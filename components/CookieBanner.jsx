@@ -26,17 +26,18 @@ function denyConsent() {
 }
 
 export default function CookieBanner() {
-  const [consent, setConsent] = useState(() => {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('cookieConsent')
-  })
+  const [consent, setConsent] = useState('loading')
+
+  useEffect(() => {
+    setConsent(localStorage.getItem('cookieConsent'))
+  }, [])
 
   useEffect(() => {
     if (consent === 'accepted') {
       grantConsent()
       loadGA()
     }
-  }, [])
+  }, [consent])
 
   useEffect(() => {
     function handleReset() {
@@ -63,7 +64,7 @@ export default function CookieBanner() {
     window.dispatchEvent(new Event('cookieConsentChanged'))
   }
 
-  if (consent !== null) return null
+  if (consent === 'loading' || consent !== null) return null
 
   return (
     <div className="cookie-banner">
