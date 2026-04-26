@@ -1,5 +1,6 @@
 import CookieBanner from '../components/CookieBanner'
 import RouteTracker from '../components/RouteTracker'
+import PageTransitionWrapper from '../components/PageTransitionWrapper'
 import './globals.css'
 
 export const metadata = {
@@ -92,7 +93,9 @@ export default function RootLayout({ children }) {
       <body>
         <RouteTracker />
         <CookieBanner />
-        {children}
+        <PageTransitionWrapper>
+          {children}
+        </PageTransitionWrapper>
       </body>
     </html>
   )
