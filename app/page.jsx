@@ -183,7 +183,7 @@ export default function Home() {
 
       {/* NAV */}
       <nav className="nav">
-        <a href="/" onClick={e => { e.preventDefault(); window.location.reload() }}>
+        <a href="/" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
           <img src="/canvas_routes_refined.png" alt="Canvas Routes" className="nav-logo" />
         </a>
         <div className="nav-links">
