@@ -15,12 +15,10 @@ export default function Home() {
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
-  const [cookieBannerVisible, setCookieBannerVisible] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('cookieConsent') === null
-  })
+  const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
   useEffect(() => {
+    setCookieBannerVisible(localStorage.getItem('cookieConsent') === null)
     function handleConsentChanged() {
       setCookieBannerVisible(localStorage.getItem('cookieConsent') === null)
     }
