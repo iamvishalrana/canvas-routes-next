@@ -246,10 +246,7 @@ export default function Home() {
             </div>
           </div>
           <div className="about-img">
-            <div style={{border:"1px solid rgba(0,0,0,0.15)",padding:"2rem",textAlign:"center"}}>
-              <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#888"}}>Route photography</div>
-              <div style={{fontSize:"11px",color:"#aaa",marginTop:"0.5rem"}}>Coming soon</div>
-            </div>
+            <img src="/pexels-quentin-martinez-2147503099-30163768.jpg" alt="Route photography" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} />
           </div>
         </div></FadeIn>
       </section>
@@ -321,11 +318,8 @@ export default function Home() {
                 </div>
                 <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join the waitlist</a>
               </div>
-              <div style={{background:"#D9D2C7",display:"flex",alignItems:"center",justifyContent:"center",minHeight:"300px"}}>
-                <div style={{border:"1px solid rgba(0,0,0,0.15)",padding:"2rem",textAlign:"center"}}>
-                  <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#888"}}>Route photography</div>
-                  <div style={{fontSize:"11px",color:"#aaa",marginTop:"0.5rem"}}>Coming soon</div>
-                </div>
+              <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden"}}>
+                <img src="/pexels-quentin-martinez-2147503099-30163768.jpg" alt="Route photography" style={{width:"100%",height:"100%",objectFit:"cover",display:"block",minHeight:"300px"}} />
               </div>
             </div>
           </div>
