@@ -245,8 +245,9 @@ export default function Home() {
               <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #7B2032",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",textDecoration:"none"}}>Routes</a>
             </div>
           </div>
-          <div className="about-img">
-            <img src="/route-photo.jpg" alt="Route photography" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} />
+          <div className="about-img" style={{position:"relative"}}>
+            <div style={{width:"100%",height:"100%",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
+            <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
           </div>
         </div></FadeIn>
       </section>
@@ -281,8 +282,9 @@ export default function Home() {
                 </div>
                 <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join the Waitlist</a>
               </div>
-              <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden"}}>
-                <img src="/meet-photo.png" alt="Meet photography" style={{width:"100%",height:"100%",objectFit:"cover",display:"block",minHeight:"300px"}} />
+              <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden",position:"relative"}}>
+                <div style={{width:"100%",minHeight:"300px",backgroundImage:"url('/meet-photo.png')",backgroundSize:"cover",backgroundPosition:"center"}} />
+                <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
               </div>
             </div>
           </div>
@@ -315,8 +317,9 @@ export default function Home() {
                 </div>
                 <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join the waitlist</a>
               </div>
-              <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden"}}>
-                <img src="/route-photo.jpg" alt="Route photography" style={{width:"100%",height:"100%",objectFit:"cover",display:"block",minHeight:"300px"}} />
+              <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden",position:"relative"}}>
+                <div style={{width:"100%",minHeight:"300px",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
+                <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
               </div>
             </div>
           </div>
