@@ -101,7 +101,9 @@ export async function POST(request) {
             </a>
           </div>
 
-          <div style="margin-top:3rem;padding-top:2rem;border-top:0.5px solid rgba(0,0,0,0.1);font-size:11px;color:#aaa;">© 2026 Canvas Routes. Montreal, QC.</div>
+          <p style="font-size:11px;color:#aaa;margin-top:3rem;line-height:1.7;">If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam — so you don't miss updates from us.</p>
+
+          <div style="padding-top:1.5rem;border-top:0.5px solid rgba(0,0,0,0.1);font-size:11px;color:#aaa;">© 2026 Canvas Routes. Montreal, QC.</div>
         </div>
         </body>
         </html>
