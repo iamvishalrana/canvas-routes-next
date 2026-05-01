@@ -14,6 +14,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
@@ -335,7 +336,7 @@ export default function Home() {
         </div>
         <div className="events-grid">
           {[
-            {date:"May 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Meets"},
+            {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Meets",popup:true},
             {date:"May 2026",name:"Run to the Laurentian",loc:"Mont-Tremblant, QC",type:"Route"},
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
@@ -347,7 +348,10 @@ export default function Home() {
               </div>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
               <div style={{fontSize:"12px",color:"#5A4A38",marginBottom:"1.5rem"}}>{e.loc}</div>
-              <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
+              {e.popup
+                ? <button onClick={() => setShowModal(true)} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>View Details</button>
+                : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
+              }
             </div>
           ))}
         </div></FadeIn>
@@ -504,6 +508,23 @@ export default function Home() {
           </form>
         )}</FadeIn>
       </section>
+
+      {/* CARS & COFFEE MODAL */}
+      {showModal && (
+        <div onClick={() => setShowModal(false)} style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.88)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}>
+          <div onClick={e => e.stopPropagation()} style={{background:"#F5F1EC",maxWidth:"400px",width:"100%",padding:"2.5rem",position:"relative",fontFamily:"'Inter',sans-serif"}}>
+            <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1.2rem",right:"1.2rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>✕</button>
+            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.8rem"}}>May 9, 2026 · Montreal</div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem"}}>Cars & Coffee</div>
+            <div style={{width:"30px",height:"1px",background:"#c5a882",marginBottom:"1.5rem"}}></div>
+            <p style={{fontSize:"0.9rem",lineHeight:"1.8",color:"#555",marginBottom:"2rem"}}>Details coming this weekend. Follow us on Instagram for updates.</p>
+            <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.6rem",padding:"0.9rem 1.8rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
+              @canvasroutes
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* STICKY MOBILE CTA */}
       <div className={`sticky-cta${showStickyCta ? ' sticky-cta--visible' : ''}`} style={cookieBannerVisible ? {bottom:'var(--cookie-banner-height, 80px)'} : {}}>
