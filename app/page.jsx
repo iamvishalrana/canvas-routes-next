@@ -528,7 +528,7 @@ export default function Home() {
           <div onClick={e => e.stopPropagation()} style={{background:"#F5F1EC",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"'Inter',sans-serif",overflow:"hidden"}}>
             <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
             <div style={{background:"#0F1E14",padding:"1.5rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.2rem"}}>
-              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"36px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"54px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
               <span style={{color:"#c5a882",fontSize:"1.1rem",lineHeight:1}}>×</span>
               <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
             </div>
@@ -537,9 +537,12 @@ export default function Home() {
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.3rem"}}>Cars & Coffee</div>
               <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1rem 0"}}></div>
               <div style={{fontSize:"12px",color:"#888",marginBottom:"0.3rem",textTransform:"uppercase",letterSpacing:"0.1em"}}>Café Napoléon</div>
-              <div style={{fontSize:"13px",color:"#555",marginBottom:"0.3rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
+              <a href="https://maps.google.com/?q=2702+Rue+Lapierre,+LaSalle,+QC,+Canada" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"13px",color:"#555",marginBottom:"0.3rem",textDecoration:"none"}}>
+                <MapPin size={13} style={{color:"#7B2032",flexShrink:0}} />
+                2702 Rue Lapierre, LaSalle, QC
+              </a>
               <div style={{fontSize:"12px",color:"#888",marginBottom:"1.5rem"}}>9:00 AM – 11:30 AM</div>
-              <p style={{fontSize:"0.88rem",lineHeight:"1.8",color:"#555",marginBottom:"1.8rem"}}>Details coming this weekend. Follow us on Instagram for updates.</p>
+              {!isLive && <p style={{fontSize:"0.88rem",lineHeight:"1.8",color:"#555",marginBottom:"1.8rem"}}>Details coming this weekend. Follow us on Instagram for updates.</p>}
               <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.6rem",padding:"0.9rem 1.8rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
                 @canvasroutes
@@ -554,7 +557,7 @@ export default function Home() {
         <div style={{position:"fixed",inset:0,background:"rgba(10,20,12,0.93)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",fontFamily:"'Inter',sans-serif"}}>
           <div style={{background:"#F5F1EC",maxWidth:"480px",width:"100%",position:"relative",overflow:"hidden"}}>
             <div style={{background:"#0F1E14",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.2rem"}}>
-              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"40px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"58px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
               <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
               <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"40px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
             </div>
