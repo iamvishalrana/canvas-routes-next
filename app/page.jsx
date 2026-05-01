@@ -190,8 +190,6 @@ export default function Home() {
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
           <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
           <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
-          <Link href="/register">Register</Link>
-          <Link href="/partners">Partners</Link>
         </div>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="nav-join">Join</a>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
@@ -207,8 +205,6 @@ export default function Home() {
         <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join the waitlist</a>
-        <Link href="/register" onClick={() => setMenuOpen(false)}>Register</Link>
-        <Link href="/partners" onClick={() => setMenuOpen(false)}>Partners</Link>
       </div>
 
       {/* HERO */}
