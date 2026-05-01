@@ -537,7 +537,8 @@ export default function Home() {
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.3rem"}}>Cars & Coffee</div>
               <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1rem 0"}}></div>
               <div style={{fontSize:"12px",color:"#888",marginBottom:"0.3rem",textTransform:"uppercase",letterSpacing:"0.1em"}}>Café Napoléon</div>
-              <div style={{fontSize:"13px",color:"#555",marginBottom:"1.5rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
+              <div style={{fontSize:"13px",color:"#555",marginBottom:"0.3rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
+              <div style={{fontSize:"12px",color:"#888",marginBottom:"1.5rem"}}>9:00 AM – 11:30 AM</div>
               <p style={{fontSize:"0.88rem",lineHeight:"1.8",color:"#555",marginBottom:"1.8rem"}}>Details coming this weekend. Follow us on Instagram for updates.</p>
               <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.6rem",padding:"0.9rem 1.8rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
@@ -564,7 +565,8 @@ export default function Home() {
               <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
               <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1.2rem auto"}}></div>
               <div style={{fontSize:"12px",color:"#888",marginBottom:"0.3rem"}}>Café Napoléon</div>
-              <div style={{fontSize:"13px",color:"#555",marginBottom:"2rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
+              <div style={{fontSize:"13px",color:"#555",marginBottom:"0.3rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
+              <div style={{fontSize:"12px",color:"#888",marginBottom:"2rem"}}>9:00 AM – 11:30 AM</div>
               <a href="/register" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem"}}>Register Now</a>
               <div>
                 <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Maybe later</button>
