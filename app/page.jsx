@@ -15,6 +15,8 @@ export default function Home() {
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [isLive, setIsLive] = useState(false)
+  const [showBanner, setShowBanner] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
@@ -74,6 +76,17 @@ export default function Home() {
     aboutObserver.observe(about)
     joinObserver.observe(join)
     return () => { aboutObserver.disconnect(); joinObserver.disconnect() }
+  }, [])
+
+  useEffect(() => {
+    const LAUNCH = new Date('2026-05-02T18:00:00Z').getTime() // 2 PM EDT
+    const preview = new URLSearchParams(window.location.search).has('preview')
+    const live = Date.now() >= LAUNCH || preview
+    if (live) {
+      setIsLive(true)
+      const t = setTimeout(() => setShowBanner(true), 600)
+      return () => clearTimeout(t)
+    }
   }, [])
 
   function updateForm(field, value) {
@@ -512,16 +525,51 @@ export default function Home() {
       {/* CARS & COFFEE MODAL */}
       {showModal && (
         <div onClick={() => setShowModal(false)} style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.88)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}>
-          <div onClick={e => e.stopPropagation()} style={{background:"#F5F1EC",maxWidth:"400px",width:"100%",padding:"2.5rem",position:"relative",fontFamily:"'Inter',sans-serif"}}>
-            <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1.2rem",right:"1.2rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>✕</button>
-            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.8rem"}}>May 9, 2026 · Montreal</div>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem"}}>Cars & Coffee</div>
-            <div style={{width:"30px",height:"1px",background:"#c5a882",marginBottom:"1.5rem"}}></div>
-            <p style={{fontSize:"0.9rem",lineHeight:"1.8",color:"#555",marginBottom:"2rem"}}>Details coming this weekend. Follow us on Instagram for updates.</p>
-            <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.6rem",padding:"0.9rem 1.8rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
-              @canvasroutes
-            </a>
+          <div onClick={e => e.stopPropagation()} style={{background:"#F5F1EC",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"'Inter',sans-serif",overflow:"hidden"}}>
+            <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
+            <div style={{background:"#0F1E14",padding:"1.5rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.2rem"}}>
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"36px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+              <span style={{color:"#c5a882",fontSize:"1.1rem",lineHeight:1}}>×</span>
+              <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+            </div>
+            <div style={{padding:"2rem 2.5rem 2.5rem"}}>
+              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.6rem"}}>May 9, 2026 · LaSalle</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.3rem"}}>Cars & Coffee</div>
+              <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1rem 0"}}></div>
+              <div style={{fontSize:"12px",color:"#888",marginBottom:"0.3rem",textTransform:"uppercase",letterSpacing:"0.1em"}}>Café Napoléon</div>
+              <div style={{fontSize:"13px",color:"#555",marginBottom:"1.5rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
+              <p style={{fontSize:"0.88rem",lineHeight:"1.8",color:"#555",marginBottom:"1.8rem"}}>Details coming this weekend. Follow us on Instagram for updates.</p>
+              <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.6rem",padding:"0.9rem 1.8rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
+                @canvasroutes
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CARS & COFFEE ANNOUNCEMENT BANNER */}
+      {showBanner && (
+        <div style={{position:"fixed",inset:0,background:"rgba(10,20,12,0.93)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",fontFamily:"'Inter',sans-serif"}}>
+          <div style={{background:"#F5F1EC",maxWidth:"480px",width:"100%",position:"relative",overflow:"hidden"}}>
+            <div style={{background:"#0F1E14",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.2rem"}}>
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"40px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+              <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
+              <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"40px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+            </div>
+            <div style={{padding:"2.5rem 2.5rem 2rem",textAlign:"center"}}>
+              <button onClick={() => setShowBanner(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"rgba(255,255,255,0.5)",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>✕</button>
+              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"0.8rem"}}>Now Open for Registration</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1.1",marginBottom:"0.8rem"}}>Cars &amp; Coffee</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
+              <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1.2rem auto"}}></div>
+              <div style={{fontSize:"12px",color:"#888",marginBottom:"0.3rem"}}>Café Napoléon</div>
+              <div style={{fontSize:"13px",color:"#555",marginBottom:"2rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
+              <a href="/register" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem"}}>Register Now</a>
+              <div>
+                <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Maybe later</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
