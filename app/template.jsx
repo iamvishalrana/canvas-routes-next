@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 
-const PAGES = ['/', '/privacy']
+const PAGES = ['/', '/privacy', '/register', '/partners']
 let _prevPath = null
 let _dir = 0
 

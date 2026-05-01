@@ -60,7 +60,7 @@ export async function POST(request) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Canvas Routes <join@canvasroutes.com>',
+      from: 'Canvas Routes <info@canvasroutes.com>',
       to: email,
       reply_to: 'info@canvasroutes.com',
       subject: "You're on the list — Canvas Routes",
@@ -119,8 +119,8 @@ export async function POST(request) {
 
   // EMAIL 2 — Internal notification (with one retry)
   const notifyBody = JSON.stringify({
-    from: 'Canvas Routes <join@canvasroutes.com>',
-    to: 'join@canvasroutes.com',
+    from: 'Canvas Routes <info@canvasroutes.com>',
+    to: 'info@canvasroutes.com',
     subject: `New application — ${name.trim()}`,
     html: `
       <!DOCTYPE html>
