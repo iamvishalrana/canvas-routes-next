@@ -527,10 +527,10 @@ export default function Home() {
         <div onClick={() => setShowModal(false)} style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.88)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}>
           <div onClick={e => e.stopPropagation()} style={{background:"#F5F1EC",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"'Inter',sans-serif",overflow:"hidden"}}>
             <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
-            <div style={{background:"#0F1E14",padding:"1.5rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.2rem"}}>
-              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"54px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
-              <span style={{color:"#c5a882",fontSize:"1.1rem",lineHeight:1}}>×</span>
-              <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+            <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.5rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"72px",width:"auto"}} />
+              <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
+              <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"40px",width:"auto"}} />
             </div>
             <div style={{padding:"2rem 2.5rem 2.5rem"}}>
               <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.6rem"}}>May 9, 2026 · LaSalle</div>
@@ -556,13 +556,13 @@ export default function Home() {
       {showBanner && (
         <div style={{position:"fixed",inset:0,background:"rgba(10,20,12,0.93)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",fontFamily:"'Inter',sans-serif"}}>
           <div style={{background:"#F5F1EC",maxWidth:"480px",width:"100%",position:"relative",overflow:"hidden"}}>
-            <div style={{background:"#0F1E14",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.2rem"}}>
-              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"58px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+            <div style={{background:"#EDE8E1",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.5rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"80px",width:"auto"}} />
               <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
-              <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"40px",width:"auto",filter:"brightness(0) invert(1)",opacity:0.9}} />
+              <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"44px",width:"auto"}} />
             </div>
             <div style={{padding:"2.5rem 2.5rem 2rem",textAlign:"center"}}>
-              <button onClick={() => setShowBanner(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"rgba(255,255,255,0.5)",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>✕</button>
+              <button onClick={() => setShowBanner(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>✕</button>
               <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"0.8rem"}}>Now Open for Registration</div>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1.1",marginBottom:"0.8rem"}}>Cars &amp; Coffee</div>
               <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
