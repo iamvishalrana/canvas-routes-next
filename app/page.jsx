@@ -576,7 +576,7 @@ export default function Home() {
               transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
               style={{background:"#F5F1EC",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
             >
-              <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
+              <img src="/cc-page.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
               <div style={{padding:"1.5rem 2rem 2rem",textAlign:"center",background:"#0F1E14"}}>
                 <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"120px",width:"auto",marginBottom:"1.2rem"}} />
                 <div>
