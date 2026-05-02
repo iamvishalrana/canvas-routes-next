@@ -25,13 +25,9 @@ export default function Home() {
   useEffect(() => { setShowSplash(true) }, [])
 
   useEffect(() => {
-    if (showSplash) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = (showSplash || showModal || showBanner) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [showSplash])
+  }, [showSplash, showModal, showBanner])
 
   useEffect(() => {
     setCookieBannerVisible(localStorage.getItem('cookieConsent') === null)

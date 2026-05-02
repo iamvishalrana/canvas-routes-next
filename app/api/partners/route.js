@@ -31,12 +31,19 @@ function h(str) {
 const VALID_TYPES = ['Photographer', 'Media Outlet', 'Business', 'Sponsor']
 
 export async function POST(request) {
+  if (!process.env.RESEND_API_KEY) {
+    return Response.json({ error: 'Service unavailable' }, { status: 503 })
+  }
+
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   if (checkRateLimit(ip)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 
-  const body = await request.json()
+  let body
+  try { body = await request.json() } catch {
+    return Response.json({ error: 'Invalid request body' }, { status: 400 })
+  }
   const { name, company, type, website, phone, collab } = body
 
   if (!name?.trim() || name.trim().length < 2) return Response.json({ error: 'Full name is required' }, { status: 400 })

@@ -384,5 +384,5 @@ section[id] {
   .cookie-banner { padding: 1.2rem 1.5rem; }
   .meets-cards-grid { grid-template-columns: 1fr; }
 
-  section[id] { scroll-margin-top: 110px; }
+  section[id] { scroll-margin-top: 120px; }
 }
