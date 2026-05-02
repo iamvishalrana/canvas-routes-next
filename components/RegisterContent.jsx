@@ -108,9 +108,8 @@ export default function RegisterContent() {
           <a href="/#events">Events</a>
           <a href="/#contact">Contact</a>
           <Link href="/register" style={{ color: '#7B2032' }}>Register</Link>
-          <Link href="/partners">Partners</Link>
         </div>
-        <Link href="/partners" className="nav-join">Partner with Us</Link>
+        <a href="/#join" className="nav-join">Join</a>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
           <span></span><span></span><span></span>
         </button>
@@ -122,7 +121,6 @@ export default function RegisterContent() {
         <a href="/#events" onClick={() => setMenuOpen(false)}>Events</a>
         <a href="/#contact" onClick={() => setMenuOpen(false)}>Contact</a>
         <Link href="/register" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Register</Link>
-        <Link href="/partners" onClick={() => setMenuOpen(false)}>Partners</Link>
       </div>
 
       {/* HEADER */}

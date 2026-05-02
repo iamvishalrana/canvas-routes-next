@@ -550,7 +550,7 @@ export default function Home() {
                 <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"40px",width:"auto"}} />
               </div>
               {/* DETAILS SECTION */}
-              <div style={{background:"#3B6B2F",padding:"2rem 2.5rem 2.5rem"}}>
+              <div style={{background:"#0F1E14",padding:"2rem 2.5rem 2.5rem"}}>
                 <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.9)",marginBottom:"0.6rem"}}>May 9, 2026 · LaSalle</div>
                 <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.3rem"}}>Cars & Coffee</div>
                 <div style={{width:"30px",height:"1px",background:"rgba(197,168,130,0.6)",margin:"1rem 0"}}></div>
@@ -561,7 +561,7 @@ export default function Home() {
                 </a>
                 <div style={{fontSize:"12px",color:"rgba(245,241,236,0.7)",marginBottom:"1.5rem"}}>09:30 AM – 12:00 PM</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:"0.75rem",alignItems:"center"}}>
-                  <Link href="/register" onClick={() => setShowModal(false)} className="btn-push" style={{display:"inline-flex",alignItems:"center",padding:"0.9rem 1.8rem",border:"1px solid #F5F1EC",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#F5F1EC",textDecoration:"none",background:"transparent"}}>Register</Link>
+                  <button onClick={() => { setShowModal(false); smoothScroll('join') }} className="btn-push" style={{display:"inline-flex",alignItems:"center",padding:"0.9rem 1.8rem",border:"1px solid #F5F1EC",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#F5F1EC",cursor:"pointer",background:"transparent",fontFamily:"'Inter',sans-serif"}}>Register</button>
                   <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",padding:"0.9rem 1.4rem",border:"1px solid rgba(245,241,236,0.4)",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(245,241,236,0.75)",textDecoration:"none",background:"transparent"}}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
                     @canvasroutes
