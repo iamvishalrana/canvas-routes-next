@@ -63,7 +63,7 @@ export async function POST(request) {
       from: 'Canvas Routes <info@canvasroutes.com>',
       to: email,
       reply_to: 'info@canvasroutes.com',
-      subject: "You're on the list — Canvas Routes",
+      subject: "Application received — Canvas Routes",
       html: `
         <!DOCTYPE html>
         <html>
@@ -76,32 +76,22 @@ export async function POST(request) {
 
           <div style="width:40px;height:1px;background:#c5a882;margin-bottom:2rem;"></div>
 
-          <h1 style="font-size:2rem;font-weight:300;line-height:1.2;margin-bottom:1.5rem;color:#1a1a1a;">You&#39;re on the list, ${firstName}.</h1>
+          <h1 style="font-size:2rem;font-weight:300;line-height:1.2;margin-bottom:1.5rem;color:#1a1a1a;">We&#39;ve got your application, ${firstName}.</h1>
 
-          <p style="font-size:0.95rem;line-height:1.8;color:#555;margin-bottom:1.5rem;">Thank you for your interest in Canvas Routes. We're building something special for Montreal's automotive community — curated drives, private meets, and unforgettable routes.</p>
+          <p style="font-size:0.95rem;line-height:1.8;color:#555;margin-bottom:1.5rem;">Thank you for applying to Canvas Routes. We've received your application and will review it shortly — we'll be in touch with you as soon as possible.</p>
 
-          <p style="font-size:0.95rem;line-height:1.8;color:#555;margin-bottom:2rem;">We'll be in touch when spots open. In the meantime, follow us on Instagram and Facebook for a preview of what's coming.</p>
+          <p style="font-size:0.95rem;line-height:1.8;color:#555;margin-bottom:2rem;">In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes.</p>
 
-          ${car ? `<p style="font-size:0.85rem;color:#888;margin-bottom:1.5rem;">What you drive: <strong style="color:#1a1a1a;">${h(car)}</strong></p>` : ''}
+          <a href="https://www.instagram.com/canvasroutes" style="display:inline-flex;align-items:center;gap:10px;padding:0.9rem 2rem;border:1px solid #1a1a1a;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#1a1a1a;text-decoration:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B2032" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1" fill="#7B2032" stroke="none"/>
+            </svg>
+            @canvasroutes
+          </a>
 
-          <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.5rem;">
-            <a href="https://www.instagram.com/canvasroutes" style="display:inline-flex;align-items:center;gap:10px;padding:0.9rem 2rem;border:1px solid #1a1a1a;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#1a1a1a;text-decoration:none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B2032" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                <circle cx="12" cy="12" r="4"/>
-                <circle cx="17.5" cy="6.5" r="1" fill="#7B2032" stroke="none"/>
-              </svg>
-              Instagram
-            </a>
-            <a href="https://www.facebook.com/share/1B8GXiPHUe/" style="display:inline-flex;align-items:center;gap:10px;padding:0.9rem 2rem;border:1px solid #1a1a1a;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#1a1a1a;text-decoration:none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B2032" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-              </svg>
-              Facebook
-            </a>
-          </div>
-
-          <p style="font-size:11px;color:#aaa;margin-top:3rem;line-height:1.7;">If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam — so you don't miss updates from us.</p>
+          <p style="font-size:11px;color:#aaa;margin-top:3rem;line-height:1.7;">If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam — so you don't miss our reply.</p>
 
           <div style="padding-top:1.5rem;border-top:0.5px solid rgba(0,0,0,0.1);font-size:11px;color:#aaa;">© 2026 Canvas Routes. Montreal, QC.</div>
         </div>
