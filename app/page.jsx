@@ -474,7 +474,7 @@ export default function Home() {
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
             <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
-              <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></div>
+              <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
               <div className="join-form-row">
                 {[
                   !ccExpired && {value:"Cars & Coffee — May 9, 2026", label:"Cars & Coffee", sub:"May 9, 2026 · Montreal"},
