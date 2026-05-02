@@ -622,7 +622,7 @@ export default function Home() {
               <div style={{padding:"1.8rem 2rem 2rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.8)",marginBottom:"0.5rem"}}>Montreal · May 9, 2026</div>
                 <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars & Coffee</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.55)",marginBottom:"1.2rem"}}>Good cars. Good coffee. Good company.</div>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.55)",marginBottom:"1.2rem"}}>Good cars. Great coffee. Better people.</div>
 
                 {/* INFO CHIPS */}
                 <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.4rem"}}>
