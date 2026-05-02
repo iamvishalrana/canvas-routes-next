@@ -66,6 +66,17 @@ export default function Home() {
   }, [])
 
   const stickyState = useRef({ pastAbout: false, atJoin: false })
+  const registerForRef = useRef(null)
+
+  useEffect(() => {
+    function handleOutsideClick(e) {
+      if (form.registerFor && registerForRef.current && !registerForRef.current.contains(e.target)) {
+        setForm(prev => ({ ...prev, registerFor: '' }))
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [form.registerFor])
 
   useEffect(() => {
     const about = document.getElementById('about')
@@ -461,7 +472,7 @@ export default function Home() {
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
             <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
               <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></div>
-              <div className="join-form-row">
+              <div className="join-form-row" ref={registerForRef}>
                 {[
                   {value:"Cars & Coffee — May 9, 2026", label:"Cars & Coffee", sub:"May 9, 2026 · Montreal"},
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
