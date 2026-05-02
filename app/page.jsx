@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2 } from 'lucide-react'
+import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, ClipboardList } from 'lucide-react'
 import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
@@ -435,17 +435,23 @@ export default function Home() {
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
             <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
-              <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for</div>
+              <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></div>
               <div className="join-form-row">
                 {[
                   {value:"Cars & Coffee — May 9, 2026", label:"Cars & Coffee", sub:"May 9, 2026 · Montreal"},
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
-                ].map(opt => (
-                  <button key={opt.value} type="button" onClick={() => updateForm('registerFor', opt.value)} style={{padding:"1rem 1.2rem",border:`1px solid ${form.registerFor===opt.value?'#7B2032':errors.registerFor?'#7B2032':'rgba(0,0,0,0.2)'}`,background:form.registerFor===opt.value?'rgba(123,32,50,0.04)':'transparent',textAlign:"left",cursor:"pointer",transition:"border-color 0.2s,background 0.2s",fontFamily:"'Inter',sans-serif"}}>
-                    <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:form.registerFor===opt.value?'#7B2032':'#1a1a1a',marginBottom:"0.3rem",fontWeight:form.registerFor===opt.value?"500":"400"}}>{opt.label}</div>
-                    <div style={{fontSize:"11px",color:"#888"}}>{opt.sub}</div>
-                  </button>
-                ))}
+                ].map(opt => {
+                  const selected = form.registerFor === opt.value
+                  const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'
+                  const bgColor = selected ? 'rgba(59,107,47,0.06)' : errors.registerFor ? 'rgba(123,32,50,0.04)' : 'transparent'
+                  const labelColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : '#1a1a1a'
+                  return (
+                    <button key={opt.value} type="button" onClick={() => updateForm('registerFor', opt.value)} style={{padding:"1rem 1.2rem",border:`1px solid ${borderColor}`,background:bgColor,textAlign:"left",cursor:"pointer",transition:"border-color 0.2s,background 0.2s",fontFamily:"'Inter',sans-serif"}}>
+                      <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:labelColor,marginBottom:"0.3rem",fontWeight:selected?"500":"400"}}>{opt.label}</div>
+                      <div style={{fontSize:"11px",color:"#888"}}>{opt.sub}</div>
+                    </button>
+                  )
+                })}
               </div>
               {errors.registerFor && <span style={{fontSize:"11px",color:"#7B2032"}}>Please select an option</span>}
             </div>
