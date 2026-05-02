@@ -483,10 +483,10 @@ export default function Home() {
             <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
-          <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
+          <form className="join-form" ref={registerForRef} onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
             <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
               <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></div>
-              <div className="join-form-row" ref={registerForRef}>
+              <div className="join-form-row">
                 {[
                   !ccExpired && {value:"Cars & Coffee — May 9, 2026", label:"Cars & Coffee", sub:"May 9, 2026 · Montreal"},
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
