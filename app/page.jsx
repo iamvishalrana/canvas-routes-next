@@ -7,6 +7,8 @@ import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
 export default function Home() {
+  const CC_DEADLINE = new Date('2026-05-09T15:00:00Z').getTime() // 11 AM EDT
+  const [ccExpired, setCcExpired] = useState(false)
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
@@ -21,6 +23,19 @@ export default function Home() {
   const [showBanner, setShowBanner] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
+
+  useEffect(() => {
+    const remaining = CC_DEADLINE - Date.now()
+    if (remaining <= 0) {
+      setCcExpired(true)
+    } else {
+      const t = setTimeout(() => {
+        setCcExpired(true)
+        setForm(prev => prev.registerFor.startsWith('Cars & Coffee') ? { ...prev, registerFor: '' } : prev)
+      }, remaining)
+      return () => clearTimeout(t)
+    }
+  }, [])
 
   useEffect(() => {
     if (!sessionStorage.getItem('splashSeen')) {
@@ -474,9 +489,9 @@ export default function Home() {
               <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></div>
               <div className="join-form-row" ref={registerForRef}>
                 {[
-                  {value:"Cars & Coffee — May 9, 2026", label:"Cars & Coffee", sub:"May 9, 2026 · Montreal"},
+                  !ccExpired && {value:"Cars & Coffee — May 9, 2026", label:"Cars & Coffee", sub:"May 9, 2026 · Montreal"},
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
-                ].map(opt => {
+                ].filter(Boolean).map(opt => {
                   const selected = form.registerFor === opt.value
                   const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'
                   const bgColor = selected ? 'rgba(59,107,47,0.06)' : errors.registerFor ? 'rgba(123,32,50,0.04)' : 'transparent'
