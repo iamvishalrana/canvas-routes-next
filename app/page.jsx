@@ -439,7 +439,7 @@ export default function Home() {
         <div style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Membership is by application. Tell us about yourself.</div>
         {status === 'success' ? (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>You're on the list. We'll be in touch.</div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you shortly.</div>
             <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
