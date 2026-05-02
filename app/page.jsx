@@ -22,7 +22,12 @@ export default function Home() {
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
-  useEffect(() => { setShowSplash(true) }, [])
+  useEffect(() => {
+    if (!sessionStorage.getItem('splashSeen')) {
+      setShowSplash(true)
+      sessionStorage.setItem('splashSeen', '1')
+    }
+  }, [])
 
   useEffect(() => {
     document.body.style.overflow = (showSplash || showModal || showBanner) ? 'hidden' : ''
@@ -93,8 +98,10 @@ export default function Home() {
     const live = Date.now() >= LAUNCH || preview
     if (live) {
       setIsLive(true)
-      const t = setTimeout(() => setShowBanner(true), 600)
-      return () => clearTimeout(t)
+      if (!sessionStorage.getItem('bannerSeen')) {
+        const t = setTimeout(() => { setShowBanner(true); sessionStorage.setItem('bannerSeen', '1') }, 600)
+        return () => clearTimeout(t)
+      }
     }
   }, [])
 
