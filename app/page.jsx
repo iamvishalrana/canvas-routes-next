@@ -572,14 +572,14 @@ export default function Home() {
             transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
             style={{background:"#F5F1EC",maxWidth:"400px",width:"100%",position:"relative",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
           >
-            <div style={{position:"relative"}}>
-              <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
-              <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:"0.75rem",right:"0.75rem",background:"rgba(0,0,0,0.5)",border:"none",cursor:"pointer",width:"32px",height:"32px",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"20px",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>×</button>
-            </div>
-            <div style={{padding:"1.5rem 2rem 2rem",textAlign:"center",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+            <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
+            <div style={{padding:"1.2rem 2rem 1.8rem",textAlign:"center",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+              <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"0.75rem"}}>
+                <button onClick={() => setShowSplash(false)} aria-label="Close" style={{background:"none",border:"none",cursor:"pointer",fontSize:"20px",color:"#aaa",lineHeight:1,fontFamily:"'Inter',sans-serif",padding:"0"}}>×</button>
+              </div>
               <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"56px",width:"auto",marginBottom:"1.2rem"}} />
               <div>
-                <Link href="/register" onClick={() => setShowSplash(false)} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Register</Link>
+                <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push btn-waitlist" style={{padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent"}}>Register</button>
               </div>
             </div>
           </motion.div>
