@@ -185,15 +185,20 @@ export default function Home() {
     const isFocused = focusedField === field
     const hasError = !!errors[field]
     const hasValue = !!form[field]
-    const borderColor = hasError ? '#7B2032' : hasValue ? '#3B6B2F' : isFocused ? '#c5a882' : 'rgba(0,0,0,0.2)'
-    const bgColor = hasError ? 'rgba(123,32,50,0.04)' : hasValue ? 'rgba(59,107,47,0.05)' : 'transparent'
-    const shadow = isFocused ? (hasValue ? '0 0 0 3px rgba(59,107,47,0.15)' : '0 0 0 3px rgba(197,168,130,0.2)') : 'none'
+    let border, background, boxShadow
+    if (hasError) {
+      border = '1px solid #7B2032'; background = 'rgba(123,32,50,0.04)'; boxShadow = 'none'
+    } else if (hasValue) {
+      border = '1px solid #3B6B2F'; background = 'rgba(59,107,47,0.05)'; boxShadow = 'none'
+    } else if (isFocused) {
+      border = '1px solid #c5a882'; background = 'transparent'; boxShadow = '0 0 0 3px rgba(197,168,130,0.2)'
+    } else {
+      border = '1px solid rgba(0,0,0,0.2)'; background = 'transparent'; boxShadow = 'none'
+    }
     return {
       width:'100%', padding:'0.9rem 1.2rem',
-      border:`1px solid ${borderColor}`,
-      background: bgColor,
+      border, background, boxShadow,
       fontSize:'13px', fontFamily:"'Inter',sans-serif", outline:'none', color:'#1a1a1a',
-      boxShadow: shadow,
       transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s',
     }
   }
