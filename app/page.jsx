@@ -566,23 +566,23 @@ export default function Home() {
           transition={{duration:0.35}}
           style={{position:"fixed",top:0,left:0,right:0,bottom:0,width:"100%",height:"100%",zIndex:1200,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
         >
-          <motion.div
-            initial={{opacity:0,scale:0.93,y:24}}
-            animate={{opacity:1,scale:1,y:0}}
-            transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
-            style={{background:"#F5F1EC",maxWidth:"400px",width:"100%",position:"relative",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
-          >
-            <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
-            <div style={{padding:"1.2rem 2rem 1.8rem",textAlign:"center",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
-              <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"0.75rem"}}>
-                <button onClick={() => setShowSplash(false)} aria-label="Close" style={{background:"none",border:"none",cursor:"pointer",fontSize:"20px",color:"#aaa",lineHeight:1,fontFamily:"'Inter',sans-serif",padding:"0"}}>×</button>
+          <div style={{position:"relative",maxWidth:"400px",width:"100%"}}>
+            <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:0,right:"-2.5rem",background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:"24px",lineHeight:1,fontFamily:"'Inter',sans-serif",padding:"0.25rem"}}>×</button>
+            <motion.div
+              initial={{opacity:0,scale:0.93,y:24}}
+              animate={{opacity:1,scale:1,y:0}}
+              transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
+              style={{background:"#F5F1EC",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
+            >
+              <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
+              <div style={{padding:"1.5rem 2rem 2rem",textAlign:"center",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"120px",width:"auto",marginBottom:"1.2rem"}} />
+                <div>
+                  <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push btn-waitlist" style={{padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent"}}>Register</button>
+                </div>
               </div>
-              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"56px",width:"auto",marginBottom:"1.2rem"}} />
-              <div>
-                <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push btn-waitlist" style={{padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent"}}>Register</button>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
 
