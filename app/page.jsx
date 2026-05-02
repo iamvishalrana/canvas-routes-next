@@ -233,7 +233,7 @@ export default function Home() {
         <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }}>Routes</a>
         <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
-        <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join the waitlist</a>
+        <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</a>
       </div>
 
       {/* HERO */}
@@ -244,7 +244,7 @@ export default function Home() {
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem"}}></div>
         <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em"}}>Curated road trips. Memories for life.</div>
         <div className="hero-buttons">
-          <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join the waitlist</a>
+          <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>About Us</a>
         </div>
         <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}
@@ -309,7 +309,7 @@ export default function Home() {
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, curated company, and a more intimate experience. Members are notified directly when a private meet is announced.</p>
                   </div>
                 </div>
-                <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join the Waitlist</a>
+                <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
               </div>
               <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden",position:"relative"}}>
                 <div style={{width:"100%",minHeight:"300px",backgroundImage:"url('/meet-photo.png')",backgroundSize:"cover",backgroundPosition:"center"}} />
@@ -344,7 +344,7 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join the waitlist</a>
+                <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
               </div>
               <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden",position:"relative"}}>
                 <div style={{width:"100%",minHeight:"300px",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
@@ -609,10 +609,14 @@ export default function Home() {
             >
               <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
               {/* LOGOS SECTION */}
-              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"0.75rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)",textAlign:"center"}}>
-                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto",display:"block",margin:"0 auto"}} />
-                <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1,display:"block",textAlign:"center"}}>×</span>
-                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",display:"block",margin:"0 auto"}} />
+              <div style={{background:"#EDE8E1",padding:"0",display:"flex",flexDirection:"column",alignItems:"center",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"1.25rem 2rem"}}>
+                  <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto",display:"block"}} />
+                </div>
+                <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1,display:"block"}}>×</span>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"1.25rem 2rem"}}>
+                  <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",display:"block"}} />
+                </div>
               </div>
               {/* DETAILS SECTION */}
               <div style={{background:"#0F1E14",padding:"2rem 2.5rem 2.5rem"}}>
@@ -668,7 +672,7 @@ export default function Home() {
       {/* STICKY MOBILE CTA */}
       <div className={`sticky-cta${showStickyCta ? ' sticky-cta--visible' : ''}`} style={cookieBannerVisible ? {bottom:'var(--cookie-banner-height, 80px)'} : {}}>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"block",width:"100%",padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",textAlign:"center"}}>
-          Join the Waitlist
+          Join
         </a>
       </div>
 
