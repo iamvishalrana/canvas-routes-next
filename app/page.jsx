@@ -183,13 +183,18 @@ export default function Home() {
 
   function inputStyle(field) {
     const isFocused = focusedField === field
+    const hasError = !!errors[field]
+    const hasValue = !!form[field]
+    const borderColor = hasError ? '#7B2032' : hasValue ? '#3B6B2F' : isFocused ? '#c5a882' : 'rgba(0,0,0,0.2)'
+    const bgColor = hasError ? 'rgba(123,32,50,0.04)' : hasValue ? 'rgba(59,107,47,0.05)' : 'transparent'
+    const shadow = isFocused ? (hasValue ? '0 0 0 3px rgba(59,107,47,0.15)' : '0 0 0 3px rgba(197,168,130,0.2)') : 'none'
     return {
       width:'100%', padding:'0.9rem 1.2rem',
-      border:`1px solid ${errors[field] ? '#7B2032' : isFocused ? '#c5a882' : 'rgba(0,0,0,0.2)'}`,
-      background: errors[field] ? 'rgba(123,32,50,0.04)' : form[field] ? 'rgba(0,0,0,0.04)' : 'transparent',
+      border:`1px solid ${borderColor}`,
+      background: bgColor,
       fontSize:'13px', fontFamily:"'Inter',sans-serif", outline:'none', color:'#1a1a1a',
-      boxShadow: isFocused ? '0 0 0 3px rgba(197,168,130,0.2)' : 'none',
-      transition:'border-color 0.2s, box-shadow 0.2s',
+      boxShadow: shadow,
+      transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s',
     }
   }
 
