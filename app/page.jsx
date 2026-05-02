@@ -426,7 +426,7 @@ export default function Home() {
       <section id="join" style={{textAlign:"center",padding:"8rem 2rem",background:"#F5F1EC"}}>
         <FadeIn><div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
         <div className="join-title" style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
-        <div style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Membership is by application. Tell us about yourself and we'll be in touch when spots open.</div>
+        <div style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Membership is by application. Tell us about yourself.</div>
         {status === 'success' ? (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
             <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>You're on the list. We'll be in touch.</div>
@@ -532,7 +532,7 @@ export default function Home() {
             </div>
             <button type="submit" disabled={status==='loading'} className="join-submit-btn"
               style={{marginTop:"1.5rem",padding:"0.9rem 3rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:status==='loading'?'not-allowed':'pointer',fontFamily:"'Inter',sans-serif",opacity:status==='loading'?0.5:1}}>
-              {status === 'loading' ? 'Sending...' : 'Join the Waitlist'}
+              {status === 'loading' ? 'Sending...' : 'Register'}
             </button>
             {status === 'error' && <div style={{marginTop:"1rem",fontSize:"12px",color:"#7B2032"}}>{serverError}</div>}
           </form>
