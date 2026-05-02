@@ -364,7 +364,7 @@ section[id] {
   .hero-buttons a { width: 100%; text-align: center; }
 
   .about-grid { grid-template-columns: 1fr; gap: 2rem; }
-  .about-img { aspect-ratio: unset; min-height: 300px; }
+  .about-img { aspect-ratio: unset; height: 300px; }
 
   .expand-btn { padding: 2rem 1.5rem; }
   .expand-content { padding: 2rem 1.5rem; }

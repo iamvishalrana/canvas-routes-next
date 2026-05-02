@@ -566,8 +566,10 @@ export default function Home() {
           transition={{duration:0.35}}
           style={{position:"fixed",top:0,left:0,right:0,bottom:0,width:"100%",height:"100%",zIndex:1200,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
         >
-          <div style={{position:"relative",maxWidth:"400px",width:"100%"}}>
-            <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:0,right:"-2.5rem",background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:"24px",lineHeight:1,fontFamily:"'Inter',sans-serif",padding:"0.25rem"}}>×</button>
+          <div style={{maxWidth:"400px",width:"100%"}}>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"0.5rem"}}>
+              <button onClick={() => setShowSplash(false)} aria-label="Close" style={{background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:"26px",lineHeight:1,fontFamily:"'Inter',sans-serif",padding:"0.25rem"}}>×</button>
+            </div>
             <motion.div
               initial={{opacity:0,scale:0.93,y:24}}
               animate={{opacity:1,scale:1,y:0}}
@@ -607,10 +609,10 @@ export default function Home() {
             >
               <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
               {/* LOGOS SECTION */}
-              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1rem",flexWrap:"wrap",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
-                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto",maxWidth:"55%"}} />
+              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"0.75rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
+                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto"}} />
                 <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
-                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",maxWidth:"35%"}} />
+                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto"}} />
               </div>
               {/* DETAILS SECTION */}
               <div style={{background:"#0F1E14",padding:"2rem 2.5rem 2.5rem"}}>
