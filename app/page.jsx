@@ -81,17 +81,6 @@ export default function Home() {
   }, [])
 
   const stickyState = useRef({ pastAbout: false, atJoin: false })
-  const registerForRef = useRef(null)
-
-  useEffect(() => {
-    function handleOutsideClick(e) {
-      if (form.registerFor && registerForRef.current && !registerForRef.current.contains(e.target)) {
-        setForm(prev => ({ ...prev, registerFor: '' }))
-      }
-    }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [form.registerFor])
 
   useEffect(() => {
     const about = document.getElementById('about')
@@ -483,7 +472,7 @@ export default function Home() {
             <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
-          <form className="join-form" ref={registerForRef} onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
+          <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
             <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
               <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></div>
               <div className="join-form-row">
