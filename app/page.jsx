@@ -692,7 +692,7 @@ export default function Home() {
               <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
               <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1.2rem auto"}}></div>
               <div style={{fontSize:"13px",color:"#555",marginBottom:"2rem",lineHeight:"1.6"}}>Location will be sent to you via email once registration is completed.</div>
-              <a href="/register" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem"}}>Register Now</a>
+              <button onClick={() => { setShowBanner(false); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>Register Now</button>
               <div>
                 <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Maybe later</button>
               </div>

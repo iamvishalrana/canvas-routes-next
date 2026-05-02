@@ -106,10 +106,10 @@ export default function PartnersContent() {
           <a href="/#about">About Us</a>
           <a href="/#events">Events</a>
           <a href="/#contact">Contact</a>
-          <Link href="/register">Register</Link>
+          <a href="/#join">Register</a>
           <Link href="/partners" style={{ color: '#7B2032' }}>Partners</Link>
         </div>
-        <Link href="/register" className="nav-join">Member Registration</Link>
+        <a href="/#join" className="nav-join">Join</a>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
           <span></span><span></span><span></span>
         </button>
@@ -120,7 +120,7 @@ export default function PartnersContent() {
         <a href="/#about" onClick={() => setMenuOpen(false)}>About Us</a>
         <a href="/#events" onClick={() => setMenuOpen(false)}>Events</a>
         <a href="/#contact" onClick={() => setMenuOpen(false)}>Contact</a>
-        <Link href="/register" onClick={() => setMenuOpen(false)}>Register</Link>
+        <a href="/#join" onClick={() => setMenuOpen(false)}>Register</a>
         <Link href="/partners" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Partners</Link>
       </div>
 
