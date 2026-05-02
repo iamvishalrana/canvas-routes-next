@@ -364,7 +364,7 @@ export default function Home() {
         </div>
         <div className="events-grid">
           {[
-            {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Meets",popup:true},
+            {date:"May 9, 2026",name:"Cars & Coffee",loc:"Location sent via email",type:"Meets",popup:true},
             {date:"May 2026",name:"Run to the Laurentian",loc:"Mont-Tremblant, QC",type:"Route"},
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
@@ -611,20 +611,13 @@ export default function Home() {
               {/* LOGOS SECTION */}
               <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",flexDirection:"column",alignItems:"center",gap:0,borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
                 <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto",display:"block"}} />
-                <span style={{color:"#c5a882",fontSize:"1.1rem",lineHeight:1,display:"block",margin:"1.1rem 0"}}>×</span>
-                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"48px",width:"auto",display:"block"}} />
               </div>
               {/* DETAILS SECTION */}
               <div style={{background:"#0F1E14",padding:"2rem 2.5rem 2.5rem"}}>
-                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.9)",marginBottom:"0.6rem"}}>May 9, 2026 · LaSalle</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.9)",marginBottom:"0.6rem"}}>May 9, 2026</div>
                 <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.3rem"}}>Cars & Coffee</div>
                 <div style={{width:"30px",height:"1px",background:"rgba(197,168,130,0.6)",margin:"1rem 0"}}></div>
-                <div style={{fontSize:"12px",color:"rgba(245,241,236,0.7)",marginBottom:"0.3rem",textTransform:"uppercase",letterSpacing:"0.1em"}}>Café Napoléon</div>
-                <a href="https://maps.google.com/?q=2702+Rue+Lapierre,+LaSalle,+QC,+Canada" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"13px",color:"rgba(245,241,236,0.85)",marginBottom:"0.3rem",textDecoration:"none"}}>
-                  <MapPin size={13} style={{color:"#c5a882",flexShrink:0}} />
-                  2702 Rue Lapierre, LaSalle, QC
-                </a>
-                <div style={{fontSize:"12px",color:"rgba(245,241,236,0.7)",marginBottom:"1.5rem"}}>09:30 AM – 12:00 PM</div>
+                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.75)",marginBottom:"1.5rem",lineHeight:"1.6"}}>Location will be sent to you via email once registration is completed.</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:"0.75rem",alignItems:"center"}}>
                   <button onClick={() => { setShowModal(false); smoothScroll('join') }} className="btn-push" style={{display:"inline-flex",alignItems:"center",padding:"0.9rem 1.8rem",border:"1px solid #F5F1EC",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#F5F1EC",cursor:"pointer",background:"transparent",fontFamily:"'Inter',sans-serif"}}>Register</button>
                   <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",padding:"0.9rem 1.4rem",border:"1px solid rgba(245,241,236,0.4)",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(245,241,236,0.75)",textDecoration:"none",background:"transparent"}}>
@@ -642,10 +635,8 @@ export default function Home() {
       {showBanner && (
         <div style={{position:"fixed",inset:0,background:"rgba(10,20,12,0.93)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",fontFamily:"'Inter',sans-serif"}}>
           <div style={{background:"#F5F1EC",maxWidth:"480px",width:"100%",position:"relative",overflow:"hidden"}}>
-            <div style={{background:"#EDE8E1",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.5rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
+            <div style={{background:"#EDE8E1",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
               <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"110px",width:"auto"}} />
-              <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
-              <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"44px",width:"auto"}} />
             </div>
             <div style={{padding:"2.5rem 2.5rem 2rem",textAlign:"center"}}>
               <button onClick={() => setShowBanner(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>✕</button>
@@ -653,9 +644,7 @@ export default function Home() {
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1.1",marginBottom:"0.8rem"}}>Cars &amp; Coffee</div>
               <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
               <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1.2rem auto"}}></div>
-              <div style={{fontSize:"12px",color:"#888",marginBottom:"0.3rem"}}>Café Napoléon</div>
-              <div style={{fontSize:"13px",color:"#555",marginBottom:"0.3rem"}}>2702 Rue Lapierre, LaSalle, QC</div>
-              <div style={{fontSize:"12px",color:"#888",marginBottom:"2rem"}}>09:30 AM – 12:00 PM</div>
+              <div style={{fontSize:"13px",color:"#555",marginBottom:"2rem",lineHeight:"1.6"}}>Location will be sent to you via email once registration is completed.</div>
               <a href="/register" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem"}}>Register Now</a>
               <div>
                 <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Maybe later</button>
