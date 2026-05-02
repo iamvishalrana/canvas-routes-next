@@ -607,10 +607,10 @@ export default function Home() {
             >
               <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
               {/* LOGOS SECTION */}
-              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.5rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
-                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"120px",width:"auto"}} />
+              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1rem",flexWrap:"wrap",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
+                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto",maxWidth:"55%"}} />
                 <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
-                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"40px",width:"auto"}} />
+                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",maxWidth:"35%"}} />
               </div>
               {/* DETAILS SECTION */}
               <div style={{background:"#0F1E14",padding:"2rem 2.5rem 2.5rem"}}>
