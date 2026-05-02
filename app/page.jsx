@@ -6,8 +6,9 @@ import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, Clipboa
 import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
+const CC_DEADLINE = new Date('2026-05-09T15:00:00Z').getTime() // 11 AM EDT
+
 export default function Home() {
-  const CC_DEADLINE = new Date('2026-05-09T15:00:00Z').getTime() // 11 AM EDT
   const [ccExpired, setCcExpired] = useState(false)
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' })
   const [errors, setErrors] = useState({})
@@ -19,7 +20,6 @@ export default function Home() {
   const [routesOpen, setRoutesOpen] = useState(false)
   const [showSplash, setShowSplash] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  const [isLive, setIsLive] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
@@ -123,7 +123,6 @@ export default function Home() {
     const preview = new URLSearchParams(window.location.search).has('preview')
     const live = Date.now() >= LAUNCH || preview
     if (live) {
-      setIsLive(true)
       if (!sessionStorage.getItem('bannerSeen')) {
         const t = setTimeout(() => { setShowBanner(true); sessionStorage.setItem('bannerSeen', '1') }, 600)
         return () => clearTimeout(t)
@@ -196,7 +195,7 @@ export default function Home() {
       clearTimeout(timeout)
       if (res.ok) {
         setStatus('success')
-        setForm({ name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' })
+        setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' })
         if (typeof window !== 'undefined' && localStorage.getItem('cookieConsent') === 'accepted' && window.gtag) {
           window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
         }
@@ -615,7 +614,7 @@ export default function Home() {
             <div style={{padding:"1rem 1.5rem 1.5rem",textAlign:"center",background:"#0F1E14",flexShrink:0}}>
               <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"70px",width:"auto",marginBottom:"0.8rem"}} />
               <div>
-                <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push" style={{padding:"0.75rem 2rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
+                <button onClick={() => { setShowSplash(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{padding:"0.75rem 2rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
               </div>
             </div>
           </motion.div>
@@ -663,7 +662,7 @@ export default function Home() {
                 <div style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",marginBottom:"1.8rem",lineHeight:"1.6"}}>Location sent to you via email after registration.</div>
 
                 {/* CTA */}
-                <button onClick={() => { setShowModal(false); smoothScroll('join') }} className="btn-push" style={{display:"block",width:"100%",padding:"0.95rem",border:"none",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#0F1E14",cursor:"pointer",background:"#c5a882",fontFamily:"'Inter',sans-serif",fontWeight:"500",marginBottom:"1rem"}}>
+                <button onClick={() => { setShowModal(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{display:"block",width:"100%",padding:"0.95rem",border:"none",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#0F1E14",cursor:"pointer",background:"#c5a882",fontFamily:"'Inter',sans-serif",fontWeight:"500",marginBottom:"1rem"}}>
                   Reserve Your Spot →
                 </button>
                 <div style={{textAlign:"center"}}>
@@ -692,7 +691,7 @@ export default function Home() {
               <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
               <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1.2rem auto"}}></div>
               <div style={{fontSize:"13px",color:"#555",marginBottom:"2rem",lineHeight:"1.6"}}>Location will be sent to you via email once registration is completed.</div>
-              <button onClick={() => { setShowBanner(false); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>Register Now</button>
+              <button onClick={() => { setShowBanner(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>Register Now</button>
               <div>
                 <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Maybe later</button>
               </div>
