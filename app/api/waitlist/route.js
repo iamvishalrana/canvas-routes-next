@@ -35,7 +35,7 @@ export async function POST(request) {
   }
 
   const body = await request.json()
-  const { name, email, car, more, phone, instagram, source } = body
+  const { registerFor, name, email, car, more, phone, instagram, source } = body
 
   if (!name?.trim() || !email?.trim() || !car?.trim()) {
     return Response.json({ error: 'Name, email, and car are required' }, { status: 400 })
@@ -129,6 +129,7 @@ export async function POST(request) {
       <div style="font-family:'Georgia',serif;max-width:520px;margin:0 auto;padding:2rem;background:#fff;color:#1a1a1a;">
         <p style="font-size:12px;color:#888;margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:0.1em;">New application received</p>
         <table style="font-size:14px;line-height:2;width:100%;border-collapse:collapse;">
+          ${registerFor ? `<tr><td style="color:#888;width:140px;padding:6px 0;border-bottom:0.5px solid #eee;">Registering for</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;"><strong>${h(registerFor)}</strong></td></tr>` : ''}
           <tr><td style="color:#888;width:140px;padding:6px 0;border-bottom:0.5px solid #eee;">Full name</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;"><strong>${h(name)}</strong></td></tr>
           <tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;">Email</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;"><a href="mailto:${h(email)}">${h(email)}</a></td></tr>
           <tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;">Car</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(car)}</td></tr>
