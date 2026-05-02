@@ -610,23 +610,36 @@ export default function Home() {
               exit={{opacity:0,scale:0.94,y:10}}
               transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
               onClick={e => e.stopPropagation()}
-              style={{background:"#F5F1EC",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"'Inter',sans-serif",overflow:"hidden"}}
+              style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"'Inter',sans-serif",overflow:"hidden"}}
             >
-              <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
-              {/* LOGOS SECTION */}
-              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",flexDirection:"column",alignItems:"center",gap:0,borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
-                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto",display:"block"}} />
-              </div>
-              {/* DETAILS SECTION */}
-              <div style={{background:"#0F1E14",padding:"2rem 2.5rem 2.5rem"}}>
-                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.9)",marginBottom:"0.6rem"}}>May 9, 2026</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.3rem"}}>Cars & Coffee</div>
-                <div style={{width:"30px",height:"1px",background:"rgba(197,168,130,0.6)",margin:"1rem 0"}}></div>
-                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.75)",marginBottom:"1.5rem",lineHeight:"1.6"}}>Location will be sent to you via email once registration is completed.</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:"0.75rem",alignItems:"center"}}>
-                  <button onClick={() => { setShowModal(false); smoothScroll('join') }} className="btn-push" style={{display:"inline-flex",alignItems:"center",padding:"0.9rem 1.8rem",border:"1px solid #F5F1EC",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#F5F1EC",cursor:"pointer",background:"transparent",fontFamily:"'Inter',sans-serif"}}>Register</button>
-                  <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="btn-push" style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",padding:"0.9rem 1.4rem",border:"1px solid rgba(245,241,236,0.4)",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(245,241,236,0.75)",textDecoration:"none",background:"transparent"}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
+              {/* X button over image */}
+              <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"'Inter',sans-serif"}}>×</button>
+
+              {/* POSTER IMAGE */}
+              <img src="/cc-page.jpg" alt="Cars & Coffee" style={{width:"100%",height:"220px",objectFit:"cover",display:"block"}} />
+
+              {/* DETAILS */}
+              <div style={{padding:"1.8rem 2rem 2rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.8)",marginBottom:"0.5rem"}}>Montreal · May 9, 2026</div>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars & Coffee</div>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.55)",marginBottom:"1.2rem"}}>Good cars. Good coffee. Good company.</div>
+
+                {/* INFO CHIPS */}
+                <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.4rem"}}>
+                  {["09:30 – 12:00 PM","Open to all","Free entry"].map((tag,i) => (
+                    <span key={i} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.9)",border:"0.5px solid rgba(197,168,130,0.35)",padding:"0.3rem 0.75rem"}}>{tag}</span>
+                  ))}
+                </div>
+
+                <div style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",marginBottom:"1.8rem",lineHeight:"1.6"}}>Location sent to you via email after registration.</div>
+
+                {/* CTA */}
+                <button onClick={() => { setShowModal(false); smoothScroll('join') }} className="btn-push" style={{display:"block",width:"100%",padding:"0.95rem",border:"none",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#0F1E14",cursor:"pointer",background:"#c5a882",fontFamily:"'Inter',sans-serif",fontWeight:"500",marginBottom:"1rem"}}>
+                  Reserve Your Spot →
+                </button>
+                <div style={{textAlign:"center"}}>
+                  <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(245,241,236,0.35)",textDecoration:"none"}}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
                     @canvasroutes
                   </a>
                 </div>
