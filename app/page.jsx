@@ -25,6 +25,15 @@ export default function Home() {
   useEffect(() => { setShowSplash(true) }, [])
 
   useEffect(() => {
+    if (showSplash) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [showSplash])
+
+  useEffect(() => {
     setCookieBannerVisible(localStorage.getItem('cookieConsent') === null)
     function handleConsentChanged() {
       setCookieBannerVisible(localStorage.getItem('cookieConsent') === null)
@@ -564,27 +573,23 @@ export default function Home() {
           initial={{opacity:0}}
           animate={{opacity:1}}
           transition={{duration:0.35}}
-          style={{position:"fixed",top:0,left:0,right:0,bottom:0,width:"100%",height:"100%",zIndex:1200,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
+          style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:1200,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
         >
-          <div style={{maxWidth:"400px",width:"100%"}}>
-            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"0.5rem"}}>
-              <button onClick={() => setShowSplash(false)} aria-label="Close" style={{background:"none",border:"none",cursor:"pointer",color:"#fff",fontSize:"26px",lineHeight:1,fontFamily:"'Inter',sans-serif",padding:"0.25rem"}}>×</button>
-            </div>
-            <motion.div
-              initial={{opacity:0,scale:0.93,y:24}}
-              animate={{opacity:1,scale:1,y:0}}
-              transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
-              style={{background:"#F5F1EC",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
-            >
-              <img src="/cc-page.jpg" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
-              <div style={{padding:"1.5rem 2rem 2rem",textAlign:"center",background:"#0F1E14"}}>
-                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"120px",width:"auto",marginBottom:"1.2rem"}} />
-                <div>
-                  <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push" style={{padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
-                </div>
+          <motion.div
+            initial={{opacity:0,scale:0.93,y:24}}
+            animate={{opacity:1,scale:1,y:0}}
+            transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
+            style={{background:"#F5F1EC",boxShadow:"0 32px 80px rgba(0,0,0,0.5)",maxWidth:"340px",width:"100%",maxHeight:"88vh",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}
+          >
+            <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,fontFamily:"'Inter',sans-serif",width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%"}}>×</button>
+            <img src="/cc-page.jpg" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block",flexShrink:1,minHeight:0,objectFit:"cover"}} />
+            <div style={{padding:"1rem 1.5rem 1.5rem",textAlign:"center",background:"#0F1E14",flexShrink:0}}>
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"70px",width:"auto",marginBottom:"0.8rem"}} />
+              <div>
+                <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push" style={{padding:"0.75rem 2rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
               </div>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </motion.div>
       )}
 
