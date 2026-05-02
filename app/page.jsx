@@ -559,36 +559,32 @@ export default function Home() {
       </section>
 
       {/* SPLASH */}
-      <AnimatePresence>
-        {showSplash && (
+      {showSplash && (
+        <motion.div
+          initial={{opacity:0}}
+          animate={{opacity:1}}
+          transition={{duration:0.35}}
+          style={{position:"fixed",top:0,left:0,right:0,bottom:0,width:"100%",height:"100%",zIndex:1200,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
+        >
           <motion.div
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            exit={{opacity:0}}
-            transition={{duration:0.35}}
-            style={{position:"fixed",inset:0,zIndex:1200,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
+            initial={{opacity:0,scale:0.93,y:24}}
+            animate={{opacity:1,scale:1,y:0}}
+            transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
+            style={{background:"#F5F1EC",maxWidth:"400px",width:"100%",position:"relative",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
           >
-            <motion.div
-              initial={{opacity:0,scale:0.93,y:24}}
-              animate={{opacity:1,scale:1,y:0}}
-              exit={{opacity:0,scale:0.96,y:10}}
-              transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
-              style={{background:"#F5F1EC",maxWidth:"400px",width:"100%",position:"relative",overflow:"hidden",maxHeight:"90vh",display:"flex",flexDirection:"column",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
-            >
-              <div style={{flex:"1 1 auto",overflow:"hidden",minHeight:0,position:"relative"}}>
-                <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"100%",display:"block",objectFit:"cover",objectPosition:"center"}} />
-                <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:"0.75rem",right:"0.75rem",background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",width:"32px",height:"32px",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"18px",lineHeight:1,fontFamily:"'Inter',sans-serif",backdropFilter:"blur(4px)"}}>×</button>
+            <div style={{position:"relative"}}>
+              <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
+              <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:"0.75rem",right:"0.75rem",background:"rgba(0,0,0,0.5)",border:"none",cursor:"pointer",width:"32px",height:"32px",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"20px",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>×</button>
+            </div>
+            <div style={{padding:"1.5rem 2rem 2rem",textAlign:"center",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"56px",width:"auto",marginBottom:"1.2rem"}} />
+              <div>
+                <Link href="/register" onClick={() => setShowSplash(false)} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Register</Link>
               </div>
-              <div style={{flexShrink:0,padding:"1.5rem 2rem 2rem",textAlign:"center",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
-                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"56px",width:"auto",marginBottom:"1.2rem"}} />
-                <div>
-                  <Link href="/register" onClick={() => setShowSplash(false)} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Register</Link>
-                </div>
-              </div>
-            </motion.div>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      )}
 
       {/* CARS & COFFEE MODAL */}
       <AnimatePresence>
