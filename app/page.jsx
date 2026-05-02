@@ -577,10 +577,10 @@ export default function Home() {
               style={{background:"#F5F1EC",boxShadow:"0 32px 80px rgba(0,0,0,0.5)"}}
             >
               <img src="/CARS.png" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block"}} />
-              <div style={{padding:"1.5rem 2rem 2rem",textAlign:"center",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+              <div style={{padding:"1.5rem 2rem 2rem",textAlign:"center",background:"#0F1E14"}}>
                 <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"120px",width:"auto",marginBottom:"1.2rem"}} />
                 <div>
-                  <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push btn-waitlist" style={{padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent"}}>Register</button>
+                  <button onClick={() => { setShowSplash(false); smoothScroll('join') }} className="btn-push" style={{padding:"0.85rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
                 </div>
               </div>
             </motion.div>
@@ -609,10 +609,10 @@ export default function Home() {
             >
               <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif",zIndex:1}}>✕</button>
               {/* LOGOS SECTION */}
-              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"0.75rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
-                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto"}} />
-                <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1}}>×</span>
-                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto"}} />
+              <div style={{background:"#EDE8E1",padding:"1.5rem 2rem",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"0.75rem",borderBottom:"0.5px solid rgba(0,0,0,0.1)",textAlign:"center"}}>
+                <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"100px",width:"auto",display:"block",margin:"0 auto"}} />
+                <span style={{color:"#c5a882",fontSize:"1.2rem",lineHeight:1,display:"block",textAlign:"center"}}>×</span>
+                <img src="https://cafenapoleon.com/cdn/shop/files/Logo_Napoleon_Cafe_Coffee_NEW-web_150x.png?v=1717442690" alt="Café Napoléon" style={{height:"36px",width:"auto",display:"block",margin:"0 auto"}} />
               </div>
               {/* DETAILS SECTION */}
               <div style={{background:"#0F1E14",padding:"2rem 2.5rem 2.5rem"}}>
