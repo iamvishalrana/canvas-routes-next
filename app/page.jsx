@@ -39,10 +39,12 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    if (!sessionStorage.getItem('splashSeen')) {
-      setShowSplash(true)
-      sessionStorage.setItem('splashSeen', '1')
-    }
+    try {
+      if (!sessionStorage.getItem('splashSeen')) {
+        setShowSplash(true)
+        sessionStorage.setItem('splashSeen', '1')
+      }
+    } catch {}
   }, [])
 
   useEffect(() => {
@@ -51,9 +53,9 @@ export default function Home() {
   }, [showSplash, showModal, showBanner])
 
   useEffect(() => {
-    setCookieBannerVisible(localStorage.getItem('cookieConsent') === null)
+    try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
     function handleConsentChanged() {
-      setCookieBannerVisible(localStorage.getItem('cookieConsent') === null)
+      try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
     }
     window.addEventListener('cookieConsentChanged', handleConsentChanged)
     window.addEventListener('cookieConsentReset', handleConsentChanged)
@@ -113,10 +115,12 @@ export default function Home() {
     const preview = new URLSearchParams(window.location.search).has('preview')
     const live = Date.now() >= LAUNCH || preview
     if (live) {
-      if (!sessionStorage.getItem('bannerSeen')) {
-        const t = setTimeout(() => { setShowBanner(true); sessionStorage.setItem('bannerSeen', '1') }, 600)
-        return () => clearTimeout(t)
-      }
+      try {
+        if (!sessionStorage.getItem('bannerSeen')) {
+          const t = setTimeout(() => { setShowBanner(true); try { sessionStorage.setItem('bannerSeen', '1') } catch {} }, 600)
+          return () => clearTimeout(t)
+        }
+      } catch {}
     }
   }, [])
 
@@ -186,7 +190,7 @@ export default function Home() {
       if (res.ok) {
         setStatus('success')
         setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' })
-        if (typeof window !== 'undefined' && localStorage.getItem('cookieConsent') === 'accepted' && window.gtag) {
+        if (typeof window !== 'undefined' && (() => { try { return localStorage.getItem('cookieConsent') } catch { return null } })() === 'accepted' && window.gtag) {
           window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
         }
       } else {

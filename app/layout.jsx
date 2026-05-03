@@ -98,7 +98,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
       <head>
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <script src="/gtag-consent.js" />
+        <script src="/gtag-consent.js" async />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -107,7 +107,7 @@ export default function RootLayout({ children }) {
       <body>
         <RouteTracker />
         <CookieBanner />
-        <div style={{ overflowX: 'clip' }}>
+        <div style={{ overflowX: 'hidden' }}>
           {children}
         </div>
       </body>

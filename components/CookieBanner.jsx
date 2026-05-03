@@ -29,7 +29,7 @@ export default function CookieBanner() {
   const [consent, setConsent] = useState('loading')
 
   useEffect(() => {
-    setConsent(localStorage.getItem('cookieConsent'))
+    try { setConsent(localStorage.getItem('cookieConsent')) } catch { setConsent('declined') }
   }, [])
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function CookieBanner() {
 
   useEffect(() => {
     function handleReset() {
-      localStorage.removeItem('cookieConsent')
+      try { localStorage.removeItem('cookieConsent') } catch {}
       denyConsent()
       setConsent(null)
     }
@@ -50,7 +50,7 @@ export default function CookieBanner() {
   }, [])
 
   function handleAccept() {
-    localStorage.setItem('cookieConsent', 'accepted')
+    try { localStorage.setItem('cookieConsent', 'accepted') } catch {}
     setConsent('accepted')
     grantConsent()
     loadGA()
@@ -58,7 +58,7 @@ export default function CookieBanner() {
   }
 
   function handleDecline() {
-    localStorage.setItem('cookieConsent', 'declined')
+    try { localStorage.setItem('cookieConsent', 'declined') } catch {}
     setConsent('declined')
     denyConsent()
     window.dispatchEvent(new Event('cookieConsentChanged'))
