@@ -147,7 +147,7 @@ export default function Home() {
     if (form.name.trim().length < 2) newErrors.name = true
     if (!form.email.trim()) newErrors.email = 'required'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'invalid'
-    else if (['.con','.co','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) newErrors.email = 'typo'
+    else if (['.con','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) newErrors.email = 'typo'
     if (!form.car.trim()) newErrors.car = true
     if (!form.source) newErrors.source = true
     if (form.phone.trim() && form.phone.replace(/\D/g,'').length !== 10) newErrors.phone = true
@@ -162,7 +162,7 @@ export default function Home() {
       if (field === 'email') {
         if (!form.email.trim()) { delete next.email }
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = 'invalid'
-        else if (['.con','.co','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) next.email = 'typo'
+        else if (['.con','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) next.email = 'typo'
         else delete next.email
       }
       if (field === 'phone') {
