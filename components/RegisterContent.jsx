@@ -81,7 +81,7 @@ export default function RegisterContent() {
       }
     } catch (err) {
       clearTimeout(timeout)
-      setServerError(err.name === 'AbortError' ? 'Request timed out. Please check your connection and try again.' : 'Something went wrong. Please try again.')
+      setServerError(err.name === 'AbortError' ? "Request timed out. Please check your connection — if you're on public WiFi, make sure you're fully logged in and try again." : 'Something went wrong. Please try again.')
       setStatus('error')
     }
   }

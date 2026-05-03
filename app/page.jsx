@@ -208,7 +208,7 @@ export default function Home() {
     } catch (err) {
       clearTimeout(timeout)
       if (err.name === 'AbortError') {
-        setServerError('Request timed out. Please check your connection and try again.')
+        setServerError('Request timed out. Please check your connection — if you\'re on public WiFi, make sure you\'re fully logged in and try again.')
       } else {
         setServerError('Something went wrong. Please try again.')
       }
@@ -241,6 +241,7 @@ export default function Home() {
       border, background, boxShadow,
       fontSize:'13px', fontFamily:"var(--font-inter),sans-serif", outline:'none', color:'#1a1a1a',
       transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s',
+      WebkitAppearance:'none', MozAppearance:'none', appearance:'none',
     }
   }
 
@@ -569,7 +570,7 @@ export default function Home() {
               <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></label>
               <div style={{position:"relative"}}>
                 <select id="field-source" value={form.source} onChange={e => updateForm('source', e.target.value)}
-                  style={{...inputStyle('source'), appearance:"none", cursor:"pointer", paddingRight:"2rem"}}>
+                  style={{...inputStyle('source'), cursor:"pointer", paddingRight:"2rem"}}>
                   <option value="">Select an option</option>
                   <option value="Instagram">Instagram</option>
                   <option value="Facebook">Facebook</option>
