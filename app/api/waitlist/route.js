@@ -1,23 +1,4 @@
-const rateLimit = new Map()
-const WINDOW_MS = 60 * 1000
-const MAX_REQUESTS = 3
-
-function checkRateLimit(ip) {
-  const now = Date.now()
-  if (rateLimit.size > 500) {
-    for (const [key, val] of rateLimit) {
-      if (now > val.resetAt) rateLimit.delete(key)
-    }
-  }
-  const entry = rateLimit.get(ip)
-  if (!entry || now > entry.resetAt) {
-    rateLimit.set(ip, { count: 1, resetAt: now + WINDOW_MS })
-    return false
-  }
-  if (entry.count >= MAX_REQUESTS) return true
-  entry.count++
-  return false
-}
+import { checkRateLimit } from '../../../lib/rateLimit.js'
 
 function h(str) {
   return String(str ?? '')
@@ -42,7 +23,8 @@ export async function POST(request) {
   try { body = await request.json() } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { registerFor, name, email, car, more, phone, instagram, source } = body
+  const { registerFor, name, email, car, more, phone, instagram, source, _hp } = body
+  if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || !email?.trim() || !car?.trim()) {
     return Response.json({ error: 'Name, email, and car are required' }, { status: 400 })

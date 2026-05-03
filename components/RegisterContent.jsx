@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -7,6 +7,7 @@ import { User, Phone, Instagram, Car, NotebookPen } from 'lucide-react'
 
 export default function RegisterContent() {
   const router = useRouter()
+  const honeypotRef = useRef(null)
   const [form, setForm] = useState({ name: '', instagram: '', phone: '', car: '', ride: '', why: '' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
@@ -62,7 +63,7 @@ export default function RegisterContent() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
@@ -227,6 +228,9 @@ export default function RegisterContent() {
               {status === 'loading' ? 'Sending...' : 'Submit Application'}
             </button>
             {status === 'error' && <div style={{ marginTop: '1rem', fontSize: '12px', color: '#7B2032' }}>{serverError}</div>}
+            <div style={{position:'absolute',left:'-9999px',width:1,height:1,overflow:'hidden'}} aria-hidden="true">
+              <input ref={honeypotRef} type="text" name="address" tabIndex={-1} autoComplete="off" />
+            </div>
           </form>
         )}
       </div>

@@ -84,6 +84,7 @@ export default function Home() {
   }, [])
 
   const stickyState = useRef({ pastAbout: false, atJoin: false })
+  const honeypotRef = useRef(null)
 
   useEffect(() => {
     const about = document.getElementById('about')
@@ -188,7 +189,7 @@ export default function Home() {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
         ...(controller ? { signal: controller.signal } : {}),
       })
       clearTimeout(timeout)
@@ -591,6 +592,9 @@ export default function Home() {
               {status === 'loading' ? 'Sending...' : 'Register'}
             </button>
             {status === 'error' && <div style={{marginTop:"1rem",fontSize:"12px",color:"#7B2032"}}>{serverError}</div>}
+            <div style={{position:'absolute',left:'-9999px',width:1,height:1,overflow:'hidden'}} aria-hidden="true">
+              <input ref={honeypotRef} type="text" name="address" tabIndex={-1} autoComplete="off" />
+            </div>
           </form>
         )}</FadeIn>
       </section>
