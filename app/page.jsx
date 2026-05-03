@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, ClipboardList } from 'lucide-react'
 import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -227,19 +228,19 @@ export default function Home() {
     return {
       width:'100%', padding:'0.9rem 1.2rem',
       border, background, boxShadow,
-      fontSize:'13px', fontFamily:"'Inter',sans-serif", outline:'none', color:'#1a1a1a',
+      fontSize:'13px', fontFamily:"var(--font-inter),sans-serif", outline:'none', color:'#1a1a1a',
       transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s',
     }
   }
 
   return (
     <ErrorBoundary>
-    <div style={{background:"#F5F1EC",fontFamily:"'Inter',sans-serif",color:"#1a1a1a"}}>
+    <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a"}}>
 
       {/* NAV */}
       <nav className="nav">
         <a href="/" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
-          <img src="/canvas_routes_refined.png" alt="Canvas Routes" className="nav-logo" />
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
         </a>
         <div className="nav-links">
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
@@ -266,14 +267,15 @@ export default function Home() {
       <section id="top" className="hero">
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem"}}><MapPin size={12} strokeWidth={1.5} />Montreal · Est. 2025</div>
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
-        <img src="/canvas_routes_refined.png" alt="Canvas Routes" className="hero-logo" />
+        <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="hero-logo" />
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem"}}></div>
-        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em"}}>Curated road trips. Memories for life.</div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em"}}>Curated road trips. Memories for life.</div>
         <div className="hero-buttons">
           <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>About Us</a>
         </div>
         <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}
+          aria-label="Scroll down"
           className={`hero-scroll-arrow${showStickyCta ? ' hero-scroll-arrow--hidden' : ''}`}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -287,7 +289,7 @@ export default function Home() {
         <FadeIn><div className="about-grid">
           <div>
             <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>About Us</div>
-            <div className="section-title" style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#7B2032"}}>art form.</em><br/>We treat it like one.</div>
+            <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#7B2032"}}>art form.</em><br/>We treat it like one.</div>
             <div style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",maxWidth:"520px",marginBottom:"1.5rem"}}>
               <strong style={{color:"#1a1a1a",fontWeight:"500"}}>For driving enthusiasts first.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We believe the best roads deserve the best company, and that cars are meant to be experienced, not just owned.
               <br/><br/>
@@ -312,7 +314,7 @@ export default function Home() {
         <button onClick={() => setMeetsOpen(!meetsOpen)} className="expand-btn btn-push" aria-expanded={meetsOpen} aria-controls="meets-content">
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:"0.4rem"}}>
             <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888"}}>Community</div>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>Car Meets</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>Car Meets</div>
           </div>
           <div className="expand-plus" style={{transform:meetsOpen?"rotate(45deg)":"rotate(0deg)"}}>+</div>
         </button>
@@ -326,12 +328,12 @@ export default function Home() {
                 <div className="meets-cards-grid">
                   <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1"}}>
                     <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",marginBottom:"0.8rem"}}>Open Meets</div>
-                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Everyone welcome</div>
+                    <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Everyone welcome</div>
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Open to all car enthusiasts. Come meet like-minded people and discover what Canvas Routes is about. Formats vary — from casual gatherings to the occasional cars & coffee morning. Fun, welcoming, and always a good time.</p>
                   </div>
                   <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1"}}>
                     <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.8rem"}}>Private Meets</div>
-                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Members only</div>
+                    <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Members only</div>
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, curated company, and a more intimate experience. Members are notified directly when a private meet is announced.</p>
                   </div>
                 </div>
@@ -351,7 +353,7 @@ export default function Home() {
         <button onClick={() => setRoutesOpen(!routesOpen)} className="expand-btn btn-push" aria-expanded={routesOpen} aria-controls="routes-content">
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:"0.4rem"}}>
             <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888"}}>Experiences</div>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>Routes</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>Routes</div>
           </div>
           <div className="expand-plus" style={{transform:routesOpen?"rotate(45deg)":"rotate(0deg)"}}>+</div>
         </button>
@@ -385,7 +387,7 @@ export default function Home() {
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
         <FadeIn><div style={{textAlign:"center",marginBottom:"4rem"}}>
           <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>On the calendar</div>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Upcoming events</div>
+          <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Upcoming events</div>
           <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
         </div>
         <div className="events-grid">
@@ -400,10 +402,10 @@ export default function Home() {
                 <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032"}}>{e.date}</div>
                 <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B5B2E",border:"0.5px solid #7B5B2E",padding:"2px 8px"}}>{e.type}</div>
               </div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
               <div style={{fontSize:"12px",color:"#5A4A38",marginBottom:"1.5rem"}}>{e.loc}</div>
               {e.popup
-                ? <button onClick={() => setShowModal(true)} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>View Details</button>
+                ? <button onClick={() => setShowModal(true)} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif"}}>View Details</button>
                 : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
               }
             </div>
@@ -414,7 +416,7 @@ export default function Home() {
       {/* CONTACT */}
       <section id="contact" style={{background:"#EDE8E1",padding:"6rem 3rem",textAlign:"center"}}>
         <FadeIn><div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Get in touch</div>
-        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>Let's talk <em style={{color:"#7B2032"}}>routes.</em></div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>Let's talk <em style={{color:"#7B2032"}}>routes.</em></div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem auto"}}></div>
         <p style={{fontSize:"0.95rem",lineHeight:"1.8",color:"#555",maxWidth:"420px",margin:"0 auto 3rem"}}>Have a question, a partnership idea, or just want to know more? Reach out — we'd love to hear from you.</p>
         <div className="contact-links" style={{flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
@@ -464,12 +466,12 @@ export default function Home() {
       {/* JOIN */}
       <section id="join" style={{textAlign:"center",padding:"8rem 2rem",background:"#F5F1EC"}}>
         <FadeIn><div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
-        <div className="join-title" style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
+        <div className="join-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
         <div style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Membership is by application. Tell us about yourself.</div>
         {status === 'success' ? (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you shortly.</div>
-            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Submit another application</button>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you shortly.</div>
+            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
@@ -485,7 +487,7 @@ export default function Home() {
                   const bgColor = selected ? 'rgba(59,107,47,0.06)' : errors.registerFor ? 'rgba(123,32,50,0.04)' : 'transparent'
                   const labelColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : '#1a1a1a'
                   return (
-                    <button key={opt.value} type="button" onClick={() => updateForm('registerFor', opt.value)} style={{padding:"1rem 1.2rem",border:`1px solid ${borderColor}`,background:bgColor,textAlign:"left",cursor:"pointer",transition:"border-color 0.2s,background 0.2s",fontFamily:"'Inter',sans-serif"}}>
+                    <button key={opt.value} type="button" onClick={() => updateForm('registerFor', opt.value)} style={{padding:"1rem 1.2rem",border:`1px solid ${borderColor}`,background:bgColor,textAlign:"left",cursor:"pointer",transition:"border-color 0.2s,background 0.2s",fontFamily:"var(--font-inter),sans-serif"}}>
                       <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:labelColor,marginBottom:"0.3rem",fontWeight:selected?"500":"400"}}>{opt.label}</div>
                       <div style={{fontSize:"11px",color:"#888"}}>{opt.sub}</div>
                     </button>
@@ -576,7 +578,7 @@ export default function Home() {
               <a href="mailto:info@canvasroutes.com" style={{fontSize:"10px",color:"#ccc",textDecoration:"underline"}}>info@canvasroutes.com</a>.
             </div>
             <button type="submit" disabled={status==='loading'} className="join-submit-btn"
-              style={{marginTop:"1.5rem",padding:"0.9rem 3rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:status==='loading'?'not-allowed':'pointer',fontFamily:"'Inter',sans-serif",opacity:status==='loading'?0.5:1}}>
+              style={{marginTop:"1.5rem",padding:"0.9rem 3rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:status==='loading'?'not-allowed':'pointer',fontFamily:"var(--font-inter),sans-serif",opacity:status==='loading'?0.5:1}}>
               {status === 'loading' ? 'Sending...' : 'Register'}
             </button>
             {status === 'error' && <div style={{marginTop:"1rem",fontSize:"12px",color:"#7B2032"}}>{serverError}</div>}
@@ -598,12 +600,12 @@ export default function Home() {
             transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
             style={{background:"#F5F1EC",boxShadow:"0 32px 80px rgba(0,0,0,0.5)",maxWidth:"340px",width:"100%",maxHeight:"88vh",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}
           >
-            <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,fontFamily:"'Inter',sans-serif",width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%"}}>×</button>
-            <img src="/cc-page.jpg" alt="Canvas Routes" style={{width:"100%",height:"auto",display:"block",flexShrink:1,minHeight:0,objectFit:"cover"}} />
+            <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,fontFamily:"var(--font-inter),sans-serif",width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%"}}>×</button>
+            <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"auto",display:"block",flexShrink:1,minHeight:0,objectFit:"cover"}} />
             <div style={{padding:"1rem 1.5rem 1.5rem",textAlign:"center",background:"#0F1E14",flexShrink:0}}>
-              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"70px",width:"auto",marginBottom:"0.8rem"}} />
+              <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} style={{height:"70px",width:"auto",marginBottom:"0.8rem"}} />
               <div>
-                <button onClick={() => { setShowSplash(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{padding:"0.75rem 2rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"'Inter',sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
+                <button onClick={() => { setShowSplash(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{padding:"0.75rem 2rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
               </div>
             </div>
           </motion.div>
@@ -627,19 +629,19 @@ export default function Home() {
               exit={{opacity:0,scale:0.94,y:10}}
               transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
               onClick={e => e.stopPropagation()}
-              style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"'Inter',sans-serif",overflow:"hidden"}}
+              style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden"}}
             >
               {/* X button over image */}
-              <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"'Inter',sans-serif"}}>×</button>
+              <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
 
               {/* POSTER IMAGE */}
-              <img src="/cc-page.jpg" alt="Cars & Coffee" style={{width:"100%",height:"220px",objectFit:"cover",display:"block"}} />
+              <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"220px",objectFit:"cover",display:"block"}} />
 
               {/* DETAILS */}
               <div style={{padding:"1.8rem 2rem 2rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.8)",marginBottom:"0.5rem"}}>Montreal · May 9, 2026</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars & Coffee</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.55)",marginBottom:"1.2rem"}}>Good cars. Great coffee. Better people.</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars & Coffee</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.55)",marginBottom:"1.2rem"}}>Good cars. Great coffee. Better people.</div>
 
                 {/* INFO CHIPS */}
                 <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.4rem"}}>
@@ -651,7 +653,7 @@ export default function Home() {
                 <div style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",marginBottom:"1.8rem",lineHeight:"1.6"}}>Location sent to you via email after registration.</div>
 
                 {/* CTA */}
-                <button onClick={() => { setShowModal(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{display:"block",width:"100%",padding:"0.95rem",border:"none",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#0F1E14",cursor:"pointer",background:"#c5a882",fontFamily:"'Inter',sans-serif",fontWeight:"500",marginBottom:"1rem"}}>
+                <button onClick={() => { setShowModal(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{display:"block",width:"100%",padding:"0.95rem",border:"none",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#0F1E14",cursor:"pointer",background:"#c5a882",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500",marginBottom:"1rem"}}>
                   Reserve Your Spot →
                 </button>
                 <div style={{textAlign:"center"}}>
@@ -668,21 +670,21 @@ export default function Home() {
 
       {/* CARS & COFFEE ANNOUNCEMENT BANNER */}
       {showBanner && (
-        <div style={{position:"fixed",inset:0,background:"rgba(10,20,12,0.93)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",fontFamily:"'Inter',sans-serif"}}>
+        <div style={{position:"fixed",inset:0,background:"rgba(10,20,12,0.93)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",fontFamily:"var(--font-inter),sans-serif"}}>
           <div style={{background:"#F5F1EC",maxWidth:"480px",width:"100%",position:"relative",overflow:"hidden"}}>
             <div style={{background:"#EDE8E1",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
-              <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"110px",width:"auto"}} />
+              <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} style={{height:"110px",width:"auto"}} />
             </div>
             <div style={{padding:"2.5rem 2.5rem 2rem",textAlign:"center"}}>
-              <button onClick={() => setShowBanner(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"'Inter',sans-serif"}}>✕</button>
+              <button onClick={() => setShowBanner(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"var(--font-inter),sans-serif"}}>✕</button>
               <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"0.8rem"}}>Now Open for Registration</div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1.1",marginBottom:"0.8rem"}}>Cars &amp; Coffee</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1.1",marginBottom:"0.8rem"}}>Cars &amp; Coffee</div>
               <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
               <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1.2rem auto"}}></div>
               <div style={{fontSize:"13px",color:"#555",marginBottom:"2rem",lineHeight:"1.6"}}>Location will be sent to you via email once registration is completed.</div>
-              <button onClick={() => { setShowBanner(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>Register Now</button>
+              <button onClick={() => { setShowBanner(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif"}}>Register Now</button>
               <div>
-                <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"'Inter',sans-serif",textDecoration:"underline"}}>Maybe later</button>
+                <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Maybe later</button>
               </div>
             </div>
           </div>
@@ -706,18 +708,18 @@ export default function Home() {
         <div style={{display:"flex",flexDirection:"column",gap:"0.4rem"}}>
           <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
           <Link href="/privacy" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>Privacy Policy</Link>
-          <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{background:"none",border:"none",padding:0,fontSize:"10px",color:"#aaa",cursor:"pointer",letterSpacing:"0.03em",fontFamily:"'Inter',sans-serif",textAlign:"left"}}>Manage cookies</button>
+          <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{background:"none",border:"none",padding:0,fontSize:"10px",color:"#aaa",cursor:"pointer",letterSpacing:"0.03em",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Manage cookies</button>
         </div>
         <div style={{display:"flex",gap:"1.2rem",alignItems:"center"}}>
-          <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#555",display:"flex"}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Canvas Routes on Instagram" style={{color:"#555",display:"flex"}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
               <circle cx="12" cy="12" r="4"/>
               <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
             </svg>
           </a>
-          <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",display:"flex"}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Canvas Routes on Facebook" style={{color:"#555",display:"flex"}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
             </svg>
           </a>

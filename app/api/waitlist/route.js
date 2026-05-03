@@ -57,6 +57,15 @@ export async function POST(request) {
   if (instagram && instagram.length > 50) return Response.json({ error: 'Instagram handle too long' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long' }, { status: 400 })
 
+  const VALID_REGISTER_FOR = ['Cars & Coffee — May 9, 2026', 'Canvas Routes Membership']
+  const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
+  if (!registerFor || !VALID_REGISTER_FOR.includes(registerFor)) {
+    return Response.json({ error: 'Invalid registration type' }, { status: 400 })
+  }
+  if (!source || !VALID_SOURCES.includes(source)) {
+    return Response.json({ error: 'Invalid source' }, { status: 400 })
+  }
+
   const firstName = h(name.split(' ')[0])
 
   // EMAIL 1 — Customer confirmation

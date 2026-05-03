@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-H9D17ELDT1'
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
 function loadGA() {
-  if (document.getElementById('ga-script')) return
+  if (!GA_ID || document.getElementById('ga-script')) return
   const script = document.createElement('script')
   script.id = 'ga-script'
   script.async = true
