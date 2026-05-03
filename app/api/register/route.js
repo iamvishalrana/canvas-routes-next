@@ -16,9 +16,7 @@ export async function POST(request) {
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')?.trim()
-    || 'unknown'
-  console.log(`[register] ip=${ip}`)
-  if (checkRateLimit(ip)) {
+  if (ip && await checkRateLimit(ip)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 
