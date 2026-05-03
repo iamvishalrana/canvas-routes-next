@@ -3,7 +3,7 @@ import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 
-const PAGES = ['/', '/privacy', '/partners']
+const PAGES = ['/', '/privacy']
 
 export default function Template({ children }) {
   const pathname = usePathname()
