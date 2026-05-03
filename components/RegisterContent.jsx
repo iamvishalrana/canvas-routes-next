@@ -57,19 +57,20 @@ export default function RegisterContent() {
     if (!validate()) return
     setStatus('loading')
     setServerError(null)
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+    const timeout = setTimeout(() => controller?.abort(), 30000)
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
-        signal: controller.signal,
+        ...(controller ? { signal: controller.signal } : {}),
       })
       clearTimeout(timeout)
       if (res.ok) {
         setStatus('success')
         setForm({ name: '', instagram: '', phone: '', car: '', ride: '', why: '' })
+        if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined' && localStorage.getItem('cookieConsent') === 'accepted' && window.gtag) {
           window.gtag('event', 'generate_lead', { event_category: 'register' })
         }
@@ -229,7 +230,7 @@ export default function RegisterContent() {
             </button>
             {status === 'error' && <div style={{ marginTop: '1rem', fontSize: '12px', color: '#7B2032' }}>{serverError}</div>}
             <div style={{position:'absolute',left:'-9999px',width:1,height:1,overflow:'hidden'}} aria-hidden="true">
-              <input ref={honeypotRef} type="text" name="address" tabIndex={-1} autoComplete="off" />
+              <input ref={honeypotRef} type="text" name="cr_field" tabIndex={-1} autoComplete="off" />
             </div>
           </form>
         )}

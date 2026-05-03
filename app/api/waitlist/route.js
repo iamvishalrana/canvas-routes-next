@@ -105,7 +105,7 @@ export async function POST(request) {
   })
 
   if (!customerEmail.ok) {
-    const err = await customerEmail.text()
+    const err = await customerEmail.text().catch(() => 'unknown')
     console.error('Customer email error:', err)
     return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
   }

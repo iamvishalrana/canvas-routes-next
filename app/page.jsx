@@ -184,7 +184,7 @@ export default function Home() {
     setStatus('loading')
     setServerError(null)
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
-    const timeout = setTimeout(() => controller?.abort(), 15000)
+    const timeout = setTimeout(() => controller?.abort(), 30000)
     try {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
@@ -196,6 +196,7 @@ export default function Home() {
       if (res.ok) {
         setStatus('success')
         setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' })
+        if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined' && (() => { try { return localStorage.getItem('cookieConsent') } catch { return null } })() === 'accepted' && window.gtag) {
           window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
         }
@@ -511,7 +512,7 @@ export default function Home() {
                 <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></label>
                 <div style={{position:"relative"}}>
                   <input id="field-name" type="text" placeholder="Your full name" value={form.name}
-                    onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')}
+                    onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')} maxLength={100}
                     onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
                   {!form.name && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
                 </div>
@@ -593,7 +594,7 @@ export default function Home() {
             </button>
             {status === 'error' && <div style={{marginTop:"1rem",fontSize:"12px",color:"#7B2032"}}>{serverError}</div>}
             <div style={{position:'absolute',left:'-9999px',width:1,height:1,overflow:'hidden'}} aria-hidden="true">
-              <input ref={honeypotRef} type="text" name="address" tabIndex={-1} autoComplete="off" />
+              <input ref={honeypotRef} type="text" name="cr_field" tabIndex={-1} autoComplete="off" />
             </div>
           </form>
         )}</FadeIn>
