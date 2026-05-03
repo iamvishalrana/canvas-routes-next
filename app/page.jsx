@@ -90,6 +90,11 @@ export default function Home() {
     const join = document.getElementById('join')
     if (!about || !join) return
 
+    if (!('IntersectionObserver' in window)) {
+      setShowStickyCta(true)
+      return
+    }
+
     const aboutObserver = new IntersectionObserver(
       ([entry]) => {
         stickyState.current.pastAbout = entry.isIntersecting || entry.boundingClientRect.top < 0
@@ -177,14 +182,14 @@ export default function Home() {
     if (!validate()) return
     setStatus('loading')
     setServerError(null)
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+    const timeout = setTimeout(() => controller?.abort(), 15000)
     try {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
-        signal: controller.signal,
+        ...(controller ? { signal: controller.signal } : {}),
       })
       clearTimeout(timeout)
       if (res.ok) {

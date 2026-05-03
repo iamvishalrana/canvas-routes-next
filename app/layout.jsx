@@ -21,6 +21,7 @@ const inter = Inter({
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export const metadata = {

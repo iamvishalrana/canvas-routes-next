@@ -262,6 +262,7 @@ body { background: #F5F1EC; color: #1a1a1a; }
   background: #F5F1EC;
   border-top: 0.5px solid rgba(0,0,0,0.15);
   padding: 1.2rem 3rem;
+  padding-bottom: max(1.2rem, calc(1.2rem + env(safe-area-inset-bottom)));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -326,6 +327,7 @@ body { background: #F5F1EC; color: #1a1a1a; }
     background: #F5F1EC;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
     padding: 0.75rem 1.2rem;
+    padding-bottom: max(0.75rem, calc(0.75rem + env(safe-area-inset-bottom)));
     transform: translateY(100%);
     opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease, bottom 0.3s ease;
