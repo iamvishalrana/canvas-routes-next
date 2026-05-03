@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { User, Phone, Instagram, Car, NotebookPen } from 'lucide-react'
@@ -101,7 +102,7 @@ export default function RegisterContent() {
       {/* NAV */}
       <nav className="nav">
         <a href="/" onClick={e => { e.preventDefault(); router.push('/') }}>
-          <img src="/canvas_routes_refined.png" alt="Canvas Routes" className="nav-logo" />
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
         </a>
         <div className="nav-links">
           <a href="/#about">About Us</a>

@@ -54,6 +54,7 @@ export async function POST(request) {
   if (name.length > 100) return Response.json({ error: 'Name too long' }, { status: 400 })
   if (company.length > 100) return Response.json({ error: 'Company name too long' }, { status: 400 })
   if (website && website.length > 300) return Response.json({ error: 'Website URL too long' }, { status: 400 })
+  if (website && !/^https?:\/\/.+\..+/.test(website.trim())) return Response.json({ error: 'Website must be a valid URL starting with http:// or https://' }, { status: 400 })
   if (phone && phone.length > 30) return Response.json({ error: 'Phone too long' }, { status: 400 })
   if (collab.length > 1000) return Response.json({ error: 'Response too long' }, { status: 400 })
 

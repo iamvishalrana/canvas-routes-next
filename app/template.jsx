@@ -1,24 +1,25 @@
 'use client'
+import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 
 const PAGES = ['/', '/privacy', '/partners']
-let _prevPath = null
-let _dir = 0
 
 export default function Template({ children }) {
   const pathname = usePathname()
+  const prevPathRef = useRef(null)
+  const dirRef = useRef(0)
 
-  if (_prevPath !== null && _prevPath !== pathname) {
-    const pi = PAGES.indexOf(_prevPath)
+  if (prevPathRef.current !== null && prevPathRef.current !== pathname) {
+    const pi = PAGES.indexOf(prevPathRef.current)
     const ci = PAGES.indexOf(pathname)
-    _dir = ci > pi ? 1 : -1
+    dirRef.current = ci > pi ? 1 : -1
   }
-  _prevPath = pathname
+  prevPathRef.current = pathname
 
   return (
     <motion.div
-      initial={{ x: `${_dir * 100}%` }}
+      initial={{ x: `${dirRef.current * 100}%` }}
       animate={{ x: 0 }}
       transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
