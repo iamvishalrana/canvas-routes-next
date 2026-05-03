@@ -18,6 +18,11 @@ const inter = Inter({
   display: 'swap',
 })
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export const metadata = {
   title: 'Canvas Routes | Luxury Car Meets & Curated Road Trips in Montreal',
   description: "Canvas Routes is Montreal's premier luxury automotive community. Join exclusive car meets, curated road trips, and scenic drives across Quebec. Apply for membership today.",
