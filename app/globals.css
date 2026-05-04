@@ -349,20 +349,20 @@ section[id] {
 
 @media (max-width: 768px) {
   .nav { padding: 0.75rem 1.2rem; }
-  .nav-logo { height: 80px; }
+  .nav-logo { height: 90px; }
   .nav-links { display: none; }
   .nav-join { display: none; }
   .hamburger { display: flex; }
 
   .mobile-menu {
     position: fixed;
-    top: 104px;
+    top: 114px;
     left: 0;
     right: 0;
     z-index: 99;
   }
 
-  .hero { padding: 120px 1.5rem 4rem; min-height: 80vh; }
+  .hero { padding: 130px 1.5rem 4rem; min-height: 80vh; }
   .hero-logo { width: 85vw; }
   .hero-buttons { flex-direction: column; align-items: center; }
   .hero-buttons a { width: 100%; text-align: center; }
