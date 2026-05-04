@@ -43,13 +43,13 @@ function customerHtml(firstName) {
 
           <tr>
             <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
-              Thank you for applying to Canvas Routes. We&#39;ve received your application and will review it shortly &#8212; we&#39;ll be in touch with you as soon as possible.
+              Thank you for applying to Canvas Routes. We&#39;ve received your application and will review it shortly &#8212; once we do, expect a personal email from our team.
             </td>
           </tr>
 
           <tr>
             <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
-              In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes.
+              To make sure our reply reaches your inbox, add <a href="mailto:jerry@canvasroutes.com" style="color:#555555;">jerry@canvasroutes.com</a> to your contacts now. In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes.
             </td>
           </tr>
 
@@ -88,9 +88,9 @@ function customerHtml(firstName) {
 function customerText(firstName) {
   return `We've got your application, ${firstName}.
 
-Thank you for applying to Canvas Routes. We've received your application and will review it shortly — we'll be in touch with you as soon as possible.
+Thank you for applying to Canvas Routes. We've received your application and will review it shortly — once we do, expect a personal email from our team.
 
-In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes:
+To make sure our reply reaches your inbox, add jerry@canvasroutes.com to your contacts. In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes:
 https://www.instagram.com/canvasroutes
 
 If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam — so you don't miss our reply.
