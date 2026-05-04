@@ -483,6 +483,7 @@ export default function Home() {
         {status === 'success' ? (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you shortly.</div>
+            <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>Keep an eye on your inbox — and check your spam folder too. Once we've reviewed your application, you'll receive a personal email from our team. If you don't hear from us, feel free to reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
             <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
