@@ -90,7 +90,7 @@ body { background: #F5F1EC; color: #1a1a1a; }
   text-align: center;
   padding: 4rem 2rem 6rem;
 }
-.hero-logo { width: 750px; max-width: 92vw; margin-bottom: 1.5rem; background: #F5F1EC; }
+.hero-logo { width: 750px; max-width: 92vw; height: auto; display: block; margin: 0 auto 1.5rem; }
 .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 3rem; }
 .hero-buttons a { transition: background 0.25s, color 0.25s; }
 
