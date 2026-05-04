@@ -1,4 +1,10 @@
+import { kv } from '@vercel/kv'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
+
+async function incrementMemberCount() {
+  if (!process.env.KV_REST_API_URL) return null
+  try { return await kv.incr('reg:membership') } catch { return null }
+}
 
 function h(str) {
   return String(str ?? '')
@@ -9,7 +15,7 @@ function h(str) {
     .replace(/'/g, '&#39;')
 }
 
-function notifyHtml({ name, instagram, phone, car, ride, why }) {
+function notifyHtml({ name, instagram, phone, car, ride, why, regCount }) {
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;white-space:pre-wrap;">${value}</td></tr>`
     : ''
@@ -26,7 +32,7 @@ function notifyHtml({ name, instagram, phone, car, ride, why }) {
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
           <tr>
             <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
-              New member application
+              New member application${regCount ? ` &mdash; <strong style="color:#1a1a1a;">#${regCount}</strong>` : ''}
             </td>
           </tr>
           <tr>
@@ -80,12 +86,14 @@ export async function POST(request) {
   if (ride.length > 1000) return Response.json({ error: 'Response too long' }, { status: 400 })
   if (why.length > 1000) return Response.json({ error: 'Response too long' }, { status: 400 })
 
+  const regCount = await incrementMemberCount()
+
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
-    subject: `New member application — ${name.trim()}`,
-    html: notifyHtml({ name, instagram, phone, car, ride, why }),
-    text: `New member application\n\nFull name: ${name}\nInstagram: ${instagram}${phone ? `\nPhone: ${phone}` : ''}\nCar: ${car}\nAbout their ride: ${ride}\nWhy they want to join: ${why}`,
+    subject: `New member application${regCount ? ` #${regCount}` : ''} — ${name.trim()}`,
+    html: notifyHtml({ name, instagram, phone, car, ride, why, regCount }),
+    text: `New member application${regCount ? ` #${regCount}` : ''}\n\nFull name: ${name}\nInstagram: ${instagram}${phone ? `\nPhone: ${phone}` : ''}\nCar: ${car}\nAbout their ride: ${ride}\nWhy they want to join: ${why}`,
   })
 
   let notifyOk = false

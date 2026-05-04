@@ -1,4 +1,11 @@
+import { kv } from '@vercel/kv'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
+
+async function incrementCount(registerFor) {
+  if (!process.env.KV_REST_API_URL) return null
+  const key = registerFor === 'Cars & Coffee — May 9, 2026' ? 'reg:cc' : 'reg:membership'
+  try { return await kv.incr(key) } catch { return null }
+}
 
 function h(str) {
   return String(str ?? '')
@@ -98,7 +105,7 @@ If this email landed in your spam folder, please move it to your inbox and mark 
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ registerFor, name, email, car, phone, instagram, more, source }) {
+function notifyHtml({ registerFor, name, email, car, phone, instagram, more, source, regCount }) {
   const row = (label, value) => value
     ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -115,7 +122,7 @@ function notifyHtml({ registerFor, name, email, car, phone, instagram, more, sou
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
           <tr>
             <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
-              New application received
+              New application received${regCount ? ` &mdash; <strong style="color:#1a1a1a;">#${regCount}</strong>` : ''}
             </td>
           </tr>
           <tr>
@@ -186,6 +193,7 @@ export async function POST(request) {
 
   const firstName = h(name.trim().split(' ')[0])
   const rawFirstName = name.trim().split(' ')[0]
+  const regCount = await incrementCount(registerFor)
 
   // EMAIL 1 — Customer confirmation
   const customerEmail = await fetch('https://api.resend.com/emails', {
@@ -214,9 +222,9 @@ export async function POST(request) {
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
-    subject: `New application — ${name.trim()}`,
-    html: notifyHtml({ registerFor, name, email, car, phone, instagram, more, source }),
-    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nCar: ${car}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
+    subject: `New application${regCount ? ` #${regCount}` : ''} — ${name.trim()}`,
+    html: notifyHtml({ registerFor, name, email, car, phone, instagram, more, source, regCount }),
+    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nCar: ${car}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
   })
 
   let notifyOk = false
