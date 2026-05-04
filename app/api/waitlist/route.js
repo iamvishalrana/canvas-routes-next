@@ -1,7 +1,12 @@
 import { kv } from '@vercel/kv'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 
-async function incrementCount(registerFor) {
+const SKIP_EMAILS = new Set(
+  (process.env.SKIP_COUNT_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+)
+
+async function incrementCount(registerFor, email) {
+  if (SKIP_EMAILS.has(email.toLowerCase())) return null
   if (!process.env.KV_REST_API_URL) return null
   const key = registerFor === 'Cars & Coffee — May 9, 2026' ? 'reg:cc' : 'reg:membership'
   try { return await kv.incr(key) } catch { return null }
@@ -193,7 +198,7 @@ export async function POST(request) {
 
   const firstName = h(name.trim().split(' ')[0])
   const rawFirstName = name.trim().split(' ')[0]
-  const regCount = await incrementCount(registerFor)
+  const regCount = await incrementCount(registerFor, email)
 
   // EMAIL 1 — Customer confirmation
   const customerEmail = await fetch('https://api.resend.com/emails', {
