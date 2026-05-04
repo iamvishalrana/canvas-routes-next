@@ -9,6 +9,46 @@ function h(str) {
     .replace(/'/g, '&#39;')
 }
 
+function notifyHtml({ name, instagram, phone, car, ride, why }) {
+  const row = (label, value) => value
+    ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;white-space:pre-wrap;">${value}</td></tr>`
+    : ''
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>New member application</title>
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#ffffff;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
+          <tr>
+            <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
+              New member application
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                ${row('Full name', `<strong>${h(name)}</strong>`)}
+                ${row('Instagram', h(instagram))}
+                ${row('Phone', phone ? h(phone) : '')}
+                ${row('Car', h(car))}
+                ${row('About their ride', h(ride))}
+                ${row('Why they want to join', h(why))}
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
 export async function POST(request) {
   if (!process.env.RESEND_API_KEY) {
     return Response.json({ error: 'Service unavailable' }, { status: 503 })
@@ -44,24 +84,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `New member application — ${name.trim()}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <body style="margin:0;padding:0;background:#ffffff;">
-      <div style="font-family:'Georgia',serif;max-width:560px;margin:0 auto;padding:2rem;background:#fff;color:#1a1a1a;">
-        <p style="font-size:12px;color:#888;margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:0.1em;">New member application</p>
-        <table style="font-size:14px;line-height:2;width:100%;border-collapse:collapse;">
-          <tr><td style="color:#888;width:160px;padding:6px 0;border-bottom:0.5px solid #eee;vertical-align:top;">Full name</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;"><strong>${h(name)}</strong></td></tr>
-          <tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;vertical-align:top;">Instagram</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(instagram)}</td></tr>
-          ${phone ? `<tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;vertical-align:top;">Phone</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(phone)}</td></tr>` : ''}
-          <tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;vertical-align:top;">Car</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(car)}</td></tr>
-          <tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;vertical-align:top;">About their ride</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;white-space:pre-wrap;">${h(ride)}</td></tr>
-          <tr><td style="color:#888;padding:6px 0;vertical-align:top;">Why they want to join</td><td style="padding:6px 0;white-space:pre-wrap;">${h(why)}</td></tr>
-        </table>
-      </div>
-      </body>
-      </html>
-    `,
+    html: notifyHtml({ name, instagram, phone, car, ride, why }),
+    text: `New member application\n\nFull name: ${name}\nInstagram: ${instagram}${phone ? `\nPhone: ${phone}` : ''}\nCar: ${car}\nAbout their ride: ${ride}\nWhy they want to join: ${why}`,
   })
 
   let notifyOk = false

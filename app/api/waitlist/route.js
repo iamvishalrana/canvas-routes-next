@@ -9,6 +9,137 @@ function h(str) {
     .replace(/'/g, '&#39;')
 }
 
+function customerHtml(firstName) {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Application received &#8212; Canvas Routes</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F1EC;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F1EC;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;background-color:#F5F1EC;">
+
+          <tr>
+            <td style="padding-bottom:28px;">
+              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" height="133" style="display:block;width:200px;height:auto;border:0;outline:0;" />
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-bottom:28px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr></table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:300;line-height:38px;color:#1a1a1a;">
+              We&#39;ve got your application, ${firstName}.
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
+              Thank you for applying to Canvas Routes. We&#39;ve received your application and will review it shortly &#8212; we&#39;ll be in touch with you as soon as possible.
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
+              In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes.
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-bottom:44px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="border:1px solid #1a1a1a;">
+                    <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#1a1a1a;text-decoration:none;">&#64;canvasroutes</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#aaaaaa;">
+              If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam &#8212; so you don&#39;t miss our reply.
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-top:20px;border-top:1px solid #ddd8d0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#aaaaaa;">
+              &#169; 2026 Canvas Routes. Montreal, QC.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+function customerText(firstName) {
+  return `We've got your application, ${firstName}.
+
+Thank you for applying to Canvas Routes. We've received your application and will review it shortly — we'll be in touch with you as soon as possible.
+
+In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes:
+https://www.instagram.com/canvasroutes
+
+If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam — so you don't miss our reply.
+
+© 2026 Canvas Routes. Montreal, QC.`
+}
+
+function notifyHtml({ registerFor, name, email, car, phone, instagram, more, source }) {
+  const row = (label, value) => value
+    ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
+    : ''
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>New application</title>
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#ffffff;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
+          <tr>
+            <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
+              New application received
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                ${row('Registering for', registerFor ? `<strong>${h(registerFor)}</strong>` : '')}
+                ${row('Full name', `<strong>${h(name)}</strong>`)}
+                ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
+                ${row('Car', h(car))}
+                ${row('Phone', phone ? h(phone) : '')}
+                ${row('Instagram', instagram ? h(instagram) : '')}
+                ${row('Tell us more', more ? h(more) : '')}
+                ${row('How they heard', source ? h(source) : '')}
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
 export async function POST(request) {
   if (!process.env.RESEND_API_KEY) {
     return Response.json({ error: 'Service unavailable' }, { status: 503 })
@@ -53,7 +184,8 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid source' }, { status: 400 })
   }
 
-  const firstName = h(name.split(' ')[0])
+  const firstName = h(name.trim().split(' ')[0])
+  const rawFirstName = name.trim().split(' ')[0]
 
   // EMAIL 1 — Customer confirmation
   const customerEmail = await fetch('https://api.resend.com/emails', {
@@ -66,41 +198,9 @@ export async function POST(request) {
       from: 'Canvas Routes <info@canvasroutes.com>',
       to: email,
       reply_to: 'info@canvasroutes.com',
-      subject: "Application received — Canvas Routes",
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <body style="margin:0;padding:0;background:#F5F1EC;">
-        <div style="font-family:'Georgia',serif;max-width:520px;margin:0 auto;padding:3rem 2rem;background:#F5F1EC;color:#1a1a1a;">
-
-          <div style="margin-bottom:2rem;">
-            <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="240" style="display:block;width:240px;height:auto;" />
-          </div>
-
-          <div style="width:40px;height:1px;background:#c5a882;margin-bottom:2rem;"></div>
-
-          <h1 style="font-size:2rem;font-weight:300;line-height:1.2;margin-bottom:1.5rem;color:#1a1a1a;">We&#39;ve got your application, ${firstName}.</h1>
-
-          <p style="font-size:0.95rem;line-height:1.8;color:#555;margin-bottom:1.5rem;">Thank you for applying to Canvas Routes. We've received your application and will review it shortly — we'll be in touch with you as soon as possible.</p>
-
-          <p style="font-size:0.95rem;line-height:1.8;color:#555;margin-bottom:2rem;">In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes.</p>
-
-          <a href="https://www.instagram.com/canvasroutes" style="display:inline-flex;align-items:center;gap:10px;padding:0.9rem 2rem;border:1px solid #1a1a1a;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#1a1a1a;text-decoration:none;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B2032" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <circle cx="12" cy="12" r="4"/>
-              <circle cx="17.5" cy="6.5" r="1" fill="#7B2032" stroke="none"/>
-            </svg>
-            @canvasroutes
-          </a>
-
-          <p style="font-size:11px;color:#aaa;margin-top:3rem;line-height:1.7;">If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam — so you don't miss our reply.</p>
-
-          <div style="padding-top:1.5rem;border-top:0.5px solid rgba(0,0,0,0.1);font-size:11px;color:#aaa;">© 2026 Canvas Routes. Montreal, QC.</div>
-        </div>
-        </body>
-        </html>
-      `,
+      subject: 'Application received — Canvas Routes',
+      html: customerHtml(firstName),
+      text: customerText(rawFirstName),
     }),
   })
 
@@ -115,26 +215,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `New application — ${name.trim()}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <body style="margin:0;padding:0;background:#ffffff;">
-      <div style="font-family:'Georgia',serif;max-width:520px;margin:0 auto;padding:2rem;background:#fff;color:#1a1a1a;">
-        <p style="font-size:12px;color:#888;margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:0.1em;">New application received</p>
-        <table style="font-size:14px;line-height:2;width:100%;border-collapse:collapse;">
-          ${registerFor ? `<tr><td style="color:#888;width:140px;padding:6px 0;border-bottom:0.5px solid #eee;">Registering for</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;"><strong>${h(registerFor)}</strong></td></tr>` : ''}
-          <tr><td style="color:#888;width:140px;padding:6px 0;border-bottom:0.5px solid #eee;">Full name</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;"><strong>${h(name)}</strong></td></tr>
-          <tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;">Email</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;"><a href="mailto:${h(email)}">${h(email)}</a></td></tr>
-          <tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;">Car</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(car)}</td></tr>
-          ${phone ? `<tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;">Phone</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(phone)}</td></tr>` : ''}
-          ${instagram ? `<tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;">Instagram</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(instagram)}</td></tr>` : ''}
-          ${more ? `<tr><td style="color:#888;vertical-align:top;padding:6px 0;">Tell us more</td><td style="padding:6px 0;">${h(more)}</td></tr>` : ''}
-          ${source ? `<tr><td style="color:#888;padding:6px 0;border-bottom:0.5px solid #eee;">How they heard</td><td style="padding:6px 0;border-bottom:0.5px solid #eee;">${h(source)}</td></tr>` : ''}
-        </table>
-      </div>
-      </body>
-      </html>
-    `,
+    html: notifyHtml({ registerFor, name, email, car, phone, instagram, more, source }),
+    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nCar: ${car}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
   })
 
   let notifyOk = false
