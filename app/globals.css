@@ -349,14 +349,14 @@ section[id] {
 
 @media (max-width: 768px) {
   .nav { padding: 0.75rem 1.2rem; }
-  .nav-logo { height: 90px; }
+  .nav-logo { height: 100px; }
   .nav-links { display: none; }
   .nav-join { display: none; }
   .hamburger { display: flex; }
 
   .mobile-menu {
     position: fixed;
-    top: 114px;
+    top: 124px;
     left: 0;
     right: 0;
     z-index: 99;
