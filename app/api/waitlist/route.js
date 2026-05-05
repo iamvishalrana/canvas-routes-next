@@ -247,5 +247,21 @@ export async function POST(request) {
     console.error(`ALERT: Notify email failed after retry — application from: ${email}`)
   }
 
+  // Google Sheets webhook (fire-and-forget, non-blocking)
+  fetch('https://script.google.com/macros/s/AKfycbxjql6bUnp5lTEWJdvlhBWBQsQaCPcIAzQp11tSYCbk5JKKG9TIlTbreqaSSmCwTbVtxQ/exec', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      formType: registerFor,
+      name,
+      email,
+      car,
+      phone: phone || '',
+      instagram: instagram || '',
+      message: more || '',
+      source,
+    }),
+  }).catch(err => console.error('Sheets webhook error:', err))
+
   return Response.json({ success: true })
 }
