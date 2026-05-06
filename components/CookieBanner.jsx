@@ -18,11 +18,11 @@ function loadGA() {
 }
 
 function grantConsent() {
-  window.gtag('consent', 'update', { analytics_storage: 'granted' })
+  if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'granted' })
 }
 
 function denyConsent() {
-  window.gtag('consent', 'update', { analytics_storage: 'denied' })
+  if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'denied' })
 }
 
 export default function CookieBanner() {

@@ -99,7 +99,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
       <head>
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <script src="/gtag-consent.js" async />
+        <script src="/gtag-consent.js" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
