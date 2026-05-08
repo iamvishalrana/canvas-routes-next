@@ -133,6 +133,7 @@ export default function Home() {
   function updateForm(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }))
+    if (serverError) setServerError(null)
   }
 
   function formatPhone(value) {
@@ -152,9 +153,9 @@ export default function Home() {
     if (!form.car.trim()) newErrors.car = true
     if (!form.source) newErrors.source = true
     if (form.phone.trim() && form.phone.replace(/\D/g,'').length !== 10) newErrors.phone = true
-    if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.trim())) newErrors.instagram = true
+    if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.replace(/^@+/, '').trim())) newErrors.instagram = true
     setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return newErrors
   }
 
   function validateField(field) {
@@ -180,7 +181,16 @@ export default function Home() {
 
   async function handleSubmit() {
     if (status === 'loading') return
-    if (!validate()) return
+    const newErrors = validate()
+    if (Object.keys(newErrors).length > 0) {
+      const fieldOrder = ['registerFor', 'name', 'email', 'car', 'phone', 'instagram', 'more', 'source']
+      const firstError = fieldOrder.find(f => newErrors[f])
+      if (firstError) {
+        const el = document.getElementById(`field-${firstError}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
     setStatus('loading')
     setServerError(null)
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
@@ -189,7 +199,7 @@ export default function Home() {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, instagram: form.instagram.trim().replace(/^@+/, ''), _hp: honeypotRef.current?.value || '' }),
         ...(controller ? { signal: controller.signal } : {}),
       })
       clearTimeout(timeout)
@@ -491,7 +501,7 @@ export default function Home() {
           </div>
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
-            <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
+            <div id="field-registerFor" role="group" aria-required="true" className="join-form-field" style={{marginBottom:"1.5rem"}}>
               <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
               <div className="join-form-row" style={ccExpired ? {gridTemplateColumns:'1fr'} : {}}>
                 {[
@@ -518,6 +528,7 @@ export default function Home() {
                 <div style={{position:"relative"}}>
                   <input id="field-name" type="text" placeholder="Your full name" value={form.name}
                     onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')} maxLength={100}
+                    aria-required="true"
                     onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
                   {!form.name && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
                 </div>
@@ -528,6 +539,7 @@ export default function Home() {
                 <div style={{position:"relative"}}>
                   <input id="field-email" type="email" placeholder="Your email address" value={form.email}
                     onChange={e => updateForm('email', e.target.value)} style={inputStyle('email')}
+                    aria-required="true"
                     onFocus={() => setFocusedField('email')} onBlur={() => { setFocusedField(null); validateField('email') }} />
                   {!form.email && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
                 </div>
@@ -541,6 +553,7 @@ export default function Home() {
               <div style={{position:"relative"}}>
                 <input id="field-car" type="text" placeholder="e.g. 2019 Porsche 911, BMW M3..." value={form.car}
                   onChange={e => updateForm('car', e.target.value)} style={inputStyle('car')}
+                  aria-required="true"
                   onFocus={() => setFocusedField('car')} onBlur={() => setFocusedField(null)} />
                 {!form.car && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
               </div>
@@ -568,13 +581,14 @@ export default function Home() {
                 onChange={e => updateForm('more', e.target.value)} rows={4} maxLength={500}
                 style={{...inputStyle('more'), resize:"vertical"}}
                 onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)} />
-              <div style={{textAlign:"right",fontSize:"10px",color:"#aaa",marginTop:"0.3rem"}}>{form.more.trim() ? form.more.length : 0}/500</div>
+              <div style={{textAlign:"right",fontSize:"10px",color:"#aaa",marginTop:"0.3rem"}}>{form.more.length}/500</div>
             </div>
             <div className="join-form-field" style={{marginTop:"1rem"}}>
               <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></label>
               <div style={{position:"relative"}}>
                 <select id="field-source" value={form.source} onChange={e => updateForm('source', e.target.value)}
-                  style={{...inputStyle('source'), cursor:"pointer", paddingRight:"2rem"}}>
+                  style={{...inputStyle('source'), cursor:"pointer", paddingRight:"2rem"}}
+                  aria-required="true">
                   <option value="">Select an option</option>
                   <option value="Instagram">Instagram</option>
                   <option value="Facebook">Facebook</option>

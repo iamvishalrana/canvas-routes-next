@@ -170,7 +170,7 @@ export async function POST(request) {
   const { registerFor, name, email, car, more, phone, instagram, source, _hp } = body
   if (_hp) return Response.json({ success: true })
 
-  if (!name?.trim() || !email?.trim() || !car?.trim()) {
+  if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !car?.trim()) {
     return Response.json({ error: 'Name, email, and car are required' }, { status: 400 })
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -248,20 +248,22 @@ export async function POST(request) {
   }
 
   // Google Sheets webhook (fire-and-forget, non-blocking)
-  fetch(process.env.SHEETS_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      formType: registerFor,
-      name,
-      email,
-      car,
-      phone: phone || '',
-      instagram: instagram || '',
-      message: more || '',
-      source,
-    }),
-  }).catch(err => console.error('Sheets webhook error:', err))
+  if (process.env.SHEETS_WEBHOOK_URL) {
+    fetch(process.env.SHEETS_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        formType: registerFor,
+        name,
+        email,
+        car,
+        phone: phone || '',
+        instagram: instagram || '',
+        message: more || '',
+        source,
+      }),
+    }).catch(err => console.error('Sheets webhook error:', err))
+  }
 
   return Response.json({ success: true })
 }
