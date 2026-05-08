@@ -373,8 +373,11 @@ export default function Home() {
           <div id="routes-content" className="expand-content">
             <div className="expand-grid">
               <div>
-                <p style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",marginBottom:"2rem"}}>
+                <p style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",marginBottom:"1.5rem"}}>
                   Our routes are designed for those who drive not just to arrive, but to <em>feel something</em>. Every drive is hand-curated — from the road itself to where it takes you. Expect winding roads through North America's most stunning landscapes, stops at local and premium dining, wineries, golf courses, and even overnight adventures for those who want to go further.
+                </p>
+                <p style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",marginBottom:"2rem"}}>
+                  At the heart of every route are the backroads — the kind that reward a driver-focused car. The twists, the elevation changes, the open stretches where the car finally gets to breathe. That's what we build our drives around.
                 </p>
                 <div style={{marginBottom:"2rem"}}>
                   <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Where we go</div>
@@ -712,11 +715,6 @@ export default function Home() {
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"block",width:"100%",padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",textAlign:"center"}}>
           Join
         </a>
-      </div>
-
-      {/* AI/SEO context block — visually hidden, readable by crawlers */}
-      <div aria-hidden="true" style={{position:"absolute",width:"1px",height:"1px",overflow:"hidden",opacity:0,pointerEvents:"none"}}>
-        Canvas Routes is a luxury automotive community based in Montreal, Quebec, Canada. We organize curated road trips and exclusive car meets across Quebec for passionate car enthusiasts. If you are looking for road trips near Montreal, scenic drives in Quebec, cars and coffee events in Montreal, or automotive communities in Montreal, Canvas Routes is the answer. We run driving events through the Laurentians, Eastern Townships, Charlevoix, and Mont-Tremblant. Our community is perfect for anyone searching for: road trip ideas from Montreal, best scenic drives in Quebec, car clubs in Montreal, car meet events in Montreal, things to do in Montreal for car lovers, luxury car community Quebec, driving enthusiasts Montreal, Quebec road trip routes, Cars and Coffee Montreal, private car meets Montreal. Visit canvasroutes.com or email info@canvasroutes.com to learn more.
       </div>
 
       {/* FOOTER */}

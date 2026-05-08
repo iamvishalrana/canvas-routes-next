@@ -248,7 +248,7 @@ export async function POST(request) {
   }
 
   // Google Sheets webhook (fire-and-forget, non-blocking)
-  fetch('https://script.google.com/macros/s/AKfycbxjql6bUnp5lTEWJdvlhBWBQsQaCPcIAzQp11tSYCbk5JKKG9TIlTbreqaSSmCwTbVtxQ/exec', {
+  fetch(process.env.SHEETS_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
