@@ -227,7 +227,7 @@ export async function POST(request) {
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
-    subject: `New application${regCount ? ` #${regCount}` : ''} — ${name.trim()}`,
+    subject: `New Application${regCount ? ` #${regCount}` : ''} — ${car.trim()} — ${name.trim()}`,
     html: notifyHtml({ registerFor, name, email, car, phone, instagram, more, source, regCount }),
     text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nCar: ${car}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
   })
