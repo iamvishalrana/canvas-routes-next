@@ -247,9 +247,8 @@ export async function POST(request) {
     console.error(`ALERT: Notify email failed after retry — application from: ${email}`)
   }
 
-  // Google Sheets webhook (fire-and-forget, non-blocking)
   if (process.env.SHEETS_WEBHOOK_URL) {
-    fetch(process.env.SHEETS_WEBHOOK_URL, {
+    await fetch(process.env.SHEETS_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
