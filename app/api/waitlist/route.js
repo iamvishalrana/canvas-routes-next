@@ -226,7 +226,7 @@ export async function POST(request) {
   // EMAIL 2 — Internal notification (with one retry)
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
-    to: 'info@canvasroutes.com',
+    to: process.env.NOTIFY_EMAIL || 'info@canvasroutes.com',
     subject: `New Application${regCount ? ` #${regCount}` : ''} — ${car.trim()} — ${name.trim()}`,
     html: notifyHtml({ registerFor, name, email, car, phone, instagram, more, source, regCount }),
     text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nCar: ${car}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
