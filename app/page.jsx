@@ -7,10 +7,7 @@ import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, Clipboa
 import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
-const CC_DEADLINE = new Date('2026-05-09T15:00:00Z').getTime() // 11 AM EDT
-
 export default function Home() {
-  const [ccExpired, setCcExpired] = useState(false)
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', car:'', phone:'', instagram:'', more:'', source:'' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
@@ -20,23 +17,8 @@ export default function Home() {
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
   const [showSplash, setShowSplash] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [showBanner, setShowBanner] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
-
-  useEffect(() => {
-    const remaining = CC_DEADLINE - Date.now()
-    if (remaining <= 0) {
-      setCcExpired(true)
-    } else {
-      const t = setTimeout(() => {
-        setCcExpired(true)
-        setForm(prev => prev.registerFor.startsWith('Cars & Coffee') ? { ...prev, registerFor: '' } : prev)
-      }, remaining)
-      return () => clearTimeout(t)
-    }
-  }, [])
 
   useEffect(() => {
     try {
@@ -48,9 +30,9 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = (showSplash || showModal || showBanner) ? 'hidden' : ''
+    document.body.style.overflow = showSplash ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [showSplash, showModal, showBanner])
+  }, [showSplash])
 
   useEffect(() => {
     try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
@@ -116,19 +98,6 @@ export default function Home() {
     return () => { aboutObserver.disconnect(); joinObserver.disconnect() }
   }, [])
 
-  useEffect(() => {
-    const LAUNCH = new Date('2026-05-02T18:00:00Z').getTime() // 2 PM EDT
-    const preview = new URLSearchParams(window.location.search).has('preview')
-    const live = Date.now() >= LAUNCH || preview
-    if (live) {
-      try {
-        if (!sessionStorage.getItem('bannerSeen')) {
-          const t = setTimeout(() => { setShowBanner(true); try { sessionStorage.setItem('bannerSeen', '1') } catch {} }, 600)
-          return () => clearTimeout(t)
-        }
-      } catch {}
-    }
-  }, [])
 
   function updateForm(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -417,20 +386,20 @@ export default function Home() {
         </div>
         <div className="events-grid">
           {[
-            {date:"May 9, 2026",name:"Cars & Coffee",loc:"Location sent via email",type:"Meets",popup:true},
+            {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
             {date:"May 2026",name:"Run to the Laurentian",loc:"Mont-Tremblant, QC",type:"Route"},
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
           ].map((e,i) => (
-            <div key={i} className="event-card" style={{background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem"}}>
+            <div key={i} className="event-card" style={{background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem",opacity:e.past?0.75:1}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
-                <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032"}}>{e.date}</div>
-                <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B5B2E",border:"0.5px solid #7B5B2E",padding:"2px 8px"}}>{e.type}</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"#888":"#7B2032"}}>{e.date}</div>
+                <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"#888":"#7B5B2E",border:`0.5px solid ${e.past?"#888":"#7B5B2E"}`,padding:"2px 8px"}}>{e.type}</div>
               </div>
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
               <div style={{fontSize:"12px",color:"#5A4A38",marginBottom:"1.5rem"}}>{e.loc}</div>
-              {e.popup
-                ? <button onClick={() => setShowModal(true)} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif"}}>View Details</button>
+              {e.past
+                ? <div style={{fontSize:"12px",color:"#5A4A38",lineHeight:"1.7"}}>To see photos &amp; videos from this event, follow us on{' '}<a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#7B2032",textDecoration:"none",fontWeight:"500"}}>Instagram</a>{' '}and{' '}<a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#7B2032",textDecoration:"none",fontWeight:"500"}}>Facebook</a>.</div>
                 : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
               }
             </div>
@@ -503,11 +472,10 @@ export default function Home() {
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
             <div id="field-registerFor" role="group" aria-required="true" className="join-form-field" style={{marginBottom:"1.5rem"}}>
               <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
-              <div className="join-form-row" style={ccExpired ? {gridTemplateColumns:'1fr'} : {}}>
+              <div className="join-form-row" style={{gridTemplateColumns:'1fr'}}>
                 {[
-                  !ccExpired && {value:"Cars & Coffee — May 9, 2026", label:"Cars & Coffee", sub:"May 9, 2026 · Montreal"},
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
-                ].filter(Boolean).map(opt => {
+                ].map(opt => {
                   const selected = form.registerFor === opt.value
                   const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'
                   const bgColor = selected ? 'rgba(59,107,47,0.06)' : errors.registerFor ? 'rgba(123,32,50,0.04)' : 'transparent'
@@ -645,84 +613,6 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* CARS & COFFEE MODAL */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            exit={{opacity:0}}
-            transition={{duration:0.2}}
-            onClick={() => setShowModal(false)}
-            style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.88)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
-          >
-            <motion.div
-              initial={{opacity:0,scale:0.92,y:20}}
-              animate={{opacity:1,scale:1,y:0}}
-              exit={{opacity:0,scale:0.94,y:10}}
-              transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
-              onClick={e => e.stopPropagation()}
-              style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden"}}
-            >
-              {/* X button over image */}
-              <button onClick={() => setShowModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-
-              {/* POSTER IMAGE */}
-              <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"220px",objectFit:"cover",display:"block"}} />
-
-              {/* DETAILS */}
-              <div style={{padding:"1.8rem 2rem 2rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.8)",marginBottom:"0.5rem"}}>Montreal · May 9, 2026</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars & Coffee</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.55)",marginBottom:"1.2rem"}}>Good cars. Great coffee. Better people.</div>
-
-                {/* INFO CHIPS */}
-                <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.4rem"}}>
-                  {["09:30 – 12:00 PM","Open to all","Free entry"].map((tag,i) => (
-                    <span key={i} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.9)",border:"0.5px solid rgba(197,168,130,0.35)",padding:"0.3rem 0.75rem"}}>{tag}</span>
-                  ))}
-                </div>
-
-                <div style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",marginBottom:"1.8rem",lineHeight:"1.6"}}>Location sent to you via email after registration.</div>
-
-                {/* CTA */}
-                <button onClick={() => { setShowModal(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{display:"block",width:"100%",padding:"0.95rem",border:"none",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#0F1E14",cursor:"pointer",background:"#c5a882",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500",marginBottom:"1rem"}}>
-                  Reserve Your Spot →
-                </button>
-                <div style={{textAlign:"center"}}>
-                  <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(245,241,236,0.35)",textDecoration:"none"}}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
-                    @canvasroutes
-                  </a>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* CARS & COFFEE ANNOUNCEMENT BANNER */}
-      {showBanner && (
-        <div style={{position:"fixed",inset:0,background:"rgba(10,20,12,0.93)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem",fontFamily:"var(--font-inter),sans-serif"}}>
-          <div style={{background:"#F5F1EC",maxWidth:"480px",width:"100%",position:"relative",overflow:"hidden"}}>
-            <div style={{background:"#EDE8E1",padding:"1.8rem 2rem",display:"flex",alignItems:"center",justifyContent:"center",borderBottom:"0.5px solid rgba(0,0,0,0.1)"}}>
-              <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} style={{height:"110px",width:"auto"}} />
-            </div>
-            <div style={{padding:"2.5rem 2.5rem 2rem",textAlign:"center"}}>
-              <button onClick={() => setShowBanner(false)} style={{position:"absolute",top:"1rem",right:"1rem",background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#888",lineHeight:1,fontFamily:"var(--font-inter),sans-serif"}}>✕</button>
-              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"0.8rem"}}>Now Open for Registration</div>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1.1",marginBottom:"0.8rem"}}>Cars &amp; Coffee</div>
-              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.5rem"}}>May 9, 2026</div>
-              <div style={{width:"30px",height:"1px",background:"#c5a882",margin:"1.2rem auto"}}></div>
-              <div style={{fontSize:"13px",color:"#555",marginBottom:"2rem",lineHeight:"1.6"}}>Location will be sent to you via email once registration is completed.</div>
-              <button onClick={() => { setShowBanner(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",marginBottom:"1.2rem",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif"}}>Register Now</button>
-              <div>
-                <button onClick={() => setShowBanner(false)} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",letterSpacing:"0.1em",textTransform:"uppercase",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Maybe later</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* STICKY MOBILE CTA */}
       <div className={`sticky-cta${showStickyCta ? ' sticky-cta--visible' : ''}`} style={cookieBannerVisible ? {bottom:'var(--cookie-banner-height, 80px)'} : {}}>
