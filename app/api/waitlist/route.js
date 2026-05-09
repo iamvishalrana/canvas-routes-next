@@ -110,7 +110,7 @@ If this email landed in your spam folder, please move it to your inbox and mark 
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ registerFor, name, email, car, phone, instagram, more, source, regCount }) {
+function notifyHtml({ registerFor, name, email, year, carModel, phone, instagram, more, source, regCount }) {
   const row = (label, value) => value
     ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -136,7 +136,8 @@ function notifyHtml({ registerFor, name, email, car, phone, instagram, more, sou
                 ${row('Registering for', registerFor ? `<strong>${h(registerFor)}</strong>` : '')}
                 ${row('Full name', `<strong>${h(name)}</strong>`)}
                 ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
-                ${row('Car', h(car))}
+                ${row('Year', h(year))}
+                ${row('Make & Model', h(carModel))}
                 ${row('Phone', phone ? h(phone) : '')}
                 ${row('Instagram', instagram ? h(instagram) : '')}
                 ${row('Tell us more', more ? h(more) : '')}
@@ -167,18 +168,19 @@ export async function POST(request) {
   try { body = await request.json() } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { registerFor, name, email, car, more, phone, instagram, source, _hp } = body
+  const { registerFor, name, email, year, carModel, more, phone, instagram, source, _hp } = body
   if (_hp) return Response.json({ success: true })
 
-  if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !car?.trim()) {
-    return Response.json({ error: 'Name, email, and car are required' }, { status: 400 })
+  if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim()) {
+    return Response.json({ error: 'Name, email, year, and car model are required' }, { status: 400 })
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ error: 'Invalid email address' }, { status: 400 })
   }
   if (name.length > 100) return Response.json({ error: 'Name too long' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long' }, { status: 400 })
-  if (car && car.length > 200) return Response.json({ error: 'Car description too long' }, { status: 400 })
+  if (year && year.length > 10) return Response.json({ error: 'Year too long' }, { status: 400 })
+  if (carModel && carModel.length > 100) return Response.json({ error: 'Car model too long' }, { status: 400 })
   if (phone && phone.length > 30) return Response.json({ error: 'Phone too long' }, { status: 400 })
   if (instagram && instagram.length > 50) return Response.json({ error: 'Instagram handle too long' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long' }, { status: 400 })
@@ -223,9 +225,9 @@ export async function POST(request) {
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
-    subject: `New Application${regCount ? ` #${regCount}` : ''} — ${car.trim()} — ${name.trim()}`,
-    html: notifyHtml({ registerFor, name, email, car, phone, instagram, more, source, regCount }),
-    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nCar: ${car}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
+    subject: `New Application${regCount ? ` #${regCount}` : ''} — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
+    html: notifyHtml({ registerFor, name, email, year, carModel, phone, instagram, more, source, regCount }),
+    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
   })
 
   let notifyOk = false
@@ -251,7 +253,8 @@ export async function POST(request) {
         formType: registerFor,
         name,
         email,
-        car,
+        year: year || '',
+        carModel: carModel || '',
         phone: phone || '',
         instagram: instagram || '',
         message: more || '',
