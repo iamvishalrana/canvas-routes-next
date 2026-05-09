@@ -517,11 +517,16 @@ export default function Home() {
               <div className="join-form-field">
                 <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
                 <div style={{position:"relative"}}>
-                  <input id="field-year" type="text" placeholder="e.g. 2019" value={form.year}
-                    onChange={e => updateForm('year', e.target.value)} style={inputStyle('year')}
-                    aria-required="true" maxLength={4}
-                    onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)} />
-                  {!form.year && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
+                  <select id="field-year" value={form.year} onChange={e => updateForm('year', e.target.value)}
+                    style={{...inputStyle('year'), cursor:"pointer", paddingRight:"2rem"}}
+                    aria-required="true">
+                    <option value="">Select year</option>
+                    {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y=>(
+                      <option key={y} value={String(y)}>{y}</option>
+                    ))}
+                  </select>
+                  {!form.year && <span style={{position:"absolute",right:"28px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
+                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
                 {errors.year && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
               </div>
