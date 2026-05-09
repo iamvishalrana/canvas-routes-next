@@ -16,23 +16,9 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
-  const [showSplash, setShowSplash] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
-  useEffect(() => {
-    try {
-      if (!sessionStorage.getItem('splashSeen')) {
-        setShowSplash(true)
-        sessionStorage.setItem('splashSeen', '1')
-      }
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    document.body.style.overflow = showSplash ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [showSplash])
 
   useEffect(() => {
     try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
@@ -391,15 +377,19 @@ export default function Home() {
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
           ].map((e,i) => (
-            <div key={i} className="event-card" style={{background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem",opacity:e.past?0.75:1}}>
+            <div key={i} className="event-card" style={e.past
+              ? {background:"#0F1E14",border:"0.5px solid rgba(197,168,130,0.18)",padding:"2rem",position:"relative",overflow:"hidden"}
+              : {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem"}
+            }>
+              {e.past && <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.55),transparent)"}} />}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
-                <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"#888":"#7B2032"}}>{e.date}</div>
-                <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"#888":"#7B5B2E",border:`0.5px solid ${e.past?"#888":"#7B5B2E"}`,padding:"2px 8px"}}>{e.type}</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.65)":"#7B2032"}}>{e.date}</div>
+                <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.5)":"#7B5B2E",border:`0.5px solid ${e.past?"rgba(197,168,130,0.28)":"#7B5B2E"}`,padding:"2px 8px"}}>{e.type}</div>
               </div>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
-              <div style={{fontSize:"12px",color:"#5A4A38",marginBottom:"1.5rem"}}>{e.loc}</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:e.past?"#F5F1EC":"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
+              <div style={{fontSize:"12px",color:e.past?"rgba(245,241,236,0.4)":"#5A4A38",marginBottom:"1.5rem"}}>{e.loc}</div>
               {e.past
-                ? <div style={{fontSize:"12px",color:"#5A4A38",lineHeight:"1.7"}}>To see photos &amp; videos from this event, follow us on{' '}<a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#7B2032",textDecoration:"none",fontWeight:"500"}}>Instagram</a>{' '}and{' '}<a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#7B2032",textDecoration:"none",fontWeight:"500"}}>Facebook</a>.</div>
+                ? <div style={{fontSize:"11px",color:"rgba(197,168,130,0.65)",lineHeight:"1.8"}}>To see photos &amp; videos from this event, follow us on{' '}<a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.4)"}}>Instagram</a>{' '}and{' '}<a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.4)"}}>Facebook</a>.</div>
                 : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
               }
             </div>
@@ -587,31 +577,6 @@ export default function Home() {
         )}</FadeIn>
       </section>
 
-      {/* SPLASH */}
-      {showSplash && (
-        <motion.div
-          initial={{opacity:0}}
-          animate={{opacity:1}}
-          transition={{duration:0.35}}
-          style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:1200,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
-        >
-          <motion.div
-            initial={{opacity:0,scale:0.93,y:24}}
-            animate={{opacity:1,scale:1,y:0}}
-            transition={{duration:0.4,ease:[0.16,1,0.3,1]}}
-            style={{background:"#F5F1EC",boxShadow:"0 32px 80px rgba(0,0,0,0.5)",maxWidth:"340px",width:"100%",maxHeight:"88vh",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}
-          >
-            <button onClick={() => setShowSplash(false)} aria-label="Close" style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,fontFamily:"var(--font-inter),sans-serif",width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%"}}>×</button>
-            <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"auto",display:"block",flexShrink:1,minHeight:0,objectFit:"cover"}} />
-            <div style={{padding:"1rem 1.5rem 1.5rem",textAlign:"center",background:"#0F1E14",flexShrink:0}}>
-              <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} style={{height:"70px",width:"auto",marginBottom:"0.8rem"}} />
-              <div>
-                <button onClick={() => { setShowSplash(false); setTimeout(() => smoothScroll('join'), 50) }} className="btn-push" style={{padding:"0.75rem 2rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",background:"transparent",border:"1px solid #F5F1EC",color:"#F5F1EC"}}>Register</button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
 
 
       {/* STICKY MOBILE CTA */}
