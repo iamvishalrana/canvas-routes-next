@@ -380,7 +380,7 @@ export default function Home() {
         <div className="events-grid">
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
-            {date:"May 2026",name:"Grand Prix Weekend",loc:"Morning meet, followed by a cruise into the city",type:"Meets"},
+            {date:"May 2026",name:"Grand Prix Weekend",loc:"Cars, Coffee & Cruise",type:"Meets"},
             {date:"May 2026",name:"Run to the Laurentian",loc:"Mont-Tremblant, QC",type:"Route"},
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
