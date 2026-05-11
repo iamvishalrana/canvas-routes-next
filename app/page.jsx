@@ -362,7 +362,7 @@ export default function Home() {
                 <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
               </div>
               <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden",position:"relative"}}>
-                <div style={{width:"100%",minHeight:"300px",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
+                <div style={{position:"absolute",inset:0,backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
                 <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
               </div>
             </div>
