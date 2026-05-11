@@ -151,7 +151,7 @@ body { background: #F5F1EC; color: #1a1a1a; }
   gap: 4rem;
   max-width: 1000px;
   margin: 0 auto;
-  align-items: start;
+  align-items: stretch;
 }
 
 .events-grid {
