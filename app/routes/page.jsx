@@ -15,19 +15,20 @@ function Chevron() {
 }
 
 const INCLUDED = [
-  'Breakfast',
-  'Coffee and pastry stop',
+  'Little gifts from us for your car',
+  'Premium breakfast in Montreal',
+  'Route photography',
   'Full media coverage',
-  'Group lunch',
-  'Farewell drinks',
-  'A little something waiting for you at breakfast',
+  'Cars, Coffee & Horology event on the way',
+  'Lunch at an artisanal restaurant',
+  'Farewell drinks & see off in the evening',
 ]
 
 export default function RoutesPage() {
   const [launched, setLaunched] = useState(false)
   const [soldOut, setSoldOut] = useState(false)
   const [checking, setChecking] = useState(true)
-  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', payment:'' })
+  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'', payment:'' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
@@ -215,8 +216,8 @@ export default function RoutesPage() {
               {[
                 'Gas and $30 VIP parking on you.',
                 'Full details sent via email upon registration.',
-                'Memberships open after this trip.',
-                'Road trips will be members only going forward.',
+                'This trip is a preview of what Canvas Routes membership is — consider it your first taste.',
+                'All future road trips will be exclusive to members. This is your way in.',
               ].map((note, i) => (
                 <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
                   <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"8px"}} />
@@ -399,12 +400,22 @@ export default function RoutesPage() {
                   {errors.source && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                 </div>
 
+                {/* Tell us more */}
+                <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <label htmlFor="field-more" className="join-label">Tell us more <span style={{color:"#888",fontWeight:"300"}}>(optional)</span></label>
+                  <textarea id="field-more" placeholder="Anything you'd like us to know — your car, your passengers, or what excites you about this trip..." value={form.more}
+                    onChange={e => updateForm('more', e.target.value)} rows={4} maxLength={500}
+                    style={{...inputStyle('more'), resize:"vertical"}}
+                    onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)} />
+                  <div style={{textAlign:"right",fontSize:"10px",color:"#aaa",marginTop:"0.3rem"}}>{form.more.length}/500</div>
+                </div>
+
                 {/* Payment preference */}
                 <div className="join-form-field" style={{marginBottom:"2.5rem"}}>
                   <div id="field-payment" className="join-label" style={{marginBottom:"0.75rem"}}>Payment preference<CreditCard size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
                   <div className="join-form-row">
                     {[
-                      {value:'E-transfer', sub:'Send to info@canvasroutes.com'},
+                      {value:'E-transfer', sub:'Details sent upon confirmation'},
                       {value:'Stripe', sub:'Secure card payment link'},
                     ].map(opt => {
                       const selected = form.payment === opt.value

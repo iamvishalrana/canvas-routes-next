@@ -119,7 +119,7 @@ Follow us on Instagram: https://www.instagram.com/canvasroutes
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, payment }) {
+function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, payment }) {
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -150,6 +150,7 @@ function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, 
                 ${row('Passengers', h(passengers))}
                 ${row('Children', childrenDisplay)}
                 ${row('How they heard', h(source))}
+                ${row('Tell us more', more ? h(more) : '')}
                 ${row('Payment preference', h(payment))}
               </table>
             </td>
@@ -189,7 +190,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, payment, _hp } = body
+  const { name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, payment, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !phone?.trim() || !year?.trim() || !carModel?.trim()) {
@@ -260,8 +261,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `Laurentians Registration${regCount ? ` #${regCount}` : ''} — ${year} ${carModel} — ${name.trim()}`,
-    html: notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, payment }),
-    text: `Laurentians Registration${regCount ? ` #${regCount}` : ''}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}\nPayment: ${payment}`,
+    html: notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, payment }),
+    text: `Laurentians Registration${regCount ? ` #${regCount}` : ''}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}\nPayment: ${payment}`,
   })
 
   let notifyOk = false
@@ -294,6 +295,7 @@ export async function POST(request) {
         passengers: passengers || '',
         children: hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No',
         source,
+        more: more || '',
         payment,
       }),
     }).catch(err => console.error('Sheets webhook error:', err))
