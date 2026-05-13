@@ -214,6 +214,8 @@ export default function RoutesPage() {
               {[
                 'Driver-focused cars only — this route is built for cars that were made to be driven.',
                 'Convoy-style drive — we roll together as a group.',
+                'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.',
+                'We drive in style, not speed. This is not a race.',
                 'Gas and $30 VIP parking on you.',
                 'Full details sent via email upon registration.',
                 'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.',
