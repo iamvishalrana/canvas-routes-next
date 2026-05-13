@@ -18,10 +18,9 @@ const INCLUDED = [
   { title: 'Welcome gift for your car', sub: 'A curated keepsake from us, waiting for you at the start.' },
   { title: 'Premium breakfast in Montreal', sub: 'The best way to start a drive — a leisurely breakfast before the road opens up.' },
   { title: 'Cars, Coffee & Horology stop', sub: 'A curated midway stop — cars, espresso, and fine watches.' },
-  { title: 'Personal photography of your car', sub: 'Your car captured on the route by our photographer.' },
   { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
-  { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
   { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
+  { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
   { title: 'Farewell drinks & send-off', sub: 'We close the day together before heading our separate ways.' },
 ]
 
@@ -184,7 +183,7 @@ export default function RoutesPage() {
 
       {/* DETAILS — What's Included + Pricing */}
       <section style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
-        <div style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"start"}}>
+        <div style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"stretch"}}>
 
           {/* PRICING + NOTES */}
           <div>
@@ -199,13 +198,12 @@ export default function RoutesPage() {
             {/* Notes */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               {[
-                'A curated group — you\'ll be surrounded by like-minded people who take their cars seriously.',
+                'Personal photography of your car on the route by our photographer.',
                 'Driver-focused cars only — this route is built for cars that were made to be driven.',
                 'Convoy-style drive — we roll together as a group.',
                 'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.',
                 'We drive in style, not speed. This is not a race.',
                 'Gas and $30 VIP parking available, at your cost.',
-                'Full details sent via email upon registration.',
                 'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.',
                 'All future road trips will be exclusive to members. This is your way in — to be around like-minded people who take cars seriously.',
               ].map((note, i) => (
