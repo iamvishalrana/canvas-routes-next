@@ -15,12 +15,14 @@ function Chevron() {
 }
 
 const INCLUDED = [
-  'Little gifts from us for your car',
-  'Premium breakfast in Montreal',
-  'Personal photography of your car on the route',
-  'Cars, Coffee & Horology event on the way',
-  'Lunch at an artisanal restaurant',
-  'Farewell drinks & see off in the evening',
+  { title: 'Welcome gift for your car', sub: 'A curated keepsake from us, waiting for you at the start.' },
+  { title: 'Premium breakfast in Montreal', sub: 'A proper sit-down to kick the day off right before we roll out.' },
+  { title: 'Cars, Coffee & Horology stop', sub: 'A curated midway stop — cars, espresso, and fine watches.' },
+  { title: 'Personal photography of your car', sub: 'Your car captured on the route by our photographer.' },
+  { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
+  { title: 'Artisanal lunch in the Laurentians', sub: 'A proper sit-down meal at a carefully chosen restaurant.' },
+  { title: 'Farewell drinks & send-off', sub: 'We close the day together before heading our separate ways.' },
+  { title: 'A curated group', sub: 'You\'ll be surrounded by like-minded people who take their cars seriously.' },
 ]
 
 export default function RoutesPage() {
@@ -187,13 +189,16 @@ export default function RoutesPage() {
           {/* WHAT'S INCLUDED */}
           <div>
             <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>What&apos;s included</div>
-            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:"0"}}>
               {INCLUDED.map((item, i) => (
-                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.9rem"}}>
-                  <div style={{width:"18px",height:"18px",border:"0.5px solid rgba(197,168,130,0.6)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"1px"}}>
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"1rem",padding:"1rem 0",borderBottom:"0.5px solid rgba(0,0,0,0.07)"}}>
+                  <div style={{width:"20px",height:"20px",border:"0.5px solid rgba(197,168,130,0.6)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"2px"}}>
                     <Check size={10} color="#c5a882" strokeWidth={2} />
                   </div>
-                  <span style={{fontSize:"0.9rem",color:"#3a3028",lineHeight:"1.6",letterSpacing:"0.02em"}}>{item}</span>
+                  <div>
+                    <div style={{fontSize:"0.875rem",color:"#1a1a1a",lineHeight:"1.5",letterSpacing:"0.01em",fontWeight:"500",marginBottom:"0.2rem"}}>{item.title}</div>
+                    <div style={{fontSize:"0.8rem",color:"#888",lineHeight:"1.6"}}>{item.sub}</div>
+                  </div>
                 </div>
               ))}
             </div>
