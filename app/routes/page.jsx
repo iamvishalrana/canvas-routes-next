@@ -17,11 +17,11 @@ function Chevron() {
 const INCLUDED = [
   { title: 'Welcome gift for your car', sub: 'A handpicked keepsake from us, waiting for you at the start.' },
   { title: 'Premium breakfast in Montreal', sub: 'The best way to start a drive — a leisurely breakfast before the road opens up.' },
-  { title: 'Cars, Coffee & Horology stop', sub: 'A handpicked midway stop — cars, espresso, and fine watches.' },
+  { title: 'Cars, Coffee & Horology stop', sub: 'A handpicked midway stop — coffee, a snack, fine watches, and great cars.' },
   { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
   { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
   { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
-  { title: 'Farewell drinks & send-off', sub: 'We close the day together before heading our separate ways.' },
+  { title: 'Farewell drinks & send-off', sub: 'After driving back to Montreal in the evening, we close the day over drinks before heading our separate ways.' },
 ]
 
 export default function RoutesPage() {
