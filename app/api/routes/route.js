@@ -2,7 +2,7 @@ import { kv } from '@vercel/kv'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 
 const CAR_CAP = 15
-const ROADTRIP_KEY = 'reg:roadtrip'
+const ROADTRIP_KEY = 'reg:routes'
 
 function h(str) {
   return String(str ?? '')
@@ -42,7 +42,7 @@ function customerHtml(firstName, payment) {
           </tr>
           <tr>
             <td style="padding-bottom:8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
-              Grand Prix Weekend &mdash; Canvas Routes
+              Into the Laurentians &mdash; Canvas Routes
             </td>
           </tr>
           <tr>
@@ -52,7 +52,7 @@ function customerHtml(firstName, payment) {
           </tr>
           <tr>
             <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
-              We&apos;ve received your registration for <strong>Grand Prix Weekend</strong> &mdash; Cars, Coffee &amp; Cruise. Your spot is held for 48 hours pending payment.
+              We&apos;ve received your registration for <strong>Into the Laurentians</strong> &mdash; Cars, Coffee &amp; Cruise. Your spot is held for 48 hours pending payment.
             </td>
           </tr>
           <tr>
@@ -107,7 +107,7 @@ function customerText(firstName, payment) {
     : `We'll send you a secure Stripe payment link within 24 hours.`
   return `You're registered, ${firstName}.
 
-We've received your registration for Grand Prix Weekend — Cars, Coffee & Cruise. Your spot is held for 48 hours pending payment.
+We've received your registration for Into the Laurentians — Cars, Coffee & Cruise. Your spot is held for 48 hours pending payment.
 
 Payment — $200 per car
 ${paymentLine}
@@ -136,7 +136,7 @@ function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, 
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
           <tr>
             <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
-              Grand Prix Weekend Registration${regCount ? ` &mdash; <strong style="color:#1a1a1a;">#${regCount}</strong>` : ''}
+              Into the Laurentians Registration${regCount ? ` &mdash; <strong style="color:#1a1a1a;">#${regCount}</strong>` : ''}
             </td>
           </tr>
           <tr>
@@ -243,7 +243,7 @@ export async function POST(request) {
       from: 'Canvas Routes <info@canvasroutes.com>',
       to: email,
       reply_to: 'info@canvasroutes.com',
-      subject: 'Registration received — Grand Prix Weekend',
+      subject: 'Registration received — Into the Laurentians',
       html: customerHtml(firstName, payment),
       text: customerText(rawFirstName, payment),
     }),
@@ -259,9 +259,9 @@ export async function POST(request) {
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
-    subject: `Grand Prix Registration${regCount ? ` #${regCount}` : ''} — ${year} ${carModel} — ${name.trim()}`,
+    subject: `Laurentians Registration${regCount ? ` #${regCount}` : ''} — ${year} ${carModel} — ${name.trim()}`,
     html: notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, payment }),
-    text: `Grand Prix Registration${regCount ? ` #${regCount}` : ''}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}\nPayment: ${payment}`,
+    text: `Laurentians Registration${regCount ? ` #${regCount}` : ''}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}\nPayment: ${payment}`,
   })
 
   let notifyOk = false
@@ -285,7 +285,7 @@ export async function POST(request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        formType: 'Grand Prix Weekend',
+        formType: 'Into the Laurentians',
         name,
         email,
         phone: phone || '',

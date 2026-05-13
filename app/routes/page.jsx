@@ -2,9 +2,9 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { User, Mail, Phone, Car, Users, Share2, CreditCard } from 'lucide-react'
+import { User, Mail, Phone, Car, Users, Share2, CreditCard, Check } from 'lucide-react'
 
-const ROADTRIP_LAUNCH = new Date('2026-05-13T23:00:00Z').getTime() // 7 PM EDT
+const ROUTES_LAUNCH = new Date('2026-05-13T23:00:00Z').getTime() // 7 PM EDT
 
 function Chevron() {
   return (
@@ -14,7 +14,16 @@ function Chevron() {
   )
 }
 
-export default function RoadTripPage() {
+const INCLUDED = [
+  'Breakfast',
+  'Coffee and pastry stop',
+  'Full media coverage',
+  'Group lunch',
+  'Farewell drinks',
+  'A little something waiting for you at breakfast',
+]
+
+export default function RoutesPage() {
   const [launched, setLaunched] = useState(false)
   const [soldOut, setSoldOut] = useState(false)
   const [checking, setChecking] = useState(true)
@@ -27,18 +36,18 @@ export default function RoadTripPage() {
 
   useEffect(() => {
     const preview = new URLSearchParams(window.location.search).has('preview')
-    if (Date.now() >= ROADTRIP_LAUNCH || preview) {
+    if (Date.now() >= ROUTES_LAUNCH || preview) {
       setLaunched(true)
     } else {
       const interval = setInterval(() => {
-        if (Date.now() >= ROADTRIP_LAUNCH) { setLaunched(true); clearInterval(interval) }
+        if (Date.now() >= ROUTES_LAUNCH) { setLaunched(true); clearInterval(interval) }
       }, 1000)
       return () => clearInterval(interval)
     }
   }, [])
 
   useEffect(() => {
-    fetch('/api/roadtrip')
+    fetch('/api/routes')
       .then(r => r.json())
       .then(d => { if (d.soldOut) setSoldOut(true) })
       .catch(() => {})
@@ -114,7 +123,7 @@ export default function RoadTripPage() {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30000)
     try {
-      const res = await fetch('/api/roadtrip', {
+      const res = await fetch('/api/routes', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
@@ -156,32 +165,77 @@ export default function RoadTripPage() {
       </nav>
 
       {/* HERO */}
-      <section style={{background:"#0F1E14",paddingTop:"clamp(140px,18vw,210px)",paddingBottom:"5rem",padding:"clamp(140px,18vw,210px) 3rem 5rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
+      <section style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
         <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · May 2026</div>
-        <h1 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
-          Grand Prix Weekend
+        <h1 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
+          Into the Laurentians
         </h1>
-        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.1rem,2.5vw,1.5rem)",fontStyle:"italic",color:"rgba(245,241,236,0.45)",marginBottom:"2.5rem"}}>
-          Cars, Coffee &amp; Cruise
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.1rem,2.5vw,1.4rem)",fontStyle:"italic",color:"rgba(245,241,236,0.4)",marginBottom:"2.5rem"}}>
+          Mont-Tremblant, QC
         </div>
         <div style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
-        <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto 3rem",lineHeight:"1.9",letterSpacing:"0.02em"}}>
-          A morning meet over coffee, followed by a curated cruise through the heart of the city. The perfect send-off to race weekend in Montreal.
+        <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
+          A curated drive through the heart of Quebec&apos;s Laurentians. Hand-picked roads, good company, and a day you won&apos;t forget.
         </p>
-
-        {/* PRICING BLOCK */}
-        <div style={{display:"inline-flex",flexDirection:"column",alignItems:"center",border:"1px solid rgba(197,168,130,0.35)",padding:"1.8rem 3rem",background:"rgba(197,168,130,0.05)",position:"relative"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
-          <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"0.75rem"}}>Registration</div>
-          <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1",marginBottom:"0.5rem"}}>$200</div>
-          <div style={{fontSize:"10px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(197,168,130,0.55)"}}>per car · 2 people included</div>
-        </div>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)"}} />
       </section>
 
+      {/* DETAILS — What's Included + Pricing */}
+      <section style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
+        <div style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"start"}}>
+
+          {/* WHAT'S INCLUDED */}
+          <div>
+            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>What&apos;s included</div>
+            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+              {INCLUDED.map((item, i) => (
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.9rem"}}>
+                  <div style={{width:"18px",height:"18px",border:"0.5px solid rgba(197,168,130,0.6)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"1px"}}>
+                    <Check size={10} color="#c5a882" strokeWidth={2} />
+                  </div>
+                  <span style={{fontSize:"0.9rem",color:"#3a3028",lineHeight:"1.6",letterSpacing:"0.02em"}}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* PRICING + NOTES */}
+          <div>
+            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>Pricing &amp; details</div>
+
+            {/* Price block */}
+            <div style={{border:"0.5px solid rgba(0,0,0,0.12)",padding:"1.8rem",marginBottom:"1.5rem",background:"#F5F1EC"}}>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1",marginBottom:"0.4rem"}}>$200</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B5B2E"}}>per car · 2 people included</div>
+            </div>
+
+            {/* Notes */}
+            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+              {[
+                'Gas and $30 VIP parking on you.',
+                'Full details sent via email upon registration.',
+                'Memberships open after this trip.',
+                'Road trips will be members only going forward.',
+              ].map((note, i) => (
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
+                  <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"8px"}} />
+                  <span style={{fontSize:"0.85rem",color:"#555",lineHeight:"1.7"}}>{note}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{marginTop:"1.8rem",paddingTop:"1.5rem",borderTop:"0.5px solid rgba(0,0,0,0.1)"}}>
+              <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited.</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B2032"}}>Selection is curated.</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* FORM SECTION */}
-      <section style={{padding:"6rem 2rem 8rem"}}>
+      <section style={{padding:"6rem 2rem 8rem",background:"#F5F1EC"}}>
         <div style={{maxWidth:"560px",margin:"0 auto"}}>
 
           {/* PRE-LAUNCH */}
@@ -190,7 +244,7 @@ export default function RoadTripPage() {
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration opens tonight</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
               <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"380px",margin:"0 auto"}}>
-                Spots are limited to 15 cars. Registration opens at 7 PM Eastern — check back then to secure yours.
+                Spots are limited and selection is curated. Registration opens at 7 PM Eastern — check back then to apply.
               </p>
             </div>
           )}
@@ -198,10 +252,10 @@ export default function RoadTripPage() {
           {/* SOLD OUT */}
           {launched && soldOut && (
             <div style={{textAlign:"center",padding:"5rem 0"}}>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Sold Out</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration Closed</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
               <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"380px",margin:"1.5rem auto 0"}}>
-                All 15 spots have been claimed. Follow us on{' '}
+                All spots have been claimed. Follow us on{' '}
                 <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#7B2032",textDecoration:"none"}}>Instagram</a>
                 {' '}to be the first to hear about future events.
               </p>
@@ -211,10 +265,10 @@ export default function RoadTripPage() {
           {/* SUCCESS */}
           {launched && !soldOut && status === 'success' && (
             <div style={{textAlign:"center",padding:"5rem 0"}}>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"1rem"}}>You&apos;re registered.</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"1rem"}}>Application received.</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
               <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"420px",margin:"1.5rem auto 0"}}>
-                We&apos;ve received your registration and a confirmation email is on its way. Check your spam folder if you don&apos;t see it. Payment instructions are included — your spot is held for 48 hours pending payment.
+                We&apos;ve received your registration. A confirmation email is on its way — check your spam if you don&apos;t see it. Full event details will be sent upon confirmation.
               </p>
             </div>
           )}
@@ -223,8 +277,8 @@ export default function RoadTripPage() {
           {showForm && (
             <>
               <div style={{textAlign:"center",marginBottom:"3.5rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"0.75rem"}}>Limited to 15 cars</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.4rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem"}}>Reserve your spot</div>
+                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"0.75rem"}}>Spots are limited · Selection is curated</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.4rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem"}}>Apply for your spot</div>
                 <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto 0"}} />
               </div>
 
@@ -299,7 +353,7 @@ export default function RoadTripPage() {
                   {errors.passengers && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                 </div>
 
-                {/* Children — Yes / No */}
+                {/* Children */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
                   <div id="field-hasChildren" className="join-label" style={{marginBottom:"0.75rem"}}>Any children attending?<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
                   <div style={{display:"flex",gap:"1rem"}}>
@@ -317,7 +371,6 @@ export default function RoadTripPage() {
                   {errors.hasChildren && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                 </div>
 
-                {/* Children ages — conditional */}
                 {form.hasChildren === 'yes' && (
                   <div className="join-form-field" style={{marginBottom:"1rem"}}>
                     <label htmlFor="field-childrenAges" className="join-label">Ages of children<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
@@ -372,15 +425,14 @@ export default function RoadTripPage() {
                   <input ref={honeypotRef} type="text" name="cr_rt_field" tabIndex={-1} autoComplete="off" />
                 </div>
 
-                {/* Submit */}
                 <button type="submit" disabled={status === 'loading'}
                   className="btn-push join-submit-btn"
                   style={{display:"block",width:"100%",padding:"1.1rem",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",cursor:status==='loading'?'wait':'pointer',fontFamily:"var(--font-inter),sans-serif",marginBottom:"1rem"}}>
-                  {status === 'loading' ? 'Submitting...' : 'Register — $200 per car'}
+                  {status === 'loading' ? 'Submitting...' : 'Apply — $200 per car'}
                 </button>
                 {status === 'error' && <div style={{fontSize:"12px",color:"#7B2032",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
                 <p style={{fontSize:"10px",color:"#aaa",lineHeight:"1.8",textAlign:"center",marginTop:"0.5rem"}}>
-                  Your spot is held for 48 hours pending payment. Payment instructions will be sent to your email upon registration.
+                  Your spot is held for 48 hours pending payment. Full event details will be sent upon confirmation.
                 </p>
 
               </form>
