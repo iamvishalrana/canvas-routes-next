@@ -94,7 +94,7 @@ export default function RoutesPage() {
     const e = {}
     if (form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!form.phone.trim()) e.phone = true
+    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10) e.phone = true
     if (!form.year) e.year = true
     if (!form.carModel.trim()) e.carModel = true
     if (!form.passengers) e.passengers = true
@@ -308,7 +308,7 @@ export default function RoutesPage() {
                   <input id="field-phone" type="tel" placeholder="(514) 000-0000" value={form.phone}
                     onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
-                  {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid 10-digit number</span>}
                 </div>
 
                 {/* Year + Make & Model */}

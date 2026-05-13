@@ -214,6 +214,7 @@ export async function POST(request) {
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })
   if (carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
+  if (more && more.length > 500) return Response.json({ error: 'Message too long.' }, { status: 400 })
 
   // Check cap
   let regCount = null
@@ -253,6 +254,9 @@ export async function POST(request) {
   if (!customerEmail.ok) {
     const err = await customerEmail.text().catch(() => 'unknown')
     console.error('Customer email error:', err)
+    if (process.env.KV_REST_API_URL && regCount !== null) {
+      await kv.decr(ROADTRIP_KEY).catch(() => {})
+    }
     return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
   }
 
