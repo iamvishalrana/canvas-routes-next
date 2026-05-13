@@ -21,7 +21,7 @@ const INCLUDED = [
   { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
   { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
   { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
-  { title: 'Evening send-off', sub: 'After driving back to Montreal, we close out the day together — one last stop before everyone heads their separate ways.' },
+  { title: 'Send-off over drinks', sub: 'After driving back to Montreal, we close the day over coffee and cold drinks — a relaxed end to a day well driven.' },
 ]
 
 export default function RoutesPage() {
