@@ -268,7 +268,7 @@ export default function RoutesPage() {
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"1rem"}}>Application received.</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
               <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"420px",margin:"1.5rem auto 0"}}>
-                We&apos;ve received your registration. A confirmation email is on its way from <strong style={{color:"#1a1a1a",fontWeight:"500"}}>jerry@canvasroutes.com</strong> — add it to your contacts and keep an eye on your junk/spam folder so you don&apos;t miss it. Full event details will be sent upon confirmation.
+                We&apos;ve received your registration. A confirmation email is on its way from <strong style={{color:"#1a1a1a",fontWeight:"500"}}>info@canvasroutes.com</strong> or <strong style={{color:"#1a1a1a",fontWeight:"500"}}>jerry@canvasroutes.com</strong> — add both to your contacts and keep an eye on your junk/spam folder so you don&apos;t miss it. Full event details will be sent upon confirmation.
               </p>
             </div>
           )}
