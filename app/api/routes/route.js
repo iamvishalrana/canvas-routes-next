@@ -52,7 +52,7 @@ function customerHtml(firstName, payment) {
           </tr>
           <tr>
             <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
-              We&apos;ve received your registration for <strong>Into the Laurentians</strong> &mdash; Cars, Coffee &amp; Cruise. Your spot is held for 48 hours pending payment.
+              We&apos;ve received your registration for <strong>Into the Laurentians &mdash; First Route</strong>.
             </td>
           </tr>
           <tr>
@@ -107,7 +107,7 @@ function customerText(firstName, payment) {
     : `We'll send you a secure Stripe payment link within 24 hours.`
   return `You're registered, ${firstName}.
 
-We've received your registration for Into the Laurentians — Cars, Coffee & Cruise. Your spot is held for 48 hours pending payment.
+We've received your registration for Into the Laurentians — First Route.
 
 Payment — $200 per car
 ${paymentLine}
