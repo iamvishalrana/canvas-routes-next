@@ -17,7 +17,6 @@ function Chevron() {
 const INCLUDED = [
   'Little gifts from us for your car',
   'Premium breakfast in Montreal',
-  'Route photography',
   'Personal photography of your car on the route',
   'Cars, Coffee & Horology event on the way',
   'Lunch at an artisanal restaurant',
@@ -443,7 +442,7 @@ export default function RoutesPage() {
                 </button>
                 {status === 'error' && <div style={{fontSize:"12px",color:"#7B2032",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
                 <p style={{fontSize:"10px",color:"#aaa",lineHeight:"1.8",textAlign:"center",marginTop:"0.5rem"}}>
-                  Your spot is held for 48 hours pending payment. Full event details will be sent upon confirmation.
+                  Full event details will be sent upon confirmation.
                 </p>
 
               </form>
