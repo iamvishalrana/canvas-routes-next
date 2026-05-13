@@ -20,10 +20,9 @@ const INCLUDED = [
   { title: 'Cars, Coffee & Horology stop', sub: 'A curated midway stop — cars, espresso, and fine watches.' },
   { title: 'Personal photography of your car', sub: 'Your car captured on the route by our photographer.' },
   { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
-  { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — local food, great setting, earned after a morning on the backroads.' },
+  { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
   { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
   { title: 'Farewell drinks & send-off', sub: 'We close the day together before heading our separate ways.' },
-  { title: 'A curated group', sub: 'You\'ll be surrounded by like-minded people who take their cars seriously.' },
 ]
 
 export default function RoutesPage() {
@@ -200,6 +199,7 @@ export default function RoutesPage() {
             {/* Notes */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               {[
+                'A curated group — you\'ll be surrounded by like-minded people who take their cars seriously.',
                 'Driver-focused cars only — this route is built for cars that were made to be driven.',
                 'Convoy-style drive — we roll together as a group.',
                 'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.',
@@ -228,9 +228,7 @@ export default function RoutesPage() {
             <div style={{display:"flex",flexDirection:"column",gap:"0"}}>
               {INCLUDED.map((item, i) => (
                 <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"1.2rem",padding:"1rem 0",borderBottom:"0.5px solid rgba(0,0,0,0.07)"}}>
-                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"0.9rem",fontWeight:"300",color:"rgba(197,168,130,0.8)",flexShrink:0,marginTop:"2px",minWidth:"22px",letterSpacing:"0.05em"}}>
-                    {String(i + 1).padStart(2, '0')}
-                  </div>
+                  <div style={{width:"5px",height:"5px",background:"rgba(197,168,130,0.75)",flexShrink:0,marginTop:"6px"}} />
                   <div>
                     <div style={{fontSize:"0.875rem",color:"#1a1a1a",lineHeight:"1.5",letterSpacing:"0.01em",fontWeight:"500",marginBottom:"0.2rem"}}>{item.title}</div>
                     <div style={{fontSize:"0.8rem",color:"#888",lineHeight:"1.6"}}>{item.sub}</div>
