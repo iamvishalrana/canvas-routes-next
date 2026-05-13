@@ -212,6 +212,8 @@ export default function RoutesPage() {
             {/* Notes */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               {[
+                'Driver-focused cars only — this route is built for cars that were made to be driven.',
+                'Convoy-style drive — we roll together as a group.',
                 'Gas and $30 VIP parking on you.',
                 'Full details sent via email upon registration.',
                 'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.',
