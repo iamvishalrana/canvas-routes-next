@@ -273,25 +273,5 @@ export async function POST(request) {
     console.error(`ALERT: Notify email failed after retry — registration from: ${email}`)
   }
 
-  // Google Sheets webhook
-  if (process.env.SHEETS_WEBHOOK_URL) {
-    fetch(process.env.SHEETS_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        formType: 'Into the Laurentians',
-        name,
-        email,
-        phone: phone || '',
-        year: year || '',
-        carModel: carModel || '',
-        passengers: passengers || '',
-        children: hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No',
-        source,
-        more: more || '',
-      }),
-    }).catch(err => console.error('Sheets webhook error:', err))
-  }
-
   return Response.json({ success: true })
 }

@@ -245,23 +245,5 @@ export async function POST(request) {
     console.error(`ALERT: Notify email failed after retry — application from: ${email}`)
   }
 
-  if (process.env.SHEETS_WEBHOOK_URL) {
-    await fetch(process.env.SHEETS_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        formType: registerFor,
-        name,
-        email,
-        year: year || '',
-        carModel: carModel || '',
-        phone: phone || '',
-        instagram: instagram || '',
-        message: more || '',
-        source,
-      }),
-    }).catch(err => console.error('Sheets webhook error:', err))
-  }
-
   return Response.json({ success: true })
 }
