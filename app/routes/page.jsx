@@ -15,9 +15,9 @@ function Chevron() {
 }
 
 const INCLUDED = [
-  { title: 'Welcome gift for your car', sub: 'A curated keepsake from us, waiting for you at the start.' },
+  { title: 'Welcome gift for your car', sub: 'A handpicked keepsake from us, waiting for you at the start.' },
   { title: 'Premium breakfast in Montreal', sub: 'The best way to start a drive — a leisurely breakfast before the road opens up.' },
-  { title: 'Cars, Coffee & Horology stop', sub: 'A curated midway stop — cars, espresso, and fine watches.' },
+  { title: 'Cars, Coffee & Horology stop', sub: 'A handpicked midway stop — cars, espresso, and fine watches.' },
   { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
   { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
   { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
@@ -176,7 +176,7 @@ export default function RoutesPage() {
         </div>
         <div style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
         <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
-          A curated drive through the heart of Quebec&apos;s Laurentians. Hand-picked roads, good company, and a day you won&apos;t forget.
+          A drive through the heart of Quebec&apos;s Laurentians. Hand-picked roads, good company, and a day you won&apos;t forget.
         </p>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)"}} />
       </section>
@@ -249,7 +249,7 @@ export default function RoutesPage() {
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration opens tonight</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
               <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"380px",margin:"0 auto"}}>
-                Spots are limited and selection is curated. Registration opens at 7 PM Eastern — check back then to apply.
+                Spots are limited. Registration opens at 7 PM Eastern — check back then to apply.
               </p>
             </div>
           )}
