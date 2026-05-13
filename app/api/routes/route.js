@@ -266,7 +266,7 @@ export async function POST(request) {
       body: notifyBody,
     })
     if (notifyEmail.ok) { notifyOk = true; break }
-    const err = await notifyEmail.text()
+    const err = await notifyEmail.text().catch(() => 'unknown')
     console.error(`Notify email attempt ${attempt + 1} failed:`, err)
   }
   if (!notifyOk) {
@@ -275,7 +275,7 @@ export async function POST(request) {
 
   // Google Sheets webhook
   if (process.env.SHEETS_WEBHOOK_URL) {
-    await fetch(process.env.SHEETS_WEBHOOK_URL, {
+    fetch(process.env.SHEETS_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
