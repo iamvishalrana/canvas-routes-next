@@ -204,10 +204,10 @@ export default function RoutesPage() {
                 'Convoy-style drive — we roll together as a group.',
                 'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.',
                 'We drive in style, not speed. This is not a race.',
-                'Gas and $30 VIP parking on you.',
+                'Gas and $30 VIP parking available, at your cost.',
                 'Full details sent via email upon registration.',
                 'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.',
-                'All future road trips will be exclusive to members. This is your way in.',
+                'All future road trips will be exclusive to members. This is your way in — to be around like-minded people who take cars seriously.',
               ].map((note, i) => (
                 <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
                   <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"8px"}} />
