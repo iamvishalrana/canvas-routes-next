@@ -198,18 +198,20 @@ export default function RoutesPage() {
             {/* Notes */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               {[
-                'Personal photography of your car on the route by our photographer.',
-                'Driver-focused cars only — this route is built for cars that were made to be driven.',
-                'Convoy-style drive — we roll together as a group.',
-                'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.',
-                'We drive in style, not speed. This is not a race.',
-                'Gas and $30 VIP parking available, at your cost.',
-                'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.',
-                'All future road trips will be exclusive to members. This is your way in — to be around like-minded people who take cars seriously.',
+                { text: 'Personal photography of your car on the route by our photographer.' },
+                { text: 'Driver-focused cars only — this route is built for cars that were made to be driven.' },
+                { text: 'Convoy-style drive — we roll together as a group.' },
+                { text: 'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.' },
+                { text: 'We drive in style, not speed. This is not a race.' },
+                { text: 'Gas and $30 VIP parking available, at your cost.', grey: 'Free parking also available nearby.' },
+                { text: 'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.' },
+                { text: 'All future road trips will be exclusive to members. This is your way in — to be around like-minded people who take cars seriously.' },
               ].map((note, i) => (
                 <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
                   <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"8px"}} />
-                  <span style={{fontSize:"0.85rem",color:"#555",lineHeight:"1.7"}}>{note}</span>
+                  <span style={{fontSize:"0.85rem",color:"#555",lineHeight:"1.7"}}>
+                    {note.text}{note.grey && <span style={{color:"#aaa",marginLeft:"0.4rem"}}>{note.grey}</span>}
+                  </span>
                 </div>
               ))}
             </div>
@@ -430,7 +432,7 @@ export default function RoutesPage() {
                   {status === 'loading' ? 'Submitting...' : 'Apply — $200 per car'}
                 </button>
                 {status === 'error' && <div style={{fontSize:"12px",color:"#7B2032",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
-                <p style={{fontSize:"10px",color:"#aaa",lineHeight:"1.8",textAlign:"center",marginTop:"0.5rem"}}>
+                <p style={{fontSize:"13px",color:"#777",lineHeight:"1.8",textAlign:"center",marginTop:"0.75rem"}}>
                   Full event details will be sent upon confirmation.
                 </p>
 
