@@ -18,23 +18,32 @@ export default function Home() {
   const [routesOpen, setRoutesOpen] = useState(false)
   const [showPastModal, setShowPastModal] = useState(false)
   const [routesLaunched, setRoutesLaunched] = useState(false)
+  const [showRoutesPopup, setShowRoutesPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
   useEffect(() => {
     const LAUNCH = new Date('2026-05-13T23:00:00Z').getTime()
     const preview = new URLSearchParams(window.location.search).has('preview')
-    if (Date.now() >= LAUNCH || preview) { setRoutesLaunched(true); return }
+    if (Date.now() >= LAUNCH || preview) {
+      setRoutesLaunched(true)
+      const t = setTimeout(() => setShowRoutesPopup(true), 800)
+      return () => clearTimeout(t)
+    }
     const interval = setInterval(() => {
-      if (Date.now() >= LAUNCH) { setRoutesLaunched(true); clearInterval(interval) }
+      if (Date.now() >= LAUNCH) {
+        setRoutesLaunched(true)
+        setShowRoutesPopup(true)
+        clearInterval(interval)
+      }
     }, 1000)
     return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = showPastModal ? 'hidden' : ''
+    document.body.style.overflow = (showPastModal || showRoutesPopup) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [showPastModal])
+  }, [showPastModal, showRoutesPopup])
 
   useEffect(() => {
     try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
@@ -627,6 +636,51 @@ export default function Home() {
       </section>
 
 
+
+      {/* ROUTES REGISTRATION POPUP */}
+      <AnimatePresence>
+        {showRoutesPopup && (
+          <motion.div
+            initial={{opacity:0}}
+            animate={{opacity:1}}
+            exit={{opacity:0}}
+            transition={{duration:0.25}}
+            onClick={() => setShowRoutesPopup(false)}
+            style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.9)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
+          >
+            <motion.div
+              initial={{opacity:0,scale:0.93,y:24}}
+              animate={{opacity:1,scale:1,y:0}}
+              exit={{opacity:0,scale:0.95,y:10}}
+              transition={{duration:0.35,ease:[0.16,1,0.3,1]}}
+              onClick={e => e.stopPropagation()}
+              style={{background:"#0F1E14",maxWidth:"440px",width:"100%",position:"relative",overflow:"hidden",border:"1px solid rgba(197,168,130,0.4)",fontFamily:"var(--font-inter),sans-serif"}}
+            >
+              <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.8),transparent)"}} />
+              <button onClick={() => setShowRoutesPopup(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+              <div style={{padding:"2.4rem 2.2rem 2.2rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.26em",textTransform:"uppercase",color:"rgba(197,168,130,0.65)",marginBottom:"1rem"}}>Canvas Routes · 31 May 2026</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.4rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.5rem"}}>Into the Laurentians</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.4)",marginBottom:"1.6rem"}}>First Route — Mont-Tremblant, QC</div>
+                <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.6rem"}} />
+                <p style={{fontSize:"13px",color:"rgba(245,241,236,0.6)",lineHeight:"1.85",marginBottom:"2rem"}}>
+                  Registration is now open. Spots are limited and selection is curated — apply before they're gone.
+                </p>
+                <div style={{display:"flex",gap:"1rem",alignItems:"center",flexWrap:"wrap"}}>
+                  <Link href="/routes#form" onClick={() => setShowRoutesPopup(false)}
+                    style={{display:"inline-block",padding:"0.85rem 2rem",background:"rgba(197,168,130,0.12)",border:"1px solid rgba(197,168,130,0.55)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
+                    Register Now
+                  </Link>
+                  <button onClick={() => setShowRoutesPopup(false)}
+                    style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(245,241,236,0.3)",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif"}}>
+                    Maybe later
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* PAST EVENT MODAL */}
       <AnimatePresence>
