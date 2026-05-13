@@ -1,0 +1,18 @@
+import { createClient } from '../../../lib/supabase/server'
+import MembersNav from '../../../components/MembersNav'
+
+export default async function PortalLayout({ children }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
+  const isAdmin = user && adminEmails.includes(user.email)
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif' }}>
+      <MembersNav email={user?.email} isAdmin={isAdmin} />
+      <main style={{ maxWidth: '900px', margin: '0 auto', padding: '3rem 2rem 6rem' }}>
+        {children}
+      </main>
+    </div>
+  )
+}
