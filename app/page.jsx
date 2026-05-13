@@ -272,7 +272,7 @@ export default function Home() {
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
         <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="hero-logo" />
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem"}}></div>
-        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em"}}>Curated road trips. Memories for life.</div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em"}}>The Community. The Routes. The Canvas.</div>
         <div className="hero-buttons">
           <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>About Us</a>
