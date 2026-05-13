@@ -18,7 +18,7 @@ const INCLUDED = [
   'Little gifts from us for your car',
   'Premium breakfast in Montreal',
   'Route photography',
-  'Full media coverage',
+  'Personal photography of your car on the route',
   'Cars, Coffee & Horology event on the way',
   'Lunch at an artisanal restaurant',
   'Farewell drinks & see off in the evening',
@@ -216,7 +216,7 @@ export default function RoutesPage() {
               {[
                 'Gas and $30 VIP parking on you.',
                 'Full details sent via email upon registration.',
-                'This trip is a preview of what Canvas Routes membership is — consider it your first taste.',
+                'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.',
                 'All future road trips will be exclusive to members. This is your way in.',
               ].map((note, i) => (
                 <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
