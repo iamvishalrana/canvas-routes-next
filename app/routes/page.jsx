@@ -16,11 +16,12 @@ function Chevron() {
 
 const INCLUDED = [
   { title: 'Welcome gift for your car', sub: 'A curated keepsake from us, waiting for you at the start.' },
-  { title: 'Premium breakfast in Montreal', sub: 'A proper sit-down to kick the day off right before we roll out.' },
+  { title: 'Premium breakfast in Montreal', sub: 'The best way to start a drive — a leisurely breakfast before the road opens up.' },
   { title: 'Cars, Coffee & Horology stop', sub: 'A curated midway stop — cars, espresso, and fine watches.' },
   { title: 'Personal photography of your car', sub: 'Your car captured on the route by our photographer.' },
   { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
-  { title: 'Artisanal lunch in the Laurentians', sub: 'A proper sit-down meal at a carefully chosen restaurant.' },
+  { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — local food, great setting, earned after a morning on the backroads.' },
+  { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
   { title: 'Farewell drinks & send-off', sub: 'We close the day together before heading our separate ways.' },
   { title: 'A curated group', sub: 'You\'ll be surrounded by like-minded people who take their cars seriously.' },
 ]
