@@ -216,10 +216,6 @@ export default function RoutesPage() {
               ))}
             </div>
 
-            <div style={{marginTop:"1.8rem",paddingTop:"1.5rem",borderTop:"0.5px solid rgba(0,0,0,0.1)"}}>
-              <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited.</div>
-              <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B2032"}}>Selection is curated.</div>
-            </div>
           </div>
 
           {/* WHAT'S INCLUDED */}
@@ -236,6 +232,10 @@ export default function RoutesPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div style={{gridColumn:"1 / -1",textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+            <div style={{fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited &nbsp;·&nbsp; Selection is curated.</div>
           </div>
 
         </div>
@@ -284,7 +284,6 @@ export default function RoutesPage() {
           {showForm && (
             <>
               <div style={{textAlign:"center",marginBottom:"3.5rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"0.75rem"}}>Spots are limited · Selection is curated</div>
                 <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.4rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem"}}>Apply for your spot</div>
                 <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto 0"}} />
               </div>
