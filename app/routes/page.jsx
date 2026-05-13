@@ -183,7 +183,8 @@ export default function RoutesPage() {
 
       {/* DETAILS — What's Included + Pricing */}
       <section style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
-        <div style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"stretch"}}>
+        <style>{`@media(max-width:680px){.details-grid{grid-template-columns:1fr !important;gap:3rem !important}}`}</style>
+        <div className="details-grid" style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"stretch"}}>
 
           {/* PRICING + NOTES */}
           <div>
