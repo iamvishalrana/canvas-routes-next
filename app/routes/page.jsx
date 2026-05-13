@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { User, Mail, Phone, Car, Users, Share2, Check } from 'lucide-react'
+import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 
 const ROUTES_LAUNCH = new Date('2026-05-13T23:00:00Z').getTime() // 7 PM EDT
 
@@ -186,24 +186,6 @@ export default function RoutesPage() {
       <section style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
         <div style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"start"}}>
 
-          {/* WHAT'S INCLUDED */}
-          <div>
-            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>What&apos;s included</div>
-            <div style={{display:"flex",flexDirection:"column",gap:"0"}}>
-              {INCLUDED.map((item, i) => (
-                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"1rem",padding:"1rem 0",borderBottom:"0.5px solid rgba(0,0,0,0.07)"}}>
-                  <div style={{width:"20px",height:"20px",border:"0.5px solid rgba(197,168,130,0.6)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"2px"}}>
-                    <Check size={10} color="#c5a882" strokeWidth={2} />
-                  </div>
-                  <div>
-                    <div style={{fontSize:"0.875rem",color:"#1a1a1a",lineHeight:"1.5",letterSpacing:"0.01em",fontWeight:"500",marginBottom:"0.2rem"}}>{item.title}</div>
-                    <div style={{fontSize:"0.8rem",color:"#888",lineHeight:"1.6"}}>{item.sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* PRICING + NOTES */}
           <div>
             <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>Pricing &amp; details</div>
@@ -236,6 +218,24 @@ export default function RoutesPage() {
             <div style={{marginTop:"1.8rem",paddingTop:"1.5rem",borderTop:"0.5px solid rgba(0,0,0,0.1)"}}>
               <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited.</div>
               <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B2032"}}>Selection is curated.</div>
+            </div>
+          </div>
+
+          {/* WHAT'S INCLUDED */}
+          <div>
+            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>What&apos;s included</div>
+            <div style={{display:"flex",flexDirection:"column",gap:"0"}}>
+              {INCLUDED.map((item, i) => (
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"1.2rem",padding:"1rem 0",borderBottom:"0.5px solid rgba(0,0,0,0.07)"}}>
+                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"0.9rem",fontWeight:"300",color:"rgba(197,168,130,0.8)",flexShrink:0,marginTop:"2px",minWidth:"22px",letterSpacing:"0.05em"}}>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+                  <div>
+                    <div style={{fontSize:"0.875rem",color:"#1a1a1a",lineHeight:"1.5",letterSpacing:"0.01em",fontWeight:"500",marginBottom:"0.2rem"}}>{item.title}</div>
+                    <div style={{fontSize:"0.8rem",color:"#888",lineHeight:"1.6"}}>{item.sub}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
