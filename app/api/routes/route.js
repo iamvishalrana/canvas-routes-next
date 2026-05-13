@@ -13,11 +13,7 @@ function h(str) {
     .replace(/'/g, '&#39;')
 }
 
-function customerHtml(firstName, payment) {
-  const paymentBlock = payment === 'E-transfer'
-    ? `Send <strong>$200</strong> via e-transfer to <a href="mailto:info@canvasroutes.com" style="color:#1a1a1a;">info@canvasroutes.com</a> with your name and car in the message.`
-    : `We'll send you a secure Stripe payment link within 24 hours.`
-
+function customerHtml(firstName) {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -61,7 +57,7 @@ function customerHtml(firstName, payment) {
                 <tr>
                   <td style="padding:20px 24px;background-color:#ffffff;">
                     <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888888;margin-bottom:10px;">Payment — $200 per car</div>
-                    <div style="font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.7;color:#1a1a1a;">${paymentBlock}</div>
+                    <div style="font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.7;color:#1a1a1a;">We&apos;ll be in touch with payment details shortly.</div>
                   </td>
                 </tr>
               </table>
@@ -101,16 +97,13 @@ function customerHtml(firstName, payment) {
 </html>`
 }
 
-function customerText(firstName, payment) {
-  const paymentLine = payment === 'E-transfer'
-    ? `Send $200 via e-transfer to info@canvasroutes.com — include your name and car in the message.`
-    : `We'll send you a secure Stripe payment link within 24 hours.`
+function customerText(firstName) {
   return `You're registered, ${firstName}.
 
 We've received your registration for Into the Laurentians — First Route.
 
 Payment — $200 per car
-${paymentLine}
+We'll be in touch with payment details shortly.
 
 Once payment is received, we'll confirm your spot and send event details closer to the date.
 
@@ -119,7 +112,7 @@ Follow us on Instagram: https://www.instagram.com/canvasroutes
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, payment }) {
+function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }) {
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -151,7 +144,6 @@ function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, 
                 ${row('Children', childrenDisplay)}
                 ${row('How they heard', h(source))}
                 ${row('Tell us more', more ? h(more) : '')}
-                ${row('Payment preference', h(payment))}
               </table>
             </td>
           </tr>
@@ -190,7 +182,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, payment, _hp } = body
+  const { name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !phone?.trim() || !year?.trim() || !carModel?.trim()) {
@@ -207,9 +199,6 @@ export async function POST(request) {
   }
   if (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other'].includes(source)) {
     return Response.json({ error: 'Please select how you heard about us.' }, { status: 400 })
-  }
-  if (!payment || !['E-transfer','Stripe'].includes(payment)) {
-    return Response.json({ error: 'Please select a payment preference.' }, { status: 400 })
   }
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })
@@ -246,8 +235,8 @@ export async function POST(request) {
       to: email,
       reply_to: 'info@canvasroutes.com',
       subject: 'Registration received — Into the Laurentians',
-      html: customerHtml(firstName, payment),
-      text: customerText(rawFirstName, payment),
+      html: customerHtml(firstName),
+      text: customerText(rawFirstName),
     }),
   })
 
@@ -265,8 +254,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `Laurentians Registration${regCount ? ` #${regCount}` : ''} — ${year} ${carModel} — ${name.trim()}`,
-    html: notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, payment }),
-    text: `Laurentians Registration${regCount ? ` #${regCount}` : ''}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}\nPayment: ${payment}`,
+    html: notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }),
+    text: `Laurentians Registration${regCount ? ` #${regCount}` : ''}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}`,
   })
 
   let notifyOk = false
@@ -300,7 +289,6 @@ export async function POST(request) {
         children: hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No',
         source,
         more: more || '',
-        payment,
       }),
     }).catch(err => console.error('Sheets webhook error:', err))
   }

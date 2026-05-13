@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { User, Mail, Phone, Car, Users, Share2, CreditCard, Check } from 'lucide-react'
+import { User, Mail, Phone, Car, Users, Share2, Check } from 'lucide-react'
 
 const ROUTES_LAUNCH = new Date('2026-05-13T23:00:00Z').getTime() // 7 PM EDT
 
@@ -27,7 +27,7 @@ export default function RoutesPage() {
   const [launched, setLaunched] = useState(false)
   const [soldOut, setSoldOut] = useState(false)
   const [checking, setChecking] = useState(true)
-  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'', payment:'' })
+  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
@@ -101,7 +101,6 @@ export default function RoutesPage() {
     if (!form.hasChildren) e.hasChildren = true
     if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
     if (!form.source) e.source = true
-    if (!form.payment) e.payment = true
     setErrors(e)
     return e
   }
@@ -110,7 +109,7 @@ export default function RoutesPage() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
-      const order = ['name','email','phone','year','carModel','passengers','hasChildren','childrenAges','source','payment']
+      const order = ['name','email','phone','year','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) {
         const el = document.getElementById(`field-${first}`)
@@ -409,25 +408,10 @@ export default function RoutesPage() {
                   <div style={{textAlign:"right",fontSize:"10px",color:"#aaa",marginTop:"0.3rem"}}>{form.more.length}/500</div>
                 </div>
 
-                {/* Payment preference */}
-                <div className="join-form-field" style={{marginBottom:"2.5rem"}}>
-                  <div id="field-payment" className="join-label" style={{marginBottom:"0.75rem"}}>Payment preference<CreditCard size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
-                  <div className="join-form-row">
-                    {[
-                      {value:'E-transfer', sub:'Details sent upon confirmation'},
-                      {value:'Stripe', sub:'Secure card payment link'},
-                    ].map(opt => {
-                      const selected = form.payment === opt.value
-                      return (
-                        <button key={opt.value} type="button" onClick={() => updateForm('payment', opt.value)}
-                          style={{padding:"1rem 1.2rem",border:`1px solid ${selected?'#3B6B2F':errors.payment?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.payment?'rgba(123,32,50,0.03)':'transparent',textAlign:"left",cursor:"pointer",transition:"all 0.2s",fontFamily:"var(--font-inter),sans-serif"}}>
-                          <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:selected?'#3B6B2F':'#1a1a1a',marginBottom:"0.3rem",fontWeight:selected?"500":"400"}}>{opt.value}</div>
-                          <div style={{fontSize:"11px",color:"#888"}}>{opt.sub}</div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {errors.payment && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                {/* Payment note */}
+                <div style={{marginBottom:"2.5rem",padding:"1rem 1.2rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"rgba(197,168,130,0.06)"}}>
+                  <div style={{fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#7B5B2E",marginBottom:"0.4rem"}}>Payment — $200 per car</div>
+                  <div style={{fontSize:"13px",color:"#555",lineHeight:"1.7"}}>Payment details will be sent in your confirmation email.</div>
                 </div>
 
                 {/* Honeypot */}
