@@ -1,0 +1,401 @@
+'use client'
+import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { User, Mail, Phone, Car, Users, Share2, CreditCard } from 'lucide-react'
+
+const ROADTRIP_LAUNCH = new Date('2026-05-13T23:00:00Z').getTime() // 7 PM EDT
+
+function Chevron() {
+  return (
+    <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  )
+}
+
+export default function RoadTripPage() {
+  const [launched, setLaunched] = useState(false)
+  const [soldOut, setSoldOut] = useState(false)
+  const [checking, setChecking] = useState(true)
+  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', payment:'' })
+  const [errors, setErrors] = useState({})
+  const [status, setStatus] = useState(null)
+  const [serverError, setServerError] = useState(null)
+  const [focusedField, setFocusedField] = useState(null)
+  const honeypotRef = useRef(null)
+
+  useEffect(() => {
+    const preview = new URLSearchParams(window.location.search).has('preview')
+    if (Date.now() >= ROADTRIP_LAUNCH || preview) {
+      setLaunched(true)
+    } else {
+      const interval = setInterval(() => {
+        if (Date.now() >= ROADTRIP_LAUNCH) { setLaunched(true); clearInterval(interval) }
+      }, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/roadtrip')
+      .then(r => r.json())
+      .then(d => { if (d.soldOut) setSoldOut(true) })
+      .catch(() => {})
+      .finally(() => setChecking(false))
+  }, [])
+
+  function updateForm(field, value) {
+    setForm(prev => ({ ...prev, [field]: value }))
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }))
+    if (serverError) setServerError(null)
+  }
+
+  function formatPhone(v) {
+    const d = v.replace(/\D/g,'').slice(0,10)
+    if (d.length <= 3) return d
+    if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`
+    return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+  }
+
+  function inputStyle(field) {
+    const isFocused = focusedField === field
+    const hasError = !!errors[field]
+    const hasValue = !!form[field]
+    let border, background, boxShadow
+    if (hasError) {
+      border = '1px solid #7B2032'; background = 'rgba(123,32,50,0.04)'; boxShadow = 'none'
+    } else if (hasValue) {
+      border = '1px solid #3B6B2F'; background = 'rgba(59,107,47,0.05)'; boxShadow = 'none'
+    } else if (isFocused) {
+      border = '1px solid #c5a882'; background = 'transparent'; boxShadow = '0 0 0 3px rgba(197,168,130,0.2)'
+    } else {
+      border = '1px solid rgba(0,0,0,0.2)'; background = 'transparent'; boxShadow = 'none'
+    }
+    return {
+      width:'100%', padding:'0.9rem 1.2rem',
+      border, background, boxShadow,
+      fontSize:'13px', fontFamily:"var(--font-inter),sans-serif", outline:'none', color:'#1a1a1a',
+      transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s',
+      WebkitAppearance:'none', MozAppearance:'none', appearance:'none',
+    }
+  }
+
+  function validate() {
+    const e = {}
+    if (form.name.trim().length < 2) e.name = true
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+    if (!form.phone.trim()) e.phone = true
+    if (!form.year) e.year = true
+    if (!form.carModel.trim()) e.carModel = true
+    if (!form.passengers) e.passengers = true
+    if (!form.hasChildren) e.hasChildren = true
+    if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
+    if (!form.source) e.source = true
+    if (!form.payment) e.payment = true
+    setErrors(e)
+    return e
+  }
+
+  async function handleSubmit() {
+    if (status === 'loading') return
+    const errs = validate()
+    if (Object.keys(errs).length > 0) {
+      const order = ['name','email','phone','year','carModel','passengers','hasChildren','childrenAges','source','payment']
+      const first = order.find(f => errs[f])
+      if (first) {
+        const el = document.getElementById(`field-${first}`)
+        if (el) el.scrollIntoView({ behavior:'smooth', block:'center' })
+      }
+      return
+    }
+    setStatus('loading')
+    setServerError(null)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30000)
+    try {
+      const res = await fetch('/api/roadtrip', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeout)
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setStatus('success')
+      } else if (data.soldOut) {
+        setSoldOut(true); setStatus(null)
+      } else {
+        setServerError(data.error || 'Something went wrong. Please try again.')
+        setStatus('error')
+      }
+    } catch {
+      clearTimeout(timeout)
+      setServerError('Something went wrong. Please try again.')
+      setStatus('error')
+    }
+  }
+
+  const showForm = launched && !soldOut && !checking && status !== 'success'
+
+  return (
+    <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",minHeight:"100vh"}}>
+
+      {/* NAV */}
+      <nav className="nav">
+        <Link href="/">
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
+        </Link>
+        <div className="nav-links">
+          <Link href="/" style={{color:"#555",textDecoration:"none"}}>Home</Link>
+          <Link href="/#events" style={{color:"#555",textDecoration:"none"}}>Events</Link>
+          <Link href="/#contact" style={{color:"#555",textDecoration:"none"}}>Contact</Link>
+        </div>
+        <Link href="/#join" className="nav-join">Join</Link>
+      </nav>
+
+      {/* HERO */}
+      <section style={{background:"#0F1E14",paddingTop:"clamp(140px,18vw,210px)",paddingBottom:"5rem",padding:"clamp(140px,18vw,210px) 3rem 5rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
+        <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · May 2026</div>
+        <h1 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
+          Grand Prix Weekend
+        </h1>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.1rem,2.5vw,1.5rem)",fontStyle:"italic",color:"rgba(245,241,236,0.45)",marginBottom:"2.5rem"}}>
+          Cars, Coffee &amp; Cruise
+        </div>
+        <div style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
+        <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto 3rem",lineHeight:"1.9",letterSpacing:"0.02em"}}>
+          A morning meet over coffee, followed by a curated cruise through the heart of the city. The perfect send-off to race weekend in Montreal.
+        </p>
+
+        {/* PRICING BLOCK */}
+        <div style={{display:"inline-flex",flexDirection:"column",alignItems:"center",border:"1px solid rgba(197,168,130,0.35)",padding:"1.8rem 3rem",background:"rgba(197,168,130,0.05)",position:"relative"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
+          <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"0.75rem"}}>Registration</div>
+          <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1",marginBottom:"0.5rem"}}>$200</div>
+          <div style={{fontSize:"10px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(197,168,130,0.55)"}}>per car · 2 people included</div>
+        </div>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)"}} />
+      </section>
+
+      {/* FORM SECTION */}
+      <section style={{padding:"6rem 2rem 8rem"}}>
+        <div style={{maxWidth:"560px",margin:"0 auto"}}>
+
+          {/* PRE-LAUNCH */}
+          {!launched && (
+            <div style={{textAlign:"center",padding:"5rem 0"}}>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration opens tonight</div>
+              <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
+              <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"380px",margin:"0 auto"}}>
+                Spots are limited to 15 cars. Registration opens at 7 PM Eastern — check back then to secure yours.
+              </p>
+            </div>
+          )}
+
+          {/* SOLD OUT */}
+          {launched && soldOut && (
+            <div style={{textAlign:"center",padding:"5rem 0"}}>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Sold Out</div>
+              <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
+              <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"380px",margin:"1.5rem auto 0"}}>
+                All 15 spots have been claimed. Follow us on{' '}
+                <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#7B2032",textDecoration:"none"}}>Instagram</a>
+                {' '}to be the first to hear about future events.
+              </p>
+            </div>
+          )}
+
+          {/* SUCCESS */}
+          {launched && !soldOut && status === 'success' && (
+            <div style={{textAlign:"center",padding:"5rem 0"}}>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"1rem"}}>You&apos;re registered.</div>
+              <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
+              <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"420px",margin:"1.5rem auto 0"}}>
+                We&apos;ve received your registration and a confirmation email is on its way. Check your spam folder if you don&apos;t see it. Payment instructions are included — your spot is held for 48 hours pending payment.
+              </p>
+            </div>
+          )}
+
+          {/* FORM */}
+          {showForm && (
+            <>
+              <div style={{textAlign:"center",marginBottom:"3.5rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"0.75rem"}}>Limited to 15 cars</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.4rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem"}}>Reserve your spot</div>
+                <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto 0"}} />
+              </div>
+
+              <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
+
+                {/* Name + Email */}
+                <div className="join-form-row" style={{marginBottom:"1rem"}}>
+                  <div className="join-form-field">
+                    <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <input id="field-name" type="text" placeholder="Your full name" value={form.name} maxLength={100}
+                      onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')}
+                      onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
+                    {errors.name && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  </div>
+                  <div className="join-form-field">
+                    <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <input id="field-email" type="email" placeholder="Your email" value={form.email}
+                      onChange={e => updateForm('email', e.target.value)} style={inputStyle('email')}
+                      onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} />
+                    {errors.email && <span style={{fontSize:"11px",color:"#7B2032"}}>Valid email required</span>}
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <label htmlFor="field-phone" className="join-label">Phone number<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <input id="field-phone" type="tel" placeholder="(514) 000-0000" value={form.phone}
+                    onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
+                    onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
+                  {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                </div>
+
+                {/* Year + Make & Model */}
+                <div className="join-form-row" style={{marginBottom:"1rem"}}>
+                  <div className="join-form-field">
+                    <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <div style={{position:"relative"}}>
+                      <select id="field-year" value={form.year} onChange={e => updateForm('year', e.target.value)}
+                        style={{...inputStyle('year'), cursor:"pointer", paddingRight:"2rem"}}>
+                        <option value="">Select year</option>
+                        {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y=>(
+                          <option key={y} value={String(y)}>{y}</option>
+                        ))}
+                      </select>
+                      <Chevron />
+                    </div>
+                    {errors.year && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  </div>
+                  <div className="join-form-field">
+                    <label htmlFor="field-carModel" className="join-label">Make &amp; Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <input id="field-carModel" type="text" placeholder="e.g. Porsche 911" value={form.carModel} maxLength={100}
+                      onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
+                      onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
+                    {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  </div>
+                </div>
+
+                {/* Passengers */}
+                <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <label htmlFor="field-passengers" className="join-label">Number of passengers<Users size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <div style={{position:"relative"}}>
+                    <select id="field-passengers" value={form.passengers} onChange={e => updateForm('passengers', e.target.value)}
+                      style={{...inputStyle('passengers'), cursor:"pointer", paddingRight:"2rem"}}>
+                      <option value="">Select</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4+">4+</option>
+                    </select>
+                    <Chevron />
+                  </div>
+                  {errors.passengers && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                </div>
+
+                {/* Children — Yes / No */}
+                <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <div id="field-hasChildren" className="join-label" style={{marginBottom:"0.75rem"}}>Any children attending?<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
+                  <div style={{display:"flex",gap:"1rem"}}>
+                    {['Yes','No'].map(v => {
+                      const val = v.toLowerCase()
+                      const selected = form.hasChildren === val
+                      return (
+                        <button key={v} type="button" onClick={() => updateForm('hasChildren', val)}
+                          style={{flex:1,padding:"0.9rem",border:`1px solid ${selected?'#3B6B2F':errors.hasChildren?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.hasChildren?'rgba(123,32,50,0.03)':'transparent',cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",fontSize:"13px",color:selected?'#3B6B2F':'#1a1a1a',transition:"all 0.2s",letterSpacing:"0.04em"}}>
+                          {v}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {errors.hasChildren && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                </div>
+
+                {/* Children ages — conditional */}
+                {form.hasChildren === 'yes' && (
+                  <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                    <label htmlFor="field-childrenAges" className="join-label">Ages of children<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <input id="field-childrenAges" type="text" placeholder="e.g. 4, 7, 12" value={form.childrenAges} maxLength={100}
+                      onChange={e => updateForm('childrenAges', e.target.value)} style={inputStyle('childrenAges')}
+                      onFocus={() => setFocusedField('childrenAges')} onBlur={() => setFocusedField(null)} />
+                    {errors.childrenAges && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter the ages</span>}
+                  </div>
+                )}
+
+                {/* Source */}
+                <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <div style={{position:"relative"}}>
+                    <select id="field-source" value={form.source} onChange={e => updateForm('source', e.target.value)}
+                      style={{...inputStyle('source'), cursor:"pointer", paddingRight:"2rem"}}>
+                      <option value="">Select an option</option>
+                      <option value="Instagram">Instagram</option>
+                      <option value="Facebook">Facebook</option>
+                      <option value="Friend / Word of mouth">Friend / Word of mouth</option>
+                      <option value="Google">Google</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <Chevron />
+                  </div>
+                  {errors.source && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                </div>
+
+                {/* Payment preference */}
+                <div className="join-form-field" style={{marginBottom:"2.5rem"}}>
+                  <div id="field-payment" className="join-label" style={{marginBottom:"0.75rem"}}>Payment preference<CreditCard size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
+                  <div className="join-form-row">
+                    {[
+                      {value:'E-transfer', sub:'Send to info@canvasroutes.com'},
+                      {value:'Stripe', sub:'Secure card payment link'},
+                    ].map(opt => {
+                      const selected = form.payment === opt.value
+                      return (
+                        <button key={opt.value} type="button" onClick={() => updateForm('payment', opt.value)}
+                          style={{padding:"1rem 1.2rem",border:`1px solid ${selected?'#3B6B2F':errors.payment?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.payment?'rgba(123,32,50,0.03)':'transparent',textAlign:"left",cursor:"pointer",transition:"all 0.2s",fontFamily:"var(--font-inter),sans-serif"}}>
+                          <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:selected?'#3B6B2F':'#1a1a1a',marginBottom:"0.3rem",fontWeight:selected?"500":"400"}}>{opt.value}</div>
+                          <div style={{fontSize:"11px",color:"#888"}}>{opt.sub}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {errors.payment && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                </div>
+
+                {/* Honeypot */}
+                <div style={{position:'absolute',left:'-9999px',width:1,height:1,overflow:'hidden'}} aria-hidden="true">
+                  <input ref={honeypotRef} type="text" name="cr_rt_field" tabIndex={-1} autoComplete="off" />
+                </div>
+
+                {/* Submit */}
+                <button type="submit" disabled={status === 'loading'}
+                  className="btn-push join-submit-btn"
+                  style={{display:"block",width:"100%",padding:"1.1rem",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",cursor:status==='loading'?'wait':'pointer',fontFamily:"var(--font-inter),sans-serif",marginBottom:"1rem"}}>
+                  {status === 'loading' ? 'Submitting...' : 'Register — $200 per car'}
+                </button>
+                {status === 'error' && <div style={{fontSize:"12px",color:"#7B2032",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
+                <p style={{fontSize:"10px",color:"#aaa",lineHeight:"1.8",textAlign:"center",marginTop:"0.5rem"}}>
+                  Your spot is held for 48 hours pending payment. Payment instructions will be sent to your email upon registration.
+                </p>
+
+              </form>
+            </>
+          )}
+
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{borderTop:"0.5px solid rgba(0,0,0,0.12)",padding:"2rem 3rem",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"1rem",background:"#F5F1EC"}}>
+        <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
+        <Link href="/" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#888",textDecoration:"none"}}>← Back to home</Link>
+      </footer>
+
+    </div>
+  )
+}
