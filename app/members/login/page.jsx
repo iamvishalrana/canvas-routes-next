@@ -4,8 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '../../../lib/supabase/client'
-
 export default function LoginPage() {
   const router = useRouter()
   const [mode, setMode] = useState('login') // 'login' | 'forgot'
@@ -14,8 +12,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [resetSent, setResetSent] = useState(false)
-
-  const supabase = createClient()
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -40,11 +36,14 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/members/reset-password`,
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
+    const data = await res.json()
     setLoading(false)
-    if (error) {
+    if (!res.ok) {
       setError('Could not send reset email. Please check the address and try again.')
     } else {
       setResetSent(true)
