@@ -700,14 +700,173 @@ function EventsTab() {
   )
 }
 
+// ─── Applications Tab ────────────────────────────────────────────────────────
+
+function ApplicationsTab() {
+  const [apps, setApps] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [inviting, setInviting] = useState(null) // id of app being invited
+  const [inviteStatus, setInviteStatus] = useState({}) // { [id]: 'success' | 'error' | msg }
+  const [expanded, setExpanded] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/admin/applications')
+      .then(r => r.json())
+      .then(data => { setApps(Array.isArray(data) ? data : []); setLoading(false) })
+  }, [])
+
+  async function sendInvite(app) {
+    setInviting(app.id)
+    const payload = {
+      name: app.name,
+      email: app.email,
+      membership_status: 'pending',
+      dob_month: app.dob_month || null,
+      dob_day: app.dob_day || null,
+      dob_year: app.dob_year || null,
+      phone: app.phone || null,
+      instagram: app.instagram || null,
+      cars: (app.car_year || app.car_model)
+        ? [{ year: app.car_year || '', make: '', model: app.car_model || '', license_plate: '' }]
+        : undefined,
+    }
+    const res = await fetch('/api/admin/members', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    })
+    const data = await res.json()
+    setInviting(null)
+    if (res.ok) {
+      setApps(prev => prev.map(a => a.id === app.id ? { ...a, is_member: true } : a))
+      setInviteStatus(p => ({ ...p, [app.id]: 'success' }))
+    } else {
+      setInviteStatus(p => ({ ...p, [app.id]: data.error || 'Failed.' }))
+    }
+  }
+
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+  const filtered = apps.filter(a =>
+    !search || [a.name, a.email, a.car_year, a.car_model, a.source].some(v => v?.toLowerCase().includes(search.toLowerCase()))
+  )
+  const totalInvited = apps.filter(a => a.is_member).length
+
+  return (
+    <div>
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+        {[
+          { label: 'Total Applications', value: apps.length, color: '#1a1a1a' },
+          { label: 'Invited', value: totalInvited, color: '#3B6B2F' },
+          { label: 'Pending Review', value: apps.length - totalInvited, color: '#8A6535' },
+        ].map(s => (
+          <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
+            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
+          {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
+        </div>
+        <input style={{ ...inp, width: '240px' }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
+      {loading ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No applications yet.</div>
+      ) : (
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+          {/* Header */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+            {['Name', 'Email', 'Car', 'DOB', 'Date', ''].map((h, i) => (
+              <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+            ))}
+          </div>
+
+          {filtered.map((a, idx) => (
+            <div key={a.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+              {/* Main row */}
+              <div
+                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', transition: 'background 0.15s' }}
+                onClick={() => setExpanded(expanded === a.id ? null : a.id)}
+              >
+                <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{a.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>{a.email}</div>
+                <div style={{ fontSize: '12px', color: '#888' }}>
+                  {[a.car_year, a.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                </div>
+                <div style={{ fontSize: '12px', color: '#888' }}>
+                  {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
+                </div>
+                <div style={{ fontSize: '11px', color: '#bbb' }}>
+                  {new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                </div>
+                <div onClick={e => e.stopPropagation()}>
+                  {a.is_member || inviteStatus[a.id] === 'success' ? (
+                    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
+                  ) : (
+                    <div>
+                      <PrimaryBtn onClick={() => sendInvite(a)} disabled={inviting === a.id}>
+                        {inviting === a.id ? '…' : 'Invite'}
+                      </PrimaryBtn>
+                      {inviteStatus[a.id] && inviteStatus[a.id] !== 'success' && (
+                        <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.3rem' }}>{inviteStatus[a.id]}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Expanded details */}
+              {expanded === a.id && (
+                <div style={{ padding: '0.75rem 1.25rem 1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+                    {[
+                      ['Phone', a.phone],
+                      ['Instagram', a.instagram ? `@${a.instagram}` : null],
+                      ['Source', a.source],
+                      ['Year applied', new Date(a.created_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })],
+                    ].map(([label, val]) => val ? (
+                      <div key={label}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>{label}</div>
+                        <div style={{ fontSize: '13px', color: '#555' }}>{val}</div>
+                      </div>
+                    ) : null)}
+                    {a.more && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Tell us more</div>
+                        <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.65' }}>{a.more}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-const TABS = ['Members', 'Announcements', 'Events']
+const TABS = ['Members', 'Applications', 'Announcements', 'Events']
 const TAB_ICONS = {
   Members: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  ),
+  Applications: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
     </svg>
   ),
   Announcements: (
@@ -776,6 +935,7 @@ export default function AdminPage() {
           </div>
 
           {tab === 'Members' && <MembersTab />}
+          {tab === 'Applications' && <ApplicationsTab />}
           {tab === 'Announcements' && <AnnouncementsTab />}
           {tab === 'Events' && <EventsTab />}
 
