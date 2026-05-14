@@ -25,7 +25,7 @@ export async function POST(request) {
   const memberData = {
     id: invited.user.id,
     name: name || null,
-    email,
+    email: email.toLowerCase().trim(),
     membership_status,
     ...(dob_month != null && { dob_month }),
     ...(dob_day != null && { dob_day }),

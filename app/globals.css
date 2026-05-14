@@ -368,6 +368,8 @@ section[id] {
   scroll-margin-top: 220px;
 }
 
+.dashboard-grid { grid-template-columns: 1fr 1fr; }
+
 @media (max-width: 768px) {
   .nav { padding: 0.75rem 1.2rem; }
   .nav-logo { height: 85px; }
@@ -411,4 +413,6 @@ section[id] {
   .meets-cards-grid { grid-template-columns: 1fr; }
 
   section[id] { scroll-margin-top: 120px; }
+
+  .dashboard-grid { grid-template-columns: 1fr; }
 }

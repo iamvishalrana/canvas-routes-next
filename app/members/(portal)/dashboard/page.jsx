@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const [{ data: member }, { data: announcements }, { data: events }] = await Promise.all([
-    supabase.from('members').select('*').eq('id', user.id).single(),
+    supabase.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
     supabase.from('events').select('*').order('created_at', { ascending: false }).limit(6),
   ])
@@ -33,15 +33,20 @@ export default async function DashboardPage() {
           <span style={{ display: 'inline-block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0.3rem 0.9rem', border: `0.5px solid ${statusStyle.border}`, background: statusStyle.bg, color: statusStyle.text }}>
             {status}
           </span>
-          {(member?.car_year || member?.car_make || member?.car_model) && (
-            <span style={{ fontSize: '13px', color: '#555', letterSpacing: '0.02em' }}>
-              {[member.car_year, member.car_make, member.car_model].filter(Boolean).join(' ')}
+          {(member?.cars?.length
+            ? member.cars
+            : (member?.car_year || member?.car_make || member?.car_model)
+              ? [{ year: member.car_year, make: member.car_make, model: member.car_model }]
+              : []
+          ).map((car, i) => (
+            <span key={i} style={{ fontSize: '13px', color: '#555', letterSpacing: '0.02em' }}>
+              {[car.year, car.make, car.model].filter(Boolean).join(' ')}
             </span>
-          )}
+          ))}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }}>
+      <div className="dashboard-grid" style={{ display: 'grid', gap: '3rem', alignItems: 'start' }}>
 
         {/* Announcements */}
         <div>
