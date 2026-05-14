@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '../../../lib/supabase/client'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -14,8 +13,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
   const [accessToken, setAccessToken] = useState(null)
-
-  const supabase = createClient()
+  const [sessionChecked, setSessionChecked] = useState(false)
 
   const rules = [
     { label: 'At least 8 characters', pass: password.length >= 8 },
@@ -27,15 +25,13 @@ export default function ResetPasswordPage() {
   const passwordsMatch = confirm.length > 0 && password === confirm
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.access_token) setAccessToken(session.access_token)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session?.access_token) {
-        setAccessToken(session.access_token)
-      }
-    })
-    return () => subscription.unsubscribe()
+    fetch('/api/auth/session')
+      .then(r => r.json())
+      .then(data => {
+        if (data.access_token) setAccessToken(data.access_token)
+        setSessionChecked(true)
+      })
+      .catch(() => setSessionChecked(true))
   }, [])
 
   async function handleReset(e) {
@@ -70,7 +66,19 @@ export default function ResetPasswordPage() {
       </Link>
 
       <div style={{ width: '100%', maxWidth: '400px', background: '#F5F1EC', padding: '2.5rem' }}>
-        {done ? (
+        {!sessionChecked ? (
+          <p style={{ fontSize: '13px', color: '#777', textAlign: 'center', margin: 0 }}>Verifying link…</p>
+        ) : !accessToken ? (
+          <>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '300', color: '#7B2032', marginBottom: '0.75rem' }}>Link expired.</div>
+            <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75', marginBottom: '1.5rem' }}>
+              This link has expired or has already been used. Please request a new one.
+            </p>
+            <Link href="/members/login" style={{ fontSize: '11px', color: '#888', letterSpacing: '0.05em', textDecoration: 'none' }}>
+              ← Back to sign in
+            </Link>
+          </>
+        ) : done ? (
           <>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#3B6B2F', marginBottom: '0.75rem' }}>Password set.</div>
             <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75' }}>Redirecting you to login…</p>
