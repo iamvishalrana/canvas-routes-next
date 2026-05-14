@@ -1,17 +1,14 @@
 'use client'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '../lib/supabase/client'
 
 export default function MembersNav({ email, isAdmin }) {
-  const router = useRouter()
   const supabase = createClient()
 
   async function signOut() {
     await supabase.auth.signOut()
-    router.push('/members/login')
-    router.refresh()
+    window.location.href = '/members/login'
   }
 
   return (
