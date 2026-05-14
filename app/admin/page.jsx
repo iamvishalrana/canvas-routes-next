@@ -705,6 +705,8 @@ function EventsTab() {
 
 // ─── Applications Tab ────────────────────────────────────────────────────────
 
+const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
+
 function ApplicationsTab({ isMobile }) {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
@@ -712,6 +714,10 @@ function ApplicationsTab({ isMobile }) {
   const [inviting, setInviting] = useState(null)
   const [inviteStatus, setInviteStatus] = useState({})
   const [expanded, setExpanded] = useState(null)
+  const [editingApp, setEditingApp] = useState(null)
+  const [editAppForm, setEditAppForm] = useState({})
+  const [savingApp, setSavingApp] = useState(false)
+  const [saveAppErr, setSaveAppErr] = useState(null)
   const [importing, setImporting] = useState(false)
   const [importDone, setImportDone] = useState(false)
 
@@ -736,8 +742,42 @@ function ApplicationsTab({ isMobile }) {
   async function deleteApp(app) {
     if (!confirm(`Delete application from ${app.name || app.email}? This cannot be undone.`)) return
     const res = await fetch(`/api/admin/applications/${app.id}`, { method: 'DELETE' })
-    if (res.ok) { setExpanded(null); loadApps() }
+    if (res.ok) { setExpanded(null); setEditingApp(null); loadApps() }
     else alert('Failed to delete.')
+  }
+
+  function startEditApp(a) {
+    setEditingApp(a.id)
+    setSaveAppErr(null)
+    setEditAppForm({
+      name: a.name || '',
+      car_year: a.car_year || '',
+      car_model: a.car_model || '',
+      phone: a.phone || '',
+      instagram: a.instagram || '',
+      dob_month: a.dob_month ? String(a.dob_month) : '',
+      dob_day: a.dob_day ? String(a.dob_day) : '',
+      dob_year: a.dob_year ? String(a.dob_year) : '',
+      source: a.source || '',
+      more: a.more || '',
+    })
+  }
+
+  async function saveApp(appId) {
+    setSavingApp(true); setSaveAppErr(null)
+    const payload = {
+      ...editAppForm,
+      dob_month: editAppForm.dob_month ? parseInt(editAppForm.dob_month) : null,
+      dob_day: editAppForm.dob_day ? parseInt(editAppForm.dob_day) : null,
+      dob_year: editAppForm.dob_year ? parseInt(editAppForm.dob_year) : null,
+    }
+    const res = await fetch(`/api/admin/applications/${appId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    })
+    setSavingApp(false)
+    if (!res.ok) { const d = await res.json(); setSaveAppErr(d.error || 'Failed to save.'); return }
+    setApps(prev => prev.map(a => a.id === appId ? { ...a, ...payload } : a))
+    setEditingApp(null)
   }
 
   async function toggleAttended(appId, regIndex, value) {
@@ -747,9 +787,7 @@ function ApplicationsTab({ isMobile }) {
       i === regIndex ? { ...r, attended: r.attended === value ? null : value } : r
     )
     const res = await fetch(`/api/admin/applications/${appId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registrations: newRegs }),
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
     })
     if (res.ok) setApps(prev => prev.map(a => a.id === appId ? { ...a, registrations: newRegs } : a))
   }
@@ -757,14 +795,9 @@ function ApplicationsTab({ isMobile }) {
   async function sendInvite(app) {
     setInviting(app.id)
     const payload = {
-      name: app.name,
-      email: app.email,
-      membership_status: 'pending',
-      dob_month: app.dob_month || null,
-      dob_day: app.dob_day || null,
-      dob_year: app.dob_year || null,
-      phone: app.phone || null,
-      instagram: app.instagram || null,
+      name: app.name, email: app.email, membership_status: 'pending',
+      dob_month: app.dob_month || null, dob_day: app.dob_day || null, dob_year: app.dob_year || null,
+      phone: app.phone || null, instagram: app.instagram || null,
       cars: (app.car_year || app.car_model)
         ? [{ year: app.car_year || '', make: '', model: app.car_model || '', license_plate: '' }]
         : undefined,
@@ -789,6 +822,15 @@ function ApplicationsTab({ isMobile }) {
   )
   const totalInvited = apps.filter(a => a.is_member).length
 
+  function InfoCell({ label, value }) {
+    return (
+      <div>
+        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>{label}</div>
+        <div style={{ fontSize: '13px', color: value ? '#444' : '#ddd' }}>{value || '—'}</div>
+      </div>
+    )
+  }
+
   return (
     <div>
       {/* Stats */}
@@ -805,8 +847,8 @@ function ApplicationsTab({ isMobile }) {
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
             {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
           </div>
@@ -818,7 +860,7 @@ function ApplicationsTab({ isMobile }) {
           )}
           {importDone && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ C&C data imported</span>}
         </div>
-        <input style={{ ...inp, width: '240px' }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
+        <input style={{ ...inp, width: isMobile ? '100%' : '240px' }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {loading ? (
@@ -828,7 +870,6 @@ function ApplicationsTab({ isMobile }) {
       ) : (
         <div style={{ overflowX: 'auto' }}>
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
-          {/* Header */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
             {['Name', 'Email', 'Car', 'DOB', 'Date', ''].map((h, i) => (
               <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
@@ -837,10 +878,10 @@ function ApplicationsTab({ isMobile }) {
 
           {filtered.map((a, idx) => (
             <div key={a.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
-              {/* Main row */}
+              {/* Summary row */}
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', transition: 'background 0.15s' }}
-                onClick={() => setExpanded(expanded === a.id ? null : a.id)}
+                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                onClick={() => { setExpanded(expanded === a.id ? null : a.id); if (editingApp === a.id) setEditingApp(null) }}
               >
                 <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{a.name || <span style={{ color: '#ccc' }}>—</span>}</div>
                 <div style={{ fontSize: '12px', color: '#666' }}>{a.email}</div>
@@ -869,28 +910,97 @@ function ApplicationsTab({ isMobile }) {
                 </div>
               </div>
 
-              {/* Expanded details */}
+              {/* Expanded panel */}
               {expanded === a.id && (
-                <div style={{ padding: '0.75rem 1.25rem 1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
-                    {[
-                      ['Phone', a.phone],
-                      ['Instagram', a.instagram ? `@${a.instagram}` : null],
-                      ['Source', a.source],
-                      ['Year applied', new Date(a.created_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })],
-                    ].map(([label, val]) => val ? (
-                      <div key={label}>
-                        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>{label}</div>
-                        <div style={{ fontSize: '13px', color: '#555' }}>{val}</div>
+                <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
+
+                  {editingApp === a.id ? (
+                    /* ── Edit mode ── */
+                    <div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                        <div><L>Name</L><input style={inp} value={editAppForm.name} onChange={e => setEditAppForm(p => ({ ...p, name: e.target.value }))} /></div>
+                        <div><L>Car Year</L><input style={inp} value={editAppForm.car_year} onChange={e => setEditAppForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
+                        <div><L>Car Make & Model</L><input style={inp} value={editAppForm.car_model} onChange={e => setEditAppForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. BMW M3" maxLength={100} /></div>
+                        <div><L>Phone</L><input style={inp} type="tel" value={editAppForm.phone} onChange={e => setEditAppForm(p => ({ ...p, phone: e.target.value }))} maxLength={30} /></div>
+                        <div><L>Instagram</L><input style={inp} value={editAppForm.instagram} onChange={e => setEditAppForm(p => ({ ...p, instagram: e.target.value }))} placeholder="handle" maxLength={50} /></div>
                       </div>
-                    ) : null)}
-                    {a.more && (
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Tell us more</div>
-                        <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.65' }}>{a.more}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 2fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                        <div>
+                          <L>DOB Month</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editAppForm.dob_month} onChange={e => setEditAppForm(p => ({ ...p, dob_month: e.target.value }))}>
+                              <option value="">Month</option>
+                              {MONTHS.map((mo, i) => <option key={i+1} value={String(i+1)}>{mo}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
+                        <div>
+                          <L>DOB Day</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editAppForm.dob_day} onChange={e => setEditAppForm(p => ({ ...p, dob_day: e.target.value }))}>
+                              <option value="">Day</option>
+                              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
+                        <div>
+                          <L>DOB Year</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editAppForm.dob_year} onChange={e => setEditAppForm(p => ({ ...p, dob_year: e.target.value }))}>
+                              <option value="">Year</option>
+                              {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
+                        <div>
+                          <L>How did they hear</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editAppForm.source} onChange={e => setEditAppForm(p => ({ ...p, source: e.target.value }))}>
+                              <option value="">Select…</option>
+                              {APP_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <L>Tell us more</L>
+                        <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editAppForm.more} onChange={e => setEditAppForm(p => ({ ...p, more: e.target.value }))} maxLength={500} />
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <PrimaryBtn onClick={() => saveApp(a.id)} disabled={savingApp}>{savingApp ? 'Saving…' : 'Save'}</PrimaryBtn>
+                        <GhostBtn onClick={() => setEditingApp(null)}>Cancel</GhostBtn>
+                      </div>
+                      {saveAppErr && <Err msg={saveAppErr} />}
+                    </div>
+                  ) : (
+                    /* ── View mode ── */
+                    <div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                        <InfoCell label="Name" value={a.name} />
+                        <InfoCell label="Car Year" value={a.car_year} />
+                        <InfoCell label="Car Make & Model" value={a.car_model} />
+                        <InfoCell label="Phone" value={a.phone} />
+                        <InfoCell label="Instagram" value={a.instagram ? `@${a.instagram}` : null} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                        <InfoCell label="DOB" value={a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : null} />
+                        <InfoCell label="How they heard" value={a.source} />
+                        <InfoCell label="Applied" value={new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })} />
+                      </div>
+                      {a.more && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Tell us more</div>
+                          <div style={{ fontSize: '13px', color: '#444', lineHeight: '1.65' }}>{a.more}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Event registrations */}
                   {a.registrations?.length > 0 && (
                     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                       <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
@@ -912,9 +1022,14 @@ function ApplicationsTab({ isMobile }) {
                       ))}
                     </div>
                   )}
-                  <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                    <DangerBtn onClick={() => deleteApp(a)} small>Delete Application</DangerBtn>
-                  </div>
+
+                  {/* Action row */}
+                  {editingApp !== a.id && (
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'flex', gap: '0.5rem' }}>
+                      <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
+                      <DangerBtn onClick={() => deleteApp(a)} small>Delete</DangerBtn>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
