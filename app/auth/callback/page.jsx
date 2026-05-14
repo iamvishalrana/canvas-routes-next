@@ -10,18 +10,36 @@ function Handler() {
 
   useEffect(() => {
     const next = searchParams.get('next') || '/members/reset-password'
-    const code = searchParams.get('code')
     const errorParam = searchParams.get('error')
+    const token_hash = searchParams.get('token_hash')
+    const type = searchParams.get('type')
+    const code = searchParams.get('code')
 
     if (errorParam) {
       router.replace(`/members/login?error=${encodeURIComponent(errorParam)}`)
       return
     }
 
+    const supabase = createClient()
+
+    // Format 1: ?token_hash=XXX&type=invite|recovery
+    // Used by newer Supabase for OTP-based invite and password reset links.
+    // verifyOtp does not require a PKCE code_verifier.
+    if (token_hash && type) {
+      supabase.auth.verifyOtp({ token_hash, type })
+        .then(({ data, error }) => {
+          if (!error && data.session?.access_token) {
+            router.replace(`${next}?token=${encodeURIComponent(data.session.access_token)}`)
+          } else {
+            router.replace(`/members/login?error=${encodeURIComponent(error?.message || 'Link expired or already used.')}`)
+          }
+        })
+      return
+    }
+
+    // Format 2: ?code=XXX — PKCE auth code
+    // Direct REST call omits code_verifier so Supabase accepts admin-initiated codes.
     if (code) {
-      // PKCE redirect: use a direct REST call that omits code_verifier entirely.
-      // The JS SDK sends code_verifier:"" which Supabase rejects for admin-initiated
-      // invite/reset codes. Omitting the field lets Supabase accept them without one.
       fetch(`/api/auth/exchange?code=${encodeURIComponent(code)}`)
         .then(r => r.json())
         .then(data => {
@@ -35,10 +53,8 @@ function Handler() {
       return
     }
 
-    // No code in URL — implicit flow: Supabase puts tokens in the URL hash.
-    // The browser Supabase client reads the hash automatically.
-    const supabase = createClient()
-
+    // Format 3: #access_token=XXX — implicit flow (hash tokens)
+    // Supabase browser client reads the URL hash automatically.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.access_token) {
         subscription.unsubscribe()
@@ -57,7 +73,12 @@ function Handler() {
 
     const timeout = setTimeout(() => {
       subscription.unsubscribe()
-      router.replace('/members/login?error=Link+expired+or+already+used.')
+      // Redirect with full URL params so we can see what Supabase actually sent
+      const allParams = Object.fromEntries(searchParams.entries())
+      const debugInfo = Object.keys(allParams).length
+        ? `No recognised auth params. Got: ${JSON.stringify(allParams)}`
+        : 'No auth params found in URL.'
+      router.replace(`/members/login?error=${encodeURIComponent(debugInfo)}`)
     }, 10000)
 
     return () => { subscription.unsubscribe(); clearTimeout(timeout) }
