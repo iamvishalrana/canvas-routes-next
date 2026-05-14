@@ -33,10 +33,15 @@ export default function ResetPasswordPage() {
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     setLoading(true)
     setError(null)
-    const { error } = await supabase.auth.updateUser({ password })
+    const res = await fetch('/api/member/password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+    const data = await res.json()
     setLoading(false)
-    if (error) {
-      setError('Could not update password. The link may have expired — please request a new one.')
+    if (!res.ok) {
+      setError(data.error || 'Could not update password. The link may have expired — please request a new one.')
     } else {
       setDone(true)
       setTimeout(() => router.push('/members/dashboard'), 2000)
