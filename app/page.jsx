@@ -19,8 +19,22 @@ export default function Home() {
   const [showPastModal, setShowPastModal] = useState(false)
   const [routesLaunched, setRoutesLaunched] = useState(false)
   const [showRoutesPopup, setShowRoutesPopup] = useState(false)
+  const [gpccOpen, setGpccOpen] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
+
+  useEffect(() => {
+    const GPCC_OPEN = new Date('2026-05-14T22:00:00Z').getTime()
+    const preview = new URLSearchParams(window.location.search).has('preview')
+    if (Date.now() >= GPCC_OPEN || preview) {
+      setGpccOpen(true)
+    } else {
+      const t = setInterval(() => {
+        if (Date.now() >= GPCC_OPEN) { setGpccOpen(true); clearInterval(t) }
+      }, 10000)
+      return () => clearInterval(t)
+    }
+  }, [])
 
   useEffect(() => {
     const LAUNCH = new Date('2026-05-13T23:00:00Z').getTime()
@@ -405,7 +419,7 @@ export default function Home() {
         <div className="events-grid">
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
-            {date:"May 2026",name:"Grand Prix Weekend",loc:"Cars, Coffee & Cruise",type:"Meets"},
+            {date:"May 23, 2026",name:"Grand Prix Weekend Cars & Coffee",loc:"Exotics and Classics",type:"Cars & Coffee",inviteOnly:true},
             {date:"May 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"},
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
@@ -423,11 +437,13 @@ export default function Home() {
               <div style={{fontSize:"12px",color:e.past?"rgba(245,241,236,0.4)":"#5A4A38",marginBottom:"1.5rem"}}>{e.loc}</div>
               {e.past
                 ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Recap <span style={{fontSize:"13px"}}>→</span></div>
-                : e.href
-                  ? routesLaunched
-                    ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
+                : e.inviteOnly
+                  ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",paddingBottom:"2px",display:"inline-block"}}>Invite Only</div>
+                  : e.href
+                    ? routesLaunched
+                      ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
+                      : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
                     : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
-                  : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming 15.05</div>
               }
             </div>
           ))}
@@ -511,6 +527,7 @@ export default function Home() {
               <div className="join-form-row" style={{gridTemplateColumns:'1fr'}}>
                 {[
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
+                  ...(gpccOpen ? [{value:"Grand Prix Weekend Cars & Coffee — May 23, 2026", label:"Grand Prix Weekend Cars & Coffee", sub:"Invite Only · May 23, 2026 · 12:30 – 3:00 PM"}] : []),
                 ].map(opt => {
                   const selected = form.registerFor === opt.value
                   const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'

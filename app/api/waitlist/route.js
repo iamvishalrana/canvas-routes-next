@@ -9,7 +9,9 @@ const SKIP_EMAILS = new Set(
 async function incrementCount(registerFor, email) {
   if (SKIP_EMAILS.has(email.toLowerCase())) return null
   if (!process.env.KV_REST_API_URL) return null
-  const key = registerFor === 'Cars & Coffee — May 9, 2026' ? 'reg:cc' : 'reg:membership'
+  const key = registerFor === 'Cars & Coffee — May 9, 2026' ? 'reg:cc'
+    : registerFor === 'Grand Prix Weekend Cars & Coffee — May 23, 2026' ? 'reg:gpcc'
+    : 'reg:membership'
   try { return await kv.incr(key) } catch { return null }
 }
 
@@ -192,7 +194,7 @@ export async function POST(request) {
   if (instagram && instagram.length > 50) return Response.json({ error: 'Instagram handle too long' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long' }, { status: 400 })
 
-  const VALID_REGISTER_FOR = ['Canvas Routes Membership']
+  const VALID_REGISTER_FOR = ['Canvas Routes Membership', 'Grand Prix Weekend Cars & Coffee — May 23, 2026']
   const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
   if (!registerFor || !VALID_REGISTER_FOR.includes(registerFor)) {
     return Response.json({ error: 'Invalid registration type' }, { status: 400 })
