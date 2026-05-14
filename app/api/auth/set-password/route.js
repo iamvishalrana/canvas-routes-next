@@ -34,5 +34,11 @@ export async function POST(request) {
 
   const { error } = await admin.auth.admin.updateUserById(userId, { password })
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  await admin.from('members')
+    .update({ membership_status: 'active', password_set_at: new Date().toISOString() })
+    .eq('id', userId)
+    .eq('membership_status', 'pending')
+
   return Response.json({ success: true })
 }

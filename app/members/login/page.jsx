@@ -12,12 +12,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [resetSent, setResetSent] = useState(false)
+  const [setupMsg, setSetupMsg] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const err = params.get('error')
     if (err) {
       setError(err)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    if (params.get('setup') === '1') {
+      setSetupMsg(true)
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
@@ -76,6 +81,12 @@ export default function LoginPage() {
           <>
             <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Members Portal</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '2rem' }}>Welcome back.</div>
+
+            {setupMsg && (
+              <div style={{ fontSize: '13px', color: '#3B6B2F', background: 'rgba(59,107,47,0.08)', border: '1px solid rgba(59,107,47,0.2)', padding: '0.85rem 1rem', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                Your password has been set. Sign in with your new password below.
+              </div>
+            )}
 
             <form onSubmit={handleLogin}>
               <div style={{ marginBottom: '1rem' }}>

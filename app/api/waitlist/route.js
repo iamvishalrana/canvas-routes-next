@@ -110,7 +110,9 @@ If this email landed in your spam folder, please move it to your inbox and mark 
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ registerFor, name, email, year, carModel, phone, instagram, more, source, regCount }) {
+function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, regCount }) {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const dobStr = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''
   const row = (label, value) => value
     ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -138,6 +140,7 @@ function notifyHtml({ registerFor, name, email, year, carModel, phone, instagram
                 ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
                 ${row('Year', h(year))}
                 ${row('Make & Model', h(carModel))}
+                ${row('Date of Birth', dobStr ? h(dobStr) : '')}
                 ${row('Phone', phone ? h(phone) : '')}
                 ${row('Instagram', instagram ? h(instagram) : '')}
                 ${row('Tell us more', more ? h(more) : '')}
@@ -168,11 +171,14 @@ export async function POST(request) {
   try { body = await request.json() } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { registerFor, name, email, year, carModel, more, phone, instagram, source, _hp } = body
+  const { registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, more, phone, instagram, source, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim()) {
     return Response.json({ error: 'Name, email, year, and car model are required' }, { status: 400 })
+  }
+  if (!dob_month || !dob_day) {
+    return Response.json({ error: 'Date of birth month and day are required' }, { status: 400 })
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ error: 'Invalid email address' }, { status: 400 })
@@ -226,8 +232,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `New Application${regCount ? ` #${regCount}` : ''} — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
-    html: notifyHtml({ registerFor, name, email, year, carModel, phone, instagram, more, source, regCount }),
-    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
+    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, regCount }),
+    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
   })
 
   let notifyOk = false

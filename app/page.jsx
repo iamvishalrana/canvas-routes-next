@@ -8,7 +8,7 @@ import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
 export default function Home() {
-  const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carModel:'', phone:'', instagram:'', more:'', source:'' })
+  const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
@@ -132,6 +132,8 @@ export default function Home() {
     else if (['.con','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) newErrors.email = 'typo'
     if (!form.year.trim()) newErrors.year = true
     if (!form.carModel.trim()) newErrors.carModel = true
+    if (!form.dob_month) newErrors.dob_month = true
+    if (!form.dob_day) newErrors.dob_day = true
     if (!form.source) newErrors.source = true
     if (form.phone.trim() && form.phone.replace(/\D/g,'').length !== 10) newErrors.phone = true
     if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.replace(/^@+/, '').trim())) newErrors.instagram = true
@@ -164,7 +166,7 @@ export default function Home() {
     if (status === 'loading') return
     const newErrors = validate()
     if (Object.keys(newErrors).length > 0) {
-      const fieldOrder = ['registerFor', 'name', 'email', 'year', 'carModel', 'phone', 'instagram', 'more', 'source']
+      const fieldOrder = ['registerFor', 'name', 'email', 'year', 'carModel', 'dob_month', 'phone', 'instagram', 'more', 'source']
       const firstError = fieldOrder.find(f => newErrors[f])
       if (firstError) {
         const el = document.getElementById(`field-${firstError}`)
@@ -186,7 +188,7 @@ export default function Home() {
       clearTimeout(timeout)
       if (res.ok) {
         setStatus('success')
-        setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', phone:'', instagram:'', more:'', source:'' })
+        setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'' })
         if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined' && (() => { try { return localStorage.getItem('cookieConsent') } catch { return null } })() === 'accepted' && window.gtag) {
           window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
@@ -500,7 +502,7 @@ export default function Home() {
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you shortly.</div>
             <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>Keep an eye on your inbox — and check your spam folder too. Once we've reviewed your application, you'll receive a personal email from our team. If you don't hear from us, feel free to reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
-            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
+            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
@@ -579,6 +581,45 @@ export default function Home() {
                 {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
               </div>
             </div>
+            <div id="field-dob_month" className="join-form-field" style={{marginTop:"1rem"}}>
+              <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth <span style={{color:"#7B2032",marginLeft:"2px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
+              <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1.2fr",gap:"0.75rem"}}>
+                <div style={{position:"relative"}}>
+                  <select id="field-dob_month" value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
+                    style={{...inputStyle('dob_month'), cursor:"pointer", paddingRight:"2rem"}}
+                    aria-required="true">
+                    <option value="">Month *</option>
+                    {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i) => (
+                      <option key={i+1} value={String(i+1)}>{m}</option>
+                    ))}
+                  </select>
+                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div style={{position:"relative"}}>
+                  <select value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)}
+                    style={{...inputStyle('dob_day'), cursor:"pointer", paddingRight:"2rem"}}
+                    aria-required="true">
+                    <option value="">Day *</option>
+                    {Array.from({length:31},(_,i)=>i+1).map(d => (
+                      <option key={d} value={String(d)}>{d}</option>
+                    ))}
+                  </select>
+                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div style={{position:"relative"}}>
+                  <select value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)}
+                    style={{...inputStyle('dob_year'), cursor:"pointer", paddingRight:"2rem"}}>
+                    <option value="">Year</option>
+                    {Array.from({length:2015-1945+1},(_,i)=>2015-i).map(y => (
+                      <option key={y} value={String(y)}>{y}</option>
+                    ))}
+                  </select>
+                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+              {(errors.dob_month || errors.dob_day) && <span style={{fontSize:"11px",color:"#7B2032"}}>Month and day are required</span>}
+            </div>
+
             <div className="join-form-row" style={{marginTop:"1rem"}}>
               <div className="join-form-field">
                 <label htmlFor="field-phone" className="join-label">Phone<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/> <span style={{color:"#888",fontWeight:"300"}}>(optional)</span></label>

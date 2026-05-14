@@ -217,8 +217,8 @@ function MembersTab() {
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 130px 1fr 100px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
-            {['Name', 'Email', 'Status', 'Car', ''].map((h, i) => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 120px 1fr 130px 100px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+            {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
               <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
             ))}
           </div>
@@ -252,11 +252,21 @@ function MembersTab() {
                   <Err msg={saveError} />
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 130px 1fr 100px', padding: '0.9rem 1.25rem', alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 120px 1fr 130px 100px', padding: '0.9rem 1.25rem', alignItems: 'center' }}>
                   <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
                   <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
                   <div><Badge status={m.membership_status} /></div>
                   <div style={{ fontSize: '12px', color: '#888' }}>{[m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}</div>
+                  <div>
+                    {m.password_set_at ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span style={{ fontSize: '11px', color: '#3B6B2F' }}>{new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.05em' }}>Awaiting</span>
+                    )}
+                  </div>
                   <div style={{ display: 'flex', gap: '0.4rem' }}>
                     <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
                     <DangerBtn onClick={() => deleteMember(m)} small>Delete</DangerBtn>
