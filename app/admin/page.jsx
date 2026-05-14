@@ -69,6 +69,12 @@ function MembersTab() {
     load()
   }
 
+  async function deleteMember(m) {
+    if (!confirm(`Delete ${m.name || m.email}? This removes them from the portal and Supabase entirely.`)) return
+    await fetch(`/api/admin/members/${m.id}`, { method: 'DELETE' })
+    load()
+  }
+
   async function invite(e) {
     e.preventDefault()
     if (!inviteForm.email.trim()) { setInviteError('Email required.'); return }
@@ -166,7 +172,10 @@ function MembersTab() {
                   <div style={{ fontSize: '12px', color: '#555' }}>{m.email}</div>
                   <div><StatusBadge status={m.membership_status} /></div>
                   <div style={{ fontSize: '12px', color: '#777' }}>{[m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ccc' }}>—</span>}</div>
-                  <button onClick={() => startEdit(m)} style={{ ...btnGhostStyle, padding: '0.4rem 0.8rem', fontSize: '10px' }}>Edit</button>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button onClick={() => startEdit(m)} style={{ ...btnGhostStyle, padding: '0.4rem 0.8rem', fontSize: '10px' }}>Edit</button>
+                    <button onClick={() => deleteMember(m)} style={{ ...btnDangerStyle, padding: '0.4rem 0.8rem', fontSize: '10px' }}>Delete</button>
+                  </div>
                 </div>
               )}
             </div>
