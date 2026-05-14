@@ -20,12 +20,9 @@ function Handler() {
       return
     }
 
-    const supabase = createClient()
-
-    // Format 1: ?token_hash=XXX&type=invite|recovery
-    // Used by newer Supabase for OTP-based invite and password reset links.
-    // verifyOtp does not require a PKCE code_verifier.
+    // Format 1: ?token_hash=XXX&type=invite|recovery (newer Supabase OTP format)
     if (token_hash && type) {
+      const supabase = createClient()
       supabase.auth.verifyOtp({ token_hash, type })
         .then(({ data, error }) => {
           if (!error && data.session?.access_token) {
@@ -37,8 +34,7 @@ function Handler() {
       return
     }
 
-    // Format 2: ?code=XXX — PKCE auth code
-    // Direct REST call omits code_verifier so Supabase accepts admin-initiated codes.
+    // Format 2: ?code=XXX (PKCE auth code)
     if (code) {
       fetch(`/api/auth/exchange?code=${encodeURIComponent(code)}`)
         .then(r => r.json())
@@ -53,8 +49,19 @@ function Handler() {
       return
     }
 
-    // Format 3: #access_token=XXX — implicit flow (hash tokens)
-    // Supabase browser client reads the URL hash automatically.
+    // Format 3: #access_token=XXX in URL hash (implicit flow)
+    // Read directly from window.location.hash — faster and more reliable than
+    // waiting for onAuthStateChange which depends on Supabase client init timing.
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const hashToken = hashParams.get('access_token')
+    if (hashToken) {
+      router.replace(`${next}?token=${encodeURIComponent(hashToken)}`)
+      return
+    }
+
+    // Format 3b: wait for Supabase client to parse hash (fallback)
+    const supabase = createClient()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.access_token) {
         subscription.unsubscribe()
@@ -73,12 +80,11 @@ function Handler() {
 
     const timeout = setTimeout(() => {
       subscription.unsubscribe()
-      // Redirect with full URL params so we can see what Supabase actually sent
-      const allParams = Object.fromEntries(searchParams.entries())
-      const debugInfo = Object.keys(allParams).length
-        ? `No recognised auth params. Got: ${JSON.stringify(allParams)}`
-        : 'No auth params found in URL.'
-      router.replace(`/members/login?error=${encodeURIComponent(debugInfo)}`)
+      const hashKeys = Array.from(hashParams.keys()).join(',')
+      const queryKeys = Array.from(searchParams.keys()).join(',')
+      router.replace(`/members/login?error=${encodeURIComponent(
+        `No auth params found. Query: [${queryKeys}] Hash: [${hashKeys}]`
+      )}`)
     }, 10000)
 
     return () => { subscription.unsubscribe(); clearTimeout(timeout) }
