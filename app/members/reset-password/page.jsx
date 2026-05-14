@@ -17,6 +17,14 @@ export default function ResetPasswordPage() {
 
   const supabase = createClient()
 
+  const rules = [
+    { label: 'At least 8 characters', pass: password.length >= 8 },
+    { label: 'Under 72 characters', pass: password.length > 0 && password.length <= 72 },
+    { label: 'One uppercase letter', pass: /[A-Z]/.test(password) },
+    { label: 'One number', pass: /[0-9]/.test(password) },
+  ]
+  const allPass = rules.every(r => r.pass)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setSessionReady(true)
@@ -29,8 +37,8 @@ export default function ResetPasswordPage() {
 
   async function handleReset(e) {
     e.preventDefault()
+    if (!allPass) { setError('Please meet all password requirements.'); return }
     if (password !== confirm) { setError('Passwords do not match.'); return }
-    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     setLoading(true)
     setError(null)
     const res = await fetch('/api/member/password', {
@@ -78,6 +86,16 @@ export default function ResetPasswordPage() {
                   style={{ width: '100%', padding: '0.85rem 1rem', border: '1px solid rgba(0,0,0,0.2)', background: 'transparent', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
+              {password.length > 0 && (
+                <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  {rules.map(r => (
+                    <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: r.pass ? '#3B6B2F' : '#aaa' }}>
+                      <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: r.pass ? '#3B6B2F' : '#ccc', flexShrink: 0 }} />
+                      {r.label}
+                    </div>
+                  ))}
+                </div>
+              )}
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Confirm Password</label>
                 <input

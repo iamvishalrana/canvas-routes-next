@@ -20,6 +20,14 @@ export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', car_year: '', car_make: '', car_model: '' })
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
+
+  const pwRules = [
+    { label: 'At least 8 characters', pass: pwForm.password.length >= 8 },
+    { label: 'Under 72 characters', pass: pwForm.password.length > 0 && pwForm.password.length <= 72 },
+    { label: 'One uppercase letter', pass: /[A-Z]/.test(pwForm.password) },
+    { label: 'One number', pass: /[0-9]/.test(pwForm.password) },
+  ]
+  const pwAllPass = pwRules.every(r => r.pass)
   const [saving, setSaving] = useState(false)
   const [savingPw, setSavingPw] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -57,8 +65,8 @@ export default function ProfilePage() {
 
   async function savePassword(e) {
     e.preventDefault()
+    if (!pwAllPass) { setPwError('Please meet all password requirements.'); return }
     if (pwForm.password !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
-    if (pwForm.password.length < 8) { setPwError('Minimum 8 characters.'); return }
     setSavingPw(true); setPwError(null); setSavedPw(false)
     const res = await fetch('/api/member/password', {
       method: 'POST',
@@ -131,6 +139,16 @@ export default function ProfilePage() {
               <input type="password" value={pwForm.password} onChange={e => setPwForm(p => ({ ...p, password: e.target.value }))}
                 minLength={8} autoComplete="new-password" style={inputStyle} />
             </Field>
+            {pwForm.password.length > 0 && (
+              <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                {pwRules.map(r => (
+                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: r.pass ? '#3B6B2F' : '#aaa' }}>
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: r.pass ? '#3B6B2F' : '#ccc', flexShrink: 0 }} />
+                    {r.label}
+                  </div>
+                ))}
+              </div>
+            )}
             <Field label="Confirm Password">
               <input type="password" value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
                 minLength={8} autoComplete="new-password" style={inputStyle} />
