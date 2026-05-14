@@ -31,8 +31,8 @@ body { background: #F5F1EC; color: #1a1a1a; }
 .nav-cta {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
+  align-items: stretch;
+  gap: 0.3rem;
   margin-right: 2rem;
 }
 
@@ -44,19 +44,23 @@ body { background: #F5F1EC; color: #1a1a1a; }
   border: 0.5px solid #7B2032;
   text-decoration: none;
   color: #7B2032;
+  text-align: center;
   transition: background 0.2s, color 0.2s;
 }
 .nav-join:hover { background: #7B2032; color: #F5F1EC; }
 
 .nav-members {
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-size: 10px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  padding: 0.35rem 1.2rem;
+  border: 0.5px solid #3B6B2F;
   text-decoration: none;
   color: #3B6B2F;
-  transition: opacity 0.2s;
+  text-align: center;
+  transition: background 0.2s, color 0.2s;
 }
-.nav-members:hover { opacity: 0.7; }
+.nav-members:hover { background: #3B6B2F; color: #F5F1EC; }
 
 .hamburger {
   display: none;
