@@ -89,7 +89,7 @@ function Success({ msg }) {
 
 // ─── Members Tab ─────────────────────────────────────────────────────────────
 
-function MembersTab() {
+function MembersTab({ isMobile }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [forbidden, setForbidden] = useState(false)
@@ -226,7 +226,7 @@ function MembersTab() {
   return (
     <div>
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
         {[
           { label: 'Total', value: members.length, color: '#1a1a1a' },
           { label: 'Active', value: counts.active, color: '#3B6B2F' },
@@ -243,7 +243,7 @@ function MembersTab() {
       {/* Invite */}
       <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>Invite New Member</div>
-        <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 180px auto', gap: '0.75rem', alignItems: 'end' }}>
+        <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr 180px auto', gap: '0.75rem', alignItems: 'end' }}>
           <div>
             <L>Full Name</L>
             <input style={inp} value={inviteForm.name} onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))} placeholder="Name" />
@@ -284,7 +284,8 @@ function MembersTab() {
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+        <div style={{ overflowX: 'auto' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 120px 1fr 130px 100px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
             {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
               <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
@@ -421,6 +422,7 @@ function MembersTab() {
               )}
             </div>
           ))}
+        </div>
         </div>
       )}
     </div>
@@ -703,7 +705,7 @@ function EventsTab() {
 
 // ─── Applications Tab ────────────────────────────────────────────────────────
 
-function ApplicationsTab() {
+function ApplicationsTab({ isMobile }) {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -776,7 +778,7 @@ function ApplicationsTab() {
   return (
     <div>
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
         {[
           { label: 'Total Applications', value: apps.length, color: '#1a1a1a' },
           { label: 'Invited', value: totalInvited, color: '#3B6B2F' },
@@ -810,7 +812,8 @@ function ApplicationsTab() {
       ) : filtered.length === 0 ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No applications yet.</div>
       ) : (
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+        <div style={{ overflowX: 'auto' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
           {/* Header */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
             {['Name', 'Email', 'Car', 'DOB', 'Date', ''].map((h, i) => (
@@ -882,6 +885,7 @@ function ApplicationsTab() {
             </div>
           ))}
         </div>
+        </div>
       )}
     </div>
   )
@@ -918,68 +922,126 @@ const TAB_ICONS = {
 
 export default function AdminPage() {
   const [tab, setTab] = useState('Members')
+  const [isMobile, setIsMobile] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   async function signOut() {
     await supabase.auth.signOut()
     window.location.href = '/members/login'
   }
 
+  function selectTab(t) {
+    setTab(t)
+    setSidebarOpen(false)
+  }
+
+  const sidebarContent = (
+    <>
+      <div style={{ padding: '1.75rem 1.5rem 1.5rem', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+        <Link href="/">
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={110} height={73} style={{ filter: 'brightness(0) invert(1)', opacity: 0.9, display: 'block' }} />
+        </Link>
+        <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginTop: '0.75rem' }}>Admin Panel</div>
+      </div>
+
+      <nav style={{ padding: '1.25rem 0', flex: 1 }}>
+        {TABS.map(t => (
+          <button key={t} onClick={() => selectTab(t)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
+              padding: '0.75rem 1.5rem', background: tab === t ? 'rgba(197,168,130,0.12)' : 'transparent',
+              border: 'none', borderLeft: tab === t ? '2px solid #c5a882' : '2px solid transparent',
+              cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
+              fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: tab === t ? '#c5a882' : 'rgba(255,255,255,0.45)',
+              textAlign: 'left', transition: 'color 0.15s, background 0.15s',
+            }}>
+            <span style={{ opacity: tab === t ? 1 : 0.5 }}>{TAB_ICONS[t]}</span>
+            {t}
+          </button>
+        ))}
+      </nav>
+
+      <div style={{ padding: '1.25rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        <Link href="/members/dashboard" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
+          → Portal
+        </Link>
+        <Link href="/members/profile" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
+          → Profile
+        </Link>
+        <button onClick={signOut}
+          style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.12)', padding: '0.45rem 0', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginTop: '0.25rem' }}>
+          Sign Out
+        </button>
+      </div>
+    </>
+  )
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif' }}>
 
-      {/* Sidebar */}
-      <aside style={{ width: '220px', flexShrink: 0, background: '#0F1E14', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }}>
-        <div style={{ padding: '1.75rem 1.5rem 1.5rem', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+      {/* Mobile top bar */}
+      {isMobile && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '56px', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem', zIndex: 300, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
           <Link href="/">
-            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={110} height={73} style={{ filter: 'brightness(0) invert(1)', opacity: 0.9, display: 'block' }} />
+            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={70} height={47} style={{ filter: 'brightness(0) invert(1)', opacity: 0.9, display: 'block' }} />
           </Link>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginTop: '0.75rem' }}>Admin Panel</div>
-        </div>
-
-        <nav style={{ padding: '1.25rem 0', flex: 1 }}>
-          {TABS.map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
-                padding: '0.75rem 1.5rem', background: tab === t ? 'rgba(197,168,130,0.12)' : 'transparent',
-                border: 'none', borderLeft: tab === t ? '2px solid #c5a882' : '2px solid transparent',
-                cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
-                fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
-                color: tab === t ? '#c5a882' : 'rgba(255,255,255,0.45)',
-                textAlign: 'left', transition: 'color 0.15s, background 0.15s',
-              }}>
-              <span style={{ opacity: tab === t ? 1 : 0.5 }}>{TAB_ICONS[t]}</span>
-              {t}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882' }}>{tab}</span>
+            <button onClick={() => setSidebarOpen(o => !o)}
+              style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.2)', padding: '0.45rem 0.6rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {sidebarOpen ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              ) : (
+                <>
+                  <span style={{ display: 'block', width: '18px', height: '1.5px', background: 'rgba(255,255,255,0.7)' }}/>
+                  <span style={{ display: 'block', width: '18px', height: '1.5px', background: 'rgba(255,255,255,0.7)' }}/>
+                  <span style={{ display: 'block', width: '18px', height: '1.5px', background: 'rgba(255,255,255,0.7)' }}/>
+                </>
+              )}
             </button>
-          ))}
-        </nav>
-
-        <div style={{ padding: '1.25rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          <Link href="/members/dashboard" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
-            → Portal
-          </Link>
-          <Link href="/members/profile" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
-            → Profile
-          </Link>
-          <button onClick={signOut}
-            style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.12)', padding: '0.45rem 0', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginTop: '0.25rem' }}>
-            Sign Out
-          </button>
+          </div>
         </div>
+      )}
+
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 298 }} />
+      )}
+
+      {/* Sidebar */}
+      <aside style={{
+        width: '220px', flexShrink: 0, background: '#0F1E14', display: 'flex', flexDirection: 'column',
+        ...(isMobile ? {
+          position: 'fixed', top: 0, left: sidebarOpen ? 0 : '-220px', height: '100vh',
+          zIndex: 299, transition: 'left 0.25s ease', overflowY: 'auto',
+        } : {
+          position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+        }),
+      }}>
+        {sidebarContent}
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, background: '#F5F1EC', overflowY: 'auto' }}>
-        <div style={{ maxWidth: '1000px', padding: '3rem 2.5rem' }}>
+      <main style={{ flex: 1, background: '#F5F1EC', overflowY: 'auto', ...(isMobile ? { paddingTop: '56px' } : {}) }}>
+        <div style={{ maxWidth: '1000px', padding: isMobile ? '1.75rem 1rem' : '3rem 2.5rem' }}>
 
           {/* Header */}
-          <div style={{ marginBottom: '2.5rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a' }}>{tab}</div>
+          <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: '300', color: '#1a1a1a' }}>{tab}</div>
           </div>
 
-          {tab === 'Members' && <MembersTab />}
-          {tab === 'Applications' && <ApplicationsTab />}
+          {tab === 'Members' && <MembersTab isMobile={isMobile} />}
+          {tab === 'Applications' && <ApplicationsTab isMobile={isMobile} />}
           {tab === 'Announcements' && <AnnouncementsTab />}
           {tab === 'Events' && <EventsTab />}
 

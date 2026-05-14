@@ -373,6 +373,7 @@ section[id] {
   .nav-logo { height: 85px; }
   .nav-links { display: none; }
   .nav-join { display: none; }
+  .nav-members { display: none; }
   .hamburger { display: flex; }
 
   .mobile-menu {
