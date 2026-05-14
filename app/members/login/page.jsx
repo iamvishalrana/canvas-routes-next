@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false)
 
   const supabase = createClient()
+  const debugUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'MISSING'
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -58,6 +59,8 @@ export default function LoginPage() {
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,transparent,#c5a882,transparent)' }} />
         </div>
+
+        <div style={{ fontSize: '10px', color: '#aaa', marginBottom: '0.5rem', wordBreak: 'break-all' }}>debug: {debugUrl}</div>
 
         {mode === 'login' && (
           <>
