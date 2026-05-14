@@ -11,7 +11,7 @@ export async function GET() {
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const { name, email, membership_status = 'pending' } = await request.json()
+  const { name, email, membership_status = 'pending', dob_month, dob_day, dob_year, phone, instagram, cars } = await request.json()
   if (!email?.trim()) return Response.json({ error: 'Email required.' }, { status: 400 })
 
   const supabase = createAdminClient()
@@ -22,12 +22,20 @@ export async function POST(request) {
   })
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 400 })
 
-  const { error: insertErr } = await supabase.from('members').insert({
+  const memberData = {
     id: invited.user.id,
     name: name || null,
     email,
     membership_status,
-  })
+    ...(dob_month != null && { dob_month }),
+    ...(dob_day != null && { dob_day }),
+    ...(dob_year != null && { dob_year }),
+    ...(phone && { phone }),
+    ...(instagram && { instagram }),
+    ...(cars?.length && { cars }),
+  }
+
+  const { error: insertErr } = await supabase.from('members').insert(memberData)
   if (insertErr) return Response.json({ error: insertErr.message }, { status: 500 })
 
   return Response.json({ success: true })

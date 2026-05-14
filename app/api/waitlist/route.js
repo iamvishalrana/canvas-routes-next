@@ -1,5 +1,6 @@
 import { kv } from '@vercel/kv'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { createAdminClient } from '../../../lib/supabase/admin'
 
 const SKIP_EMAILS = new Set(
   (process.env.SKIP_COUNT_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
@@ -249,6 +250,26 @@ export async function POST(request) {
   }
   if (!notifyOk) {
     console.error(`ALERT: Notify email failed after retry — application from: ${email}`)
+  }
+
+  // Store application data so admin can auto-populate member records
+  try {
+    const supabase = createAdminClient()
+    await supabase.from('applications').upsert({
+      email: email.toLowerCase().trim(),
+      name: name.trim(),
+      car_year: year.trim(),
+      car_model: carModel.trim(),
+      dob_month: dob_month ? parseInt(dob_month) : null,
+      dob_day: dob_day ? parseInt(dob_day) : null,
+      dob_year: dob_year ? parseInt(dob_year) : null,
+      phone: phone || null,
+      instagram: instagram || null,
+      more: more || null,
+      source: source || null,
+    }, { onConflict: 'email' })
+  } catch (e) {
+    console.error('Failed to store application:', e.message)
   }
 
   return Response.json({ success: true })

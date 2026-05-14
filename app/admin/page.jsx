@@ -5,6 +5,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 const STATUS_OPTIONS = ['pending', 'active', 'suspended', 'expired']
+const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const DOB_YEARS = Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i)
+const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '' }
 const STATUS_COLORS = {
   active:    { bg: 'rgba(59,107,47,0.1)',   text: '#3B6B2F', border: 'rgba(59,107,47,0.3)'   },
   pending:   { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
@@ -90,12 +94,15 @@ function MembersTab() {
   const [forbidden, setForbidden] = useState(false)
   const [editing, setEditing] = useState(null)
   const [editForm, setEditForm] = useState({})
+  const [editCars, setEditCars] = useState([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', membership_status: 'pending' })
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState(null)
   const [inviteSuccess, setInviteSuccess] = useState(false)
+  const [appData, setAppData] = useState(null)
+  const [appLookupEmail, setAppLookupEmail] = useState('')
   const [actionError, setActionError] = useState(null)
   const [search, setSearch] = useState('')
 
@@ -110,16 +117,54 @@ function MembersTab() {
 
   useEffect(() => { load() }, [load])
 
+  async function lookupApplication(email) {
+    if (!email?.trim() || !email.includes('@')) { setAppData(null); return }
+    const res = await fetch(`/api/admin/applications?email=${encodeURIComponent(email.trim())}`)
+    const data = await res.json()
+    setAppData(data)
+    if (data?.name) setInviteForm(p => ({ ...p, name: p.name || data.name }))
+  }
+
   function startEdit(m) {
     setEditing(m.id)
     setSaveError(null)
-    setEditForm({ membership_status: m.membership_status, name: m.name || '', phone: m.phone || '', car_year: m.car_year || '', car_make: m.car_make || '', car_model: m.car_model || '' })
+    setEditForm({
+      membership_status: m.membership_status,
+      name: m.name || '',
+      phone: m.phone || '',
+      instagram: m.instagram || '',
+      dob_month: m.dob_month ? String(m.dob_month) : '',
+      dob_day: m.dob_day ? String(m.dob_day) : '',
+      dob_year: m.dob_year ? String(m.dob_year) : '',
+    })
+    if (m.cars?.length > 0) {
+      setEditCars(m.cars)
+    } else if (m.car_year || m.car_make || m.car_model) {
+      setEditCars([{ year: m.car_year || '', make: m.car_make || '', model: m.car_model || '', license_plate: '' }])
+    } else {
+      setEditCars([{ ...EMPTY_CAR }])
+    }
+  }
+
+  function updateEditCar(idx, field, value) {
+    setEditCars(prev => prev.map((c, i) => i === idx ? { ...c, [field]: value } : c))
   }
 
   async function saveEdit() {
     setSaving(true); setSaveError(null)
+    const cleanCars = editCars.filter(c => c.year || c.make || c.model || c.license_plate)
+    const payload = {
+      ...editForm,
+      dob_month: editForm.dob_month ? parseInt(editForm.dob_month) : null,
+      dob_day: editForm.dob_day ? parseInt(editForm.dob_day) : null,
+      dob_year: editForm.dob_year ? parseInt(editForm.dob_year) : null,
+      cars: cleanCars,
+      car_year: cleanCars[0]?.year || '',
+      car_make: cleanCars[0]?.make || '',
+      car_model: cleanCars[0]?.model || '',
+    }
     const res = await fetch(`/api/admin/members/${editing}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm),
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
     })
     setSaving(false)
     if (!res.ok) { const d = await res.json(); setSaveError(d.error || 'Failed to save.'); return }
@@ -139,14 +184,27 @@ function MembersTab() {
     e.preventDefault()
     if (!inviteForm.email.trim()) { setInviteError('Email required.'); return }
     setInviting(true); setInviteError(null); setInviteSuccess(false)
+    const payload = { ...inviteForm }
+    if (appData) {
+      if (appData.dob_month) payload.dob_month = appData.dob_month
+      if (appData.dob_day) payload.dob_day = appData.dob_day
+      if (appData.dob_year) payload.dob_year = appData.dob_year
+      if (appData.phone) payload.phone = appData.phone
+      if (appData.instagram) payload.instagram = appData.instagram
+      if (appData.car_year || appData.car_model) {
+        payload.cars = [{ year: appData.car_year || '', make: '', model: appData.car_model || '', license_plate: '' }]
+      }
+    }
     const res = await fetch('/api/admin/members', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inviteForm),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
     })
     const data = await res.json()
     setInviting(false)
     if (!res.ok) { setInviteError(data.error || 'Failed to send invite.'); return }
     setInviteSuccess(true)
     setInviteForm({ name: '', email: '', membership_status: 'pending' })
+    setAppData(null)
+    setAppLookupEmail('')
     load()
     setTimeout(() => setInviteSuccess(false), 4000)
   }
@@ -191,7 +249,10 @@ function MembersTab() {
           </div>
           <div>
             <L>Email *</L>
-            <input style={inp} type="email" value={inviteForm.email} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder="email@example.com" />
+            <input style={inp} type="email" value={inviteForm.email}
+              onChange={e => { setInviteForm(p => ({ ...p, email: e.target.value })); if (appData) setAppData(null) }}
+              onBlur={e => lookupApplication(e.target.value)}
+              placeholder="email@example.com" />
           </div>
           <div>
             <L>Initial Status</L>
@@ -199,6 +260,12 @@ function MembersTab() {
           </div>
           <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Send Invite'}</PrimaryBtn>
         </form>
+        {appData && (
+          <div style={{ marginTop: '0.75rem', fontSize: '12px', color: '#3B6B2F', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.25)', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Application found — <strong>{appData.name}</strong>{appData.car_year ? ` · ${appData.car_year} ${appData.car_model}` : ''}{appData.dob_month ? ` · DOB ${appData.dob_month}/${appData.dob_day}${appData.dob_year ? `/${appData.dob_year}` : ''}` : ''}. Profile will be pre-populated on invite.
+          </div>
+        )}
         <Err msg={inviteError} />
         <Success msg={inviteSuccess ? 'Invite sent successfully.' : null} />
       </div>
@@ -231,23 +298,95 @@ function MembersTab() {
             <div key={m.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {editing === m.id ? (
                 <div style={{ padding: '1.5rem 1.25rem', background: 'rgba(197,168,130,0.05)', borderLeft: '2px solid #c5a882' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-                    {[['Name', 'name', 'text'], ['Phone', 'phone', 'tel'], ['Car Year', 'car_year', 'text'], ['Make', 'car_make', 'text'], ['Model', 'car_model', 'text']].map(([label, key, type]) => (
-                      <div key={key}>
-                        <L>{label}</L>
-                        <input style={inp} type={type} value={editForm[key]} onChange={e => setEditForm(p => ({ ...p, [key]: e.target.value }))} />
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div style={{ width: '180px' }}>
+
+                  {/* Personal info row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 180px', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <div><L>Name</L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
+                    <div><L>Phone</L><input style={inp} type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} /></div>
+                    <div><L>Instagram</L><input style={inp} value={editForm.instagram} onChange={e => setEditForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" /></div>
+                    <div>
                       <L>Status</L>
                       <SelectWrap value={editForm.membership_status} onChange={e => setEditForm(p => ({ ...p, membership_status: e.target.value }))} options={STATUS_OPTIONS} />
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
-                      <GhostBtn onClick={() => setEditing(null)}>Cancel</GhostBtn>
+                  </div>
+
+                  {/* DOB row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 3fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                    <div>
+                      <L>DOB Month</L>
+                      <div style={{ position: 'relative' }}>
+                        <select style={{ ...sel }} value={editForm.dob_month} onChange={e => setEditForm(p => ({ ...p, dob_month: e.target.value }))}>
+                          <option value="">Month</option>
+                          {MONTHS.map((mo, i) => <option key={i+1} value={String(i+1)}>{mo}</option>)}
+                        </select>
+                        <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                      </div>
                     </div>
+                    <div>
+                      <L>DOB Day</L>
+                      <div style={{ position: 'relative' }}>
+                        <select style={sel} value={editForm.dob_day} onChange={e => setEditForm(p => ({ ...p, dob_day: e.target.value }))}>
+                          <option value="">Day</option>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
+                        </select>
+                        <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                      </div>
+                    </div>
+                    <div>
+                      <L>DOB Year</L>
+                      <div style={{ position: 'relative' }}>
+                        <select style={sel} value={editForm.dob_year} onChange={e => setEditForm(p => ({ ...p, dob_year: e.target.value }))}>
+                          <option value="">Year</option>
+                          {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                        </select>
+                        <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cars */}
+                  <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Cars ({editCars.length}/5)</div>
+                  {editCars.map((car, cidx) => (
+                    <div key={cidx} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 120px auto', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'end' }}>
+                      <div>
+                        {cidx === 0 && <L>Year</L>}
+                        <div style={{ position: 'relative' }}>
+                          <select style={sel} value={car.year} onChange={e => updateEditCar(cidx, 'year', e.target.value)}>
+                            <option value="">Year</option>
+                            {CAR_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                          </select>
+                          <svg style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                      </div>
+                      <div>
+                        {cidx === 0 && <L>Make</L>}
+                        <input style={inp} value={car.make} onChange={e => updateEditCar(cidx, 'make', e.target.value)} placeholder="Make" />
+                      </div>
+                      <div>
+                        {cidx === 0 && <L>Model</L>}
+                        <input style={inp} value={car.model} onChange={e => updateEditCar(cidx, 'model', e.target.value)} placeholder="Model" />
+                      </div>
+                      <div>
+                        {cidx === 0 && <L>Plate</L>}
+                        <input style={{ ...inp, textTransform: 'uppercase' }} value={car.license_plate} onChange={e => updateEditCar(cidx, 'license_plate', e.target.value)} placeholder="ABC-123" maxLength={15} />
+                      </div>
+                      <div style={{ paddingBottom: '2px' }}>
+                        {cidx === 0 && <div style={{ marginBottom: '0.35rem', height: '14px' }} />}
+                        <button type="button" onClick={() => setEditCars(prev => prev.length === 1 ? [{ ...EMPTY_CAR }] : prev.filter((_, i) => i !== cidx))}
+                          style={{ padding: '0.5rem 0.6rem', background: 'transparent', border: '0.5px solid rgba(123,32,50,0.25)', color: '#7B2032', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1 }}>✕</button>
+                      </div>
+                    </div>
+                  ))}
+                  {editCars.length < 5 && (
+                    <button type="button" onClick={() => setEditCars(p => [...p, { ...EMPTY_CAR }])}
+                      style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.4)', padding: '0.4rem 0.8rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1rem' }}>
+                      + Add Car
+                    </button>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
+                    <GhostBtn onClick={() => setEditing(null)}>Cancel</GhostBtn>
                   </div>
                   <Err msg={saveError} />
                 </div>
@@ -256,7 +395,13 @@ function MembersTab() {
                   <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
                   <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
                   <div><Badge status={m.membership_status} /></div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>{[m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}</div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>
+                    {m.cars?.length > 0
+                      ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
+                      : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
+                    }
+                    {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
+                  </div>
                   <div>
                     {m.password_set_at ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
