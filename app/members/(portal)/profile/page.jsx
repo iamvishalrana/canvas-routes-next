@@ -1,7 +1,6 @@
 'use client'
 export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
-import { createClient } from '../../../../lib/supabase/client'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 
@@ -18,7 +17,6 @@ const inputStyle = { width: '100%', padding: '0.85rem 1rem', border: '1px solid 
 const selectStyle = { ...inputStyle, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none' }
 
 export default function ProfilePage() {
-  const supabase = createClient()
   const [user, setUser] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', car_year: '', car_make: '', car_model: '' })
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
@@ -30,21 +28,30 @@ export default function ProfilePage() {
   const [pwError, setPwError] = useState(null)
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      const { data } = await supabase.from('members').select('*').eq('id', user.id).single()
-      if (data) setForm({ name: data.name || '', phone: data.phone || '', car_year: data.car_year || '', car_make: data.car_make || '', car_model: data.car_model || '' })
-    }
-    load()
+    fetch('/api/member/me')
+      .then(r => r.json())
+      .then(({ user, member }) => {
+        if (user) setUser(user)
+        if (member) setForm({
+          name: member.name || '',
+          phone: member.phone || '',
+          car_year: member.car_year || '',
+          car_make: member.car_make || '',
+          car_model: member.car_model || '',
+        })
+      })
   }, [])
 
   async function saveProfile(e) {
     e.preventDefault()
     setSaving(true); setError(null); setSaved(false)
-    const { error } = await supabase.from('members').update({ ...form }).eq('id', user.id)
+    const res = await fetch('/api/member/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
     setSaving(false)
-    if (error) setError('Could not save. Please try again.')
+    if (!res.ok) setError('Could not save. Please try again.')
     else setSaved(true)
   }
 
@@ -53,9 +60,14 @@ export default function ProfilePage() {
     if (pwForm.password !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
     if (pwForm.password.length < 8) { setPwError('Minimum 8 characters.'); return }
     setSavingPw(true); setPwError(null); setSavedPw(false)
-    const { error } = await supabase.auth.updateUser({ password: pwForm.password })
+    const res = await fetch('/api/member/password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwForm.password }),
+    })
+    const data = await res.json()
     setSavingPw(false)
-    if (error) setPwError('Could not update password.')
+    if (!res.ok) setPwError(data.error || 'Could not update password.')
     else { setSavedPw(true); setPwForm({ password: '', confirm: '' }) }
   }
 

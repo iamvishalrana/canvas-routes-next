@@ -29,9 +29,16 @@ export default async function DashboardPage() {
         <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.4rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '1rem' }}>
           Welcome back, {firstName}.
         </div>
-        <span style={{ display: 'inline-block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0.3rem 0.9rem', border: `0.5px solid ${statusStyle.border}`, background: statusStyle.bg, color: statusStyle.text }}>
-          {status}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0.3rem 0.9rem', border: `0.5px solid ${statusStyle.border}`, background: statusStyle.bg, color: statusStyle.text }}>
+            {status}
+          </span>
+          {(member?.car_year || member?.car_make || member?.car_model) && (
+            <span style={{ fontSize: '13px', color: '#555', letterSpacing: '0.02em' }}>
+              {[member.car_year, member.car_make, member.car_model].filter(Boolean).join(' ')}
+            </span>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }}>

@@ -1,6 +1,8 @@
 'use client'
 export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 
 const STATUS_OPTIONS = ['pending', 'active', 'suspended', 'expired']
 const STATUS_COLORS = {
@@ -467,6 +469,18 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif' }}>
+
+      {/* Nav */}
+      <nav style={{ background: '#F5F1EC', borderBottom: '0.5px solid rgba(0,0,0,0.1)', padding: '0 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '60px' }}>
+        <Link href="/">
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={100} height={67} style={{ display: 'block' }} />
+        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <Link href="/members/dashboard" style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', textDecoration: 'none' }}>Portal</Link>
+          <Link href="/members/profile" style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', textDecoration: 'none' }}>Profile</Link>
+        </div>
+      </nav>
+
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '3rem 2rem' }}>
 
         {/* Header */}
