@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/members/dashboard'
+  const next = searchParams.get('next') ?? '/members/reset-password'
 
   if (code) {
     const cookieStore = await cookies()
@@ -23,7 +23,10 @@ export async function GET(request) {
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) return NextResponse.redirect(`${origin}${next}`)
+    console.error('exchangeCodeForSession error:', error.message)
+    return NextResponse.redirect(`${origin}/members/login?error=${encodeURIComponent(error.message)}`)
   }
 
-  return NextResponse.redirect(`${origin}/members/login?error=auth`)
+  // No code — implicit flow, redirect to destination and let client handle hash tokens
+  return NextResponse.redirect(`${origin}${next}`)
 }
