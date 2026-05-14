@@ -250,8 +250,10 @@ export default function Home() {
           <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
           <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         </div>
-        <Link href="/members/login" className="nav-members">Members Login</Link>
-        <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="nav-join">Join</a>
+        <div className="nav-cta">
+          <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="nav-join">Join</a>
+          <Link href="/members/login" className="nav-members">Members Login</Link>
+        </div>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
           <span></span><span></span><span></span>
         </button>
