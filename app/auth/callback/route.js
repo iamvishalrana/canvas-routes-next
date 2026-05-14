@@ -9,6 +9,8 @@ export async function GET(request) {
 
   if (code) {
     const cookieStore = await cookies()
+    const redirectResponse = NextResponse.redirect(`${origin}${next}`)
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -16,17 +18,21 @@ export async function GET(request) {
         cookies: {
           getAll() { return cookieStore.getAll() },
           setAll(cookiesToSet) {
-            try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {}
+            cookiesToSet.forEach(({ name, value, options }) => {
+              try { cookieStore.set(name, value, options) } catch {}
+              redirectResponse.cookies.set(name, value, options)
+            })
           },
         },
       }
     )
+
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) return NextResponse.redirect(`${origin}${next}`)
+    if (!error) return redirectResponse
     console.error('exchangeCodeForSession error:', error.message)
     return NextResponse.redirect(`${origin}/members/login?error=${encodeURIComponent(error.message)}`)
   }
 
-  // No code — implicit flow, redirect to destination and let client handle hash tokens
+  // No code — implicit flow, browser will handle hash tokens
   return NextResponse.redirect(`${origin}${next}`)
 }
