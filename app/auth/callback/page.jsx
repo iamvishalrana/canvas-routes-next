@@ -10,6 +10,7 @@ function Handler() {
 
   useEffect(() => {
     const next = searchParams.get('next') || '/members/reset-password'
+    const code = searchParams.get('code')
     const errorParam = searchParams.get('error')
 
     if (errorParam) {
@@ -17,10 +18,27 @@ function Handler() {
       return
     }
 
+    if (code) {
+      // PKCE redirect: use a direct REST call that omits code_verifier entirely.
+      // The JS SDK sends code_verifier:"" which Supabase rejects for admin-initiated
+      // invite/reset codes. Omitting the field lets Supabase accept them without one.
+      fetch(`/api/auth/exchange?code=${encodeURIComponent(code)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.token) {
+            router.replace(`${next}?token=${encodeURIComponent(data.token)}`)
+          } else {
+            router.replace(`/members/login?error=${encodeURIComponent(data.error || 'Link expired or already used.')}`)
+          }
+        })
+        .catch(() => router.replace('/members/login?error=Something+went+wrong.'))
+      return
+    }
+
+    // No code in URL — implicit flow: Supabase puts tokens in the URL hash.
+    // The browser Supabase client reads the hash automatically.
     const supabase = createClient()
 
-    // Implicit flow: Supabase client reads hash tokens automatically and fires
-    // onAuthStateChange. Works when Supabase project is set to Implicit flow type.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.access_token) {
         subscription.unsubscribe()
@@ -29,7 +47,6 @@ function Handler() {
       }
     })
 
-    // In case session is already resolved before the listener fires
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token) {
         subscription.unsubscribe()
