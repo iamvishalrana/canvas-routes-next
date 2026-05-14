@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { createClient } from '../../lib/supabase/client'
 
 const STATUS_OPTIONS = ['pending', 'active', 'suspended', 'expired']
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
@@ -730,6 +731,13 @@ function ApplicationsTab() {
     else alert('Import failed: ' + data.error)
   }
 
+  async function deleteApp(app) {
+    if (!confirm(`Delete application from ${app.name || app.email}? This cannot be undone.`)) return
+    const res = await fetch(`/api/admin/applications/${app.id}`, { method: 'DELETE' })
+    if (res.ok) { setExpanded(null); loadApps() }
+    else alert('Failed to delete.')
+  }
+
   async function sendInvite(app) {
     setInviting(app.id)
     const payload = {
@@ -866,6 +874,9 @@ function ApplicationsTab() {
                       </div>
                     )}
                   </div>
+                  <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <DangerBtn onClick={() => deleteApp(a)} small>Delete Application</DangerBtn>
+                  </div>
                 </div>
               )}
             </div>
@@ -907,6 +918,12 @@ const TAB_ICONS = {
 
 export default function AdminPage() {
   const [tab, setTab] = useState('Members')
+  const supabase = createClient()
+
+  async function signOut() {
+    await supabase.auth.signOut()
+    window.location.href = '/members/login'
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -945,6 +962,10 @@ export default function AdminPage() {
           <Link href="/members/profile" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
             → Profile
           </Link>
+          <button onClick={signOut}
+            style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.12)', padding: '0.45rem 0', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginTop: '0.25rem' }}>
+            Sign Out
+          </button>
         </div>
       </aside>
 
