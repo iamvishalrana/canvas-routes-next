@@ -250,6 +250,7 @@ export default function Home() {
           <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
           <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         </div>
+        <Link href="/members/login" style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#888",textDecoration:"none",marginRight:"0.5rem"}}>Members</Link>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="nav-join">Join</a>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
           <span></span><span></span><span></span>
@@ -264,6 +265,7 @@ export default function Home() {
         <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</a>
+        <Link href="/members/login" style={{color:"#888"}}>Members Login</Link>
       </div>
 
       {/* HERO */}
