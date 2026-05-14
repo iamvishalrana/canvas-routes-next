@@ -18,24 +18,23 @@ function Handler() {
       return
     }
 
+    const supabase = createClient()
+
     if (code) {
-      // PKCE flow: exchange the code server-side, receive access token
-      fetch(`/api/auth/exchange?code=${encodeURIComponent(code)}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.token) {
-            router.replace(`${next}?token=${encodeURIComponent(data.token)}`)
-          } else {
-            router.replace(`/members/login?error=${encodeURIComponent(data.error || 'Link expired or already used.')}`)
-          }
-        })
-        .catch(() => router.replace('/members/login?error=Something+went+wrong.'))
+      // Exchange the code client-side — browser client handles invite/reset OTP
+      // codes without needing a stored PKCE code_verifier
+      ;(async () => {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+        if (!error && data.session?.access_token) {
+          router.replace(`${next}?token=${encodeURIComponent(data.session.access_token)}`)
+        } else {
+          router.replace(`/members/login?error=${encodeURIComponent(error?.message || 'Link expired or already used.')}`)
+        }
+      })()
       return
     }
 
-    // Implicit flow: browser Supabase client reads hash tokens automatically
-    const supabase = createClient()
-
+    // No code in URL — implicit flow: browser client reads hash tokens automatically
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.access_token) {
         subscription.unsubscribe()
@@ -44,7 +43,6 @@ function Handler() {
       }
     })
 
-    // In case the session is already available
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token) {
         subscription.unsubscribe()
@@ -53,7 +51,6 @@ function Handler() {
       }
     })
 
-    // Fallback if nothing resolves within 10s
     const timeout = setTimeout(() => {
       subscription.unsubscribe()
       router.replace('/members/login?error=Link+expired+or+already+used.')
