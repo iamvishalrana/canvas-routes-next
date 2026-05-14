@@ -706,15 +706,29 @@ function ApplicationsTab() {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [inviting, setInviting] = useState(null) // id of app being invited
-  const [inviteStatus, setInviteStatus] = useState({}) // { [id]: 'success' | 'error' | msg }
+  const [inviting, setInviting] = useState(null)
+  const [inviteStatus, setInviteStatus] = useState({})
   const [expanded, setExpanded] = useState(null)
+  const [importing, setImporting] = useState(false)
+  const [importDone, setImportDone] = useState(false)
 
-  useEffect(() => {
+  const loadApps = useCallback(() => {
+    setLoading(true)
     fetch('/api/admin/applications')
       .then(r => r.json())
       .then(data => { setApps(Array.isArray(data) ? data : []); setLoading(false) })
   }, [])
+
+  useEffect(() => { loadApps() }, [loadApps])
+
+  async function importCC() {
+    setImporting(true)
+    const res = await fetch('/api/admin/import-cc', { method: 'POST' })
+    const data = await res.json()
+    setImporting(false)
+    if (res.ok) { setImportDone(true); loadApps() }
+    else alert('Import failed: ' + data.error)
+  }
 
   async function sendInvite(app) {
     setInviting(app.id)
@@ -768,8 +782,17 @@ function ApplicationsTab() {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
-          {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
+            {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
+          </div>
+          {!importDone && (
+            <button onClick={importCC} disabled={importing}
+              style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c5a882', background: 'none', border: '0.5px solid rgba(197,168,130,0.4)', padding: '0.35rem 0.9rem', cursor: importing ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: importing ? 0.6 : 1 }}>
+              {importing ? 'Importing…' : 'Import C&C May 9'}
+            </button>
+          )}
+          {importDone && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ C&C data imported</span>}
         </div>
         <input style={{ ...inp, width: '240px' }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
