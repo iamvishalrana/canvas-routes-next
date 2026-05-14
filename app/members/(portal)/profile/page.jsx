@@ -18,7 +18,10 @@ const selectStyle = { ...inputStyle, cursor: 'pointer', WebkitAppearance: 'none'
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
-  const [form, setForm] = useState({ name: '', phone: '', car_year: '', car_make: '', car_model: '' })
+  const [form, setForm] = useState({ name: '', phone: '', dob_day: '', dob_month: '', dob_year: '', car_year: '', car_make: '', car_model: '' })
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const DOB_YEARS = Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i)
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
 
   const pwRules = [
@@ -43,6 +46,9 @@ export default function ProfilePage() {
         if (member) setForm({
           name: member.name || '',
           phone: member.phone || '',
+          dob_day: member.dob_day ? String(member.dob_day) : '',
+          dob_month: member.dob_month ? String(member.dob_month) : '',
+          dob_year: member.dob_year ? String(member.dob_year) : '',
           car_year: member.car_year || '',
           car_make: member.car_make || '',
           car_model: member.car_model || '',
@@ -56,7 +62,12 @@ export default function ProfilePage() {
     const res = await fetch('/api/member/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        dob_day: form.dob_day ? parseInt(form.dob_day) : null,
+        dob_month: form.dob_month ? parseInt(form.dob_month) : null,
+        dob_year: form.dob_year ? parseInt(form.dob_year) : null,
+      }),
     })
     setSaving(false)
     if (!res.ok) setError('Could not save. Please try again.')
@@ -104,6 +115,39 @@ export default function ProfilePage() {
               <input type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
                 maxLength={20} style={inputStyle} />
             </Field>
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', margin: '1.5rem 0 1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>Date of Birth</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Month *</label>
+                <div style={{ position: 'relative' }}>
+                  <select value={form.dob_month} onChange={e => setForm(p => ({ ...p, dob_month: e.target.value }))} style={selectStyle} required>
+                    <option value="">Month</option>
+                    {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
+                  </select>
+                  <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Day *</label>
+                <div style={{ position: 'relative' }}>
+                  <select value={form.dob_day} onChange={e => setForm(p => ({ ...p, dob_day: e.target.value }))} style={selectStyle} required>
+                    <option value="">Day</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
+                  </select>
+                  <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Year</label>
+                <div style={{ position: 'relative' }}>
+                  <select value={form.dob_year} onChange={e => setForm(p => ({ ...p, dob_year: e.target.value }))} style={selectStyle}>
+                    <option value="">Optional</option>
+                    {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                  </select>
+                  <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+            </div>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', margin: '1.5rem 0 1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>Your Car</div>
             <Field label="Year">
               <div style={{ position: 'relative' }}>
