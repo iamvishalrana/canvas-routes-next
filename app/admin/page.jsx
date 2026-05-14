@@ -740,6 +740,20 @@ function ApplicationsTab({ isMobile }) {
     else alert('Failed to delete.')
   }
 
+  async function toggleAttended(appId, regIndex, value) {
+    const app = apps.find(a => a.id === appId)
+    if (!app) return
+    const newRegs = (app.registrations || []).map((r, i) =>
+      i === regIndex ? { ...r, attended: r.attended === value ? null : value } : r
+    )
+    const res = await fetch(`/api/admin/applications/${appId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registrations: newRegs }),
+    })
+    if (res.ok) setApps(prev => prev.map(a => a.id === appId ? { ...a, registrations: newRegs } : a))
+  }
+
   async function sendInvite(app) {
     setInviting(app.id)
     const payload = {
@@ -877,6 +891,27 @@ function ApplicationsTab({ isMobile }) {
                       </div>
                     )}
                   </div>
+                  {a.registrations?.length > 0 && (
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
+                      {a.registrations.map((reg, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '12px', color: '#444', minWidth: '180px' }}>{reg.event}</span>
+                          <span style={{ fontSize: '11px', color: '#bbb' }}>
+                            {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <button onClick={() => toggleAttended(a.id, i, true)}
+                            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg.attended === true ? '#3B6B2F' : '#888' }}>
+                            ✓ Attended
+                          </button>
+                          <button onClick={() => toggleAttended(a.id, i, false)}
+                            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg.attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: reg.attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: reg.attended === false ? '#7B2032' : '#888' }}>
+                            ✗ No-show
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <DangerBtn onClick={() => deleteApp(a)} small>Delete Application</DangerBtn>
                   </div>

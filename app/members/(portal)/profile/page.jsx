@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
   const pwRules = [
@@ -47,6 +48,13 @@ export default function ProfilePage() {
   const [savingPw, setSavingPw] = useState(false)
   const [savedPw, setSavedPw] = useState(false)
   const [pwError, setPwError] = useState(null)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     fetch('/api/member/me')
@@ -127,12 +135,12 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <div style={{ marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+      <div style={{ marginBottom: isMobile ? '2rem' : '3rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Account</div>
-        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.4rem', fontWeight: '300', color: '#1a1a1a' }}>Your Profile</div>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#1a1a1a' }}>Your Profile</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '2.5rem' : '4rem', alignItems: 'start' }}>
 
         {/* Profile Info */}
         <div>
@@ -146,7 +154,7 @@ export default function ProfilePage() {
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                 maxLength={100} style={inp} />
             </Field>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
               <Field label="Phone">
                 <input type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
                   maxLength={20} style={inp} />
@@ -230,7 +238,7 @@ export default function ProfilePage() {
             {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{error}</div>}
             {saved && <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>Saved.</div>}
             <button type="submit" disabled={saving}
-              style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: saving ? 0.6 : 1 }}>
+              style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: saving ? 0.6 : 1, width: isMobile ? '100%' : 'auto' }}>
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
           </form>
@@ -261,7 +269,7 @@ export default function ProfilePage() {
             {pwError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{pwError}</div>}
             {savedPw && <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>Password updated.</div>}
             <button type="submit" disabled={savingPw}
-              style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: savingPw ? 0.6 : 1 }}>
+              style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: savingPw ? 0.6 : 1, width: isMobile ? '100%' : 'auto' }}>
               {savingPw ? 'Updating…' : 'Update Password'}
             </button>
           </form>

@@ -255,8 +255,19 @@ export async function POST(request) {
   // Store application data so admin can auto-populate member records
   try {
     const supabase = createAdminClient()
+    const normalEmail = email.toLowerCase().trim()
+    const newReg = { event: registerFor, registered_at: new Date().toISOString(), attended: null }
+
+    const { data: existing } = await supabase
+      .from('applications')
+      .select('registrations')
+      .eq('email', normalEmail)
+      .maybeSingle()
+
+    const registrations = [...(existing?.registrations || []), newReg]
+
     await supabase.from('applications').upsert({
-      email: email.toLowerCase().trim(),
+      email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),
       car_model: carModel.trim(),
@@ -267,6 +278,7 @@ export async function POST(request) {
       instagram: instagram || null,
       more: more || null,
       source: source || null,
+      registrations,
     }, { onConflict: 'email' })
   } catch (e) {
     console.error('Failed to store application:', e.message)
