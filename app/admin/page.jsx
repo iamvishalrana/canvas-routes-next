@@ -130,6 +130,7 @@ function MembersTab({ isMobile }) {
     setEditing(m.id)
     setSaveError(null)
     setEditForm({
+      email: m.email || '',
       membership_status: m.membership_status,
       name: m.name || '',
       phone: m.phone || '',
@@ -301,15 +302,23 @@ function MembersTab({ isMobile }) {
               {editing === m.id ? (
                 <div style={{ padding: '1.5rem 1.25rem', background: 'rgba(197,168,130,0.05)', borderLeft: '2px solid #c5a882' }}>
 
-                  {/* Personal info row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 180px', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <div><L>Name</L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
-                    <div><L>Phone</L><input style={inp} type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} /></div>
-                    <div><L>Instagram</L><input style={inp} value={editForm.instagram} onChange={e => setEditForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" /></div>
+                  {/* Email + Status row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div>
+                      <L>Email (changes login email)</L>
+                      <input style={inp} type="email" value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} />
+                    </div>
                     <div>
                       <L>Status</L>
                       <SelectWrap value={editForm.membership_status} onChange={e => setEditForm(p => ({ ...p, membership_status: e.target.value }))} options={STATUS_OPTIONS} />
                     </div>
+                  </div>
+
+                  {/* Personal info row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <div><L>Name</L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
+                    <div><L>Phone</L><input style={inp} type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} /></div>
+                    <div><L>Instagram</L><input style={inp} value={editForm.instagram} onChange={e => setEditForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" /></div>
                   </div>
 
                   {/* DOB row */}
