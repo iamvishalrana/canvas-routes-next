@@ -25,6 +25,16 @@ export default function ResetPasswordPage() {
   const passwordsMatch = confirm.length > 0 && password === confirm
 
   useEffect(() => {
+    // Token passed from /auth/callback via URL query param
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token')
+    if (urlToken) {
+      setAccessToken(urlToken)
+      setSessionChecked(true)
+      window.history.replaceState({}, '', window.location.pathname)
+      return
+    }
+    // Fallback: check server-side cookie session
     fetch('/api/auth/session')
       .then(r => r.json())
       .then(data => {
