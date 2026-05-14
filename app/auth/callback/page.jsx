@@ -9,7 +9,6 @@ function Handler() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const code = searchParams.get('code')
     const next = searchParams.get('next') || '/members/reset-password'
     const errorParam = searchParams.get('error')
 
@@ -20,21 +19,8 @@ function Handler() {
 
     const supabase = createClient()
 
-    if (code) {
-      // Exchange the code client-side — browser client handles invite/reset OTP
-      // codes without needing a stored PKCE code_verifier
-      ;(async () => {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error && data.session?.access_token) {
-          router.replace(`${next}?token=${encodeURIComponent(data.session.access_token)}`)
-        } else {
-          router.replace(`/members/login?error=${encodeURIComponent(error?.message || 'Link expired or already used.')}`)
-        }
-      })()
-      return
-    }
-
-    // No code in URL — implicit flow: browser client reads hash tokens automatically
+    // Implicit flow: Supabase client reads hash tokens automatically and fires
+    // onAuthStateChange. Works when Supabase project is set to Implicit flow type.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.access_token) {
         subscription.unsubscribe()
@@ -43,6 +29,7 @@ function Handler() {
       }
     })
 
+    // In case session is already resolved before the listener fires
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token) {
         subscription.unsubscribe()
