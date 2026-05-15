@@ -753,6 +753,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [seenAppIds, setSeenAppIds] = useState(new Set())
   const seenInitRef = useRef(false)
   const [addingContact, setAddingContact] = useState(new Set())
+  const [sortApps, setSortApps] = useState('newest')
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -881,9 +882,15 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-  const filtered = apps.filter(a =>
-    !search || [a.name, a.email, a.car_year, a.car_model, a.source].some(v => v?.toLowerCase().includes(search.toLowerCase()))
-  )
+  const filtered = apps
+    .filter(a => !search || [a.name, a.email, a.car_year, a.car_model, a.source].some(v => v?.toLowerCase().includes(search.toLowerCase())))
+    .sort((a, b) => {
+      if (sortApps === 'newest') return new Date(b.created_at) - new Date(a.created_at)
+      if (sortApps === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
+      if (sortApps === 'name_az') return (a.name || '').localeCompare(b.name || '')
+      if (sortApps === 'name_za') return (b.name || '').localeCompare(a.name || '')
+      return 0
+    })
   const totalInvited = apps.filter(a => a.is_member).length
   const unseenCount = apps.filter(a => !seenAppIds.has(a.id)).length
 
@@ -919,9 +926,21 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
         <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
           {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
         </div>
-        <div style={{ position: 'relative', width: isMobile ? '100%' : '340px' }}>
-          <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
-          {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={sortApps} onChange={e => setSortApps(e.target.value)}
+              style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="name_az">Name A → Z</option>
+              <option value="name_za">Name Z → A</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', width: isMobile ? '100%' : '280px' }}>
+            <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+          </div>
         </div>
       </div>
 
@@ -1156,6 +1175,7 @@ function ContactsTab({ isMobile }) {
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
   const [search, setSearch] = useState('')
+  const [sortContacts, setSortContacts] = useState('name_az')
 
   const loadContacts = useCallback(async () => {
     setLoading(true)
@@ -1176,9 +1196,15 @@ function ContactsTab({ isMobile }) {
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-  const filtered = contacts.filter(c =>
-    !search || [c.name, c.email, c.car_year, c.car_model].some(v => v?.toLowerCase().includes(search.toLowerCase()))
-  )
+  const filtered = contacts
+    .filter(c => !search || [c.name, c.email, c.car_year, c.car_model].some(v => v?.toLowerCase().includes(search.toLowerCase())))
+    .sort((a, b) => {
+      if (sortContacts === 'name_az') return (a.name || '').localeCompare(b.name || '')
+      if (sortContacts === 'name_za') return (b.name || '').localeCompare(a.name || '')
+      if (sortContacts === 'newest') return new Date(b.contact_created_at || b.created_at) - new Date(a.contact_created_at || a.created_at)
+      if (sortContacts === 'oldest') return new Date(a.contact_created_at || a.created_at) - new Date(b.contact_created_at || b.created_at)
+      return 0
+    })
 
   return (
     <div>
@@ -1194,9 +1220,20 @@ function ContactsTab({ isMobile }) {
         <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
           {filtered.length} of {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
         </div>
-        <div style={{ position: 'relative', width: isMobile ? '100%' : '340px' }}>
-          <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car…" value={search} onChange={e => setSearch(e.target.value)} />
-          {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={sortContacts} onChange={e => setSortContacts(e.target.value)}
+              style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="name_az">Name A → Z</option>
+              <option value="name_za">Name Z → A</option>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', width: isMobile ? '100%' : '280px' }}>
+            <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car…" value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
         </div>
       </div>
 
