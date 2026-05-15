@@ -591,7 +591,7 @@ export default function Home() {
               <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth <span style={{color:"#7B2032",marginLeft:"2px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
               <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1.2fr",gap:"0.75rem"}}>
                 <div style={{position:"relative"}}>
-                  <select id="field-dob_month" value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
+                  <select value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
                     style={{...inputStyle('dob_month'), cursor:"pointer", paddingRight:"2rem"}}
                     aria-required="true">
                     <option value="">Month *</option>

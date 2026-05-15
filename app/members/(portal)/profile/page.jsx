@@ -152,7 +152,7 @@ export default function ProfilePage() {
             </Field>
             <Field label="Full Name">
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                maxLength={100} style={inp} />
+                maxLength={100} autoCapitalize="words" style={{ ...inp, textTransform: 'capitalize' }} />
             </Field>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
               <Field label="Phone">

@@ -23,7 +23,8 @@ export default async function DashboardPage() {
 
   const status = member?.membership_status || 'pending'
   const statusStyle = STATUS_COLORS[status] || STATUS_COLORS.pending
-  const firstName = member?.name?.split(' ')[0] || user.email.split('@')[0]
+  const rawFirst = member?.name?.split(' ')[0] || user.email.split('@')[0]
+  const firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1)
 
   return (
     <div>

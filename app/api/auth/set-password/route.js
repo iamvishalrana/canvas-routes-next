@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { createClient } from '../../../../lib/supabase/server'
+import { checkRateLimit } from '../../../../lib/rateLimit.js'
 
 function validate(password) {
   if (!password || password.length < 8) return 'Password must be at least 8 characters.'
@@ -10,7 +11,17 @@ function validate(password) {
 }
 
 export async function POST(request) {
-  const { password, accessToken } = await request.json()
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')?.trim()
+  if (ip && await checkRateLimit(ip)) {
+    return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+  }
+
+  let body
+  try { body = await request.json() } catch {
+    return Response.json({ error: 'Invalid request.' }, { status: 400 })
+  }
+  const { password, accessToken } = body
   const err = validate(password)
   if (err) return Response.json({ error: err }, { status: 400 })
 
