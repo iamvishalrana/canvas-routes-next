@@ -17,6 +17,11 @@ const STATUS_COLORS = {
   expired:   { bg: 'rgba(0,0,0,0.05)',      text: '#999',    border: 'rgba(0,0,0,0.15)'      },
 }
 const EVENT_TYPES = ['Road Trip', 'Cars & Coffee', 'Social', 'Track Day', 'Other']
+const CANONICAL_EVENTS = [
+  { name: 'Cars & Coffee — May 9, 2026', date: '2026-05-09' },
+  { name: 'Grand Prix Weekend Cars & Coffee — May 23, 2026', date: '2026-05-23' },
+  { name: 'Into the Laurentians — May 31, 2026', date: '2026-05-31' },
+]
 
 const inp = {
   width: '100%', padding: '0.7rem 0.9rem',
@@ -59,10 +64,10 @@ function PrimaryBtn({ onClick, disabled, type = 'button', children }) {
   )
 }
 
-function GhostBtn({ onClick, small, children }) {
+function GhostBtn({ onClick, small, disabled, children }) {
   return (
-    <button type="button" onClick={onClick}
-      style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <button type="button" onClick={onClick} disabled={disabled}
+      style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
       {children}
     </button>
   )
@@ -747,6 +752,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [saveAppErr, setSaveAppErr] = useState(null)
   const [seenAppIds, setSeenAppIds] = useState(new Set())
   const seenInitRef = useRef(false)
+  const [addingContact, setAddingContact] = useState(new Set())
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -822,12 +828,19 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
     setEditingApp(null)
   }
 
-  async function toggleAttended(appId, regIndex, value) {
+  async function toggleAttended(appId, eventName, value) {
     const app = apps.find(a => a.id === appId)
     if (!app) return
-    const newRegs = (app.registrations || []).map((r, i) =>
-      i === regIndex ? { ...r, attended: r.attended === value ? null : value } : r
-    )
+    const existing = app.registrations || []
+    const idx = existing.findIndex(r => r.event === eventName)
+    let newRegs
+    if (idx !== -1) {
+      newRegs = existing.map((r, i) =>
+        i === idx ? { ...r, attended: r.attended === value ? null : value } : r
+      )
+    } else {
+      newRegs = [...existing, { event: eventName, registered_at: null, attended: value }]
+    }
     const res = await fetch(`/api/admin/applications/${appId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
     })
@@ -855,6 +868,15 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
     } else {
       setInviteStatus(p => ({ ...p, [app.id]: data.error || 'Failed.' }))
     }
+  }
+
+  async function addToContact(appId) {
+    setAddingContact(prev => new Set([...prev, appId]))
+    const res = await fetch('/api/admin/contacts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ application_id: appId })
+    })
+    setAddingContact(prev => { const n = new Set(prev); n.delete(appId); return n })
+    if (res.ok) loadApps()
   }
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -920,18 +942,18 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
             <div key={a.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: a.is_contact ? 'rgba(0,0,0,0.025)' : undefined }}
                 onClick={() => { setExpanded(expanded === a.id ? null : a.id); if (editingApp === a.id) setEditingApp(null); markSeen(a.id) }}
               >
-                <div style={{ fontSize: '13px', color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <div style={{ fontSize: '13px', color: a.is_contact ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                   {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
                   {a.name || <span style={{ color: '#ccc' }}>—</span>}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>{a.email}</div>
-                <div style={{ fontSize: '12px', color: '#888' }}>
+                <div style={{ fontSize: '12px', color: a.is_contact ? '#bbb' : '#666' }}>{a.email}</div>
+                <div style={{ fontSize: '12px', color: a.is_contact ? '#bbb' : '#888' }}>
                   {[a.car_year, a.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
                 </div>
-                <div style={{ fontSize: '12px', color: '#888' }}>
+                <div style={{ fontSize: '12px', color: a.is_contact ? '#bbb' : '#888' }}>
                   {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
                 </div>
                 <div style={{ fontSize: '11px', color: '#bbb' }}>
@@ -1044,31 +1066,60 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   )}
 
                   {/* Event registrations */}
-                  {a.registrations?.length > 0 && (
-                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
-                      {a.registrations.map((reg, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '12px', color: '#444', minWidth: '180px' }}>{reg.event}</span>
-                          <span style={{ fontSize: '11px', color: '#bbb' }}>
-                            {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                          <button onClick={() => toggleAttended(a.id, i, true)}
-                            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg.attended === true ? '#3B6B2F' : '#888' }}>
-                            ✓ Attended
-                          </button>
-                          <button onClick={() => toggleAttended(a.id, i, false)}
-                            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg.attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: reg.attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: reg.attended === false ? '#7B2032' : '#888' }}>
-                            ✗ No-show
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
+                    {(() => {
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      const canonicalNames = new Set(CANONICAL_EVENTS.map(e => e.name))
+                      const extraRegs = (a.registrations || []).filter(r => !canonicalNames.has(r.event))
+                      const allRows = [
+                        ...CANONICAL_EVENTS.map(ev => {
+                          const reg = (a.registrations || []).find(r => r.event === ev.name)
+                          return { eventName: ev.name, eventDate: ev.date, reg: reg || null }
+                        }),
+                        ...extraRegs.map(r => ({ eventName: r.event, eventDate: null, reg: r })),
+                      ]
+                      return allRows.map(({ eventName, eventDate, reg }) => {
+                        const isPast = eventDate ? new Date(eventDate) <= today : true
+                        return (
+                          <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{eventName}</span>
+                            {reg?.registered_at && (
+                              <span style={{ fontSize: '11px', color: '#bbb' }}>
+                                {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            )}
+                            {isPast ? (
+                              <>
+                                <button onClick={() => toggleAttended(a.id, eventName, true)}
+                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg?.attended === true ? '#3B6B2F' : '#888' }}>
+                                  ✓ Attended
+                                </button>
+                                <button onClick={() => toggleAttended(a.id, eventName, false)}
+                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: reg?.attended === false ? '#7B2032' : '#888' }}>
+                                  ✗ No-show
+                                </button>
+                              </>
+                            ) : (
+                              <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
+                            )}
+                          </div>
+                        )
+                      })
+                    })()}
+                  </div>
 
                   {/* Action row */}
                   {editingApp !== a.id && (
-                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {!a.is_contact ? (
+                        <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
+                          {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
+                        </GhostBtn>
+                      ) : (
+                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
+                      )}
                       <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
                       <DangerBtn onClick={() => deleteApp(a)} small>Delete</DangerBtn>
                     </div>
@@ -1084,9 +1135,154 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   )
 }
 
+// ─── Contacts Tab ────────────────────────────────────────────────────────────
+
+function ContactsTab({ isMobile }) {
+  const [contacts, setContacts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
+  const [search, setSearch] = useState('')
+
+  const loadContacts = useCallback(async () => {
+    setLoading(true)
+    const res = await fetch('/api/admin/contacts')
+    const data = await res.json()
+    setContacts(Array.isArray(data) ? data : [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { loadContacts() }, [loadContacts])
+
+  async function removeContact(contactId) {
+    if (!confirm('Remove this contact?')) return
+    const res = await fetch(`/api/admin/contacts/${contactId}`, { method: 'DELETE' })
+    if (res.ok) loadContacts()
+    else alert('Failed to remove contact.')
+  }
+
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+  const filtered = contacts.filter(c =>
+    !search || [c.name, c.email, c.car_year, c.car_model].some(v => v?.toLowerCase().includes(search.toLowerCase()))
+  )
+
+  return (
+    <div>
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
+          <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{contacts.length}</div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>Total Contacts</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
+          {filtered.length} of {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
+        </div>
+        <div style={{ position: 'relative', width: isMobile ? '100%' : '340px' }}>
+          <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car…" value={search} onChange={e => setSearch(e.target.value)} />
+          {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No contacts yet.</div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+            {['Name', 'Email', 'Car', 'DOB', 'Applied', ''].map((h, i) => (
+              <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+            ))}
+          </div>
+
+          {filtered.map((c, idx) => (
+            <div key={c.contact_id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+              {/* Summary row */}
+              <div
+                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}
+              >
+                <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>{c.email}</div>
+                <div style={{ fontSize: '12px', color: '#888' }}>
+                  {[c.car_year, c.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                </div>
+                <div style={{ fontSize: '12px', color: '#888' }}>
+                  {c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? `, ${c.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
+                </div>
+                <div style={{ fontSize: '11px', color: '#bbb' }}>
+                  {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}
+                </div>
+                <div onClick={e => e.stopPropagation()}>
+                  <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
+                </div>
+              </div>
+
+              {/* Expanded panel */}
+              {expanded === c.contact_id && (
+                <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Name</div>
+                      <div style={{ fontSize: '13px', color: c.name ? '#444' : '#ddd' }}>{c.name || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Car Year</div>
+                      <div style={{ fontSize: '13px', color: c.car_year ? '#444' : '#ddd' }}>{c.car_year || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Car Make & Model</div>
+                      <div style={{ fontSize: '13px', color: c.car_model ? '#444' : '#ddd' }}>{c.car_model || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Phone</div>
+                      <div style={{ fontSize: '13px', color: c.phone ? '#444' : '#ddd' }}>{c.phone || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Instagram</div>
+                      <div style={{ fontSize: '13px', color: c.instagram ? '#444' : '#ddd' }}>{c.instagram ? `@${c.instagram}` : '—'}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>DOB</div>
+                      <div style={{ fontSize: '13px', color: c.dob_month ? '#444' : '#ddd' }}>
+                        {c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? `, ${c.dob_year}` : ''}` : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>How they heard</div>
+                      <div style={{ fontSize: '13px', color: c.source ? '#444' : '#ddd' }}>{c.source || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Applied</div>
+                      <div style={{ fontSize: '13px', color: '#444' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</div>
+                    </div>
+                  </div>
+                  {c.more && (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Tell us more</div>
+                      <div style={{ fontSize: '13px', color: '#444', lineHeight: '1.65' }}>{c.more}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-const TABS = ['Members', 'Applications', 'Announcements', 'Events']
+const TABS = ['Members', 'Applications', 'Contacts', 'Announcements', 'Events']
 const TAB_ICONS = {
   Members: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -1098,6 +1294,12 @@ const TAB_ICONS = {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
       <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
+    </svg>
+  ),
+  Contacts: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      <path d="M16 3.5 L19 6.5 L22 3.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   Announcements: (
@@ -1239,6 +1441,7 @@ export default function AdminPage() {
 
           {tab === 'Members' && <MembersTab isMobile={isMobile} />}
           {tab === 'Applications' && <ApplicationsTab isMobile={isMobile} onUnseenCountChange={setUnseenAppsCount} />}
+          {tab === 'Contacts' && <ContactsTab isMobile={isMobile} />}
           {tab === 'Announcements' && <AnnouncementsTab />}
           {tab === 'Events' && <EventsTab />}
 

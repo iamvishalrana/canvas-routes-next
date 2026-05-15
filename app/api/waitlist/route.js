@@ -266,7 +266,17 @@ export async function POST(request) {
       .eq('email', normalEmail)
       .maybeSingle()
 
-    const registrations = [...(existing?.registrations || []), newReg]
+    const CANONICAL_EVENTS = [
+      'Cars & Coffee — May 9, 2026',
+      'Grand Prix Weekend Cars & Coffee — May 23, 2026',
+      'Into the Laurentians — May 31, 2026',
+    ]
+    const prevRegs = existing?.registrations || []
+    const existingEventNames = new Set(prevRegs.map(r => r.event))
+    const missingCanonical = CANONICAL_EVENTS
+      .filter(ev => !existingEventNames.has(ev) && ev !== registerFor)
+      .map(ev => ({ event: ev, registered_at: null, attended: null }))
+    const registrations = [...prevRegs, ...missingCanonical, newReg]
 
     await supabase.from('applications').upsert({
       email: normalEmail,
