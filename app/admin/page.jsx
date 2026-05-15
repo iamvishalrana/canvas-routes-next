@@ -1234,6 +1234,7 @@ function ContactsTab({ isMobile }) {
           <div style={{ position: 'relative', width: isMobile ? '100%' : '280px' }}>
             <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car…" value={search} onChange={e => setSearch(e.target.value)} />
             {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+          </div>
         </div>
       </div>
 
@@ -1371,7 +1372,6 @@ export default function AdminPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unseenAppsCount, setUnseenAppsCount] = useState(0)
-  const supabase = createClient()
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1381,7 +1381,7 @@ export default function AdminPage() {
   }, [])
 
   async function signOut() {
-    await supabase.auth.signOut()
+    await createClient().auth.signOut()
     window.location.href = '/members/login'
   }
 
