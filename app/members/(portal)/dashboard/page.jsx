@@ -1,4 +1,7 @@
 import { createClient } from '../../../../lib/supabase/server'
+import { createAdminClient } from '../../../../lib/supabase/admin'
+
+export const dynamic = 'force-dynamic'
 
 const STATUS_COLORS = {
   active:    { bg: 'rgba(59,107,47,0.08)',  text: '#3B6B2F', border: 'rgba(59,107,47,0.3)'  },
@@ -11,8 +14,9 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const admin = createAdminClient()
   const [{ data: member }, { data: announcements }, { data: events }] = await Promise.all([
-    supabase.from('members').select('*').eq('id', user.id).maybeSingle(),
+    admin.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
     supabase.from('events').select('*').order('created_at', { ascending: false }).limit(6),
   ])
@@ -29,19 +33,26 @@ export default async function DashboardPage() {
         <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.4rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '1rem' }}>
           Welcome back, {firstName}.
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span style={{ display: 'inline-block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0.3rem 0.9rem', border: `0.5px solid ${statusStyle.border}`, background: statusStyle.bg, color: statusStyle.text }}>
             {status}
           </span>
           {(member?.cars?.length
             ? member.cars
             : (member?.car_year || member?.car_make || member?.car_model)
-              ? [{ year: member.car_year, make: member.car_make, model: member.car_model }]
+              ? [{ year: member.car_year, make: member.car_make, model: member.car_model, license_plate: '' }]
               : []
           ).map((car, i) => (
-            <span key={i} style={{ fontSize: '13px', color: '#555', letterSpacing: '0.02em' }}>
-              {[car.year, car.make, car.model].filter(Boolean).join(' ')}
-            </span>
+            <div key={i} style={{ borderLeft: '1.5px solid #c5a882', paddingLeft: '0.85rem' }}>
+              <div style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.02em', fontWeight: '400' }}>
+                {[car.year, car.make, car.model].filter(Boolean).join(' ') || 'Unnamed car'}
+              </div>
+              {car.license_plate && (
+                <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#888', marginTop: '0.2rem' }}>
+                  {car.license_plate}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
