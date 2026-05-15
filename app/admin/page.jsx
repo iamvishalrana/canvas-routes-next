@@ -1194,6 +1194,23 @@ function ContactsTab({ isMobile }) {
     else alert('Failed to remove contact.')
   }
 
+  async function toggleAttended(appId, eventName, value) {
+    const contact = contacts.find(c => c.id === appId)
+    if (!contact) return
+    const existing = contact.registrations || []
+    const idx = existing.findIndex(r => r.event === eventName)
+    let newRegs
+    if (idx !== -1) {
+      newRegs = existing.map((r, i) => i === idx ? { ...r, attended: r.attended === value ? null : value } : r)
+    } else {
+      newRegs = [...existing, { event: eventName, registered_at: null, attended: value }]
+    }
+    const res = await fetch(`/api/admin/applications/${appId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
+    })
+    if (res.ok) setContacts(prev => prev.map(c => c.id === appId ? { ...c, registrations: newRegs } : c))
+  }
+
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
   const filtered = contacts
@@ -1321,6 +1338,51 @@ function ContactsTab({ isMobile }) {
                       <div style={{ fontSize: '13px', color: '#444', lineHeight: '1.65' }}>{c.more}</div>
                     </div>
                   )}
+
+                  {/* Event registrations */}
+                  <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
+                    {(() => {
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      const canonicalNames = new Set(CANONICAL_EVENTS.map(e => e.name))
+                      const extraRegs = (c.registrations || []).filter(r => !canonicalNames.has(r.event))
+                      const allRows = [
+                        ...CANONICAL_EVENTS.map(ev => {
+                          const reg = (c.registrations || []).find(r => r.event === ev.name)
+                          return { eventName: ev.name, eventDate: ev.date, reg: reg || null }
+                        }),
+                        ...extraRegs.map(r => ({ eventName: r.event, eventDate: null, reg: r })),
+                      ]
+                      return allRows.map(({ eventName, eventDate, reg }) => {
+                        const isPast = eventDate ? new Date(eventDate) <= today : true
+                        return (
+                          <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{eventName}</span>
+                            {reg?.registered_at && (
+                              <span style={{ fontSize: '11px', color: '#bbb' }}>
+                                {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            )}
+                            {isPast ? (
+                              <>
+                                <button onClick={() => toggleAttended(c.id, eventName, true)}
+                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg?.attended === true ? '#3B6B2F' : '#888' }}>
+                                  ✓ Attended
+                                </button>
+                                <button onClick={() => toggleAttended(c.id, eventName, false)}
+                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: reg?.attended === false ? '#7B2032' : '#888' }}>
+                                  ✗ No-show
+                                </button>
+                              </>
+                            ) : (
+                              <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
+                            )}
+                          </div>
+                        )
+                      })
+                    })()}
+                  </div>
                 </div>
               )}
             </div>
