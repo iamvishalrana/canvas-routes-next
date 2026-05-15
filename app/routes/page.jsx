@@ -33,6 +33,7 @@ export default function RoutesPage() {
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const honeypotRef = useRef(null)
 
   useEffect(() => {
@@ -162,7 +163,19 @@ export default function RoutesPage() {
           <Link href="/#contact" style={{color:"#555",textDecoration:"none"}}>Contact</Link>
         </div>
         <Link href="/#join" className="nav-join">Join</Link>
+        <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
+          <span></span><span></span><span></span>
+        </button>
       </nav>
+
+      {/* MOBILE MENU */}
+      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+        <Link href="/" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Home</Link>
+        <Link href="/#events" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Events</Link>
+        <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Contact</Link>
+        <Link href="/#join" onClick={() => setMenuOpen(false)} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</Link>
+        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{color:"#3B6B2F",fontWeight:"500"}}>Members Login</Link>
+      </div>
 
       {/* HERO */}
       <section style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>

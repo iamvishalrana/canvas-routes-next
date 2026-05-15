@@ -1,5 +1,6 @@
 import { kv } from '@vercel/kv'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { createAdminClient } from '../../../lib/supabase/admin.js'
 
 const CAR_CAP = 15
 const ROADTRIP_KEY = 'reg:routes'
@@ -271,6 +272,41 @@ export async function POST(request) {
   }
   if (!notifyOk) {
     console.error(`ALERT: Notify email failed after retry — registration from: ${email}`)
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const normalEmail = email.toLowerCase().trim()
+    const ITL_EVENT = 'Into the Laurentians — May 31, 2026'
+    const CANONICAL_EVENTS = [
+      'Cars & Coffee — May 9, 2026',
+      'Grand Prix Weekend Cars & Coffee — May 23, 2026',
+      ITL_EVENT,
+    ]
+    const newReg = { event: ITL_EVENT, registered_at: new Date().toISOString(), attended: null }
+    const { data: existing } = await supabase
+      .from('applications')
+      .select('registrations')
+      .eq('email', normalEmail)
+      .maybeSingle()
+    const prevRegs = (existing?.registrations || []).filter(r => r.event !== ITL_EVENT)
+    const existingEventNames = new Set(prevRegs.map(r => r.event))
+    const missingCanonical = CANONICAL_EVENTS
+      .filter(ev => !existingEventNames.has(ev) && ev !== ITL_EVENT)
+      .map(ev => ({ event: ev, registered_at: null, attended: null }))
+    const registrations = [...prevRegs, ...missingCanonical, newReg]
+    await supabase.from('applications').upsert({
+      email: normalEmail,
+      name: name.trim(),
+      car_year: year.trim(),
+      car_model: carModel.trim(),
+      phone: phone || null,
+      source: source || null,
+      more: more || null,
+      registrations,
+    }, { onConflict: 'email' })
+  } catch (e) {
+    console.error('Failed to store route registration:', e.message)
   }
 
   return Response.json({ success: true })

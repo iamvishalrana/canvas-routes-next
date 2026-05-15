@@ -271,7 +271,7 @@ export async function POST(request) {
       'Grand Prix Weekend Cars & Coffee — May 23, 2026',
       'Into the Laurentians — May 31, 2026',
     ]
-    const prevRegs = existing?.registrations || []
+    const prevRegs = (existing?.registrations || []).filter(r => r.event !== registerFor)
     const existingEventNames = new Set(prevRegs.map(r => r.event))
     const missingCanonical = CANONICAL_EVENTS
       .filter(ev => !existingEventNames.has(ev) && ev !== registerFor)
