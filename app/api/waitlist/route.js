@@ -208,21 +208,27 @@ export async function POST(request) {
   const regCount = await incrementCount(registerFor, email)
 
   // EMAIL 1 — Customer confirmation
-  const customerEmail = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: 'Canvas Routes <info@canvasroutes.com>',
-      to: email,
-      reply_to: 'info@canvasroutes.com',
-      subject: 'Application received — Canvas Routes',
-      html: customerHtml(firstName),
-      text: customerText(rawFirstName),
-    }),
-  })
+  let customerEmail
+  try {
+    customerEmail = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: email,
+        reply_to: 'info@canvasroutes.com',
+        subject: 'Application received — Canvas Routes',
+        html: customerHtml(firstName),
+        text: customerText(rawFirstName),
+      }),
+    })
+  } catch (err) {
+    console.error('Customer email network error:', err)
+    return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
+  }
 
   if (!customerEmail.ok) {
     const err = await customerEmail.text().catch(() => 'unknown')
@@ -241,14 +247,18 @@ export async function POST(request) {
 
   let notifyOk = false
   for (let attempt = 0; attempt < 2; attempt++) {
-    const notifyEmail = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: notifyBody,
-    })
-    if (notifyEmail.ok) { notifyOk = true; break }
-    const err = await notifyEmail.text()
-    console.error(`Notify email attempt ${attempt + 1} failed:`, err)
+    try {
+      const notifyEmail = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: notifyBody,
+      })
+      if (notifyEmail.ok) { notifyOk = true; break }
+      const err = await notifyEmail.text().catch(() => 'unknown')
+      console.error(`Notify email attempt ${attempt + 1} failed:`, err)
+    } catch (err) {
+      console.error(`Notify email attempt ${attempt + 1} network error:`, err)
+    }
   }
   if (!notifyOk) {
     console.error(`ALERT: Notify email failed after retry — application from: ${email}`)

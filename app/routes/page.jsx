@@ -140,9 +140,13 @@ export default function RoutesPage() {
         setServerError(data.error || 'Something went wrong. Please try again.')
         setStatus('error')
       }
-    } catch {
+    } catch (err) {
       clearTimeout(timeout)
-      setServerError('Something went wrong. Please try again.')
+      if (err?.name === 'AbortError') {
+        setServerError("Request timed out. Please check your connection and try again.")
+      } else {
+        setServerError('Something went wrong. Please try again.')
+      }
       setStatus('error')
     }
   }
