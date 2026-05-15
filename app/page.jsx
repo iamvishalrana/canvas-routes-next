@@ -798,7 +798,7 @@ export default function Home() {
             >
               <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
               <button onClick={() => setShowGpccModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-              <img src="/ccgp.jpeg" alt="Grand Prix Weekend Cars & Coffee" style={{width:"100%",height:"220px",objectFit:"cover",display:"block"}} />
+              <img src="/ccgp.jpeg" alt="Grand Prix Weekend Cars & Coffee" style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:"top",display:"block"}} />
               <div style={{padding:"1.8rem 2rem 2rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 23, 2026</div>
                 <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Grand Prix Weekend<br/>Cars &amp; Coffee</div>
@@ -844,7 +844,7 @@ export default function Home() {
               {/* Grand Prix Weekend Cars & Coffee */}
               <div style={{flex:1,background:"#0F1E14",border:"1px solid rgba(197,168,130,0.35)",overflow:"hidden",position:"relative",fontFamily:"var(--font-inter),sans-serif"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-                <img src="/ccgp.jpeg" alt="Grand Prix Weekend Cars & Coffee" style={{width:"100%",height:"200px",objectFit:"cover",display:"block"}} />
+                <img src="/ccgp.jpeg" alt="Grand Prix Weekend Cars & Coffee" style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"top",display:"block"}} />
                 <div style={{padding:"1.6rem 1.8rem 2rem"}}>
                   <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 23, 2026</div>
                   <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.85rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.35rem"}}>Grand Prix Weekend<br/>Cars &amp; Coffee</div>
@@ -864,7 +864,7 @@ export default function Home() {
               {/* Into the Laurentians */}
               <div style={{flex:1,background:"#0F1E14",border:"1px solid rgba(197,168,130,0.35)",overflow:"hidden",position:"relative",fontFamily:"var(--font-inter),sans-serif"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-                <img src="/itl.png" alt="Into the Laurentians road trip" style={{width:"100%",height:"200px",objectFit:"cover",display:"block"}} />
+                <img src="/itl.png" alt="Into the Laurentians road trip" style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"top",display:"block"}} />
                 <div style={{padding:"1.6rem 1.8rem 2rem"}}>
                   <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Mont-Tremblant · May 31, 2026</div>
                   <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.85rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.35rem"}}>Into the<br/>Laurentians</div>
