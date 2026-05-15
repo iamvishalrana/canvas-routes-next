@@ -289,6 +289,7 @@ export async function POST(request) {
       .select('registrations')
       .eq('email', normalEmail)
       .maybeSingle()
+    const isReRegistration = !!existing
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== ITL_EVENT)
     const existingEventNames = new Set(prevRegs.map(r => r.event))
     const missingCanonical = CANONICAL_EVENTS
@@ -304,6 +305,7 @@ export async function POST(request) {
       source: source || null,
       more: more || null,
       registrations,
+      ...(isReRegistration ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' })
   } catch (e) {
     console.error('Failed to store route registration:', e.message)

@@ -266,6 +266,8 @@ export async function POST(request) {
       .eq('email', normalEmail)
       .maybeSingle()
 
+    const isReRegistration = !!existing
+
     const CANONICAL_EVENTS = [
       'Cars & Coffee — May 9, 2026',
       'Grand Prix Weekend Cars & Coffee — May 23, 2026',
@@ -291,6 +293,7 @@ export async function POST(request) {
       more: more || null,
       source: source || null,
       registrations,
+      ...(isReRegistration ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' })
   } catch (e) {
     console.error('Failed to store application:', e.message)

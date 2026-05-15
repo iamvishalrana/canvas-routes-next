@@ -941,39 +941,53 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
           {filtered.map((a, idx) => (
             <div key={a.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: a.is_contact ? 'rgba(0,0,0,0.025)' : undefined }}
-                onClick={() => { setExpanded(expanded === a.id ? null : a.id); if (editingApp === a.id) setEditingApp(null); markSeen(a.id) }}
-              >
-                <div style={{ fontSize: '13px', color: a.is_contact ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
-                  {a.name || <span style={{ color: '#ccc' }}>—</span>}
+              {(() => {
+                const isGreyed = a.is_contact && !a.reregistered_at
+                return (
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: isGreyed ? 'rgba(0,0,0,0.025)' : undefined }}
+                  onClick={() => {
+                    setExpanded(expanded === a.id ? null : a.id)
+                    if (editingApp === a.id) setEditingApp(null)
+                    markSeen(a.id)
+                    if (a.reregistered_at) {
+                      setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: null } : x))
+                      fetch(`/api/admin/applications/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reregistered_at: null }) })
+                    }
+                  }}
+                >
+                  <div style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
+                    {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-registered</span>}
+                    {a.name || <span style={{ color: '#ccc' }}>—</span>}
+                  </div>
+                  <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666' }}>{a.email}</div>
+                  <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
+                    {[a.car_year, a.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                  </div>
+                  <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
+                    {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#bbb' }}>
+                    {new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                  </div>
+                  <div onClick={e => e.stopPropagation()}>
+                    {a.is_member || inviteStatus[a.id] === 'success' ? (
+                      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
+                    ) : (
+                      <div>
+                        <PrimaryBtn onClick={() => sendInvite(a)} disabled={inviting === a.id}>
+                          {inviting === a.id ? '…' : 'Invite'}
+                        </PrimaryBtn>
+                        {inviteStatus[a.id] && inviteStatus[a.id] !== 'success' && (
+                          <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.3rem' }}>{inviteStatus[a.id]}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize: '12px', color: a.is_contact ? '#bbb' : '#666' }}>{a.email}</div>
-                <div style={{ fontSize: '12px', color: a.is_contact ? '#bbb' : '#888' }}>
-                  {[a.car_year, a.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
-                </div>
-                <div style={{ fontSize: '12px', color: a.is_contact ? '#bbb' : '#888' }}>
-                  {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
-                </div>
-                <div style={{ fontSize: '11px', color: '#bbb' }}>
-                  {new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
-                </div>
-                <div onClick={e => e.stopPropagation()}>
-                  {a.is_member || inviteStatus[a.id] === 'success' ? (
-                    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
-                  ) : (
-                    <div>
-                      <PrimaryBtn onClick={() => sendInvite(a)} disabled={inviting === a.id}>
-                        {inviting === a.id ? '…' : 'Invite'}
-                      </PrimaryBtn>
-                      {inviteStatus[a.id] && inviteStatus[a.id] !== 'success' && (
-                        <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.3rem' }}>{inviteStatus[a.id]}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+                )
+              })()}
 
               {/* Expanded panel */}
               {expanded === a.id && (

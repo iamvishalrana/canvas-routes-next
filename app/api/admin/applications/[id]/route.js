@@ -7,7 +7,7 @@ export async function PATCH(request, { params }) {
   const body = await request.json()
   const supabase = createAdminClient()
   const ALLOWED = ['name', 'car_year', 'car_model', 'phone', 'instagram',
-                   'dob_month', 'dob_day', 'dob_year', 'source', 'more', 'registrations']
+                   'dob_month', 'dob_day', 'dob_year', 'source', 'more', 'registrations', 'reregistered_at']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => ALLOWED.includes(k)))
   const { error } = await supabase.from('applications').update(update).eq('id', id)
   if (error) return Response.json({ error: error.message }, { status: 500 })
