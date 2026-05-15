@@ -13,7 +13,7 @@ export async function PATCH(request, { params }) {
     if (authErr) return Response.json({ error: authErr.message }, { status: 500 })
   }
 
-  const allowed = ['membership_status', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars']
+  const allowed = ['membership_status', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars', 'event_attendance']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (update.email) update.email = update.email.trim().toLowerCase()
 

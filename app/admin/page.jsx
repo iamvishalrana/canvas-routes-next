@@ -1,6 +1,6 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '../../lib/supabase/client'
@@ -182,6 +182,15 @@ function MembersTab({ isMobile }) {
     load()
   }
 
+  async function toggleCCAttendance(m, value) {
+    const current = m.event_attendance || {}
+    const newAttendance = { ...current, cc_may9: current.cc_may9 === value ? null : value }
+    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, event_attendance: newAttendance } : x))
+    await fetch(`/api/admin/members/${m.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_attendance: newAttendance }),
+    })
+  }
+
   async function invite(e) {
     e.preventDefault()
     if (!inviteForm.email.trim()) { setInviteError('Email required.'); return }
@@ -279,7 +288,10 @@ function MembersTab({ isMobile }) {
         <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
           {filtered.length} of {members.length} member{members.length !== 1 ? 's' : ''}
         </div>
-        <input style={{ ...inp, width: '220px' }} placeholder="Search name, email, status…" value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ position: 'relative', width: isMobile ? '100%' : '340px' }}>
+          <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, status…" value={search} onChange={e => setSearch(e.target.value)} />
+          {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+        </div>
       </div>
 
       {loading ? (
@@ -287,8 +299,8 @@ function MembersTab({ isMobile }) {
       ) : (
         <div style={{ overflowX: 'auto' }}>
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 120px 1fr 130px 100px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
-            {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 110px 1fr 90px 120px 100px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+            {['Name', 'Email', 'Status', 'Car', 'C&C May 9', 'Setup', ''].map((h, i) => (
               <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
             ))}
           </div>
@@ -402,7 +414,7 @@ function MembersTab({ isMobile }) {
                   <Err msg={saveError} />
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 120px 1fr 130px 100px', padding: '0.9rem 1.25rem', alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 110px 1fr 90px 120px 100px', padding: '0.9rem 1.25rem', alignItems: 'center' }}>
                   <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
                   <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
                   <div><Badge status={m.membership_status} /></div>
@@ -412,6 +424,12 @@ function MembersTab({ isMobile }) {
                       : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
                     }
                     {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '3px' }}>
+                    <button onClick={() => toggleCCAttendance(m, true)}
+                      style={{ fontSize: '9px', padding: '3px 7px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em', border: m.event_attendance?.cc_may9 === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.12)', background: m.event_attendance?.cc_may9 === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: m.event_attendance?.cc_may9 === true ? '#3B6B2F' : '#bbb' }}>✓</button>
+                    <button onClick={() => toggleCCAttendance(m, false)}
+                      style={{ fontSize: '9px', padding: '3px 7px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em', border: m.event_attendance?.cc_may9 === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.12)', background: m.event_attendance?.cc_may9 === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: m.event_attendance?.cc_may9 === false ? '#7B2032' : '#bbb' }}>✗</button>
                   </div>
                   <div>
                     {m.password_set_at ? (
@@ -716,7 +734,7 @@ function EventsTab() {
 
 const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
-function ApplicationsTab({ isMobile }) {
+function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -727,8 +745,8 @@ function ApplicationsTab({ isMobile }) {
   const [editAppForm, setEditAppForm] = useState({})
   const [savingApp, setSavingApp] = useState(false)
   const [saveAppErr, setSaveAppErr] = useState(null)
-  const [importing, setImporting] = useState(false)
-  const [importDone, setImportDone] = useState(false)
+  const [seenAppIds, setSeenAppIds] = useState(new Set())
+  const seenInitRef = useRef(false)
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -739,13 +757,28 @@ function ApplicationsTab({ isMobile }) {
 
   useEffect(() => { loadApps() }, [loadApps])
 
-  async function importCC() {
-    setImporting(true)
-    const res = await fetch('/api/admin/import-cc', { method: 'POST' })
-    const data = await res.json()
-    setImporting(false)
-    if (res.ok) { setImportDone(true); loadApps() }
-    else alert('Import failed: ' + data.error)
+  useEffect(() => {
+    if (loading || seenInitRef.current) return
+    seenInitRef.current = true
+    try {
+      const stored = localStorage.getItem('admin_seen_app_ids')
+      if (stored === null) {
+        const allIds = apps.map(a => a.id)
+        localStorage.setItem('admin_seen_app_ids', JSON.stringify(allIds))
+        setSeenAppIds(new Set(allIds))
+      } else {
+        setSeenAppIds(new Set(JSON.parse(stored)))
+      }
+    } catch {}
+  }, [loading, apps])
+
+  function markSeen(appId) {
+    setSeenAppIds(prev => {
+      if (prev.has(appId)) return prev
+      const next = new Set([...prev, appId])
+      try { localStorage.setItem('admin_seen_app_ids', JSON.stringify([...next])) } catch {}
+      return next
+    })
   }
 
   async function deleteApp(app) {
@@ -830,6 +863,9 @@ function ApplicationsTab({ isMobile }) {
     !search || [a.name, a.email, a.car_year, a.car_model, a.source].some(v => v?.toLowerCase().includes(search.toLowerCase()))
   )
   const totalInvited = apps.filter(a => a.is_member).length
+  const unseenCount = apps.filter(a => !seenAppIds.has(a.id)).length
+
+  useEffect(() => { onUnseenCountChange?.(unseenCount) }, [unseenCount, onUnseenCountChange])
 
   function InfoCell({ label, value }) {
     return (
@@ -843,11 +879,12 @@ function ApplicationsTab({ isMobile }) {
   return (
     <div>
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
         {[
           { label: 'Total Applications', value: apps.length, color: '#1a1a1a' },
           { label: 'Invited', value: totalInvited, color: '#3B6B2F' },
           { label: 'Pending Review', value: apps.length - totalInvited, color: '#8A6535' },
+          { label: 'New', value: unseenCount, color: unseenCount > 0 ? '#7B2032' : '#999' },
         ].map(s => (
           <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -857,19 +894,13 @@ function ApplicationsTab({ isMobile }) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
-            {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
-          </div>
-          {!importDone && (
-            <button onClick={importCC} disabled={importing}
-              style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c5a882', background: 'none', border: '0.5px solid rgba(197,168,130,0.4)', padding: '0.35rem 0.9rem', cursor: importing ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: importing ? 0.6 : 1 }}>
-              {importing ? 'Importing…' : 'Import C&C May 9'}
-            </button>
-          )}
-          {importDone && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ C&C data imported</span>}
+        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
+          {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
         </div>
-        <input style={{ ...inp, width: isMobile ? '100%' : '240px' }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ position: 'relative', width: isMobile ? '100%' : '340px' }}>
+          <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
+          {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+        </div>
       </div>
 
       {loading ? (
@@ -890,9 +921,12 @@ function ApplicationsTab({ isMobile }) {
               {/* Summary row */}
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
-                onClick={() => { setExpanded(expanded === a.id ? null : a.id); if (editingApp === a.id) setEditingApp(null) }}
+                onClick={() => { setExpanded(expanded === a.id ? null : a.id); if (editingApp === a.id) setEditingApp(null); markSeen(a.id) }}
               >
-                <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{a.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                <div style={{ fontSize: '13px', color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
+                  {a.name || <span style={{ color: '#ccc' }}>—</span>}
+                </div>
                 <div style={{ fontSize: '12px', color: '#666' }}>{a.email}</div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
                   {[a.car_year, a.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
@@ -1083,6 +1117,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState('Members')
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [unseenAppsCount, setUnseenAppsCount] = useState(0)
   const supabase = createClient()
 
   useEffect(() => {
@@ -1124,7 +1159,10 @@ export default function AdminPage() {
               textAlign: 'left', transition: 'color 0.15s, background 0.15s',
             }}>
             <span style={{ opacity: tab === t ? 1 : 0.5 }}>{TAB_ICONS[t]}</span>
-            {t}
+            <span style={{ flex: 1 }}>{t}</span>
+            {t === 'Applications' && unseenAppsCount > 0 && (
+              <span style={{ minWidth: '18px', height: '18px', borderRadius: '9px', background: '#7B2032', color: '#fff', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', fontWeight: '600', letterSpacing: 0 }}>{unseenAppsCount}</span>
+            )}
           </button>
         ))}
       </nav>
@@ -1200,7 +1238,7 @@ export default function AdminPage() {
           </div>
 
           {tab === 'Members' && <MembersTab isMobile={isMobile} />}
-          {tab === 'Applications' && <ApplicationsTab isMobile={isMobile} />}
+          {tab === 'Applications' && <ApplicationsTab isMobile={isMobile} onUnseenCountChange={setUnseenAppsCount} />}
           {tab === 'Announcements' && <AnnouncementsTab />}
           {tab === 'Events' && <EventsTab />}
 
