@@ -787,7 +787,7 @@ export default function Home() {
             >
               <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
               <button onClick={() => setShowPastModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-              <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"220px",objectFit:"cover",display:"block"}} />
+              <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:"top",display:"block"}} />
               <div style={{padding:"1.8rem 2rem 2rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 9, 2026</div>
                 <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars &amp; Coffee</div>
