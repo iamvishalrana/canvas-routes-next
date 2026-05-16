@@ -10,7 +10,7 @@ async function incrementCount(registerFor, email) {
   if (SKIP_EMAILS.has(email.toLowerCase())) return null
   if (!process.env.KV_REST_API_URL) return null
   const key = registerFor === 'Cars & Coffee — May 9, 2026' ? 'reg:cc'
-    : registerFor === 'Grand Prix Weekend Cars & Coffee — May 23, 2026' ? 'reg:gpcc'
+    : registerFor === 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026' ? 'reg:gpcc'
     : 'reg:membership'
   try { return await kv.incr(key) } catch { return null }
 }
@@ -195,7 +195,7 @@ export async function POST(request) {
   if (instagram && instagram.length > 50) return Response.json({ error: 'Instagram handle too long' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long' }, { status: 400 })
 
-  const VALID_REGISTER_FOR = ['Canvas Routes Membership', 'Grand Prix Weekend Cars & Coffee — May 23, 2026']
+  const VALID_REGISTER_FOR = ['Canvas Routes Membership', 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026']
   const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
   if (!registerFor || !VALID_REGISTER_FOR.includes(registerFor)) {
     return Response.json({ error: 'Invalid registration type' }, { status: 400 })
@@ -203,7 +203,7 @@ export async function POST(request) {
   if (!source || !VALID_SOURCES.includes(source)) {
     return Response.json({ error: 'Invalid source' }, { status: 400 })
   }
-  const GPCC = 'Grand Prix Weekend Cars & Coffee — May 23, 2026'
+  const GPCC = 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026'
   if (registerFor === GPCC && (!downtown_cruise || !['yes', 'no'].includes(downtown_cruise))) {
     return Response.json({ error: 'Please answer the downtown cruise question.' }, { status: 400 })
   }
@@ -285,7 +285,7 @@ export async function POST(request) {
 
     const CANONICAL_EVENTS = [
       'Cars & Coffee — May 9, 2026',
-      'Grand Prix Weekend Cars & Coffee — May 23, 2026',
+      'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
       'Into the Laurentians — May 31, 2026',
     ]
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== registerFor)

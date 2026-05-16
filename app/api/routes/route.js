@@ -293,7 +293,7 @@ export async function POST(request) {
     const ITL_EVENT = 'Into the Laurentians — May 31, 2026'
     const CANONICAL_EVENTS = [
       'Cars & Coffee — May 9, 2026',
-      'Grand Prix Weekend Cars & Coffee — May 23, 2026',
+      'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
       ITL_EVENT,
     ]
     const newReg = { event: ITL_EVENT, registered_at: new Date().toISOString(), attended: null }

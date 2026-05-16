@@ -111,7 +111,7 @@ export default function Home() {
   }, [])
 
 
-  const GPCC = 'Grand Prix Weekend Cars & Coffee — May 23, 2026'
+  const GPCC = 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026'
 
   function updateForm(field, value) {
     setForm(prev => {
@@ -413,7 +413,7 @@ export default function Home() {
         <div className="events-grid">
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
-            {date:"May 23, 2026",name:"Grand Prix Weekend Cars & Coffee",loc:"Exotics and Classics",type:"Cars & Coffee",inviteOnly:true},
+            {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Cars & Coffee",inviteOnly:true},
             {date:"May 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"},
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
@@ -523,7 +523,7 @@ export default function Home() {
               <div className="join-form-row" style={{gridTemplateColumns:'1fr'}}>
                 {[
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
-                  {value:"Grand Prix Weekend Cars & Coffee — May 23, 2026", label:"Grand Prix Weekend Cars & Coffee", sub:"Invite Only · May 23, 2026 · 12:30 – 3:00 PM"},
+                  {value:"Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026", label:"Grand Prix Weekend - Cars, Coffee & Cruise", sub:"Invite Only · May 23, 2026 · 12:30 – 3:00 PM"},
                 ].map(opt => {
                   const selected = form.registerFor === opt.value
                   const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'
@@ -831,10 +831,10 @@ export default function Home() {
             >
               <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
               <button onClick={() => setShowGpccModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-              <img src="/ccgp.jpeg" alt="Grand Prix Weekend Cars & Coffee" style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:"top",display:"block"}} />
+              <img src="/ccgp.jpeg" alt="Grand Prix Weekend - Cars, Coffee & Cruise" style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:"top",display:"block"}} />
               <div style={{padding:"1.8rem 2rem 2rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 23, 2026</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Grand Prix Weekend<br/>Cars &amp; Coffee</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Grand Prix Weekend -<br/>Cars, Coffee &amp; Cruise</div>
                 <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.5)",marginBottom:"1.4rem"}}>Exotics and Classics</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.8rem"}}>
                   {["12:30 – 3:00 PM","Invite Only"].map((tag,idx) => (
@@ -874,13 +874,13 @@ export default function Home() {
             >
               <button onClick={() => setShowEventsPopup(false)} style={{position:"absolute",top:"-0.5rem",right:"-0.5rem",zIndex:10,background:"rgba(0,0,0,0.6)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
 
-              {/* Grand Prix Weekend Cars & Coffee */}
+              {/* Grand Prix Weekend - Cars, Coffee & Cruise */}
               <div style={{flex:1,background:"#0F1E14",border:"1px solid rgba(197,168,130,0.35)",overflow:"hidden",position:"relative",fontFamily:"var(--font-inter),sans-serif"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-                <img src="/ccgp.jpeg" alt="Grand Prix Weekend Cars & Coffee" style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"top",display:"block"}} />
+                <img src="/ccgp.jpeg" alt="Grand Prix Weekend - Cars, Coffee & Cruise" style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"top",display:"block"}} />
                 <div style={{padding:"1.6rem 1.8rem 2rem"}}>
                   <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 23, 2026</div>
-                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.85rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.35rem"}}>Grand Prix Weekend<br/>Cars &amp; Coffee</div>
+                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.85rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.35rem"}}>Grand Prix Weekend -<br/>Cars, Coffee &amp; Cruise</div>
                   <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"0.95rem",fontStyle:"italic",color:"rgba(245,241,236,0.45)",marginBottom:"1.3rem"}}>Exotics and Classics</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:"0.4rem",marginBottom:"1.5rem"}}>
                     {["12:30 – 3:00 PM","Invite Only"].map((tag,idx) => (

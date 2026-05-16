@@ -19,7 +19,7 @@ const STATUS_COLORS = {
 const EVENT_TYPES = ['Road Trip', 'Cars & Coffee', 'Social', 'Track Day', 'Other']
 const CANONICAL_EVENTS = [
   { name: 'Cars & Coffee — May 9, 2026', date: '2026-05-09' },
-  { name: 'Grand Prix Weekend Cars & Coffee — May 23, 2026', date: '2026-05-23' },
+  { name: 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026', date: '2026-05-23' },
   { name: 'Into the Laurentians — May 31, 2026', date: '2026-05-31' },
 ]
 
