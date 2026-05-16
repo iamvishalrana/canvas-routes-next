@@ -57,7 +57,11 @@ export default function RoutesPage() {
   }, [])
 
   function updateForm(field, value) {
-    setForm(prev => ({ ...prev, [field]: value }))
+    setForm(prev => {
+      const next = { ...prev, [field]: value }
+      if (field === 'hasChildren' && value === 'no') next.childrenAges = ''
+      return next
+    })
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }))
     if (serverError) setServerError(null)
   }

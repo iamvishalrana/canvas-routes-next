@@ -174,7 +174,7 @@ export default function Home() {
     if (status === 'loading') return
     const newErrors = validate()
     if (Object.keys(newErrors).length > 0) {
-      const fieldOrder = ['registerFor', 'name', 'email', 'year', 'carModel', 'dob_month', 'phone', 'instagram', 'more', 'source']
+      const fieldOrder = ['registerFor', 'downtown_cruise', 'name', 'email', 'year', 'carModel', 'dob_month', 'phone', 'instagram', 'more', 'source']
       const firstError = fieldOrder.find(f => newErrors[f])
       if (firstError) {
         const el = document.getElementById(`field-${firstError}`)
@@ -541,7 +541,7 @@ export default function Home() {
             </div>
 
             {form.registerFor === GPCC && (
-              <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
+              <div id="field-downtown_cruise" className="join-form-field" style={{marginBottom:"1.5rem"}}>
                 <div className="join-label" style={{marginBottom:"0.75rem"}}>
                   Interested in joining the downtown cruise after the event?
                   <span style={{color:"#7B2032",marginLeft:"3px"}}>*</span>
