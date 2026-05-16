@@ -550,9 +550,12 @@ export default function Home() {
                   {['Yes','No'].map(v => {
                     const val = v.toLowerCase()
                     const selected = form.downtown_cruise === val
+                    const isNo = val === 'no'
+                    const activeColor = isNo ? '#7B2032' : '#3B6B2F'
+                    const activeBg = isNo ? 'rgba(123,32,50,0.06)' : 'rgba(59,107,47,0.06)'
                     return (
                       <button key={v} type="button" onClick={() => updateForm('downtown_cruise', val)}
-                        style={{flex:1,padding:"0.9rem",border:`1px solid ${selected?'#3B6B2F':errors.downtown_cruise?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.downtown_cruise?'rgba(123,32,50,0.03)':'transparent',cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",fontSize:"13px",color:selected?'#3B6B2F':'#1a1a1a',transition:"all 0.2s",letterSpacing:"0.04em"}}>
+                        style={{flex:1,padding:"0.9rem",border:`1px solid ${selected?activeColor:errors.downtown_cruise?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?activeBg:errors.downtown_cruise?'rgba(123,32,50,0.03)':'transparent',cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",fontSize:"13px",color:selected?activeColor:'#1a1a1a',transition:"all 0.2s",letterSpacing:"0.04em"}}>
                         {v}
                       </button>
                     )
