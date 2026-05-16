@@ -22,6 +22,10 @@ const CANONICAL_EVENTS = [
   { name: 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026', date: '2026-05-23' },
   { name: 'Into the Laurentians — May 31, 2026', date: '2026-05-31' },
 ]
+const NAME_ALIASES = {
+  'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+}
+function normalizeEventName(name) { return NAME_ALIASES[name] || name }
 
 const inp = {
   width: '100%', padding: '0.7rem 0.9rem',
@@ -1105,16 +1109,17 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                       const today = new Date()
                       today.setHours(0, 0, 0, 0)
                       const canonicalNames = new Set(CANONICAL_EVENTS.map(e => e.name))
-                      const extraRegs = (a.registrations || []).filter(r => !canonicalNames.has(r.event))
+                      const extraRegs = (a.registrations || []).filter(r => !canonicalNames.has(normalizeEventName(r.event)))
                       const allRows = [
                         ...CANONICAL_EVENTS.map(ev => {
-                          const reg = (a.registrations || []).find(r => r.event === ev.name)
+                          const reg = (a.registrations || []).find(r => normalizeEventName(r.event) === ev.name)
                           return { eventName: ev.name, eventDate: ev.date, reg: reg || null }
                         }),
                         ...extraRegs.map(r => ({ eventName: r.event, eventDate: null, reg: r })),
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
                         const isPast = eventDate ? new Date(eventDate) <= today : true
+                        const isNA = isPast && (!reg || (reg.registered_at === null && reg.attended === null))
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{eventName}</span>
@@ -1123,7 +1128,9 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                                 {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                               </span>
                             )}
-                            {isPast ? (
+                            {isNA ? (
+                              <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>N/A</span>
+                            ) : isPast ? (
                               <>
                                 <button onClick={() => toggleAttended(a.id, eventName, true)}
                                   style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg?.attended === true ? '#3B6B2F' : '#888' }}>
@@ -1346,16 +1353,17 @@ function ContactsTab({ isMobile }) {
                       const today = new Date()
                       today.setHours(0, 0, 0, 0)
                       const canonicalNames = new Set(CANONICAL_EVENTS.map(e => e.name))
-                      const extraRegs = (c.registrations || []).filter(r => !canonicalNames.has(r.event))
+                      const extraRegs = (c.registrations || []).filter(r => !canonicalNames.has(normalizeEventName(r.event)))
                       const allRows = [
                         ...CANONICAL_EVENTS.map(ev => {
-                          const reg = (c.registrations || []).find(r => r.event === ev.name)
+                          const reg = (c.registrations || []).find(r => normalizeEventName(r.event) === ev.name)
                           return { eventName: ev.name, eventDate: ev.date, reg: reg || null }
                         }),
                         ...extraRegs.map(r => ({ eventName: r.event, eventDate: null, reg: r })),
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
                         const isPast = eventDate ? new Date(eventDate) <= today : true
+                        const isNA = isPast && (!reg || (reg.registered_at === null && reg.attended === null))
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{eventName}</span>
@@ -1364,7 +1372,9 @@ function ContactsTab({ isMobile }) {
                                 {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                               </span>
                             )}
-                            {isPast ? (
+                            {isNA ? (
+                              <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>N/A</span>
+                            ) : isPast ? (
                               <>
                                 <button onClick={() => toggleAttended(c.id, eventName, true)}
                                   style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg?.attended === true ? '#3B6B2F' : '#888' }}>

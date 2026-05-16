@@ -303,7 +303,12 @@ export async function POST(request) {
       .eq('email', normalEmail)
       .maybeSingle()
     const isReRegistration = !!existing
-    const prevRegs = (existing?.registrations || []).filter(r => r.event !== ITL_EVENT)
+    const NAME_ALIASES = {
+      'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+    }
+    const prevRegs = (existing?.registrations || [])
+      .map(r => NAME_ALIASES[r.event] ? { ...r, event: NAME_ALIASES[r.event] } : r)
+      .filter(r => r.event !== ITL_EVENT)
     const existingEventNames = new Set(prevRegs.map(r => r.event))
     const missingCanonical = CANONICAL_EVENTS
       .filter(ev => !existingEventNames.has(ev) && ev !== ITL_EVENT)
