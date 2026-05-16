@@ -113,7 +113,7 @@ If this email landed in your spam folder, please move it to your inbox and mark 
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, regCount }) {
+function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, regCount }) {
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const dobStr = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''
   const row = (label, value) => value
@@ -146,6 +146,7 @@ function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_d
                 ${row('Date of Birth', dobStr ? h(dobStr) : '')}
                 ${row('Phone', phone ? h(phone) : '')}
                 ${row('Instagram', instagram ? h(instagram) : '')}
+                ${row('Downtown cruise', downtown_cruise === 'yes' ? 'Yes' : downtown_cruise === 'no' ? 'No' : '')}
                 ${row('Tell us more', more ? h(more) : '')}
                 ${row('How they heard', source ? h(source) : '')}
               </table>
@@ -174,7 +175,7 @@ export async function POST(request) {
   try { body = await request.json() } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, more, phone, instagram, source, _hp } = body
+  const { registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, more, phone, instagram, source, downtown_cruise, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim()) {
@@ -201,6 +202,10 @@ export async function POST(request) {
   }
   if (!source || !VALID_SOURCES.includes(source)) {
     return Response.json({ error: 'Invalid source' }, { status: 400 })
+  }
+  const GPCC = 'Grand Prix Weekend Cars & Coffee — May 23, 2026'
+  if (registerFor === GPCC && (!downtown_cruise || !['yes', 'no'].includes(downtown_cruise))) {
+    return Response.json({ error: 'Please answer the downtown cruise question.' }, { status: 400 })
   }
 
   const firstName = h(name.trim().split(' ')[0])
@@ -241,8 +246,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `New Application${regCount ? ` #${regCount}` : ''} — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
-    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, regCount }),
-    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}`,
+    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, regCount }),
+    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}`,
   })
 
   let notifyOk = false

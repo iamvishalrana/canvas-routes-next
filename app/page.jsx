@@ -8,7 +8,7 @@ import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
 export default function Home() {
-  const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'' })
+  const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
@@ -111,8 +111,14 @@ export default function Home() {
   }, [])
 
 
+  const GPCC = 'Grand Prix Weekend Cars & Coffee — May 23, 2026'
+
   function updateForm(field, value) {
-    setForm(prev => ({ ...prev, [field]: value }))
+    setForm(prev => {
+      const next = { ...prev, [field]: value }
+      if (field === 'registerFor' && value !== GPCC) next.downtown_cruise = ''
+      return next
+    })
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }))
     if (serverError) setServerError(null)
   }
@@ -136,6 +142,7 @@ export default function Home() {
     if (!form.dob_month) newErrors.dob_month = true
     if (!form.dob_day) newErrors.dob_day = true
     if (!form.source) newErrors.source = true
+    if (form.registerFor === GPCC && !form.downtown_cruise) newErrors.downtown_cruise = true
     if (form.phone.trim() && form.phone.replace(/\D/g,'').length !== 10) newErrors.phone = true
     if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.replace(/^@+/, '').trim())) newErrors.instagram = true
     setErrors(newErrors)
@@ -189,7 +196,7 @@ export default function Home() {
       clearTimeout(timeout)
       if (res.ok) {
         setStatus('success')
-        setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'' })
+        setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
         if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined' && (() => { try { return localStorage.getItem('cookieConsent') } catch { return null } })() === 'accepted' && window.gtag) {
           window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
@@ -507,7 +514,7 @@ export default function Home() {
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you shortly.</div>
             <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>Keep an eye on your inbox — and check your spam folder too. Once we've reviewed your application, you'll receive a personal email from our team. If you don't hear from us, feel free to reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
-            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
+            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
@@ -532,6 +539,29 @@ export default function Home() {
               </div>
               {errors.registerFor && <span style={{fontSize:"11px",color:"#7B2032"}}>Please select an option</span>}
             </div>
+
+            {form.registerFor === GPCC && (
+              <div className="join-form-field" style={{marginBottom:"1.5rem"}}>
+                <div className="join-label" style={{marginBottom:"0.75rem"}}>
+                  Interested in joining the downtown cruise after the event?
+                  <span style={{color:"#7B2032",marginLeft:"3px"}}>*</span>
+                </div>
+                <div style={{display:"flex",gap:"1rem"}}>
+                  {['Yes','No'].map(v => {
+                    const val = v.toLowerCase()
+                    const selected = form.downtown_cruise === val
+                    return (
+                      <button key={v} type="button" onClick={() => updateForm('downtown_cruise', val)}
+                        style={{flex:1,padding:"0.9rem",border:`1px solid ${selected?'#3B6B2F':errors.downtown_cruise?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.downtown_cruise?'rgba(123,32,50,0.03)':'transparent',cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",fontSize:"13px",color:selected?'#3B6B2F':'#1a1a1a',transition:"all 0.2s",letterSpacing:"0.04em"}}>
+                        {v}
+                      </button>
+                    )
+                  })}
+                </div>
+                {errors.downtown_cruise && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+              </div>
+            )}
+
             <div className="join-form-row">
               <div className="join-form-field">
                 <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></label>
