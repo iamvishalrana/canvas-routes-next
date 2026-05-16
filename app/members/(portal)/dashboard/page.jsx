@@ -3,6 +3,8 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 const STATUS_COLORS = {
   active:    { bg: 'rgba(59,107,47,0.08)',  text: '#3B6B2F', border: 'rgba(59,107,47,0.3)'  },
   pending:   { bg: 'rgba(123,91,46,0.08)',  text: '#7B5B2E', border: 'rgba(123,91,46,0.3)'  },
@@ -34,6 +36,12 @@ export default async function DashboardPage() {
       : []
 
   const attendedEvents = (application?.registrations || []).filter(r => r.attended === true)
+
+  const dobParts = []
+  if (member?.dob_month) dobParts.push(MONTHS_SHORT[(member.dob_month - 1)])
+  if (member?.dob_day) dobParts.push(member.dob_day)
+  if (member?.dob_year) dobParts.push(member.dob_year)
+  const dob = dobParts.length ? dobParts.join(' ') : null
 
   return (
     <div>
@@ -105,6 +113,39 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* My Details */}
+        {(member?.name || member?.phone || member?.instagram || dob) && (
+          <div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '1.5rem' }}>My Details</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {member?.name && (
+                <div style={{ padding: '0.9rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', gap: '1rem' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', minWidth: '80px', paddingTop: '1px' }}>Name</div>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a', textTransform: 'capitalize' }}>{member.name}</div>
+                </div>
+              )}
+              {dob && (
+                <div style={{ padding: '0.9rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', gap: '1rem' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', minWidth: '80px', paddingTop: '1px' }}>Birthday</div>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{dob}</div>
+                </div>
+              )}
+              {member?.phone && (
+                <div style={{ padding: '0.9rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', gap: '1rem' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', minWidth: '80px', paddingTop: '1px' }}>Phone</div>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{member.phone}</div>
+                </div>
+              )}
+              {member?.instagram && (
+                <div style={{ padding: '0.9rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', gap: '1rem' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', minWidth: '80px', paddingTop: '1px' }}>Instagram</div>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>@{member.instagram.replace(/^@/, '')}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* My Cars */}
         {carList.length > 0 && (
