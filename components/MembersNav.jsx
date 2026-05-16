@@ -1,13 +1,10 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '../lib/supabase/client'
 
 export default function MembersNav({ email, isAdmin }) {
-  const supabase = createClient()
-
   async function signOut() {
-    await supabase.auth.signOut()
+    await fetch('/api/auth/signout', { method: 'POST' })
     window.location.href = '/members/login'
   }
 
