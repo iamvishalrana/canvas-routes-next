@@ -273,7 +273,8 @@ export async function POST(request) {
   try {
     const supabase = createAdminClient()
     const normalEmail = email.toLowerCase().trim()
-    const newReg = { event: registerFor, registered_at: new Date().toISOString(), attended: null }
+    const isEventReg = registerFor !== 'Canvas Routes Membership'
+    const newReg = isEventReg ? { event: registerFor, registered_at: new Date().toISOString(), attended: null } : null
 
     const { data: existing } = await supabase
       .from('applications')
@@ -293,12 +294,12 @@ export async function POST(request) {
     }
     const prevRegs = (existing?.registrations || [])
       .map(r => NAME_ALIASES[r.event] ? { ...r, event: NAME_ALIASES[r.event] } : r)
-      .filter(r => r.event !== registerFor)
+      .filter(r => r.event !== 'Canvas Routes Membership' && r.event !== registerFor)
     const existingEventNames = new Set(prevRegs.map(r => r.event))
     const missingCanonical = CANONICAL_EVENTS
       .filter(ev => !existingEventNames.has(ev) && ev !== registerFor)
       .map(ev => ({ event: ev, registered_at: null, attended: null }))
-    const registrations = [...prevRegs, ...missingCanonical, newReg]
+    const registrations = [...prevRegs, ...missingCanonical, ...(newReg ? [newReg] : [])]
 
     await supabase.from('applications').upsert({
       email: normalEmail,

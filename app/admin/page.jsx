@@ -1109,7 +1109,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                       const today = new Date()
                       today.setHours(0, 0, 0, 0)
                       const canonicalNames = new Set(CANONICAL_EVENTS.map(e => e.name))
-                      const extraRegs = (a.registrations || []).filter(r => !canonicalNames.has(normalizeEventName(r.event)))
+                      const extraRegs = (a.registrations || []).filter(r => !canonicalNames.has(normalizeEventName(r.event)) && r.event !== 'Canvas Routes Membership')
                       const allRows = [
                         ...CANONICAL_EVENTS.map(ev => {
                           const reg = (a.registrations || []).find(r => normalizeEventName(r.event) === ev.name)
