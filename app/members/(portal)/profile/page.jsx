@@ -1,9 +1,10 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 const DOB_YEARS = Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i)
 const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '' }
 
@@ -28,14 +29,27 @@ function SelectWrap({ value, onChange, children }) {
   )
 }
 
+function InfoRow({ label, value }) {
+  if (!value) return null
+  return (
+    <div style={{ padding: '0.85rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', gap: '1rem', alignItems: 'baseline' }}>
+      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', minWidth: '90px', flexShrink: 0 }}>{label}</div>
+      <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{value}</div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', instagram: '', dob_day: '', dob_month: '', dob_year: '' })
   const [cars, setCars] = useState([{ ...EMPTY_CAR }])
+  const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
+  const savedForm = useRef(null)
+  const savedCars = useRef(null)
 
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
   const pwRules = [
@@ -62,22 +76,41 @@ export default function ProfilePage() {
       .then(({ user, member }) => {
         if (user) setUser(user)
         if (member) {
-          setForm({
+          const f = {
             name: member.name || '',
             phone: member.phone || '',
             instagram: member.instagram || '',
             dob_day: member.dob_day ? String(member.dob_day) : '',
             dob_month: member.dob_month ? String(member.dob_month) : '',
             dob_year: member.dob_year ? String(member.dob_year) : '',
-          })
-          if (member.cars?.length > 0) {
-            setCars(member.cars)
-          } else if (member.car_year || member.car_make || member.car_model) {
-            setCars([{ year: member.car_year || '', make: member.car_make || '', model: member.car_model || '', license_plate: '' }])
           }
+          const c = member.cars?.length > 0
+            ? member.cars
+            : (member.car_year || member.car_make || member.car_model)
+              ? [{ year: member.car_year || '', make: member.car_make || '', model: member.car_model || '', license_plate: '' }]
+              : [{ ...EMPTY_CAR }]
+          setForm(f)
+          setCars(c)
+          savedForm.current = f
+          savedCars.current = c
         }
       })
   }, [])
+
+  function startEditing() {
+    savedForm.current = { ...form }
+    savedCars.current = cars.map(c => ({ ...c }))
+    setEditing(true)
+    setSaved(false)
+    setError(null)
+  }
+
+  function cancelEditing() {
+    if (savedForm.current) setForm(savedForm.current)
+    if (savedCars.current) setCars(savedCars.current)
+    setEditing(false)
+    setError(null)
+  }
 
   function updateCar(idx, field, value) {
     setCars(prev => prev.map((c, i) => i === idx ? { ...c, [field]: value } : c))
@@ -111,8 +144,15 @@ export default function ProfilePage() {
       }),
     })
     setSaving(false)
-    if (!res.ok) setError('Could not save. Please try again.')
-    else setSaved(true)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error || 'Could not save. Please try again.')
+    } else {
+      setSaved(true)
+      savedForm.current = { ...form }
+      savedCars.current = cars.map(c => ({ ...c }))
+      setEditing(false)
+    }
   }
 
   async function savePassword(e) {
@@ -133,6 +173,11 @@ export default function ProfilePage() {
 
   const sectionLabel = { fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', margin: '1.5rem 0 1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.08)' }
 
+  const hasCar = cars.some(c => c.year || c.make || c.model || c.license_plate)
+  const dobDisplay = form.dob_month
+    ? `${MONTHS_SHORT[parseInt(form.dob_month) - 1]} ${form.dob_day}${form.dob_year ? `, ${form.dob_year}` : ''}`
+    : null
+
   return (
     <div>
       <div style={{ marginBottom: isMobile ? '2rem' : '3rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
@@ -144,104 +189,155 @@ export default function ProfilePage() {
 
         {/* Profile Info */}
         <div>
-          <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '1.5rem' }}>Personal Info</div>
-          <form onSubmit={saveProfile}>
-            <Field label="Email">
-              <input type="email" value={user?.email || ''} disabled
-                style={{ ...inp, background: 'rgba(0,0,0,0.03)', color: '#999', cursor: 'not-allowed' }} />
-            </Field>
-            <Field label="Full Name">
-              <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                maxLength={100} autoCapitalize="words" style={{ ...inp, textTransform: 'capitalize' }} />
-            </Field>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
-              <Field label="Phone">
-                <input type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                  maxLength={20} style={inp} />
-              </Field>
-              <Field label="Instagram">
-                <input type="text" value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))}
-                  maxLength={50} placeholder="@yourhandle" style={inp} />
-              </Field>
-            </div>
-
-            <div style={sectionLabel}>Date of Birth</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Month *</label>
-                <SelectWrap value={form.dob_month} onChange={e => setForm(p => ({ ...p, dob_month: e.target.value }))}>
-                  <option value="">Month</option>
-                  {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
-                </SelectWrap>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Day *</label>
-                <SelectWrap value={form.dob_day} onChange={e => setForm(p => ({ ...p, dob_day: e.target.value }))}>
-                  <option value="">Day</option>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
-                </SelectWrap>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Year</label>
-                <SelectWrap value={form.dob_year} onChange={e => setForm(p => ({ ...p, dob_year: e.target.value }))}>
-                  <option value="">Optional</option>
-                  {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
-                </SelectWrap>
-              </div>
-            </div>
-
-            <div style={sectionLabel}>Your Cars <span style={{ color: '#bbb', fontWeight: '300', textTransform: 'none', letterSpacing: 0 }}>({cars.length}/5)</span></div>
-
-            {cars.map((car, idx) => (
-              <div key={idx} style={{ border: '0.5px solid rgba(0,0,0,0.12)', padding: '1.1rem', marginBottom: '0.75rem', background: '#fafaf9', position: 'relative' }}>
-                <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.75rem' }}>Car {idx + 1}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Year</label>
-                    <SelectWrap value={car.year} onChange={e => updateCar(idx, 'year', e.target.value)}>
-                      <option value="">Select year</option>
-                      {CAR_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
-                    </SelectWrap>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Make</label>
-                    <input type="text" value={car.make} onChange={e => updateCar(idx, 'make', e.target.value)}
-                      placeholder="e.g. Porsche" maxLength={50} style={inp} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Model</label>
-                    <input type="text" value={car.model} onChange={e => updateCar(idx, 'model', e.target.value)}
-                      placeholder="e.g. 911 Carrera" maxLength={100} style={inp} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>License Plate</label>
-                    <input type="text" value={car.license_plate} onChange={e => updateCar(idx, 'license_plate', e.target.value)}
-                      placeholder="e.g. ABC-123" maxLength={15} style={{ ...inp, textTransform: 'uppercase' }} />
-                  </div>
-                </div>
-                {(cars.length > 1 || car.year || car.make || car.model || car.license_plate) && (
-                  <button type="button" onClick={() => removeCar(idx)}
-                    style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-
-            {cars.length < 5 && (
-              <button type="button" onClick={addCar}
-                style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.4)', padding: '0.55rem 1rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.25rem' }}>
-                + Add Car
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888' }}>Personal Info</div>
+            {!editing && (
+              <button onClick={startEditing}
+                style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.25)', padding: '0.35rem 0.9rem', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Edit
               </button>
             )}
+          </div>
 
-            {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{error}</div>}
-            {saved && <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>Saved.</div>}
-            <button type="submit" disabled={saving}
-              style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: saving ? 0.6 : 1, width: isMobile ? '100%' : 'auto' }}>
-              {saving ? 'Saving…' : 'Save Changes'}
-            </button>
-          </form>
+          {!editing ? (
+            /* ── VIEW MODE ── */
+            <div>
+              <InfoRow label="Email" value={user?.email} />
+              <InfoRow label="Name" value={form.name ? form.name.charAt(0).toUpperCase() + form.name.slice(1) : null} />
+              <InfoRow label="Phone" value={form.phone || null} />
+              <InfoRow label="Instagram" value={form.instagram ? `@${form.instagram.replace(/^@/, '')}` : null} />
+              <InfoRow label="Birthday" value={dobDisplay} />
+
+              {hasCar && (
+                <>
+                  <div style={{ ...sectionLabel, marginTop: '1.5rem' }}>Your Cars</div>
+                  {cars.filter(c => c.year || c.make || c.model || c.license_plate).map((car, i) => (
+                    <div key={i} style={{ padding: '0.85rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                      <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>
+                        {[car.year, car.make, car.model].filter(Boolean).join(' ') || 'Unnamed car'}
+                      </div>
+                      {car.license_plate && (
+                        <div style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginTop: '0.2rem' }}>
+                          {car.license_plate}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {!form.name && !form.phone && !dobDisplay && !hasCar && (
+                <div style={{ fontSize: '13px', color: '#aaa', paddingTop: '0.5rem' }}>No profile info saved yet. Click Edit to add your details.</div>
+              )}
+
+              {saved && <div style={{ fontSize: '12px', color: '#3B6B2F', marginTop: '1rem' }}>Changes saved.</div>}
+            </div>
+          ) : (
+            /* ── EDIT MODE ── */
+            <form onSubmit={saveProfile}>
+              <Field label="Email">
+                <input type="email" value={user?.email || ''} disabled
+                  style={{ ...inp, background: 'rgba(0,0,0,0.03)', color: '#999', cursor: 'not-allowed' }} />
+              </Field>
+              <Field label="Full Name">
+                <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                  maxLength={100} autoCapitalize="words" style={{ ...inp, textTransform: 'capitalize' }} />
+              </Field>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
+                <Field label="Phone">
+                  <input type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                    maxLength={20} style={inp} />
+                </Field>
+                <Field label="Instagram">
+                  <input type="text" value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))}
+                    maxLength={50} placeholder="@yourhandle" style={inp} />
+                </Field>
+              </div>
+
+              <div style={sectionLabel}>Date of Birth</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Month</label>
+                  <SelectWrap value={form.dob_month} onChange={e => setForm(p => ({ ...p, dob_month: e.target.value }))}>
+                    <option value="">Month</option>
+                    {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
+                  </SelectWrap>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Day</label>
+                  <SelectWrap value={form.dob_day} onChange={e => setForm(p => ({ ...p, dob_day: e.target.value }))}>
+                    <option value="">Day</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
+                  </SelectWrap>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Year</label>
+                  <SelectWrap value={form.dob_year} onChange={e => setForm(p => ({ ...p, dob_year: e.target.value }))}>
+                    <option value="">Optional</option>
+                    {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                  </SelectWrap>
+                </div>
+              </div>
+
+              <div style={sectionLabel}>Your Cars <span style={{ color: '#bbb', fontWeight: '300', textTransform: 'none', letterSpacing: 0 }}>({cars.length}/5)</span></div>
+
+              {cars.map((car, idx) => (
+                <div key={idx} style={{ border: '0.5px solid rgba(0,0,0,0.12)', padding: '1.1rem', marginBottom: '0.75rem', background: '#fafaf9', position: 'relative' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.75rem' }}>Car {idx + 1}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Year</label>
+                      <SelectWrap value={car.year} onChange={e => updateCar(idx, 'year', e.target.value)}>
+                        <option value="">Select year</option>
+                        {CAR_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                      </SelectWrap>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Make</label>
+                      <input type="text" value={car.make} onChange={e => updateCar(idx, 'make', e.target.value)}
+                        placeholder="e.g. Porsche" maxLength={50} style={inp} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Model</label>
+                      <input type="text" value={car.model} onChange={e => updateCar(idx, 'model', e.target.value)}
+                        placeholder="e.g. 911 Carrera" maxLength={100} style={inp} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>License Plate</label>
+                      <input type="text" value={car.license_plate} onChange={e => updateCar(idx, 'license_plate', e.target.value)}
+                        placeholder="e.g. ABC-123" maxLength={15} style={{ ...inp, textTransform: 'uppercase' }} />
+                    </div>
+                  </div>
+                  {(cars.length > 1 || car.year || car.make || car.model || car.license_plate) && (
+                    <button type="button" onClick={() => removeCar(idx)}
+                      style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {cars.length < 5 && (
+                <button type="button" onClick={addCar}
+                  style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.4)', padding: '0.55rem 1rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.25rem' }}>
+                  + Add Car
+                </button>
+              )}
+
+              {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{error}</div>}
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" disabled={saving}
+                  style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: saving ? 0.6 : 1 }}>
+                  {saving ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button type="button" onClick={cancelEditing} disabled={saving}
+                  style={{ padding: '0.85rem 1.5rem', background: 'none', color: '#888', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         {/* Change Password */}
