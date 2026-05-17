@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
@@ -26,6 +27,7 @@ function denyConsent() {
 }
 
 export default function CookieBanner() {
+  const pathname = usePathname()
   const [consent, setConsent] = useState('loading')
 
   useEffect(() => {
@@ -65,6 +67,7 @@ export default function CookieBanner() {
   }
 
   if (consent === 'loading' || consent !== null) return null
+  if (pathname.startsWith('/members') || pathname.startsWith('/admin')) return null
 
   return (
     <div className="cookie-banner">

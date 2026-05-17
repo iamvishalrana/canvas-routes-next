@@ -51,6 +51,7 @@ export default function ProfilePage() {
   const savedForm = useRef(null)
   const savedCars = useRef(null)
 
+  const [pwOpen, setPwOpen] = useState(false)
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
   const pwRules = [
     { label: 'At least 8 characters', pass: pwForm.password.length >= 8 },
@@ -340,35 +341,50 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Change Password */}
+        {/* Change Password — collapsible tile */}
         <div>
-          <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '1.5rem' }}>Change Password</div>
-          <form onSubmit={savePassword}>
-            <Field label="New Password">
-              <input type="password" value={pwForm.password} onChange={e => setPwForm(p => ({ ...p, password: e.target.value }))}
-                minLength={8} autoComplete="new-password" style={inp} />
-            </Field>
-            {pwForm.password.length > 0 && (
-              <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                {pwRules.map(r => (
-                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: r.pass ? '#3B6B2F' : '#aaa' }}>
-                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: r.pass ? '#3B6B2F' : '#ccc', flexShrink: 0 }} />
-                    {r.label}
+          <button
+            type="button"
+            onClick={() => { setPwOpen(o => !o); setPwError(null); setSavedPw(false); setPwForm({ password: '', confirm: '' }) }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}
+          >
+            <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>Change Password</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: pwOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          {pwOpen && (
+            <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderTop: 'none', padding: '1.5rem 1.25rem', background: '#fafaf9' }}>
+              <form onSubmit={savePassword}>
+                <Field label="New Password">
+                  <input type="password" value={pwForm.password} onChange={e => setPwForm(p => ({ ...p, password: e.target.value }))}
+                    minLength={8} autoComplete="new-password" style={inp} />
+                </Field>
+                {pwForm.password.length > 0 && (
+                  <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    {pwRules.map(r => (
+                      <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: r.pass ? '#3B6B2F' : '#aaa' }}>
+                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: r.pass ? '#3B6B2F' : '#ccc', flexShrink: 0 }} />
+                        {r.label}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-            <Field label="Confirm Password">
-              <input type="password" value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
-                minLength={8} autoComplete="new-password" style={inp} />
-            </Field>
-            {pwError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{pwError}</div>}
-            {savedPw && <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>Password updated.</div>}
-            <button type="submit" disabled={savingPw}
-              style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: savingPw ? 0.6 : 1, width: isMobile ? '100%' : 'auto' }}>
-              {savingPw ? 'Updating…' : 'Update Password'}
-            </button>
-          </form>
+                )}
+                <Field label="Confirm Password">
+                  <input type="password" value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
+                    minLength={8} autoComplete="new-password" style={inp} />
+                </Field>
+                {pwError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{pwError}</div>}
+                {savedPw && <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>Password updated.</div>}
+                <button type="submit" disabled={savingPw}
+                  style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: savingPw ? 0.6 : 1 }}>
+                  {savingPw ? 'Updating…' : 'Update Password'}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
 
       </div>
