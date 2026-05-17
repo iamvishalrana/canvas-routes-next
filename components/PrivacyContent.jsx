@@ -21,7 +21,7 @@ export default function PrivacyContent() {
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Legal</div>
         <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem",lineHeight:"1.2"}}>Privacy Policy</div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem 0"}}></div>
-        <div style={{fontSize:"12px",color:"#888",marginBottom:"3rem"}}>Last updated: April 2026</div>
+        <div style={{fontSize:"12px",color:"#888",marginBottom:"3rem"}}>Last updated: May 2026</div>
         {[
           {
             title: "Who we are",
@@ -41,11 +41,11 @@ export default function PrivacyContent() {
           },
           {
             title: "Who processes your data",
-            body: "Your submission is processed using Resend (resend.com), an email delivery service. Your information is transmitted securely and used only for the purposes described above. Resend's privacy policy can be found at resend.com/privacy."
+            body: "We use the following third-party services to operate Canvas Routes: Supabase (supabase.com) stores your personal information in a secure database, including membership applications, member profiles, and event registrations. Resend (resend.com) delivers confirmation and notification emails. Upstash (upstash.com) provides rate limiting by temporarily storing your IP address to prevent abuse — this data is not linked to your identity and expires automatically. Vercel (vercel.com) hosts the website and may process basic technical data for infrastructure and security purposes. All services are used solely to operate Canvas Routes and are not permitted to use your data for their own purposes."
           },
           {
             title: "Data transfers outside Quebec",
-            body: "Your personal information is transmitted to Resend, Inc., a company based in the United States. As a result, your personal information may be stored and processed outside of Quebec and Canada. Before using Resend, we assessed that it provides a level of protection comparable to Quebec's privacy law requirements. By submitting our form, you acknowledge that your information will be transferred to the United States for the purposes described in this policy."
+            body: "Your personal information is processed by third-party services based in the United States: Supabase, Inc. (database storage), Resend, Inc. (email delivery), and Upstash, Inc. (rate limiting). As a result, your personal information may be stored and processed outside of Quebec and Canada. Before using these services, we assessed that each provides a level of protection comparable to Quebec's privacy law requirements. By submitting our forms, you acknowledge that your information will be transferred to the United States for the purposes described in this policy."
           },
           {
             title: "Cookies & Analytics",
