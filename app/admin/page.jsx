@@ -1464,7 +1464,7 @@ export default function AdminPage() {
     <>
       <div style={{ padding: '1.75rem 1.5rem 1.5rem', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
         <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={110} height={73} style={{ filter: 'brightness(0) invert(1)', opacity: 0.9, display: 'block' }} />
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={150} height={100} style={{ filter: 'brightness(0) invert(1)', opacity: 0.9, display: 'block' }} />
         </Link>
         <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginTop: '0.75rem' }}>Admin Panel</div>
       </div>

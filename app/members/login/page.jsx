@@ -75,7 +75,7 @@ export default function LoginPage() {
         <>
           <div style={{ marginBottom: '2.5rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Members Portal</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Member.</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Welcome.</div>
             <div style={{ width: '28px', height: '1px', background: '#c5a882', marginTop: '1.1rem' }} />
           </div>
 

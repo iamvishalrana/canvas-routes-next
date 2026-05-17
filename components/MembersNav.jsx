@@ -36,10 +36,10 @@ export default function MembersNav({ email, isAdmin }) {
         borderBottom: '0.5px solid rgba(197,168,130,0.15)',
         padding: '0 2rem',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        height: '60px', position: 'sticky', top: 0, zIndex: 50,
+        height: '72px', position: 'sticky', top: 0, zIndex: 50,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={90} height={60}
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={120} height={80}
             style={{ opacity: 0.9, display: 'block' }} />
         </Link>
 
@@ -93,7 +93,7 @@ export default function MembersNav({ email, isAdmin }) {
         <div style={{
           background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.15)',
           padding: '1rem 2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem',
-          position: 'sticky', top: '60px', zIndex: 49,
+          position: 'sticky', top: '72px', zIndex: 49,
         }}>
           <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/dashboard' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Dashboard</Link>
           <Link href="/members/profile" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/profile' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Profile</Link>
