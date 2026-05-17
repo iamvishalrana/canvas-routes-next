@@ -1,9 +1,14 @@
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 
 const CAR_CAP = 15
 const ROADTRIP_KEY = 'reg:routes'
+
+function getRedis() {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null
+  return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+}
 
 function h(str) {
   return String(str ?? '')
@@ -157,9 +162,10 @@ function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, 
 }
 
 export async function GET() {
-  if (!process.env.KV_REST_API_URL) return Response.json({ count: 0, soldOut: false })
+  const redis = getRedis()
+  if (!redis) return Response.json({ count: 0, soldOut: false })
   try {
-    const count = await kv.get(ROADTRIP_KEY)
+    const count = await redis.get(ROADTRIP_KEY)
     const n = Number(count) || 0
     return Response.json({ count: n, soldOut: n >= CAR_CAP })
   } catch {
@@ -208,19 +214,20 @@ export async function POST(request) {
 
   // Check cap
   let regCount = null
-  if (process.env.KV_REST_API_URL) {
+  const redis = getRedis()
+  if (redis) {
     try {
-      const current = await kv.get(ROADTRIP_KEY)
+      const current = await redis.get(ROADTRIP_KEY)
       if (Number(current) >= CAR_CAP) {
         return Response.json({ error: 'Sorry, all spots have been claimed.', soldOut: true }, { status: 409 })
       }
-      regCount = await kv.incr(ROADTRIP_KEY)
+      regCount = await redis.incr(ROADTRIP_KEY)
       if (regCount > CAR_CAP) {
-        await kv.decr(ROADTRIP_KEY)
+        await redis.decr(ROADTRIP_KEY)
         return Response.json({ error: 'Sorry, all spots have been claimed.', soldOut: true }, { status: 409 })
       }
     } catch (err) {
-      console.error('KV error:', err)
+      console.error('Redis error:', err)
     }
   }
 
@@ -244,8 +251,8 @@ export async function POST(request) {
     })
   } catch (err) {
     console.error('Customer email network error:', err)
-    if (process.env.KV_REST_API_URL && regCount !== null) {
-      await kv.decr(ROADTRIP_KEY).catch(() => {})
+    if (redis && regCount !== null) {
+      await redis.decr(ROADTRIP_KEY).catch(() => {})
     }
     return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
   }
@@ -253,8 +260,8 @@ export async function POST(request) {
   if (!customerEmail.ok) {
     const err = await customerEmail.text().catch(() => 'unknown')
     console.error('Customer email error:', err)
-    if (process.env.KV_REST_API_URL && regCount !== null) {
-      await kv.decr(ROADTRIP_KEY).catch(() => {})
+    if (redis && regCount !== null) {
+      await redis.decr(ROADTRIP_KEY).catch(() => {})
     }
     return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
   }

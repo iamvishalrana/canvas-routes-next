@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
@@ -6,13 +6,19 @@ const SKIP_EMAILS = new Set(
   (process.env.SKIP_COUNT_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
 )
 
+function getRedis() {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null
+  return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+}
+
 async function incrementCount(registerFor, email) {
   if (SKIP_EMAILS.has(email.toLowerCase())) return null
-  if (!process.env.KV_REST_API_URL) return null
+  const redis = getRedis()
+  if (!redis) return null
   const key = registerFor === 'Cars & Coffee — May 9, 2026' ? 'reg:cc'
     : registerFor === 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026' ? 'reg:gpcc'
     : 'reg:membership'
-  try { return await kv.incr(key) } catch { return null }
+  try { return await redis.incr(key) } catch { return null }
 }
 
 function h(str) {
