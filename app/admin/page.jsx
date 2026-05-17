@@ -96,6 +96,26 @@ function Success({ msg }) {
   return <div style={{ fontSize: '12px', color: '#3B6B2F', marginTop: '0.6rem' }}>{msg}</div>
 }
 
+function CopyBtn({ value }) {
+  const [copied, setCopied] = useState(false)
+  if (!value) return null
+  function doCopy(e) {
+    e.stopPropagation()
+    navigator.clipboard?.writeText(value).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    }).catch(() => {})
+  }
+  return (
+    <button onClick={doCopy} title="Copy" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 3px', color: copied ? '#3B6B2F' : '#bbb', lineHeight: 1, display: 'inline-flex', alignItems: 'center', flexShrink: 0, transition: 'color 0.15s' }}>
+      {copied
+        ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      }
+    </button>
+  )
+}
+
 // ─── Members Tab ─────────────────────────────────────────────────────────────
 
 function MembersTab({ isMobile }) {
@@ -898,11 +918,14 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
 
   useEffect(() => { onUnseenCountChange?.(unseenCount) }, [unseenCount, onUnseenCountChange])
 
-  function InfoCell({ label, value }) {
+  function InfoCell({ label, value, copyable }) {
     return (
       <div>
         <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>{label}</div>
-        <div style={{ fontSize: '13px', color: value ? '#444' : '#ddd' }}>{value || '—'}</div>
+        <div style={{ fontSize: '13px', color: value ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+          <span>{value || '—'}</span>
+          {copyable && <CopyBtn value={value} />}
+        </div>
       </div>
     )
   }
@@ -982,7 +1005,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                     {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-registered</span>}
                     {a.name || <span style={{ color: '#ccc' }}>—</span>}
                   </div>
-                  <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666' }}>{a.email}</div>
+                  <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
                     {[a.car_year, a.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
                   </div>
@@ -1083,7 +1106,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                         <InfoCell label="Name" value={a.name} />
                         <InfoCell label="Car Year" value={a.car_year} />
                         <InfoCell label="Car Make & Model" value={a.car_model} />
-                        <InfoCell label="Phone" value={a.phone} />
+                        <InfoCell label="Phone" value={a.phone} copyable />
                         <InfoCell label="Instagram" value={a.instagram ? `@${a.instagram}` : null} />
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
@@ -1281,7 +1304,7 @@ function ContactsTab({ isMobile }) {
                 onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}
               >
                 <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
-                <div style={{ fontSize: '12px', color: '#666' }}>{c.email}</div>
+                <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
                   {[c.car_year, c.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
                 </div>
@@ -1314,7 +1337,7 @@ function ContactsTab({ isMobile }) {
                     </div>
                     <div>
                       <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Phone</div>
-                      <div style={{ fontSize: '13px', color: c.phone ? '#444' : '#ddd' }}>{c.phone || '—'}</div>
+                      <div style={{ fontSize: '13px', color: c.phone ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><span>{c.phone || '—'}</span><CopyBtn value={c.phone} /></div>
                     </div>
                     <div>
                       <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Instagram</div>
