@@ -306,9 +306,8 @@ function MembersTab({ isMobile }) {
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 110px 1fr 90px 120px 100px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 0.8fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
             {['Name', 'Email', 'Status', 'Car', 'C&C May 9', 'Setup', ''].map((h, i) => (
               <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
             ))}
@@ -423,7 +422,7 @@ function MembersTab({ isMobile }) {
                   <Err msg={saveError} />
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 110px 1fr 90px 120px 100px', padding: '0.9rem 1.25rem', alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 0.8fr 1fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center' }}>
                   <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
                   <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
                   <div><Badge status={m.membership_status} /></div>
@@ -458,7 +457,6 @@ function MembersTab({ isMobile }) {
               )}
             </div>
           ))}
-        </div>
         </div>
       )}
     </div>
