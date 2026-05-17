@@ -1,25 +1,5 @@
-import { Redis } from '@upstash/redis'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
-
-const SKIP_EMAILS = new Set(
-  (process.env.SKIP_COUNT_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-)
-
-function getRedis() {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null
-  return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
-}
-
-async function incrementCount(registerFor, email) {
-  if (SKIP_EMAILS.has(email.toLowerCase())) return null
-  const redis = getRedis()
-  if (!redis) return null
-  const key = registerFor === 'Cars & Coffee — May 9, 2026' ? 'reg:cc'
-    : registerFor === 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026' ? 'reg:gpcc'
-    : 'reg:membership'
-  try { return await redis.incr(key) } catch { return null }
-}
 
 function h(str) {
   return String(str ?? '')
@@ -119,7 +99,7 @@ If this email landed in your spam folder, please move it to your inbox and mark 
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, regCount }) {
+function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise }) {
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const dobStr = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''
   const row = (label, value) => value
@@ -138,7 +118,7 @@ function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_d
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
           <tr>
             <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
-              New application received${regCount ? ` &mdash; <strong style="color:#1a1a1a;">#${regCount}</strong>` : ''}
+              New application received
             </td>
           </tr>
           <tr>
@@ -216,8 +196,6 @@ export async function POST(request) {
 
   const firstName = h(name.trim().split(' ')[0])
   const rawFirstName = name.trim().split(' ')[0]
-  const regCount = await incrementCount(registerFor, email)
-
   // EMAIL 1 — Customer confirmation
   let customerEmail
   try {
@@ -251,9 +229,9 @@ export async function POST(request) {
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
-    subject: `New Application${regCount ? ` #${regCount}` : ''} — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
-    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, regCount }),
-    text: `New application${regCount ? ` #${regCount}` : ''}\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}`,
+    subject: `New Application — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
+    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise }),
+    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}`,
   })
 
   let notifyOk = false

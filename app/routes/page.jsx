@@ -26,8 +26,6 @@ const INCLUDED = [
 
 export default function RoutesPage() {
   const [launched, setLaunched] = useState(false)
-  const [soldOut, setSoldOut] = useState(false)
-  const [checking, setChecking] = useState(true)
   const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
@@ -46,14 +44,6 @@ export default function RoutesPage() {
       }, 1000)
       return () => clearInterval(interval)
     }
-  }, [])
-
-  useEffect(() => {
-    fetch('/api/routes')
-      .then(r => r.json())
-      .then(d => { if (d.soldOut) setSoldOut(true) })
-      .catch(() => {})
-      .finally(() => setChecking(false))
   }, [])
 
   function updateForm(field, value) {
@@ -138,8 +128,6 @@ export default function RoutesPage() {
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setStatus('success')
-      } else if (data.soldOut) {
-        setSoldOut(true); setStatus(null)
       } else {
         setServerError(data.error || 'Something went wrong. Please try again.')
         setStatus('error')
@@ -155,7 +143,7 @@ export default function RoutesPage() {
     }
   }
 
-  const showForm = launched && !soldOut && !checking && status !== 'success'
+  const showForm = launched && status !== 'success'
 
   return (
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",minHeight:"100vh"}}>
@@ -278,21 +266,8 @@ export default function RoutesPage() {
             </div>
           )}
 
-          {/* SOLD OUT */}
-          {launched && soldOut && (
-            <div style={{textAlign:"center",padding:"5rem 0"}}>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration Closed</div>
-              <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
-              <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"380px",margin:"1.5rem auto 0"}}>
-                All spots have been claimed. Follow us on{' '}
-                <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#7B2032",textDecoration:"none"}}>Instagram</a>
-                {' '}to be the first to hear about future events.
-              </p>
-            </div>
-          )}
-
           {/* SUCCESS */}
-          {launched && !soldOut && status === 'success' && (
+          {launched && status === 'success' && (
             <div style={{textAlign:"center",padding:"5rem 0"}}>
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"1rem"}}>Application received.</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />

@@ -1,14 +1,5 @@
-import { Redis } from '@upstash/redis'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
-
-const CAR_CAP = 15
-const ROADTRIP_KEY = 'reg:routes'
-
-function getRedis() {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null
-  return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
-}
 
 function h(str) {
   return String(str ?? '')
@@ -118,7 +109,7 @@ Follow us on Instagram: https://www.instagram.com/canvasroutes
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }) {
+function notifyHtml({ name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }) {
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -135,7 +126,7 @@ function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, 
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
           <tr>
             <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
-              Into the Laurentians Registration${regCount ? ` &mdash; <strong style="color:#1a1a1a;">#${regCount}</strong>` : ''}
+              Into the Laurentians Registration
             </td>
           </tr>
           <tr>
@@ -159,18 +150,6 @@ function notifyHtml({ regCount, name, email, phone, year, carModel, passengers, 
   </table>
 </body>
 </html>`
-}
-
-export async function GET() {
-  const redis = getRedis()
-  if (!redis) return Response.json({ count: 0, soldOut: false })
-  try {
-    const count = await redis.get(ROADTRIP_KEY)
-    const n = Number(count) || 0
-    return Response.json({ count: n, soldOut: n >= CAR_CAP })
-  } catch {
-    return Response.json({ count: 0, soldOut: false })
-  }
 }
 
 export async function POST(request) {
@@ -212,25 +191,6 @@ export async function POST(request) {
   if (carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long.' }, { status: 400 })
 
-  // Check cap
-  let regCount = null
-  const redis = getRedis()
-  if (redis) {
-    try {
-      const current = await redis.get(ROADTRIP_KEY)
-      if (Number(current) >= CAR_CAP) {
-        return Response.json({ error: 'Sorry, all spots have been claimed.', soldOut: true }, { status: 409 })
-      }
-      regCount = await redis.incr(ROADTRIP_KEY)
-      if (regCount > CAR_CAP) {
-        await redis.decr(ROADTRIP_KEY)
-        return Response.json({ error: 'Sorry, all spots have been claimed.', soldOut: true }, { status: 409 })
-      }
-    } catch (err) {
-      console.error('Redis error:', err)
-    }
-  }
-
   const firstName = h(name.trim().split(' ')[0])
   const rawFirstName = name.trim().split(' ')[0]
 
@@ -251,18 +211,12 @@ export async function POST(request) {
     })
   } catch (err) {
     console.error('Customer email network error:', err)
-    if (redis && regCount !== null) {
-      await redis.decr(ROADTRIP_KEY).catch(() => {})
-    }
     return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
   }
 
   if (!customerEmail.ok) {
     const err = await customerEmail.text().catch(() => 'unknown')
     console.error('Customer email error:', err)
-    if (redis && regCount !== null) {
-      await redis.decr(ROADTRIP_KEY).catch(() => {})
-    }
     return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
   }
 
@@ -270,9 +224,9 @@ export async function POST(request) {
   const notifyBody = JSON.stringify({
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
-    subject: `Laurentians Registration${regCount ? ` #${regCount}` : ''} — ${year} ${carModel} — ${name.trim()}`,
-    html: notifyHtml({ regCount, name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }),
-    text: `Laurentians Registration${regCount ? ` #${regCount}` : ''}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}`,
+    subject: `Laurentians Registration — ${year} ${carModel} — ${name.trim()}`,
+    html: notifyHtml({ name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }),
+    text: `Laurentians Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}`,
   })
 
   let notifyOk = false
