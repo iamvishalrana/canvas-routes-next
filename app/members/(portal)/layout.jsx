@@ -10,7 +10,7 @@ export default async function PortalLayout({ children }) {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif' }}>
       <MembersNav email={user?.email} isAdmin={isAdmin} />
-      <main style={{ maxWidth: '900px', margin: '0 auto', padding: '3rem 2rem 6rem' }}>
+      <main style={{ maxWidth: '1040px', margin: '0 auto', padding: '3rem 2rem 6rem' }}>
         {children}
       </main>
     </div>
