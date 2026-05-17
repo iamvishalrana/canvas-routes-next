@@ -40,7 +40,7 @@ export default function MembersNav({ email, isAdmin }) {
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
           <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={90} height={60}
-            style={{ filter: 'brightness(0) invert(1)', opacity: 0.75, display: 'block' }} />
+            style={{ opacity: 0.9, display: 'block' }} />
         </Link>
 
         {/* Desktop links */}

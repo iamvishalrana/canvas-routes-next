@@ -75,7 +75,7 @@ export default function LoginPage() {
         <>
           <div style={{ marginBottom: '2.5rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Members Portal</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Welcome back.</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Member.</div>
             <div style={{ width: '28px', height: '1px', background: '#c5a882', marginTop: '1.1rem' }} />
           </div>
 
@@ -192,7 +192,7 @@ export default function LoginPage() {
             <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
           </Link>
           <div style={{ marginTop: '1.5rem', fontFamily: 'var(--font-cormorant),serif', fontSize: '1rem', fontStyle: 'italic', color: 'rgba(245,241,236,0.35)', letterSpacing: '0.02em' }}>
-            The community. The routes. The canvas.
+            The Community. The Routes. The Canvas.
           </div>
         </div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2.5rem 1.5rem 3rem' }}>
@@ -219,7 +219,7 @@ export default function LoginPage() {
         <div>
           <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.6)', marginBottom: '2rem' }} />
           <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.8rem', fontWeight: '300', color: '#F5F1EC', lineHeight: '1.25', letterSpacing: '-0.01em' }}>
-            The community.<br/>The routes.<br/>The canvas.
+            The Community.<br/>The Routes.<br/>The Canvas.
           </div>
           <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.6)', marginTop: '2rem' }} />
         </div>
