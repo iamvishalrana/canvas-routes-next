@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 const SECTIONS = [
   {
-    num: '01',
     title: 'About Canvas Routes',
     items: [
       {
@@ -36,7 +35,6 @@ const SECTIONS = [
     ],
   },
   {
-    num: '02',
     title: 'Cars and Coffee',
     items: [
       {
@@ -74,7 +72,6 @@ const SECTIONS = [
     ],
   },
   {
-    num: '03',
     title: 'Road Trips',
     items: [
       {
@@ -124,7 +121,6 @@ const SECTIONS = [
     ],
   },
   {
-    num: '04',
     title: 'Overnight and Long Distance Trips',
     items: [
       {
@@ -142,7 +138,6 @@ const SECTIONS = [
     ],
   },
   {
-    num: '05',
     title: 'Membership',
     items: [
       {
@@ -161,41 +156,42 @@ const SECTIONS = [
   },
 ]
 
-function AccordionItem({ item, index, isOpen, onToggle }) {
+function AccordionItem({ item, isOpen, onToggle }) {
   return (
-    <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+    <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
       <button
         onClick={onToggle}
         style={{
-          width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-          gap: '1.5rem', padding: '1.25rem 0',
-          background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '2rem',
+          padding: '1.4rem 0',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
           fontFamily: 'var(--font-inter),sans-serif',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flex: 1 }}>
-          <span style={{
-            fontSize: '10px', letterSpacing: '0.12em', color: isOpen ? '#c5a882' : '#ccc',
-            paddingTop: '2px', flexShrink: 0, transition: 'color 0.2s', fontVariantNumeric: 'tabular-nums',
-          }}>
-            {String(index + 1).padStart(2, '0')}
-          </span>
-          <span style={{
-            fontSize: '14px', fontWeight: isOpen ? '500' : '400',
-            color: isOpen ? '#1a1a1a' : '#444', lineHeight: '1.55', flex: 1,
-            transition: 'color 0.2s, font-weight 0.2s',
-          }}>
-            {item.q}
-          </span>
-        </div>
+        <span style={{
+          fontSize: '15px',
+          fontWeight: '400',
+          color: isOpen ? '#1a1a1a' : '#3a3a3a',
+          lineHeight: '1.5',
+          flex: 1,
+          transition: 'color 0.15s',
+        }}>
+          {item.q}
+        </span>
         <motion.div
-          animate={{ rotate: isOpen ? 45 : 0 }}
-          transition={{ duration: 0.2, ease: 'easeInOut' }}
-          style={{ flexShrink: 0, marginTop: '2px', color: isOpen ? '#c5a882' : '#ccc' }}
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.22, ease: 'easeInOut' }}
+          style={{ flexShrink: 0, color: isOpen ? '#c5a882' : '#aaa', display: 'flex' }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
           </svg>
         </motion.div>
       </button>
@@ -207,22 +203,19 @@ function AccordionItem({ item, index, isOpen, onToggle }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ height: { duration: 0.28, ease: [0.4, 0, 0.2, 1] }, opacity: { duration: 0.2 } }}
+            transition={{ height: { duration: 0.26, ease: [0.4, 0, 0.2, 1] }, opacity: { duration: 0.18 } }}
             style={{ overflow: 'hidden' }}
           >
-            <motion.p
-              initial={{ y: -6 }}
-              animate={{ y: 0 }}
-              exit={{ y: -6 }}
-              transition={{ duration: 0.22 }}
-              style={{
-                fontSize: '13px', color: '#666', lineHeight: '1.9',
-                margin: '0 0 1.5rem', paddingLeft: '2rem',
-                fontFamily: 'var(--font-inter),sans-serif',
-              }}
-            >
+            <p style={{
+              fontSize: '14px',
+              color: '#666',
+              lineHeight: '1.9',
+              margin: '0 0 1.6rem',
+              paddingRight: '2.5rem',
+              fontFamily: 'var(--font-inter),sans-serif',
+            }}>
               {item.a}
-            </motion.p>
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -248,7 +241,7 @@ export default function FAQContent() {
         background: '#F5F1EC', height: '72px',
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={110} height={73} style={{ display: 'block' }} />
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ display: 'block' }} />
         </Link>
         <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#888', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           ← Back
@@ -256,122 +249,65 @@ export default function FAQContent() {
       </nav>
 
       {/* Hero */}
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '5rem 2rem 2rem' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-        >
-          <div style={{ fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#aaa', marginBottom: '1.2rem' }}>Support</div>
-          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '3.4rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.05', marginBottom: '2rem' }}>
-            Frequently asked<br />questions.
-          </div>
-          <div style={{ width: '40px', height: '1px', background: '#c5a882', marginBottom: '1.5rem' }} />
-          <p style={{ fontSize: '13px', color: '#888', lineHeight: '1.8', maxWidth: '500px', marginBottom: '4rem' }}>
-            Everything you need to know about Canvas Routes — the car club, the events, and the road ahead.
-          </p>
-        </motion.div>
-
-        {/* Quick nav */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '5rem' }}
-        >
-          {SECTIONS.map((s, i) => (
-            <a
-              key={i}
-              href={`#section-${i}`}
-              onClick={e => {
-                e.preventDefault()
-                document.getElementById(`section-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }}
-              style={{
-                fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
-                color: '#888', textDecoration: 'none',
-                border: '0.5px solid rgba(0,0,0,0.15)', padding: '0.45rem 1rem',
-                background: 'transparent', transition: 'border-color 0.15s, color 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#1a1a1a'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.35)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)' }}
-            >
-              {s.title}
-            </a>
-          ))}
-        </motion.div>
+      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '5rem 2rem 4rem' }}>
+        <div style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1rem' }}>Support</div>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '3rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1', marginBottom: '1.5rem' }}>
+          Frequently asked questions.
+        </div>
+        <div style={{ width: '40px', height: '1px', background: '#c5a882', marginBottom: '1.5rem' }} />
+        <p style={{ fontSize: '15px', color: '#777', lineHeight: '1.75', maxWidth: '480px' }}>
+          Everything you need to know about Canvas Routes — the car club, the events, and the road ahead.
+        </p>
       </div>
 
       {/* Sections */}
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2rem' }}>
+      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 2rem 6rem' }}>
         {SECTIONS.map((section, si) => (
-          <motion.div
-            key={si}
-            id={`section-${si}`}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
-            style={{ marginBottom: '5rem', scrollMarginTop: '100px' }}
-          >
-            {/* Section header */}
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.25rem', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-              <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.8rem', fontWeight: '300', color: 'rgba(197,168,130,0.4)', lineHeight: 1 }}>
-                {section.num}
-              </span>
-              <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>
-                {section.title}
-              </span>
+          <div key={si} style={{ marginBottom: '4rem' }}>
+            <div style={{
+              fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase',
+              color: '#7B2032', marginBottom: '1.5rem', paddingBottom: '1.2rem',
+              borderBottom: '0.5px solid rgba(0,0,0,0.12)',
+            }}>
+              {section.title}
             </div>
 
-            {/* Accordion */}
-            <div>
-              {section.items.map((item, ii) => {
-                const key = `${si}-${ii}`
-                return (
-                  <AccordionItem
-                    key={key}
-                    item={item}
-                    index={ii}
-                    isOpen={!!open[key]}
-                    onToggle={() => toggle(key)}
-                  />
-                )
-              })}
-            </div>
-          </motion.div>
+            {section.items.map((item, ii) => {
+              const key = `${si}-${ii}`
+              return (
+                <AccordionItem
+                  key={key}
+                  item={item}
+                  isOpen={!!open[key]}
+                  onToggle={() => toggle(key)}
+                />
+              )
+            })}
+          </div>
         ))}
 
         {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          style={{ marginTop: '2rem', marginBottom: '5rem', padding: '3.5rem', background: '#0F1E14', textAlign: 'center' }}
-        >
-          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '1rem', lineHeight: 1.2 }}>
+        <div style={{ marginTop: '2rem', padding: '3rem', background: '#0F1E14', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
             Still have questions?
           </div>
-          <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.5rem' }} />
-          <p style={{ fontSize: '13px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.85', maxWidth: '380px', margin: '0 auto 2rem' }}>
+          <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.25rem' }} />
+          <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.85', maxWidth: '360px', margin: '0 auto' }}>
             Reach out at{' '}
-            <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none', borderBottom: '0.5px solid rgba(197,168,130,0.4)', paddingBottom: '1px' }}>
+            <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none' }}>
               info@canvasroutes.com
             </a>
             {' '}or follow us at{' '}
-            <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none', borderBottom: '0.5px solid rgba(197,168,130,0.4)', paddingBottom: '1px' }}>
+            <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none' }}>
               @canvasroutes
             </a>
           </p>
-        </motion.div>
+        </div>
 
         {/* Footer */}
-        <div style={{ paddingBottom: '3rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em' }}>© 2026 Canvas Routes. Montreal, QC.</div>
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
-            <Link href="/privacy" style={{ fontSize: '10px', color: '#bbb', textDecoration: 'none', letterSpacing: '0.03em' }}>Privacy Policy</Link>
-          </div>
+        <div style={{ paddingTop: '2.5rem', marginTop: '3rem', borderTop: '0.5px solid rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <p style={{ fontSize: '11px', color: '#aaa' }}>© 2026 Canvas Routes. Montreal, QC. — info@canvasroutes.com</p>
+          <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none', letterSpacing: '0.03em' }}>Privacy Policy</Link>
         </div>
       </div>
 
