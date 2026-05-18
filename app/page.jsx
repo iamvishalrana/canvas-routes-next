@@ -259,6 +259,7 @@ export default function Home() {
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
           <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
           <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
+          <Link href="/faq">FAQ</Link>
         </div>
         <div className="nav-cta">
           <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="nav-join">Join</a>
@@ -276,6 +277,7 @@ export default function Home() {
         <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }}>Routes</a>
         <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
+        <Link href="/faq">FAQ</Link>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</a>
         <Link href="/members/login" style={{color:"#3B6B2F",fontWeight:"500"}}>Members Login</Link>
       </div>
@@ -931,6 +933,7 @@ export default function Home() {
         <div style={{display:"flex",flexDirection:"column",gap:"0.4rem"}}>
           <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
           <Link href="/privacy" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>Privacy Policy</Link>
+          <Link href="/faq" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>FAQ</Link>
           <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{background:"none",border:"none",padding:0,fontSize:"10px",color:"#aaa",cursor:"pointer",letterSpacing:"0.03em",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Manage cookies</button>
         </div>
         <div style={{display:"flex",gap:"1.2rem",alignItems:"center"}}>
