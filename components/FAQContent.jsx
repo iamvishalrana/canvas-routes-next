@@ -91,7 +91,8 @@ const SECTIONS = [
       },
       {
         q: 'What is included in the road trip fee?',
-        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are at your own cost and are not included in the road trip fee.',
+        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day.',
+        note: 'Parking fees (if needed) and your car\'s gas are at your own cost and are not included in the road trip fee.',
       },
       {
         q: 'What makes each road trip unique?',
@@ -215,12 +216,25 @@ function AccordionItem({ item, isOpen, onToggle }) {
               fontSize: '14px',
               color: '#666',
               lineHeight: '1.9',
-              margin: item.cta ? '0 0 1rem' : '0 0 1.6rem',
+              margin: (item.note || item.cta) ? '0 0 0.6rem' : '0 0 1.6rem',
               paddingRight: '2.5rem',
               fontFamily: 'var(--font-inter),sans-serif',
             }}>
               {item.a}
             </p>
+            {item.note && (
+              <p style={{
+                fontSize: '14px',
+                color: '#1a1a1a',
+                fontWeight: '500',
+                lineHeight: '1.9',
+                margin: item.cta ? '0 0 1rem' : '0 0 1.6rem',
+                paddingRight: '2.5rem',
+                fontFamily: 'var(--font-inter),sans-serif',
+              }}>
+                {item.note}
+              </p>
+            )}
             {item.cta && (
               <div style={{ marginBottom: '1.6rem' }}>
                 <Link href="/#join" style={{
