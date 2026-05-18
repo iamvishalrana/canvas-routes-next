@@ -7,6 +7,25 @@ import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, Clipboa
 import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
+const CC_MAY9_PHOTOS = [
+  "/May 09 2026/0cb302ba-17a0-4455-b7fe-b3f4cefe1f81.jpeg",
+  "/May 09 2026/1e6b349c-6466-42f8-bf24-a84685f45a9e.jpeg",
+  "/May 09 2026/541742e8-373f-4f5e-aac7-4b7069e81d4e.jpeg",
+  "/May 09 2026/63431220-b936-4d5f-9590-ac3fc4151396.jpeg",
+  "/May 09 2026/6a28265c-92eb-453b-a102-fa3a34a06e41.jpeg",
+  "/May 09 2026/7377df81-c8d9-4a7f-a015-38fc55071d35.jpeg",
+  "/May 09 2026/964d1ec3-c3cd-43b1-8f8c-ad6d1d6fbac0.jpeg",
+  "/May 09 2026/b26a7de5-375e-41c6-971e-0317f2cd2fba.jpeg",
+  "/May 09 2026/bd04dda7-f5c1-4156-bf77-84afec8cabe5.jpeg",
+  "/May 09 2026/c409d578-b651-42b2-9230-4a554f6b2d49.jpeg",
+  "/May 09 2026/d1025007-017c-4497-a42d-d2d585560e38.jpeg",
+  "/May 09 2026/d31118e9-0dc2-444b-b608-3c7995bdaed8.jpeg",
+  "/May 09 2026/IMG_5190.jpeg",
+  "/May 09 2026/IMG_5191.jpeg",
+  "/May 09 2026/IMG_5193.jpeg",
+  "/May 09 2026/IMG_5195.jpeg",
+]
+
 export default function Home() {
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
   const [errors, setErrors] = useState({})
@@ -23,6 +42,18 @@ export default function Home() {
   const [showGpccModal, setShowGpccModal] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
+  const [lightboxIdx, setLightboxIdx] = useState(null)
+
+  useEffect(() => {
+    if (lightboxIdx === null) return
+    function onKey(e) {
+      if (e.key === 'ArrowRight') setLightboxIdx(i => (i + 1) % CC_MAY9_PHOTOS.length)
+      if (e.key === 'ArrowLeft') setLightboxIdx(i => (i - 1 + CC_MAY9_PHOTOS.length) % CC_MAY9_PHOTOS.length)
+      if (e.key === 'Escape') setLightboxIdx(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lightboxIdx])
 
   useEffect(() => {
     try { if (sessionStorage.getItem('eventsPopupDismissed')) return } catch {}
@@ -783,7 +814,7 @@ export default function Home() {
             animate={{opacity:1}}
             exit={{opacity:0}}
             transition={{duration:0.2}}
-            onClick={() => setShowPastModal(false)}
+            onClick={() => { setShowPastModal(false); setLightboxIdx(null) }}
             style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
           >
             <motion.div
@@ -792,29 +823,76 @@ export default function Home() {
               exit={{opacity:0,scale:0.94,y:10}}
               transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
               onClick={e => e.stopPropagation()}
-              style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)"}}
+              style={{background:"#0F1E14",maxWidth:"720px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",border:"1px solid rgba(197,168,130,0.35)",display:"flex",flexDirection:"column",maxHeight:"90vh",overflow:"hidden"}}
             >
               <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-              <button onClick={() => setShowPastModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-              <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:"top",display:"block"}} />
-              <div style={{padding:"1.8rem 2rem 2rem"}}>
+              <button onClick={() => { setShowPastModal(false); setLightboxIdx(null) }} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+              <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"top",display:"block",flexShrink:0}} />
+              <div style={{padding:"1.6rem 2rem 2rem",overflowY:"auto",flex:1}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 9, 2026</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars &amp; Coffee</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.5)",marginBottom:"1.4rem"}}>Good cars. Great coffee. Better people.</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.8rem"}}>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars &amp; Coffee</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.5)",marginBottom:"1.2rem"}}>Good cars. Great coffee. Better people.</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.4rem"}}>
                   {["09:30 – 12:00 PM","Open to all","Free entry"].map((tag,idx) => (
                     <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
                   ))}
                 </div>
-                <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.4rem"}} />
-                <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>
-                  To see photos &amp; videos from this event, follow us on{' '}
-                  <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Instagram</a>
+                <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.2rem"}} />
+                <div style={{fontSize:"10px",letterSpacing:"0.16em",textTransform:"uppercase",color:"rgba(197,168,130,0.5)",marginBottom:"0.75rem"}}>Photos</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"3px"}}>
+                  {CC_MAY9_PHOTOS.map((src, i) => (
+                    <button key={i} onClick={() => setLightboxIdx(i)} style={{padding:0,border:"none",cursor:"pointer",overflow:"hidden",aspectRatio:"1",background:"#0a1a0e",display:"block"}}>
+                      <img src={src} alt="" loading="lazy" style={{width:"100%",height:"100%",objectFit:"cover",display:"block",opacity:0.88,transition:"opacity 0.15s"}}
+                        onMouseEnter={e => e.currentTarget.style.opacity='1'}
+                        onMouseLeave={e => e.currentTarget.style.opacity='0.88'}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <div style={{marginTop:"1.25rem",fontSize:"11px",color:"rgba(245,241,236,0.3)",lineHeight:"1.7"}}>
+                  Follow us on{' '}
+                  <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"rgba(197,168,130,0.6)",textDecoration:"none"}}>Instagram</a>
                   {' '}and{' '}
-                  <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
+                  <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"rgba(197,168,130,0.6)",textDecoration:"none"}}>Facebook</a>
+                  {' '}for more.
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* LIGHTBOX */}
+      <AnimatePresence>
+        {lightboxIdx !== null && (
+          <motion.div
+            initial={{opacity:0}}
+            animate={{opacity:1}}
+            exit={{opacity:0}}
+            transition={{duration:0.18}}
+            onClick={() => setLightboxIdx(null)}
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",zIndex:1100,display:"flex",alignItems:"center",justifyContent:"center"}}
+          >
+            <motion.img
+              key={lightboxIdx}
+              initial={{opacity:0,scale:0.96}}
+              animate={{opacity:1,scale:1}}
+              exit={{opacity:0}}
+              transition={{duration:0.18}}
+              src={CC_MAY9_PHOTOS[lightboxIdx]}
+              alt=""
+              onClick={e => e.stopPropagation()}
+              style={{maxWidth:"90vw",maxHeight:"90vh",objectFit:"contain",display:"block",userSelect:"none"}}
+            />
+            <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i - 1 + CC_MAY9_PHOTOS.length) % CC_MAY9_PHOTOS.length) }}
+              style={{position:"fixed",left:"1rem",top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",fontSize:"22px",cursor:"pointer",width:"44px",height:"44px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif",lineHeight:1}}>‹</button>
+            <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i + 1) % CC_MAY9_PHOTOS.length) }}
+              style={{position:"fixed",right:"1rem",top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",fontSize:"22px",cursor:"pointer",width:"44px",height:"44px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif",lineHeight:1}}>›</button>
+            <button onClick={() => setLightboxIdx(null)}
+              style={{position:"fixed",top:"1rem",right:"1rem",background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",fontSize:"18px",cursor:"pointer",width:"36px",height:"36px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+            <div style={{position:"fixed",bottom:"1.25rem",left:"50%",transform:"translateX(-50%)",fontSize:"11px",color:"rgba(255,255,255,0.35)",letterSpacing:"0.08em",pointerEvents:"none"}}>
+              {lightboxIdx + 1} / {CC_MAY9_PHOTOS.length}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
