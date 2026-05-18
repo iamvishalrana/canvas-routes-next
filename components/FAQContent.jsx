@@ -284,11 +284,11 @@ export default function FAQContent() {
           <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ display: 'block' }} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <Link href="/#join" style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none', background: '#7B2032', padding: '0.55rem 1.4rem' }}>
-            Join
-          </Link>
           <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#888', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             ← Back
+          </Link>
+          <Link href="/#join" style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none', background: '#7B2032', padding: '0.55rem 1.4rem' }}>
+            Join
           </Link>
         </div>
       </nav>
