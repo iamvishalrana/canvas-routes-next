@@ -10,7 +10,7 @@ const SECTIONS = [
     items: [
       {
         q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a Montreal-based luxury automotive community built around curated car meets, scenic road trips and convoy adventures across Quebec, Ontario, Vermont, Maine and New York. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
+        a: 'Canvas Routes is a Montreal-based luxury automotive community built around curated car meets, scenic road trips and convoy adventures across Quebec, Ontario, Vermont, Maine, New York and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
       },
       {
         q: 'Who is Canvas Routes for?',
@@ -22,7 +22,7 @@ const SECTIONS = [
       },
       {
         q: 'Where are you based?',
-        a: 'Montreal, Quebec. All current events depart from Montreal or the greater Montreal area. We are a young and growing community with ambitions that stretch across Quebec, Ontario, Vermont, Maine and New York — and further as we grow.',
+        a: 'Montreal, Quebec. All current events depart from Montreal or the greater Montreal area. We are a young and growing community with ambitions that stretch across Quebec, Ontario, Vermont, Maine, New York and beyond.',
       },
       {
         q: 'How do I stay updated on upcoming events?',
