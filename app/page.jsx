@@ -25,6 +25,7 @@ export default function Home() {
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
   useEffect(() => {
+    try { if (sessionStorage.getItem('eventsPopupDismissed')) return } catch {}
     const t = setTimeout(() => setShowEventsPopup(true), 800)
     return () => clearTimeout(t)
   }, [])
@@ -215,6 +216,11 @@ export default function Home() {
       }
       setStatus('error')
     }
+  }
+
+  function dismissEventsPopup() {
+    try { sessionStorage.setItem('eventsPopupDismissed', '1') } catch {}
+    setShowEventsPopup(false)
   }
 
   function smoothScroll(id) {
@@ -416,9 +422,9 @@ export default function Home() {
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Cars & Coffee",inviteOnly:true},
-            {date:"May 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"},
-            {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route"},
-            {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route"},
+            {date:"May 31, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"},
+            {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route",teaser:"Wine country roads and sweeping valleys through the Eastern Townships — a route built for a summer day."},
+            {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route",teaser:"Quebec's most dramatic coastline — clifftop roads, river views, and countryside that earns every kilometre."},
           ].map((e,i) => (
             <div key={i} className="event-card" style={e.past
               ? {background:"#0F1E14",border:"1px solid rgba(197,168,130,0.55)",padding:"2rem",position:"relative",overflow:"hidden",cursor:"pointer"}
@@ -432,7 +438,8 @@ export default function Home() {
                 <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.6)":"#7B5B2E",border:`0.5px solid ${e.past?"rgba(197,168,130,0.5)":"#7B5B2E"}`,padding:"2px 8px"}}>{e.type}</div>
               </div>
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:e.past?"#F5F1EC":"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
-              <div style={{fontSize:"12px",color:e.past?"rgba(245,241,236,0.4)":"#5A4A38",marginBottom:"1.5rem"}}>{e.loc}</div>
+              <div style={{fontSize:"12px",color:e.past?"rgba(245,241,236,0.4)":"#5A4A38",marginBottom:e.teaser?"0.75rem":"1.5rem"}}>{e.loc}</div>
+              {e.teaser && <p style={{fontSize:"12px",color:"#7A6A58",lineHeight:"1.65",marginBottom:"1.25rem"}}>{e.teaser}</p>}
               {e.past
                 ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Recap <span style={{fontSize:"13px"}}>→</span></div>
                 : e.inviteOnly
@@ -514,7 +521,7 @@ export default function Home() {
         )}
         {status === 'success' ? (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
-            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you shortly.</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you — usually within 48 hours.</div>
             <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>A confirmation email is on its way from <strong style={{color:"#555",fontWeight:"500"}}>info@canvasroutes.com</strong> or <strong style={{color:"#555",fontWeight:"500"}}>jerry@canvasroutes.com</strong> — add both to your contacts and check your spam/junk folder so you don't miss it. Once we've reviewed your application, you'll hear from our team directly. If you don't hear from us, reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
             <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
@@ -862,7 +869,7 @@ export default function Home() {
             animate={{opacity:1}}
             exit={{opacity:0}}
             transition={{duration:0.25}}
-            onClick={() => setShowEventsPopup(false)}
+            onClick={dismissEventsPopup}
             style={{position:"fixed",inset:0,background:"rgba(10,22,14,0.94)",zIndex:1002,display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"2rem 1.25rem",overflowY:"auto"}}
           >
             <motion.div
@@ -874,7 +881,7 @@ export default function Home() {
               className="events-popup-cards"
               style={{display:"flex",gap:"1.25rem",position:"relative"}}
             >
-              <button onClick={() => setShowEventsPopup(false)} style={{position:"absolute",top:"-0.5rem",right:"-0.5rem",zIndex:10,background:"rgba(0,0,0,0.6)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+              <button onClick={dismissEventsPopup} style={{position:"absolute",top:"-0.5rem",right:"-0.5rem",zIndex:10,background:"rgba(0,0,0,0.6)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
 
               {/* Grand Prix Weekend - Cars, Coffee & Cruise */}
               <div style={{flex:1,background:"#0F1E14",border:"1px solid rgba(197,168,130,0.35)",overflow:"hidden",position:"relative",fontFamily:"var(--font-inter),sans-serif"}}>
@@ -889,7 +896,7 @@ export default function Home() {
                       <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
                     ))}
                   </div>
-                  <a href="#join" onClick={e => { e.preventDefault(); setShowEventsPopup(false); smoothScroll('join') }}
+                  <a href="#join" onClick={e => { e.preventDefault(); dismissEventsPopup(); smoothScroll('join') }}
                     style={{display:"inline-block",padding:"0.8rem 1.8rem",background:"rgba(197,168,130,0.1)",border:"1px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
                     Register
                   </a>
@@ -909,7 +916,7 @@ export default function Home() {
                       <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
                     ))}
                   </div>
-                  <Link href="/routes#form" onClick={() => setShowEventsPopup(false)}
+                  <Link href="/routes#form" onClick={dismissEventsPopup}
                     style={{display:"inline-block",padding:"0.8rem 1.8rem",background:"rgba(197,168,130,0.1)",border:"1px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
                     Register
                   </Link>

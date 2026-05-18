@@ -260,6 +260,24 @@ function MembersTab({ isMobile }) {
     !search || [m.name, m.email, m.membership_status].some(v => v?.toLowerCase().includes(search.toLowerCase()))
   )
 
+  function exportCSV() {
+    const rows = members.map(m => ({
+      Name: m.name || '',
+      Email: m.email || '',
+      Status: m.membership_status || '',
+      Phone: m.phone || '',
+      Instagram: m.instagram ? `@${m.instagram}` : '',
+      Car: [m.cars?.[0]?.year || m.car_year, m.cars?.[0]?.make || m.car_make, m.cars?.[0]?.model || m.car_model].filter(Boolean).join(' '),
+      'Password Set': m.password_set_at ? new Date(m.password_set_at).toLocaleDateString('en-CA') : '',
+    }))
+    const headers = Object.keys(rows[0] || {})
+    const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(','))].join('\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    a.download = `canvas-routes-members-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+  }
+
   const counts = { active: 0, pending: 0, suspended: 0, expired: 0 }
   members.forEach(m => { if (counts[m.membership_status] !== undefined) counts[m.membership_status]++ })
 
@@ -320,9 +338,16 @@ function MembersTab({ isMobile }) {
       {/* Member List */}
       {actionError && <Err msg={actionError} />}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
-          {filtered.length} of {members.length} member{members.length !== 1 ? 's' : ''}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
+            {filtered.length} of {members.length} member{members.length !== 1 ? 's' : ''}
+          </div>
+          {members.length > 0 && (
+            <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Export CSV
+            </button>
+          )}
         </div>
         <div style={{ position: 'relative', width: isMobile ? '100%' : '340px' }}>
           <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, status…" value={search} onChange={e => setSearch(e.target.value)} />
@@ -1281,6 +1306,25 @@ function ContactsTab({ isMobile }) {
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
+  function exportCSV() {
+    const rows = contacts.map(c => ({
+      Name: c.name || '',
+      Email: c.email || '',
+      Phone: c.phone || '',
+      Instagram: c.instagram ? `@${c.instagram}` : '',
+      Car: [c.car_year, c.car_model].filter(Boolean).join(' '),
+      DOB: c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? ` ${c.dob_year}` : ''}` : '',
+      Source: c.source || '',
+      Applied: c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA') : '',
+    }))
+    const headers = Object.keys(rows[0] || {})
+    const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(','))].join('\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    a.download = `canvas-routes-contacts-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+  }
+
   const filtered = contacts
     .filter(c => !search || [c.name, c.email, c.car_year, c.car_model].some(v => v?.toLowerCase().includes(search.toLowerCase())))
     .sort((a, b) => {
@@ -1302,8 +1346,15 @@ function ContactsTab({ isMobile }) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
-          {filtered.length} of {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
+            {filtered.length} of {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
+          </div>
+          {contacts.length > 0 && (
+            <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Export CSV
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
