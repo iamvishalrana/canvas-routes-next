@@ -1591,12 +1591,37 @@ export default function AdminPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unseenAppsCount, setUnseenAppsCount] = useState(0)
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState([])
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    async function fetchBirthdays() {
+      try {
+        const res = await fetch('/api/admin/members')
+        if (!res.ok) return
+        const data = await res.json()
+        if (!Array.isArray(data)) return
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        const in14 = new Date(today); in14.setDate(in14.getDate() + 14)
+        const upcoming = data
+          .filter(m => m.dob_month && m.dob_day && m.name)
+          .map(m => {
+            const bday = new Date(today.getFullYear(), m.dob_month - 1, m.dob_day)
+            if (bday < today) bday.setFullYear(today.getFullYear() + 1)
+            return { ...m, nextBirthday: bday }
+          })
+          .filter(m => m.nextBirthday <= in14)
+          .sort((a, b) => a.nextBirthday - b.nextBirthday)
+        setUpcomingBirthdays(upcoming)
+      } catch {}
+    }
+    fetchBirthdays()
   }, [])
 
   async function signOut() {
@@ -1638,6 +1663,28 @@ export default function AdminPage() {
           </button>
         ))}
       </nav>
+
+      {upcomingBirthdays.length > 0 && (
+        <div style={{ padding: '1.1rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '0.75rem' }}>Upcoming Birthdays</div>
+          {upcomingBirthdays.map(m => {
+            const today = new Date(); today.setHours(0, 0, 0, 0)
+            const daysUntil = Math.round((m.nextBirthday - today) / 86400000)
+            const isToday = daysUntil === 0
+            return (
+              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem' }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em' }}>{m.name.split(' ')[0]}</div>
+                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} {m.dob_day}</div>
+                </div>
+                <div style={{ fontSize: '10px', color: isToday ? '#c5a882' : 'rgba(255,255,255,0.4)', letterSpacing: '0.02em', textAlign: 'right' }}>
+                  {isToday ? 'Today' : `${daysUntil}d`}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       <div style={{ padding: '1.25rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
         <Link href="/members/dashboard" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
