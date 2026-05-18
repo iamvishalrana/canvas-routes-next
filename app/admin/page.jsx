@@ -1700,15 +1700,18 @@ export default function AdminPage() {
           const daysUntil = Math.round((m.nextBirthday - today) / 86400000)
           const isToday = daysUntil === 0
           return (
-            <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem' }}>
-              <button onClick={() => jumpToPerson(m)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em', textDecoration: 'underline', textDecorationColor: 'rgba(255,255,255,0.2)' }}>{m.name.split(' ')[0]}</div>
+            <button key={m.id} onClick={() => jumpToPerson(m)}
+              style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', background: 'none', border: 'none', padding: '0.35rem 0.5rem', margin: '0 -0.5rem 0.2rem', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', letterSpacing: '0.02em' }}>{m.name.split(' ')[0]}</div>
                 <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} {m.dob_day}</div>
-              </button>
-              <div style={{ fontSize: '10px', color: isToday ? '#c5a882' : 'rgba(255,255,255,0.4)', letterSpacing: '0.02em', textAlign: 'right' }}>
+              </div>
+              <div style={{ fontSize: '10px', color: isToday ? '#c5a882' : 'rgba(255,255,255,0.4)', letterSpacing: '0.02em' }}>
                 {isToday ? 'Today' : `${daysUntil}d`}
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
