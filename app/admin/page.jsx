@@ -1664,27 +1664,27 @@ export default function AdminPage() {
         ))}
       </nav>
 
-      {upcomingBirthdays.length > 0 && (
-        <div style={{ padding: '1.1rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '0.75rem' }}>Upcoming Birthdays</div>
-          {upcomingBirthdays.map(m => {
-            const today = new Date(); today.setHours(0, 0, 0, 0)
-            const daysUntil = Math.round((m.nextBirthday - today) / 86400000)
-            const isToday = daysUntil === 0
-            return (
-              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem' }}>
-                <div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em' }}>{m.name.split(' ')[0]}</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} {m.dob_day}</div>
-                </div>
-                <div style={{ fontSize: '10px', color: isToday ? '#c5a882' : 'rgba(255,255,255,0.4)', letterSpacing: '0.02em', textAlign: 'right' }}>
-                  {isToday ? 'Today' : `${daysUntil}d`}
-                </div>
+      <div style={{ padding: '1.1rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '0.75rem' }}>Upcoming Birthdays</div>
+        {upcomingBirthdays.length === 0 ? (
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>None in the next 14 days</div>
+        ) : upcomingBirthdays.map(m => {
+          const today = new Date(); today.setHours(0, 0, 0, 0)
+          const daysUntil = Math.round((m.nextBirthday - today) / 86400000)
+          const isToday = daysUntil === 0
+          return (
+            <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem' }}>
+              <div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em' }}>{m.name.split(' ')[0]}</div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} {m.dob_day}</div>
               </div>
-            )
-          })}
-        </div>
-      )}
+              <div style={{ fontSize: '10px', color: isToday ? '#c5a882' : 'rgba(255,255,255,0.4)', letterSpacing: '0.02em', textAlign: 'right' }}>
+                {isToday ? 'Today' : `${daysUntil}d`}
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
       <div style={{ padding: '1.25rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
         <Link href="/members/dashboard" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
