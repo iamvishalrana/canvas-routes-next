@@ -1702,7 +1702,7 @@ export default function AdminPage() {
 
       {/* Main */}
       <main style={{ flex: 1, background: '#F5F1EC', overflowY: 'auto', ...(isMobile ? { paddingTop: '56px' } : {}) }}>
-        <div style={{ maxWidth: '1000px', padding: isMobile ? '1.75rem 1rem' : '3rem 2.5rem' }}>
+        <div style={{ padding: isMobile ? '1.75rem 1rem' : '3rem 2.5rem' }}>
 
           {/* Header */}
           <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
