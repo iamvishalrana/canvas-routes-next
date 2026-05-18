@@ -27,6 +27,10 @@ const SECTIONS = [
         q: 'How do I stay updated on upcoming events?',
         a: 'Follow us on Instagram @canvasroutes and on Facebook. All event announcements drop there first. You can also register at canvasroutes.com to be on our list.',
       },
+      {
+        q: 'I registered — what should I expect?',
+        a: 'All Canvas Routes communication happens by email — confirmations, event details, payment information and updates are all sent directly to your inbox. Please make sure to check your junk or spam folder as our emails can sometimes land there. We recommend adding info@canvasroutes.com and jerry@canvasroutes.com to your contacts so nothing gets missed.',
+      },
     ],
   },
   {
@@ -111,7 +115,7 @@ const SECTIONS = [
       },
       {
         q: 'How do I register and pay?',
-        a: 'Register at canvasroutes.com and send your Interac E-transfer to info@canvasroutes.com to secure your spot. Include your name and car in the message. Spots are strictly limited and confirmed on a first paid basis.',
+        a: 'Register at canvasroutes.com. Once your registration is reviewed, payment details will be shared with you by email. Spots are strictly limited and confirmed on a first paid basis.',
       },
     ],
   },
