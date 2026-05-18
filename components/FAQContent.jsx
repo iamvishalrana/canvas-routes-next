@@ -75,7 +75,7 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Road Trips',
+    title: 'Road Trips — Routes',
     items: [
       {
         q: 'What is a Canvas Routes road trip?',
@@ -91,7 +91,7 @@ const SECTIONS = [
       },
       {
         q: 'What is included in the road trip fee?',
-        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day. Gas and any optional parking fees are on you.',
+        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are at your own cost and are not included in the road trip fee.',
       },
       {
         q: 'What makes each road trip unique?',
