@@ -18,7 +18,7 @@ const SECTIONS = [
       },
       {
         q: 'Are you a car club?',
-        a: 'Yes — a car club built around the driver. Cars are the common thread but the real heart of Canvas Routes is the person behind the wheel. Someone who chose their car with intention and would rather put real kilometres on it than let it sit. We are not a show-and-tell club. We drive.',
+        a: 'Yes — a car club built around the driver. Cars are the common thread, but the real heart of Canvas Routes is the person behind the wheel. Someone who chose their car with intention and would rather be out on the road than standing next to it. If that sounds like you, you belong here.',
       },
       {
         q: 'Where are you based?',
