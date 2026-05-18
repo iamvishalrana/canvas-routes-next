@@ -1269,6 +1269,7 @@ function ContactsTab({ isMobile }) {
   const [expanded, setExpanded] = useState(null)
   const [search, setSearch] = useState('')
   const [sortContacts, setSortContacts] = useState('name_az')
+  const [selected, setSelected] = useState(new Set())
 
   const loadContacts = useCallback(async () => {
     setLoading(true)
@@ -1283,8 +1284,16 @@ function ContactsTab({ isMobile }) {
   async function removeContact(contactId) {
     if (!confirm('Remove this contact?')) return
     const res = await fetch(`/api/admin/contacts/${contactId}`, { method: 'DELETE' })
-    if (res.ok) loadContacts()
+    if (res.ok) { setSelected(prev => { const n = new Set(prev); n.delete(contactId); return n }); loadContacts() }
     else alert('Failed to remove contact.')
+  }
+
+  async function deleteSelected() {
+    if (!selected.size) return
+    if (!confirm(`Delete ${selected.size} contact${selected.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+    await Promise.all([...selected].map(id => fetch(`/api/admin/contacts/${id}`, { method: 'DELETE' })))
+    setSelected(new Set())
+    loadContacts()
   }
 
   async function toggleAttended(appId, eventName, value) {
@@ -1307,7 +1316,8 @@ function ContactsTab({ isMobile }) {
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
   function exportCSV() {
-    const rows = contacts.map(c => ({
+    const source = selected.size > 0 ? contacts.filter(c => selected.has(c.contact_id)) : contacts
+    const rows = source.map(c => ({
       Name: c.name || '',
       Email: c.email || '',
       Phone: c.phone || '',
@@ -1345,14 +1355,23 @@ function ContactsTab({ isMobile }) {
         </div>
       </div>
 
+      {selected.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
+          <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
+          <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Export CSV</button>
+          <button onClick={deleteSelected} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: '0.5px solid rgba(123,32,50,0.3)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Delete</button>
+          <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
             {filtered.length} of {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
           </div>
-          {contacts.length > 0 && (
+          {contacts.length > 0 && selected.size === 0 && (
             <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Export CSV
+              Export All
             </button>
           )}
         </div>
@@ -1381,7 +1400,16 @@ function ContactsTab({ isMobile }) {
       ) : (
         <div style={{ overflowX: 'auto' }}>
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+            <input type="checkbox"
+              checked={filtered.length > 0 && filtered.every(c => selected.has(c.contact_id))}
+              ref={el => { if (el) el.indeterminate = filtered.some(c => selected.has(c.contact_id)) && !filtered.every(c => selected.has(c.contact_id)) }}
+              onChange={e => {
+                if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(c => c.contact_id)]))
+                else setSelected(prev => { const n = new Set(prev); filtered.forEach(c => n.delete(c.contact_id)); return n })
+              }}
+              style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+            />
             {['Name', 'Email', 'Car', 'DOB', 'Applied', ''].map((h, i) => (
               <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
             ))}
@@ -1391,9 +1419,16 @@ function ContactsTab({ isMobile }) {
             <div key={c.contact_id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
                 onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}
               >
+                <div onClick={e => e.stopPropagation()}>
+                  <input type="checkbox"
+                    checked={selected.has(c.contact_id)}
+                    onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(c.contact_id) : n.delete(c.contact_id); return n })}
+                    style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                  />
+                </div>
                 <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
                 <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
