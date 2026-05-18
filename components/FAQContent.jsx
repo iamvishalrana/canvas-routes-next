@@ -111,6 +111,10 @@ const SECTIONS = [
         a: 'Cancellations made more than 7 days before the trip receive a full refund. Cancellations within 7 days are non-refundable due to pre-booked reservations.',
       },
       {
+        q: 'What is your refund policy?',
+        a: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel or have any questions about a refund, we always encourage you to reach out to us directly — we will do our best to work with you.',
+      },
+      {
         q: 'What cars are eligible for road trips?',
         a: 'Performance and luxury vehicles across all eras. The real standard is the person driving — someone who loves the road and shows up with the right attitude. If you are unsure whether your car qualifies, reach out at info@canvasroutes.com.',
       },
