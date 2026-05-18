@@ -1603,20 +1603,30 @@ export default function AdminPage() {
   useEffect(() => {
     async function fetchBirthdays() {
       try {
-        const res = await fetch('/api/admin/members')
-        if (!res.ok) return
-        const data = await res.json()
-        if (!Array.isArray(data)) return
+        const [mRes, cRes] = await Promise.all([
+          fetch('/api/admin/members'),
+          fetch('/api/admin/contacts'),
+        ])
+        const members = mRes.ok ? await mRes.json() : []
+        const contacts = cRes.ok ? await cRes.json() : []
+        const seen = new Set()
+        const all = [...(Array.isArray(members) ? members : []), ...(Array.isArray(contacts) ? contacts : [])]
+          .filter(p => {
+            if (!p.dob_month || !p.dob_day || !p.name) return false
+            const key = (p.email || p.id || p.name).toLowerCase()
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+          })
         const today = new Date(); today.setHours(0, 0, 0, 0)
         const in14 = new Date(today); in14.setDate(in14.getDate() + 14)
-        const upcoming = data
-          .filter(m => m.dob_month && m.dob_day && m.name)
-          .map(m => {
-            const bday = new Date(today.getFullYear(), m.dob_month - 1, m.dob_day)
+        const upcoming = all
+          .map(p => {
+            const bday = new Date(today.getFullYear(), p.dob_month - 1, p.dob_day)
             if (bday < today) bday.setFullYear(today.getFullYear() + 1)
-            return { ...m, nextBirthday: bday }
+            return { ...p, nextBirthday: bday }
           })
-          .filter(m => m.nextBirthday <= in14)
+          .filter(p => p.nextBirthday <= in14)
           .sort((a, b) => a.nextBirthday - b.nextBirthday)
         setUpcomingBirthdays(upcoming)
       } catch {}
