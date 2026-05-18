@@ -22,6 +22,11 @@ const CANONICAL_EVENTS = [
   { name: 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026', date: '2026-05-23' },
   { name: 'Into the Laurentians — May 31, 2026', date: '2026-05-31' },
 ]
+const MEMBER_ATTENDANCE_KEYS = {
+  'Cars & Coffee — May 9, 2026': 'cc_may9',
+  'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026': 'gp_may23',
+  'Into the Laurentians — May 31, 2026': 'laurentians_may31',
+}
 const NAME_ALIASES = {
   'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
 }
@@ -135,6 +140,7 @@ function MembersTab({ isMobile }) {
   const [appLookupEmail, setAppLookupEmail] = useState('')
   const [actionError, setActionError] = useState(null)
   const [search, setSearch] = useState('')
+  const [expanded, setExpanded] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -211,9 +217,10 @@ function MembersTab({ isMobile }) {
     load()
   }
 
-  async function toggleCCAttendance(m, value) {
+  async function toggleMemberAttendance(m, eventName, value) {
+    const key = MEMBER_ATTENDANCE_KEYS[eventName] || eventName
     const current = m.event_attendance || {}
-    const newAttendance = { ...current, cc_may9: current.cc_may9 === value ? null : value }
+    const newAttendance = { ...current, [key]: current[key] === value ? null : value }
     setMembers(prev => prev.map(x => x.id === m.id ? { ...x, event_attendance: newAttendance } : x))
     await fetch(`/api/admin/members/${m.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_attendance: newAttendance }),
@@ -327,8 +334,8 @@ function MembersTab({ isMobile }) {
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 0.8fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
-            {['Name', 'Email', 'Status', 'Car', 'C&C May 9', 'Setup', ''].map((h, i) => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+            {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
               <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
             ))}
           </div>
@@ -442,38 +449,71 @@ function MembersTab({ isMobile }) {
                   <Err msg={saveError} />
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 0.8fr 1fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center' }}>
-                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
-                  <div><Badge status={m.membership_status} /></div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>
-                    {m.cars?.length > 0
-                      ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
-                      : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
-                    }
-                    {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
+                <>
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                    onClick={() => setExpanded(expanded === m.id ? null : m.id)}
+                  >
+                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
+                    <div><Badge status={m.membership_status} /></div>
+                    <div style={{ fontSize: '12px', color: '#888' }}>
+                      {m.cars?.length > 0
+                        ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
+                        : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
+                      }
+                      {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
+                    </div>
+                    <div>
+                      {m.password_set_at ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          <span style={{ fontSize: '11px', color: '#3B6B2F' }}>{new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.05em' }}>Awaiting</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem' }} onClick={e => e.stopPropagation()}>
+                      <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
+                      <DangerBtn onClick={() => deleteMember(m)} small>Delete</DangerBtn>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '3px' }}>
-                    <button onClick={() => toggleCCAttendance(m, true)}
-                      style={{ fontSize: '9px', padding: '3px 7px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em', border: m.event_attendance?.cc_may9 === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.12)', background: m.event_attendance?.cc_may9 === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: m.event_attendance?.cc_may9 === true ? '#3B6B2F' : '#bbb' }}>✓</button>
-                    <button onClick={() => toggleCCAttendance(m, false)}
-                      style={{ fontSize: '9px', padding: '3px 7px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em', border: m.event_attendance?.cc_may9 === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.12)', background: m.event_attendance?.cc_may9 === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: m.event_attendance?.cc_may9 === false ? '#7B2032' : '#bbb' }}>✗</button>
-                  </div>
-                  <div>
-                    {m.password_set_at ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span style={{ fontSize: '11px', color: '#3B6B2F' }}>{new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.05em' }}>Awaiting</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.4rem' }}>
-                    <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
-                    <DangerBtn onClick={() => deleteMember(m)} small>Delete</DangerBtn>
-                  </div>
-                </div>
+
+                  {expanded === m.id && (
+                    <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Attendance</div>
+                      {(() => {
+                        const today = new Date()
+                        today.setHours(0, 0, 0, 0)
+                        return CANONICAL_EVENTS.map(ev => {
+                          const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
+                          const attended = m.event_attendance?.[key]
+                          const isPast = new Date(ev.date) <= today
+                          return (
+                            <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{ev.name}</span>
+                              {isPast ? (
+                                <>
+                                  <button onClick={() => toggleMemberAttendance(m, ev.name, true)}
+                                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: attended === true ? '#3B6B2F' : '#888' }}>
+                                    ✓ Attended
+                                  </button>
+                                  <button onClick={() => toggleMemberAttendance(m, ev.name, false)}
+                                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: attended === false ? '#7B2032' : '#888' }}>
+                                    ✗ No-show
+                                  </button>
+                                </>
+                              ) : (
+                                <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
+                              )}
+                            </div>
+                          )
+                        })
+                      })()}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))}
