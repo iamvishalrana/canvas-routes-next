@@ -157,6 +157,7 @@ export default function RoutesPage() {
           <Link href="/" style={{color:"#555",textDecoration:"none"}}>Home</Link>
           <Link href="/#events" style={{color:"#555",textDecoration:"none"}}>Events</Link>
           <Link href="/#contact" style={{color:"#555",textDecoration:"none"}}>Contact</Link>
+          <Link href="/faq" style={{color:"#555",textDecoration:"none"}}>FAQ</Link>
         </div>
         <Link href="/#join" className="nav-join">Join</Link>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
@@ -169,6 +170,7 @@ export default function RoutesPage() {
         <Link href="/" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Home</Link>
         <Link href="/#events" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Events</Link>
         <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Contact</Link>
+        <Link href="/faq" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>FAQ</Link>
         <Link href="/#join" onClick={() => setMenuOpen(false)} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</Link>
         <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{color:"#3B6B2F",fontWeight:"500"}}>Members Login</Link>
       </div>
@@ -442,7 +444,13 @@ export default function RoutesPage() {
 
       {/* FOOTER */}
       <footer style={{borderTop:"0.5px solid rgba(0,0,0,0.12)",padding:"2rem 3rem",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"1rem",background:"#F5F1EC"}}>
-        <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
+        <div style={{display:"flex",flexDirection:"column",gap:"0.4rem"}}>
+          <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
+          <div style={{display:"flex",gap:"1rem"}}>
+            <Link href="/privacy" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>Privacy Policy</Link>
+            <Link href="/faq" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>FAQ</Link>
+          </div>
+        </div>
         <Link href="/" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#888",textDecoration:"none"}}>← Back to home</Link>
       </footer>
 

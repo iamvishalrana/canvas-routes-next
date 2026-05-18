@@ -13,9 +13,12 @@ export default function PrivacyContent() {
     <div style={{background:"#F5F1EC",minHeight:"100vh",fontFamily:"'Inter',sans-serif"}}>
       <nav style={{position:"sticky",top:0,zIndex:100,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"1rem 3rem",borderBottom:"0.5px solid rgba(0,0,0,0.12)",background:"#F5F1EC"}}>
         <a href="/" onClick={e => { e.preventDefault(); router.push('/') }}><img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{height:"180px",width:"auto"}} /></a>
-        <button onClick={() => router.push('/')} style={{background:"none",border:"none",cursor:"pointer",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",display:"flex",alignItems:"center",gap:"0.5rem",padding:0}}>
-          ← Back
-        </button>
+        <div style={{display:"flex",alignItems:"center",gap:"1.5rem"}}>
+          <a href="/faq" style={{background:"none",border:"none",cursor:"pointer",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",textDecoration:"none"}}>FAQ</a>
+          <button onClick={() => router.push('/')} style={{background:"none",border:"none",cursor:"pointer",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",display:"flex",alignItems:"center",gap:"0.5rem",padding:0}}>
+            ← Back
+          </button>
+        </div>
       </nav>
       <div style={{maxWidth:"720px",margin:"0 auto",padding:"4rem 2rem"}}>
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Legal</div>
@@ -79,6 +82,7 @@ export default function PrivacyContent() {
         ))}
         <div style={{borderTop:"0.5px solid rgba(0,0,0,0.1)",paddingTop:"2rem",marginTop:"2rem"}}>
           <p style={{fontSize:"11px",color:"#aaa"}}>© 2026 Canvas Routes. Montreal, QC. — info@canvasroutes.com</p>
+          <a href="/faq" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em",display:"inline-block",marginTop:"0.25rem"}}>FAQ</a>
           <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",fontFamily:"'Inter',sans-serif",marginTop:"0.5rem"}}>Manage cookies</button>
         </div>
       </div>
