@@ -123,7 +123,7 @@ function CopyBtn({ value }) {
 
 // ─── Members Tab ─────────────────────────────────────────────────────────────
 
-function MembersTab({ isMobile }) {
+function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [forbidden, setForbidden] = useState(false)
@@ -141,6 +141,10 @@ function MembersTab({ isMobile }) {
   const [actionError, setActionError] = useState(null)
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(null)
+
+  useEffect(() => {
+    if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
+  }, [searchOverride])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -1263,13 +1267,17 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
 
 // ─── Contacts Tab ────────────────────────────────────────────────────────────
 
-function ContactsTab({ isMobile }) {
+function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
   const [search, setSearch] = useState('')
   const [sortContacts, setSortContacts] = useState('name_az')
   const [selected, setSelected] = useState(new Set())
+
+  useEffect(() => {
+    if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
+  }, [searchOverride])
 
   const loadContacts = useCallback(async () => {
     setLoading(true)
@@ -1592,6 +1600,7 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unseenAppsCount, setUnseenAppsCount] = useState(0)
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([])
+  const [tabSearch, setTabSearch] = useState('')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1610,7 +1619,10 @@ export default function AdminPage() {
         const members = mRes.ok ? await mRes.json() : []
         const contacts = cRes.ok ? await cRes.json() : []
         const seen = new Set()
-        const all = [...(Array.isArray(members) ? members : []), ...(Array.isArray(contacts) ? contacts : [])]
+        const all = [
+          ...(Array.isArray(members) ? members.map(m => ({ ...m, _source: 'Members' })) : []),
+          ...(Array.isArray(contacts) ? contacts.map(c => ({ ...c, _source: 'Contacts' })) : []),
+        ]
           .filter(p => {
             if (!p.dob_month || !p.dob_day || !p.name) return false
             const key = (p.email || p.id || p.name).toLowerCase()
@@ -1642,6 +1654,11 @@ export default function AdminPage() {
   function selectTab(t) {
     setTab(t)
     setSidebarOpen(false)
+  }
+
+  function jumpToPerson(p) {
+    setTabSearch(p.email || p.name || '')
+    selectTab(p._source || 'Contacts')
   }
 
   const sidebarContent = (
@@ -1684,10 +1701,10 @@ export default function AdminPage() {
           const isToday = daysUntil === 0
           return (
             <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem' }}>
-              <div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em' }}>{m.name.split(' ')[0]}</div>
+              <button onClick={() => jumpToPerson(m)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em', textDecoration: 'underline', textDecorationColor: 'rgba(255,255,255,0.2)' }}>{m.name.split(' ')[0]}</div>
                 <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} {m.dob_day}</div>
-              </div>
+              </button>
               <div style={{ fontSize: '10px', color: isToday ? '#c5a882' : 'rgba(255,255,255,0.4)', letterSpacing: '0.02em', textAlign: 'right' }}>
                 {isToday ? 'Today' : `${daysUntil}d`}
               </div>
@@ -1766,9 +1783,9 @@ export default function AdminPage() {
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: '300', color: '#1a1a1a' }}>{tab}</div>
           </div>
 
-          {tab === 'Members' && <MembersTab isMobile={isMobile} />}
+          {tab === 'Members' && <MembersTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
           {tab === 'Applications' && <ApplicationsTab isMobile={isMobile} onUnseenCountChange={setUnseenAppsCount} />}
-          {tab === 'Contacts' && <ContactsTab isMobile={isMobile} />}
+          {tab === 'Contacts' && <ContactsTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
           {tab === 'Announcements' && <AnnouncementsTab />}
           {tab === 'Events' && <EventsTab />}
 
