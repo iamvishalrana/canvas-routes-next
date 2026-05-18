@@ -27,6 +27,7 @@ const SECTIONS = [
       {
         q: 'How do I stay updated on upcoming events?',
         a: 'Follow us on Instagram @canvasroutes and on Facebook. All event announcements drop there first. You can also register at canvasroutes.com to be on our list.',
+        cta: true,
       },
       {
         q: 'I registered — what should I expect?',
@@ -44,6 +45,7 @@ const SECTIONS = [
       {
         q: 'How do I get an invite?',
         a: 'Register at canvasroutes.com. All registrations are personally reviewed and confirmed. This is not a first come first served event — we take care with every registration to make sure the right fit is there.',
+        cta: true,
       },
       {
         q: 'Is there a cost to attend?',
@@ -60,6 +62,7 @@ const SECTIONS = [
       {
         q: 'Can I bring a friend or spectator?',
         a: 'Absolutely. If they have a car they love, have them register at canvasroutes.com. Spectators are also welcome to come and enjoy the morning.',
+        cta: true,
       },
       {
         q: 'Can I bring my kids?',
@@ -117,6 +120,7 @@ const SECTIONS = [
       {
         q: 'How do I register and pay?',
         a: 'Register at canvasroutes.com. Once your registration is reviewed, payment details will be shared with you by email. Spots are strictly limited and confirmed on a first paid basis.',
+        cta: true,
       },
     ],
   },
@@ -143,6 +147,7 @@ const SECTIONS = [
       {
         q: 'When do memberships launch?',
         a: 'Canvas Routes memberships open after our first road trip on May 31. Register at canvasroutes.com to be among the first notified.',
+        cta: true,
       },
       {
         q: 'What will membership include?',
@@ -210,12 +215,29 @@ function AccordionItem({ item, isOpen, onToggle }) {
               fontSize: '14px',
               color: '#666',
               lineHeight: '1.9',
-              margin: '0 0 1.6rem',
+              margin: item.cta ? '0 0 1rem' : '0 0 1.6rem',
               paddingRight: '2.5rem',
               fontFamily: 'var(--font-inter),sans-serif',
             }}>
               {item.a}
             </p>
+            {item.cta && (
+              <div style={{ marginBottom: '1.6rem' }}>
+                <Link href="/#join" style={{
+                  display: 'inline-block',
+                  padding: '0.6rem 1.4rem',
+                  background: '#7B2032',
+                  color: '#fff',
+                  fontSize: '11px',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-inter),sans-serif',
+                }}>
+                  Register
+                </Link>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
