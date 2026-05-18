@@ -310,9 +310,9 @@ export default function Home() {
             <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>About Us</div>
             <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#7B2032"}}>art form.</em><br/>We treat it like one.</div>
             <div style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",maxWidth:"520px",marginBottom:"1.5rem"}}>
-              <strong style={{color:"#1a1a1a",fontWeight:"500"}}>A car club built for passionate drivers.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We are not a show-and-tell club. We drive. The best roads deserve the best company, and great cars are meant to be experienced, not just owned.
+              <strong style={{color:"#1a1a1a",fontWeight:"500"}}>Where luxury meets the open road.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We are not a show-and-tell club. We drive. The best roads deserve the best company, and great cars are meant to be experienced, not just owned.
               <br/><br/>
-              Based in Montreal, we bring together a curated circle of passionate drivers for scenic drives, exclusive car meets, and unforgettable experiences across Quebec and beyond. Every route is hand-picked. Every detail is considered. Every event is designed to leave you wanting more.
+              Based in Montreal, we bring together a curated circle of passionate drivers for scenic drives, exclusive car meets, and unforgettable experiences across Quebec, Ontario, Vermont, Maine and New York. Every route is hand-picked. Every detail is considered. Every event is designed to leave you wanting more.
               <br/><br/>
               Canvas Routes is for those who understand that a great car deserves great roads. If you've chosen your car for the way it makes you feel — the sound, the handling, the experience — you're exactly who we built this for.
             </div>

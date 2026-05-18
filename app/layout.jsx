@@ -26,7 +26,7 @@ export const viewport = {
 
 export const metadata = {
   title: 'Canvas Routes | Luxury Car Meets & Curated Road Trips in Montreal',
-  description: "Canvas Routes is Montreal's premier luxury automotive community. Join exclusive car meets, curated road trips, and scenic drives across Quebec. Apply for membership today.",
+  description: "Canvas Routes is Montreal's premier luxury automotive community. Join exclusive car meets, curated road trips, and scenic drives across Quebec, Ontario, Vermont, Maine and New York. Apply for membership today.",
   keywords: 'luxury car meets Montreal, curated road trips Quebec, automotive community Montreal, car enthusiasts Montreal, scenic drives Quebec, private car meets Montreal, canvas routes, road trips Montreal, Montreal road trips, Montreal car scene, Montreal exotic cars, Quebec driving routes, cars and coffee Montreal, Montreal car club',
   robots: { index: true, follow: true },
   alternates: { canonical: 'https://canvasroutes.com' },
@@ -34,7 +34,7 @@ export const metadata = {
     type: 'website',
     siteName: 'Canvas Routes',
     title: 'Canvas Routes | Luxury Car Meets & Curated Road Trips in Montreal',
-    description: "Montreal's premier luxury automotive community. Exclusive car meets, curated road trips, and scenic drives across Quebec. Apply for membership.",
+    description: "Montreal's premier luxury automotive community. Exclusive car meets, curated road trips, and scenic drives across Quebec, Ontario, Vermont, Maine and New York. Apply for membership.",
     url: 'https://canvasroutes.com',
     images: [{ url: 'https://canvasroutes.com/canvas_routes_refined.png', width: 1200, height: 630, alt: 'Canvas Routes — Luxury Automotive Community Montreal' }],
     locale: 'en_CA',
@@ -42,7 +42,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Canvas Routes | Luxury Car Meets & Curated Road Trips in Montreal',
-    description: "Montreal's premier luxury automotive community. Exclusive car meets, curated road trips, and scenic drives across Quebec.",
+    description: "Montreal's premier luxury automotive community. Exclusive car meets, curated road trips, and scenic drives across Quebec, Ontario, Vermont, Maine and New York.",
     images: [{ url: 'https://canvasroutes.com/canvas_routes_refined.png', width: 1200, height: 630, alt: 'Canvas Routes — Luxury Automotive Community Montreal' }],
   },
   icons: {
@@ -60,7 +60,7 @@ const jsonLd = {
       '@type': 'LocalBusiness',
       '@id': 'https://canvasroutes.com/#business',
       name: 'Canvas Routes',
-      description: "Canvas Routes is Montreal's premier luxury automotive community, organizing exclusive curated road trips, car meets, and scenic drives across Quebec. Whether you're looking for road trips from Montreal, cars and coffee events, scenic driving routes through the Laurentians, Eastern Townships, or Charlevoix, Canvas Routes brings together passionate car enthusiasts for unforgettable experiences.",
+      description: "Canvas Routes is Montreal's premier luxury automotive community, organizing exclusive curated road trips, car meets, and scenic drives across Quebec, Ontario, Vermont, Maine and New York. Whether you're looking for road trips from Montreal, cars and coffee events, scenic driving routes through the Laurentians, Eastern Townships, or Charlevoix, Canvas Routes brings together passionate car enthusiasts for unforgettable experiences.",
       url: 'https://canvasroutes.com',
       logo: 'https://canvasroutes.com/canvas_routes_refined.png',
       image: 'https://canvasroutes.com/canvas_routes_refined.png',
@@ -70,7 +70,7 @@ const jsonLd = {
         addressRegion: 'QC',
         addressCountry: 'CA',
       },
-      areaServed: ['Montreal', 'Quebec', 'Laurentians', 'Eastern Townships', 'Charlevoix', 'Cantons-de-l\'Est', 'Mont-Tremblant'],
+      areaServed: ['Montreal', 'Quebec', 'Ontario', 'Vermont', 'Maine', 'New York', 'Laurentians', 'Eastern Townships', 'Charlevoix', 'Cantons-de-l\'Est', 'Mont-Tremblant'],
       email: 'info@canvasroutes.com',
       sameAs: [
         'https://www.instagram.com/canvasroutes',
@@ -81,7 +81,7 @@ const jsonLd = {
       '@type': 'TouristAttraction',
       '@id': 'https://canvasroutes.com/#attraction',
       name: 'Canvas Routes — Curated Road Trips & Car Meets in Montreal',
-      description: 'Looking for road trips near Montreal? Canvas Routes organizes curated scenic drives and exclusive car meets across Quebec, including routes through the Laurentians, Eastern Townships, and Charlevoix. A must for car enthusiasts in Montreal and Quebec.',
+      description: 'Looking for road trips near Montreal? Canvas Routes organizes curated scenic drives and exclusive car meets across Quebec, Ontario, Vermont, Maine and New York, including routes through the Laurentians, Eastern Townships, and Charlevoix. A must for car enthusiasts in Montreal and beyond.',
       url: 'https://canvasroutes.com',
       touristType: ['Car Enthusiasts', 'Road Trip Travellers', 'Automotive Community'],
       address: {

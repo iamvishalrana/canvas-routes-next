@@ -10,7 +10,7 @@ const SECTIONS = [
     items: [
       {
         q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a Montreal-based car club built around curated car meets, scenic road trips and convoy adventures across Canada, the United States and beyond. We are a car club for drivers — the passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
+        a: 'Canvas Routes is a Montreal-based luxury automotive community built around curated car meets, scenic road trips and convoy adventures across Quebec, Ontario, Vermont, Maine and New York. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
       },
       {
         q: 'Who is Canvas Routes for?',
@@ -22,7 +22,7 @@ const SECTIONS = [
       },
       {
         q: 'Where are you based?',
-        a: 'Montreal, Quebec. All current events depart from Montreal or the greater Montreal area. We are a young and growing community with national and international ambitions.',
+        a: 'Montreal, Quebec. All current events depart from Montreal or the greater Montreal area. We are a young and growing community with ambitions that stretch across Quebec, Ontario, Vermont, Maine and New York — and further as we grow.',
       },
       {
         q: 'How do I stay updated on upcoming events?',
@@ -133,7 +133,7 @@ const SECTIONS = [
       },
       {
         q: 'How far do your road trips go?',
-        a: 'We are based in Montreal but our ambitions go far beyond. We are planning trips across Canada, into the United States and eventually internationally as the community grows. The road has no limits and neither do we.',
+        a: 'We are based in Montreal but our routes extend well beyond the city. We are planning drives across Quebec, into Ontario, and south into Vermont, Maine and New York — with further destinations on the horizon as the community grows. The road has no limits and neither do we.',
       },
     ],
   },
