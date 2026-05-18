@@ -365,8 +365,8 @@ export default function Home() {
                 <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:"4px",minHeight:"300px",overflow:"hidden"}}>
-                <div style={{flex:1,minHeight:"180px",backgroundImage:"url('/May%2009%202026/IMG_5191.jpeg')",backgroundSize:"cover",backgroundPosition:"center top"}} onContextMenu={e=>e.preventDefault()} />
-                <div style={{flex:1,minHeight:"180px",backgroundImage:"url('/May%2009%202026/6a28265c-92eb-453b-a102-fa3a34a06e41.jpeg')",backgroundSize:"cover",backgroundPosition:"center"}} onContextMenu={e=>e.preventDefault()} />
+                <div style={{flex:1,minHeight:"180px",backgroundImage:"url('/events/cc-may9-overview.jpeg')",backgroundSize:"cover",backgroundPosition:"center top"}} onContextMenu={e=>e.preventDefault()} />
+                <div style={{flex:1,minHeight:"180px",backgroundImage:"url('/events/cc-may9-ferraris.jpeg')",backgroundSize:"cover",backgroundPosition:"center"}} onContextMenu={e=>e.preventDefault()} />
               </div>
             </div>
           </div>
