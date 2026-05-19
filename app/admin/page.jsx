@@ -1279,6 +1279,32 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
   }, [searchOverride])
 
+  function downloadVCard(c) {
+    const esc = v => (v || '').replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\n/g, '\\n')
+    const nameParts = (c.name || '').trim().split(' ')
+    const first = nameParts[0] || ''
+    const last = nameParts.slice(1).join(' ') || ''
+    const lines = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `FN:${esc(c.name)}`,
+      `N:${esc(last)};${esc(first)};;;`,
+      c.email ? `EMAIL;TYPE=INTERNET:${c.email}` : null,
+      c.phone ? `TEL;TYPE=CELL,VOICE:${c.phone}` : null,
+      c.instagram ? `X-SOCIALPROFILE;TYPE=instagram:${c.instagram}` : null,
+      `NOTE:Canvas Routes${c.car_year || c.car_model ? ` · ${[c.car_year, c.car_model].filter(Boolean).join(' ')}` : ''}`,
+      (c.dob_year && c.dob_month && c.dob_day) ? `BDAY:${c.dob_year}-${String(c.dob_month).padStart(2,'0')}-${String(c.dob_day).padStart(2,'0')}` : null,
+      'END:VCARD',
+    ].filter(Boolean).join('\r\n')
+    const blob = new Blob([lines], { type: 'text/vcard;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${(c.name || 'contact').replace(/\s+/g, '_')}.vcf`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const loadContacts = useCallback(async () => {
     setLoading(true)
     const res = await fetch('/api/admin/contacts')
@@ -1408,7 +1434,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       ) : (
         <div style={{ overflowX: 'auto' }}>
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
             <input type="checkbox"
               checked={filtered.length > 0 && filtered.every(c => selected.has(c.contact_id))}
               ref={el => { if (el) el.indeterminate = filtered.some(c => selected.has(c.contact_id)) && !filtered.every(c => selected.has(c.contact_id)) }}
@@ -1427,7 +1453,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
             <div key={c.contact_id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               <div
-                style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
+                style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
                 onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}
               >
                 <div onClick={e => e.stopPropagation()}>
@@ -1448,7 +1474,18 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                 <div style={{ fontSize: '11px', color: '#bbb' }}>
                   {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}
                 </div>
-                <div onClick={e => e.stopPropagation()}>
+                <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <button
+                    onClick={() => downloadVCard(c)}
+                    title="Save to Contacts (.vcf)"
+                    style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '3px', padding: '0.28rem 0.45rem', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#666' }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = '#c5a882'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)'}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </button>
                   <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
                 </div>
               </div>
