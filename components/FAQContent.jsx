@@ -31,7 +31,7 @@ const SECTIONS = [
       },
       {
         q: 'I registered — what should I expect?',
-        a: 'All Canvas Routes communication happens by email — confirmations, event details, payment information and updates are all sent directly to your inbox. Please make sure to check your junk or spam folder as our emails can sometimes land there. We recommend adding info@canvasroutes.com and jerry@canvasroutes.com to your contacts so nothing gets missed.',
+        a: 'All Canvas Routes communication happens by email — confirmations, event details, payment information and updates are all sent directly to your inbox. Please make sure to check your junk or spam folder as our emails can sometimes land there. We recommend adding info@canvasroutes.com to your contacts so nothing gets missed.',
       },
     ],
   },
@@ -107,11 +107,7 @@ const SECTIONS = [
         a: 'Yes. All road trip participants are required to sign a Canvas Routes participant waiver before the event. This is sent to you upon confirmation of your spot.',
       },
       {
-        q: 'What is the cancellation policy?',
-        a: 'Cancellations made more than 7 days before the trip receive a full refund. Cancellations within 7 days are non-refundable due to pre-booked reservations.',
-      },
-      {
-        q: 'What is your refund policy?',
+        q: 'What is your cancellation and refund policy?',
         a: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel or have any questions about a refund, we always encourage you to reach out to us directly — we will do our best to work with you.',
       },
       {
@@ -125,7 +121,7 @@ const SECTIONS = [
       {
         q: 'How do I register and pay?',
         a: 'Register at canvasroutes.com. Once your registration is reviewed, payment details will be shared with you by email. Spots are strictly limited and confirmed on a first paid basis.',
-        cta: true,
+        ctaRoute: true,
       },
     ],
   },
@@ -151,7 +147,7 @@ const SECTIONS = [
     items: [
       {
         q: 'When do memberships launch?',
-        a: 'Canvas Routes memberships open after our first road trip on May 31. Register at canvasroutes.com to be among the first notified.',
+        a: 'Canvas Routes memberships are launching soon. Register at canvasroutes.com to be among the first notified when they open.',
         cta: true,
       },
       {
@@ -220,7 +216,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
               fontSize: '14px',
               color: '#666',
               lineHeight: '1.9',
-              margin: (item.note || item.cta) ? '0 0 0.6rem' : '0 0 1.6rem',
+              margin: (item.note || item.cta || item.ctaRoute) ? '0 0 0.6rem' : '0 0 1.6rem',
               paddingRight: '2.5rem',
               fontFamily: 'var(--font-inter),sans-serif',
             }}>
@@ -232,16 +228,16 @@ function AccordionItem({ item, isOpen, onToggle }) {
                 color: '#1a1a1a',
                 fontWeight: '500',
                 lineHeight: '1.9',
-                margin: item.cta ? '0 0 1rem' : '0 0 1.6rem',
+                margin: (item.cta || item.ctaRoute) ? '0 0 1rem' : '0 0 1.6rem',
                 paddingRight: '2.5rem',
                 fontFamily: 'var(--font-inter),sans-serif',
               }}>
                 {item.note}
               </p>
             )}
-            {item.cta && (
+            {(item.cta || item.ctaRoute) && (
               <div style={{ marginBottom: '1.6rem' }}>
-                <Link href="/#join" style={{
+                <Link href={item.ctaRoute ? '/routes' : '/#join'} style={{
                   display: 'inline-block',
                   padding: '0.6rem 1.4rem',
                   background: '#7B2032',
@@ -295,7 +291,7 @@ export default function FAQContent() {
 
       {/* Hero */}
       <div style={{ maxWidth: '760px', margin: '0 auto', padding: '5rem 2rem 4rem' }}>
-        <div style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1rem' }}>Support</div>
+        <div style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1rem' }}>Community</div>
         <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '3rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1', marginBottom: '1.5rem' }}>
           Frequently asked questions.
         </div>

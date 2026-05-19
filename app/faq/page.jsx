@@ -58,7 +58,7 @@ const faqSchema = {
     },
     {
       '@type': 'Question',
-      name: 'What is your refund policy?',
+      name: 'What is your cancellation and refund policy?',
       acceptedAnswer: { '@type': 'Answer', text: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel or have any questions about a refund, we always encourage you to reach out to us directly — we will do our best to work with you.' },
     },
     {
