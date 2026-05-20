@@ -113,7 +113,7 @@ export default function MembershipContent() {
       <div style={{ background: 'rgba(197,168,130,0.12)', borderBottom: '0.5px solid rgba(197,168,130,0.3)', padding: '1rem 2rem', textAlign: 'center' }}>
         <span style={{ fontSize: '12px', color: '#7B5B2E', letterSpacing: '0.04em', lineHeight: '1.6' }}>
           <span style={{ fontWeight: '500' }}>Memberships open after our first road trip — May 31.</span>
-          {' '}Road trip participants receive exclusive early access pricing.
+          {' '}Priority access coming soon.
         </span>
       </div>
 
@@ -139,17 +139,8 @@ export default function MembershipContent() {
                   Canvas Routes<br />Member
                 </div>
                 <div style={{ paddingBottom: '1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
                     <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.8rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>$99</span>
-                    <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.06em' }}>CAD / season</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ height: '0.5px', flex: 1, background: 'rgba(197,168,130,0.3)' }} />
-                    <span style={{ fontSize: '10px', color: '#c5a882', letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Road trip price</span>
-                    <div style={{ height: '0.5px', flex: 1, background: 'rgba(197,168,130,0.3)' }} />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.5rem' }}>
-                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.9rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$49</span>
                     <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.06em' }}>CAD / season</span>
                   </div>
                 </div>
@@ -177,17 +168,8 @@ export default function MembershipContent() {
                   Canvas Routes<br />Inner Circle
                 </div>
                 <div style={{ paddingBottom: '1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
                     <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.8rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>$249</span>
-                    <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.06em' }}>CAD / season</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ height: '0.5px', flex: 1, background: 'rgba(197,168,130,0.3)' }} />
-                    <span style={{ fontSize: '10px', color: '#c5a882', letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Road trip price</span>
-                    <div style={{ height: '0.5px', flex: 1, background: 'rgba(197,168,130,0.3)' }} />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.5rem' }}>
-                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.9rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$199</span>
                     <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.06em' }}>CAD / season</span>
                   </div>
                 </div>
@@ -207,7 +189,7 @@ export default function MembershipContent() {
 
           {/* Note below cards */}
           <p style={{ textAlign: 'center', fontSize: '11.5px', color: '#aaa', marginTop: '1.75rem', lineHeight: '1.7', letterSpacing: '0.02em' }}>
-            Road trip participants receive exclusive early access pricing. Season runs May to November.
+            Season runs May to November.
           </p>
         </div>
       </section>
