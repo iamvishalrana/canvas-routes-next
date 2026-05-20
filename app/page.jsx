@@ -10,6 +10,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 export default function Home() {
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
   const [errors, setErrors] = useState({})
+  const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
@@ -144,7 +145,7 @@ export default function Home() {
     if (!form.dob_day) newErrors.dob_day = true
     if (!form.source) newErrors.source = true
     if (form.registerFor === GPCC && !form.downtown_cruise) newErrors.downtown_cruise = true
-    if (form.phone.trim() && form.phone.replace(/\D/g,'').length !== 10) newErrors.phone = true
+    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length !== 10)) newErrors.phone = true
     if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.replace(/^@+/, '').trim())) newErrors.instagram = true
     setErrors(newErrors)
     return newErrors
@@ -670,11 +671,21 @@ export default function Home() {
 
             <div className="join-form-row" style={{marginTop:"1rem"}}>
               <div className="join-form-field">
-                <label htmlFor="field-phone" className="join-label">Phone<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/> <span style={{color:"#888",fontWeight:"300"}}>(optional)</span></label>
-                <input id="field-phone" type="tel" placeholder="Your phone number" value={form.phone}
-                  onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
-                  onFocus={() => setFocusedField('phone')} onBlur={() => { setFocusedField(null); validateField('phone') }} />
-                {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid 10-digit number</span>}
+                <label htmlFor="field-phone" className="join-label">Phone<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                {phoneOptOut ? (
+                  <div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.65rem 0.9rem",background:"rgba(0,0,0,0.03)",border:"0.5px solid rgba(0,0,0,0.1)"}}>
+                    <span style={{fontSize:"13px",color:"#aaa",flex:1}}>Phone not provided</span>
+                    <button type="button" onClick={() => { setPhoneOptOut(false); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#888",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",whiteSpace:"nowrap"}}>Add number</button>
+                  </div>
+                ) : (
+                  <>
+                    <input id="field-phone" type="tel" placeholder="Your phone number" value={form.phone}
+                      onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
+                      onFocus={() => setFocusedField('phone')} onBlur={() => { setFocusedField(null); validateField('phone') }} />
+                    {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid 10-digit number</span>}
+                    <button type="button" onClick={() => { setPhoneOptOut(true); updateForm('phone',''); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:"0.3rem 0",fontSize:"11px",color:"#aaa",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Prefer not to share my number</button>
+                  </>
+                )}
               </div>
               <div className="join-form-field">
                 <label htmlFor="field-instagram" className="join-label">Instagram<Instagram size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/> <span style={{color:"#888",fontWeight:"300"}}>(optional)</span></label>

@@ -28,6 +28,7 @@ export default function RoutesPage() {
   const [launched, setLaunched] = useState(false)
   const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
+  const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
@@ -90,7 +91,7 @@ export default function RoutesPage() {
     const e = {}
     if (form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10) e.phone = true
+    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) e.phone = true
     if (!form.year) e.year = true
     if (!form.carModel.trim()) e.carModel = true
     if (!form.passengers) e.passengers = true
@@ -310,10 +311,20 @@ export default function RoutesPage() {
                 {/* Phone */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
                   <label htmlFor="field-phone" className="join-label">Phone number<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                  <input id="field-phone" type="tel" placeholder="(514) 000-0000" value={form.phone}
-                    onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
-                    onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
-                  {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid 10-digit number</span>}
+                  {phoneOptOut ? (
+                    <div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.65rem 0.9rem",background:"rgba(0,0,0,0.03)",border:"0.5px solid rgba(0,0,0,0.1)"}}>
+                      <span style={{fontSize:"13px",color:"#aaa",flex:1}}>Phone not provided</span>
+                      <button type="button" onClick={() => { setPhoneOptOut(false); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#888",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",whiteSpace:"nowrap"}}>Add number</button>
+                    </div>
+                  ) : (
+                    <>
+                      <input id="field-phone" type="tel" placeholder="(514) 000-0000" value={form.phone}
+                        onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
+                        onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
+                      {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid 10-digit number</span>}
+                      <button type="button" onClick={() => { setPhoneOptOut(true); setForm(p => ({...p, phone:''})); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:"0.3rem 0",fontSize:"11px",color:"#aaa",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Prefer not to share my number</button>
+                    </>
+                  )}
                 </div>
 
                 {/* Year + Make & Model */}
