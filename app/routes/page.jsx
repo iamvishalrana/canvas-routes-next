@@ -14,6 +14,8 @@ function Chevron() {
   )
 }
 
+const CAR_MAKES = ['Acura','Alfa Romeo','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Porsche','Ram','Rivian','Rolls-Royce','Subaru','Tesla','Toyota','Volkswagen','Volvo','Other']
+
 const INCLUDED = [
   { title: 'Welcome gift for your car', sub: 'A handpicked keepsake from us, waiting for you at the start.' },
   { title: 'Premium breakfast in Montreal', sub: 'The best way to start a drive — a leisurely breakfast before the road opens up.' },
@@ -26,7 +28,7 @@ const INCLUDED = [
 
 export default function RoutesPage() {
   const [launched, setLaunched] = useState(false)
-  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
+  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [status, setStatus] = useState(null)
@@ -93,6 +95,7 @@ export default function RoutesPage() {
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
     if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) e.phone = true
     if (!form.year) e.year = true
+    if (!form.carMake) e.carMake = true
     if (!form.carModel.trim()) e.carModel = true
     if (!form.passengers) e.passengers = true
     if (!form.hasChildren) e.hasChildren = true
@@ -106,7 +109,7 @@ export default function RoutesPage() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
-      const order = ['name','email','phone','year','carModel','passengers','hasChildren','childrenAges','source']
+      const order = ['name','email','phone','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) {
         const el = document.getElementById(`field-${first}`)
@@ -122,7 +125,7 @@ export default function RoutesPage() {
       const res = await fetch('/api/routes', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), _hp: honeypotRef.current?.value || '' }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
@@ -327,7 +330,7 @@ export default function RoutesPage() {
                   )}
                 </div>
 
-                {/* Year + Make & Model */}
+                {/* Year + Make */}
                 <div className="join-form-row" style={{marginBottom:"1rem"}}>
                   <div className="join-form-field">
                     <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
@@ -344,12 +347,26 @@ export default function RoutesPage() {
                     {errors.year && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                   </div>
                   <div className="join-form-field">
-                    <label htmlFor="field-carModel" className="join-label">Make &amp; Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                    <input id="field-carModel" type="text" placeholder="e.g. Porsche 911" value={form.carModel} maxLength={100}
-                      onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
-                      onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
-                    {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                    <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <div style={{position:"relative"}}>
+                      <select id="field-carMake" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)}
+                        style={{...inputStyle('carMake'), cursor:"pointer", paddingRight:"2rem"}}>
+                        <option value="">Select make</option>
+                        {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      <Chevron />
+                    </div>
+                    {errors.carMake && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                   </div>
+                </div>
+
+                {/* Model */}
+                <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <input id="field-carModel" type="text" placeholder="e.g. 911 Carrera S" value={form.carModel} maxLength={100}
+                    onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
+                    onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
+                  {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                 </div>
 
                 {/* Passengers */}

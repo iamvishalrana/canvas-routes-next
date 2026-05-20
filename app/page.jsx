@@ -7,8 +7,10 @@ import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, Clipboa
 import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
+const CAR_MAKES = ['Acura','Alfa Romeo','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Porsche','Ram','Rivian','Rolls-Royce','Subaru','Tesla','Toyota','Volkswagen','Volvo','Other']
+
 export default function Home() {
-  const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
+  const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [status, setStatus] = useState(null)
@@ -140,6 +142,7 @@ export default function Home() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'invalid'
     else if (['.con','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) newErrors.email = 'typo'
     if (!form.year.trim()) newErrors.year = true
+    if (!form.carMake) newErrors.carMake = true
     if (!form.carModel.trim()) newErrors.carModel = true
     if (!form.dob_month) newErrors.dob_month = true
     if (!form.dob_day) newErrors.dob_day = true
@@ -176,7 +179,7 @@ export default function Home() {
     if (status === 'loading') return
     const newErrors = validate()
     if (Object.keys(newErrors).length > 0) {
-      const fieldOrder = ['registerFor', 'downtown_cruise', 'name', 'email', 'year', 'carModel', 'dob_month', 'phone', 'instagram', 'more', 'source']
+      const fieldOrder = ['registerFor', 'downtown_cruise', 'name', 'email', 'year', 'carMake', 'carModel', 'dob_month', 'phone', 'instagram', 'more', 'source']
       const firstError = fieldOrder.find(f => newErrors[f])
       if (firstError) {
         const el = document.getElementById(`field-${firstError}`)
@@ -192,13 +195,13 @@ export default function Home() {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, instagram: form.instagram.trim().replace(/^@+/, ''), _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), instagram: form.instagram.trim().replace(/^@+/, ''), _hp: honeypotRef.current?.value || '' }),
         ...(controller ? { signal: controller.signal } : {}),
       })
       clearTimeout(timeout)
       if (res.ok) {
         setStatus('success')
-        setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
+        setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
         if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined' && (() => { try { return localStorage.getItem('cookieConsent') } catch { return null } })() === 'accepted' && window.gtag) {
           window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
@@ -524,7 +527,7 @@ export default function Home() {
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you — usually within 48 hours.</div>
             <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>A confirmation email is on its way from <strong style={{color:"#555",fontWeight:"500"}}>info@canvasroutes.com</strong> or <strong style={{color:"#555",fontWeight:"500"}}>jerry@canvasroutes.com</strong> — add both to your contacts and check your spam/junk folder so you don't miss it. Once we've reviewed your application, you'll hear from our team directly. If you don't hear from us, reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
-            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
+            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
@@ -619,16 +622,30 @@ export default function Home() {
                 {errors.year && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
               </div>
               <div className="join-form-field">
-                <label htmlFor="field-carModel" className="join-label">Make &amp; Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
                 <div style={{position:"relative"}}>
-                  <input id="field-carModel" type="text" placeholder="e.g. Porsche 911" value={form.carModel}
-                    onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
-                    aria-required="true" maxLength={100}
-                    onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
-                  {!form.carModel && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
+                  <select id="field-carMake" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)}
+                    style={{...inputStyle('carMake'), cursor:"pointer", paddingRight:"2rem"}}
+                    aria-required="true">
+                    <option value="">Select make</option>
+                    {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  {!form.carMake && <span style={{position:"absolute",right:"28px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
+                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                {errors.carMake && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
               </div>
+            </div>
+            <div className="join-form-field" style={{marginTop:"1rem"}}>
+              <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+              <div style={{position:"relative"}}>
+                <input id="field-carModel" type="text" placeholder="e.g. 911 Carrera S" value={form.carModel}
+                  onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
+                  aria-required="true" maxLength={100}
+                  onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
+                {!form.carModel && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
+              </div>
+              {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
             </div>
             <div id="field-dob_month" className="join-form-field" style={{marginTop:"1rem"}}>
               <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth <span style={{color:"#7B2032",marginLeft:"2px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
