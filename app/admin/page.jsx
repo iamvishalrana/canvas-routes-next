@@ -139,19 +139,91 @@ function MemberExpandedPanel({ m, onToggleAttendance }) {
     setTimeout(() => setNoteSaved(false), 2000)
   }
 
+  const initials = (m.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  const memberSinceRaw = m.created_at || m.password_set_at
+  const memberSinceStr = memberSinceRaw ? new Date(memberSinceRaw).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null
+  const cars = m.cars?.length > 0 ? m.cars : (m.car_year || m.car_make || m.car_model ? [{ year: m.car_year, make: m.car_make, model: m.car_model, license_plate: m.license_plate }] : [])
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const pastEvents = CANONICAL_EVENTS.filter(ev => new Date(ev.date) <= today)
+  const attendedCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === true).length
+  const noShowCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === false).length
+  const upcomingCount = CANONICAL_EVENTS.filter(ev => new Date(ev.date) > today).length
+  const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}` : null
+
   return (
-    <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
-      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Attendance</div>
-      {(() => {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        return CANONICAL_EVENTS.map(ev => {
+    <div style={{ background: 'rgba(197,168,130,0.025)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '3px solid #c5a882' }}>
+
+      {/* Header */}
+      <div style={{ padding: '1.5rem 1.5rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
+        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #c5a882, #a8885f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(197,168,130,0.35)' }}>
+          <span style={{ fontSize: '15px', color: '#fff', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500', letterSpacing: '0.06em' }}>{initials}</span>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.01em' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
+            <Badge status={m.membership_status} />
+          </div>
+          {memberSinceStr && (
+            <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem', letterSpacing: '0.04em' }}>Member since {memberSinceStr}</div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.6rem' }}>
+            {m.email && <a href={`mailto:${m.email}`} style={{ fontSize: '11px', color: '#888', textDecoration: 'none', letterSpacing: '0.02em' }}>{m.email}</a>}
+            {m.phone && <a href={`tel:${m.phone}`} style={{ fontSize: '11px', color: '#888', textDecoration: 'none', letterSpacing: '0.02em' }}>{m.phone}</a>}
+            {m.instagram && <a href={`https://instagram.com/${m.instagram.replace(/^@/, '')}`} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none', letterSpacing: '0.02em' }}>@{m.instagram.replace(/^@/, '')}</a>}
+            {dobStr && <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.02em' }}>🎂 {dobStr}</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Car centrepiece */}
+      {cars.filter(c => c.year || c.make || c.model).length > 0 && (
+        <div style={{ padding: '1rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.5)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {cars.map((car, i) => {
+            const parts = [car.year, car.make, car.model].filter(Boolean)
+            if (!parts.length) return null
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/><rect x="11" y="13" width="10" height="8" rx="2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>
+                <span style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.03em' }}>
+                  {parts.map((p, pi) => (
+                    <span key={pi}>{pi > 0 && <span style={{ color: '#c5a882', margin: '0 0.4rem', fontSize: '10px' }}>·</span>}{p}</span>
+                  ))}
+                </span>
+                {car.license_plate && (
+                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1px 7px', marginLeft: '0.25rem' }}>{car.license_plate}</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Stats strip */}
+      {pastEvents.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
+          {[
+            { value: attendedCount, label: 'Attended', color: attendedCount > 0 ? '#3B6B2F' : '#1a1a1a' },
+            { value: noShowCount, label: 'No-shows', color: noShowCount > 0 ? '#7B2032' : '#1a1a1a' },
+            { value: upcomingCount, label: 'Upcoming', color: '#1a1a1a' },
+          ].map((s, i) => (
+            <div key={i} style={{ padding: '0.85rem 1.5rem', borderRight: i < 2 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+              <div style={{ fontSize: '1.6rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.25rem' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Event Attendance */}
+      <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
+        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.9rem' }}>Event Attendance</div>
+        {CANONICAL_EVENTS.map(ev => {
           const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
           const attended = m.event_attendance?.[key]
           const isPast = new Date(ev.date) <= today
           return (
-            <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{ev.name}</span>
+            <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12px', color: '#444', minWidth: '280px' }}>{ev.name}</span>
               {isPast ? (
                 <>
                   <button onClick={() => onToggleAttendance(m, ev.name, true)}
@@ -168,12 +240,12 @@ function MemberExpandedPanel({ m, onToggleAttendance }) {
               )}
             </div>
           )
-        })
-      })()}
+        })}
+      </div>
 
       {/* Admin Notes */}
-      <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Admin Notes</div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Admin Notes</div>
         <textarea
           style={{ ...inp, height: '80px', resize: 'vertical' }}
           value={noteValue}
