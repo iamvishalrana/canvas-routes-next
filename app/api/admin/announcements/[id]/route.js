@@ -5,7 +5,7 @@ export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const body = await request.json()
-  const allowed = ['title', 'content', 'published']
+  const allowed = ['title', 'content', 'published', 'audience']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   const supabase = createAdminClient()
   const { error } = await supabase.from('announcements').update(update).eq('id', id)

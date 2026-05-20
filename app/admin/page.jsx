@@ -121,6 +121,74 @@ function CopyBtn({ value }) {
   )
 }
 
+// ─── Member Expanded Panel ───────────────────────────────────────────────────
+
+function MemberExpandedPanel({ m, onToggleAttendance }) {
+  const [noteValue, setNoteValue] = useState(m.admin_notes || '')
+  const [savingNote, setSavingNote] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(false)
+
+  async function saveNote() {
+    setSavingNote(true)
+    await fetch(`/api/admin/members/${m.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_notes: noteValue }),
+    })
+    setSavingNote(false)
+    setNoteSaved(true)
+    setTimeout(() => setNoteSaved(false), 2000)
+  }
+
+  return (
+    <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
+      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Attendance</div>
+      {(() => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        return CANONICAL_EVENTS.map(ev => {
+          const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
+          const attended = m.event_attendance?.[key]
+          const isPast = new Date(ev.date) <= today
+          return (
+            <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{ev.name}</span>
+              {isPast ? (
+                <>
+                  <button onClick={() => onToggleAttendance(m, ev.name, true)}
+                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: attended === true ? '#3B6B2F' : '#888' }}>
+                    ✓ Attended
+                  </button>
+                  <button onClick={() => onToggleAttendance(m, ev.name, false)}
+                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: attended === false ? '#7B2032' : '#888' }}>
+                    ✗ No-show
+                  </button>
+                </>
+              ) : (
+                <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
+              )}
+            </div>
+          )
+        })
+      })()}
+
+      {/* Admin Notes */}
+      <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Admin Notes</div>
+        <textarea
+          style={{ ...inp, height: '80px', resize: 'vertical' }}
+          value={noteValue}
+          onChange={e => setNoteValue(e.target.value)}
+          placeholder="Internal notes (not visible to member)…"
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+          <GhostBtn small onClick={saveNote} disabled={savingNote}>{savingNote ? 'Saving…' : 'Save Note'}</GhostBtn>
+          {noteSaved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Saved</span>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Members Tab ─────────────────────────────────────────────────────────────
 
 function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
@@ -128,6 +196,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [loading, setLoading] = useState(true)
   const [forbidden, setForbidden] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [emailsCopied, setEmailsCopied] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [editCars, setEditCars] = useState([])
   const [saving, setSaving] = useState(false)
@@ -282,6 +351,14 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     a.click()
   }
 
+  function copyEmails() {
+    const emails = filtered.map(m => m.email).filter(Boolean).join(', ')
+    navigator.clipboard?.writeText(emails).then(() => {
+      setEmailsCopied(true)
+      setTimeout(() => setEmailsCopied(false), 1500)
+    }).catch(() => {})
+  }
+
   const counts = { active: 0, pending: 0, suspended: 0, expired: 0 }
   members.forEach(m => { if (counts[m.membership_status] !== undefined) counts[m.membership_status]++ })
 
@@ -350,6 +427,11 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
           {members.length > 0 && (
             <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               Export CSV
+            </button>
+          )}
+          {members.length > 0 && (
+            <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>
           )}
         </div>
@@ -510,37 +592,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   </div>
 
                   {expanded === m.id && (
-                    <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Attendance</div>
-                      {(() => {
-                        const today = new Date()
-                        today.setHours(0, 0, 0, 0)
-                        return CANONICAL_EVENTS.map(ev => {
-                          const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
-                          const attended = m.event_attendance?.[key]
-                          const isPast = new Date(ev.date) <= today
-                          return (
-                            <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{ev.name}</span>
-                              {isPast ? (
-                                <>
-                                  <button onClick={() => toggleMemberAttendance(m, ev.name, true)}
-                                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: attended === true ? '#3B6B2F' : '#888' }}>
-                                    ✓ Attended
-                                  </button>
-                                  <button onClick={() => toggleMemberAttendance(m, ev.name, false)}
-                                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: attended === false ? '#7B2032' : '#888' }}>
-                                    ✗ No-show
-                                  </button>
-                                </>
-                              ) : (
-                                <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
-                              )}
-                            </div>
-                          )
-                        })
-                      })()}
-                    </div>
+                    <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} />
                   )}
                 </>
               )}
@@ -557,7 +609,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
 function AnnouncementsTab() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ title: '', content: '', published: false })
+  const [form, setForm] = useState({ title: '', content: '', published: false, audience: 'all' })
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -585,7 +637,7 @@ function AnnouncementsTab() {
     const data = await res.json()
     setPosting(false)
     if (!res.ok) { setPostError(data.error || 'Failed.'); return }
-    setForm({ title: '', content: '', published: false })
+    setForm({ title: '', content: '', published: false, audience: 'all' })
     load()
   }
 
@@ -627,6 +679,17 @@ function AnnouncementsTab() {
             <L>Content</L>
             <textarea style={{ ...inp, height: '100px', resize: 'vertical' }} value={form.content} onChange={e => setForm(p => ({ ...p, content: e.target.value }))} placeholder="Write your announcement here…" />
           </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <L>Audience</L>
+            <div style={{ position: 'relative', width: '200px' }}>
+              <select style={sel} value={form.audience} onChange={e => setForm(p => ({ ...p, audience: e.target.value }))}>
+                <option value="all">Everyone</option>
+                <option value="members">Members only</option>
+                <option value="contacts">Contacts only</option>
+              </select>
+              <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#555' }}>
               <input type="checkbox" checked={form.published} onChange={e => setForm(p => ({ ...p, published: e.target.checked }))} />
@@ -656,6 +719,17 @@ function AnnouncementsTab() {
                     <L>Content</L>
                     <textarea style={{ ...inp, height: '90px', resize: 'vertical' }} value={editForm.content} onChange={e => setEditForm(p => ({ ...p, content: e.target.value }))} />
                   </div>
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <L>Audience</L>
+                    <div style={{ position: 'relative', width: '200px' }}>
+                      <select style={sel} value={editForm.audience || 'all'} onChange={e => setEditForm(p => ({ ...p, audience: e.target.value }))}>
+                        <option value="all">Everyone</option>
+                        <option value="members">Members only</option>
+                        <option value="contacts">Contacts only</option>
+                      </select>
+                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
                     <GhostBtn onClick={() => setEditing(null)}>Cancel</GhostBtn>
@@ -670,6 +744,11 @@ function AnnouncementsTab() {
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: item.published ? '0.5px solid rgba(59,107,47,0.3)' : '0.5px solid rgba(0,0,0,0.12)', background: item.published ? 'rgba(59,107,47,0.08)' : 'transparent', color: item.published ? '#3B6B2F' : '#bbb' }}>
                         {item.published ? 'Published' : 'Draft'}
                       </span>
+                      {item.audience && item.audience !== 'all' && (
+                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(197,168,130,0.45)', background: 'rgba(197,168,130,0.1)', color: '#8A6535' }}>
+                          {item.audience === 'members' ? 'Members only' : 'Contacts only'}
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65', whiteSpace: 'pre-wrap' }}>{item.content}</div>
                     <div style={{ fontSize: '11px', color: '#ccc', marginTop: '0.5rem' }}>
@@ -678,7 +757,7 @@ function AnnouncementsTab() {
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                     <GhostBtn onClick={() => togglePublish(item)} small>{item.published ? 'Unpublish' : 'Publish'}</GhostBtn>
-                    <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content }); setSaveError(null) }} small>Edit</GhostBtn>
+                    <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content, audience: item.audience || 'all' }); setSaveError(null) }} small>Edit</GhostBtn>
                     <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
                   </div>
                 </div>
@@ -703,6 +782,9 @@ function EventsTab() {
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [showRegistrants, setShowRegistrants] = useState(null)
+  const [registrantsData, setRegistrantsData] = useState({})
+  const [loadingRegistrants, setLoadingRegistrants] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -744,6 +826,35 @@ function EventsTab() {
     const res = await fetch(`/api/admin/events/${id}`, { method: 'DELETE' })
     if (!res.ok) { alert('Failed to delete.'); return }
     load()
+  }
+
+  async function toggleRegistrants(eventName) {
+    if (showRegistrants === eventName) { setShowRegistrants(null); return }
+    setShowRegistrants(eventName)
+    if (registrantsData[eventName]) return
+    setLoadingRegistrants(true)
+    const [mRes, cRes] = await Promise.all([fetch('/api/admin/members'), fetch('/api/admin/contacts')])
+    const members = mRes.ok ? await mRes.json() : []
+    const contacts = cRes.ok ? await cRes.json() : []
+    const key = MEMBER_ATTENDANCE_KEYS[eventName]
+    const memberRegs = (Array.isArray(members) ? members : [])
+      .filter(m => {
+        if (!key) return false
+        const att = m.event_attendance?.[key]
+        return att === true || att === 'attended'
+      })
+      .map(m => ({ name: m.name, email: m.email, phone: m.phone, type: 'Member' }))
+    const contactRegs = (Array.isArray(contacts) ? contacts : [])
+      .filter(c => (c.registrations || []).some(r => normalizeEventName(r.event) === eventName))
+      .map(c => ({ name: c.name, email: c.email, phone: c.phone, type: 'Contact' }))
+    const seen = new Set()
+    const combined = [...memberRegs, ...contactRegs].filter(r => {
+      const k = (r.email || r.name || '').toLowerCase()
+      if (seen.has(k)) return false
+      seen.add(k); return true
+    })
+    setRegistrantsData(prev => ({ ...prev, [eventName]: combined }))
+    setLoadingRegistrants(false)
   }
 
   return (
@@ -802,26 +913,91 @@ function EventsTab() {
                   <Err msg={saveError} />
                 </div>
               ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
-                      <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.name}</div>
-                      <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.45)', padding: '2px 7px' }}>{item.type}</span>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.name}</div>
+                        <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.45)', padding: '2px 7px' }}>{item.type}</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#c5a882', fontWeight: '500', marginBottom: '0.25rem' }}>{item.date}</div>
+                      {item.location && <div style={{ fontSize: '12px', color: '#888' }}>{item.location}</div>}
+                      {item.description && <div style={{ fontSize: '12px', color: '#777', marginTop: '0.3rem', lineHeight: '1.55' }}>{item.description}</div>}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#c5a882', fontWeight: '500', marginBottom: '0.25rem' }}>{item.date}</div>
-                    {item.location && <div style={{ fontSize: '12px', color: '#888' }}>{item.location}</div>}
-                    {item.description && <div style={{ fontSize: '12px', color: '#777', marginTop: '0.3rem', lineHeight: '1.55' }}>{item.description}</div>}
+                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                      <GhostBtn onClick={() => toggleRegistrants(item.name)} small>{showRegistrants === item.name ? 'Hide' : 'Registrants'}</GhostBtn>
+                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type }); setSaveError(null) }} small>Edit</GhostBtn>
+                      <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                    <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type }); setSaveError(null) }} small>Edit</GhostBtn>
-                    <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
-                  </div>
+                  {showRegistrants === item.name && (
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Registrants</div>
+                      {loadingRegistrants && !registrantsData[item.name] ? (
+                        <div style={{ fontSize: '12px', color: '#ccc' }}>Loading…</div>
+                      ) : !registrantsData[item.name] || registrantsData[item.name].length === 0 ? (
+                        <div style={{ fontSize: '12px', color: '#ccc' }}>No registrants on record.</div>
+                      ) : (
+                        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                            {['Name', 'Email', 'Phone', 'Type'].map(h => (
+                              <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
+                            ))}
+                          </div>
+                          {registrantsData[item.name].map((r, ri) => (
+                            <div key={ri} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.name].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                              <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
+                              <div style={{ fontSize: '12px', color: '#888' }}>{r.phone || '—'}</div>
+                              <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535' }}>{r.type}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Shared Admin Notes component for Applications / Contacts ────────────────
+
+function AppAdminNotes({ appId, initialNotes, onSaved }) {
+  const [noteValue, setNoteValue] = useState(initialNotes || '')
+  const [savingNote, setSavingNote] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(false)
+
+  async function saveNote() {
+    setSavingNote(true)
+    await fetch(`/api/admin/applications/${appId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_notes: noteValue }),
+    })
+    setSavingNote(false)
+    setNoteSaved(true)
+    onSaved?.(noteValue)
+    setTimeout(() => setNoteSaved(false), 2000)
+  }
+
+  return (
+    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Admin Notes</div>
+      <textarea
+        style={{ ...inp, height: '70px', resize: 'vertical' }}
+        value={noteValue}
+        onChange={e => setNoteValue(e.target.value)}
+        placeholder="Internal notes (not visible to applicant)…"
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+        <GhostBtn small onClick={saveNote} disabled={savingNote}>{savingNote ? 'Saving…' : 'Save Note'}</GhostBtn>
+        {noteSaved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Saved</span>}
+      </div>
     </div>
   )
 }
@@ -845,6 +1021,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const seenInitRef = useRef(false)
   const [addingContact, setAddingContact] = useState(new Set())
   const [sortApps, setSortApps] = useState('newest')
+  const [emailsCopied, setEmailsCopied] = useState(false)
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -983,6 +1160,34 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
       return 0
     })
   const totalInvited = apps.filter(a => a.is_member).length
+
+  function exportCSV() {
+    const rows = filtered.map(a => ({
+      Name: a.name || '',
+      Email: a.email || '',
+      Phone: a.phone || '',
+      'Car Year': a.car_year || '',
+      'Car Model': a.car_model || '',
+      Source: a.source || '',
+      Applied: a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA') : '',
+      Status: a.is_member ? 'Invited / Member' : 'Pending',
+      Registrations: (a.registrations || []).map(r => r.event || '').filter(Boolean).join('; '),
+    }))
+    const headers = Object.keys(rows[0] || {})
+    const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(','))].join('\n')
+    const el = document.createElement('a')
+    el.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    el.download = `canvas-routes-applications-${new Date().toISOString().slice(0,10)}.csv`
+    el.click()
+  }
+
+  function copyEmails() {
+    const emails = filtered.map(a => a.email).filter(Boolean).join(', ')
+    navigator.clipboard?.writeText(emails).then(() => {
+      setEmailsCopied(true)
+      setTimeout(() => setEmailsCopied(false), 1500)
+    }).catch(() => {})
+  }
   const unseenCount = apps.filter(a => !seenAppIds.has(a.id)).length
 
   useEffect(() => { onUnseenCountChange?.(unseenCount) }, [unseenCount, onUnseenCountChange])
@@ -1017,8 +1222,20 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
-          {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
+            {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
+          </div>
+          {apps.length > 0 && (
+            <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Export CSV
+            </button>
+          )}
+          {apps.length > 0 && (
+            <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {emailsCopied ? 'Copied!' : 'Copy Emails'}
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -1240,6 +1457,11 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                     })()}
                   </div>
 
+                  {/* Admin Notes */}
+                  {editingApp !== a.id && (
+                    <AppAdminNotes key={a.id} appId={a.id} initialNotes={a.admin_notes} onSaved={notes => setApps(prev => prev.map(x => x.id === a.id ? { ...x, admin_notes: notes } : x))} />
+                  )}
+
                   {/* Action row */}
                   {editingApp !== a.id && (
                     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -1274,6 +1496,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [search, setSearch] = useState('')
   const [sortContacts, setSortContacts] = useState('name_az')
   const [selected, setSelected] = useState(new Set())
+  const [emailsCopied, setEmailsCopied] = useState(false)
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -1379,6 +1602,14 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       return 0
     })
 
+  function copyEmails() {
+    const emails = filtered.map(c => c.email).filter(Boolean).join(', ')
+    navigator.clipboard?.writeText(emails).then(() => {
+      setEmailsCopied(true)
+      setTimeout(() => setEmailsCopied(false), 1500)
+    }).catch(() => {})
+  }
+
   return (
     <div>
       {/* Stats */}
@@ -1406,6 +1637,11 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
           {contacts.length > 0 && selected.size === 0 && (
             <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               Export All
+            </button>
+          )}
+          {contacts.length > 0 && selected.size === 0 && (
+            <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>
           )}
         </div>
@@ -1585,6 +1821,9 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       })
                     })()}
                   </div>
+
+                  {/* Admin Notes */}
+                  <AppAdminNotes key={c.id} appId={c.id} initialNotes={c.admin_notes} onSaved={notes => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, admin_notes: notes } : x))} />
                 </div>
               )}
             </div>
@@ -1596,14 +1835,271 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   )
 }
 
+// ─── Dashboard Tab ───────────────────────────────────────────────────────────
+
+function DashboardTab({ isMobile, onNavigate }) {
+  const [data, setData] = useState({ members: [], apps: [], contacts: [], events: [] })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const [mRes, aRes, cRes, eRes] = await Promise.all([
+        fetch('/api/admin/members'),
+        fetch('/api/admin/applications'),
+        fetch('/api/admin/contacts'),
+        fetch('/api/admin/events'),
+      ])
+      const [members, apps, contacts, events] = await Promise.all([
+        mRes.ok ? mRes.json() : [],
+        aRes.ok ? aRes.json() : [],
+        cRes.ok ? cRes.json() : [],
+        eRes.ok ? eRes.json() : [],
+      ])
+      setData({
+        members: Array.isArray(members) ? members : [],
+        apps: Array.isArray(apps) ? apps : [],
+        contacts: Array.isArray(contacts) ? contacts : [],
+        events: Array.isArray(events) ? events : [],
+      })
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const activeMembers = data.members.filter(m => m.membership_status === 'active').length
+  const pendingApps = data.apps.filter(a => !a.is_member).length
+
+  // Recent sign-ups: last 7 from members+contacts combined by created_at
+  const recentSignups = [
+    ...data.members.map(m => ({ name: m.name || m.email, type: 'Member', date: m.created_at })),
+    ...data.contacts.map(c => ({ name: c.name || c.email, type: 'Contact', date: c.contact_created_at || c.created_at })),
+  ]
+    .filter(r => r.date)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 7)
+
+  // Upcoming events (next 90 days)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const in90 = new Date(today); in90.setDate(in90.getDate() + 90)
+  const upcomingEvents = data.events
+    .filter(e => { try { const d = new Date(e.date); return d >= today && d <= in90 } catch { return false } })
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 5)
+
+  const statCards = [
+    { label: 'Total Members', value: data.members.length, color: '#1a1a1a', tab: 'Members' },
+    { label: 'Active Members', value: activeMembers, color: '#3B6B2F', tab: 'Members' },
+    { label: 'Pending Applications', value: pendingApps, color: '#8A6535', tab: 'Applications' },
+    { label: 'Total Contacts', value: data.contacts.length, color: '#1a1a1a', tab: 'Contacts' },
+  ]
+
+  return (
+    <div>
+      {loading ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : (
+        <>
+          {/* Stat cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+            {statCards.map(s => (
+              <button key={s.label} onClick={() => onNavigate(s.tab)}
+                style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem', textAlign: 'left', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                <div style={{ fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>{s.label}</div>
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
+            {/* Recent sign-ups */}
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.5rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>Recent Sign-Ups</div>
+              {recentSignups.length === 0 ? (
+                <div style={{ fontSize: '12px', color: '#ccc' }}>None yet.</div>
+              ) : recentSignups.map((r, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: i < recentSignups.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{r.name || '—'}</div>
+                    <div style={{ fontSize: '10px', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '2px' }}>{r.type}</div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#bbb' }}>
+                    {new Date(r.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Upcoming events */}
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.5rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>Upcoming Events</div>
+              {upcomingEvents.length === 0 ? (
+                <div style={{ fontSize: '12px', color: '#ccc' }}>No upcoming events in the next 90 days.</div>
+              ) : upcomingEvents.map((e, i) => (
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{e.name}</div>
+                    {e.type && <div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A6535', marginTop: '2px' }}>{e.type}</div>}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#c5a882' }}>{e.date}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Cars Tab ─────────────────────────────────────────────────────────────────
+
+function CarsTab() {
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [assignInputs, setAssignInputs] = useState({})
+  const [assigning, setAssigning] = useState({})
+
+  useEffect(() => {
+    fetch('/api/admin/members').then(r => r.json()).then(data => {
+      setMembers(Array.isArray(data) ? data : [])
+      setLoading(false)
+    })
+  }, [])
+
+  async function assignCar(m, make) {
+    if (!make.trim()) return
+    setAssigning(p => ({ ...p, [m.id]: true }))
+    const existingCars = m.cars || []
+    let newCars
+    if (existingCars.length > 0) {
+      // update cars that have no make
+      const hasNoMake = existingCars.some(c => !c.make)
+      if (hasNoMake) {
+        newCars = existingCars.map(c => !c.make ? { ...c, make: make.trim() } : c)
+      } else {
+        newCars = [...existingCars, { year: '', make: make.trim(), model: '' }]
+      }
+    } else {
+      newCars = [{ year: '', make: make.trim(), model: '' }]
+    }
+    await fetch(`/api/admin/members/${m.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cars: newCars }),
+    })
+    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars: newCars } : x))
+    setAssignInputs(p => ({ ...p, [m.id]: '' }))
+    setAssigning(p => ({ ...p, [m.id]: false }))
+  }
+
+  // Group members by car make
+  const brandGroups = {}
+  const unassigned = []
+
+  members.forEach(m => {
+    const cars = m.cars || []
+    if (m.car_make && cars.length === 0) {
+      // legacy single car
+      const make = m.car_make
+      if (!brandGroups[make]) brandGroups[make] = []
+      brandGroups[make].push({ member: m, car: { year: m.car_year || '', make, model: m.car_model || '' } })
+      return
+    }
+    const carsWithMake = cars.filter(c => c.make)
+    if (carsWithMake.length === 0) {
+      unassigned.push(m)
+    } else {
+      carsWithMake.forEach(car => {
+        const make = car.make
+        if (!brandGroups[make]) brandGroups[make] = []
+        brandGroups[make].push({ member: m, car })
+      })
+    }
+  })
+
+  const sortedBrands = Object.keys(brandGroups).sort((a, b) => a.localeCompare(b))
+  const totalBrands = sortedBrands.length
+
+  return (
+    <div>
+      <div style={{ fontSize: '11px', color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>
+        {totalBrands} brand{totalBrands !== 1 ? 's' : ''} represented
+      </div>
+
+      {loading ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : (
+        <>
+          {sortedBrands.map(brand => (
+            <div key={brand} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', marginBottom: '1rem' }}>
+              <div style={{ padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.02em' }}>{brand}</div>
+                <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{brandGroups[brand].length} car{brandGroups[brand].length !== 1 ? 's' : ''}</div>
+              </div>
+              {brandGroups[brand].map(({ member: m, car }, i) => (
+                <div key={`${m.id}-${i}`} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr', padding: '0.75rem 1.25rem', borderBottom: i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>{[car.year, car.model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {unassigned.length > 0 && (
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', marginBottom: '1rem' }}>
+              <div style={{ padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: '13px', fontWeight: '500', color: '#bbb', letterSpacing: '0.02em' }}>Unassigned</div>
+                <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{unassigned.length} member{unassigned.length !== 1 ? 's' : ''}</div>
+              </div>
+              {unassigned.map((m, i) => (
+                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr', padding: '0.75rem 1.25rem', borderBottom: i < unassigned.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      style={{ ...inp, width: '120px', padding: '0.4rem 0.6rem', fontSize: '12px' }}
+                      placeholder="Brand"
+                      value={assignInputs[m.id] || ''}
+                      onChange={e => setAssignInputs(p => ({ ...p, [m.id]: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && assignCar(m, assignInputs[m.id] || '')}
+                    />
+                    <GhostBtn small onClick={() => assignCar(m, assignInputs[m.id] || '')} disabled={assigning[m.id]}>
+                      {assigning[m.id] ? '…' : 'Assign'}
+                    </GhostBtn>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {sortedBrands.length === 0 && unassigned.length === 0 && (
+            <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No members yet.</div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-const TABS = ['Members', 'Applications', 'Contacts', 'Announcements', 'Events']
+const TABS = ['Dashboard', 'Members', 'Cars', 'Applications', 'Contacts', 'Announcements', 'Events']
 const TAB_ICONS = {
+  Dashboard: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+  ),
   Members: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  ),
+  Cars: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>
     </svg>
   ),
   Applications: (
@@ -1632,7 +2128,7 @@ const TAB_ICONS = {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState('Members')
+  const [tab, setTab] = useState('Dashboard')
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unseenAppsCount, setUnseenAppsCount] = useState(0)
@@ -1823,7 +2319,9 @@ export default function AdminPage() {
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: '300', color: '#1a1a1a' }}>{tab}</div>
           </div>
 
+          {tab === 'Dashboard' && <DashboardTab isMobile={isMobile} onNavigate={selectTab} />}
           {tab === 'Members' && <MembersTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
+          {tab === 'Cars' && <CarsTab />}
           {tab === 'Applications' && <ApplicationsTab isMobile={isMobile} onUnseenCountChange={setUnseenAppsCount} />}
           {tab === 'Contacts' && <ContactsTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
           {tab === 'Announcements' && <AnnouncementsTab />}

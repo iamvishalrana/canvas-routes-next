@@ -11,11 +11,11 @@ export async function GET() {
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const { title, content, published = false } = await request.json()
+  const { title, content, published = false, audience = 'all' } = await request.json()
   if (!title?.trim()) return Response.json({ error: 'Title required.' }, { status: 400 })
   if (!content?.trim()) return Response.json({ error: 'Content required.' }, { status: 400 })
   const supabase = createAdminClient()
-  const { data, error } = await supabase.from('announcements').insert({ title: title.trim(), content: content.trim(), published }).select().single()
+  const { data, error } = await supabase.from('announcements').insert({ title: title.trim(), content: content.trim(), published, audience }).select().single()
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json(data)
 }
