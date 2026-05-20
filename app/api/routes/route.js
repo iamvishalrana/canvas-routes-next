@@ -171,9 +171,10 @@ export async function POST(request) {
   const { name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, _hp } = body
   if (_hp) return Response.json({ success: true })
 
-  if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !phone?.trim() || !year?.trim() || !carModel?.trim()) {
+  if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim()) {
     return Response.json({ error: 'Please fill in all required fields.' }, { status: 400 })
   }
+  if (phone && phone.length > 30) return Response.json({ error: 'Phone too long.' }, { status: 400 })
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ error: 'Invalid email address.' }, { status: 400 })
   }
