@@ -261,7 +261,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   }
 
   const filtered = members.filter(m =>
-    !search || [m.name, m.email, m.membership_status].some(v => v?.toLowerCase().includes(search.toLowerCase()))
+    !search || [m.name, m.email, m.membership_status, m.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
   )
 
   function exportCSV() {
@@ -974,7 +974,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
   const filtered = apps
-    .filter(a => !search || [a.name, a.email, a.car_year, a.car_model, a.source].some(v => v?.toLowerCase().includes(search.toLowerCase())))
+    .filter(a => !search || [a.name, a.email, a.car_year, a.car_model, a.source, a.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && a.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))))
     .sort((a, b) => {
       if (sortApps === 'newest') return new Date(b.created_at) - new Date(a.created_at)
       if (sortApps === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
@@ -1370,7 +1370,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   }
 
   const filtered = contacts
-    .filter(c => !search || [c.name, c.email, c.car_year, c.car_model].some(v => v?.toLowerCase().includes(search.toLowerCase())))
+    .filter(c => !search || [c.name, c.email, c.car_year, c.car_model, c.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && c.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))))
     .sort((a, b) => {
       if (sortContacts === 'name_az') return (a.name || '').localeCompare(b.name || '')
       if (sortContacts === 'name_za') return (b.name || '').localeCompare(a.name || '')
