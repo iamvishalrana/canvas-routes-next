@@ -1639,7 +1639,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
               Export All
             </button>
           )}
-          {contacts.length > 0 && selected.size === 0 && (
+          {contacts.length > 0 && (
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>
