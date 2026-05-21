@@ -53,7 +53,7 @@ const TIER1 = [
   'Access to Canvas Routes road trips',
   '10% discount on your next road trip when referring a member',
   '15% discount at one Canvas Routes partner',
-  'Canvas Routes branded car perfume — yours at every Canvas Routes event, every 2 months throughout the season',
+  'Canvas Routes car perfume — yours at every Canvas Routes event, every 2 months throughout the season',
   'Canvas Routes full grain leather keychain',
 ]
 
@@ -63,14 +63,14 @@ const TIER2_EXTRA = [
   'Professional car photoshoot on a Canvas Routes route',
   '$70 one-time discount on one of the next two road trips',
   'Discounts at all Canvas Routes partners',
-  'Canvas Routes branded baseball cap',
-  'Canvas Routes branded t-shirt',
+  'Canvas Routes merch baseball cap',
+  'Canvas Routes merch t-shirt',
 ]
 
 const PERKS = [
-  { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes branded. Part of your welcome kit on day one.', tier: 1 },
+  { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merch. Part of your welcome kit on day one.', tier: 1 },
   { label: 'Car Perfume', sub: 'Picked up at any Canvas Routes event, refreshed every 2 months throughout the season.', tier: 1 },
-  { label: 'Cap & T-Shirt', sub: 'A branded cap and t-shirt included in your Inner Circle welcome kit.', tier: 2 },
+  { label: 'Cap & T-Shirt', sub: 'Canvas Routes merch cap and t-shirt included in your Inner Circle welcome kit.', tier: 2 },
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes route.', tier: 2 },
 ]
 
@@ -209,7 +209,7 @@ export default function MembershipContent() {
           </FadeUp>
 
           <FadeUp delay={0.15} style={{ display: 'flex', flexDirection: 'column', gap: '1px' }} className="mem-about-img">
-            <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: 'clamp(240px,30vw,380px)', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
+            <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: 'clamp(240px,30vw,380px)', objectFit: 'cover', objectPosition: 'center 50%', display: 'block' }} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(0,0,0,0.07)' }}>
               {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'C&C + Road trips'], ['Access', 'Priority registration']].map(([k, v]) => (
                 <div key={k} style={{ background: '#F5F1EC', padding: '0.85rem 1rem' }}>
@@ -334,7 +334,7 @@ export default function MembershipContent() {
           <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-perks">
             {PERKS.map((p, i) => (
               <motion.div key={i} variants={fadeUp}
-                style={{ background: p.tier === 2 ? '#111' : '#F5F1EC', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
+                style={{ background: p.tier === 2 ? '#0F1E14' : '#F5F1EC', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <div style={{ width: '20px', height: '0.5px', background: p.tier === 2 ? 'rgba(197,168,130,0.5)' : '#c5a882' }} />
                   <span style={{ ...LABEL, color: p.tier === 2 ? 'rgba(197,168,130,0.85)' : '#888', background: p.tier === 2 ? 'rgba(197,168,130,0.08)' : 'rgba(0,0,0,0.05)', border: `0.5px solid ${p.tier === 2 ? 'rgba(197,168,130,0.2)' : 'rgba(0,0,0,0.1)'}`, padding: '2px 8px' }}>
