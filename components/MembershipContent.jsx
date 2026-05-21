@@ -55,7 +55,7 @@ const TIER1 = [
   'Priority access to all Cars & Coffee events',
   'Access to Canvas Routes road trips',
   '10% discount on your next road trip when referring a member',
-  '15% discount at one Canvas Routes partner',
+  '25% discount at one Canvas Routes partner',
   'Canvas Routes car perfume — refreshed every 2 months, picked up at any event throughout the season',
   'Canvas Routes full grain leather keychain',
 ]
@@ -64,7 +64,7 @@ const TIER2_EXTRA = [
   'Exclusive 48hr priority access to all Canvas Routes events before public registration opens',
   '25% referral discount when referring a Tier 2 member',
   'Professional car photoshoot on a Canvas Routes road trip',
-  '$70 one-time discount on one of the next two road trips',
+  '$70 off one of the next two road trips — your membership starts paying for itself from day one',
   'Discounts at all Canvas Routes partners',
   'Canvas Routes merchandise baseball cap',
   'Canvas Routes merchandise t-shirt',
