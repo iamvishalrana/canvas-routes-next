@@ -228,9 +228,9 @@ export default function MembershipContent() {
       <motion.div variants={fadeIn} initial="hidden" whileInView="visible" viewport={{ once: true }}
         style={{ position: 'relative', height: 'clamp(260px,36vw,460px)', overflow: 'hidden' }}>
         <img src="/events/may9-cars-row.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(10,20,13,0.25), rgba(10,20,13,0.65))' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.62)' }} />
         <FadeUp style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: '300', color: 'rgba(245,241,236,0.88)', lineHeight: '1.5', maxWidth: '520px' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: '1.5', maxWidth: '520px', textShadow: '0 1px 12px rgba(0,0,0,0.4)' }}>
             &ldquo;You chose your car with intention.<br />We choose the routes with intention.<br />Let&apos;s put both towards great drives and lasting memories.&rdquo;
           </div>
         </FadeUp>
