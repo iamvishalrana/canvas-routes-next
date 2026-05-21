@@ -232,8 +232,8 @@ export default function MembershipContent() {
       {/* ── NOTICE BANNER ───────────────────────────────────────────── */}
       <div style={{ background: 'rgba(197,168,130,0.11)', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: '1rem 2rem', textAlign: 'center' }}>
         <span style={{ ...SMALL, color: '#7B5B2E' }}>
-          <strong>Memberships open June 2026.</strong>
-          {' '}Leave your email below for early access before we open to the public.
+          <strong>2026 season — spots are limited.</strong>
+          {' '}Every application is reviewed personally.
         </span>
       </div>
 
@@ -413,7 +413,7 @@ export default function MembershipContent() {
           <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-steps">
             {[
               { n: '01', title: 'Register your interest', body: 'Fill in the form below. Every application is reviewed personally — this is not an automated list.' },
-              { n: '02', title: 'We reach out', body: 'Before memberships open to the public, we contact you directly to confirm your spot and tier.' },
+              { n: '02', title: 'We reach out', body: 'Every application is reviewed personally. We contact you directly to confirm your spot and tier.' },
               { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and receive your welcome kit at your first event of the season.' },
             ].map((s, i) => (
               <motion.div key={i} variants={fadeUp} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
@@ -436,7 +436,7 @@ export default function MembershipContent() {
               Spots are limited.
             </div>
             <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>
-              The 2026 season has a fixed number of members. Leave your details and we&apos;ll reach out before we open to the public.
+              The 2026 season has a fixed number of members. Leave your details and we&apos;ll be in touch personally.
             </p>
           </FadeUp>
 
@@ -445,7 +445,7 @@ export default function MembershipContent() {
               <div style={{ padding: '2rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)', textAlign: 'center' }}>
                 <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem' }}>You&apos;re on the list.</div>
-                <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>We&apos;ll be in touch before memberships open to the public. Check your inbox for a confirmation.</p>
+                <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>We&apos;ll be in touch shortly. Check your inbox for a confirmation.</p>
               </div>
             </FadeUp>
           ) : (
