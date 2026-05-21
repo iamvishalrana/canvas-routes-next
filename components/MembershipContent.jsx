@@ -14,9 +14,9 @@ import { motion } from 'framer-motion'
 // PRICE:   Cormorant clamp(3.5rem,6vw,4.5rem) / 300
 // ────────────────────────────────────────────────────────────────────────────
 
-const LABEL = { fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }
-const BODY  = { fontSize: '13px', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }
-const SMALL = { fontSize: '11px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }
+const LABEL = { fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }
+const BODY  = { fontSize: '14px', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }
+const SMALL = { fontSize: '12px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }
 
 const fadeUp = {
   hidden:  { opacity: 0, y: 32 },
@@ -156,17 +156,17 @@ export default function MembershipContent() {
 
         <motion.div initial="hidden" animate="visible" variants={stagger}
           style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
-          <motion.div variants={fadeUp} style={{ ...LABEL, color: 'rgba(197,168,130,0.6)', marginBottom: '1.75rem' }}>
+          <motion.div variants={fadeUp} style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1.75rem' }}>
             Canvas Routes · Season 2026
           </motion.div>
           <motion.h1 variants={fadeUp}
             style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.8rem,8vw,6.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
             For those who chose<br />their car
-            <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.45)' }}> on purpose.</span>
+            <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.65)' }}> on purpose.</span>
           </motion.h1>
           <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <motion.p variants={fadeUp} style={{ ...BODY, color: 'rgba(245,241,236,0.45)', maxWidth: '340px', margin: '0 auto' }}>
-            The season runs May to November.<br />Two tiers. One community.
+          <motion.p variants={fadeUp} style={{ ...BODY, color: 'rgba(245,241,236,0.72)', maxWidth: '340px', margin: '0 auto' }}>
+            The season runs June to November.<br />Two tiers. One community.
           </motion.p>
         </motion.div>
 
@@ -200,21 +200,21 @@ export default function MembershipContent() {
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.75rem' }}>
               A season of roads<br />you&apos;ll remember.
             </div>
-            <p style={{ ...BODY, color: '#555', marginBottom: '1.1rem' }}>
+            <p style={{ ...BODY, color: '#444', marginBottom: '1.1rem' }}>
               Canvas Routes membership is built around the drive. Not the parking lot. Not the Instagram photo. The act of getting behind the wheel and going somewhere worth going — with people who feel the same way.
             </p>
-            <p style={{ ...BODY, color: '#555' }}>
-              From May to November, members get priority access to every Cars &amp; Coffee, every road trip, and every experience we run out of Montreal. Two tiers, both built to give you more of what brought you here.
+            <p style={{ ...BODY, color: '#444' }}>
+              From June to November, members get priority access to every Cars &amp; Coffee, every road trip, and every experience we run out of Montreal. Two tiers, both built to give you more of what brought you here.
             </p>
           </FadeUp>
 
           <FadeUp delay={0.15} style={{ display: 'flex', flexDirection: 'column', gap: '1px' }} className="mem-about-img">
             <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: 'clamp(240px,30vw,380px)', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(0,0,0,0.07)' }}>
-              {[['Season', 'May — November'], ['Base', 'Montreal, QC'], ['Events', 'C&C + Road trips'], ['Access', 'Priority registration']].map(([k, v]) => (
+              {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'C&C + Road trips'], ['Access', 'Priority registration']].map(([k, v]) => (
                 <div key={k} style={{ background: '#F5F1EC', padding: '0.85rem 1rem' }}>
-                  <div style={{ ...LABEL, color: '#ccc', marginBottom: '0.2rem' }}>{k}</div>
-                  <div style={{ ...SMALL, color: '#444' }}>{v}</div>
+                  <div style={{ ...LABEL, color: '#999', marginBottom: '0.2rem' }}>{k}</div>
+                  <div style={{ ...SMALL, color: '#333' }}>{v}</div>
                 </div>
               ))}
             </div>
@@ -249,24 +249,24 @@ export default function MembershipContent() {
             <FadeUp delay={0.05}>
               <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.09)', height: '100%' }}>
                 <div style={{ padding: '2.25rem 2.25rem 0' }}>
-                  <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.5rem' }}>Tier 1</div>
+                  <div style={{ ...LABEL, color: '#999', marginBottom: '0.5rem' }}>Tier 1</div>
                   <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '2rem', lineHeight: 1.2 }}>
                     Canvas Routes<br />Member
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
                     <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.5rem,5.5vw,4.5rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>$99</span>
-                    <span style={{ ...SMALL, color: '#bbb', paddingBottom: '0.5rem' }}>CAD</span>
+                    <span style={{ ...SMALL, color: '#999', paddingBottom: '0.5rem' }}>CAD</span>
                   </div>
-                  <div style={{ ...SMALL, color: '#bbb', marginBottom: '2rem' }}>per season</div>
+                  <div style={{ ...SMALL, color: '#999', marginBottom: '2rem' }}>per season</div>
                   <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.07)', marginBottom: '1.75rem' }} />
                 </div>
                 <div style={{ padding: '0 2.25rem 2.25rem' }}>
-                  <div style={{ ...LABEL, color: '#ccc', marginBottom: '1.1rem' }}>Includes</div>
+                  <div style={{ ...LABEL, color: '#999', marginBottom: '1.1rem' }}>Includes</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {TIER1.map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem' }}>
                         <CheckIcon />
-                        <span style={{ ...BODY, color: '#444' }}>{item}</span>
+                        <span style={{ ...BODY, color: '#333' }}>{item}</span>
                       </div>
                     ))}
                   </div>
@@ -282,24 +282,24 @@ export default function MembershipContent() {
                   <span style={{ ...LABEL, color: '#0F1E14', fontWeight: '500', letterSpacing: '0.18em' }}>Best Value</span>
                 </div>
                 <div style={{ padding: '2.25rem 2.25rem 0' }}>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', marginBottom: '0.5rem' }}>Tier 2</div>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '0.5rem' }}>Tier 2</div>
                   <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '2rem', lineHeight: 1.2 }}>
                     Canvas Routes<br />Inner Circle
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
                     <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.5rem,5.5vw,4.5rem)', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$249</span>
-                    <span style={{ ...SMALL, color: 'rgba(197,168,130,0.45)', paddingBottom: '0.5rem' }}>CAD</span>
+                    <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.5rem' }}>CAD</span>
                   </div>
-                  <div style={{ ...SMALL, color: 'rgba(245,241,236,0.28)', marginBottom: '2rem' }}>per season</div>
+                  <div style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', marginBottom: '2rem' }}>per season</div>
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.75rem' }} />
                 </div>
                 <div style={{ padding: '0 2.25rem 2.25rem' }}>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.4)', marginBottom: '1.1rem' }}>Everything in Tier 1, plus</div>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '1.1rem' }}>Everything in Tier 1, plus</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {TIER2_EXTRA.map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem' }}>
                         <CheckIcon gold />
-                        <span style={{ ...BODY, color: 'rgba(245,241,236,0.6)' }}>{item}</span>
+                        <span style={{ ...BODY, color: 'rgba(245,241,236,0.82)' }}>{item}</span>
                       </div>
                     ))}
                   </div>
@@ -309,7 +309,7 @@ export default function MembershipContent() {
           </div>
 
           <FadeUp style={{ textAlign: 'center', marginTop: '1.75rem' }}>
-            <span style={{ ...SMALL, color: '#bbb' }}>Season runs May to November.</span>
+            <span style={{ ...SMALL, color: '#888' }}>Season runs June — November. Inner Circle access extends through December.</span>
           </FadeUp>
         </div>
       </section>
@@ -337,12 +337,12 @@ export default function MembershipContent() {
                 style={{ background: p.tier === 2 ? '#111' : '#F5F1EC', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <div style={{ width: '20px', height: '0.5px', background: p.tier === 2 ? 'rgba(197,168,130,0.5)' : '#c5a882' }} />
-                  <span style={{ ...LABEL, fontSize: '8px', letterSpacing: '0.22em', color: p.tier === 2 ? 'rgba(197,168,130,0.5)' : '#bbb', background: p.tier === 2 ? 'rgba(197,168,130,0.08)' : 'rgba(0,0,0,0.04)', border: `0.5px solid ${p.tier === 2 ? 'rgba(197,168,130,0.15)' : 'rgba(0,0,0,0.08)'}`, padding: '2px 7px' }}>
+                  <span style={{ ...LABEL, color: p.tier === 2 ? 'rgba(197,168,130,0.85)' : '#888', background: p.tier === 2 ? 'rgba(197,168,130,0.08)' : 'rgba(0,0,0,0.05)', border: `0.5px solid ${p.tier === 2 ? 'rgba(197,168,130,0.2)' : 'rgba(0,0,0,0.1)'}`, padding: '2px 8px' }}>
                     {p.tier === 2 ? 'Inner Circle' : 'All members'}
                   </span>
                 </div>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.25rem', fontWeight: '300', color: p.tier === 2 ? '#F5F1EC' : '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.3 }}>{p.label}</div>
-                <div style={{ ...BODY, color: p.tier === 2 ? 'rgba(245,241,236,0.42)' : '#888' }}>{p.sub}</div>
+                <div style={{ ...BODY, color: p.tier === 2 ? 'rgba(245,241,236,0.72)' : '#555' }}>{p.sub}</div>
               </motion.div>
             ))}
           </StaggerGrid>
@@ -357,12 +357,12 @@ export default function MembershipContent() {
           <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.1 }}>
             Be first to know.
           </div>
-          <p style={{ ...BODY, color: 'rgba(245,241,236,0.38)', marginBottom: '2.25rem' }}>
+          <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)', marginBottom: '2.25rem' }}>
             Leave your email and we&apos;ll reach out the moment memberships open.
           </p>
           {status === 'success' ? (
             <div style={{ padding: '1.25rem 1.5rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)' }}>
-              <span style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>You&apos;re on the list. We&apos;ll be in touch before memberships open.</span>
+              <span style={{ ...BODY, color: 'rgba(245,241,236,0.82)' }}>You&apos;re on the list. We&apos;ll be in touch before memberships open.</span>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
