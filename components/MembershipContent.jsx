@@ -53,7 +53,7 @@ const TIER1 = [
   'Access to Canvas Routes road trips',
   '10% discount on your next road trip when referring a member',
   '15% discount at one Canvas Routes partner',
-  'Canvas Routes car perfume — yours at every Canvas Routes event, every 2 months throughout the season',
+  'Canvas Routes car perfume — every 2 months throughout the season, picked up at any Canvas Routes event',
   'Canvas Routes full grain leather keychain',
 ]
 
@@ -69,7 +69,7 @@ const TIER2_EXTRA = [
 
 const PERKS = [
   { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merch. Part of your welcome kit on day one.', tier: 1 },
-  { label: 'Car Perfume', sub: 'Picked up at any Canvas Routes event, refreshed every 2 months throughout the season.', tier: 1 },
+  { label: 'Car Perfume', sub: 'Refreshed every 2 months throughout the season, picked up at any Canvas Routes event.', tier: 1 },
   { label: 'Cap & T-Shirt', sub: 'Canvas Routes merch cap and t-shirt included in your Inner Circle welcome kit.', tier: 2 },
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes route.', tier: 2 },
 ]
