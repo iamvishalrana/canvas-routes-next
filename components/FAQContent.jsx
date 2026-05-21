@@ -10,7 +10,7 @@ const SECTIONS = [
     items: [
       {
         q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a Montreal-based luxury automotive community built around curated car meets, scenic road trips and convoy adventures across Quebec, Ontario, Vermont, Maine, New York and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
+        a: 'Canvas Routes is a luxury automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
       },
       {
         q: 'Who is Canvas Routes for?',
@@ -116,7 +116,7 @@ const SECTIONS = [
       },
       {
         q: 'Are road trips members only?',
-        a: 'Currently road trips are open to all enthusiasts. Once Canvas Routes memberships launch, future road trips will be members only with members receiving priority registration and preferred pricing.',
+        a: 'Yes — from June 2026, all Canvas Routes road trips are members only. The Into the Laurentians road trip on May 31 is the last open registration. All future road trips require an active Canvas Routes membership. Members receive priority registration and preferred pricing for every road trip on the calendar.',
       },
       {
         q: 'How do I register and pay?',
@@ -138,7 +138,7 @@ const SECTIONS = [
       },
       {
         q: 'How far do your road trips go?',
-        a: 'We are based in Montreal but our routes extend well beyond the city. We are planning drives across Quebec, into Ontario, and south into Vermont, Maine and New York — with further destinations on the horizon as the community grows. The road has no limits and neither do we.',
+        a: 'Our routes span North America — scenic backroads through the northeast, longer expeditions further afield, and overnight adventures for those who want to go further. The road has no limits and neither do we.',
       },
     ],
   },
@@ -147,7 +147,7 @@ const SECTIONS = [
     items: [
       {
         q: 'When do memberships launch?',
-        a: 'Canvas Routes memberships are launching soon. Register at canvasroutes.com to be among the first notified when they open.',
+        a: 'Canvas Routes memberships launch June 2026. Register your interest at canvasroutes.com/membership to secure early access before we open to the public.',
         cta: true,
       },
       {
@@ -156,7 +156,7 @@ const SECTIONS = [
       },
       {
         q: 'How much does membership cost?',
-        a: 'The Canvas Routes season runs May to November. Full pricing and details will be announced at membership launch.',
+        a: 'Routes Member is $99 CAD per season (June — November). Inner Circle is $249 CAD per season, with access extending through December. Full details at canvasroutes.com/membership.',
       },
     ],
   },
