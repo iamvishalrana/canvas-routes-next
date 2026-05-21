@@ -2199,12 +2199,84 @@ const TAB_ICONS = {
   ),
 }
 
+function BirthdayCalendar({ people, onPersonClick }) {
+  const now = new Date()
+  const [viewMonth, setViewMonth] = useState(now.getMonth())
+  const [viewYear, setViewYear]   = useState(now.getFullYear())
+
+  const birthdayMap = {}
+  people.forEach(p => {
+    if ((p.dob_month - 1) === viewMonth) {
+      const d = p.dob_day
+      if (!birthdayMap[d]) birthdayMap[d] = []
+      birthdayMap[d].push(p)
+    }
+  })
+
+  const firstDay    = new Date(viewYear, viewMonth, 1).getDay()
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+  const todayDate   = new Date(); todayDate.setHours(0,0,0,0)
+  const isThisMonth = todayDate.getMonth() === viewMonth && todayDate.getFullYear() === viewYear
+  const todayDay    = todayDate.getDate()
+
+  const cells = []
+  for (let i = 0; i < firstDay; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  function prev() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
+    else setViewMonth(m => m - 1)
+  }
+  function next() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
+    else setViewMonth(m => m + 1)
+  }
+
+  return (
+    <div style={{ marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+        <button onClick={prev} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', fontSize: '14px', padding: '0 4px', lineHeight: 1 }}>‹</button>
+        <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>{MONTHS[viewMonth].slice(0,3)} {viewYear}</span>
+        <button onClick={next} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', fontSize: '14px', padding: '0 4px', lineHeight: 1 }}>›</button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: '3px' }}>
+        {['S','M','T','W','T','F','S'].map((d, i) => (
+          <div key={i} style={{ textAlign: 'center', fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', rowGap: '2px' }}>
+        {cells.map((d, i) => {
+          if (!d) return <div key={i} />
+          const hasBday  = !!birthdayMap[d]
+          const isToday  = isThisMonth && d === todayDay
+          return (
+            <div key={i} title={hasBday ? birthdayMap[d].map(p => p.name.split(' ')[0]).join(', ') : undefined}
+              onClick={hasBday ? () => birthdayMap[d].forEach(p => onPersonClick(p)) : undefined}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: hasBday ? 'pointer' : 'default' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '20px', height: '20px', borderRadius: '50%', fontSize: '9px',
+                fontFamily: 'var(--font-inter),sans-serif',
+                color:      hasBday ? '#0F1E14' : isToday ? '#c5a882' : 'rgba(255,255,255,0.4)',
+                background: hasBday ? '#c5a882'  : isToday ? 'rgba(197,168,130,0.15)' : 'transparent',
+                fontWeight: hasBday ? '600' : '400',
+                border:     isToday && !hasBday ? '0.5px solid rgba(197,168,130,0.4)' : 'none',
+              }}>{d}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [tab, setTab] = useState('Dashboard')
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unseenAppsCount, setUnseenAppsCount] = useState(0)
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([])
+  const [allPeopleWithDob, setAllPeopleWithDob] = useState([])
   const [tabSearch, setTabSearch] = useState('')
 
   useEffect(() => {
@@ -2237,6 +2309,7 @@ export default function AdminPage() {
           })
         const today = new Date(); today.setHours(0, 0, 0, 0)
         const in14 = new Date(today); in14.setDate(in14.getDate() + 14)
+        setAllPeopleWithDob(all)
         const upcoming = all
           .map(p => {
             const bday = new Date(today.getFullYear(), p.dob_month - 1, p.dob_day)
@@ -2297,7 +2370,9 @@ export default function AdminPage() {
       </nav>
 
       <div style={{ padding: '1.1rem 1.5rem', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '0.75rem' }}>Upcoming Birthdays</div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '0.75rem' }}>Birthdays</div>
+        <BirthdayCalendar people={allPeopleWithDob} onPersonClick={jumpToPerson} />
+        <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginBottom: '0.5rem', marginTop: '0.75rem' }}>Upcoming</div>
         {upcomingBirthdays.length === 0 ? (
           <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>None in the next 14 days</div>
         ) : upcomingBirthdays.map(m => {
