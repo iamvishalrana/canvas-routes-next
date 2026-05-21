@@ -317,7 +317,7 @@ export default function MembershipContent() {
       {/* ── PHOTO BREAK 2 ───────────────────────────────────────────── */}
       <motion.div variants={fadeIn} initial="hidden" whileInView="visible" viewport={{ once: true }}
         style={{ position: 'relative', height: 'clamp(200px,28vw,360px)', overflow: 'hidden' }}>
-        <img src="/events/may9-cars2.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 18%', display: 'block' }} />
+        <img src="/events/may9-cars2.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.4)' }} />
       </motion.div>
 
