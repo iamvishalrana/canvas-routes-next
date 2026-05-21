@@ -209,9 +209,9 @@ export default function MembershipContent() {
           </FadeUp>
 
           <FadeUp delay={0.15} style={{ display: 'flex', flexDirection: 'column', gap: '1px' }} className="mem-about-img">
-            <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: 'clamp(240px,30vw,380px)', objectFit: 'cover', objectPosition: 'center 50%', display: 'block' }} />
+            <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: 'clamp(240px,30vw,380px)', objectFit: 'cover', objectPosition: 'center 70%', display: 'block' }} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(0,0,0,0.07)' }}>
-              {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'C&C + Road trips'], ['Access', 'Priority registration']].map(([k, v]) => (
+              {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'Cars & Coffee · Road Trips'], ['Access', 'Priority registration']].map(([k, v]) => (
                 <div key={k} style={{ background: '#F5F1EC', padding: '0.85rem 1rem' }}>
                   <div style={{ ...LABEL, color: '#999', marginBottom: '0.2rem' }}>{k}</div>
                   <div style={{ ...SMALL, color: '#333' }}>{v}</div>
