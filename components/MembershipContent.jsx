@@ -412,9 +412,9 @@ export default function MembershipContent() {
           </FadeUp>
           <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-steps">
             {[
-              { n: '01', title: 'Register your interest', body: 'Fill in the form below. Every application is reviewed personally — this is not an automated list.' },
+              { n: '01', title: 'Register your interest', body: 'Fill in the form below. Tell us about yourself, your car, and the tier you\'re interested in.' },
               { n: '02', title: 'We reach out', body: 'Every application is reviewed personally. We contact you directly to confirm your spot and tier.' },
-              { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and receive your welcome kit at your first event of the season.' },
+              { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and receive your welcome kit at the first Canvas Routes event you attend after your membership is confirmed.' },
             ].map((s, i) => (
               <motion.div key={i} variants={fadeUp} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.35)', lineHeight: 1, marginBottom: '1.25rem' }}>{s.n}</div>
@@ -492,10 +492,17 @@ export default function MembershipContent() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
                   <div>
                     <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year</div>
-                    <input type="text" value={form.year} placeholder="2019" maxLength={4} autoComplete="off"
-                      onChange={e => set('year', e.target.value.replace(/\D/g,'').slice(0,4))}
-                      onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
-                      style={inp('year')} />
+                    <div style={{ position: 'relative' }}>
+                      <select value={form.year} onChange={e => set('year', e.target.value)}
+                        onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
+                        style={{ ...inp('year'), paddingRight: '2rem', cursor: 'pointer' }}>
+                        <option value="">Year</option>
+                        {Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i).map(y => (
+                          <option key={y} value={String(y)}>{y}</option>
+                        ))}
+                      </select>
+                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
                   </div>
                   <div>
                     <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Make</div>
