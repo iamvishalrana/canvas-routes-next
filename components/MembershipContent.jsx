@@ -14,6 +14,9 @@ import { motion } from 'framer-motion'
 // PRICE:   Cormorant clamp(3.5rem,6vw,4.5rem) / 300
 // ────────────────────────────────────────────────────────────────────────────
 
+const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
+const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
+
 const LABEL = { fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }
 const BODY  = { fontSize: '14px', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }
 const SMALL = { fontSize: '12px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }
@@ -60,7 +63,7 @@ const TIER1 = [
 const TIER2_EXTRA = [
   'Exclusive 48hr priority access to all Canvas Routes events before public registration opens',
   '25% referral discount when referring a Tier 2 member',
-  'Professional car photoshoot on a Canvas Routes route',
+  'Professional car photoshoot on a Canvas Routes road trip',
   '$70 one-time discount on one of the next two road trips',
   'Discounts at all Canvas Routes partners',
   'Canvas Routes merchandise baseball cap',
@@ -71,7 +74,7 @@ const PERKS = [
   { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merchandise. Part of your welcome kit on day one.', tier: 1 },
   { label: 'Car Perfume', sub: 'Refreshed every 2 months throughout the season, picked up at any Canvas Routes event.', tier: 1 },
   { label: 'Cap & T-Shirt', sub: 'Canvas Routes merchandise cap and t-shirt included in your Inner Circle welcome kit.', tier: 2 },
-  { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes route.', tier: 2 },
+  { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes road trip.', tier: 2 },
 ]
 
 function CheckIcon({ gold }) {
@@ -85,26 +88,67 @@ function CheckIcon({ gold }) {
   )
 }
 
+const INIT_FORM = { name:'', email:'', phone:'', year:'', carMake:'', carModel:'', tier:'', source:'', more:'' }
+
 export default function MembershipContent() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [email, setEmail]       = useState('')
-  const [status, setStatus]     = useState(null)
-  const [error, setError]       = useState(null)
-  const honeypotRef             = useRef(null)
+  const [menuOpen, setMenuOpen]         = useState(false)
+  const [form, setForm]                 = useState(INIT_FORM)
+  const [errors, setErrors]             = useState({})
+  const [phoneOptOut, setPhoneOptOut]   = useState(false)
+  const [focusedField, setFocusedField] = useState(null)
+  const [status, setStatus]             = useState(null)
+  const [submitError, setSubmitError]   = useState(null)
+  const honeypotRef                     = useRef(null)
+
+  function set(field, val) {
+    setForm(f => ({ ...f, [field]: val }))
+    if (errors[field]) setErrors(e => ({ ...e, [field]: false }))
+    if (submitError) setSubmitError(null)
+  }
+
+  function formatPhone(v) {
+    const d = v.replace(/\D/g,'').slice(0,10)
+    if (d.length <= 3) return d
+    if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`
+    return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+  }
+
+  function inp(field) {
+    const base = { width:'100%', padding:'0.85rem 1rem', fontSize:'13px', fontFamily:'var(--font-inter),sans-serif', color:'#F5F1EC', outline:'none', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border 0.2s, background 0.2s', boxSizing:'border-box' }
+    if (errors[field]) return { ...base, border:'0.5px solid rgba(208,96,112,0.7)', background:'rgba(208,96,112,0.06)' }
+    if (form[field])   return { ...base, border:'0.5px solid rgba(197,168,130,0.45)', background:'rgba(197,168,130,0.07)' }
+    if (focusedField === field) return { ...base, border:'0.5px solid rgba(197,168,130,0.5)', background:'rgba(255,255,255,0.06)' }
+    return { ...base, border:'0.5px solid rgba(197,168,130,0.18)', background:'rgba(255,255,255,0.04)' }
+  }
+
+  function validate() {
+    const e = {}
+    if (!form.name.trim() || form.name.trim().length < 2) e.name = true
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) e.phone = true
+    if (!form.year.trim()) e.year = true
+    if (!form.carMake) e.carMake = true
+    if (!form.tier) e.tier = true
+    if (!form.source) e.source = true
+    setErrors(e)
+    return e
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (status === 'loading') return
-    setStatus('loading'); setError(null)
+    const errs = validate()
+    if (Object.keys(errs).length) return
+    setStatus('loading'); setSubmitError(null)
     try {
-      const res  = await fetch('/api/membership-waitlist', {
+      const res = await fetch('/api/membership-waitlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, phone: phoneOptOut ? '' : form.phone, _hp: honeypotRef.current?.value || '' }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) setStatus('success')
-      else { setError(data.error || 'Something went wrong. Please try again.'); setStatus('error') }
-    } catch { setError('Something went wrong. Please try again.'); setStatus('error') }
+      else { setSubmitError(data.error || 'Something went wrong. Please try again.'); setStatus('error') }
+    } catch { setSubmitError('Something went wrong. Please try again.'); setStatus('error') }
   }
 
   return (
@@ -260,7 +304,11 @@ export default function MembershipContent() {
                     <span style={{ ...SMALL, color: '#999', paddingBottom: '0.5rem' }}>CAD</span>
                   </div>
                   <div style={{ ...SMALL, color: '#999', marginBottom: '2rem' }}>per season</div>
-                  <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.07)', marginBottom: '1.75rem' }} />
+                  <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.07)', marginBottom: '1.25rem' }} />
+                  <div style={{ marginBottom: '1.75rem' }}>
+                    <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.35rem' }}>Why choose this</div>
+                    <div style={{ ...BODY, color: '#444' }}>For drivers who want to show up and drive.</div>
+                  </div>
                 </div>
                 <div style={{ padding: '0 2.25rem 2.25rem' }}>
                   <div style={{ ...LABEL, color: '#999', marginBottom: '1.1rem' }}>Includes</div>
@@ -291,7 +339,11 @@ export default function MembershipContent() {
                     <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.5rem' }}>CAD</span>
                   </div>
                   <div style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', marginBottom: '2rem' }}>per season</div>
-                  <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.75rem' }} />
+                  <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
+                  <div style={{ marginBottom: '1.75rem' }}>
+                    <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>Why choose this</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>For drivers who want to be first for everything and leave with something to show for it.</div>
+                  </div>
                 </div>
                 <div style={{ padding: '0 2.25rem 2.25rem' }}>
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '1.1rem' }}>Everything in Tier 1, plus</div>
@@ -349,39 +401,148 @@ export default function MembershipContent() {
         </div>
       </section>
 
-      {/* ── WAITLIST ────────────────────────────────────────────────── */}
-      <section style={{ background: '#0F1E14', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)', textAlign: 'center', position: 'relative' }}>
+      {/* ── REGISTRATION ────────────────────────────────────────────── */}
+      <section style={{ background: '#0F1E14', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)' }} />
-        <FadeUp style={{ maxWidth: '440px', margin: '0 auto' }}>
-          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1rem' }}>Founding access</div>
-          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.1 }}>
-            Spots are limited.
-          </div>
-          <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)', marginBottom: '2.25rem' }}>
-            The 2026 season has a fixed number of members. Leave your email and we&apos;ll reach out before we open to the public.
-          </p>
-          {status === 'success' ? (
-            <div style={{ padding: '1.25rem 1.5rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)' }}>
-              <span style={{ ...BODY, color: 'rgba(245,241,236,0.82)' }}>You&apos;re on the list. We&apos;ll be in touch before memberships open.</span>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <FadeUp style={{ marginBottom: 'clamp(2.5rem,4vw,3.5rem)' }}>
+            <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1rem' }}>Founding access</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.1 }}>
+              Spots are limited.
             </div>
+            <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>
+              The 2026 season has a fixed number of members. Leave your details and we&apos;ll reach out before we open to the public.
+            </p>
+          </FadeUp>
+
+          {status === 'success' ? (
+            <FadeUp>
+              <div style={{ padding: '2rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)', textAlign: 'center' }}>
+                <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem' }}>You&apos;re on the list.</div>
+                <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>We&apos;ll be in touch before memberships open to the public. Check your inbox for a confirmation.</p>
+              </div>
+            </FadeUp>
           ) : (
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <input ref={honeypotRef} type="text" name="_hp" tabIndex={-1} autoComplete="off"
                 style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0 }} />
-              <div style={{ display: 'flex', maxWidth: '420px', margin: '0 auto' }}>
-                <input type="email" placeholder="your@email.com" value={email} required
-                  onChange={e => { setEmail(e.target.value); if (error) setError(null) }}
-                  style={{ flex: 1, padding: '0.9rem 1rem', background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(197,168,130,0.2)', borderRight: 'none', color: '#F5F1EC', ...BODY, outline: 'none' }}
-                />
-                <button type="submit" disabled={status === 'loading'}
-                  style={{ padding: '0.9rem 1.5rem', background: '#c5a882', border: 'none', color: '#0F1E14', ...LABEL, letterSpacing: '0.15em', fontWeight: '500', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.6 : 1, whiteSpace: 'nowrap' }}>
-                  {status === 'loading' ? 'Sending…' : 'Notify me'}
-                </button>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+
+                {/* Name */}
+                <div>
+                  <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Full name</div>
+                  <input type="text" value={form.name} placeholder="First and last name" autoComplete="name"
+                    onChange={e => set('name', e.target.value)}
+                    onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
+                    style={inp('name')} />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Email</div>
+                  <input type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
+                    onChange={e => set('email', e.target.value)}
+                    onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
+                    style={inp('email')} />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', marginTop: '1rem' }}>
+                    <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)' }}>Phone</div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={phoneOptOut} onChange={e => { setPhoneOptOut(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, phone: false })) }} style={{ accentColor: '#c5a882', width: '12px', height: '12px' }} />
+                      <span style={{ ...SMALL, color: 'rgba(245,241,236,0.35)', fontSize: '11px' }}>Prefer not to share</span>
+                    </label>
+                  </div>
+                  <input type="tel" value={form.phone} placeholder="(514) 000-0000" disabled={phoneOptOut} autoComplete="tel"
+                    onChange={e => set('phone', formatPhone(e.target.value))}
+                    onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
+                    style={{ ...inp('phone'), opacity: phoneOptOut ? 0.3 : 1, cursor: phoneOptOut ? 'not-allowed' : 'text' }} />
+                </div>
+
+                {/* Year + Make */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
+                  <div>
+                    <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year</div>
+                    <input type="text" value={form.year} placeholder="2019" maxLength={4} autoComplete="off"
+                      onChange={e => set('year', e.target.value.replace(/\D/g,'').slice(0,4))}
+                      onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
+                      style={inp('year')} />
+                  </div>
+                  <div>
+                    <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Make</div>
+                    <div style={{ position: 'relative' }}>
+                      <select value={form.carMake} onChange={e => set('carMake', e.target.value)}
+                        onFocus={() => setFocusedField('carMake')} onBlur={() => setFocusedField(null)}
+                        style={{ ...inp('carMake'), paddingRight: '2rem' }}>
+                        <option value="">Select make</option>
+                        {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      <svg style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Model */}
+                <div>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Model <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>optional</span></div>
+                  <input type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
+                    onChange={e => set('carModel', e.target.value)}
+                    onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)}
+                    style={inp('carModel')} />
+                </div>
+
+                {/* Tier */}
+                <div style={{ marginTop: '1rem' }}>
+                  <div style={{ ...LABEL, color: errors.tier ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.75rem' }}>Membership tier</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: errors.tier ? 'rgba(208,96,112,0.3)' : 'rgba(197,168,130,0.1)' }}>
+                    {[['Routes Member', '$99'], ['Inner Circle', '$249']].map(([t, price]) => (
+                      <button key={t} type="button" onClick={() => set('tier', t)}
+                        style={{ padding: '1.1rem 1rem', background: form.tier === t ? 'rgba(197,168,130,0.15)' : 'rgba(255,255,255,0.03)', border: form.tier === t ? '0.5px solid rgba(197,168,130,0.4)' : '0.5px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                        <div style={{ ...SMALL, color: form.tier === t ? '#c5a882' : 'rgba(245,241,236,0.5)', marginBottom: '0.2rem' }}>{t}</div>
+                        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.3rem', fontWeight: '300', color: form.tier === t ? '#F5F1EC' : 'rgba(245,241,236,0.3)' }}>{price} <span style={{ fontSize: '0.7rem', color: 'rgba(245,241,236,0.3)' }}>CAD / season</span></div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Source */}
+                <div>
+                  <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>How did you hear about us</div>
+                  <div style={{ position: 'relative' }}>
+                    <select value={form.source} onChange={e => set('source', e.target.value)}
+                      onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
+                      style={{ ...inp('source'), paddingRight: '2rem' }}>
+                      <option value="">Select</option>
+                      {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <svg style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+
+                {/* More */}
+                <div>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Anything else <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>optional</span></div>
+                  <textarea value={form.more} rows={3} placeholder="Questions, thoughts, or anything you'd like us to know."
+                    onChange={e => set('more', e.target.value)}
+                    onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)}
+                    style={{ ...inp('more'), resize: 'vertical', minHeight: '80px' }} />
+                </div>
+
               </div>
-              {error && <div style={{ ...SMALL, color: '#d06070', marginTop: '0.75rem' }}>{error}</div>}
+
+              {submitError && <div style={{ ...SMALL, color: '#d06070', marginTop: '1rem' }}>{submitError}</div>}
+
+              <button type="submit" disabled={status === 'loading'}
+                style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', ...LABEL, letterSpacing: '0.2em', fontWeight: '600', fontSize: '10px', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+                {status === 'loading' ? 'Submitting…' : 'Register interest'}
+              </button>
             </form>
           )}
-        </FadeUp>
+        </div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.15),transparent)' }} />
       </section>
 
