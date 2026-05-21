@@ -65,7 +65,7 @@ const TIER2_EXTRA = [
   '25% referral discount when referring a Tier 2 member',
   'Professional car photoshoot on a Canvas Routes road trip',
   '$70 off one of the next two road trips — your membership starts paying for itself from day one',
-  'We are onboarding partners across Montreal — Inner Circle members will receive exclusive discounts from every partner we bring on',
+  'We are actively onboarding partners — Inner Circle members will receive exclusive discounts from every partner we bring on board',
   'Canvas Routes merchandise baseball cap',
   'Canvas Routes merchandise t-shirt',
 ]
