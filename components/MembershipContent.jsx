@@ -248,7 +248,7 @@ export default function MembershipContent() {
               Canvas Routes membership is built around the drive. Not the parking lot. Not the Instagram photo. The act of getting behind the wheel and going somewhere worth going — with people who feel the same way.
             </p>
             <p style={{ ...BODY, color: '#444' }}>
-              From June to November, members get priority access to every Cars &amp; Coffee, every road trip, and every experience we run out of Montreal. Two tiers, both built to give you more of what brought you here.
+              From June to November, members get priority access to every Cars &amp; Coffee, every road trip, and every experience on the Canvas Routes calendar. Two tiers, both built to give you more of what brought you here.
             </p>
           </FadeUp>
 
@@ -257,7 +257,7 @@ export default function MembershipContent() {
               <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: '117%', objectFit: 'cover', objectPosition: 'center top', display: 'block', marginTop: '-7%' }} />
             </div>
             <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderTop: 'none' }}>
-              {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'Cars & Coffee · Cruises · Road Trips']].map(([k, v], i, arr) => (
+              {[['Season', 'June — November'], ['Membership', 'Limited spots per season'], ['Events', 'Cars & Coffee · Cruises · Road Trips']].map(([k, v], i, arr) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', padding: '0.9rem 1.25rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                   <span style={{ ...LABEL, color: '#c5a882', flexShrink: 0 }}>{k}</span>
                   <span style={{ ...SMALL, color: '#1a1a1a', textAlign: 'right' }}>{v}</span>
