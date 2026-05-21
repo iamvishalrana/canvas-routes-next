@@ -2252,7 +2252,7 @@ function BirthdayCalendar({ people, onPersonClick }) {
           return (
             <div key={i} title={hasBday ? birthdayMap[d].map(p => p.name.split(' ')[0]).join(', ') : undefined}
               onClick={hasBday ? () => birthdayMap[d].forEach(p => onPersonClick(p)) : undefined}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: hasBday ? 'pointer' : 'default' }}>
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: hasBday ? 'pointer' : 'default', gap: '2px' }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 width: '20px', height: '20px', borderRadius: '50%', fontSize: '9px',
@@ -2260,8 +2260,9 @@ function BirthdayCalendar({ people, onPersonClick }) {
                 color:      hasBday ? '#0F1E14' : isToday ? '#c5a882' : 'rgba(255,255,255,0.4)',
                 background: hasBday ? '#c5a882'  : isToday ? 'rgba(197,168,130,0.15)' : 'transparent',
                 fontWeight: hasBday ? '600' : '400',
-                border:     isToday && !hasBday ? '0.5px solid rgba(197,168,130,0.4)' : 'none',
+                border:     isToday && !hasBday ? '1px solid #c5a882' : 'none',
               }}>{d}</span>
+              {isToday && <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#c5a882', flexShrink: 0 }} />}
             </div>
           )
         })}
