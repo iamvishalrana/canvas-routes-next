@@ -193,7 +193,7 @@ export default function MembershipContent() {
 
       {/* ── ABOUT ───────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(5rem,8vw,8rem) clamp(1.5rem,5vw,5rem)' }}>
-        <div className="mem-about" style={{ maxWidth: '1040px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(3rem,6vw,7rem)', alignItems: 'center' }}>
+        <div className="mem-about" style={{ maxWidth: '1040px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(3rem,6vw,7rem)', alignItems: 'start' }}>
 
           <FadeUp>
             <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.5rem' }}>What membership means</div>
@@ -210,7 +210,7 @@ export default function MembershipContent() {
 
           <FadeUp delay={0.15} style={{ display: 'flex', flexDirection: 'column' }} className="mem-about-img">
             <div style={{ overflow: 'hidden', height: 'clamp(240px,30vw,380px)' }}>
-              <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: '112%', objectFit: 'cover', objectPosition: 'center bottom', display: 'block', marginTop: '-12%' }} />
+              <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: '117%', objectFit: 'cover', objectPosition: 'center top', display: 'block', marginTop: '-7%' }} />
             </div>
             <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderTop: 'none' }}>
               {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'Cars & Coffee · Cruises · Road Trips'], ['Access', 'Priority registration']].map(([k, v], i, arr) => (
