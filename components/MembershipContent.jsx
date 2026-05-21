@@ -53,7 +53,7 @@ const TIER1 = [
   'Access to Canvas Routes road trips',
   '10% discount on your next road trip when referring a member',
   '15% discount at one Canvas Routes partner',
-  'Canvas Routes car perfume — every 2 months throughout the season, picked up at any Canvas Routes event',
+  'Canvas Routes car perfume — refreshed every 2 months, picked up at any event throughout the season',
   'Canvas Routes full grain leather keychain',
 ]
 
@@ -63,14 +63,14 @@ const TIER2_EXTRA = [
   'Professional car photoshoot on a Canvas Routes route',
   '$70 one-time discount on one of the next two road trips',
   'Discounts at all Canvas Routes partners',
-  'Canvas Routes merch baseball cap',
-  'Canvas Routes merch t-shirt',
+  'Canvas Routes merchandise baseball cap',
+  'Canvas Routes merchandise t-shirt',
 ]
 
 const PERKS = [
-  { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merch. Part of your welcome kit on day one.', tier: 1 },
+  { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merchandise. Part of your welcome kit on day one.', tier: 1 },
   { label: 'Car Perfume', sub: 'Refreshed every 2 months throughout the season, picked up at any Canvas Routes event.', tier: 1 },
-  { label: 'Cap & T-Shirt', sub: 'Canvas Routes merch cap and t-shirt included in your Inner Circle welcome kit.', tier: 2 },
+  { label: 'Cap & T-Shirt', sub: 'Canvas Routes merchandise cap and t-shirt included in your Inner Circle welcome kit.', tier: 2 },
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes route.', tier: 2 },
 ]
 
@@ -213,7 +213,7 @@ export default function MembershipContent() {
               <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: '117%', objectFit: 'cover', objectPosition: 'center top', display: 'block', marginTop: '-7%' }} />
             </div>
             <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderTop: 'none' }}>
-              {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'Cars & Coffee · Cruises · Road Trips'], ['Access', 'Priority registration']].map(([k, v], i, arr) => (
+              {[['Season', 'June — November'], ['Base', 'Montreal, QC'], ['Events', 'Cars & Coffee · Cruises · Road Trips']].map(([k, v], i, arr) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', padding: '0.9rem 1.25rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                   <span style={{ ...LABEL, color: '#c5a882', flexShrink: 0 }}>{k}</span>
                   <span style={{ ...SMALL, color: '#1a1a1a', textAlign: 'right' }}>{v}</span>
