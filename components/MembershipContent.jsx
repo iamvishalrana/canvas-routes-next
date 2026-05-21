@@ -67,9 +67,11 @@ const TIER2_EXTRA = [
   'Canvas Routes branded t-shirt',
 ]
 
-const PERKS = [
+const PERKS_T1 = [
   { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes branded. Part of your welcome kit on day one.' },
   { label: 'Car Perfume', sub: 'Picked up at any Canvas Routes event, refreshed every 2 months throughout the season.' },
+]
+const PERKS_T2 = [
   { label: 'Cap & T-Shirt', sub: 'Inner Circle members receive a branded cap and t-shirt. Yours to wear wherever the road takes you.' },
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes route. Inner Circle exclusive.' },
 ]
@@ -317,7 +319,7 @@ export default function MembershipContent() {
       {/* ── PHOTO BREAK 2 ───────────────────────────────────────────── */}
       <motion.div variants={fadeIn} initial="hidden" whileInView="visible" viewport={{ once: true }}
         style={{ position: 'relative', height: 'clamp(200px,28vw,360px)', overflow: 'hidden' }}>
-        <img src="/events/may9-detail.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 50%', display: 'block' }} />
+        <img src="/events/may9-cars2.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 50%', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.4)' }} />
       </motion.div>
 
@@ -330,13 +332,36 @@ export default function MembershipContent() {
               Membership you can hold.
             </div>
           </FadeUp>
-          <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-perks">
-            {PERKS.map((p, i) => (
+
+          {/* Tier 1 perks */}
+          <FadeUp style={{ marginBottom: '0.4rem' }}>
+            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.85rem' }}>All members</div>
+          </FadeUp>
+          <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)', marginBottom: '2rem' }} className="mem-perks">
+            {PERKS_T1.map((p, i) => (
               <motion.div key={i} variants={fadeUp}
                 style={{ background: '#F5F1EC', padding: '2rem 1.5rem' }}>
                 <div style={{ width: '24px', height: '0.5px', background: '#c5a882', marginBottom: '1.5rem' }} />
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.25rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.3 }}>{p.label}</div>
                 <div style={{ ...BODY, color: '#888' }}>{p.sub}</div>
+              </motion.div>
+            ))}
+          </StaggerGrid>
+
+          {/* Tier 2 perks */}
+          <FadeUp style={{ marginBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)' }}>Inner Circle only</div>
+              <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.2)' }} />
+            </div>
+          </FadeUp>
+          <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '1px', background: 'rgba(197,168,130,0.15)' }} className="mem-perks">
+            {PERKS_T2.map((p, i) => (
+              <motion.div key={i} variants={fadeUp}
+                style={{ background: '#1a1a1a', padding: '2rem 1.5rem' }}>
+                <div style={{ width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.4)', marginBottom: '1.5rem' }} />
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.25rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.3 }}>{p.label}</div>
+                <div style={{ ...BODY, color: 'rgba(245,241,236,0.45)' }}>{p.sub}</div>
               </motion.div>
             ))}
           </StaggerGrid>
