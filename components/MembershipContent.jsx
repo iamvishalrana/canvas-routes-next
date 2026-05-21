@@ -52,6 +52,7 @@ function StaggerGrid({ children, style }) {
 }
 
 const TIER1 = [
+  'Access to the Canvas Routes members community — a private group of drivers who chose their car with intention',
   'Priority access to all Cars & Coffee events',
   'Access to Canvas Routes road trips',
   '10% discount on your next road trip when referring a member',
@@ -71,9 +72,9 @@ const TIER2_EXTRA = [
 ]
 
 const PERKS = [
-  { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merchandise. Part of your welcome kit on day one.', tier: 1 },
+  { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merchandise. Handed to you at your first Canvas Routes event of the season.', tier: 1 },
   { label: 'Car Perfume', sub: 'Refreshed every 2 months throughout the season, picked up at any Canvas Routes event.', tier: 1 },
-  { label: 'Cap & T-Shirt', sub: 'Canvas Routes merchandise cap and t-shirt included in your Inner Circle welcome kit.', tier: 2 },
+  { label: 'Cap & T-Shirt', sub: 'Canvas Routes merchandise cap and t-shirt — handed to you at your first event of the season.', tier: 2 },
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes road trip.', tier: 2 },
 ]
 
@@ -159,6 +160,7 @@ export default function MembershipContent() {
           .mem-perks  { grid-template-columns: 1fr 1fr !important; }
           .mem-about  { grid-template-columns: 1fr !important; }
           .mem-about-img { display: none !important; }
+          .mem-steps  { grid-template-columns: 1fr !important; }
         }
         @media(max-width:480px){
           .mem-perks  { grid-template-columns: 1fr !important; }
@@ -210,7 +212,7 @@ export default function MembershipContent() {
           </motion.h1>
           <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
           <motion.p variants={fadeUp} style={{ ...BODY, color: 'rgba(245,241,236,0.72)', maxWidth: '340px', margin: '0 auto' }}>
-            The season runs June to November.<br />Two tiers. One community.
+            Six months of driving with purpose.<br />Two ways to be part of it.
           </motion.p>
         </motion.div>
 
@@ -395,6 +397,29 @@ export default function MembershipContent() {
                 </div>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.25rem', fontWeight: '300', color: p.tier === 2 ? '#F5F1EC' : '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.3 }}>{p.label}</div>
                 <div style={{ ...BODY, color: p.tier === 2 ? 'rgba(245,241,236,0.72)' : '#555' }}>{p.sub}</div>
+              </motion.div>
+            ))}
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* ── WHAT HAPPENS NEXT ───────────────────────────────────────── */}
+      <section style={{ background: '#EDE8E1', padding: 'clamp(4rem,6vw,6rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
+          <FadeUp style={{ marginBottom: 'clamp(2.5rem,4vw,4rem)' }}>
+            <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.75rem' }}>After you register</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a' }}>What happens next.</div>
+          </FadeUp>
+          <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-steps">
+            {[
+              { n: '01', title: 'Register your interest', body: 'Fill in the form below. Every application is reviewed personally — this is not an automated list.' },
+              { n: '02', title: 'We reach out', body: 'Before memberships open to the public, we contact you directly to confirm your spot and tier.' },
+              { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and receive your welcome kit at your first event of the season.' },
+            ].map((s, i) => (
+              <motion.div key={i} variants={fadeUp} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.35)', lineHeight: 1, marginBottom: '1.25rem' }}>{s.n}</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3 }}>{s.title}</div>
+                <div style={{ ...BODY, color: '#666' }}>{s.body}</div>
               </motion.div>
             ))}
           </StaggerGrid>
