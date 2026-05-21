@@ -186,8 +186,8 @@ export default function MembershipContent() {
       {/* ── NOTICE BANNER ───────────────────────────────────────────── */}
       <div style={{ background: 'rgba(197,168,130,0.11)', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: '1rem 2rem', textAlign: 'center' }}>
         <span style={{ ...SMALL, color: '#7B5B2E' }}>
-          <strong>Memberships open after our first road trip — May 31.</strong>
-          {' '}Priority access coming soon.
+          <strong>Memberships open June 2026.</strong>
+          {' '}Leave your email below for early access before we open to the public.
         </span>
       </div>
 
@@ -231,7 +231,7 @@ export default function MembershipContent() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(10,20,13,0.25), rgba(10,20,13,0.65))' }} />
         <FadeUp style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: '300', color: 'rgba(245,241,236,0.88)', lineHeight: '1.5', maxWidth: '520px' }}>
-            &ldquo;The road is the reward —<br />membership is how you earn it.&rdquo;
+            &ldquo;Every road north of Montreal has a story.<br />Membership is how you learn them.&rdquo;
           </div>
         </FadeUp>
       </motion.div>
@@ -253,7 +253,7 @@ export default function MembershipContent() {
                 <div style={{ padding: '2.25rem 2.25rem 0' }}>
                   <div style={{ ...LABEL, color: '#999', marginBottom: '0.5rem' }}>Tier 1</div>
                   <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '2rem', lineHeight: 1.2 }}>
-                    Canvas Routes<br />Member
+                    Routes<br />Member
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
                     <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.5rem,5.5vw,4.5rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>$99</span>
@@ -280,9 +280,7 @@ export default function MembershipContent() {
             <FadeUp delay={0.15}>
               <div style={{ background: '#0F1E14', position: 'relative', overflow: 'hidden', height: '100%' }}>
                 <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(197,168,130,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
-                <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: '#c5a882', padding: '3px 11px' }}>
-                  <span style={{ ...LABEL, color: '#0F1E14', fontWeight: '500', letterSpacing: '0.18em' }}>Best Value</span>
-                </div>
+
                 <div style={{ padding: '2.25rem 2.25rem 0' }}>
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '0.5rem' }}>Tier 2</div>
                   <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '2rem', lineHeight: 1.2 }}>
@@ -355,12 +353,12 @@ export default function MembershipContent() {
       <section style={{ background: '#0F1E14', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)', textAlign: 'center', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)' }} />
         <FadeUp style={{ maxWidth: '440px', margin: '0 auto' }}>
-          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.55)', marginBottom: '1rem' }}>Get notified</div>
+          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1rem' }}>Founding access</div>
           <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.1 }}>
-            Be first to know.
+            Spots are limited.
           </div>
           <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)', marginBottom: '2.25rem' }}>
-            Leave your email and we&apos;ll reach out the moment memberships open.
+            The 2026 season has a fixed number of members. Leave your email and we&apos;ll reach out before we open to the public.
           </p>
           {status === 'success' ? (
             <div style={{ padding: '1.25rem 1.5rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)' }}>
@@ -388,8 +386,9 @@ export default function MembershipContent() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ padding: '2rem 3rem', textAlign: 'center', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
-        <p style={{ ...SMALL, color: '#ccc' }}>© 2026 Canvas Routes. Montreal, QC.</p>
+      <footer style={{ padding: '2rem 3rem', textAlign: 'center', borderTop: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <span style={{ ...SMALL, color: '#ccc' }}>© 2026 Canvas Routes. Montreal, QC.</span>
+        <a href="https://instagram.com/canvasroutes" target="_blank" rel="noreferrer" style={{ ...LABEL, color: '#c5a882', textDecoration: 'none', borderBottom: '0.5px solid rgba(197,168,130,0.3)', paddingBottom: '1px' }}>@canvasroutes</a>
       </footer>
     </div>
   )
