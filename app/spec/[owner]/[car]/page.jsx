@@ -193,11 +193,22 @@ export default function SpecSheet({ params }) {
         @media print {
           .cookie-banner { display: none !important; }
 
+          html, body { margin: 0 !important; padding: 0 !important; }
+
+          /* Suppress browser-printed link URLs */
+          a[href]::after, a::after { content: none !important; }
+
           .spec-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 210mm;
+            height: 297mm;
             padding: 9mm 13mm;
             box-sizing: border-box;
-            height: 297mm;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
           }
 
           /* Logo: centered */
