@@ -121,6 +121,7 @@ export default function Home() {
     setForm(prev => {
       const next = { ...prev, [field]: value }
       if (field === 'registerFor' && value !== GPCC) next.downtown_cruise = ''
+      if (field === 'registerFor' && value === GPCC) next.downtown_cruise = 'yes'
       return next
     })
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }))
@@ -538,20 +539,28 @@ export default function Home() {
               <div className="join-form-row" style={{gridTemplateColumns:'1fr'}}>
                 {[
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
-                  {value:"Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026", label:"Grand Prix Weekend - Cars, Coffee & Cruise", sub:"Invite Only · May 23, 2026 · 12:30 – 3:00 PM"},
+                  {value:"Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026", label:"Grand Prix Weekend - Cars, Coffee & Cruise", sub:"Spots are full · Downtown Cruise registrations open until 2:00 PM", full:true},
                 ].map(opt => {
                   const selected = form.registerFor === opt.value
                   const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'
                   const bgColor = selected ? 'rgba(59,107,47,0.06)' : errors.registerFor ? 'rgba(123,32,50,0.04)' : 'transparent'
-                  const labelColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : '#1a1a1a'
+                  const labelColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : opt.full ? '#888' : '#1a1a1a'
                   return (
-                    <button key={opt.value} type="button" onClick={() => updateForm('registerFor', opt.value)} style={{padding:"1rem 1.2rem",border:`1px solid ${borderColor}`,background:bgColor,textAlign:"left",cursor:"pointer",transition:"border-color 0.2s,background 0.2s",fontFamily:"var(--font-inter),sans-serif"}}>
-                      <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:labelColor,marginBottom:"0.3rem",fontWeight:selected?"500":"400"}}>{opt.label}</div>
-                      <div style={{fontSize:"11px",color:"#888"}}>{opt.sub}</div>
+                    <button key={opt.value} type="button" onClick={() => updateForm('registerFor', opt.value)} style={{padding:"1rem 1.2rem",border:`1px solid ${opt.full && !selected ? 'rgba(0,0,0,0.12)' : borderColor}`,background:opt.full && !selected ? 'rgba(0,0,0,0.02)' : bgColor,textAlign:"left",cursor:"pointer",transition:"border-color 0.2s,background 0.2s",fontFamily:"var(--font-inter),sans-serif",position:"relative"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:"0.5rem",marginBottom:"0.3rem"}}>
+                        <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:labelColor,fontWeight:selected?"500":"400"}}>{opt.label}</div>
+                        {opt.full && <span style={{fontSize:"9px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#fff",background:"#7B2032",padding:"0.15rem 0.5rem"}}>Full</span>}
+                      </div>
+                      <div style={{fontSize:"11px",color: opt.full ? '#c5a882' : "#888"}}>{opt.sub}</div>
                     </button>
                   )
                 })}
               </div>
+              {form.registerFor === GPCC && (
+                <div style={{marginTop:"0.75rem",padding:"0.8rem 1rem",background:"rgba(197,168,130,0.08)",border:"0.5px solid rgba(197,168,130,0.4)",fontSize:"11px",color:"#7B2032",lineHeight:"1.6"}}>
+                  Cars, Coffee &amp; Cruise is at capacity. Registrations for the Downtown Cruise only — closes at 2:00 PM today.
+                </div>
+              )}
               {errors.registerFor && <span style={{fontSize:"11px",color:"#7B2032"}}>Please select an option</span>}
             </div>
 
