@@ -139,27 +139,20 @@ export default function SpecSheet({ params }) {
           line-height: 1.4;
         }
 
-        .spec-mods-header {
-          padding: 0.75rem 1.25rem;
-          border-bottom: 0.5px solid rgba(0,0,0,0.08);
+        .spec-mods-text {
+          font-size: 12px;
+          color: #666;
+          line-height: 1.7;
+          margin-bottom: 2rem;
+        }
+
+        .spec-mods-label {
           font-size: 9px;
           letter-spacing: 0.22em;
           text-transform: uppercase;
           color: #c5a882;
+          margin-bottom: 0.4rem;
         }
-
-        .spec-mods-body {
-          padding: 0.6rem 1.25rem 0.7rem;
-          font-size: 13px;
-          color: #555;
-          line-height: 1.6;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .spec-mods-lines { display: none; }
 
         .spec-lower-section {
           flex: 1;
@@ -245,14 +238,10 @@ export default function SpecSheet({ params }) {
           .spec-cell-label { font-size: 7.5px; }
           .spec-cell-value { font-size: 11.5px; }
 
-          /* Lower section fills remaining page space */
-          .spec-lower-section { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-
-          /* Mods grows within lower section, footer+QR stay below */
-          .spec-mods-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0 !important; }
-          .spec-mods-body  { display: none !important; }
-          .spec-mods-lines { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0.5rem 0.8rem 0 !important; }
-          .spec-mods-header { padding: 0.5rem 0.8rem; font-size: 7.5px; }
+          /* Lower section */
+          .spec-lower-section { display: flex; flex-direction: column; }
+          .spec-mods-label { font-size: 7.5px; margin-bottom: 0.25rem; }
+          .spec-mods-text { font-size: 10px; margin-bottom: 0.8rem; }
 
           /* Footer */
           .spec-footer { padding-top: 0.6rem; margin-top: 0; }
@@ -317,17 +306,12 @@ export default function SpecSheet({ params }) {
         <div className="spec-lower-section">
 
           {/* Modifications */}
-          <div className="spec-mods-container" style={{ marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-            <div className="spec-mods-header">Modifications / Speciality</div>
-            <div className="spec-mods-body">
-              {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
+          {data.mods && (
+            <div>
+              <div className="spec-mods-label">Modifications / Speciality</div>
+              <div className="spec-mods-text">{data.mods}</div>
             </div>
-            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
-              {[0,1,2,3,4].map(i => (
-                <div key={i} style={{ flex: 1, borderBottom: '0.5px solid rgba(0,0,0,0.15)', minHeight: '1.5rem' }} />
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Footer */}
           <div className="spec-footer">
