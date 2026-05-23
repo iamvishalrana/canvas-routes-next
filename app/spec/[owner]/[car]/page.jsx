@@ -181,7 +181,7 @@ export default function SpecSheet({ params }) {
         /* ── Print ──────────────────────────────────────────────── */
         @page {
           size: A4;
-          margin: 12mm 15mm;
+          margin: 10mm 14mm;
         }
 
         @media print {
@@ -192,39 +192,40 @@ export default function SpecSheet({ params }) {
             min-height: unset;
           }
 
-          /* Logo: centered, bigger */
+          /* Logo: centered */
           .spec-header {
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 0.6rem;
-            margin-bottom: 1.4rem;
-            padding-bottom: 1.2rem;
+            gap: 0.35rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.9rem;
           }
-          .spec-logo { width: 190px !important; }
-          .spec-event-label { text-align: center; }
+          .spec-logo { width: 160px !important; }
+          .spec-event-label { text-align: center; font-size: 9px; }
 
           /* Compact heading */
-          .spec-car-heading { margin-bottom: 1rem; }
-          .spec-owner-name { font-size: 2.6rem; }
-          .spec-car-year   { font-size: 2.6rem; }
-          .spec-car-name   { font-size: 1.4rem; margin-top: 0.2rem; }
+          .spec-car-heading { margin-bottom: 0.8rem; }
+          .spec-owner-name { font-size: 2.3rem; }
+          .spec-car-year   { font-size: 2.3rem; }
+          .spec-car-name   { font-size: 1.2rem; margin-top: 0.15rem; }
 
           /* Compact divider + note */
-          .spec-divider { margin: 0.9rem 0; }
-          .spec-note { margin-bottom: 1rem; font-size: 1rem; }
+          .spec-divider { margin: 0.7rem 0; }
+          .spec-note { margin-bottom: 0.8rem; font-size: 0.95rem; }
 
           /* Compact specs grid */
-          .spec-grid { margin-bottom: 1rem; }
-          .spec-cell { padding: 0.6rem 1rem; }
-          .spec-cell-value { font-size: 13px; }
+          .spec-grid { margin-bottom: 0.8rem; }
+          .spec-cell { padding: 0.5rem 0.9rem; }
+          .spec-cell-label { font-size: 8px; }
+          .spec-cell-value { font-size: 12px; }
 
-          /* Paint / Mods: show lines, hide body */
+          /* Mods: show lines, hide body */
           .spec-mods-body  { display: none !important; }
           .spec-mods-lines { display: block; }
 
           /* Footer */
-          .spec-footer { padding-top: 0.9rem; margin-top: 0.5rem; }
+          .spec-footer { padding-top: 0.7rem; margin-top: 0.4rem; }
           .spec-membership-cta { display: none !important; }
 
           /* QR: centered below footer */
@@ -232,8 +233,8 @@ export default function SpecSheet({ params }) {
             display: flex !important;
             flex-direction: column;
             align-items: center;
-            gap: 0.4rem;
-            padding-top: 1.2rem;
+            gap: 0.3rem;
+            padding-top: 0.9rem;
           }
         }
 
@@ -251,9 +252,7 @@ export default function SpecSheet({ params }) {
         <div className="spec-header">
           <img src="/canvas_routes_refined.png" alt="Canvas Routes" className="spec-logo" />
           <div className="spec-event-label">
-            Cars, Coffee &amp; Cruise<br />
-            Grand Prix Weekend · May 23, 2026<br />
-            Montreal, QC
+            Grand Prix Weekend · May 23, 2026 · Montreal, QC
           </div>
         </div>
 
