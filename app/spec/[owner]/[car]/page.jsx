@@ -159,6 +159,7 @@ export default function SpecSheet({ params }) {
           overflow: hidden;
         }
 
+        .spec-mods-container { display: none; }
         .spec-mods-lines { display: none; }
 
         .spec-lower-section {
@@ -248,6 +249,7 @@ export default function SpecSheet({ params }) {
 
           /* Lower section fills remaining page space */
           .spec-lower-section { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+          .spec-mods-container { display: flex !important; }
 
           /* Mods grows within lower section, footer+QR stay below */
           .spec-mods-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0 !important; }
