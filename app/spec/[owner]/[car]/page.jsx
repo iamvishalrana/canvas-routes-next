@@ -202,7 +202,7 @@ export default function SpecSheet({ params }) {
             margin-bottom: 0.8rem;
             padding-bottom: 0.7rem;
           }
-          .spec-logo { width: 140px !important; }
+          .spec-logo { width: 200px !important; }
           .spec-event-label { text-align: center; font-size: 8.5px; }
 
           /* Compact heading */
