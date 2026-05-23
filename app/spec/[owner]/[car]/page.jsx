@@ -189,7 +189,7 @@ export default function SpecSheet({ params }) {
 
           .spec-page {
             padding: 0;
-            min-height: unset;
+            height: 279mm;
             overflow: hidden;
           }
 
@@ -221,9 +221,10 @@ export default function SpecSheet({ params }) {
           .spec-cell-label { font-size: 7.5px; }
           .spec-cell-value { font-size: 11.5px; }
 
-          /* Mods: show lines, hide body */
+          /* Mods: grow to fill page, show lines, hide body */
+          .spec-mods-container { flex: 1; display: flex; flex-direction: column; margin-bottom: 0 !important; }
           .spec-mods-body  { display: none !important; }
-          .spec-mods-lines { display: block; }
+          .spec-mods-lines { flex: 1; display: flex; flex-direction: column; justify-content: space-around; padding: 0.75rem 0.8rem !important; }
           .spec-mods-header { padding: 0.5rem 0.8rem; font-size: 7.5px; }
 
           /* Footer */
@@ -286,7 +287,7 @@ export default function SpecSheet({ params }) {
         </div>
 
         {/* Modifications */}
-        <div style={{ marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <div className="spec-mods-container" style={{ marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div className="spec-mods-header">Modifications / Speciality</div>
           <div className="spec-mods-body">
             {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
