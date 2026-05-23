@@ -124,6 +124,11 @@ export default function SpecSheet({ params }) {
 
         .spec-cell:nth-child(even) { border-right: none; }
 
+        .spec-cell-full {
+          grid-column: 1 / -1;
+          border-right: none;
+        }
+
         .spec-cell-label {
           font-size: 9px;
           letter-spacing: 0.22em;
@@ -137,21 +142,6 @@ export default function SpecSheet({ params }) {
           color: #1a1a1a;
           font-weight: 400;
           line-height: 1.4;
-        }
-
-        .spec-mods-text {
-          font-size: 12px;
-          color: #666;
-          line-height: 1.7;
-          margin-bottom: 2rem;
-        }
-
-        .spec-mods-label {
-          font-size: 9px;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          color: #c5a882;
-          margin-bottom: 0.4rem;
         }
 
         .spec-lower-section {
@@ -238,11 +228,6 @@ export default function SpecSheet({ params }) {
           .spec-cell-label { font-size: 7.5px; }
           .spec-cell-value { font-size: 11.5px; }
 
-          /* Lower section */
-          .spec-lower-section { display: flex; flex-direction: column; }
-          .spec-mods-label { font-size: 7.5px; margin-bottom: 0.25rem; }
-          .spec-mods-text { font-size: 10px; margin-bottom: 0.8rem; }
-
           /* Footer */
           .spec-footer { padding-top: 0.6rem; margin-top: 0; }
           .spec-membership-cta { display: none !important; }
@@ -300,18 +285,16 @@ export default function SpecSheet({ params }) {
               <div className="spec-cell-value">{data.color}</div>
             </div>
           )}
-        </div>
-
-        {/* Lower section — grows to fill remaining space, keeps footer+QR anchored inside */}
-        <div className="spec-lower-section">
-
-          {/* Modifications */}
           {data.mods && (
-            <div>
-              <div className="spec-mods-label">Modifications / Speciality</div>
-              <div className="spec-mods-text">{data.mods}</div>
+            <div className="spec-cell spec-cell-full">
+              <div className="spec-cell-label">Modifications / Speciality</div>
+              <div className="spec-cell-value" style={{ color: '#555', fontWeight: 400 }}>{data.mods}</div>
             </div>
           )}
+        </div>
+
+        {/* Footer section */}
+        <div className="spec-lower-section">
 
           {/* Footer */}
           <div className="spec-footer">
