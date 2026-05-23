@@ -307,7 +307,7 @@ export default function SpecSheet({ params }) {
               © 2026 Canvas Routes · canvasroutes.com
             </div>
             <div className="spec-membership-cta">
-              <Link href="/routes" style={{
+              <Link href="/#join" style={{
                 display: 'inline-block',
                 padding: '0.7rem 1.6rem',
                 background: '#0F1E14',
@@ -319,7 +319,7 @@ export default function SpecSheet({ params }) {
                 fontFamily: 'var(--font-inter), Arial, sans-serif',
                 border: '0.5px solid rgba(197,168,130,0.4)',
               }}>
-                Join Membership
+                Join
               </Link>
             </div>
           </div>
