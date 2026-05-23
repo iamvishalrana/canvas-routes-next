@@ -116,6 +116,7 @@ export default function Home() {
 
 
   const GPCC = 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026'
+  const gpccClosed = new Date() >= new Date('2026-05-23T14:00:00-04:00')
 
   function updateForm(field, value) {
     setForm(prev => {
@@ -539,7 +540,7 @@ export default function Home() {
               <div className="join-form-row" style={{gridTemplateColumns:'1fr'}}>
                 {[
                   {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
-                  {value:"Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026", label:"Grand Prix Weekend - Cars, Coffee & Cruise", sub:"Spots are full · Downtown Cruise registrations open until 2:00 PM", full:true},
+                  ...(!gpccClosed ? [{value:"Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026", label:"Grand Prix Weekend - Cars, Coffee & Cruise", sub:"Spots are full · Downtown Cruise registrations open until 2:00 PM", full:true}] : []),
                 ].map(opt => {
                   const selected = form.registerFor === opt.value
                   const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'
