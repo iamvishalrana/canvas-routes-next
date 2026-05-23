@@ -261,7 +261,7 @@ export default function SpecSheet({ params }) {
         <div className="spec-car-heading">
           <div className="spec-owner-name">{data.displayName}&apos;s</div>
           <div className="spec-car-year">{data.year}</div>
-          <div className="spec-car-name">{data.make} {data.model}{data.color ? ` · ${data.color}` : ''}</div>
+          <div className="spec-car-name">{data.make} {data.model}</div>
         </div>
 
         <div className="spec-divider" />
@@ -276,35 +276,25 @@ export default function SpecSheet({ params }) {
               <div className="spec-cell-value">{s.value}</div>
             </div>
           ))}
+          {data.color && (
+            <div className="spec-cell" style={{ gridColumn: '1 / -1' }}>
+              <div className="spec-cell-label">Color</div>
+              <div className="spec-cell-value">{data.color}</div>
+            </div>
+          )}
         </div>
 
-        {/* Paint & Modifications — side by side */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0', marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-
-          <div style={{ borderRight: '0.5px solid rgba(0,0,0,0.08)' }}>
-            <div className="spec-mods-header">Paint</div>
-            <div className="spec-mods-body">
-              {data.paint ? data.paint : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
-            </div>
-            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
-              ))}
-            </div>
+        {/* Modifications */}
+        <div style={{ marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div className="spec-mods-header">Modifications / Speciality</div>
+          <div className="spec-mods-body">
+            {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
           </div>
-
-          <div>
-            <div className="spec-mods-header">Modifications / Speciality</div>
-            <div className="spec-mods-body">
-              {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
-            </div>
-            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
-              ))}
-            </div>
+          <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
+            ))}
           </div>
-
         </div>
 
         {/* Footer */}
