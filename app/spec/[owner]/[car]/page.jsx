@@ -240,18 +240,35 @@ export default function SpecSheet({ params }) {
           ))}
         </div>
 
-        {/* Modifications */}
-        <div className="spec-mods">
-          <div className="spec-mods-header">Modifications</div>
-          <div className="spec-mods-body">
-            {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
+        {/* Paint & Modifications — side by side */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0', marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+
+          {/* Paint */}
+          <div style={{ borderRight: '0.5px solid rgba(0,0,0,0.08)' }}>
+            <div className="spec-mods-header">Paint</div>
+            <div className="spec-mods-body">
+              {data.paint ? data.paint : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
+            </div>
+            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.5rem' }}>
+              {[0,1,2].map(i => (
+                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '2rem', marginBottom: '0.25rem' }} />
+              ))}
+            </div>
           </div>
-          {/* Print: blank lines to write on */}
-          <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.5rem' }}>
-            {[0,1,2].map(i => (
-              <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '2rem', marginBottom: '0.25rem' }} />
-            ))}
+
+          {/* Modifications */}
+          <div>
+            <div className="spec-mods-header">Modifications</div>
+            <div className="spec-mods-body">
+              {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
+            </div>
+            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.5rem' }}>
+              {[0,1,2].map(i => (
+                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '2rem', marginBottom: '0.25rem' }} />
+              ))}
+            </div>
           </div>
+
         </div>
 
         {/* Footer */}
