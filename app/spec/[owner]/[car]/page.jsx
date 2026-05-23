@@ -159,7 +159,6 @@ export default function SpecSheet({ params }) {
           overflow: hidden;
         }
 
-        .spec-mods-container { display: none; }
         .spec-mods-lines { display: none; }
 
         .spec-lower-section {
@@ -197,10 +196,9 @@ export default function SpecSheet({ params }) {
         @media print {
           .cookie-banner { display: none !important; }
 
-          html, body {
+          html, body, body > div {
             margin: 0 !important;
             padding: 0 !important;
-            width: 210mm !important;
             height: 297mm !important;
             max-height: 297mm !important;
             overflow: hidden !important;
@@ -248,8 +246,7 @@ export default function SpecSheet({ params }) {
           .spec-cell-value { font-size: 11.5px; }
 
           /* Lower section fills remaining page space */
-          .spec-lower-section { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-          .spec-mods-container { display: flex !important; }
+          .spec-lower-section { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
           /* Mods grows within lower section, footer+QR stay below */
           .spec-mods-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0 !important; }
