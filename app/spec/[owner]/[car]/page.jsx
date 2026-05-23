@@ -276,7 +276,7 @@ export default function SpecSheet({ params }) {
             </div>
           ))}
           {data.color && (
-            <div className="spec-cell" style={{ gridColumn: '1 / -1' }}>
+            <div className="spec-cell">
               <div className="spec-cell-label">Color</div>
               <div className="spec-cell-value">{data.color}</div>
             </div>
