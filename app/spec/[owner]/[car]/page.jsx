@@ -72,6 +72,15 @@ export default function SpecSheet({ params }) {
           letter-spacing: -0.01em;
         }
 
+        .spec-car-year {
+          font-family: var(--font-cormorant), Georgia, serif;
+          font-size: clamp(2.4rem, 5vw, 3.8rem);
+          font-weight: 300;
+          color: #c5a882;
+          line-height: 1.0;
+          letter-spacing: -0.01em;
+        }
+
         .spec-car-name {
           font-family: var(--font-cormorant), Georgia, serif;
           font-size: clamp(1.6rem, 3vw, 2.2rem);
@@ -79,15 +88,6 @@ export default function SpecSheet({ params }) {
           color: #444;
           line-height: 1.2;
           margin-top: 0.35rem;
-          letter-spacing: -0.01em;
-        }
-
-        .spec-car-year {
-          font-family: var(--font-cormorant), Georgia, serif;
-          font-size: clamp(2.4rem, 5vw, 3.8rem);
-          font-weight: 300;
-          color: #c5a882;
-          line-height: 1.0;
           letter-spacing: -0.01em;
         }
 
@@ -122,9 +122,7 @@ export default function SpecSheet({ params }) {
           border-bottom: 0.5px solid rgba(0,0,0,0.08);
         }
 
-        .spec-cell:nth-child(even) {
-          border-right: none;
-        }
+        .spec-cell:nth-child(even) { border-right: none; }
 
         .spec-cell-label {
           font-size: 9px;
@@ -139,31 +137,6 @@ export default function SpecSheet({ params }) {
           color: #1a1a1a;
           font-weight: 400;
           line-height: 1.4;
-        }
-
-        .spec-footer {
-          margin-top: auto;
-          padding-top: 2rem;
-          border-top: 0.5px solid rgba(0,0,0,0.1);
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-        }
-
-        .spec-footer-left {
-          font-size: 10px;
-          letter-spacing: 0.05em;
-          color: #aaa;
-          line-height: 1.8;
-        }
-
-        /* Screen: hide QR, show membership CTA */
-        .spec-qr-block { display: none; }
-        .spec-membership-cta { display: block; }
-
-        .spec-mods {
-          border: 0.5px solid rgba(0,0,0,0.1);
-          margin-bottom: 2.5rem;
         }
 
         .spec-mods-header {
@@ -183,20 +156,85 @@ export default function SpecSheet({ params }) {
           line-height: 1.7;
         }
 
-        .spec-mods-lines {
-          display: none;
+        .spec-mods-lines { display: none; }
+
+        .spec-footer {
+          margin-top: auto;
+          padding-top: 1.5rem;
+          border-top: 0.5px solid rgba(0,0,0,0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
 
-        /* Print: show QR, hide membership CTA */
+        .spec-footer-left {
+          font-size: 10px;
+          letter-spacing: 0.05em;
+          color: #aaa;
+          line-height: 1.8;
+        }
+
+        /* Screen: hide QR block, show membership CTA */
+        .spec-qr-centered { display: none; }
+        .spec-membership-cta { display: block; }
+
+        /* ── Print ──────────────────────────────────────────────── */
+        @page {
+          size: A4;
+          margin: 12mm 15mm;
+        }
+
         @media print {
-          .spec-page { padding: 1.8rem 2.5rem 2.5rem; }
-          .spec-membership-cta { display: none !important; }
-          .spec-qr-block { display: flex !important; }
+          .cookie-banner { display: none !important; }
+
+          .spec-page {
+            padding: 0;
+            min-height: unset;
+          }
+
+          /* Logo: centered, bigger */
+          .spec-header {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.6rem;
+            margin-bottom: 1.4rem;
+            padding-bottom: 1.2rem;
+          }
+          .spec-logo { width: 190px !important; }
+          .spec-event-label { text-align: center; }
+
+          /* Compact heading */
+          .spec-car-heading { margin-bottom: 1rem; }
           .spec-owner-name { font-size: 2.6rem; }
-          .spec-car-year { font-size: 2.6rem; }
-          .spec-car-name { font-size: 1.5rem; }
-          .spec-mods-body { display: none; }
+          .spec-car-year   { font-size: 2.6rem; }
+          .spec-car-name   { font-size: 1.4rem; margin-top: 0.2rem; }
+
+          /* Compact divider + note */
+          .spec-divider { margin: 0.9rem 0; }
+          .spec-note { margin-bottom: 1rem; font-size: 1rem; }
+
+          /* Compact specs grid */
+          .spec-grid { margin-bottom: 1rem; }
+          .spec-cell { padding: 0.6rem 1rem; }
+          .spec-cell-value { font-size: 13px; }
+
+          /* Paint / Mods: show lines, hide body */
+          .spec-mods-body  { display: none !important; }
           .spec-mods-lines { display: block; }
+
+          /* Footer */
+          .spec-footer { padding-top: 0.9rem; margin-top: 0.5rem; }
+          .spec-membership-cta { display: none !important; }
+
+          /* QR: centered below footer */
+          .spec-qr-centered {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            padding-top: 1.2rem;
+          }
         }
 
         @media (max-width: 600px) {
@@ -243,28 +281,26 @@ export default function SpecSheet({ params }) {
         {/* Paint & Modifications — side by side */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0', marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
 
-          {/* Paint */}
           <div style={{ borderRight: '0.5px solid rgba(0,0,0,0.08)' }}>
             <div className="spec-mods-header">Paint</div>
             <div className="spec-mods-body">
               {data.paint ? data.paint : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
             </div>
-            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.5rem' }}>
+            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
               {[0,1,2].map(i => (
-                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '2rem', marginBottom: '0.25rem' }} />
+                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
               ))}
             </div>
           </div>
 
-          {/* Modifications */}
           <div>
             <div className="spec-mods-header">Modifications / Speciality</div>
             <div className="spec-mods-body">
               {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
             </div>
-            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.5rem' }}>
+            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
               {[0,1,2].map(i => (
-                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '2rem', marginBottom: '0.25rem' }} />
+                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
               ))}
             </div>
           </div>
@@ -274,11 +310,8 @@ export default function SpecSheet({ params }) {
         {/* Footer */}
         <div className="spec-footer">
           <div className="spec-footer-left">
-            © 2026 Canvas Routes<br />
-            canvasroutes.com
+            © 2026 Canvas Routes · canvasroutes.com
           </div>
-
-          {/* Screen only: membership CTA */}
           <div className="spec-membership-cta">
             <Link href="/membership" style={{
               display: 'inline-block',
@@ -295,13 +328,13 @@ export default function SpecSheet({ params }) {
               Join Membership
             </Link>
           </div>
+        </div>
 
-          {/* Print only: QR code */}
-          <div className="spec-qr-block" style={{ flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            {url && <QRCode value={url} size={80} fgColor="#1a1a1a" bgColor="#F5F1EC" />}
-            <div style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#aaa', textAlign: 'center' }}>
-              Scan to view
-            </div>
+        {/* Print only: QR code centered below footer */}
+        <div className="spec-qr-centered">
+          {url && <QRCode value={url} size={90} fgColor="#1a1a1a" bgColor="#F5F1EC" />}
+          <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa' }}>
+            Scan to view
           </div>
         </div>
 
