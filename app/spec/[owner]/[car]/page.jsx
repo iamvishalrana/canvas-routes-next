@@ -221,8 +221,8 @@ export default function SpecSheet({ params }) {
 
         {/* Car heading */}
         <div className="spec-car-heading">
-          <div className="spec-car-year">{data.year}</div>
           <div className="spec-owner-name">{data.displayName}&apos;s</div>
+          <div className="spec-car-year">{data.year}</div>
           <div className="spec-car-name">{data.make} {data.model}{data.color ? ` · ${data.color}` : ''}</div>
         </div>
 
@@ -258,7 +258,7 @@ export default function SpecSheet({ params }) {
 
           {/* Modifications */}
           <div>
-            <div className="spec-mods-header">Modifications</div>
+            <div className="spec-mods-header">Modifications / Speciality</div>
             <div className="spec-mods-body">
               {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
             </div>
