@@ -149,11 +149,14 @@ export default function SpecSheet({ params }) {
         }
 
         .spec-mods-body {
-          padding: 1rem 1.25rem;
-          min-height: 80px;
+          padding: 0.6rem 1.25rem 0.7rem;
           font-size: 13px;
           color: #555;
-          line-height: 1.7;
+          line-height: 1.6;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
         .spec-mods-lines { display: none; }
