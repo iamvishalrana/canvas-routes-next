@@ -233,7 +233,7 @@ export default function SpecSheet({ params }) {
           /* Mods grows within lower section, footer+QR stay below */
           .spec-mods-container { flex: 1; display: flex; flex-direction: column; margin-bottom: 0 !important; }
           .spec-mods-body  { display: none !important; }
-          .spec-mods-lines { flex: 1; display: flex; flex-direction: column; justify-content: space-around; padding: 0.75rem 0.8rem !important; }
+          .spec-mods-lines { flex: 1; display: flex; flex-direction: column; padding: 0.5rem 0.8rem 0 !important; }
           .spec-mods-header { padding: 0.5rem 0.8rem; font-size: 7.5px; }
 
           /* Footer */
@@ -305,8 +305,8 @@ export default function SpecSheet({ params }) {
               {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
             </div>
             <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
+              {[0,1,2,3,4].map(i => (
+                <div key={i} style={{ flex: 1, borderBottom: '0.5px solid rgba(0,0,0,0.15)', minHeight: '1.5rem' }} />
               ))}
             </div>
           </div>
