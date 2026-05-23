@@ -181,7 +181,7 @@ export default function SpecSheet({ params }) {
         /* ── Print ──────────────────────────────────────────────── */
         @page {
           size: A4;
-          margin: 10mm 14mm;
+          margin: 9mm 13mm;
         }
 
         @media print {
@@ -190,6 +190,7 @@ export default function SpecSheet({ params }) {
           .spec-page {
             padding: 0;
             min-height: unset;
+            overflow: hidden;
           }
 
           /* Logo: centered */
@@ -197,35 +198,36 @@ export default function SpecSheet({ params }) {
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 0.35rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.9rem;
+            gap: 0.3rem;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.7rem;
           }
-          .spec-logo { width: 160px !important; }
-          .spec-event-label { text-align: center; font-size: 9px; }
+          .spec-logo { width: 140px !important; }
+          .spec-event-label { text-align: center; font-size: 8.5px; }
 
           /* Compact heading */
-          .spec-car-heading { margin-bottom: 0.8rem; }
-          .spec-owner-name { font-size: 2.3rem; }
-          .spec-car-year   { font-size: 2.3rem; }
-          .spec-car-name   { font-size: 1.2rem; margin-top: 0.15rem; }
+          .spec-car-heading { margin-bottom: 0.6rem; }
+          .spec-owner-name { font-size: 2.1rem; }
+          .spec-car-year   { font-size: 2.1rem; }
+          .spec-car-name   { font-size: 1.1rem; margin-top: 0.1rem; }
 
           /* Compact divider + note */
-          .spec-divider { margin: 0.7rem 0; }
-          .spec-note { margin-bottom: 0.8rem; font-size: 0.95rem; }
+          .spec-divider { margin: 0.5rem 0; }
+          .spec-note { margin-bottom: 0.6rem; font-size: 0.88rem; line-height: 1.55; }
 
           /* Compact specs grid */
-          .spec-grid { margin-bottom: 0.8rem; }
-          .spec-cell { padding: 0.5rem 0.9rem; }
-          .spec-cell-label { font-size: 8px; }
-          .spec-cell-value { font-size: 12px; }
+          .spec-grid { margin-bottom: 0.6rem; }
+          .spec-cell { padding: 0.4rem 0.8rem; }
+          .spec-cell-label { font-size: 7.5px; }
+          .spec-cell-value { font-size: 11.5px; }
 
           /* Mods: show lines, hide body */
           .spec-mods-body  { display: none !important; }
           .spec-mods-lines { display: block; }
+          .spec-mods-header { padding: 0.5rem 0.8rem; font-size: 7.5px; }
 
           /* Footer */
-          .spec-footer { padding-top: 0.7rem; margin-top: 0.4rem; }
+          .spec-footer { padding-top: 0.6rem; margin-top: 0.3rem; }
           .spec-membership-cta { display: none !important; }
 
           /* QR: centered below footer */
@@ -233,8 +235,8 @@ export default function SpecSheet({ params }) {
             display: flex !important;
             flex-direction: column;
             align-items: center;
-            gap: 0.3rem;
-            padding-top: 0.9rem;
+            gap: 0.25rem;
+            padding-top: 0.6rem;
           }
         }
 
@@ -321,7 +323,7 @@ export default function SpecSheet({ params }) {
 
         {/* Print only: QR code centered below footer */}
         <div className="spec-qr-centered">
-          {url && <QRCode value={url} size={90} fgColor="#1a1a1a" bgColor="#F5F1EC" />}
+          {url && <QRCode value={url} size={72} fgColor="#1a1a1a" bgColor="#F5F1EC" />}
           <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa' }}>
             Scan to view
           </div>
