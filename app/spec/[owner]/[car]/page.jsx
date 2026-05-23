@@ -193,15 +193,19 @@ export default function SpecSheet({ params }) {
         @media print {
           .cookie-banner { display: none !important; }
 
-          html, body { margin: 0 !important; padding: 0 !important; }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            max-height: 297mm !important;
+            overflow: hidden !important;
+          }
 
           /* Suppress browser-printed link URLs */
           a[href]::after, a::after { content: none !important; }
 
           .spec-page {
-            position: fixed;
-            top: 0;
-            left: 0;
             width: 210mm;
             height: 297mm;
             padding: 9mm 13mm;
