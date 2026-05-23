@@ -63,15 +63,7 @@ export default function SpecSheet({ params }) {
           margin-bottom: 2.5rem;
         }
 
-        .spec-owner-label {
-          font-size: 10px;
-          letter-spacing: 0.24em;
-          text-transform: uppercase;
-          color: #888;
-          margin-bottom: 0.6rem;
-        }
-
-        .spec-car-name {
+        .spec-owner-name {
           font-family: var(--font-cormorant), Georgia, serif;
           font-size: clamp(2.4rem, 5vw, 3.8rem);
           font-weight: 300;
@@ -80,12 +72,23 @@ export default function SpecSheet({ params }) {
           letter-spacing: -0.01em;
         }
 
+        .spec-car-name {
+          font-family: var(--font-cormorant), Georgia, serif;
+          font-size: clamp(1.6rem, 3vw, 2.2rem);
+          font-weight: 300;
+          color: #444;
+          line-height: 1.2;
+          margin-top: 0.35rem;
+          letter-spacing: -0.01em;
+        }
+
         .spec-car-year {
           font-family: var(--font-cormorant), Georgia, serif;
-          font-size: clamp(1.1rem, 2vw, 1.4rem);
+          font-size: clamp(2.4rem, 5vw, 3.8rem);
           font-weight: 300;
           color: #c5a882;
-          margin-top: 0.3rem;
+          line-height: 1.0;
+          letter-spacing: -0.01em;
         }
 
         .spec-divider {
@@ -158,12 +161,42 @@ export default function SpecSheet({ params }) {
         .spec-qr-block { display: none; }
         .spec-membership-cta { display: block; }
 
+        .spec-mods {
+          border: 0.5px solid rgba(0,0,0,0.1);
+          margin-bottom: 2.5rem;
+        }
+
+        .spec-mods-header {
+          padding: 0.75rem 1.25rem;
+          border-bottom: 0.5px solid rgba(0,0,0,0.08);
+          font-size: 9px;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: #c5a882;
+        }
+
+        .spec-mods-body {
+          padding: 1rem 1.25rem;
+          min-height: 80px;
+          font-size: 13px;
+          color: #555;
+          line-height: 1.7;
+        }
+
+        .spec-mods-lines {
+          display: none;
+        }
+
         /* Print: show QR, hide membership CTA */
         @media print {
           .spec-page { padding: 1.8rem 2.5rem 2.5rem; }
           .spec-membership-cta { display: none !important; }
           .spec-qr-block { display: flex !important; }
-          .spec-car-name { font-size: 2.6rem; }
+          .spec-owner-name { font-size: 2.6rem; }
+          .spec-car-year { font-size: 2.6rem; }
+          .spec-car-name { font-size: 1.5rem; }
+          .spec-mods-body { display: none; }
+          .spec-mods-lines { display: block; }
         }
 
         @media (max-width: 600px) {
@@ -188,9 +221,9 @@ export default function SpecSheet({ params }) {
 
         {/* Car heading */}
         <div className="spec-car-heading">
-          <div className="spec-owner-label">{data.displayName}&apos;s car</div>
-          <div className="spec-car-name">{data.make} {data.model}</div>
-          <div className="spec-car-year">{data.year}{data.color ? ` · ${data.color}` : ''}</div>
+          <div className="spec-car-year">{data.year}</div>
+          <div className="spec-owner-name">{data.displayName}&apos;s</div>
+          <div className="spec-car-name">{data.make} {data.model}{data.color ? ` · ${data.color}` : ''}</div>
         </div>
 
         <div className="spec-divider" />
@@ -205,6 +238,20 @@ export default function SpecSheet({ params }) {
               <div className="spec-cell-value">{s.value}</div>
             </div>
           ))}
+        </div>
+
+        {/* Modifications */}
+        <div className="spec-mods">
+          <div className="spec-mods-header">Modifications</div>
+          <div className="spec-mods-body">
+            {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
+          </div>
+          {/* Print: blank lines to write on */}
+          <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.5rem' }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '2rem', marginBottom: '0.25rem' }} />
+            ))}
+          </div>
         </div>
 
         {/* Footer */}
