@@ -158,6 +158,12 @@ export default function SpecSheet({ params }) {
 
         .spec-mods-lines { display: none; }
 
+        .spec-lower-section {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
         .spec-footer {
           margin-top: auto;
           padding-top: 1.5rem;
@@ -221,14 +227,17 @@ export default function SpecSheet({ params }) {
           .spec-cell-label { font-size: 7.5px; }
           .spec-cell-value { font-size: 11.5px; }
 
-          /* Mods: grow to fill page, show lines, hide body */
+          /* Lower section fills remaining page space */
+          .spec-lower-section { flex: 1; display: flex; flex-direction: column; }
+
+          /* Mods grows within lower section, footer+QR stay below */
           .spec-mods-container { flex: 1; display: flex; flex-direction: column; margin-bottom: 0 !important; }
           .spec-mods-body  { display: none !important; }
           .spec-mods-lines { flex: 1; display: flex; flex-direction: column; justify-content: space-around; padding: 0.75rem 0.8rem !important; }
           .spec-mods-header { padding: 0.5rem 0.8rem; font-size: 7.5px; }
 
           /* Footer */
-          .spec-footer { padding-top: 0.6rem; margin-top: 0.3rem; }
+          .spec-footer { padding-top: 0.6rem; margin-top: 0; }
           .spec-membership-cta { display: none !important; }
 
           /* QR: centered below footer */
@@ -286,48 +295,53 @@ export default function SpecSheet({ params }) {
           )}
         </div>
 
-        {/* Modifications */}
-        <div className="spec-mods-container" style={{ marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <div className="spec-mods-header">Modifications / Speciality</div>
-          <div className="spec-mods-body">
-            {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
-          </div>
-          <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
-            {[0,1,2].map(i => (
-              <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
-            ))}
-          </div>
-        </div>
+        {/* Lower section — grows to fill remaining space, keeps footer+QR anchored inside */}
+        <div className="spec-lower-section">
 
-        {/* Footer */}
-        <div className="spec-footer">
-          <div className="spec-footer-left">
-            © 2026 Canvas Routes · canvasroutes.com
+          {/* Modifications */}
+          <div className="spec-mods-container" style={{ marginBottom: '2.5rem', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+            <div className="spec-mods-header">Modifications / Speciality</div>
+            <div className="spec-mods-body">
+              {data.mods ? data.mods : <span style={{ color: '#bbb', fontStyle: 'italic' }}>—</span>}
+            </div>
+            <div className="spec-mods-lines" style={{ padding: '0.75rem 1.25rem 1.25rem' }}>
+              {[0,1,2].map(i => (
+                <div key={i} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.15)', height: '1.8rem', marginBottom: '0.2rem' }} />
+              ))}
+            </div>
           </div>
-          <div className="spec-membership-cta">
-            <Link href="/membership" style={{
-              display: 'inline-block',
-              padding: '0.7rem 1.6rem',
-              background: '#0F1E14',
-              color: '#c5a882',
-              fontSize: '10px',
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              fontFamily: 'var(--font-inter), Arial, sans-serif',
-              border: '0.5px solid rgba(197,168,130,0.4)',
-            }}>
-              Join Membership
-            </Link>
-          </div>
-        </div>
 
-        {/* Print only: QR code centered below footer */}
-        <div className="spec-qr-centered">
-          {url && <QRCode value={url} size={72} fgColor="#1a1a1a" bgColor="#F5F1EC" />}
-          <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa' }}>
-            Scan to view
+          {/* Footer */}
+          <div className="spec-footer">
+            <div className="spec-footer-left">
+              © 2026 Canvas Routes · canvasroutes.com
+            </div>
+            <div className="spec-membership-cta">
+              <Link href="/membership" style={{
+                display: 'inline-block',
+                padding: '0.7rem 1.6rem',
+                background: '#0F1E14',
+                color: '#c5a882',
+                fontSize: '10px',
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                fontFamily: 'var(--font-inter), Arial, sans-serif',
+                border: '0.5px solid rgba(197,168,130,0.4)',
+              }}>
+                Join Membership
+              </Link>
+            </div>
           </div>
+
+          {/* Print only: QR code centered below footer */}
+          <div className="spec-qr-centered">
+            {url && <QRCode value={url} size={72} fgColor="#1a1a1a" bgColor="#F5F1EC" />}
+            <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa' }}>
+              Scan to view
+            </div>
+          </div>
+
         </div>
 
       </div>
