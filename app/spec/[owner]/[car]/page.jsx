@@ -145,13 +145,10 @@ export default function SpecSheet({ params }) {
         }
 
         .spec-lower-section {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
+          display: block;
         }
 
         .spec-footer {
-          margin-top: auto;
           padding-top: 1.5rem;
           border-top: 0.5px solid rgba(0,0,0,0.1);
           display: flex;
@@ -228,22 +225,19 @@ export default function SpecSheet({ params }) {
           .spec-cell-label { font-size: 8.5px; }
           .spec-cell-value { font-size: 13px; }
 
-          /* Lower section: push footer + QR to bottom */
-          .spec-lower-section { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
-
           /* Footer */
-          .spec-footer { padding-top: 0.8rem; margin-top: 0; }
+          .spec-footer { padding-top: 0.6rem; margin-top: 0.6rem; }
           .spec-membership-cta { display: none !important; }
 
-          /* QR: full-width centered block */
+          /* QR: full-width centered, tight to footer */
           .spec-qr-centered {
             display: flex !important;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
-            gap: 0.4rem;
-            padding-top: 1rem;
+            gap: 0.3rem;
+            padding-top: 0.6rem;
           }
         }
 
