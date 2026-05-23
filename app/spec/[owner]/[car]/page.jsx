@@ -187,15 +187,16 @@ export default function SpecSheet({ params }) {
         /* ── Print ──────────────────────────────────────────────── */
         @page {
           size: A4;
-          margin: 9mm 13mm;
+          margin: 0;
         }
 
         @media print {
           .cookie-banner { display: none !important; }
 
           .spec-page {
-            padding: 0;
-            height: 279mm;
+            padding: 9mm 13mm;
+            box-sizing: border-box;
+            height: 297mm;
             overflow: hidden;
           }
 
@@ -228,12 +229,12 @@ export default function SpecSheet({ params }) {
           .spec-cell-value { font-size: 11.5px; }
 
           /* Lower section fills remaining page space */
-          .spec-lower-section { flex: 1; display: flex; flex-direction: column; }
+          .spec-lower-section { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
           /* Mods grows within lower section, footer+QR stay below */
-          .spec-mods-container { flex: 1; display: flex; flex-direction: column; margin-bottom: 0 !important; }
+          .spec-mods-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0 !important; }
           .spec-mods-body  { display: none !important; }
-          .spec-mods-lines { flex: 1; display: flex; flex-direction: column; padding: 0.5rem 0.8rem 0 !important; }
+          .spec-mods-lines { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0.5rem 0.8rem 0 !important; }
           .spec-mods-header { padding: 0.5rem 0.8rem; font-size: 7.5px; }
 
           /* Footer */
