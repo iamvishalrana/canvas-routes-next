@@ -123,7 +123,7 @@ function CopyBtn({ value }) {
 
 // ─── Member Expanded Panel ───────────────────────────────────────────────────
 
-function MemberExpandedPanel({ m, onToggleAttendance }) {
+function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
   const [noteValue, setNoteValue] = useState(m.admin_notes || '')
   const [savingNote, setSavingNote] = useState(false)
   const [noteSaved, setNoteSaved] = useState(false)
@@ -223,7 +223,7 @@ function MemberExpandedPanel({ m, onToggleAttendance }) {
           const isPast = new Date(ev.date) <= today
           return (
             <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', color: '#444', minWidth: '280px' }}>{ev.name}</span>
+              <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '280px' }}>{ev.name}</span>
               {isPast ? (
                 <>
                   <button onClick={() => onToggleAttendance(m, ev.name, true)}
@@ -517,11 +517,13 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
-            {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
-              <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
-            ))}
-          </div>
+          {!isMobile && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+              {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
+                <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+              ))}
+            </div>
+          )}
 
           {filtered.length === 0 && (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No members found.</div>
@@ -533,7 +535,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                 <div style={{ padding: '1.5rem 1.25rem', background: 'rgba(197,168,130,0.05)', borderLeft: '2px solid #c5a882' }}>
 
                   {/* Email + Status row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 180px', gap: '0.75rem', marginBottom: '0.75rem' }}>
                     <div>
                       <L>Email (changes login email)</L>
                       <input style={inp} type="email" value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} />
@@ -545,14 +547,14 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   </div>
 
                   {/* Personal info row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
                     <div><L>Name</L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
                     <div><L>Phone</L><input style={inp} type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} /></div>
                     <div><L>Instagram</L><input style={inp} value={editForm.instagram} onChange={e => setEditForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" /></div>
                   </div>
 
                   {/* DOB row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 3fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 3fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
                     <div>
                       <L>DOB Month</L>
                       <div style={{ position: 'relative' }}>
@@ -588,7 +590,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   {/* Cars */}
                   <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Cars ({editCars.length}/5)</div>
                   {editCars.map((car, cidx) => (
-                    <div key={cidx} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 120px auto', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'end' }}>
+                    <div key={cidx} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '100px 1fr 1fr 120px auto', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'end' }}>
                       <div>
                         {cidx === 0 && <L>Year</L>}
                         <div style={{ position: 'relative' }}>
@@ -633,6 +635,32 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                 </div>
               ) : (
                 <>
+                  {isMobile ? (
+                    <div style={{ padding: '0.9rem 1rem', cursor: 'pointer' }} onClick={() => setExpanded(expanded === m.id ? null : m.id)}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', minWidth: 0 }}>
+                          <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
+                          <Badge status={m.membership_status} />
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                          <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
+                          <DangerBtn onClick={() => deleteMember(m)} small>Del</DangerBtn>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.25rem' }}>{m.email}</div>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', color: '#888' }}>
+                          {m.cars?.length > 0
+                            ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || '—'
+                            : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || '—'}
+                          {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.3rem' }}>+{m.cars.length - 1}</span>}
+                        </span>
+                        <span style={{ fontSize: '11px', color: m.password_set_at ? '#3B6B2F' : '#bbb' }}>
+                          {m.password_set_at ? `✓ ${new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Awaiting'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
                   <div
                     style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
                     onClick={() => setExpanded(expanded === m.id ? null : m.id)}
@@ -662,9 +690,10 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       <DangerBtn onClick={() => deleteMember(m)} small>Delete</DangerBtn>
                     </div>
                   </div>
+                  )}
 
                   {expanded === m.id && (
-                    <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} />
+                    <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile} />
                   )}
                 </>
               )}
@@ -1332,31 +1361,69 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
       ) : filtered.length === 0 ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No applications yet.</div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
-            {['Name', 'Email', 'Car', 'DOB', 'Date', ''].map((h, i) => (
-              <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
-            ))}
-          </div>
+        <div style={isMobile ? {} : { overflowX: 'auto' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', ...(isMobile ? {} : { minWidth: '700px' }) }}>
+          {!isMobile && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+              {['Name', 'Email', 'Car', 'DOB', 'Date', ''].map((h, i) => (
+                <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+              ))}
+            </div>
+          )}
 
           {filtered.map((a, idx) => (
             <div key={a.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               {(() => {
                 const isGreyed = a.is_contact && !a.reregistered_at
+                const handleRowClick = () => {
+                  setExpanded(expanded === a.id ? null : a.id)
+                  if (editingApp === a.id) setEditingApp(null)
+                  markSeen(a.id)
+                  if (a.reregistered_at) {
+                    setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: null } : x))
+                    fetch(`/api/admin/applications/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reregistered_at: null }) })
+                  }
+                }
+                const inviteCell = (
+                  <div onClick={e => e.stopPropagation()}>
+                    {a.is_member || inviteStatus[a.id] === 'success' ? (
+                      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
+                    ) : (
+                      <div>
+                        <PrimaryBtn onClick={() => sendInvite(a)} disabled={inviting === a.id}>
+                          {inviting === a.id ? '…' : 'Invite'}
+                        </PrimaryBtn>
+                        {inviteStatus[a.id] && inviteStatus[a.id] !== 'success' && (
+                          <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.3rem' }}>{inviteStatus[a.id]}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+                if (isMobile) {
+                  return (
+                    <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: isGreyed ? 'rgba(0,0,0,0.025)' : undefined }} onClick={handleRowClick}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', minWidth: 0 }}>
+                          {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
+                          {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-reg</span>}
+                          <span style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a' }}>{a.name || <span style={{ color: '#ccc' }}>—</span>}</span>
+                        </div>
+                        {inviteCell}
+                      </div>
+                      <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>{[a.car_year, a.car_model].filter(Boolean).join(' ') || '—'}</span>
+                        <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                      </div>
+                    </div>
+                  )
+                }
                 return (
                 <div
                   style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: isGreyed ? 'rgba(0,0,0,0.025)' : undefined }}
-                  onClick={() => {
-                    setExpanded(expanded === a.id ? null : a.id)
-                    if (editingApp === a.id) setEditingApp(null)
-                    markSeen(a.id)
-                    if (a.reregistered_at) {
-                      setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: null } : x))
-                      fetch(`/api/admin/applications/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reregistered_at: null }) })
-                    }
-                  }}
+                  onClick={handleRowClick}
                 >
                   <div style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                     {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
@@ -1373,20 +1440,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   <div style={{ fontSize: '11px', color: '#bbb' }}>
                     {new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
                   </div>
-                  <div onClick={e => e.stopPropagation()}>
-                    {a.is_member || inviteStatus[a.id] === 'success' ? (
-                      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
-                    ) : (
-                      <div>
-                        <PrimaryBtn onClick={() => sendInvite(a)} disabled={inviting === a.id}>
-                          {inviting === a.id ? '…' : 'Invite'}
-                        </PrimaryBtn>
-                        {inviteStatus[a.id] && inviteStatus[a.id] !== 'success' && (
-                          <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.3rem' }}>{inviteStatus[a.id]}</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  {inviteCell}
                 </div>
                 )
               })()}
@@ -1398,14 +1452,14 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   {editingApp === a.id ? (
                     /* ── Edit mode ── */
                     <div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                         <div><L>Name</L><input style={inp} value={editAppForm.name} onChange={e => setEditAppForm(p => ({ ...p, name: e.target.value }))} /></div>
                         <div><L>Car Year</L><input style={inp} value={editAppForm.car_year} onChange={e => setEditAppForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
                         <div><L>Car Make & Model</L><input style={inp} value={editAppForm.car_model} onChange={e => setEditAppForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. BMW M3" maxLength={100} /></div>
                         <div><L>Phone</L><input style={inp} type="tel" value={editAppForm.phone} onChange={e => setEditAppForm(p => ({ ...p, phone: e.target.value }))} maxLength={30} /></div>
                         <div><L>Instagram</L><input style={inp} value={editAppForm.instagram} onChange={e => setEditAppForm(p => ({ ...p, instagram: e.target.value }))} placeholder="handle" maxLength={50} /></div>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 2fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 2fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                         <div>
                           <L>DOB Month</L>
                           <div style={{ position: 'relative' }}>
@@ -1460,14 +1514,14 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   ) : (
                     /* ── View mode ── */
                     <div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
                         <InfoCell label="Name" value={a.name} />
                         <InfoCell label="Car Year" value={a.car_year} />
                         <InfoCell label="Car Make & Model" value={a.car_model} />
                         <InfoCell label="Phone" value={a.phone} copyable />
                         <InfoCell label="Instagram" value={a.instagram ? `@${a.instagram}` : null} />
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
                         <InfoCell label="DOB" value={a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : null} />
                         <InfoCell label="How they heard" value={a.source} />
                         <InfoCell label="Applied" value={new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })} />
@@ -1501,7 +1555,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                         const isNA = isPast && (!reg || (reg.registered_at === null && reg.attended === null))
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{eventName}</span>
+                            <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
                             {reg?.registered_at && (
                               <span style={{ fontSize: '11px', color: '#bbb' }}>
                                 {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -1740,26 +1794,57 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       ) : filtered.length === 0 ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No contacts yet.</div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minWidth: '700px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
-            <input type="checkbox"
-              checked={filtered.length > 0 && filtered.every(c => selected.has(c.contact_id))}
-              ref={el => { if (el) el.indeterminate = filtered.some(c => selected.has(c.contact_id)) && !filtered.every(c => selected.has(c.contact_id)) }}
-              onChange={e => {
-                if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(c => c.contact_id)]))
-                else setSelected(prev => { const n = new Set(prev); filtered.forEach(c => n.delete(c.contact_id)); return n })
-              }}
-              style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
-            />
-            {['Name', 'Email', 'Car', 'DOB', 'Applied', ''].map((h, i) => (
-              <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
-            ))}
-          </div>
+        <div style={isMobile ? {} : { overflowX: 'auto' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', ...(isMobile ? {} : { minWidth: '700px' }) }}>
+          {!isMobile && (
+            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+              <input type="checkbox"
+                checked={filtered.length > 0 && filtered.every(c => selected.has(c.contact_id))}
+                ref={el => { if (el) el.indeterminate = filtered.some(c => selected.has(c.contact_id)) && !filtered.every(c => selected.has(c.contact_id)) }}
+                onChange={e => {
+                  if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(c => c.contact_id)]))
+                  else setSelected(prev => { const n = new Set(prev); filtered.forEach(c => n.delete(c.contact_id)); return n })
+                }}
+                style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+              />
+              {['Name', 'Email', 'Car', 'DOB', 'Applied', ''].map((h, i) => (
+                <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+              ))}
+            </div>
+          )}
 
           {filtered.map((c, idx) => (
             <div key={c.contact_id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
+              {isMobile ? (
+                <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
+                  onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }} onClick={e => e.stopPropagation()}>
+                      <input type="checkbox"
+                        checked={selected.has(c.contact_id)}
+                        onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(c.contact_id) : n.delete(c.contact_id); return n })}
+                        style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px', flexShrink: 0 }}
+                      />
+                      <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</span>
+                    </div>
+                    <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                      <button onClick={() => downloadVCard(c)} title="Save .vcf"
+                        style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '3px', padding: '0.28rem 0.45rem', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#666' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                      </button>
+                      <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '12px', color: '#888' }}>{[c.car_year, c.car_model].filter(Boolean).join(' ') || '—'}</span>
+                    {c.created_at && <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>}
+                  </div>
+                </div>
+              ) : (
               <div
                 style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
                 onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}
@@ -1797,11 +1882,12 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
                 </div>
               </div>
+              )}
 
               {/* Expanded panel */}
               {expanded === c.contact_id && (
                 <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
                     <div>
                       <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Name</div>
                       <div style={{ fontSize: '13px', color: c.name ? '#444' : '#ddd' }}>{c.name || '—'}</div>
@@ -1823,7 +1909,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       <div style={{ fontSize: '13px', color: c.instagram ? '#444' : '#ddd' }}>{c.instagram ? `@${c.instagram}` : '—'}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
                     <div>
                       <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>DOB</div>
                       <div style={{ fontSize: '13px', color: c.dob_month ? '#444' : '#ddd' }}>
@@ -1866,7 +1952,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         const isNA = isPast && (!reg || (reg.registered_at === null && reg.attended === null))
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '12px', color: '#444', minWidth: '260px' }}>{eventName}</span>
+                            <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
                             {reg?.registered_at && (
                               <span style={{ fontSize: '11px', color: '#bbb' }}>
                                 {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
