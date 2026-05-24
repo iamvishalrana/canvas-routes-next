@@ -78,7 +78,12 @@ export default async function DashboardPage() {
     <div>
       <style>{`
         .portal-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; align-items: start; }
-        @media (max-width: 700px) { .portal-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 700px) {
+          .portal-grid { grid-template-columns: 1fr; gap: 1.75rem; }
+          .dash-header { margin-bottom: 2rem !important; }
+          .dash-card-header { padding: 0.9rem 1.1rem !important; }
+          .dash-card-body { padding: 1rem 1.1rem !important; }
+        }
         .dash-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.08); }
         .dash-card-header { padding: 1.1rem 1.5rem; border-bottom: 0.5px solid rgba(0,0,0,0.07); }
         .dash-card-body { padding: 1.25rem 1.5rem; }
@@ -86,7 +91,7 @@ export default async function DashboardPage() {
       `}</style>
 
       {/* ── Header ── */}
-      <div style={{ marginBottom: '3rem' }}>
+      <div className="dash-header" style={{ marginBottom: '3rem' }}>
         <div style={{ width: '28px', height: '1.5px', background: '#c5a882', marginBottom: '1.75rem' }} />
         <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.2rem,5vw,3.2rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, marginBottom: '1rem' }}>
           Welcome back,<br />{firstName}.

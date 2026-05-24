@@ -88,17 +88,25 @@ export default function MembersNav({ email, isAdmin }) {
         </button>
       </nav>
 
+      {/* Mobile overlay */}
+      {menuOpen && (
+        <div onClick={() => setMenuOpen(false)}
+          style={{ position: 'fixed', inset: 0, top: '72px', zIndex: 48, background: 'rgba(0,0,0,0.3)' }} />
+      )}
+
       {/* Mobile dropdown */}
       {menuOpen && (
         <div style={{
           background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.15)',
-          padding: '1rem 2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem',
-          position: 'sticky', top: '72px', zIndex: 49,
+          padding: '1.25rem 1.5rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.1rem',
+          position: 'fixed', top: '72px', left: 0, right: 0, zIndex: 49,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
         }}>
           <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/dashboard' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Dashboard</Link>
           <Link href="/members/profile" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/profile' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Profile</Link>
           {isAdmin && <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', textDecoration: 'none' }}>Admin</Link>}
-          {email && <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)' }}>{email}</span>}
+          <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)' }} />
+          {email && <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.02em' }}>{email}</span>}
           <button onClick={signOut} style={{ background: 'none', border: 'none', padding: 0, fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>Sign out</button>
         </div>
       )}
