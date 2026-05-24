@@ -151,6 +151,14 @@ export default function RoutesPage() {
 
   return (
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",minHeight:"100vh"}}>
+      <style>{`
+        @media (max-width: 768px) {
+          .routes-hero { padding: clamp(100px,14vw,160px) 1.25rem 4rem !important; }
+          .routes-details { padding: 3.5rem 1.25rem !important; }
+          .routes-form-section { padding: 3rem 1.25rem 5rem !important; }
+          .routes-footer { padding: 1.5rem 1.25rem !important; }
+        }
+      `}</style>
 
       {/* NAV */}
       <nav className="nav">
@@ -180,7 +188,7 @@ export default function RoutesPage() {
       </div>
 
       {/* HERO */}
-      <section style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
+      <section className="routes-hero" style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
         <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · 31 May 2026</div>
         <h1 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
@@ -197,7 +205,7 @@ export default function RoutesPage() {
       </section>
 
       {/* DETAILS — What's Included + Pricing */}
-      <section style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
+      <section className="routes-details" style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
         <style>{`@media(max-width:680px){.details-grid{grid-template-columns:1fr !important;gap:3rem !important}}`}</style>
         <div className="details-grid" style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"stretch"}}>
 
@@ -258,7 +266,7 @@ export default function RoutesPage() {
       </section>
 
       {/* FORM SECTION */}
-      <section id="form" style={{padding:"6rem 2rem 8rem",background:"#F5F1EC"}}>
+      <section id="form" className="routes-form-section" style={{padding:"6rem 2rem 8rem",background:"#F5F1EC"}}>
         <div style={{maxWidth:"560px",margin:"0 auto"}}>
 
           {/* PRE-LAUNCH */}
@@ -471,7 +479,7 @@ export default function RoutesPage() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{borderTop:"0.5px solid rgba(0,0,0,0.12)",padding:"2rem 3rem",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"1rem",background:"#F5F1EC"}}>
+      <footer className="routes-footer" style={{borderTop:"0.5px solid rgba(0,0,0,0.12)",padding:"2rem 3rem",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"1rem",background:"#F5F1EC"}}>
         <div style={{display:"flex",flexDirection:"column",gap:"0.4rem"}}>
           <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
           <div style={{display:"flex",gap:"1rem"}}>
