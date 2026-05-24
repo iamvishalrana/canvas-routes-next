@@ -23,7 +23,6 @@ export default function Home() {
   const [routesLaunched, setRoutesLaunched] = useState(false)
   const [showRoutesPopup, setShowRoutesPopup] = useState(false)
   const [showEventsPopup, setShowEventsPopup] = useState(false)
-  const [showGpccModal, setShowGpccModal] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
@@ -46,9 +45,9 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = (showPastModal || showRoutesPopup || showEventsPopup || showGpccModal) ? 'hidden' : ''
+    document.body.style.overflow = (showPastModal || showRoutesPopup || showEventsPopup) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [showPastModal, showRoutesPopup, showEventsPopup, showGpccModal])
+  }, [showPastModal, showRoutesPopup, showEventsPopup])
 
   useEffect(() => {
     try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
@@ -437,7 +436,7 @@ export default function Home() {
               : e.inviteOnly
                 ? {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem",cursor:"pointer"}
                 : {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem"}
-            } onClick={e.past ? () => setShowPastModal(true) : e.inviteOnly ? () => setShowGpccModal(true) : undefined}>
+            } onClick={e.past ? () => setShowPastModal(true) : undefined}>
               {e.past && <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.8),transparent)"}} />}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
                 <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.65)":"#7B2032"}}>{e.date}</div>
@@ -853,48 +852,6 @@ export default function Home() {
                   {' '}and{' '}
                   <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
                 </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* GPCC MODAL */}
-      <AnimatePresence>
-        {showGpccModal && (
-          <motion.div
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            exit={{opacity:0}}
-            transition={{duration:0.2}}
-            onClick={() => setShowGpccModal(false)}
-            style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
-          >
-            <motion.div
-              initial={{opacity:0,scale:0.92,y:20}}
-              animate={{opacity:1,scale:1,y:0}}
-              exit={{opacity:0,scale:0.94,y:10}}
-              transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
-              onClick={e => e.stopPropagation()}
-              style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)"}}
-            >
-              <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-              <button onClick={() => setShowGpccModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-              <img src="/ccgp.jpeg" alt="Grand Prix Weekend - Cars, Coffee & Cruise" style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:"top",display:"block"}} />
-              <div style={{padding:"1.8rem 2rem 2rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 23, 2026</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Grand Prix Weekend -<br/>Cars, Coffee &amp; Cruise</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.5)",marginBottom:"1.4rem"}}>Exotics and Classics</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.8rem"}}>
-                  {["12:30 – 3:00 PM","Invite Only"].map((tag,idx) => (
-                    <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
-                  ))}
-                </div>
-                <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.4rem"}} />
-                <a href="#join" onClick={e => { e.preventDefault(); setShowGpccModal(false); smoothScroll('join') }}
-                  style={{display:"inline-block",padding:"0.85rem 2rem",background:"rgba(197,168,130,0.12)",border:"1px solid rgba(197,168,130,0.55)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
-                  Register
-                </a>
               </div>
             </motion.div>
           </motion.div>
