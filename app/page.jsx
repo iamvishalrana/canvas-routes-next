@@ -880,26 +880,6 @@ export default function Home() {
             >
               <button onClick={dismissEventsPopup} style={{position:"absolute",top:"-0.5rem",right:"-0.5rem",zIndex:10,background:"rgba(0,0,0,0.6)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
 
-              {/* Grand Prix Weekend - Cars, Coffee & Cruise */}
-              <div style={{flex:1,background:"#0F1E14",border:"1px solid rgba(197,168,130,0.35)",overflow:"hidden",position:"relative",fontFamily:"var(--font-inter),sans-serif"}}>
-                <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-                <img src="/ccgp.jpeg" alt="Grand Prix Weekend - Cars, Coffee & Cruise" style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"top",display:"block"}} />
-                <div style={{padding:"1.6rem 1.8rem 2rem"}}>
-                  <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 23, 2026</div>
-                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.85rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.35rem"}}>Grand Prix Weekend -<br/>Cars, Coffee &amp; Cruise</div>
-                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"0.95rem",fontStyle:"italic",color:"rgba(245,241,236,0.45)",marginBottom:"1.3rem"}}>Exotics and Classics</div>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:"0.4rem",marginBottom:"1.5rem"}}>
-                    {["12:30 – 3:00 PM","Invite Only"].map((tag,idx) => (
-                      <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
-                    ))}
-                  </div>
-                  <a href="#join" onClick={e => { e.preventDefault(); dismissEventsPopup(); smoothScroll('join') }}
-                    style={{display:"inline-block",padding:"0.8rem 1.8rem",background:"rgba(197,168,130,0.1)",border:"1px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
-                    Register
-                  </a>
-                </div>
-              </div>
-
               {/* Into the Laurentians */}
               <div style={{flex:1,background:"#0F1E14",border:"1px solid rgba(197,168,130,0.35)",overflow:"hidden",position:"relative",fontFamily:"var(--font-inter),sans-serif"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
