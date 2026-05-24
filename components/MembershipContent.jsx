@@ -31,21 +31,21 @@ const fadeIn  = {
   visible: { opacity: 1, transition: { duration: 0.9, ease: 'easeOut' } },
 }
 
-function FadeUp({ children, delay = 0, style }) {
+function FadeUp({ children, delay = 0, style, className }) {
   return (
     <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1], delay }}
-      style={style}>
+      style={style} className={className}>
       {children}
     </motion.div>
   )
 }
 
-function StaggerGrid({ children, style }) {
+function StaggerGrid({ children, style, className }) {
   return (
     <motion.div variants={stagger} initial="hidden" whileInView="visible"
-      viewport={{ once: true, margin: '-60px' }} style={style}>
+      viewport={{ once: true, margin: '-60px' }} style={style} className={className}>
       {children}
     </motion.div>
   )
@@ -156,14 +156,16 @@ export default function MembershipContent() {
     <div style={{ background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', minHeight: '100vh' }}>
       <style>{`
         @media(max-width:720px){
-          .mem-tiers  { grid-template-columns: 1fr !important; }
-          .mem-perks  { grid-template-columns: 1fr 1fr !important; }
-          .mem-about  { grid-template-columns: 1fr !important; }
-          .mem-about-img { display: none !important; }
-          .mem-steps  { grid-template-columns: 1fr !important; }
+          .mem-tiers      { grid-template-columns: 1fr !important; }
+          .mem-perks      { grid-template-columns: 1fr 1fr !important; }
+          .mem-about      { grid-template-columns: 1fr !important; }
+          .mem-about-img  { display: none !important; }
+          .mem-steps      { grid-template-columns: 1fr !important; }
+          .mem-tier-inner { padding: 1.5rem 1.5rem 0 !important; }
+          .mem-tier-body  { padding: 0 1.5rem 1.5rem !important; }
         }
         @media(max-width:480px){
-          .mem-perks  { grid-template-columns: 1fr !important; }
+          .mem-perks { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
@@ -296,7 +298,7 @@ export default function MembershipContent() {
             {/* TIER 1 */}
             <FadeUp delay={0.05}>
               <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.09)', height: '100%' }}>
-                <div style={{ padding: '2.25rem 2.25rem 0' }}>
+                <div className="mem-tier-inner" style={{ padding: '2.25rem 2.25rem 0' }}>
                   <div style={{ ...LABEL, color: '#999', marginBottom: '0.5rem' }}>Tier 1</div>
                   <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '2rem', lineHeight: 1.2 }}>
                     Routes<br />Member
@@ -312,7 +314,7 @@ export default function MembershipContent() {
                     <div style={{ ...BODY, color: '#444' }}>For drivers who want to show up and drive.</div>
                   </div>
                 </div>
-                <div style={{ padding: '0 2.25rem 2.25rem' }}>
+                <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
                   <div style={{ ...LABEL, color: '#999', marginBottom: '1.1rem' }}>Includes</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {TIER1.map((item, i) => (
@@ -331,7 +333,7 @@ export default function MembershipContent() {
               <div style={{ background: '#0F1E14', position: 'relative', overflow: 'hidden', height: '100%' }}>
                 <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(197,168,130,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                <div style={{ padding: '2.25rem 2.25rem 0' }}>
+                <div className="mem-tier-inner" style={{ padding: '2.25rem 2.25rem 0' }}>
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '0.5rem' }}>Tier 2</div>
                   <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '2rem', lineHeight: 1.2 }}>
                     Canvas Routes<br />Inner Circle
@@ -347,7 +349,7 @@ export default function MembershipContent() {
                     <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>For drivers who want to be first for everything and leave with something to show for it.</div>
                   </div>
                 </div>
-                <div style={{ padding: '0 2.25rem 2.25rem' }}>
+                <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '1.1rem' }}>Everything in Tier 1, plus</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {TIER2_EXTRA.map((item, i) => (
