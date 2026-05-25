@@ -68,13 +68,12 @@ const TIER2_EXTRA = [
   '$70 off one of the next two road trips — your membership starts paying for itself from day one',
   'We are actively onboarding partners — Inner Circle members will receive exclusive discounts from every partner we bring on board',
   'Canvas Routes merchandise baseball cap',
-  'Canvas Routes merchandise t-shirt',
 ]
 
 const PERKS = [
   { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merchandise. Handed to you at the first Canvas Routes event you attend after your membership is confirmed.', tier: 1 },
   { label: 'Car Perfume', sub: 'Refreshed every 2 months throughout the season, picked up at any Canvas Routes event.', tier: 1 },
-  { label: 'Cap & T-Shirt', sub: 'Canvas Routes merchandise cap and t-shirt — handed to you at your first event of the season.', tier: 2 },
+  { label: 'Cap', sub: 'Canvas Routes merchandise cap — handed to you at your first event of the season.', tier: 2 },
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes road trip.', tier: 2 },
 ]
 
