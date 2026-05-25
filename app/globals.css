@@ -369,7 +369,7 @@ section[id] {
 }
 
 .dashboard-grid { grid-template-columns: 1fr 1fr; }
-.events-popup-cards { flex-direction: row; width: 100%; max-width: 860px; }
+.events-popup-cards { flex-direction: row; width: 100%; max-width: 420px; }
 
 @media (max-width: 768px) {
   .nav { padding: 0.75rem 1.2rem; }
