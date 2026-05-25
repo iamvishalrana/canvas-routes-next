@@ -98,6 +98,7 @@ export default function MembershipContent() {
   const [focusedField, setFocusedField] = useState(null)
   const [status, setStatus]             = useState(null)
   const [submitError, setSubmitError]   = useState(null)
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const honeypotRef                     = useRef(null)
 
   function set(field, val) {
@@ -130,6 +131,7 @@ export default function MembershipContent() {
     if (!form.carMake) e.carMake = true
     if (!form.tier) e.tier = true
     if (!form.source) e.source = true
+    if (!termsAccepted) e.termsAccepted = true
     setErrors(e)
     return e
   }
@@ -566,6 +568,15 @@ export default function MembershipContent() {
                 </div>
 
               </div>
+
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '1.5rem', padding: '0.75rem', border: `0.5px solid ${errors.termsAccepted ? 'rgba(208,96,112,0.7)' : 'transparent'}`, background: errors.termsAccepted ? 'rgba(208,96,112,0.06)' : 'transparent', cursor: 'pointer' }}>
+                <input type="checkbox" checked={termsAccepted} onChange={e => { setTermsAccepted(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, termsAccepted: false })) }} style={{ accentColor: '#c5a882', width: '12px', height: '12px', flexShrink: 0, marginTop: '1px' }} />
+                <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  I have read and agree to the{' '}
+                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'rgba(197,168,130,0.8)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>Terms &amp; Conditions</a>
+                  .
+                </span>
+              </label>
 
               {submitError && <div style={{ ...SMALL, color: '#d06070', marginTop: '1rem' }}>{submitError}</div>}
 
