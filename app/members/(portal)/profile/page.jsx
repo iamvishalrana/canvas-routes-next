@@ -120,6 +120,7 @@ export default function ProfilePage() {
     if (savedCars.current) setCars(savedCars.current)
     setEditing(false)
     setError(null)
+    setSaved(false)
   }
 
   function updateCar(idx, field, value) {
@@ -184,14 +185,20 @@ export default function ProfilePage() {
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (fileInputRef.current) fileInputRef.current.value = ''
     setPhotoUploading(true); setPhotoError(null)
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
-    const data = await res.json()
-    setPhotoUploading(false)
-    if (res.ok) setCarPhotoUrl(data.url)
-    else setPhotoError(data.error || 'Upload failed.')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok) setCarPhotoUrl(data.url)
+      else setPhotoError(data.error || 'Upload failed.')
+    } catch {
+      setPhotoError('Upload failed. Please check your connection.')
+    } finally {
+      setPhotoUploading(false)
+    }
   }
 
   const sectionLabel = { fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', margin: '1.5rem 0 1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.08)' }
@@ -441,12 +448,9 @@ export default function ProfilePage() {
 
           {/* Photo with your car */}
           <div style={{ marginTop: '1.5rem' }}>
-            <button
-              type="button"
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', cursor: 'default', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}
-            >
+            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', boxSizing: 'border-box', fontFamily: 'var(--font-inter),sans-serif' }}>
               <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>Photo with your car</span>
-            </button>
+            </div>
             <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderTop: 'none', padding: '1.5rem 1.25rem', background: '#fafaf9' }}>
               {carPhotoUrl ? (
                 <div style={{ marginBottom: '1rem' }}>
