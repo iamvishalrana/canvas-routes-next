@@ -198,6 +198,16 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
         </div>
       )}
 
+      {/* Member photo */}
+      {m.car_photo_url && (
+        <div style={{ padding: '1rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Photo</div>
+          <a href={m.car_photo_url} target="_blank" rel="noreferrer">
+            <img src={m.car_photo_url} alt={m.name} style={{ width: '100%', maxHeight: '220px', objectFit: 'cover', display: 'block' }} />
+          </a>
+        </div>
+      )}
+
       {/* Stats strip */}
       {pastEvents.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>

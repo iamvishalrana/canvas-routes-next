@@ -19,6 +19,7 @@ CREATE TABLE public.members (
   membership_status TEXT DEFAULT 'pending'
                 CHECK (membership_status IN ('pending','active','suspended','expired')),
   tier          TEXT CHECK (tier IN ('routes_member', 'inner_circle')),
+  car_photo_url TEXT,
   join_date     TIMESTAMPTZ DEFAULT NOW(),
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
