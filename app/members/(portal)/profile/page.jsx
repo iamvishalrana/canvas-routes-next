@@ -107,6 +107,17 @@ export default function ProfilePage() {
       })
   }, [])
 
+  function formatPhone(v) {
+    let d = v.replace(/\D/g, '')
+    if (d.startsWith('1') && d.length > 1) d = d.slice(1)
+    d = d.slice(0, 10)
+    if (!d) return ''
+    const p = '+1 '
+    if (d.length <= 3) return p + d
+    if (d.length <= 6) return `${p}(${d.slice(0,3)}) ${d.slice(3)}`
+    return `${p}(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+  }
+
   function startEditing() {
     savedForm.current = { ...form }
     savedCars.current = cars.map(c => ({ ...c }))
@@ -301,13 +312,14 @@ export default function ProfilePage() {
                   style={{ ...inp, background: 'rgba(0,0,0,0.03)', color: '#999', cursor: 'not-allowed' }} />
               </Field>
               <Field label="Full Name">
-                <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                  maxLength={100} autoCapitalize="words" style={{ ...inp, textTransform: 'capitalize' }} />
+                <input type="text" value={form.name}
+                  onChange={e => setForm(p => ({ ...p, name: e.target.value.replace(/\b\w/g, c => c.toUpperCase()) }))}
+                  maxLength={100} autoCapitalize="words" style={inp} />
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
                 <Field label="Phone">
-                  <input type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                    maxLength={20} style={inp} />
+                  <input type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: formatPhone(e.target.value) }))}
+                    placeholder="+1 (514) 000-0000" maxLength={18} style={inp} />
                 </Field>
                 <Field label="Instagram">
                   <input type="text" value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))}

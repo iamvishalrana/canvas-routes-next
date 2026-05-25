@@ -106,11 +106,20 @@ export default function MembershipContent() {
     if (submitError) setSubmitError(null)
   }
 
+  function capitaliseName(v) {
+    return v.replace(/\b\w/g, c => c.toUpperCase())
+  }
+
   function formatPhone(v) {
-    const d = v.replace(/\D/g,'').slice(0,10)
-    if (d.length <= 3) return d
-    if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`
-    return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+    let d = v.replace(/\D/g, '')
+    // Strip leading country code 1 if the user typed it themselves
+    if (d.startsWith('1') && d.length > 1) d = d.slice(1)
+    d = d.slice(0, 10)
+    if (!d) return ''
+    const p = '+1 '
+    if (d.length <= 3) return p + d
+    if (d.length <= 6) return `${p}(${d.slice(0,3)}) ${d.slice(3)}`
+    return `${p}(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
   }
 
   function inp(field) {
@@ -125,7 +134,7 @@ export default function MembershipContent() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10) e.phone = true
+    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 11) e.phone = true
     if (!form.year.trim()) e.year = true
     if (!form.carMake) e.carMake = true
     if (!form.tier) e.tier = true
@@ -461,7 +470,7 @@ export default function MembershipContent() {
                 <div>
                   <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Full name</div>
                   <input type="text" value={form.name} placeholder="First and last name" autoComplete="name"
-                    onChange={e => set('name', e.target.value)}
+                    onChange={e => set('name', capitaliseName(e.target.value))}
                     onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
                     style={inp('name')} />
                 </div>
@@ -478,7 +487,7 @@ export default function MembershipContent() {
                 {/* Phone */}
                 <div>
                   <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone</div>
-                  <input type="tel" value={form.phone} placeholder="(514) 000-0000" autoComplete="tel"
+                  <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
                     onChange={e => set('phone', formatPhone(e.target.value))}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
                     style={inp('phone')} />
