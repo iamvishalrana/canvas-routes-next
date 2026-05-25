@@ -45,15 +45,22 @@ function inviteHtml({ firstName, tier, actionLink }) {
 
           <!-- Headline -->
           <tr>
-            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">
-              You&apos;re in, ${h(firstName)}.
+            <td style="padding-bottom:16px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">
+              Welcome to the community, ${h(firstName)}.
             </td>
           </tr>
 
-          <!-- Subtext -->
+          <!-- Warm intro -->
           <tr>
-            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.75);">
-              We&apos;ve reviewed your application personally. You&apos;ve been selected to join Canvas Routes for the 2026 season.
+            <td style="padding-bottom:12px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:rgba(245,241,236,0.8);">
+              We go through every application ourselves &mdash; and we&apos;re really glad to have you with us this season.
+            </td>
+          </tr>
+
+          <!-- Second line -->
+          <tr>
+            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:rgba(245,241,236,0.65);">
+              This is going to be a good one. Road trips through the Laurentians and beyond, morning meets with the right crowd, and a season built around actually driving. We&apos;ll be in touch with everything you need before we hit the road.
             </td>
           </tr>
 
@@ -91,17 +98,25 @@ function inviteHtml({ firstName, tier, actionLink }) {
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td align="center" style="background-color:#c5a882;">
-                    <a href="${h(actionLink)}" style="display:block;padding:16px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#0F1E14;text-decoration:none;font-weight:600;">Set up your membership &rarr;</a>
+                    <a href="${h(actionLink)}" style="display:block;padding:16px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#0F1E14;text-decoration:none;font-weight:600;">Set up your account &rarr;</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
+          <!-- Sign off -->
+          <tr>
+            <td style="padding-top:28px;padding-bottom:8px;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.7;color:rgba(245,241,236,0.55);">
+              See you on the road.<br/>
+              <span style="color:rgba(245,241,236,0.35);font-size:12px;">The Canvas Routes team</span>
+            </td>
+          </tr>
+
           <!-- Expiry note -->
           <tr>
-            <td style="padding-bottom:40px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:rgba(245,241,236,0.4);">
-              This link expires in 24 hours. If you have any questions, reply to this email or contact <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.4);">info@canvasroutes.com</a>.
+            <td style="padding-bottom:40px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:rgba(245,241,236,0.3);">
+              The setup link above expires in 24 hours. Any questions? Reply here or reach us at <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.3);">info@canvasroutes.com</a>.
             </td>
           </tr>
 
