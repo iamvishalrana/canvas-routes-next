@@ -51,6 +51,8 @@ export default function ProfilePage() {
   const savedForm = useRef(null)
   const savedCars = useRef(null)
 
+  const [tier, setTier] = useState(null)
+
   const [pwOpen, setPwOpen] = useState(false)
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
   const pwRules = [
@@ -100,6 +102,7 @@ export default function ProfilePage() {
           savedForm.current = f
           savedCars.current = c
           if (member?.car_photo_url) setCarPhotoUrl(member.car_photo_url)
+          if (member?.tier) setTier(member.tier)
         }
       })
   }, [])
@@ -200,6 +203,37 @@ export default function ProfilePage() {
 
   return (
     <div>
+      {tier && (
+        <div style={{
+          marginBottom: '1.5rem',
+          padding: '0.85rem 1.25rem',
+          background: tier === 'inner_circle' ? 'linear-gradient(90deg, rgba(197,168,130,0.12), rgba(197,168,130,0.06))' : 'rgba(0,0,0,0.03)',
+          border: tier === 'inner_circle' ? '0.5px solid rgba(197,168,130,0.35)' : '0.5px solid rgba(0,0,0,0.08)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '2px', height: '20px', background: tier === 'inner_circle' ? '#c5a882' : 'rgba(0,0,0,0.15)' }} />
+            <div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: tier === 'inner_circle' ? '#c5a882' : '#bbb', marginBottom: '0.15rem' }}>Canvas Routes</div>
+              <div style={{ fontSize: '13px', color: tier === 'inner_circle' ? '#7B5B2E' : '#555', letterSpacing: '0.04em' }}>
+                {tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'}
+              </div>
+            </div>
+          </div>
+          {tier === 'inner_circle' && (
+            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', textAlign: 'right' }}>
+              Season 2026<br />
+              <span style={{ color: 'rgba(197,168,130,0.4)' }}>June — December</span>
+            </div>
+          )}
+          {tier === 'routes_member' && (
+            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', textAlign: 'right' }}>
+              Season 2026<br />
+              <span style={{ color: '#ccc' }}>June — November</span>
+            </div>
+          )}
+        </div>
+      )}
       <div style={{ marginBottom: isMobile ? '2rem' : '3rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Account</div>
         <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#1a1a1a' }}>Your Profile</div>
