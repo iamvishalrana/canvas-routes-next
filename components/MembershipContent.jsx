@@ -94,7 +94,6 @@ export default function MembershipContent() {
   const [menuOpen, setMenuOpen]         = useState(false)
   const [form, setForm]                 = useState(INIT_FORM)
   const [errors, setErrors]             = useState({})
-  const [phoneOptOut, setPhoneOptOut]   = useState(false)
   const [focusedField, setFocusedField] = useState(null)
   const [status, setStatus]             = useState(null)
   const [submitError, setSubmitError]   = useState(null)
@@ -126,7 +125,7 @@ export default function MembershipContent() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) e.phone = true
+    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10) e.phone = true
     if (!form.year.trim()) e.year = true
     if (!form.carMake) e.carMake = true
     if (!form.tier) e.tier = true
@@ -145,7 +144,7 @@ export default function MembershipContent() {
     try {
       const res = await fetch('/api/membership-waitlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, phone: phoneOptOut ? '' : form.phone, _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) setStatus('success')
@@ -478,17 +477,11 @@ export default function MembershipContent() {
 
                 {/* Phone */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', marginTop: '1rem' }}>
-                    <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)' }}>Phone</div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={phoneOptOut} onChange={e => { setPhoneOptOut(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, phone: false })) }} style={{ accentColor: '#c5a882', width: '12px', height: '12px' }} />
-                      <span style={{ ...SMALL, color: 'rgba(245,241,236,0.35)', fontSize: '11px' }}>Prefer not to share</span>
-                    </label>
-                  </div>
-                  <input type="tel" value={form.phone} placeholder="(514) 000-0000" disabled={phoneOptOut} autoComplete="tel"
+                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone</div>
+                  <input type="tel" value={form.phone} placeholder="(514) 000-0000" autoComplete="tel"
                     onChange={e => set('phone', formatPhone(e.target.value))}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
-                    style={{ ...inp('phone'), opacity: phoneOptOut ? 0.3 : 1, cursor: phoneOptOut ? 'not-allowed' : 'text' }} />
+                    style={inp('phone')} />
                 </div>
 
                 {/* Year + Make */}
