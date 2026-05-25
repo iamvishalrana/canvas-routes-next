@@ -752,6 +752,8 @@ export default function Home() {
             <div style={{marginTop:"1.5rem",fontSize:"10px",color:"#ccc",lineHeight:"1.7",textAlign:"left"}}>
               By applying, you agree to our{' '}
               <Link href="/privacy" style={{fontSize:"10px",color:"#ccc",textDecoration:"underline"}}>privacy policy</Link>
+              {' '}and{' '}
+              <Link href="/terms" style={{fontSize:"10px",color:"#ccc",textDecoration:"underline"}}>terms & conditions</Link>
               {' '}and consent to receive updates from Canvas Routes about events and membership. You may withdraw your consent at any time by contacting{' '}
               <a href="mailto:info@canvasroutes.com" style={{fontSize:"10px",color:"#ccc",textDecoration:"underline"}}>info@canvasroutes.com</a>.
             </div>
@@ -917,6 +919,7 @@ export default function Home() {
         <div style={{display:"flex",flexDirection:"column",gap:"0.4rem"}}>
           <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
           <Link href="/privacy" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>Privacy Policy</Link>
+          <Link href="/terms" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>Terms</Link>
           <Link href="/faq" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>FAQ</Link>
           <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{background:"none",border:"none",padding:0,fontSize:"10px",color:"#aaa",cursor:"pointer",letterSpacing:"0.03em",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Manage cookies</button>
         </div>

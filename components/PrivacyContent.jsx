@@ -83,6 +83,7 @@ export default function PrivacyContent() {
         <div style={{borderTop:"0.5px solid rgba(0,0,0,0.1)",paddingTop:"2rem",marginTop:"2rem"}}>
           <p style={{fontSize:"11px",color:"#aaa"}}>© 2026 Canvas Routes. Montreal, QC. — info@canvasroutes.com</p>
           <a href="/faq" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em",display:"inline-block",marginTop:"0.25rem"}}>FAQ</a>
+          <a href="/terms" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em",display:"inline-block",marginTop:"0.25rem",marginLeft:"1rem"}}>Terms</a>
           <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#aaa",cursor:"pointer",fontFamily:"'Inter',sans-serif",marginTop:"0.5rem"}}>Manage cookies</button>
         </div>
       </div>

@@ -593,6 +593,8 @@ export default function MembershipContent() {
       {/* FOOTER */}
       <footer style={{ padding: '2rem 3rem', textAlign: 'center', borderTop: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
         <span style={{ ...SMALL, color: '#ccc' }}>© 2026 Canvas Routes. Montreal, QC.</span>
+        <Link href="/terms" style={{ ...SMALL, color: '#ccc', textDecoration: 'none' }}>Terms</Link>
+        <Link href="/privacy" style={{ ...SMALL, color: '#ccc', textDecoration: 'none' }}>Privacy</Link>
         <a href="https://instagram.com/canvasroutes" target="_blank" rel="noreferrer" style={{ ...LABEL, color: '#c5a882', textDecoration: 'none', borderBottom: '0.5px solid rgba(197,168,130,0.3)', paddingBottom: '1px' }}>@canvasroutes</a>
       </footer>
     </div>
