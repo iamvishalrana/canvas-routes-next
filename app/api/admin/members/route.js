@@ -1,6 +1,124 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 
+function h(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+function inviteHtml({ firstName, actionLink }) {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're in — Canvas Routes 2026</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0F1E14;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
+
+          <!-- Logo -->
+          <tr>
+            <td style="padding-bottom:32px;">
+              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
+            </td>
+          </tr>
+
+          <!-- Gold divider -->
+          <tr>
+            <td style="padding-bottom:28px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr></table>
+            </td>
+          </tr>
+
+          <!-- Eyebrow -->
+          <tr>
+            <td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">
+              Canvas Routes &middot; 2026 Season
+            </td>
+          </tr>
+
+          <!-- Headline -->
+          <tr>
+            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">
+              You&apos;re in, ${h(firstName)}.
+            </td>
+          </tr>
+
+          <!-- Subtext -->
+          <tr>
+            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.75);">
+              We&apos;ve reviewed your application personally. You&apos;ve been selected to join Canvas Routes for the 2026 season.
+            </td>
+          </tr>
+
+          <!-- Dark card -->
+          <tr>
+            <td style="padding-bottom:32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:rgba(197,168,130,0.08);border:0.5px solid rgba(197,168,130,0.2);">
+                <tr>
+                  <td style="padding:24px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <!-- Season row -->
+                      <tr>
+                        <td style="padding-bottom:16px;">
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Season</div>
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">June &mdash; November 2026</div>
+                        </td>
+                      </tr>
+                      <!-- Membership row -->
+                      <tr>
+                        <td>
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Your membership</div>
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">Canvas Routes Member</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA button -->
+          <tr>
+            <td style="padding-bottom:16px;" align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="background-color:#c5a882;">
+                    <a href="${h(actionLink)}" style="display:block;padding:16px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#0F1E14;text-decoration:none;font-weight:600;">Set up your membership &rarr;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Expiry note -->
+          <tr>
+            <td style="padding-bottom:40px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:rgba(245,241,236,0.4);">
+              This link expires in 24 hours. If you have any questions, reply to this email or contact <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.4);">info@canvasroutes.com</a>.
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top:20px;border-top:1px solid rgba(197,168,130,0.15);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.35);">
+              &copy; 2026 Canvas Routes. Montreal, QC.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
@@ -16,9 +134,14 @@ export async function POST(request) {
 
   const supabase = createAdminClient()
 
-  const { data: invited, error: inviteErr } = await supabase.auth.admin.inviteUserByEmail(email, {
-    data: { name },
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/members/reset-password`,
+  // Generate invite link without sending Supabase's default email
+  const { data: invited, error: inviteErr } = await supabase.auth.admin.generateLink({
+    type: 'invite',
+    email,
+    options: {
+      data: { name },
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/members/reset-password`,
+    },
   })
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 400 })
 
@@ -37,6 +160,38 @@ export async function POST(request) {
 
   const { error: insertErr } = await supabase.from('members').insert(memberData)
   if (insertErr) return Response.json({ error: insertErr.message }, { status: 500 })
+
+  // Send custom invite email via Resend
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const firstName = (name || email).trim().split(' ')[0]
+      const actionLink = invited.properties?.action_link ?? ''
+
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Canvas Routes <membership@canvasroutes.com>',
+          to: email,
+          reply_to: 'info@canvasroutes.com',
+          subject: "You're in — Canvas Routes 2026",
+          html: inviteHtml({ firstName, actionLink }),
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.text().catch(() => 'unknown')
+        console.error('Invite email send error:', err)
+      }
+    } catch (err) {
+      console.error('Invite email network error:', err)
+    }
+  } else {
+    console.warn('RESEND_API_KEY not set — invite email not sent.')
+  }
 
   return Response.json({ success: true })
 }
