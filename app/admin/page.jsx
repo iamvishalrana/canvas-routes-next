@@ -273,7 +273,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [editCars, setEditCars] = useState([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
-  const [inviteForm, setInviteForm] = useState({ name: '', email: '', membership_status: 'pending' })
+  const [inviteForm, setInviteForm] = useState({ name: '', email: '', membership_status: 'pending', tier: 'routes_member' })
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState(null)
   const [inviteSuccess, setInviteSuccess] = useState(false)
@@ -394,7 +394,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     setInviting(false)
     if (!res.ok) { setInviteError(data.error || 'Failed to send invite.'); return }
     setInviteSuccess(true)
-    setInviteForm({ name: '', email: '', membership_status: 'pending' })
+    setInviteForm({ name: '', email: '', membership_status: 'pending', tier: 'routes_member' })
     setAppData(null)
     setAppLookupEmail('')
     load()
@@ -460,7 +460,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       {/* Invite */}
       <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>Invite New Member</div>
-        <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr 180px auto', gap: '0.75rem', alignItems: 'end' }}>
+        <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr 160px 160px auto', gap: '0.75rem', alignItems: 'end' }}>
           <div>
             <L>Full Name</L>
             <input style={inp} value={inviteForm.name} onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))} placeholder="Name" />
@@ -475,6 +475,16 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
           <div>
             <L>Initial Status</L>
             <SelectWrap value={inviteForm.membership_status} onChange={e => setInviteForm(p => ({ ...p, membership_status: e.target.value }))} options={STATUS_OPTIONS} />
+          </div>
+          <div>
+            <L>Tier</L>
+            <div style={{ position: 'relative' }}>
+              <select style={sel} value={inviteForm.tier} onChange={e => setInviteForm(p => ({ ...p, tier: e.target.value }))}>
+                <option value="routes_member">Routes Member</option>
+                <option value="inner_circle">Inner Circle</option>
+              </select>
+              <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
           <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Send Invite'}</PrimaryBtn>
         </form>
@@ -1624,6 +1634,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [selected, setSelected] = useState(new Set())
   const [emailsCopied, setEmailsCopied] = useState(false)
   const [contactInviteStatus, setContactInviteStatus] = useState({}) // keyed by contact_id: 'sending'|'sent'|'error'
+  const [contactTierPick, setContactTierPick] = useState(null) // contact_id being tier-picked
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -1672,12 +1683,12 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     else alert('Failed to remove contact.')
   }
 
-  async function inviteContact(c) {
+  async function inviteContact(c, tier = 'routes_member') {
     setContactInviteStatus(p => ({ ...p, [c.contact_id]: 'sending' }))
     const res = await fetch('/api/admin/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: c.name, email: c.email, membership_status: 'pending' }),
+      body: JSON.stringify({ name: c.name, email: c.email, membership_status: 'pending', tier }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -1849,9 +1860,22 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                     <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                       {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
                         <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
+                      ) : contactTierPick === c.contact_id ? (
+                        <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                          <button onClick={() => { inviteContact(c, 'routes_member'); setContactTierPick(null) }}
+                            style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                            Routes
+                          </button>
+                          <button onClick={() => { inviteContact(c, 'inner_circle'); setContactTierPick(null) }}
+                            style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                            Inner Circle
+                          </button>
+                          <button onClick={() => setContactTierPick(null)}
+                            style={{ fontSize: '11px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+                        </div>
                       ) : (
                         <button
-                          onClick={() => inviteContact(c)}
+                          onClick={() => setContactTierPick(c.contact_id)}
                           disabled={contactInviteStatus[c.contact_id] === 'sending'}
                           style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
                         >
@@ -1899,9 +1923,22 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                 <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
                     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
+                  ) : contactTierPick === c.contact_id ? (
+                    <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                      <button onClick={() => { inviteContact(c, 'routes_member'); setContactTierPick(null) }}
+                        style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                        Routes
+                      </button>
+                      <button onClick={() => { inviteContact(c, 'inner_circle'); setContactTierPick(null) }}
+                        style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                        Inner Circle
+                      </button>
+                      <button onClick={() => setContactTierPick(null)}
+                        style={{ fontSize: '11px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+                    </div>
                   ) : (
                     <button
-                      onClick={() => inviteContact(c)}
+                      onClick={() => setContactTierPick(c.contact_id)}
                       disabled={contactInviteStatus[c.contact_id] === 'sending'}
                       style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
                     >

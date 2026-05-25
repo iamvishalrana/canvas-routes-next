@@ -7,7 +7,8 @@ function h(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-function inviteHtml({ firstName, actionLink }) {
+function inviteHtml({ firstName, tier, actionLink }) {
+  const tierLabel = tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -74,7 +75,7 @@ function inviteHtml({ firstName, actionLink }) {
                       <tr>
                         <td>
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Your membership</div>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">Canvas Routes Member</div>
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">${tierLabel}</div>
                         </td>
                       </tr>
                     </table>
@@ -129,7 +130,7 @@ export async function GET() {
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const { name, email, membership_status = 'pending', dob_month, dob_day, dob_year, phone, instagram, cars } = await request.json()
+  const { name, email, membership_status = 'pending', tier, dob_month, dob_day, dob_year, phone, instagram, cars } = await request.json()
   if (!email?.trim()) return Response.json({ error: 'Email required.' }, { status: 400 })
 
   const supabase = createAdminClient()
@@ -150,6 +151,7 @@ export async function POST(request) {
     name: name || null,
     email: email.toLowerCase().trim(),
     membership_status,
+    ...(tier && { tier }),
     ...(dob_month != null && { dob_month }),
     ...(dob_day != null && { dob_day }),
     ...(dob_year != null && { dob_year }),
@@ -178,7 +180,7 @@ export async function POST(request) {
           to: email,
           reply_to: 'info@canvasroutes.com',
           subject: "You're in — Canvas Routes 2026",
-          html: inviteHtml({ firstName, actionLink }),
+          html: inviteHtml({ firstName, tier, actionLink }),
         }),
       })
 

@@ -18,6 +18,7 @@ CREATE TABLE public.members (
   dob_year      SMALLINT,
   membership_status TEXT DEFAULT 'pending'
                 CHECK (membership_status IN ('pending','active','suspended','expired')),
+  tier          TEXT CHECK (tier IN ('routes_member', 'inner_circle')),
   join_date     TIMESTAMPTZ DEFAULT NOW(),
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
