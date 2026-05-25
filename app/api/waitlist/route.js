@@ -18,63 +18,78 @@ function customerHtml(firstName) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Application received &#8212; Canvas Routes</title>
 </head>
-<body style="margin:0;padding:0;background-color:#F5F1EC;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F1EC;">
+<body style="margin:0;padding:0;background-color:#0F1E14;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
     <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;background-color:#F5F1EC;">
+      <td align="center" style="padding:48px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
 
+          <!-- Logo -->
           <tr>
-            <td style="padding-bottom:28px;">
-              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" height="133" style="display:block;width:200px;height:auto;border:0;outline:0;" />
+            <td style="padding-bottom:32px;">
+              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
             </td>
           </tr>
 
+          <!-- Gold divider -->
           <tr>
             <td style="padding-bottom:28px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr></table>
             </td>
           </tr>
 
+          <!-- Eyebrow -->
           <tr>
-            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:300;line-height:38px;color:#1a1a1a;">
-              We&#39;ve got your application, ${firstName}.
+            <td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">
+              Canvas Routes &middot; Application
             </td>
           </tr>
 
+          <!-- Headline -->
           <tr>
-            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
-              Thank you for applying to Canvas Routes. We&#39;ve received your application and will review it shortly &#8212; once we do, expect a personal email from our team.
+            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">
+              We&apos;ve got your application, ${firstName}.
             </td>
           </tr>
 
+          <!-- Subtext -->
           <tr>
-            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:27px;color:#555555;">
-              To make sure our reply reaches your inbox, add <a href="mailto:jerry@canvasroutes.com" style="color:#555555;">jerry@canvasroutes.com</a> to your contacts now. In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes.
+            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
+              Thank you for applying to Canvas Routes. We review every application personally and will be in touch directly.
             </td>
           </tr>
 
+          <!-- Dark card -->
           <tr>
-            <td style="padding-bottom:44px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <td style="padding-bottom:32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:rgba(197,168,130,0.08);border:0.5px solid rgba(197,168,130,0.2);">
                 <tr>
-                  <td style="border:1px solid #1a1a1a;">
-                    <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#1a1a1a;text-decoration:none;">&#64;canvasroutes</a>
+                  <td style="padding:24px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:10px;">What&apos;s next</div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#F5F1EC;">Expect a personal email from our team. To make sure it reaches you, add info@canvasroutes.com to your contacts now.</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
+          <!-- Instagram button -->
           <tr>
-            <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#aaaaaa;">
-              If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam &#8212; so you don&#39;t miss our reply.
+            <td style="padding-bottom:40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="border:1px solid rgba(197,168,130,0.4);">
+                    <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;text-decoration:none;">&#64;canvasroutes &rarr;</a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
+          <!-- Footer -->
           <tr>
-            <td style="padding-top:20px;border-top:1px solid #ddd8d0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#aaaaaa;">
-              &#169; 2026 Canvas Routes. Montreal, QC.
+            <td style="padding-top:20px;border-top:1px solid rgba(197,168,130,0.15);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.35);">
+              &copy; 2026 Canvas Routes. Montreal, QC.
             </td>
           </tr>
 
