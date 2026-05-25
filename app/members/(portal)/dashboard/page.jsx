@@ -174,9 +174,9 @@ export default async function DashboardPage() {
                   <div style={{ fontSize: '11px', color: '#c5a882', letterSpacing: '0.06em', marginBottom: '0.2rem' }}>{ev.date}</div>
                   {ev.location && <div style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.02em', marginBottom: '0.25rem' }}>{ev.location}</div>}
                   {ev.description && <div style={{ fontSize: '12px', color: '#777', lineHeight: '1.65', marginTop: '0.35rem' }}>{ev.description}</div>}
-                  {ev.registration_url && (
+                  {(ev.registration_url || ev.type === 'Road Trip' || ev.type === 'Route') && (
                     <div style={{ marginTop: '0.85rem' }}>
-                      <Link href={ev.registration_url} style={{ display: 'inline-block', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.55rem 1.25rem', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      <Link href={ev.registration_url || '/routes'} style={{ display: 'inline-block', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.55rem 1.25rem', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
                         Register →
                       </Link>
                     </div>
