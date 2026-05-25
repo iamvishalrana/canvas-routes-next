@@ -2,12 +2,12 @@ import FAQContent from '../../components/FAQContent'
 
 export const metadata = {
   title: 'FAQ | Canvas Routes — Montreal Car Club',
-  description: "Frequently asked questions about Canvas Routes — Montreal's luxury car club. Cars and coffee, road trips from Montreal, membership, and more.",
-  keywords: 'Canvas Routes FAQ, car club Montreal, road trips from Montreal, cars and coffee Montreal, automotive community Montreal, luxury car meets Quebec',
+  description: "Frequently asked questions about Canvas Routes — Montreal's car club. Cars and Coffee events, road trips from Montreal, scenic drives through the Laurentians and Eastern Townships, membership, and more.",
+  keywords: 'Canvas Routes FAQ, car club Montreal, road trips from Montreal, cars and coffee Montreal, automotive community Montreal, Laurentians road trip, Eastern Townships drive, car meets Quebec, scenic drives Quebec',
   alternates: { canonical: 'https://canvasroutes.com/faq' },
   openGraph: {
     title: 'FAQ | Canvas Routes — Montreal Car Club',
-    description: "Frequently asked questions about Canvas Routes — Montreal's luxury car club. Cars and coffee, road trips from Montreal, membership, and more.",
+    description: "Frequently asked questions about Canvas Routes — Montreal's car club. Cars and Coffee, road trips, scenic drives and membership.",
     url: 'https://canvasroutes.com/faq',
   },
 }
@@ -19,12 +19,12 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'What is Canvas Routes?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Canvas Routes is a Montreal-based luxury automotive community built around curated car meets, scenic road trips and convoy adventures across Quebec, Ontario, Vermont, Maine, New York and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Canvas Routes is a Montreal-based car club built around curated road trips, scenic convoy drives, and invite-only Cars and Coffee events across Quebec, Ontario, Vermont, Maine, New York and beyond. We organize road trips through the Laurentians, Eastern Townships, Charlevoix and further afield, including overnight adventures. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.' },
     },
     {
       '@type': 'Question',
       name: 'Who is Canvas Routes for?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Anyone who genuinely loves to drive. Not to be seen, not to park and pose — but to actually get out and experience the road. Our community brings together enthusiasts of all backgrounds who share a respect for the drive, the machine and the people around them.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Anyone who genuinely loves to drive. Not to be seen, not to park and pose — but to actually get out and experience the road. Our community brings together car enthusiasts of all backgrounds who share a respect for the drive, the machine, and the people around them. Based in Montreal, open to drivers across Quebec and beyond.' },
     },
     {
       '@type': 'Question',
@@ -34,12 +34,22 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'Where are you based?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Montreal, Quebec. All current events depart from Montreal or the greater Montreal area. We are a young and growing community with ambitions that stretch across Quebec, Ontario, Vermont, Maine, New York and beyond.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Montreal, Quebec. All current events depart from Montreal or the greater Montreal area. We organize road trips through the Laurentians, Eastern Townships, Charlevoix, and further destinations including Nova Scotia. We are a young and growing community with ambitions that stretch across Quebec, Ontario, Vermont, Maine, New York and beyond.' },
+    },
+    {
+      '@type': 'Question',
+      name: 'How do I stay updated on upcoming events?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Follow us on Instagram @canvasroutes and on Facebook. All event announcements drop there first. You can also register at canvasroutes.com to be on our list for upcoming Cars and Coffee events, road trips, and membership launches.' },
     },
     {
       '@type': 'Question',
       name: 'What is a Canvas Routes Cars and Coffee?',
-      acceptedAnswer: { '@type': 'Answer', text: 'A curated invite-only morning meet at a premium venue in Montreal. Great cars, great coffee, great people. No entry fee, no judging — just a morning worth waking up for.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'A curated invite-only morning car meet at a premium venue in Montreal. Great cars, great coffee, great people. No entry fee, no judging — just a morning worth waking up for. Past events include themed meets like Exotics and Classics, Grand Prix weekend, and more.' },
+    },
+    {
+      '@type': 'Question',
+      name: 'How do I get an invite to Cars and Coffee?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Register at canvasroutes.com. All registrations are personally reviewed and confirmed. This is not a first come first served event — we take care with every registration to make sure the right fit is there.' },
     },
     {
       '@type': 'Question',
@@ -48,8 +58,18 @@ const faqSchema = {
     },
     {
       '@type': 'Question',
+      name: 'What kind of cars show up to Canvas Routes events?',
+      acceptedAnswer: { '@type': 'Answer', text: 'A mix of exotics, classics, performance cars and enthusiast builds. Themed events like Exotics and Classics give preference to specific categories but all passionate enthusiasts are welcome. For road trips, the standard is performance and luxury vehicles across all eras — the real qualifier is the person driving.' },
+    },
+    {
+      '@type': 'Question',
       name: 'What is a Canvas Routes road trip?',
-      acceptedAnswer: { '@type': 'Answer', text: 'A fully planned curated convoy through some of the most scenic backroads in North America and beyond. Every detail is handled — breakfast before departure, stops along the route, group lunch, farewell drinks and personal photography of your car on the road. All you bring is your car and your energy.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'A fully planned curated convoy drive through some of the most scenic backroads in North America. Every detail is handled — premium breakfast before departure, stops along the route, group lunch, farewell drinks and personal photography of your car on the road. Routes include drives through the Laurentians, Eastern Townships, Charlevoix, and beyond. All you bring is your car and your energy.' },
+    },
+    {
+      '@type': 'Question',
+      name: 'What kind of roads can I expect on a Canvas Routes road trip?',
+      acceptedAnswer: { '@type': 'Answer', text: 'We plan every route to avoid highways as much as possible. After the first regroup stop we take nothing but backroads all the way to the destination. Every route is personally mapped and scouted before the trip. Expect winding two-lane roads, elevation changes, lake views and long sweeping corners — the kind of roads you came for.' },
     },
     {
       '@type': 'Question',
@@ -58,18 +78,38 @@ const faqSchema = {
     },
     {
       '@type': 'Question',
+      name: 'Are Canvas Routes road trips members only?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Yes — from June 2026, all Canvas Routes road trips are members only. The Into the Laurentians road trip on May 31, 2026 was the last open registration. All future road trips require an active Canvas Routes membership. Members receive priority registration and preferred pricing for every road trip on the calendar.' },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do you organize overnight road trips?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Yes — overnight and multi-day convoy adventures are a core part of Canvas Routes. We have overnight trips planned for this season and longer expeditions in the works. The Canvas Routes flagship trip is a full convoy from Montreal to Cape Breton to drive the Cabot Trail in Nova Scotia — one of the greatest driving roads in North America.' },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is the Canvas Routes flagship road trip?',
+      acceptedAnswer: { '@type': 'Answer', text: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, driving one of the greatest roads in North America. This is a trip we are actively planning. Reach out at info@canvasroutes.com to be kept in the loop.' },
+    },
+    {
+      '@type': 'Question',
       name: 'What is your cancellation and refund policy?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel or have any questions about a refund, we always encourage you to reach out to us directly — we will do our best to work with you.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Generally, any fee paid to Canvas Routes is fully refundable. It can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel, reach out directly — we will always do our best to work with you.' },
     },
     {
       '@type': 'Question',
-      name: 'When do memberships launch?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Canvas Routes memberships open after our first road trip on May 31. Register at canvasroutes.com to be among the first notified.' },
+      name: 'When do Canvas Routes memberships launch?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Canvas Routes memberships launch June 2026. Register at canvasroutes.com/membership to secure early access before we open to the public.' },
     },
     {
       '@type': 'Question',
-      name: 'What will membership include?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Priority registration for all events and road trips, access to members only experiences, partner discounts, a Canvas Routes welcome kit and more. Full details dropping at launch.' },
+      name: 'How much does Canvas Routes membership cost?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Routes Member is $99 CAD per season (June — November). Inner Circle is $249 CAD per season, with access extending through December and additional exclusive perks. Full details at canvasroutes.com/membership.' },
+    },
+    {
+      '@type': 'Question',
+      name: 'What does a Canvas Routes membership include?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes welcome kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.' },
     },
   ],
 }

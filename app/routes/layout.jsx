@@ -1,18 +1,18 @@
 export const metadata = {
-  title: 'Into the Laurentians — Canvas Routes',
-  description: 'Join Canvas Routes for a curated road trip into the Laurentians on May 31, 2026. Premium breakfast, scenic backroads, artisanal lunch, media coverage, and farewell drinks. $200 per car. Spots are limited.',
-  keywords: 'Laurentians road trip Montreal, Canvas Routes road trip, curated driving event Quebec, cars and coffee road trip Montreal, Mont-Tremblant drive, scenic drive Laurentians',
+  title: 'Into the Laurentians — Road Trip from Montreal | Canvas Routes',
+  description: 'A curated road trip from Montreal into the Laurentians on May 31, 2026. Scenic backroads through Mont-Tremblant, premium breakfast, artisanal lunch, full media coverage and farewell drinks. $200 per car. Spots are limited.',
+  keywords: 'Laurentians road trip Montreal, road trip from Montreal 2026, Canvas Routes road trip, curated driving event Quebec, Mont-Tremblant drive, scenic drive Laurentians, convoy drive Quebec, car road trip Montreal, Quebec backroads driving',
   alternates: { canonical: 'https://canvasroutes.com/routes' },
   openGraph: {
-    title: 'Into the Laurentians — Canvas Routes',
-    description: 'A curated road trip through the Laurentians on May 31, 2026. Premium breakfast, scenic backroads, artisanal lunch, full media coverage. $200 per car.',
+    title: 'Into the Laurentians — Road Trip from Montreal | Canvas Routes',
+    description: 'Curated road trip from Montreal through the Laurentians, May 31, 2026. Scenic backroads, premium breakfast, artisanal lunch, full media coverage. $200 per car.',
     url: 'https://canvasroutes.com/routes',
-    images: [{ url: 'https://canvasroutes.com/itl.png', alt: 'Into the Laurentians — Canvas Routes Road Trip' }],
+    images: [{ url: 'https://canvasroutes.com/itl.png', alt: 'Into the Laurentians — Road Trip from Montreal Canvas Routes' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Into the Laurentians — Canvas Routes',
-    description: 'A curated road trip through the Laurentians on May 31, 2026. $200 per car. Spots are limited.',
+    title: 'Into the Laurentians — Road Trip from Montreal | Canvas Routes',
+    description: 'Curated road trip from Montreal through the Laurentians. May 31, 2026. $200 per car. Spots are limited.',
     images: ['https://canvasroutes.com/itl.png'],
   },
 }
