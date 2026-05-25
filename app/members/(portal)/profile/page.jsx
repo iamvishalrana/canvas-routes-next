@@ -71,6 +71,8 @@ export default function ProfilePage() {
   const [photoError, setPhotoError] = useState(null)
   const fileInputRef = useRef(null)
 
+  useEffect(() => { document.title = 'Your Profile — Canvas Routes' }, [])
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()

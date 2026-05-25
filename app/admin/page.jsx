@@ -2453,6 +2453,8 @@ export default function AdminPage() {
   const [allPeopleWithDob, setAllPeopleWithDob] = useState([])
   const [tabSearch, setTabSearch] = useState('')
 
+  useEffect(() => { document.title = 'Admin — Canvas Routes' }, [])
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()

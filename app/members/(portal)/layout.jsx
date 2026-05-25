@@ -1,4 +1,6 @@
 import { createClient } from '../../../lib/supabase/server'
+
+export const metadata = { title: 'Members Portal' }
 import MembersNav from '../../../components/MembersNav'
 
 export default async function PortalLayout({ children }) {

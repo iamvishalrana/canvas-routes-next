@@ -24,6 +24,8 @@ export default function ResetPasswordPage() {
   const allPass = rules.every(r => r.pass)
   const passwordsMatch = confirm.length > 0 && password === confirm
 
+  useEffect(() => { document.title = 'Set Password — Canvas Routes' }, [])
+
   useEffect(() => {
     // Token passed from /auth/callback via URL query param
     const params = new URLSearchParams(window.location.search)

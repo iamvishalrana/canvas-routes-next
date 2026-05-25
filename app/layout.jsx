@@ -25,7 +25,10 @@ export const viewport = {
 }
 
 export const metadata = {
-  title: 'Canvas Routes | Luxury Car Meets & Curated Road Trips in Montreal',
+  title: {
+    default: 'Canvas Routes | Luxury Car Meets & Curated Road Trips in Montreal',
+    template: '%s — Canvas Routes',
+  },
   description: "Canvas Routes is Montreal's premier luxury automotive community. Join exclusive car meets, curated road trips, and scenic drives across Quebec, Ontario, Vermont, Maine, New York and beyond. Apply for membership today.",
   keywords: 'luxury car meets Montreal, curated road trips Quebec, automotive community Montreal, car enthusiasts Montreal, scenic drives Quebec, private car meets Montreal, canvas routes, road trips Montreal, Montreal road trips, Montreal car scene, Montreal exotic cars, Quebec driving routes, cars and coffee Montreal, Montreal car club',
   robots: { index: true, follow: true },

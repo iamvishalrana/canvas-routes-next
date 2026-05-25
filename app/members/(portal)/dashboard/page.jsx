@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
+export const metadata = { title: 'Dashboard' }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 

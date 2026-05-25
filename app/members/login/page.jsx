@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [focused, setFocused] = useState(null)
 
+  useEffect(() => { document.title = 'Sign In — Canvas Routes' }, [])
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
