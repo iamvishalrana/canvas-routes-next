@@ -44,7 +44,7 @@ export default async function DashboardPage() {
   const [{ data: member }, { data: announcements }, { data: events }, { data: application }] = await Promise.all([
     admin.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
-    supabase.from('events').select('*').order('created_at', { ascending: false }).limit(6),
+    supabase.from('events').select('*').order('date', { ascending: true }).limit(20),
     admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle(),
   ])
 
@@ -78,6 +78,11 @@ export default async function DashboardPage() {
   const tier = member?.tier || 'routes_member'
   const isInnerCircle = tier === 'inner_circle'
   const carPhotoUrl = member?.car_photo_url || null
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const upcomingEvents = (events || []).filter(ev => {
+    const d = new Date(ev.date)
+    return !isNaN(d) ? d >= today : true
+  })
 
   return (
     <div>
@@ -158,17 +163,24 @@ export default async function DashboardPage() {
           <div className="dash-card">
             <div className="dash-card-header"><span className="section-label">Upcoming Events</span></div>
             <div style={{ padding: '0 1.5rem' }}>
-              {!events?.length ? (
-                <p style={{ fontSize: '13px', color: '#bbb', margin: '1.25rem 0' }}>No events scheduled yet.</p>
-              ) : events.map((ev, i) => (
-                <div key={ev.id} style={{ padding: '1.25rem 0', borderBottom: i < events.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
+              {!upcomingEvents.length ? (
+                <p style={{ fontSize: '13px', color: '#bbb', margin: '1.25rem 0' }}>No upcoming events scheduled yet.</p>
+              ) : upcomingEvents.map((ev, i) => (
+                <div key={ev.id} style={{ padding: '1.25rem 0', borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.4rem' }}>
                     <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', lineHeight: '1.35' }}>{ev.name}</div>
                     <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.25)', padding: '2px 7px', flexShrink: 0, background: 'rgba(123,91,46,0.05)', marginTop: '1px' }}>{ev.type}</span>
                   </div>
                   <div style={{ fontSize: '11px', color: '#c5a882', letterSpacing: '0.06em', marginBottom: '0.2rem' }}>{ev.date}</div>
-                  {ev.location && <div style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.02em' }}>{ev.location}</div>}
-                  {ev.description && <div style={{ fontSize: '12px', color: '#777', lineHeight: '1.65', marginTop: '0.5rem' }}>{ev.description}</div>}
+                  {ev.location && <div style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.02em', marginBottom: '0.25rem' }}>{ev.location}</div>}
+                  {ev.description && <div style={{ fontSize: '12px', color: '#777', lineHeight: '1.65', marginTop: '0.35rem' }}>{ev.description}</div>}
+                  {ev.registration_url && (
+                    <div style={{ marginTop: '0.85rem' }}>
+                      <Link href={ev.registration_url} style={{ display: 'inline-block', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.55rem 1.25rem', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+                        Register →
+                      </Link>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -912,7 +912,7 @@ function AnnouncementsTab() {
 function EventsTab() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', date: '', location: '', description: '', type: 'Road Trip' })
+  const [form, setForm] = useState({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '' })
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -943,7 +943,7 @@ function EventsTab() {
     const data = await res.json()
     setPosting(false)
     if (!res.ok) { setPostError(data.error || 'Failed.'); return }
-    setForm({ name: '', date: '', location: '', description: '', type: 'Road Trip' })
+    setForm({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '' })
     load()
   }
 
@@ -1021,6 +1021,10 @@ function EventsTab() {
             <L>Description</L>
             <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Brief description shown to members…" />
           </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <L>Registration URL (optional — adds a Register button for members)</L>
+            <input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" />
+          </div>
           <PrimaryBtn type="submit" disabled={posting}>{posting ? 'Adding…' : 'Add Event'}</PrimaryBtn>
           <Err msg={postError} />
         </form>
@@ -1042,7 +1046,8 @@ function EventsTab() {
                     <div><L>Type</L><SelectWrap value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
                   </div>
                   <div style={{ marginBottom: '0.6rem' }}><L>Location</L><input style={inp} value={editForm.location || ''} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} /></div>
-                  <div style={{ marginBottom: '0.75rem' }}><L>Description</L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
+                  <div style={{ marginBottom: '0.6rem' }}><L>Description</L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
+                  <div style={{ marginBottom: '0.75rem' }}><L>Registration URL</L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
                     <GhostBtn onClick={() => setEditing(null)}>Cancel</GhostBtn>
@@ -1063,7 +1068,7 @@ function EventsTab() {
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                       <GhostBtn onClick={() => toggleRegistrants(item.name)} small>{showRegistrants === item.name ? 'Hide' : 'Registrants'}</GhostBtn>
-                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type }); setSaveError(null) }} small>Edit</GhostBtn>
+                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '' }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
                     </div>
                   </div>

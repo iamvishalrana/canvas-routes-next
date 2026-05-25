@@ -40,8 +40,9 @@ CREATE TABLE public.events (
   date        TEXT NOT NULL,
   location    TEXT,
   description TEXT,
-  type        TEXT DEFAULT 'Meet',
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  type             TEXT DEFAULT 'Meet',
+  registration_url TEXT,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Row Level Security
