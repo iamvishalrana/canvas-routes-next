@@ -64,6 +64,11 @@ export default function ProfilePage() {
   const [savedPw, setSavedPw] = useState(false)
   const [pwError, setPwError] = useState(null)
 
+  const [carPhotoUrl, setCarPhotoUrl] = useState(null)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [photoError, setPhotoError] = useState(null)
+  const fileInputRef = useRef(null)
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
@@ -94,6 +99,7 @@ export default function ProfilePage() {
           setCars(c)
           savedForm.current = f
           savedCars.current = c
+          if (member?.car_photo_url) setCarPhotoUrl(member.car_photo_url)
         }
       })
   }, [])
@@ -170,6 +176,19 @@ export default function ProfilePage() {
     setSavingPw(false)
     if (!res.ok) setPwError(data.error || 'Could not update password.')
     else { setSavedPw(true); setPwForm({ password: '', confirm: '' }) }
+  }
+
+  async function handlePhotoUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoUploading(true); setPhotoError(null)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
+    const data = await res.json()
+    setPhotoUploading(false)
+    if (res.ok) setCarPhotoUrl(data.url)
+    else setPhotoError(data.error || 'Upload failed.')
   }
 
   const sectionLabel = { fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', margin: '1.5rem 0 1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.08)' }
@@ -385,6 +404,38 @@ export default function ProfilePage() {
               </form>
             </div>
           )}
+
+          {/* Photo with your car */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <button
+              type="button"
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', cursor: 'default', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}
+            >
+              <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>Photo with your car</span>
+            </button>
+            <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderTop: 'none', padding: '1.5rem 1.25rem', background: '#fafaf9' }}>
+              {carPhotoUrl ? (
+                <div style={{ marginBottom: '1rem' }}>
+                  <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', display: 'block' }} />
+                </div>
+              ) : (
+                <div style={{ marginBottom: '1rem', height: '140px', border: '0.5px dashed rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f4f2' }}>
+                  <span style={{ fontSize: '12px', color: '#bbb', letterSpacing: '0.06em' }}>No photo yet</span>
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+              {photoError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{photoError}</div>}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={photoUploading}
+                style={{ padding: '0.75rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: photoUploading ? 0.6 : 1 }}
+              >
+                {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change photo' : 'Upload photo'}
+              </button>
+              <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.6rem' }}>A photo of you with your car. Max 8 MB.</div>
+            </div>
+          </div>
         </div>
 
       </div>
