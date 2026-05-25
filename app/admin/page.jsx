@@ -162,6 +162,11 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.01em' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
             <Badge status={m.membership_status} />
+            {m.tier && (
+              <span style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', border: m.tier === 'inner_circle' ? '0.5px solid rgba(197,168,130,0.6)' : '0.5px solid rgba(0,0,0,0.15)', color: m.tier === 'inner_circle' ? '#c5a882' : '#888', background: m.tier === 'inner_circle' ? 'rgba(197,168,130,0.08)' : 'transparent' }}>
+                {m.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'}
+              </span>
+            )}
           </div>
           {memberSinceStr && (
             <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem', letterSpacing: '0.04em' }}>Member since {memberSinceStr}</div>
@@ -322,6 +327,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     setEditForm({
       email: m.email || '',
       membership_status: m.membership_status,
+      tier: m.tier || 'routes_member',
       name: m.name || '',
       phone: m.phone || '',
       instagram: m.instagram || '',
@@ -554,8 +560,8 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
               {editing === m.id ? (
                 <div style={{ padding: '1.5rem 1.25rem', background: 'rgba(197,168,130,0.05)', borderLeft: '2px solid #c5a882' }}>
 
-                  {/* Email + Status row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 180px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  {/* Email + Status + Tier row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 160px 160px', gap: '0.75rem', marginBottom: '0.75rem' }}>
                     <div>
                       <L>Email (changes login email)</L>
                       <input style={inp} type="email" value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} />
@@ -563,6 +569,16 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                     <div>
                       <L>Status</L>
                       <SelectWrap value={editForm.membership_status} onChange={e => setEditForm(p => ({ ...p, membership_status: e.target.value }))} options={STATUS_OPTIONS} />
+                    </div>
+                    <div>
+                      <L>Tier</L>
+                      <div style={{ position: 'relative' }}>
+                        <select style={sel} value={editForm.tier || 'routes_member'} onChange={e => setEditForm(p => ({ ...p, tier: e.target.value }))}>
+                          <option value="routes_member">Routes Member</option>
+                          <option value="inner_circle">Inner Circle</option>
+                        </select>
+                        <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                      </div>
                     </div>
                   </div>
 
