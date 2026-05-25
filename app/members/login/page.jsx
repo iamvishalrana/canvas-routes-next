@@ -69,13 +69,13 @@ export default function LoginPage() {
   }
 
   const formContent = (
-    <div style={{ width: '100%', maxWidth: '360px' }}>
+    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '360px' }}>
 
       {mode === 'login' && (
         <>
           <div style={{ marginBottom: '2.5rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Members Portal</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Welcome.</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '2.2rem' : '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Welcome.</div>
             <div style={{ width: '28px', height: '1px', background: '#c5a882', marginTop: '1.1rem' }} />
           </div>
 
@@ -139,7 +139,7 @@ export default function LoginPage() {
         <>
           <div style={{ marginBottom: '1.75rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Password Reset</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.4rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Reset your<br/>password.</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1' }}>Reset your<br/>password.</div>
             <div style={{ width: '28px', height: '1px', background: '#c5a882', marginTop: '1.1rem' }} />
           </div>
           <p style={{ fontSize: '13px', color: '#777', lineHeight: '1.75', marginBottom: '1.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -167,7 +167,7 @@ export default function LoginPage() {
       {mode === 'forgot' && resetSent && (
         <>
           <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.4rem', fontWeight: '300', color: '#3B6B2F', lineHeight: '1.1' }}>Check your<br/>inbox.</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#3B6B2F', lineHeight: '1.1' }}>Check your<br/>inbox.</div>
             <div style={{ width: '28px', height: '1px', background: '#c5a882', marginTop: '1.1rem' }} />
           </div>
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75', marginBottom: '1.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -186,19 +186,16 @@ export default function LoginPage() {
   if (isMobile) {
     return (
       <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ background: '#0F1E14', padding: '2.5rem 1.5rem 3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+        <div style={{ background: '#0F1E14', paddingTop: 'max(1.75rem, env(safe-area-inset-top))', paddingBottom: '1.75rem', paddingLeft: '1.5rem', paddingRight: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)' }} />
           <Link href="/" style={{ display: 'inline-block' }}>
-            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
+            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={110} height={73} style={{ filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
           </Link>
-          <div style={{ marginTop: '1.5rem', fontFamily: 'var(--font-cormorant),serif', fontSize: '1rem', fontStyle: 'italic', color: 'rgba(245,241,236,0.35)', letterSpacing: '0.02em' }}>
-            The Community. The Routes. The Canvas.
-          </div>
         </div>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2.5rem 1.5rem 3rem' }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1.5rem 2rem' }}>
           {formContent}
         </div>
-        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '10px', color: '#bbb', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }}>
+        <div style={{ paddingTop: '0.75rem', paddingBottom: 'max(1rem, env(safe-area-inset-bottom))', paddingLeft: '1rem', paddingRight: '1rem', textAlign: 'center', fontSize: '10px', color: '#bbb', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }}>
           © 2026 Canvas Routes
         </div>
       </div>
