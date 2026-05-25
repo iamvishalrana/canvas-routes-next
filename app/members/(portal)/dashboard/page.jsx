@@ -77,6 +77,7 @@ export default async function DashboardPage() {
 
   const tier = member?.tier || 'routes_member'
   const isInnerCircle = tier === 'inner_circle'
+  const carPhotoUrl = member?.car_photo_url || null
 
   return (
     <div>
@@ -240,6 +241,30 @@ export default async function DashboardPage() {
               )}
             </div>
           </div>
+
+          {/* Car photo */}
+          {carPhotoUrl && (
+            <div style={{ position: 'relative', overflow: 'hidden', lineHeight: 0 }}>
+              <img
+                src={carPhotoUrl}
+                alt={primaryCar ? [primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).join(' ') : 'Your car'}
+                style={{ width: '100%', height: '210px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+              />
+              {/* gradient caption overlay */}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '2.5rem 1.1rem 0.9rem', background: 'linear-gradient(to top, rgba(15,30,20,0.82) 0%, transparent 100%)', pointerEvents: 'none' }}>
+                {primaryCar && [primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).length > 0 && (
+                  <div style={{ fontSize: '11px', letterSpacing: '0.1em', color: 'rgba(245,241,236,0.75)', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    {[primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).map((p, i) => (
+                      <span key={i}>
+                        {i > 0 && <span style={{ color: '#c5a882', margin: '0 0.35rem', fontSize: '9px' }}>·</span>}
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Edit profile link */}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
