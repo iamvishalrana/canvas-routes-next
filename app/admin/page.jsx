@@ -1623,6 +1623,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [sortContacts, setSortContacts] = useState('name_az')
   const [selected, setSelected] = useState(new Set())
   const [emailsCopied, setEmailsCopied] = useState(false)
+  const [contactInviteStatus, setContactInviteStatus] = useState({}) // keyed by contact_id: 'sending'|'sent'|'error'
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -1669,6 +1670,23 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     const res = await fetch(`/api/admin/contacts/${contactId}`, { method: 'DELETE' })
     if (res.ok) { setSelected(prev => { const n = new Set(prev); n.delete(contactId); return n }); loadContacts() }
     else alert('Failed to remove contact.')
+  }
+
+  async function inviteContact(c) {
+    setContactInviteStatus(p => ({ ...p, [c.contact_id]: 'sending' }))
+    const res = await fetch('/api/admin/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: c.name, email: c.email, membership_status: 'pending' }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) {
+      setContactInviteStatus(p => ({ ...p, [c.contact_id]: 'sent' }))
+      setContacts(prev => prev.map(x => x.contact_id === c.contact_id ? { ...x, is_invited: true } : x))
+    } else {
+      setContactInviteStatus(p => ({ ...p, [c.contact_id]: data.error || 'Error' }))
+      setTimeout(() => setContactInviteStatus(p => { const n = {...p}; delete n[c.contact_id]; return n }), 4000)
+    }
   }
 
   async function deleteSelected() {
@@ -1829,6 +1847,17 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</span>
                     </div>
                     <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                      {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
+                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
+                      ) : (
+                        <button
+                          onClick={() => inviteContact(c)}
+                          disabled={contactInviteStatus[c.contact_id] === 'sending'}
+                          style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
+                        >
+                          {contactInviteStatus[c.contact_id] === 'sending' ? '…' : typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? 'Error' : 'Invite'}
+                        </button>
+                      )}
                       <button onClick={() => downloadVCard(c)} title="Save .vcf"
                         style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '3px', padding: '0.28rem 0.45rem', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#666' }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -1868,6 +1897,17 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}
                 </div>
                 <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
+                    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
+                  ) : (
+                    <button
+                      onClick={() => inviteContact(c)}
+                      disabled={contactInviteStatus[c.contact_id] === 'sending'}
+                      style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
+                    >
+                      {contactInviteStatus[c.contact_id] === 'sending' ? '…' : typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? 'Error' : 'Invite'}
+                    </button>
+                  )}
                   <button
                     onClick={() => downloadVCard(c)}
                     title="Save to Contacts (.vcf)"

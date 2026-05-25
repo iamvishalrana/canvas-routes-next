@@ -28,7 +28,10 @@ export async function GET() {
     contact_created_at: c.created_at,
   }))
 
-  return Response.json(merged)
+  const { data: members } = await supabase.from('members').select('email')
+  const memberEmails = new Set((members || []).map(m => m.email?.toLowerCase()))
+  const withInvited = merged.map(c => ({ ...c, is_invited: memberEmails.has((c.email || '').toLowerCase()) }))
+  return Response.json(withInvited)
 }
 
 export async function POST(request) {
