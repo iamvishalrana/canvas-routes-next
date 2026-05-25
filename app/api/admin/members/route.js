@@ -46,14 +46,14 @@ function inviteHtml({ firstName, tier, actionLink }) {
           <!-- Headline -->
           <tr>
             <td style="padding-bottom:16px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">
-              Welcome to the community, ${h(firstName)}.
+              Welcome, ${h(firstName)}.
             </td>
           </tr>
 
           <!-- Warm intro -->
           <tr>
             <td style="padding-bottom:12px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:rgba(245,241,236,0.8);">
-              We go through every application ourselves &mdash; and we&apos;re really glad to have you with us this season.
+              Your membership is confirmed &mdash; glad to have you with us for the 2026 season.
             </td>
           </tr>
 
