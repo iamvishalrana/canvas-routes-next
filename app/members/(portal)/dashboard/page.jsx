@@ -74,6 +74,9 @@ export default async function DashboardPage() {
 
   const primaryCar = carList[0]
 
+  const tier = member?.tier || 'routes_member'
+  const isInnerCircle = tier === 'inner_circle'
+
   return (
     <div>
       <style>{`
@@ -101,6 +104,18 @@ export default async function DashboardPage() {
             <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusStyle.text, display: 'inline-block' }} />
             {status}
           </span>
+          {tier && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
+              padding: '0.3rem 0.85rem',
+              border: isInnerCircle ? '0.5px solid rgba(197,168,130,0.6)' : '0.5px solid rgba(197,168,130,0.3)',
+              background: isInnerCircle ? 'rgba(197,168,130,0.1)' : 'transparent',
+              color: '#c5a882',
+            }}>
+              {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
+            </span>
+          )}
           {primaryCar && (
             <span style={{ fontSize: '12px', color: '#888', letterSpacing: '0.03em', borderLeft: '1px solid rgba(197,168,130,0.4)', paddingLeft: '0.75rem' }}>
               <CarDots car={primaryCar} />
@@ -163,17 +178,20 @@ export default async function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
           {/* Membership card — dark visual card */}
-          <div style={{ background: '#0F1E14', padding: '1.75rem 1.75rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ background: isInnerCircle ? 'linear-gradient(135deg, #0F1E14 50%, rgba(197,168,130,0.1) 100%)' : '#0F1E14', padding: '1.75rem 1.75rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
             {/* Ambient glow */}
-            <div style={{ position: 'absolute', top: 0, right: 0, width: '180px', height: '180px', background: 'radial-gradient(circle, rgba(197,168,130,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '180px', height: '180px', background: isInnerCircle ? 'radial-gradient(circle, rgba(197,168,130,0.18) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(197,168,130,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             {/* Wordmark */}
-            <div style={{ fontSize: '9px', letterSpacing: '0.35em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.35em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>
               Canvas Routes
+            </div>
+            <div style={{ fontSize: '8px', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', marginTop: '0.2rem', marginBottom: '1.3rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
             </div>
 
             {/* Divider */}
-            <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.25)', marginBottom: '1.5rem' }} />
+            <div style={{ height: '0.5px', background: isInnerCircle ? 'rgba(197,168,130,0.45)' : 'rgba(197,168,130,0.25)', marginBottom: '1.5rem' }} />
 
             {/* Name */}
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.7rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '0.5rem' }}>
@@ -209,7 +227,7 @@ export default async function DashboardPage() {
             )}
 
             {/* Bottom row */}
-            <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.15)', marginBottom: '1rem' }} />
+            <div style={{ height: '0.5px', background: isInnerCircle ? 'rgba(197,168,130,0.25)' : 'rgba(197,168,130,0.15)', marginBottom: '1rem' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)' }}>
                 {memberSince || 'Canvas Routes'}
