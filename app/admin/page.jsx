@@ -1666,6 +1666,10 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [emailsCopied, setEmailsCopied] = useState(false)
   const [contactInviteStatus, setContactInviteStatus] = useState({}) // keyed by contact_id: 'sending'|'sent'|'error'
   const [contactTierPick, setContactTierPick] = useState(null) // contact_id being tier-picked
+  const [editingContact, setEditingContact] = useState(null) // contact_id
+  const [editContactForm, setEditContactForm] = useState({})
+  const [savingContact, setSavingContact] = useState(false)
+  const [saveContactErr, setSaveContactErr] = useState(null)
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -1737,6 +1741,40 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     await Promise.all([...selected].map(id => fetch(`/api/admin/contacts/${id}`, { method: 'DELETE' })))
     setSelected(new Set())
     loadContacts()
+  }
+
+  function startEditContact(c) {
+    setEditingContact(c.contact_id)
+    setSaveContactErr(null)
+    setEditContactForm({
+      name: c.name || '',
+      car_year: c.car_year || '',
+      car_model: c.car_model || '',
+      phone: c.phone || '',
+      instagram: c.instagram || '',
+      dob_month: c.dob_month ? String(c.dob_month) : '',
+      dob_day: c.dob_day ? String(c.dob_day) : '',
+      dob_year: c.dob_year ? String(c.dob_year) : '',
+      source: c.source || '',
+      more: c.more || '',
+    })
+  }
+
+  async function saveContact(c) {
+    setSavingContact(true); setSaveContactErr(null)
+    const payload = {
+      ...editContactForm,
+      dob_month: editContactForm.dob_month ? parseInt(editContactForm.dob_month) : null,
+      dob_day: editContactForm.dob_day ? parseInt(editContactForm.dob_day) : null,
+      dob_year: editContactForm.dob_year ? parseInt(editContactForm.dob_year) : null,
+    }
+    const res = await fetch(`/api/admin/applications/${c.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    })
+    setSavingContact(false)
+    if (!res.ok) { const d = await res.json(); setSaveContactErr(d.error || 'Failed to save.'); return }
+    setContacts(prev => prev.map(x => x.contact_id === c.contact_id ? { ...x, ...payload } : x))
+    setEditingContact(null)
   }
 
   async function toggleAttended(appId, eventName, value) {
@@ -1995,52 +2033,121 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
               {/* Expanded panel */}
               {expanded === c.contact_id && (
                 <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+
+                  {editingContact === c.contact_id ? (
+                    /* ── Edit mode ── */
                     <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Name</div>
-                      <div style={{ fontSize: '13px', color: c.name ? '#444' : '#ddd' }}>{c.name || '—'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Car Year</div>
-                      <div style={{ fontSize: '13px', color: c.car_year ? '#444' : '#ddd' }}>{c.car_year || '—'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Car Make & Model</div>
-                      <div style={{ fontSize: '13px', color: c.car_model ? '#444' : '#ddd' }}>{c.car_model || '—'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Phone</div>
-                      <div style={{ fontSize: '13px', color: c.phone ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><span>{c.phone || '—'}</span><CopyBtn value={c.phone} /></div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Instagram</div>
-                      <div style={{ fontSize: '13px', color: c.instagram ? '#444' : '#ddd' }}>{c.instagram ? `@${c.instagram}` : '—'}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
-                    <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>DOB</div>
-                      <div style={{ fontSize: '13px', color: c.dob_month ? '#444' : '#ddd' }}>
-                        {c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? `, ${c.dob_year}` : ''}` : '—'}
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                        <div><L>Name</L><input style={inp} value={editContactForm.name} onChange={e => setEditContactForm(p => ({ ...p, name: e.target.value }))} /></div>
+                        <div><L>Car Year</L><input style={inp} value={editContactForm.car_year} onChange={e => setEditContactForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
+                        <div><L>Car Make & Model</L><input style={inp} value={editContactForm.car_model} onChange={e => setEditContactForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. BMW M3" maxLength={100} /></div>
+                        <div><L>Phone</L><input style={inp} type="tel" value={editContactForm.phone} onChange={e => setEditContactForm(p => ({ ...p, phone: e.target.value }))} maxLength={30} /></div>
+                        <div><L>Instagram</L><input style={inp} value={editContactForm.instagram} onChange={e => setEditContactForm(p => ({ ...p, instagram: e.target.value }))} placeholder="handle" maxLength={50} /></div>
                       </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 2fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                        <div>
+                          <L>DOB Month</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editContactForm.dob_month} onChange={e => setEditContactForm(p => ({ ...p, dob_month: e.target.value }))}>
+                              <option value="">Month</option>
+                              {MONTHS.map((mo, i) => <option key={i+1} value={String(i+1)}>{mo}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
+                        <div>
+                          <L>DOB Day</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editContactForm.dob_day} onChange={e => setEditContactForm(p => ({ ...p, dob_day: e.target.value }))}>
+                              <option value="">Day</option>
+                              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
+                        <div>
+                          <L>DOB Year</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editContactForm.dob_year} onChange={e => setEditContactForm(p => ({ ...p, dob_year: e.target.value }))}>
+                              <option value="">Year</option>
+                              {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
+                        <div>
+                          <L>How did they hear</L>
+                          <div style={{ position: 'relative' }}>
+                            <select style={sel} value={editContactForm.source} onChange={e => setEditContactForm(p => ({ ...p, source: e.target.value }))}>
+                              <option value="">Select…</option>
+                              {APP_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <L>Tell us more</L>
+                        <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editContactForm.more} onChange={e => setEditContactForm(p => ({ ...p, more: e.target.value }))} maxLength={500} />
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <PrimaryBtn onClick={() => saveContact(c)} disabled={savingContact}>{savingContact ? 'Saving…' : 'Save'}</PrimaryBtn>
+                        <GhostBtn onClick={() => setEditingContact(null)}>Cancel</GhostBtn>
+                      </div>
+                      {saveContactErr && <Err msg={saveContactErr} />}
                     </div>
+                  ) : (
+                    /* ── View mode ── */
                     <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>How they heard</div>
-                      <div style={{ fontSize: '13px', color: c.source ? '#444' : '#ddd' }}>{c.source || '—'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Applied</div>
-                      <div style={{ fontSize: '13px', color: '#444' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</div>
-                    </div>
-                  </div>
-                  {c.more && (
-                    <div style={{ marginBottom: '1rem' }}>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Tell us more</div>
-                      <div style={{ fontSize: '13px', color: '#444', lineHeight: '1.65' }}>{c.more}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Name</div>
+                          <div style={{ fontSize: '13px', color: c.name ? '#444' : '#ddd' }}>{c.name || '—'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Car Year</div>
+                          <div style={{ fontSize: '13px', color: c.car_year ? '#444' : '#ddd' }}>{c.car_year || '—'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Car Make & Model</div>
+                          <div style={{ fontSize: '13px', color: c.car_model ? '#444' : '#ddd' }}>{c.car_model || '—'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Phone</div>
+                          <div style={{ fontSize: '13px', color: c.phone ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><span>{c.phone || '—'}</span><CopyBtn value={c.phone} /></div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Instagram</div>
+                          <div style={{ fontSize: '13px', color: c.instagram ? '#444' : '#ddd' }}>{c.instagram ? `@${c.instagram}` : '—'}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>DOB</div>
+                          <div style={{ fontSize: '13px', color: c.dob_month ? '#444' : '#ddd' }}>
+                            {c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? `, ${c.dob_year}` : ''}` : '—'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>How they heard</div>
+                          <div style={{ fontSize: '13px', color: c.source ? '#444' : '#ddd' }}>{c.source || '—'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Applied</div>
+                          <div style={{ fontSize: '13px', color: '#444' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</div>
+                        </div>
+                      </div>
+                      {c.more && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Tell us more</div>
+                          <div style={{ fontSize: '13px', color: '#444', lineHeight: '1.65' }}>{c.more}</div>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Event registrations */}
+                  {editingContact !== c.contact_id && (
                   <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
                     {(() => {
@@ -2087,9 +2194,20 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       })
                     })()}
                   </div>
+                  )}
 
                   {/* Admin Notes */}
-                  <AppAdminNotes key={c.id} appId={c.id} initialNotes={c.admin_notes} onSaved={notes => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, admin_notes: notes } : x))} />
+                  {editingContact !== c.contact_id && (
+                    <AppAdminNotes key={c.id} appId={c.id} initialNotes={c.admin_notes} onSaved={notes => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, admin_notes: notes } : x))} />
+                  )}
+
+                  {/* Action row */}
+                  {editingContact !== c.contact_id && (
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <GhostBtn onClick={() => startEditContact(c)} small>Edit</GhostBtn>
+                      <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
