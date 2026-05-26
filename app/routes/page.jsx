@@ -219,6 +219,12 @@ export default function RoutesPage() {
               <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B5B2E"}}>per car · 2 people included</div>
             </div>
 
+            {/* Membership note */}
+            <div style={{marginBottom:"1rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
+              <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
+              <Link href="/membership" style={{fontSize:"12px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>canvasroutes.com/membership</Link>
+            </div>
+
             {/* Notes */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               {[

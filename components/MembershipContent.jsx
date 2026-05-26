@@ -379,6 +379,27 @@ export default function MembershipContent() {
         </div>
       </section>
 
+      {/* ── ROAD TRIP SAVINGS ───────────────────────────────────────── */}
+      <section style={{ background: '#F5F1EC', padding: 'clamp(4rem,6vw,6rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
+          <FadeUp>
+            <div style={{ maxWidth: '540px' }}>
+              <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Road trips</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.5rem' }}>
+                Members save on<br />every road trip.
+              </div>
+              <p style={{ ...BODY, color: '#555', marginBottom: '1.5rem' }}>
+                Canvas Routes members receive preferred pricing on all road trips throughout the season. The more you drive with us, the more your membership pays for itself.
+              </p>
+              <div style={{ height: '0.5px', width: '32px', background: '#c5a882', marginBottom: '1.25rem' }} />
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: '1.35rem', fontWeight: '300', color: '#888', lineHeight: 1.5 }}>
+                Join once. Save all season.
+              </div>
+            </div>
+          </FadeUp>
+        </div>
+      </section>
+
       {/* ── PHOTO BREAK 2 ───────────────────────────────────────────── */}
       <motion.div variants={fadeIn} initial="hidden" whileInView="visible" viewport={{ once: true }}
         style={{ position: 'relative', height: 'clamp(200px,28vw,360px)', overflow: 'hidden' }}>

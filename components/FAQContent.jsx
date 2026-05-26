@@ -120,8 +120,8 @@ const SECTIONS = [
       },
       {
         q: 'How do I register and pay?',
-        a: 'Register at canvasroutes.com. Once your registration is reviewed, payment details will be shared with you by email. Spots are strictly limited and confirmed on a first paid basis.',
-        ctaRoute: true,
+        a: 'Road trip pricing varies based on membership status. Members receive preferred pricing on all Canvas Routes road trips. Full membership details at canvasroutes.com/membership.',
+        a2: 'To register send an Interac E-transfer to info@canvasroutes.com with your name, car and membership status in the message. Spots are strictly limited and confirmed on a first paid basis. Registration deadlines apply for each trip.',
       },
     ],
   },
@@ -216,12 +216,24 @@ function AccordionItem({ item, isOpen, onToggle }) {
               fontSize: '14px',
               color: '#666',
               lineHeight: '1.9',
-              margin: (item.note || item.cta || item.ctaRoute) ? '0 0 0.6rem' : '0 0 1.6rem',
+              margin: (item.a2 || item.note || item.cta || item.ctaRoute) ? '0 0 0.6rem' : '0 0 1.6rem',
               paddingRight: '2.5rem',
               fontFamily: 'var(--font-inter),sans-serif',
             }}>
               {item.a}
             </p>
+            {item.a2 && (
+              <p style={{
+                fontSize: '14px',
+                color: '#666',
+                lineHeight: '1.9',
+                margin: (item.note || item.cta || item.ctaRoute) ? '0 0 0.6rem' : '0 0 1.6rem',
+                paddingRight: '2.5rem',
+                fontFamily: 'var(--font-inter),sans-serif',
+              }}>
+                {item.a2}
+              </p>
+            )}
             {item.note && (
               <p style={{
                 fontSize: '14px',

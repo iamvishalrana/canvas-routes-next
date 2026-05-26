@@ -83,6 +83,11 @@ const faqSchema = {
     },
     {
       '@type': 'Question',
+      name: 'How do I register and pay?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Road trip pricing varies based on membership status. Members receive preferred pricing on all Canvas Routes road trips. Full membership details at canvasroutes.com/membership. To register send an Interac E-transfer to info@canvasroutes.com with your name, car and membership status in the message. Spots are strictly limited and confirmed on a first paid basis. Registration deadlines apply for each trip.' },
+    },
+    {
+      '@type': 'Question',
       name: 'Do you organize overnight road trips?',
       acceptedAnswer: { '@type': 'Answer', text: 'Yes — overnight and multi-day convoy adventures are a core part of Canvas Routes. We have overnight trips planned for this season and longer expeditions in the works. The Canvas Routes flagship trip is a full convoy from Montreal to Cape Breton to drive the Cabot Trail in Nova Scotia — one of the greatest driving roads in North America.' },
     },
