@@ -47,6 +47,51 @@ function SectionDivider({ children, extra }) {
   )
 }
 
+function PhotoSection({ carPhotoUrl, photoUploading, photoError, fileInputRef, onUpload }) {
+  return (
+    <div style={{ marginTop: '1.75rem' }}>
+      <SectionDivider>Car Photo</SectionDivider>
+      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onUpload} />
+      {carPhotoUrl ? (
+        <div style={{ position: 'relative', lineHeight: 0, marginBottom: '0.85rem' }}>
+          <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '230px', objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,30,20,0.45) 0%, transparent 55%)', pointerEvents: 'none' }} />
+        </div>
+      ) : (
+        <div
+          className="photo-empty"
+          onClick={() => !photoUploading && fileInputRef.current?.click()}
+          style={{
+            marginBottom: '0.85rem', height: '150px',
+            border: '0.5px dashed rgba(197,168,130,0.28)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(197,168,130,0.02)', cursor: 'pointer',
+            transition: 'border-color 0.15s, background 0.15s', gap: '0.65rem',
+          }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
+            <rect x="11" y="13" width="10" height="8" rx="2"/>
+            <circle cx="7.5" cy="17.5" r="1.5"/>
+            <circle cx="17.5" cy="17.5" r="1.5"/>
+          </svg>
+          <span style={{ fontSize: '12px', color: '#ccc', letterSpacing: '0.04em', fontFamily: 'var(--font-inter), sans-serif' }}>No photo yet — tap to upload</span>
+        </div>
+      )}
+      {photoError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.65rem' }}>{photoError}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={photoUploading}
+          style={{ padding: '0.75rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.18)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: photoUploading ? 0.6 : 1 }}>
+          {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change Photo' : 'Upload Photo'}
+        </button>
+        <span style={{ fontSize: '11px', color: '#ccc' }}>Max 8 MB</span>
+      </div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', instagram: '', dob_day: '', dob_month: '', dob_year: '' })
@@ -227,52 +272,6 @@ export default function ProfilePage() {
   const initials = displayName.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
   const isInnerCircle = tier === 'inner_circle'
 
-  /* Shared photo section — used in both view and edit modes */
-  function PhotoSection() {
-    return (
-      <div style={{ marginTop: '1.75rem' }}>
-        <SectionDivider>Car Photo</SectionDivider>
-        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
-        {carPhotoUrl ? (
-          <div style={{ position: 'relative', lineHeight: 0, marginBottom: '0.85rem' }}>
-            <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '230px', objectFit: 'cover', display: 'block' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,30,20,0.45) 0%, transparent 55%)', pointerEvents: 'none' }} />
-          </div>
-        ) : (
-          <div
-            className="photo-empty"
-            onClick={() => !photoUploading && fileInputRef.current?.click()}
-            style={{
-              marginBottom: '0.85rem', height: '150px',
-              border: '0.5px dashed rgba(197,168,130,0.28)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(197,168,130,0.02)', cursor: 'pointer',
-              transition: 'border-color 0.15s, background 0.15s', gap: '0.65rem',
-            }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
-              <rect x="11" y="13" width="10" height="8" rx="2"/>
-              <circle cx="7.5" cy="17.5" r="1.5"/>
-              <circle cx="17.5" cy="17.5" r="1.5"/>
-            </svg>
-            <span style={{ fontSize: '12px', color: '#ccc', letterSpacing: '0.04em', fontFamily: 'var(--font-inter), sans-serif' }}>No photo yet — tap to upload</span>
-          </div>
-        )}
-        {photoError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.65rem' }}>{photoError}</div>}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={photoUploading}
-            style={{ padding: '0.75rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.18)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: photoUploading ? 0.6 : 1 }}>
-            {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change Photo' : 'Upload Photo'}
-          </button>
-          <span style={{ fontSize: '11px', color: '#ccc' }}>Max 8 MB</span>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div>
       <style>{`
@@ -399,7 +398,7 @@ export default function ProfilePage() {
               )}
 
               {/* Car photo in view mode */}
-              <PhotoSection />
+              <PhotoSection carPhotoUrl={carPhotoUrl} photoUploading={photoUploading} photoError={photoError} fileInputRef={fileInputRef} onUpload={handlePhotoUpload} />
 
               {!form.name && !form.phone && !dobDisplay && !hasCar && (
                 <div style={{ fontSize: '13px', color: '#bbb', paddingTop: '0.5rem', lineHeight: 1.75 }}>
@@ -508,7 +507,7 @@ export default function ProfilePage() {
               )}
 
               {/* Car photo in edit mode */}
-              <PhotoSection />
+              <PhotoSection carPhotoUrl={carPhotoUrl} photoUploading={photoUploading} photoError={photoError} fileInputRef={fileInputRef} onUpload={handlePhotoUpload} />
 
               {error && <div style={{ fontSize: '12px', color: '#7B2032', margin: '0.75rem 0' }}>{error}</div>}
 

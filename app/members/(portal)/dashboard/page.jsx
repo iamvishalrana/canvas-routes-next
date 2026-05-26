@@ -110,7 +110,7 @@ export default async function DashboardPage() {
         }
         .card-pad { padding: 0 1.75rem; }
         .section-label {
-          font-size: 8.5px; letter-spacing: 0.28em; text-transform: uppercase;
+          font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
           color: #aaa; font-family: var(--font-inter), sans-serif;
         }
         .event-row {
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
 
       {/* ── Header ── */}
       <header className="dash-header" style={{ marginBottom: '3.5rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-        <div style={{ fontSize: '8px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+        <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
           Canvas Routes &mdash; Season 2026
         </div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.8rem, 6vw, 4rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
