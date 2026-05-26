@@ -8,33 +8,32 @@ const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 const DOB_YEARS = Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i)
 const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '' }
 
+const inp = {
+  width: '100%', padding: '0.88rem 1rem',
+  border: '0.5px solid rgba(0,0,0,0.16)', background: '#fff',
+  fontSize: '13px', fontFamily: 'var(--font-inter), sans-serif',
+  color: '#1a1a1a', outline: 'none', boxSizing: 'border-box',
+}
+const sel = { ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none' }
+
+function FieldLabel({ children }) {
+  return <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.45rem', fontFamily: 'var(--font-inter), sans-serif' }}>{children}</div>
+}
+
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>{label}</label>
+    <div style={{ marginBottom: '0.9rem' }}>
+      <FieldLabel>{label}</FieldLabel>
       {children}
     </div>
   )
 }
 
-const inp = { width: '100%', padding: '0.85rem 1rem', border: '1px solid rgba(0,0,0,0.2)', background: 'transparent', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }
-const sel = { ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none' }
-
 function SelectWrap({ value, onChange, children }) {
   return (
     <div style={{ position: 'relative' }}>
-      <select value={value} onChange={onChange} style={sel}>{children}</select>
-      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-  )
-}
-
-function InfoRow({ label, value }) {
-  if (!value) return null
-  return (
-    <div style={{ padding: '0.85rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', gap: '1rem', alignItems: 'baseline' }}>
-      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', minWidth: '90px', flexShrink: 0 }}>{label}</div>
-      <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{value}</div>
+      <select value={value} onChange={onChange} style={sel} className="cr-select">{children}</select>
+      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
   )
 }
@@ -123,17 +122,13 @@ export default function ProfilePage() {
   function startEditing() {
     savedForm.current = { ...form }
     savedCars.current = cars.map(c => ({ ...c }))
-    setEditing(true)
-    setSaved(false)
-    setError(null)
+    setEditing(true); setSaved(false); setError(null)
   }
 
   function cancelEditing() {
     if (savedForm.current) setForm(savedForm.current)
     if (savedCars.current) setCars(savedCars.current)
-    setEditing(false)
-    setError(null)
-    setSaved(false)
+    setEditing(false); setError(null); setSaved(false)
   }
 
   function updateCar(idx, field, value) {
@@ -214,139 +209,198 @@ export default function ProfilePage() {
     }
   }
 
-  const sectionLabel = { fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', margin: '1.5rem 0 1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.08)' }
-
   const hasCar = cars.some(c => c.year || c.make || c.model || c.license_plate)
   const dobDisplay = form.dob_month
     ? `${MONTHS_SHORT[parseInt(form.dob_month) - 1]} ${form.dob_day}${form.dob_year ? `, ${form.dob_year}` : ''}`
     : null
 
+  const displayName = form.name || (user?.email ? user.email.split('@')[0] : '')
+  const initials = displayName.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
+  const isInnerCircle = tier === 'inner_circle'
+
   return (
     <div>
-      {tier && (
-        <div style={{
-          marginBottom: '1.5rem',
-          padding: '0.85rem 1.25rem',
-          background: tier === 'inner_circle' ? 'linear-gradient(90deg, rgba(197,168,130,0.12), rgba(197,168,130,0.06))' : 'rgba(0,0,0,0.03)',
-          border: tier === 'inner_circle' ? '0.5px solid rgba(197,168,130,0.35)' : '0.5px solid rgba(0,0,0,0.08)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '2px', height: '20px', background: tier === 'inner_circle' ? '#c5a882' : 'rgba(0,0,0,0.15)' }} />
-            <div>
-              <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: tier === 'inner_circle' ? '#c5a882' : '#bbb', marginBottom: '0.15rem' }}>Canvas Routes</div>
-              <div style={{ fontSize: '13px', color: tier === 'inner_circle' ? '#7B5B2E' : '#555', letterSpacing: '0.04em' }}>
-                {tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'}
-              </div>
-            </div>
+      <style>{`
+        .cr-input:focus, .cr-select:focus {
+          border-color: rgba(197,168,130,0.55) !important;
+          box-shadow: 0 0 0 2.5px rgba(197,168,130,0.08);
+        }
+        .info-row:hover { background: rgba(197,168,130,0.025); }
+        .car-view-card:hover { border-color: rgba(197,168,130,0.35) !important; }
+        .photo-empty:hover { border-color: rgba(197,168,130,0.45) !important; background: rgba(197,168,130,0.04) !important; }
+        .pw-toggle:hover { background: rgba(0,0,0,0.01) !important; }
+      `}</style>
+
+      {/* ── Header ── */}
+      <div style={{ marginBottom: '3rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
+          {/* Initials avatar */}
+          <div style={{
+            width: '54px', height: '54px', borderRadius: '50%', flexShrink: 0,
+            background: isInnerCircle
+              ? 'linear-gradient(135deg, #c5a882, #a8885f)'
+              : 'linear-gradient(135deg, #243328, #0F1E14)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: isInnerCircle ? '0 3px 14px rgba(197,168,130,0.28)' : '0 3px 14px rgba(15,30,20,0.22)',
+            marginTop: '3px',
+          }}>
+            <span style={{ fontSize: '16px', color: '#fff', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '400', letterSpacing: '0.05em' }}>{initials}</span>
           </div>
-          {tier === 'inner_circle' && (
-            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', textAlign: 'right' }}>
-              Season 2026<br />
-              <span style={{ color: 'rgba(197,168,130,0.4)' }}>June — December</span>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '8px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+              Canvas Routes &mdash; Season 2026
             </div>
-          )}
-          {tier === 'routes_member' && (
-            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', textAlign: 'right' }}>
-              Season 2026<br />
-              <span style={{ color: '#ccc' }}>June — November</span>
+            <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.01em' }}>
+              {form.name || (user?.email ? user.email.split('@')[0] : 'Your Profile')}
             </div>
-          )}
+            {user?.email && (
+              <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', marginBottom: '0.6rem' }}>{user.email}</div>
+            )}
+            {tier && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center',
+                fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                padding: '0.28rem 0.9rem',
+                border: isInnerCircle ? '0.5px solid rgba(197,168,130,0.5)' : '0.5px solid rgba(197,168,130,0.25)',
+                background: isInnerCircle ? 'rgba(197,168,130,0.09)' : 'transparent',
+                color: '#c5a882',
+                fontFamily: 'var(--font-inter), sans-serif',
+              }}>
+                {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
+              </span>
+            )}
+          </div>
         </div>
-      )}
-      <div style={{ marginBottom: isMobile ? '2rem' : '3rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Account</div>
-        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#1a1a1a' }}>Your Profile</div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '2.5rem' : '4rem', alignItems: 'start' }}>
 
-        {/* Profile Info */}
+        {/* ── Left: Profile Info ── */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888' }}>Personal Info</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>Personal Info</div>
             {!editing && (
               <button onClick={startEditing}
-                style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.25)', padding: '0.35rem 0.9rem', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
+                style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.38rem 1rem', cursor: 'pointer', color: '#666', fontFamily: 'var(--font-inter), sans-serif' }}>
                 Edit
               </button>
             )}
           </div>
 
           {!editing ? (
-            /* ── VIEW MODE ── */
+            /* ── View mode ── */
             <div>
-              <InfoRow label="Email" value={user?.email} />
-              <InfoRow label="Name" value={form.name ? form.name.charAt(0).toUpperCase() + form.name.slice(1) : null} />
-              <InfoRow label="Phone" value={form.phone || null} />
-              <InfoRow label="Instagram" value={form.instagram ? `@${form.instagram.replace(/^@/, '')}` : null} />
-              <InfoRow label="Birthday" value={dobDisplay} />
+              {[
+                { label: 'Email', value: user?.email },
+                { label: 'Name', value: form.name || null },
+                { label: 'Phone', value: form.phone || null },
+                { label: 'Instagram', value: form.instagram ? `@${form.instagram.replace(/^@/, '')}` : null },
+                { label: 'Birthday', value: dobDisplay },
+              ].map(row => row.value ? (
+                <div key={row.label} className="info-row" style={{
+                  display: 'flex', gap: '1rem', alignItems: 'baseline',
+                  padding: '0.88rem 0.5rem',
+                  borderBottom: '0.5px solid rgba(0,0,0,0.06)',
+                  margin: '0 -0.5rem',
+                  transition: 'background 0.12s',
+                }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#ccc', minWidth: '78px', flexShrink: 0, fontFamily: 'var(--font-inter), sans-serif' }}>{row.label}</div>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{row.value}</div>
+                </div>
+              ) : null)}
 
               {hasCar && (
                 <>
-                  <div style={{ ...sectionLabel, marginTop: '1.5rem' }}>Your Cars</div>
+                  <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', margin: '1.75rem 0 0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>Your Cars</div>
                   {cars.filter(c => c.year || c.make || c.model || c.license_plate).map((car, i) => (
-                    <div key={i} style={{ padding: '0.85rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-                      <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>
-                        {[car.year, car.make, car.model].filter(Boolean).join(' ') || 'Unnamed car'}
-                      </div>
-                      {car.license_plate && (
-                        <div style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginTop: '0.2rem' }}>
-                          {car.license_plate}
+                    <div key={i} className="car-view-card" style={{
+                      display: 'flex', alignItems: 'center', gap: '0.9rem',
+                      padding: '0.9rem 1rem', marginBottom: '0.5rem',
+                      border: '0.5px solid rgba(0,0,0,0.08)',
+                      background: 'rgba(197,168,130,0.025)',
+                      transition: 'border-color 0.15s',
+                    }}>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
+                        <rect x="11" y="13" width="10" height="8" rx="2"/>
+                        <circle cx="7.5" cy="17.5" r="1.5"/>
+                        <circle cx="17.5" cy="17.5" r="1.5"/>
+                      </svg>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.02em' }}>
+                          {[car.year, car.make, car.model].filter(Boolean).map((p, pi) => (
+                            <span key={pi}>
+                              {pi > 0 && <span style={{ color: '#c5a882', margin: '0 0.3rem', fontSize: '9px' }}>·</span>}
+                              {p}
+                            </span>
+                          ))}
                         </div>
-                      )}
+                        {car.license_plate && (
+                          <div style={{ fontSize: '9.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.15rem' }}>{car.license_plate}</div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </>
               )}
 
               {!form.name && !form.phone && !dobDisplay && !hasCar && (
-                <div style={{ fontSize: '13px', color: '#aaa', paddingTop: '0.5rem' }}>No profile info saved yet. Click Edit to add your details.</div>
+                <div style={{ fontSize: '13px', color: '#bbb', paddingTop: '0.5rem', lineHeight: 1.75 }}>
+                  No profile info yet. Click Edit to add your details.
+                </div>
               )}
 
-              {saved && <div style={{ fontSize: '12px', color: '#3B6B2F', marginTop: '1rem' }}>Changes saved.</div>}
+              {saved && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#3B6B2F', marginTop: '1.25rem' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Changes saved.
+                </div>
+              )}
             </div>
           ) : (
-            /* ── EDIT MODE ── */
+            /* ── Edit mode ── */
             <form onSubmit={saveProfile}>
               <Field label="Email">
                 <input type="email" value={user?.email || ''} disabled
-                  style={{ ...inp, background: 'rgba(0,0,0,0.03)', color: '#999', cursor: 'not-allowed' }} />
+                  style={{ ...inp, background: 'rgba(0,0,0,0.02)', color: '#bbb', cursor: 'not-allowed', borderColor: 'rgba(0,0,0,0.08)' }} />
               </Field>
               <Field label="Full Name">
-                <input type="text" value={form.name}
+                <input className="cr-input" type="text" value={form.name}
                   onChange={e => setForm(p => ({ ...p, name: e.target.value.replace(/\b\w/g, c => c.toUpperCase()) }))}
                   maxLength={100} autoCapitalize="words" style={inp} />
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
                 <Field label="Phone">
-                  <input type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: formatPhone(e.target.value) }))}
+                  <input className="cr-input" type="tel" value={form.phone}
+                    onChange={e => setForm(p => ({ ...p, phone: formatPhone(e.target.value) }))}
                     placeholder="+1 (514) 000-0000" maxLength={18} style={inp} />
                 </Field>
                 <Field label="Instagram">
-                  <input type="text" value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))}
+                  <input className="cr-input" type="text" value={form.instagram}
+                    onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))}
                     maxLength={50} placeholder="@yourhandle" style={inp} />
                 </Field>
               </div>
 
-              <div style={sectionLabel}>Date of Birth</div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', margin: '1.25rem 0 0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>Date of Birth</div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Month</label>
+                  <FieldLabel>Month</FieldLabel>
                   <SelectWrap value={form.dob_month} onChange={e => setForm(p => ({ ...p, dob_month: e.target.value }))}>
                     <option value="">Month</option>
                     {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
                   </SelectWrap>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Day</label>
+                  <FieldLabel>Day</FieldLabel>
                   <SelectWrap value={form.dob_day} onChange={e => setForm(p => ({ ...p, dob_day: e.target.value }))}>
                     <option value="">Day</option>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
                   </SelectWrap>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Year</label>
+                  <FieldLabel>Year</FieldLabel>
                   <SelectWrap value={form.dob_year} onChange={e => setForm(p => ({ ...p, dob_year: e.target.value }))}>
                     <option value="">Optional</option>
                     {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
@@ -354,60 +408,60 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div style={sectionLabel}>Your Cars <span style={{ color: '#bbb', fontWeight: '300', textTransform: 'none', letterSpacing: 0 }}>({cars.length}/5)</span></div>
+              <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', margin: '1.25rem 0 0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                Your Cars <span style={{ opacity: 0.5, textTransform: 'none', letterSpacing: 0 }}>({cars.length}/5)</span>
+              </div>
 
               {cars.map((car, idx) => (
-                <div key={idx} style={{ border: '0.5px solid rgba(0,0,0,0.12)', padding: '1.1rem', marginBottom: '0.75rem', background: '#fafaf9', position: 'relative' }}>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.75rem' }}>Car {idx + 1}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Year</label>
-                      <SelectWrap value={car.year} onChange={e => updateCar(idx, 'year', e.target.value)}>
-                        <option value="">Select year</option>
-                        {CAR_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
-                      </SelectWrap>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Make</label>
-                      <input type="text" value={car.make} onChange={e => updateCar(idx, 'make', e.target.value)}
-                        placeholder="e.g. Porsche" maxLength={50} style={inp} />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>Model</label>
-                      <input type="text" value={car.model} onChange={e => updateCar(idx, 'model', e.target.value)}
-                        placeholder="e.g. 911 Carrera" maxLength={100} style={inp} />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>License Plate</label>
-                      <input type="text" value={car.license_plate} onChange={e => updateCar(idx, 'license_plate', e.target.value)}
-                        placeholder="e.g. ABC-123" maxLength={15} style={{ ...inp, textTransform: 'uppercase' }} />
-                    </div>
+                <div key={idx} style={{ border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.2rem', marginBottom: '0.65rem', background: '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                    <div style={{ fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>Car {idx + 1}</div>
+                    {(cars.length > 1 || car.year || car.make || car.model || car.license_plate) && (
+                      <button type="button" onClick={() => removeCar(idx)}
+                        style={{ fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: 0.7 }}>
+                        Remove
+                      </button>
+                    )}
                   </div>
-                  {(cars.length > 1 || car.year || car.make || car.model || car.license_plate) && (
-                    <button type="button" onClick={() => removeCar(idx)}
-                      style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                      Remove
-                    </button>
-                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                    {[['Year', 'year', true], ['Make', 'make', false], ['Model', 'model', false], ['Plate', 'license_plate', false]].map(([label, field, isSelect]) => (
+                      <div key={field}>
+                        <FieldLabel>{label}</FieldLabel>
+                        {isSelect ? (
+                          <SelectWrap value={car.year} onChange={e => updateCar(idx, 'year', e.target.value)}>
+                            <option value="">Select</option>
+                            {CAR_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                          </SelectWrap>
+                        ) : (
+                          <input className="cr-input" type="text" value={car[field]}
+                            onChange={e => updateCar(idx, field, e.target.value)}
+                            placeholder={field === 'make' ? 'e.g. Porsche' : field === 'model' ? 'e.g. 911' : 'ABC-123'}
+                            maxLength={field === 'license_plate' ? 15 : 100}
+                            style={{ ...inp, ...(field === 'license_plate' ? { textTransform: 'uppercase' } : {}) }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
 
               {cars.length < 5 && (
                 <button type="button" onClick={addCar}
-                  style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.4)', padding: '0.55rem 1rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.25rem' }}>
-                  + Add Car
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '0.55rem 1.1rem', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '1.5rem' }}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Car
                 </button>
               )}
 
               {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{error}</div>}
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.5rem' }}>
                 <button type="submit" disabled={saving}
-                  style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: saving ? 0.6 : 1 }}>
+                  style={{ padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: saving ? 0.6 : 1 }}>
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
                 <button type="button" onClick={cancelEditing} disabled={saving}
-                  style={{ padding: '0.85rem 1.5rem', background: 'none', color: '#888', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  style={{ padding: '0.9rem 1.5rem', background: 'none', color: '#888', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
                   Cancel
                 </button>
               </div>
@@ -415,81 +469,120 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Change Password — collapsible tile */}
-        <div>
-          <button
-            type="button"
-            onClick={() => { setPwOpen(o => !o); setPwError(null); setSavedPw(false); setPwForm({ password: '', confirm: '' }) }}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}
-          >
-            <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>Change Password</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              style={{ transform: pwOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
+        {/* ── Right: Password + Photo ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-          {pwOpen && (
-            <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderTop: 'none', padding: '1.5rem 1.25rem', background: '#fafaf9' }}>
-              <form onSubmit={savePassword}>
-                <Field label="New Password">
-                  <input type="password" value={pwForm.password} onChange={e => setPwForm(p => ({ ...p, password: e.target.value }))}
-                    minLength={8} autoComplete="new-password" style={inp} />
-                </Field>
-                {pwForm.password.length > 0 && (
-                  <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    {pwRules.map(r => (
-                      <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: r.pass ? '#3B6B2F' : '#aaa' }}>
-                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: r.pass ? '#3B6B2F' : '#ccc', flexShrink: 0 }} />
-                        {r.label}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <Field label="Confirm Password">
-                  <input type="password" value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
-                    minLength={8} autoComplete="new-password" style={inp} />
-                </Field>
-                {pwError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{pwError}</div>}
-                {savedPw && <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>Password updated.</div>}
-                <button type="submit" disabled={savingPw}
-                  style={{ padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: savingPw ? 0.6 : 1 }}>
-                  {savingPw ? 'Updating…' : 'Update Password'}
-                </button>
-              </form>
-            </div>
-          )}
+          {/* Change password */}
+          <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff' }}>
+            <button
+              type="button"
+              className="pw-toggle"
+              onClick={() => { setPwOpen(o => !o); setPwError(null); setSavedPw(false); setPwForm({ password: '', confirm: '' }) }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', textAlign: 'left', transition: 'background 0.1s' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span style={{ fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#555' }}>Change Password</span>
+              </div>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transform: pwOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
 
-          {/* Photo with your car */}
-          <div style={{ marginTop: '1.5rem' }}>
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', boxSizing: 'border-box', fontFamily: 'var(--font-inter),sans-serif' }}>
-              <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>Photo with your car</span>
+            {pwOpen && (
+              <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)', padding: '1.4rem 1.25rem', background: 'rgba(250,250,248,0.8)' }}>
+                <form onSubmit={savePassword}>
+                  <Field label="New Password">
+                    <input className="cr-input" type="password" value={pwForm.password}
+                      onChange={e => setPwForm(p => ({ ...p, password: e.target.value }))}
+                      minLength={8} autoComplete="new-password" style={inp} />
+                  </Field>
+                  {pwForm.password.length > 0 && (
+                    <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      {pwRules.map(r => (
+                        <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: r.pass ? '#3B6B2F' : '#bbb', transition: 'color 0.15s' }}>
+                          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: r.pass ? '#3B6B2F' : '#ddd', flexShrink: 0, transition: 'background 0.15s' }} />
+                          {r.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Field label="Confirm Password">
+                    <input className="cr-input" type="password" value={pwForm.confirm}
+                      onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
+                      minLength={8} autoComplete="new-password" style={inp} />
+                  </Field>
+                  {pwError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{pwError}</div>}
+                  {savedPw && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Password updated.
+                    </div>
+                  )}
+                  <button type="submit" disabled={savingPw}
+                    style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: savingPw ? 0.6 : 1 }}>
+                    {savingPw ? 'Updating…' : 'Update Password'}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Car photo */}
+          <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '1.1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span style={{ fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>Photo with your car</span>
             </div>
-            <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderTop: 'none', padding: '1.5rem 1.25rem', background: '#fafaf9' }}>
+            <div style={{ padding: '1.25rem' }}>
+              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+
               {carPhotoUrl ? (
-                <div style={{ marginBottom: '1rem' }}>
-                  <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', display: 'block' }} />
+                <div style={{ marginBottom: '1rem', position: 'relative', lineHeight: 0 }}>
+                  <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '240px', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,30,20,0.45) 0%, transparent 55%)', pointerEvents: 'none' }} />
                 </div>
               ) : (
-                <div style={{ marginBottom: '1rem', height: '140px', border: '0.5px dashed rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f4f2' }}>
-                  <span style={{ fontSize: '12px', color: '#bbb', letterSpacing: '0.06em' }}>No photo yet</span>
+                <div
+                  className="photo-empty"
+                  onClick={() => !photoUploading && fileInputRef.current?.click()}
+                  style={{
+                    marginBottom: '1rem', height: '160px',
+                    border: '0.5px dashed rgba(197,168,130,0.28)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(197,168,130,0.02)', cursor: 'pointer',
+                    transition: 'border-color 0.15s, background 0.15s', gap: '0.65rem',
+                  }}>
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
+                    <rect x="11" y="13" width="10" height="8" rx="2"/>
+                    <circle cx="7.5" cy="17.5" r="1.5"/>
+                    <circle cx="17.5" cy="17.5" r="1.5"/>
+                  </svg>
+                  <span style={{ fontSize: '11px', color: '#ccc', letterSpacing: '0.06em', fontFamily: 'var(--font-inter), sans-serif' }}>No photo yet</span>
                 </div>
               )}
-              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+
               {photoError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{photoError}</div>}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={photoUploading}
-                style={{ padding: '0.75rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: photoUploading ? 0.6 : 1 }}
-              >
-                {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change photo' : 'Upload photo'}
-              </button>
-              <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.6rem' }}>A photo of you with your car. Max 8 MB.</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={photoUploading}
+                  style={{ padding: '0.78rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.18)', fontSize: '8.5px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: photoUploading ? 0.6 : 1 }}>
+                  {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change Photo' : 'Upload Photo'}
+                </button>
+                <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.02em' }}>Max 8 MB</span>
+              </div>
             </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   )
