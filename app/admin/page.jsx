@@ -1854,8 +1854,8 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       ) : filtered.length === 0 ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No contacts yet.</div>
       ) : (
-        <div style={isMobile ? {} : { overflowX: 'auto' }}>
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', ...(isMobile ? {} : { minWidth: '700px' }) }}>
+        <div>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
           {!isMobile && (
             <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
               <input type="checkbox"
