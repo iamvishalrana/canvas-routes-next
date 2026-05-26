@@ -1810,7 +1810,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
           <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
           <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Export CSV</button>
-          <button onClick={deleteSelected} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: '0.5px solid rgba(123,32,50,0.3)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Delete</button>
+          <button onClick={deleteSelected} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: '0.5px solid rgba(123,32,50,0.3)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Remove</button>
           <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
         </div>
       )}
@@ -1919,7 +1919,6 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                         </svg>
                       </button>
-                      <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
                     </div>
                   </div>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
@@ -1987,7 +1986,6 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                     </svg>
                   </button>
-                  <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
                 </div>
               </div>
               )}
