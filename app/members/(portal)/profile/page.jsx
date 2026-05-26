@@ -17,7 +17,7 @@ const inp = {
 const sel = { ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none' }
 
 function FieldLabel({ children }) {
-  return <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.45rem', fontFamily: 'var(--font-inter), sans-serif' }}>{children}</div>
+  return <div style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.45rem', fontFamily: 'var(--font-inter), sans-serif' }}>{children}</div>
 }
 
 function Field({ label, children }) {
@@ -34,6 +34,15 @@ function SelectWrap({ value, onChange, children }) {
     <div style={{ position: 'relative' }}>
       <select value={value} onChange={onChange} style={sel} className="cr-select">{children}</select>
       <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  )
+}
+
+function SectionDivider({ children, extra }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#aaa', margin: '1.5rem 0 0.85rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+      {children}
+      {extra && <span style={{ opacity: 0.5, textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>{extra}</span>}
     </div>
   )
 }
@@ -218,6 +227,52 @@ export default function ProfilePage() {
   const initials = displayName.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
   const isInnerCircle = tier === 'inner_circle'
 
+  /* Shared photo section — used in both view and edit modes */
+  function PhotoSection() {
+    return (
+      <div style={{ marginTop: '1.75rem' }}>
+        <SectionDivider>Car Photo</SectionDivider>
+        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+        {carPhotoUrl ? (
+          <div style={{ position: 'relative', lineHeight: 0, marginBottom: '0.85rem' }}>
+            <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '230px', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,30,20,0.45) 0%, transparent 55%)', pointerEvents: 'none' }} />
+          </div>
+        ) : (
+          <div
+            className="photo-empty"
+            onClick={() => !photoUploading && fileInputRef.current?.click()}
+            style={{
+              marginBottom: '0.85rem', height: '150px',
+              border: '0.5px dashed rgba(197,168,130,0.28)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(197,168,130,0.02)', cursor: 'pointer',
+              transition: 'border-color 0.15s, background 0.15s', gap: '0.65rem',
+            }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
+              <rect x="11" y="13" width="10" height="8" rx="2"/>
+              <circle cx="7.5" cy="17.5" r="1.5"/>
+              <circle cx="17.5" cy="17.5" r="1.5"/>
+            </svg>
+            <span style={{ fontSize: '12px', color: '#ccc', letterSpacing: '0.04em', fontFamily: 'var(--font-inter), sans-serif' }}>No photo yet — tap to upload</span>
+          </div>
+        )}
+        {photoError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.65rem' }}>{photoError}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={photoUploading}
+            style={{ padding: '0.75rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.18)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: photoUploading ? 0.6 : 1 }}>
+            {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change Photo' : 'Upload Photo'}
+          </button>
+          <span style={{ fontSize: '11px', color: '#ccc' }}>Max 8 MB</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <style>{`
@@ -234,7 +289,6 @@ export default function ProfilePage() {
       {/* ── Header ── */}
       <div style={{ marginBottom: '3rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
-          {/* Initials avatar */}
           <div style={{
             width: '54px', height: '54px', borderRadius: '50%', flexShrink: 0,
             background: isInnerCircle
@@ -248,24 +302,23 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '8px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.34em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
               Canvas Routes &mdash; Season 2026
             </div>
             <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.01em' }}>
               {form.name || (user?.email ? user.email.split('@')[0] : 'Your Profile')}
             </div>
             {user?.email && (
-              <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', marginBottom: '0.6rem' }}>{user.email}</div>
+              <div style={{ fontSize: '12px', color: '#bbb', letterSpacing: '0.03em', marginBottom: '0.6rem' }}>{user.email}</div>
             )}
             {tier && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center',
-                fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
                 padding: '0.28rem 0.9rem',
                 border: isInnerCircle ? '0.5px solid rgba(197,168,130,0.5)' : '0.5px solid rgba(197,168,130,0.25)',
                 background: isInnerCircle ? 'rgba(197,168,130,0.09)' : 'transparent',
-                color: '#c5a882',
-                fontFamily: 'var(--font-inter), sans-serif',
+                color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif',
               }}>
                 {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
               </span>
@@ -279,10 +332,10 @@ export default function ProfilePage() {
         {/* ── Left: Profile Info ── */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>Personal Info</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>Personal Info</div>
             {!editing && (
               <button onClick={startEditing}
-                style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.38rem 1rem', cursor: 'pointer', color: '#666', fontFamily: 'var(--font-inter), sans-serif' }}>
+                style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.38rem 1rem', cursor: 'pointer', color: '#666', fontFamily: 'var(--font-inter), sans-serif' }}>
                 Edit
               </button>
             )}
@@ -305,14 +358,14 @@ export default function ProfilePage() {
                   margin: '0 -0.5rem',
                   transition: 'background 0.12s',
                 }}>
-                  <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#ccc', minWidth: '78px', flexShrink: 0, fontFamily: 'var(--font-inter), sans-serif' }}>{row.label}</div>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#ccc', minWidth: '82px', flexShrink: 0, fontFamily: 'var(--font-inter), sans-serif' }}>{row.label}</div>
                   <div style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{row.value}</div>
                 </div>
               ) : null)}
 
               {hasCar && (
                 <>
-                  <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', margin: '1.75rem 0 0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>Your Cars</div>
+                  <SectionDivider>Your Cars</SectionDivider>
                   {cars.filter(c => c.year || c.make || c.model || c.license_plate).map((car, i) => (
                     <div key={i} className="car-view-card" style={{
                       display: 'flex', alignItems: 'center', gap: '0.9rem',
@@ -337,13 +390,16 @@ export default function ProfilePage() {
                           ))}
                         </div>
                         {car.license_plate && (
-                          <div style={{ fontSize: '9.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.15rem' }}>{car.license_plate}</div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.15rem' }}>{car.license_plate}</div>
                         )}
                       </div>
                     </div>
                   ))}
                 </>
               )}
+
+              {/* Car photo in view mode */}
+              <PhotoSection />
 
               {!form.name && !form.phone && !dobDisplay && !hasCar && (
                 <div style={{ fontSize: '13px', color: '#bbb', paddingTop: '0.5rem', lineHeight: 1.75 }}>
@@ -383,7 +439,7 @@ export default function ProfilePage() {
                 </Field>
               </div>
 
-              <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', margin: '1.25rem 0 0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>Date of Birth</div>
+              <SectionDivider>Date of Birth</SectionDivider>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
                   <FieldLabel>Month</FieldLabel>
@@ -408,17 +464,15 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div style={{ fontSize: '8.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#aaa', margin: '1.25rem 0 0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-                Your Cars <span style={{ opacity: 0.5, textTransform: 'none', letterSpacing: 0 }}>({cars.length}/5)</span>
-              </div>
+              <SectionDivider extra={`(${cars.length}/5)`}>Your Cars</SectionDivider>
 
               {cars.map((car, idx) => (
                 <div key={idx} style={{ border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.2rem', marginBottom: '0.65rem', background: '#fff' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                    <div style={{ fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>Car {idx + 1}</div>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>Car {idx + 1}</div>
                     {(cars.length > 1 || car.year || car.make || car.model || car.license_plate) && (
                       <button type="button" onClick={() => removeCar(idx)}
-                        style={{ fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: 0.7 }}>
+                        style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: 0.75 }}>
                         Remove
                       </button>
                     )}
@@ -447,21 +501,24 @@ export default function ProfilePage() {
 
               {cars.length < 5 && (
                 <button type="button" onClick={addCar}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '0.55rem 1.1rem', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '1.5rem' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '0.55rem 1.1rem', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.5rem' }}>
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   Add Car
                 </button>
               )}
 
-              {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{error}</div>}
+              {/* Car photo in edit mode */}
+              <PhotoSection />
 
-              <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.5rem' }}>
+              {error && <div style={{ fontSize: '12px', color: '#7B2032', margin: '0.75rem 0' }}>{error}</div>}
+
+              <div style={{ display: 'flex', gap: '0.65rem', marginTop: '1.25rem' }}>
                 <button type="submit" disabled={saving}
-                  style={{ padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: saving ? 0.6 : 1 }}>
+                  style={{ padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: saving ? 0.6 : 1 }}>
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
                 <button type="button" onClick={cancelEditing} disabled={saving}
-                  style={{ padding: '0.9rem 1.5rem', background: 'none', color: '#888', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
+                  style={{ padding: '0.9rem 1.5rem', background: 'none', color: '#888', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
                   Cancel
                 </button>
               </div>
@@ -469,10 +526,8 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* ── Right: Password + Photo ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-          {/* Change password */}
+        {/* ── Right: Password ── */}
+        <div>
           <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff' }}>
             <button
               type="button"
@@ -484,7 +539,7 @@ export default function ProfilePage() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
-                <span style={{ fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#555' }}>Change Password</span>
+                <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>Change Password</span>
               </div>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 style={{ transform: pwOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
@@ -503,7 +558,7 @@ export default function ProfilePage() {
                   {pwForm.password.length > 0 && (
                     <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       {pwRules.map(r => (
-                        <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: r.pass ? '#3B6B2F' : '#bbb', transition: 'color 0.15s' }}>
+                        <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: r.pass ? '#3B6B2F' : '#bbb', transition: 'color 0.15s' }}>
                           <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: r.pass ? '#3B6B2F' : '#ddd', flexShrink: 0, transition: 'background 0.15s' }} />
                           {r.label}
                         </div>
@@ -523,66 +578,15 @@ export default function ProfilePage() {
                     </div>
                   )}
                   <button type="submit" disabled={savingPw}
-                    style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: savingPw ? 0.6 : 1 }}>
+                    style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: savingPw ? 0.6 : 1 }}>
                     {savingPw ? 'Updating…' : 'Update Password'}
                   </button>
                 </form>
               </div>
             )}
           </div>
-
-          {/* Car photo */}
-          <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '1.1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-              </svg>
-              <span style={{ fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>Photo with your car</span>
-            </div>
-            <div style={{ padding: '1.25rem' }}>
-              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
-
-              {carPhotoUrl ? (
-                <div style={{ marginBottom: '1rem', position: 'relative', lineHeight: 0 }}>
-                  <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '240px', objectFit: 'cover', display: 'block' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,30,20,0.45) 0%, transparent 55%)', pointerEvents: 'none' }} />
-                </div>
-              ) : (
-                <div
-                  className="photo-empty"
-                  onClick={() => !photoUploading && fileInputRef.current?.click()}
-                  style={{
-                    marginBottom: '1rem', height: '160px',
-                    border: '0.5px dashed rgba(197,168,130,0.28)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(197,168,130,0.02)', cursor: 'pointer',
-                    transition: 'border-color 0.15s, background 0.15s', gap: '0.65rem',
-                  }}>
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
-                    <rect x="11" y="13" width="10" height="8" rx="2"/>
-                    <circle cx="7.5" cy="17.5" r="1.5"/>
-                    <circle cx="17.5" cy="17.5" r="1.5"/>
-                  </svg>
-                  <span style={{ fontSize: '11px', color: '#ccc', letterSpacing: '0.06em', fontFamily: 'var(--font-inter), sans-serif' }}>No photo yet</span>
-                </div>
-              )}
-
-              {photoError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{photoError}</div>}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={photoUploading}
-                  style={{ padding: '0.78rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.18)', fontSize: '8.5px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: photoUploading ? 0.6 : 1 }}>
-                  {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change Photo' : 'Upload Photo'}
-                </button>
-                <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.02em' }}>Max 8 MB</span>
-              </div>
-            </div>
-          </div>
-
         </div>
+
       </div>
     </div>
   )
