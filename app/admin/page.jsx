@@ -1,6 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '../../lib/supabase/client'
@@ -2584,7 +2585,10 @@ function BirthdayCalendar({ people, onPersonClick }) {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState('Dashboard')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const rawTab = searchParams.get('tab')
+  const tab = TABS.includes(rawTab) ? rawTab : 'Dashboard'
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unseenAppsCount, setUnseenAppsCount] = useState(0)
@@ -2645,7 +2649,7 @@ export default function AdminPage() {
   }
 
   function selectTab(t) {
-    setTab(t)
+    router.replace(`/admin?tab=${encodeURIComponent(t)}`, { scroll: false })
     setSidebarOpen(false)
   }
 
