@@ -222,9 +222,12 @@ export default function MembershipContent() {
             <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.65)' }}> on purpose.</span>
           </motion.h1>
           <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <motion.p variants={fadeUp} style={{ ...BODY, color: 'rgba(245,241,236,0.72)', maxWidth: '340px', margin: '0 auto' }}>
-            Six months of driving with purpose.<br />Two ways to be part of it.
+          <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.1rem,2vw,1.3rem)', fontWeight: '300', color: 'rgba(245,241,236,0.65)', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
+            &ldquo;A car is not just a machine — it&apos;s an extension of yourself.&rdquo;
           </motion.p>
+          <motion.div variants={fadeUp} style={{ ...BODY, color: 'rgba(245,241,236,0.35)', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', marginTop: '0.75rem' }}>
+            Henry Ford
+          </motion.div>
         </motion.div>
 
         {/* Scroll indicator */}
