@@ -18,7 +18,7 @@ const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley'
 
 const INCLUDED = [
   { title: 'Welcome gift for your car', sub: 'A handpicked keepsake from us, waiting for you at the start.' },
-  { title: 'Premium breakfast in Montreal', sub: 'The best way to start a drive — a leisurely breakfast before the road opens up.' },
+  { title: 'Premium breakfast in LaSalle', sub: 'We meet at 7 AM in LaSalle — a leisurely breakfast before the road opens up.' },
   { title: 'Cars, Coffee & Horology stop', sub: 'A handpicked midway stop — coffee, a snack, fine watches, and great cars.' },
   { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
   { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
@@ -217,6 +217,13 @@ export default function RoutesPage() {
             <div style={{border:"0.5px solid rgba(0,0,0,0.12)",padding:"1.8rem",marginBottom:"1.5rem",background:"#F5F1EC"}}>
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1",marginBottom:"0.4rem"}}>$200</div>
               <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B5B2E"}}>per car · 2 people included</div>
+            </div>
+
+            {/* Meetup */}
+            <div style={{marginBottom:"1.5rem",padding:"1.1rem 1.2rem",background:"#0F1E14"}}>
+              <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Meetup</div>
+              <div style={{fontSize:"14px",color:"#F5F1EC",fontFamily:"var(--font-cormorant),serif",fontWeight:"300",marginBottom:"0.2rem"}}>Breakfast in LaSalle</div>
+              <div style={{fontSize:"11px",color:"rgba(245,241,236,0.5)",letterSpacing:"0.06em"}}>7:00 AM · LaSalle, Montreal</div>
             </div>
 
             {/* Membership note */}
