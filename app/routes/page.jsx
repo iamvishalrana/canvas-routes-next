@@ -252,15 +252,19 @@ export default function RoutesPage() {
           <div>
             <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>What&apos;s included</div>
             <div style={{display:"flex",flexDirection:"column",gap:"0"}}>
-              {INCLUDED.map((item, i) => (
-                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"1.2rem",padding:"1rem 0",borderBottom:"0.5px solid rgba(0,0,0,0.07)"}}>
-                  <div style={{width:"5px",height:"5px",background:"rgba(197,168,130,0.75)",flexShrink:0,marginTop:"6px"}} />
-                  <div>
-                    <div style={{fontSize:"0.875rem",color:"#1a1a1a",lineHeight:"1.5",letterSpacing:"0.01em",fontWeight:"500",marginBottom:"0.2rem"}}>{item.title}</div>
-                    <div style={{fontSize:"0.8rem",color:"#888",lineHeight:"1.6"}}>{item.sub}</div>
+              {INCLUDED.map((item, i) => {
+                const isBreakfast = item.title === 'Premium breakfast in LaSalle'
+                return (
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"1.2rem",padding:"1rem",borderBottom:"0.5px solid rgba(0,0,0,0.07)",marginLeft: isBreakfast ? "-1rem" : undefined, marginRight: isBreakfast ? "-0rem" : undefined, background:isBreakfast?"#c5a882":"transparent"}}>
+                    <div style={{width:"5px",height:"5px",background:isBreakfast?"#0F1E14":"rgba(197,168,130,0.75)",flexShrink:0,marginTop:"6px"}} />
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:"0.875rem",color:isBreakfast?"#0F1E14":"#1a1a1a",lineHeight:"1.5",letterSpacing:"0.01em",fontWeight:"600",marginBottom:"0.2rem"}}>{item.title}</div>
+                      <div style={{fontSize:"0.8rem",color:isBreakfast?"rgba(15,30,20,0.7)":"#888",lineHeight:"1.6"}}>{item.sub}</div>
+                    </div>
+                    {isBreakfast && <div style={{fontSize:"10px",letterSpacing:"0.16em",textTransform:"uppercase",color:"rgba(15,30,20,0.55)",flexShrink:0,alignSelf:"center"}}>7:00 AM</div>}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
