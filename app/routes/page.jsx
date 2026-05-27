@@ -219,13 +219,6 @@ export default function RoutesPage() {
               <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B5B2E"}}>per car · 2 people included</div>
             </div>
 
-            {/* Meetup */}
-            <div style={{marginBottom:"1.5rem",padding:"1.1rem 1.2rem",background:"#c5a882"}}>
-              <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(15,30,20,0.6)",marginBottom:"0.5rem"}}>Meetup</div>
-              <div style={{fontSize:"14px",color:"#0F1E14",fontFamily:"var(--font-cormorant),serif",fontWeight:"300",marginBottom:"0.2rem"}}>Breakfast in LaSalle</div>
-              <div style={{fontSize:"11px",color:"rgba(15,30,20,0.65)",letterSpacing:"0.06em"}}>7:00 AM · LaSalle, Montreal</div>
-            </div>
-
             {/* Membership note */}
             <div style={{marginBottom:"1rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
               <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
