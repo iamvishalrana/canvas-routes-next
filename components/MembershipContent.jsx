@@ -391,10 +391,6 @@ export default function MembershipContent() {
               <p style={{ ...BODY, color: '#555', marginBottom: '1.5rem' }}>
                 Canvas Routes members receive preferred pricing on all road trips throughout the season. The more you drive with us, the more your membership pays for itself.
               </p>
-              <div style={{ height: '0.5px', width: '32px', background: '#c5a882', marginBottom: '1.25rem' }} />
-              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: '1.35rem', fontWeight: '300', color: '#888', lineHeight: 1.5 }}>
-                Join once. Save all season.
-              </div>
             </div>
           </FadeUp>
         </div>
