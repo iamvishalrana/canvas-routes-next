@@ -250,11 +250,7 @@ export default function MembershipContent() {
         <div className="mem-about" style={{ maxWidth: '1040px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(3rem,6vw,7rem)', alignItems: 'start' }}>
 
           <FadeUp>
-            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>What membership means</div>
-            <p style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: '1.15rem', fontWeight: '300', color: '#888', lineHeight: '1.6', marginBottom: '1.75rem' }}>
-              &ldquo;A car is not just a machine — it&apos;s an extension of yourself.&rdquo;
-              <span style={{ display: 'block', fontFamily: 'var(--font-inter),sans-serif', fontStyle: 'normal', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.5rem' }}>Henry Ford</span>
-            </p>
+            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.5rem' }}>What membership means</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.75rem' }}>
               A season of roads<br />you&apos;ll remember.
             </div>
@@ -288,8 +284,11 @@ export default function MembershipContent() {
         <img src="/events/may9-cars-row.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.62)' }} />
         <FadeUp style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: '1.5', maxWidth: '520px', textShadow: '0 1px 12px rgba(0,0,0,0.4)' }}>
-            &ldquo;You chose your car with intention.<br />We choose the routes with intention.<br />Let&apos;s put both towards great drives and lasting memories.&rdquo;
+          <div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: '1.5', maxWidth: '520px', textShadow: '0 1px 12px rgba(0,0,0,0.4)' }}>
+              &ldquo;A car is not just a machine — it&apos;s an extension of yourself.&rdquo;
+            </div>
+            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginTop: '1.25rem' }}>Henry Ford</div>
           </div>
         </FadeUp>
       </motion.div>
