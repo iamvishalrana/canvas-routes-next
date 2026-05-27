@@ -1198,6 +1198,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [addingContact, setAddingContact] = useState(new Set())
   const [sortApps, setSortApps] = useState('newest')
   const [emailsCopied, setEmailsCopied] = useState(false)
+  const [appTierPick, setAppTierPick] = useState(null)
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -1292,10 +1293,11 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
     if (res.ok) setApps(prev => prev.map(a => a.id === appId ? { ...a, registrations: newRegs } : a))
   }
 
-  async function sendInvite(app) {
+  async function sendInvite(app, tier = 'routes_member') {
     setInviting(app.id)
+    setAppTierPick(null)
     const payload = {
-      name: app.name, email: app.email, membership_status: 'pending',
+      name: app.name, email: app.email, membership_status: 'pending', tier,
       dob_month: app.dob_month || null, dob_day: app.dob_day || null, dob_year: app.dob_year || null,
       phone: app.phone || null, instagram: app.instagram || null,
       cars: (app.car_year || app.car_model)
@@ -1464,9 +1466,22 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   <div onClick={e => e.stopPropagation()}>
                     {a.is_member || inviteStatus[a.id] === 'success' ? (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
+                    ) : appTierPick === a.id ? (
+                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        <button onClick={() => sendInvite(a, 'routes_member')}
+                          style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                          Routes
+                        </button>
+                        <button onClick={() => sendInvite(a, 'inner_circle')}
+                          style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                          Inner Circle
+                        </button>
+                        <button onClick={() => setAppTierPick(null)}
+                          style={{ fontSize: '11px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+                      </div>
                     ) : (
                       <div>
-                        <PrimaryBtn onClick={() => sendInvite(a)} disabled={inviting === a.id}>
+                        <PrimaryBtn onClick={() => setAppTierPick(a.id)} disabled={inviting === a.id}>
                           {inviting === a.id ? '…' : 'Invite'}
                         </PrimaryBtn>
                         {inviteStatus[a.id] && inviteStatus[a.id] !== 'success' && (
