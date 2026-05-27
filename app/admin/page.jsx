@@ -122,23 +122,75 @@ function CopyBtn({ value }) {
   )
 }
 
+// ─── Admin Notes Panel ───────────────────────────────────────────────────────
+
+function parseAdminNotes(raw) {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed
+  } catch {}
+  return [{ id: 1, text: raw, createdAt: null }]
+}
+
+function AdminNotesPanel({ initialNotes, onSave }) {
+  const [notes, setNotes] = useState(() => parseAdminNotes(initialNotes))
+  const [draft, setDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function addNote() {
+    if (!draft.trim()) return
+    const updated = [...notes, { id: Date.now(), text: draft.trim(), createdAt: new Date().toISOString() }]
+    setNotes(updated)
+    setDraft('')
+    setSaving(true)
+    await onSave(JSON.stringify(updated))
+    setSaving(false)
+  }
+
+  async function deleteNote(id) {
+    const updated = notes.filter(n => n.id !== id)
+    setNotes(updated)
+    await onSave(JSON.stringify(updated))
+  }
+
+  function fmt(iso) {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.65rem' }}>Admin Notes</div>
+      {notes.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
+          {notes.map(note => (
+            <div key={note.id} style={{ background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.07)', padding: '0.6rem 0.75rem' }}>
+              <div style={{ fontSize: '12px', color: '#333', lineHeight: '1.6', marginBottom: '0.3rem', whiteSpace: 'pre-wrap' }}>{note.text}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '10px', color: '#bbb' }}>{note.createdAt ? fmt(note.createdAt) : ''}</span>
+                <button onClick={() => deleteNote(note.id)} style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer', fontSize: '10px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <textarea
+        style={{ ...inp, height: '60px', resize: 'vertical' }}
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        placeholder="Add a note…"
+        onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addNote() }}
+      />
+      <div style={{ marginTop: '0.5rem' }}>
+        <GhostBtn small onClick={addNote} disabled={saving || !draft.trim()}>{saving ? 'Saving…' : 'Add Note'}</GhostBtn>
+      </div>
+    </div>
+  )
+}
+
 // ─── Member Expanded Panel ───────────────────────────────────────────────────
 
 function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
-  const [noteValue, setNoteValue] = useState(m.admin_notes || '')
-  const [savingNote, setSavingNote] = useState(false)
-  const [noteSaved, setNoteSaved] = useState(false)
-
-  async function saveNote() {
-    setSavingNote(true)
-    await fetch(`/api/admin/members/${m.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ admin_notes: noteValue }),
-    })
-    setSavingNote(false)
-    setNoteSaved(true)
-    setTimeout(() => setNoteSaved(false), 2000)
-  }
 
   const initials = (m.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const memberSinceRaw = m.created_at || m.password_set_at
@@ -261,17 +313,15 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
 
       {/* Admin Notes */}
       <div style={{ padding: '1.25rem 1.5rem' }}>
-        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Admin Notes</div>
-        <textarea
-          style={{ ...inp, height: '80px', resize: 'vertical' }}
-          value={noteValue}
-          onChange={e => setNoteValue(e.target.value)}
-          placeholder="Internal notes (not visible to member)…"
+        <AdminNotesPanel
+          initialNotes={m.admin_notes}
+          onSave={async (json) => {
+            await fetch(`/api/admin/members/${m.id}`, {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ admin_notes: json }),
+            })
+          }}
         />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-          <GhostBtn small onClick={saveNote} disabled={savingNote}>{savingNote ? 'Saving…' : 'Save Note'}</GhostBtn>
-          {noteSaved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Saved</span>}
-        </div>
       </div>
     </div>
   )
@@ -1112,35 +1162,18 @@ function EventsTab() {
 // ─── Shared Admin Notes component for Applications / Contacts ────────────────
 
 function AppAdminNotes({ appId, initialNotes, onSaved }) {
-  const [noteValue, setNoteValue] = useState(initialNotes || '')
-  const [savingNote, setSavingNote] = useState(false)
-  const [noteSaved, setNoteSaved] = useState(false)
-
-  async function saveNote() {
-    setSavingNote(true)
-    await fetch(`/api/admin/applications/${appId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ admin_notes: noteValue }),
-    })
-    setSavingNote(false)
-    setNoteSaved(true)
-    onSaved?.(noteValue)
-    setTimeout(() => setNoteSaved(false), 2000)
-  }
-
   return (
     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Admin Notes</div>
-      <textarea
-        style={{ ...inp, height: '70px', resize: 'vertical' }}
-        value={noteValue}
-        onChange={e => setNoteValue(e.target.value)}
-        placeholder="Internal notes (not visible to applicant)…"
+      <AdminNotesPanel
+        initialNotes={initialNotes}
+        onSave={async (json) => {
+          await fetch(`/api/admin/applications/${appId}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_notes: json }),
+          })
+          onSaved?.(json)
+        }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-        <GhostBtn small onClick={saveNote} disabled={savingNote}>{savingNote ? 'Saving…' : 'Save Note'}</GhostBtn>
-        {noteSaved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Saved</span>}
-      </div>
     </div>
   )
 }
