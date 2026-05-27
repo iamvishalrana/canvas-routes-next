@@ -221,7 +221,10 @@ export default function MembershipContent() {
             For those who chose<br />their car
             <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.65)' }}> on purpose.</span>
           </motion.h1>
-          <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto' }} />
+          <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
+          <motion.div variants={fadeUp} style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', letterSpacing: '0.28em' }}>
+            Season 2026 &nbsp;·&nbsp; Limited spots &nbsp;·&nbsp; Two tiers
+          </motion.div>
         </motion.div>
 
         {/* Scroll indicator */}
@@ -320,7 +323,7 @@ export default function MembershipContent() {
                   <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.07)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
                     <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.35rem' }}>Why choose this</div>
-                    <div style={{ ...BODY, color: '#444' }}>For drivers who want to show up and drive.</div>
+                    <div style={{ ...BODY, color: '#444' }}>Full access to every Canvas Routes event and road trip all season — priority registration included.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
@@ -355,7 +358,7 @@ export default function MembershipContent() {
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
                     <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>Why choose this</div>
-                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>For drivers who want to be first for everything and leave with something to show for it.</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First access to everything, plus a $70 road trip credit — your membership starts paying for itself from day one.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
@@ -381,18 +384,40 @@ export default function MembershipContent() {
 
       {/* ── ROAD TRIP SAVINGS ───────────────────────────────────────── */}
       <section style={{ background: '#F5F1EC', padding: 'clamp(4rem,6vw,6rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+        <style>{`.rt-savings{display:grid;grid-template-columns:1fr 1fr;gap:clamp(3rem,6vw,7rem);align-items:center}@media(max-width:680px){.rt-savings{grid-template-columns:1fr !important}}`}</style>
         <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
-          <FadeUp>
-            <div style={{ maxWidth: '540px' }}>
+          <div className="rt-savings">
+            <FadeUp>
               <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Road trips</div>
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.5rem' }}>
                 Members save on<br />every road trip.
               </div>
-              <p style={{ ...BODY, color: '#555', marginBottom: '1.5rem' }}>
+              <p style={{ ...BODY, color: '#555' }}>
                 Canvas Routes members receive preferred pricing on all road trips throughout the season. The more you drive with us, the more your membership pays for itself.
               </p>
-            </div>
-          </FadeUp>
+            </FadeUp>
+            <FadeUp delay={0.1}>
+              <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: 'rgba(197,168,130,0.04)', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
+                <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Member rate</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.6rem,3vw,2rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.3', marginBottom: '1.25rem' }}>
+                  Preferred pricing<br />on every road trip.
+                </div>
+                <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.25)', marginBottom: '1.25rem' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  {[
+                    'Applies to every road trip on the calendar',
+                    'Both Routes Member and Inner Circle tiers',
+                    'Inner Circle members receive an additional $70 credit',
+                  ].map((line, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+                      <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#c5a882', flexShrink: 0, marginTop: '7px' }} />
+                      <span style={{ ...BODY, fontSize: '13px', color: '#666' }}>{line}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FadeUp>
+          </div>
         </div>
       </section>
 
@@ -442,7 +467,7 @@ export default function MembershipContent() {
             {[
               { n: '01', title: 'Register your interest', body: 'Fill in the form below. Tell us about yourself, your car, and the tier you\'re interested in.' },
               { n: '02', title: 'We reach out', body: 'Every application is reviewed personally. We contact you directly to confirm your spot and tier.' },
-              { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and receive your welcome kit at the first Canvas Routes event you attend after your membership is confirmed.' },
+              { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and collect your welcome kit at your first event of the season.' },
             ].map((s, i) => (
               <motion.div key={i} variants={fadeUp} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.35)', lineHeight: 1, marginBottom: '1.25rem' }}>{s.n}</div>
@@ -555,9 +580,12 @@ export default function MembershipContent() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: errors.tier ? 'rgba(208,96,112,0.3)' : 'rgba(197,168,130,0.1)' }}>
                     {[['Routes Member', '$99'], ['Inner Circle', '$249']].map(([t, price]) => (
                       <button key={t} type="button" onClick={() => set('tier', t)}
-                        style={{ padding: '1.1rem 1rem', background: form.tier === t ? 'rgba(197,168,130,0.15)' : 'rgba(255,255,255,0.03)', border: form.tier === t ? '0.5px solid rgba(197,168,130,0.4)' : '0.5px solid transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
-                        <div style={{ ...SMALL, color: form.tier === t ? '#c5a882' : 'rgba(245,241,236,0.5)', marginBottom: '0.2rem' }}>{t}</div>
-                        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.3rem', fontWeight: '300', color: form.tier === t ? '#F5F1EC' : 'rgba(245,241,236,0.3)' }}>{price} <span style={{ fontSize: '0.7rem', color: 'rgba(245,241,236,0.3)' }}>CAD / season</span></div>
+                        style={{ padding: '1.1rem 1rem', background: form.tier === t ? '#c5a882' : 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative' }}>
+                        <div style={{ ...SMALL, color: form.tier === t ? '#0F1E14' : 'rgba(245,241,236,0.5)', marginBottom: '0.2rem', fontWeight: form.tier === t ? '600' : '400' }}>{t}</div>
+                        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.3rem', fontWeight: '300', color: form.tier === t ? '#0F1E14' : 'rgba(245,241,236,0.3)' }}>{price} <span style={{ fontSize: '0.7rem', color: form.tier === t ? 'rgba(15,30,20,0.6)' : 'rgba(245,241,236,0.3)' }}>CAD / season</span></div>
+                        {form.tier === t && (
+                          <svg style={{ position: 'absolute', top: '0.6rem', right: '0.75rem' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F1E14" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        )}
                       </button>
                     ))}
                   </div>
