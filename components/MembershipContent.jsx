@@ -221,13 +221,7 @@ export default function MembershipContent() {
             For those who chose<br />their car
             <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.65)' }}> on purpose.</span>
           </motion.h1>
-          <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.1rem,2vw,1.3rem)', fontWeight: '300', color: 'rgba(245,241,236,0.65)', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
-            &ldquo;A car is not just a machine — it&apos;s an extension of yourself.&rdquo;
-          </motion.p>
-          <motion.div variants={fadeUp} style={{ ...BODY, color: 'rgba(245,241,236,0.35)', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', marginTop: '0.75rem' }}>
-            Henry Ford
-          </motion.div>
+          <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto' }} />
         </motion.div>
 
         {/* Scroll indicator */}
@@ -256,7 +250,11 @@ export default function MembershipContent() {
         <div className="mem-about" style={{ maxWidth: '1040px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(3rem,6vw,7rem)', alignItems: 'start' }}>
 
           <FadeUp>
-            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.5rem' }}>What membership means</div>
+            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>What membership means</div>
+            <p style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: '1.15rem', fontWeight: '300', color: '#888', lineHeight: '1.6', marginBottom: '1.75rem' }}>
+              &ldquo;A car is not just a machine — it&apos;s an extension of yourself.&rdquo;
+              <span style={{ display: 'block', fontFamily: 'var(--font-inter),sans-serif', fontStyle: 'normal', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.5rem' }}>Henry Ford</span>
+            </p>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.75rem' }}>
               A season of roads<br />you&apos;ll remember.
             </div>
