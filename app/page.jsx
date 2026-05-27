@@ -426,8 +426,11 @@ export default function Home() {
         <div className="events-grid">
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
-            {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Cars & Coffee",past:true},
-            {date:"May 31, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"},
+            {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
+            ...(Date.now() >= new Date('2026-06-01T04:00:00Z').getTime()
+              ? [{date:"May 31, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true}]
+              : [{date:"May 31, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"}]
+            ),
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route",teaser:"Wine country roads and sweeping valleys through the Eastern Townships — a route built for a summer day.",membersOnly:true},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route",teaser:"Quebec's most dramatic coastline — clifftop roads, river views, and countryside that earns every kilometre.",membersOnly:true},
           ].map((e,i) => (
