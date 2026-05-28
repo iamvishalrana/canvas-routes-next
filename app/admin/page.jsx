@@ -804,6 +804,7 @@ function AnnouncementsTab() {
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [publishing, setPublishing] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -830,9 +831,12 @@ function AnnouncementsTab() {
   }
 
   async function togglePublish(item) {
+    if (publishing === item.id) return
+    setPublishing(item.id)
     await fetch(`/api/admin/announcements/${item.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: !item.published }),
     })
+    setPublishing(null)
     load()
   }
 
@@ -944,7 +948,7 @@ function AnnouncementsTab() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                    <GhostBtn onClick={() => togglePublish(item)} small>{item.published ? 'Unpublish' : 'Publish'}</GhostBtn>
+                    <GhostBtn onClick={() => togglePublish(item)} small disabled={publishing === item.id}>{publishing === item.id ? '…' : item.published ? 'Unpublish' : 'Publish'}</GhostBtn>
                     <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content, audience: item.audience || 'all' }); setSaveError(null) }} small>Edit</GhostBtn>
                     <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
                   </div>
@@ -1456,6 +1460,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                 const handleRowClick = () => {
                   setExpanded(expanded === a.id ? null : a.id)
                   if (editingApp === a.id) setEditingApp(null)
+                  if (appTierPick === a.id) setAppTierPick(null)
                   markSeen(a.id)
                   if (a.reregistered_at) {
                     setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: null } : x))
@@ -1967,7 +1972,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
               {/* Summary row */}
               {isMobile ? (
                 <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
-                  onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}>
+                  onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null); if (contactTierPick === c.contact_id) setContactTierPick(null) }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }} onClick={e => e.stopPropagation()}>
                       <input type="checkbox"
@@ -2019,7 +2024,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
               ) : (
               <div
                 style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
-                onClick={() => setExpanded(expanded === c.contact_id ? null : c.contact_id)}
+                onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null); if (contactTierPick === c.contact_id) setContactTierPick(null) }}
               >
                 <div onClick={e => e.stopPropagation()}>
                   <input type="checkbox"
