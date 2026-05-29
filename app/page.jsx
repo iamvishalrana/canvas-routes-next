@@ -9,6 +9,27 @@ import ErrorBoundary from '../components/ErrorBoundary'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
+const PAST_EVENTS = {
+  'Cars & Coffee': {
+    img: '/cc-page.jpg', imgAlt: 'Cars & Coffee event poster', imgPos: 'top',
+    meta: 'Montreal · May 9, 2026', title: 'Cars & Coffee',
+    sub: 'Good cars. Great coffee. Better people.',
+    tags: ['09:30 – 12:00 PM', 'Open to all', 'Free entry'],
+  },
+  'Grand Prix Weekend - Cars, Coffee & Cruise': {
+    img: null,
+    meta: 'Montreal · May 23, 2026', title: 'Grand Prix Weekend',
+    sub: 'Cars, Coffee & Cruise — GP Weekend.',
+    tags: ['May 23, 2026', 'Exotics & Classics', 'Open to all'],
+  },
+  'Into the Laurentians': {
+    img: '/itl.png', imgAlt: 'Into the Laurentians road trip', imgPos: 'top',
+    meta: 'Mont-Tremblant · May 31, 2026', title: 'Into the Laurentians',
+    sub: 'First Route — Canvas Routes.',
+    tags: ['May 31, 2026', 'Road Trip', 'Members Only'],
+  },
+}
+
 export default function Home() {
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
   const [errors, setErrors] = useState({})
@@ -19,14 +40,14 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
-  const [showPastModal, setShowPastModal] = useState(false)
+  const [pastModalEvent, setPastModalEvent] = useState(null)
   const [routesLaunched, setRoutesLaunched] = useState(false)
-  const [showRoutesPopup, setShowRoutesPopup] = useState(false)
   const [showEventsPopup, setShowEventsPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
   useEffect(() => {
+    if (Date.now() >= new Date('2026-06-01T04:00:00Z').getTime()) return
     try { if (sessionStorage.getItem('eventsPopupDismissed')) return } catch {}
     const t = setTimeout(() => setShowEventsPopup(true), 800)
     return () => clearTimeout(t)
@@ -45,9 +66,9 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = (showPastModal || showRoutesPopup || showEventsPopup) ? 'hidden' : ''
+    document.body.style.overflow = (pastModalEvent !== null || showEventsPopup) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [showPastModal, showRoutesPopup, showEventsPopup])
+  }, [pastModalEvent, showEventsPopup])
 
   useEffect(() => {
     try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
@@ -116,6 +137,7 @@ export default function Home() {
 
   const GPCC = 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026'
   const gpccClosed = new Date() >= new Date('2026-05-23T14:00:00-04:00')
+  const laurentiansIsPast = Date.now() >= new Date('2026-06-01T04:00:00Z').getTime()
 
   function updateForm(field, value) {
     setForm(prev => {
@@ -420,7 +442,7 @@ export default function Home() {
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
         <FadeIn><div style={{textAlign:"center",marginBottom:"4rem"}}>
           <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>On the calendar</div>
-          <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Upcoming events</div>
+          <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
           <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
         </div>
         <div className="events-grid">
@@ -439,7 +461,7 @@ export default function Home() {
               : e.inviteOnly
                 ? {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem",cursor:"pointer"}
                 : {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem"}
-            } onClick={e.past ? () => setShowPastModal(true) : undefined}>
+            } onClick={e.past ? () => setPastModalEvent(e) : undefined}>
               {e.past && <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.8),transparent)"}} />}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
                 <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.65)":"#7B2032"}}>{e.date}</div>
@@ -520,7 +542,7 @@ export default function Home() {
         <FadeIn><div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
         <div className="join-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
         <div style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Membership is by application. Tell us about yourself.</div>
-        {routesLaunched && (
+        {routesLaunched && !laurentiansIsPast && (
           <div style={{maxWidth:"560px",margin:"-1rem auto 3rem",padding:"1.2rem 1.6rem",border:"0.5px solid rgba(197,168,130,0.45)",background:"rgba(197,168,130,0.05)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
             <div>
               <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"0.3rem"}}>Road Trip · 31 May 2026</div>
@@ -774,93 +796,47 @@ export default function Home() {
 
 
 
-      {/* ROUTES REGISTRATION POPUP */}
-      <AnimatePresence>
-        {showRoutesPopup && (
-          <motion.div
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            exit={{opacity:0}}
-            transition={{duration:0.25}}
-            onClick={() => setShowRoutesPopup(false)}
-            style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.9)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
-          >
-            <motion.div
-              initial={{opacity:0,scale:0.93,y:24}}
-              animate={{opacity:1,scale:1,y:0}}
-              exit={{opacity:0,scale:0.95,y:10}}
-              transition={{duration:0.35,ease:[0.16,1,0.3,1]}}
-              onClick={e => e.stopPropagation()}
-              style={{background:"#0F1E14",maxWidth:"440px",width:"100%",position:"relative",overflow:"hidden",border:"1px solid rgba(197,168,130,0.4)",fontFamily:"var(--font-inter),sans-serif"}}
-            >
-              <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.8),transparent)"}} />
-              <button onClick={() => setShowRoutesPopup(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-              <div style={{padding:"2.4rem 2.2rem 2.2rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.26em",textTransform:"uppercase",color:"rgba(197,168,130,0.65)",marginBottom:"1rem"}}>Canvas Routes · 31 May 2026</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.4rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.5rem"}}>Into the Laurentians</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.4)",marginBottom:"1.6rem"}}>First Route — Mont-Tremblant, QC</div>
-                <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.6rem"}} />
-                <p style={{fontSize:"13px",color:"rgba(245,241,236,0.6)",lineHeight:"1.85",marginBottom:"2rem"}}>
-                  Registration is now open. Spots are limited and selection is curated — apply before they're gone.
-                </p>
-                <div style={{display:"flex",gap:"1rem",alignItems:"center",flexWrap:"wrap"}}>
-                  <Link href="/routes#form" onClick={() => setShowRoutesPopup(false)}
-                    style={{display:"inline-block",padding:"0.85rem 2rem",background:"rgba(197,168,130,0.12)",border:"1px solid rgba(197,168,130,0.55)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
-                    Register Now
-                  </Link>
-                  <button onClick={() => setShowRoutesPopup(false)}
-                    style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(245,241,236,0.3)",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif"}}>
-                    Maybe later
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* PAST EVENT MODAL */}
       <AnimatePresence>
-        {showPastModal && (
-          <motion.div
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            exit={{opacity:0}}
-            transition={{duration:0.2}}
-            onClick={() => setShowPastModal(false)}
-            style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
-          >
+        {pastModalEvent && (() => {
+          const d = PAST_EVENTS[pastModalEvent.name] || { meta: pastModalEvent.date, title: pastModalEvent.name, sub: null, tags: [], img: null }
+          return (
             <motion.div
-              initial={{opacity:0,scale:0.92,y:20}}
-              animate={{opacity:1,scale:1,y:0}}
-              exit={{opacity:0,scale:0.94,y:10}}
-              transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
-              onClick={e => e.stopPropagation()}
-              style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)"}}
+              key="past-modal"
+              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.2}}
+              onClick={() => setPastModalEvent(null)}
+              style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
             >
-              <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-              <button onClick={() => setShowPastModal(false)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-              <Image src="/cc-page.jpg" alt="Cars & Coffee event poster" width={842} height={1215} style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:"top",display:"block"}} />
-              <div style={{padding:"1.8rem 2rem 2rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Montreal · May 9, 2026</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>Cars &amp; Coffee</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.5)",marginBottom:"1.4rem"}}>Good cars. Great coffee. Better people.</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.8rem"}}>
-                  {["09:30 – 12:00 PM","Open to all","Free entry"].map((tag,idx) => (
-                    <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
-                  ))}
+              <motion.div
+                initial={{opacity:0,scale:0.92,y:20}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.94,y:10}}
+                transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
+                onClick={ev => ev.stopPropagation()}
+                style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)"}}
+              >
+                <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
+                <button onClick={() => setPastModalEvent(null)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+                {d.img && <Image src={d.img} alt={d.imgAlt||''} width={842} height={1215} style={{width:"100%",height:"220px",objectFit:"cover",objectPosition:d.imgPos||"top",display:"block"}} />}
+                <div style={{padding:"1.8rem 2rem 2rem"}}>
+                  <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>{d.meta}</div>
+                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>{d.title}</div>
+                  {d.sub && <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.5)",marginBottom:"1.4rem"}}>{d.sub}</div>}
+                  <div style={{display:"flex",flexWrap:"wrap",gap:"0.5rem",marginBottom:"1.8rem"}}>
+                    {d.tags.map((tag,idx) => (
+                      <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
+                    ))}
+                  </div>
+                  <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.4rem"}} />
+                  <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>
+                    To see photos &amp; videos from this event, follow us on{' '}
+                    <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Instagram</a>
+                    {' '}and{' '}
+                    <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
+                  </div>
                 </div>
-                <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.4rem"}} />
-                <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>
-                  To see photos &amp; videos from this event, follow us on{' '}
-                  <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Instagram</a>
-                  {' '}and{' '}
-                  <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )
+        })()}
       </AnimatePresence>
 
       {/* EVENTS POPUP */}
