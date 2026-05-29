@@ -70,7 +70,7 @@ function customerHtml(firstName) {
                       <tr>
                         <td style="padding-bottom:16px;border-bottom:1px solid rgba(197,168,130,0.1);">
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:6px;">Event</div>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">Into the Laurentians &mdash; May 31, 2026</div>
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">Into the Laurentians &mdash; June 7, 2026</div>
                         </td>
                       </tr>
                       <!-- Payment row -->
@@ -273,7 +273,7 @@ export async function POST(request) {
   try {
     const supabase = createAdminClient()
     const normalEmail = email.toLowerCase().trim()
-    const ITL_EVENT = 'Into the Laurentians — May 31, 2026'
+    const ITL_EVENT = 'Into the Laurentians — June 7, 2026'
     const CANONICAL_EVENTS = [
       'Cars & Coffee — May 9, 2026',
       'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
@@ -288,6 +288,7 @@ export async function POST(request) {
     const isReRegistration = !!existing
     const NAME_ALIASES = {
       'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+      'Into the Laurentians — May 31, 2026': 'Into the Laurentians — June 7, 2026',
     }
     const prevRegs = (existing?.registrations || [])
       .map(r => NAME_ALIASES[r.event] ? { ...r, event: NAME_ALIASES[r.event] } : r)
