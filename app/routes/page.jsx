@@ -20,8 +20,8 @@ const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley'
 const INCLUDED = [
   { title: 'Welcome gift for your car', sub: 'A handpicked keepsake from us, waiting for you at the start.' },
   { title: 'Premium breakfast in LaSalle', sub: 'We meet at 7 AM in LaSalle — a leisurely breakfast before the road opens up.' },
-  { title: 'Cars, Coffee & Horology stop', sub: 'A handpicked midway stop — coffee, a snack, fine watches, and great cars.' },
-  { title: 'Full media coverage', sub: 'Photo and video coverage of the full event — shared with the group.' },
+  { title: 'Cars, Coffee & Horology stop', sub: 'Step out halfway through — coffee in hand, fine watches on display, and a moment to take in the cars around you before the road opens up again.' },
+  { title: 'Full media coverage', sub: 'Your car on the road it was built for — captured by our media team and shared with every attendee after the trip.' },
   { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
   { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
   { title: 'Send-off over drinks', sub: 'After driving back to Montreal, we close the day over coffee and cold drinks — a relaxed end to a day well driven.' },
@@ -201,7 +201,7 @@ export default function RoutesPage() {
         </div>
         <div style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
         <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
-          A drive through the heart of Quebec&apos;s Laurentians. Hand-picked roads, good company, and a day you won&apos;t forget.
+          The road starts at 7 AM in LaSalle. By the time you reach the Laurentians, the city feels far away. That&apos;s the point.
         </p>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)"}} />
       </section>
@@ -230,9 +230,9 @@ export default function RoutesPage() {
             {/* Notes */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               {[
-                { text: 'Personal photography of your car on the route by our photographer.' },
+                { text: 'Your car photographed on the road it was built for — personal shots from our photographer on the best stretches of the day.' },
                 { text: 'Driver-focused cars only — this route is built for cars that were made to be driven.' },
-                { text: 'Convoy-style drive — we roll together as a group.' },
+                { text: 'Convoy all the way — we leave together, move together, and arrive together. The group is half the experience.' },
                 { text: 'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.' },
                 { text: 'We drive in style, not speed. This is not a race.' },
                 { text: 'Gas and $30 VIP parking available, at your cost.', grey: 'Free parking also available nearby.' },

@@ -345,7 +345,7 @@ export default function Home() {
             <div style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",maxWidth:"520px",marginBottom:"1.5rem"}}>
               <strong style={{color:"#1a1a1a",fontWeight:"500"}}>We are driving enthusiasts before car enthusiasts.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We are not a show-and-tell club. We drive. The best roads deserve the best company, and great cars are meant to be experienced, not just owned.
               <br/><br/>
-              Based in Montreal, we bring together a curated circle of passionate drivers for scenic drives, exclusive car meets, and unforgettable experiences across Quebec, Ontario, Vermont, Maine, New York and beyond. Every route is hand-picked. Every detail is considered. Every event is designed to leave you wanting more.
+              Based in Montreal, we take the best roads in Quebec, Ontario, Vermont, Maine and New York — and fill them with people who actually care about the drive. Every route is hand-picked. Every detail is considered. Every event ends with you already thinking about the next one.
               <br/><br/>
               Canvas Routes is for those who understand that a great car deserves great roads. If you've chosen your car for the way it makes you feel — the sound, the handling, the experience — you're exactly who we built this for.
             </div>
@@ -375,18 +375,18 @@ export default function Home() {
             <div className="expand-grid">
               <div>
                 <p style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",marginBottom:"2rem"}}>
-                  Our car meets are where the community comes alive — fuelled by great cars, genuine passion, and good company. Whether you're just discovering Canvas Routes or a seasoned member, there's always a place for you here.
+                  Our car meets are where the community comes together — great cars, genuine conversation, and the kind of energy that doesn't need to be manufactured. First time or fifth time, the vibe is the same.
                 </p>
                 <div className="meets-cards-grid">
                   <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1"}}>
                     <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",marginBottom:"0.8rem"}}>Open Meets</div>
                     <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Everyone welcome</div>
-                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Open to all car enthusiasts. Come meet like-minded people and discover what Canvas Routes is about. Formats vary — from casual gatherings to the occasional cars & coffee morning. Fun, welcoming, and always a good time.</p>
+                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>No membership required — just show up. Meet people who get it, see what Canvas Routes is about, and find out why people keep coming back. The format changes, the energy doesn't.</p>
                   </div>
                   <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1"}}>
                     <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.8rem"}}>Private Meets</div>
                     <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Members only</div>
-                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, curated company, and a more intimate experience. Members are notified directly when a private meet is announced.</p>
+                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, a tighter group, and a different kind of evening. Members are notified directly when one is announced — these don't get advertised.</p>
                   </div>
                 </div>
                 <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
