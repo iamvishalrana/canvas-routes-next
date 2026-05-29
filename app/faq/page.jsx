@@ -79,7 +79,7 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'Are Canvas Routes road trips members only?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Yes — from June 2026, all Canvas Routes road trips are members only. The Into the Laurentians road trip on May 31, 2026 was the last open registration. All future road trips require an active Canvas Routes membership. Members receive priority registration and preferred pricing for every road trip on the calendar.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Yes — from June 2026, all Canvas Routes road trips are members only. The Into the Laurentians road trip on June 7, 2026 is the last open registration. All future road trips require an active Canvas Routes membership. Members receive priority registration and preferred pricing for every road trip on the calendar.' },
     },
     {
       '@type': 'Question',

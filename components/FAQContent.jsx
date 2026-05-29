@@ -116,7 +116,7 @@ const SECTIONS = [
       },
       {
         q: 'Are road trips members only?',
-        a: 'Yes — from June 2026, all Canvas Routes road trips are members only. The Into the Laurentians road trip on May 31 is the last open registration. All future road trips require an active Canvas Routes membership. Members receive priority registration and preferred pricing for every road trip on the calendar.',
+        a: 'Yes — from June 2026, all Canvas Routes road trips are members only. The Into the Laurentians road trip on June 7 is the last open registration. All future road trips require an active Canvas Routes membership. Members receive priority registration and preferred pricing for every road trip on the calendar.',
       },
       {
         q: 'How do I register and pay?',
