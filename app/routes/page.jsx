@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 
 const ROUTES_LAUNCH = new Date('2026-05-13T23:00:00Z').getTime() // 7 PM EDT
-const ROUTES_CLOSED = new Date('2026-06-01T04:00:00Z').getTime() // midnight EDT June 1
+const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime() // midnight EDT June 8
 
 function Chevron() {
   return (
@@ -192,7 +192,7 @@ export default function RoutesPage() {
       {/* HERO */}
       <section className="routes-hero" style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
-        <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · 31 May 2026</div>
+        <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · June 7, 2026</div>
         <h1 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
           Into the Laurentians
         </h1>

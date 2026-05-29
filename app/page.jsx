@@ -24,9 +24,9 @@ const PAST_EVENTS = {
   },
   'Into the Laurentians': {
     img: '/itl.png', imgAlt: 'Into the Laurentians road trip', imgPos: 'top',
-    meta: 'Mont-Tremblant · May 31, 2026', title: 'Into the Laurentians',
+    meta: 'Mont-Tremblant · June 7, 2026', title: 'Into the Laurentians',
     sub: 'First Route — Canvas Routes.',
-    tags: ['May 31, 2026', 'Road Trip', 'Members Only'],
+    tags: ['June 7, 2026', 'Road Trip', 'Members Only'],
   },
 }
 
@@ -47,7 +47,7 @@ export default function Home() {
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
 
   useEffect(() => {
-    if (Date.now() >= new Date('2026-06-01T04:00:00Z').getTime()) return
+    if (Date.now() >= new Date('2026-06-08T04:00:00Z').getTime()) return
     try { if (sessionStorage.getItem('eventsPopupDismissed')) return } catch {}
     const t = setTimeout(() => setShowEventsPopup(true), 800)
     return () => clearTimeout(t)
@@ -137,7 +137,7 @@ export default function Home() {
 
   const GPCC = 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026'
   const gpccClosed = new Date() >= new Date('2026-05-23T14:00:00-04:00')
-  const laurentiansIsPast = Date.now() >= new Date('2026-06-01T04:00:00Z').getTime()
+  const laurentiansIsPast = Date.now() >= new Date('2026-06-08T04:00:00Z').getTime()
 
   function updateForm(field, value) {
     setForm(prev => {
@@ -449,9 +449,9 @@ export default function Home() {
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
-            ...(Date.now() >= new Date('2026-06-01T04:00:00Z').getTime()
-              ? [{date:"May 31, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true}]
-              : [{date:"May 31, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"}]
+            ...(Date.now() >= new Date('2026-06-08T04:00:00Z').getTime()
+              ? [{date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true}]
+              : [{date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"}]
             ),
             {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route",teaser:"Wine country roads and sweeping valleys through the Eastern Townships — a route built for a summer day.",membersOnly:true},
             {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route",teaser:"Quebec's most dramatic coastline — clifftop roads, river views, and countryside that earns every kilometre.",membersOnly:true},
@@ -545,7 +545,7 @@ export default function Home() {
         {routesLaunched && !laurentiansIsPast && (
           <div style={{maxWidth:"560px",margin:"-1rem auto 3rem",padding:"1.2rem 1.6rem",border:"0.5px solid rgba(197,168,130,0.45)",background:"rgba(197,168,130,0.05)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
             <div>
-              <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"0.3rem"}}>Road Trip · 31 May 2026</div>
+              <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"0.3rem"}}>Road Trip · 7 Jun 2026</div>
               <div style={{fontSize:"0.9rem",color:"#1a1a1a",lineHeight:"1.4"}}>Into the Laurentians — First Route</div>
             </div>
             <Link href="/routes#form" style={{fontSize:"11px",letterSpacing:"0.14em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.5rem 1.1rem",textDecoration:"none",whiteSpace:"nowrap",flexShrink:0}}>Register →</Link>
@@ -866,11 +866,11 @@ export default function Home() {
                 <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
                 <img src="/itl.png" alt="Into the Laurentians road trip" style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"top",display:"block"}} />
                 <div style={{padding:"1.6rem 1.8rem 2rem"}}>
-                  <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Mont-Tremblant · May 31, 2026</div>
+                  <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Mont-Tremblant · June 7, 2026</div>
                   <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.85rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.35rem"}}>Into the<br/>Laurentians</div>
                   <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"0.95rem",fontStyle:"italic",color:"rgba(245,241,236,0.45)",marginBottom:"1.3rem"}}>First Route — Canvas Routes</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:"0.4rem",marginBottom:"1.5rem"}}>
-                    {["31 May 2026","Road Trip"].map((tag,idx) => (
+                    {["June 7, 2026","Road Trip"].map((tag,idx) => (
                       <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
                     ))}
                   </div>
