@@ -50,6 +50,10 @@ export default function RoutesPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'ViewContent', { content_name: 'Into the Laurentians' })
+  }, [])
+
   function updateForm(field, value) {
     setForm(prev => {
       const next = { ...prev, [field]: value }
