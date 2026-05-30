@@ -371,7 +371,7 @@ export default function RoutesPage() {
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
-                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Sent to you after your application is reviewed.</div>
+                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Details sent to you after application is reviewed</div>
               </div>
             </div>
           </div>
