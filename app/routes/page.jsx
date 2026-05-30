@@ -436,6 +436,11 @@ export default function RoutesPage() {
                     })}
                   </div>
                   {errors.hasChildren && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  {form.hasChildren === 'yes' && (
+                    <div style={{marginTop:"0.75rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.4)",background:"rgba(197,168,130,0.08)"}}>
+                      <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Each child attending is an additional charge. We&apos;ll reach out by email with the details after you register.</span>
+                    </div>
+                  )}
                 </div>
 
                 {form.hasChildren === 'yes' && (
