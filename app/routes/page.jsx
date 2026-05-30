@@ -405,7 +405,7 @@ export default function RoutesPage() {
 
                 {/* Passengers */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <label htmlFor="field-passengers" className="join-label">Number of passengers<Users size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <label htmlFor="field-passengers" className="join-label">Number of passengers<Users size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(including driver)</span></label>
                   <div style={{position:"relative"}}>
                     <select id="field-passengers" value={form.passengers} onChange={e => updateForm('passengers', e.target.value)}
                       style={{...inputStyle('passengers'), cursor:"pointer", paddingRight:"2rem"}}>
