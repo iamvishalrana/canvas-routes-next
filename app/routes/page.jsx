@@ -369,7 +369,7 @@ export default function RoutesPage() {
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Register by</div>
+                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
                 <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
