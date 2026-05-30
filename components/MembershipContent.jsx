@@ -156,7 +156,10 @@ export default function MembershipContent() {
         body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
       })
       const data = await res.json().catch(() => ({}))
-      if (res.ok) setStatus('success')
+      if (res.ok) {
+        setStatus('success')
+        if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'Lead')
+      }
       else { setSubmitError(data.error || 'Something went wrong. Please try again.'); setStatus('error') }
     } catch { setSubmitError('Something went wrong. Please try again.'); setStatus('error') }
   }

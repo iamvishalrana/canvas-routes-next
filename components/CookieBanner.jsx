@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
 
 function loadGA() {
   if (!GA_ID || document.getElementById('ga-script')) return
@@ -18,12 +19,26 @@ function loadGA() {
   document.head.appendChild(script)
 }
 
+function loadMetaPixel() {
+  if (!META_PIXEL_ID || window.fbq) return
+  ;(function(f, b, e, v, n, t, s) {
+    if (f.fbq) return
+    n = f.fbq = function() { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments) }
+    if (!f._fbq) f._fbq = n
+    n.push = n; n.loaded = true; n.version = '2.0'; n.queue = []
+    t = b.createElement(e); t.async = true; t.src = v
+    s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s)
+  })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
+  window.fbq('init', META_PIXEL_ID)
+  window.fbq('track', 'PageView')
+}
+
 function grantConsent() {
-  if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'granted' })
+  if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'granted', ad_storage: 'granted' })
 }
 
 function denyConsent() {
-  if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'denied' })
+  if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied' })
 }
 
 export default function CookieBanner() {
@@ -38,6 +53,7 @@ export default function CookieBanner() {
     if (consent === 'accepted') {
       grantConsent()
       loadGA()
+      loadMetaPixel()
     }
   }, [consent])
 
@@ -56,6 +72,7 @@ export default function CookieBanner() {
     setConsent('accepted')
     grantConsent()
     loadGA()
+    loadMetaPixel()
     window.dispatchEvent(new Event('cookieConsentChanged'))
   }
 
@@ -72,7 +89,7 @@ export default function CookieBanner() {
   return (
     <div className="cookie-banner">
       <p style={{margin:0,fontSize:"12px",color:"#555",lineHeight:"1.7",maxWidth:"680px"}}>
-        We use cookies to understand how our site is used and improve your experience. See our{' '}
+        We use cookies to understand how our site is used and to show more relevant ads. See our{' '}
         <Link href="/privacy" style={{color:"#555",textDecoration:"underline"}}>Privacy Policy</Link>.
       </p>
       <div style={{display:"flex",gap:"0.75rem",flexShrink:0}}>

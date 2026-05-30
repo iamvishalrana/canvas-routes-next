@@ -133,6 +133,7 @@ export default function RoutesPage() {
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setStatus('success')
+        if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'Lead')
       } else {
         setServerError(data.error || 'Something went wrong. Please try again.')
         setStatus('error')
