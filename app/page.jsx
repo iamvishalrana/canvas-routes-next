@@ -226,8 +226,8 @@ export default function Home() {
         setStatus('success')
         setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
         if (honeypotRef.current) honeypotRef.current.value = ''
-        if (typeof window !== 'undefined' && (() => { try { return localStorage.getItem('cookieConsent') } catch { return null } })() === 'accepted') {
-          if (window.gtag) window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
+        if (typeof window !== 'undefined') {
+          if (localStorage.getItem('cookieConsent') === 'accepted' && window.gtag) window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
           if (window.fbq) window.fbq('track', 'Lead')
         }
       } else {
