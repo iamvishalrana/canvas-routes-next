@@ -532,11 +532,11 @@ export default function RoutesPage() {
             { label:'Convoy Departs', venue:null, address:null, desc:'LaSalle, heading north through the Laurentians backroads.', pays:false },
             { label:'Regroup', venue:null, address:'Saint-Sauveur', desc:'Fuel stop.', pays:false },
             { label:'Lake View Photo Stop', venue:null, address:'Sainte-Agathe-des-Monts, Lac des Sables', desc:null, pays:false },
-            { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'653 Rue Principale, Mont-Blanc QC', desc:'Coffee and pastry.', pays:true },
+            { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'Mont-Blanc, QC', desc:'Coffee and pastry.', pays:true },
             { label:'Free Time', venue:'Mont-Tremblant Pedestrian Village', address:null, desc:'Wander the village on your own time. P1 VIP parking at $30 per car — at your cost. Any activities in the village are on you. Meet back at the cars at 3:00 PM sharp.', pays:false },
-            { label:'Group Lunch', venue:'Pizzeria No.900', address:'175 Mnt Ryan, Mont-Tremblant QC', desc:'Sit-down lunch together.', pays:true },
+            { label:'Group Lunch', venue:'Pizzeria No.900', address:'Mont-Tremblant, QC', desc:'Sit-down lunch together.', pays:true },
             { label:'Return Convoy', venue:null, address:null, desc:'QC-117 South to A-15 South.', pays:false },
-            { label:'Farewell', venue:'Aloe Cafe', address:'1000 Boul. Saint-Jean #20, Pointe-Claire', desc:'Close the day over coffees and snacks on the West Island.', pays:true },
+            { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:'Close the day over coffees and snacks on the West Island.', pays:true },
           ].map((stop, i, arr) => (
             <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.5rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
               <div style={{width:"6px",height:"6px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"5px"}} />
