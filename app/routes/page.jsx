@@ -291,29 +291,30 @@ export default function RoutesPage() {
           <div style={{textAlign:"center",marginBottom:"4rem"}}>
             <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · June 7, 2026</div>
             <h2 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.6rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",margin:0}}>What Your Day Looks Like</h2>
-            <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.4)",margin:"1.5rem auto 0"}} />
+            <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.4)",margin:"1.5rem auto"}} />
+            <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.5)",lineHeight:"1.9",maxWidth:"400px",margin:"0 auto"}}>Every stop is planned. Every meal is on us. All you need to bring is your car and show up at 7.</p>
           </div>
 
           {/* Stops */}
           {[
-            { label:'Breakfast', venue:'Petinos Restaurant', address:'LaSalle, Montreal', desc:'Premium breakfast together before we hit the road.', pays:true },
-            { label:'Convoy Departs', venue:null, address:null, desc:'LaSalle, heading north through the Laurentians backroads.', pays:false },
-            { label:'Regroup', venue:null, address:'Saint-Sauveur', desc:'Fuel stop.', pays:false },
-            { label:'Lake View Photo Stop', venue:null, address:'Sainte-Agathe-des-Monts, Lac des Sables', desc:null, pays:false },
-            { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'Mont-Blanc, QC', desc:'Coffee and pastry.', pays:true },
-            { label:'Free Time', venue:'Mont-Tremblant Pedestrian Village', address:null, desc:'Wander the village on your own time. P1 VIP parking at $30 per car — at your cost. Any activities in the village are on you. Meet back at the cars at 3:00 PM sharp.', pays:false },
-            { label:'Group Lunch', venue:'Pizzeria No.900', address:'Mont-Tremblant, QC', desc:'Sit-down lunch together.', pays:true },
-            { label:'Return Convoy', venue:null, address:null, desc:'QC-117 South to A-15 South.', pays:false },
-            { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:'Close the day over coffees and snacks on the West Island.', pays:true },
+            { label:'Breakfast', venue:'Petinos Restaurant', address:'LaSalle, Montreal', desc:"The day starts with a proper sit-down breakfast — not a grab-and-go. You'll leave the table full and ready.", pays:true },
+            { label:'Convoy Departs', venue:null, address:null, desc:'The city falls behind you fast once you\'re north of LaSalle. From the first regroup stop, it\'s nothing but backroads all the way.', pays:false },
+            { label:'Regroup', venue:null, address:'Saint-Sauveur', desc:'Quick stop to refuel and regroup before the real roads begin.', pays:false },
+            { label:'Lake View Photo Stop', venue:null, address:'Sainte-Agathe-des-Monts, Lac des Sables', desc:'Pull off at Lac des Sables for a moment to breathe — windows down, engines off, water in view.', pays:false },
+            { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'Mont-Blanc, QC', desc:'Halfway through the drive, a proper coffee break deep in the Laurentians. Step out, take in the cars around you, and enjoy the quiet before the road opens back up.', pays:true },
+            { label:'Free Time', venue:'Mont-Tremblant Pedestrian Village', address:null, desc:'The pedestrian village is yours — wander, explore, take in the mountain. P1 VIP parking available at $30 per car, at your cost. Meet back at the cars at 3:00 PM sharp.', pays:false },
+            { label:'Group Lunch', venue:'Pizzeria No.900', address:'Mont-Tremblant, QC', desc:'A proper sit-down lunch together at one of the best spots in the village. A meal worth the drive.', pays:true },
+            { label:'Return Convoy', venue:null, address:null, desc:'QC-117 South to A-15 South. The way home is just as good as the way up.', pays:false },
+            { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:'The day closes over coffees and snacks on the West Island — a relaxed end to a day well driven.', pays:true },
           ].map((stop, i, arr) => (
-            <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.5rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
-              <div style={{width:"6px",height:"6px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"5px"}} />
+            <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.75rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
+              <div style={{width:"6px",height:"6px",borderRadius:"50%",background:stop.pays?"#c5a882":"rgba(197,168,130,0.4)",flexShrink:0,marginTop:"5px"}} />
               <div style={{flex:1}}>
                 <div style={{fontSize:"9px",letterSpacing:"0.25em",textTransform:"uppercase",color:"rgba(197,168,130,0.65)",marginBottom:"0.35rem"}}>{stop.label}</div>
-                {stop.venue && <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",fontWeight:"400",color:"#F5F1EC",marginBottom:"0.2rem",lineHeight:"1.3"}}>{stop.venue}</div>}
-                {stop.address && <div style={{fontSize:"11px",color:"rgba(245,241,236,0.3)",marginBottom:"0.5rem",letterSpacing:"0.02em"}}>{stop.address}</div>}
+                {stop.venue && <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.25rem",fontWeight:"400",color:"#F5F1EC",marginBottom:"0.2rem",lineHeight:"1.3"}}>{stop.venue}</div>}
+                {stop.address && <div style={{fontSize:"11px",color:"rgba(245,241,236,0.3)",marginBottom:"0.6rem",letterSpacing:"0.02em"}}>{stop.address}</div>}
                 {(stop.desc || stop.pays) && (
-                  <div style={{fontSize:"13px",color:"rgba(245,241,236,0.55)",lineHeight:"1.8"}}>
+                  <div style={{fontSize:"13px",color:"rgba(245,241,236,0.65)",lineHeight:"1.85"}}>
                     {stop.desc}{stop.pays && <span style={{color:"#c5a882",marginLeft: stop.desc ? "0.35rem" : 0}}>Canvas Routes pays.</span>}
                   </div>
                 )}
