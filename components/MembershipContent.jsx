@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -91,6 +91,10 @@ function CheckIcon({ gold }) {
 const INIT_FORM = { name:'', email:'', phone:'', year:'', carMake:'', carModel:'', tier:'', source:'', more:'' }
 
 export default function MembershipContent() {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'ViewContent', { content_name: 'Membership' })
+  }, [])
+
   const [menuOpen, setMenuOpen]         = useState(false)
   const [form, setForm]                 = useState(INIT_FORM)
   const [errors, setErrors]             = useState({})
