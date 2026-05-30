@@ -214,10 +214,9 @@ export default function RoutesPage() {
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)"}} />
       </section>
 
-      {/* DETAILS — What's Included + Pricing */}
+      {/* DETAILS — Pricing */}
       <section className="routes-details" style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
-        <style>{`@media(max-width:680px){.details-grid{grid-template-columns:1fr !important;gap:3rem !important}}`}</style>
-        <div className="details-grid" style={{maxWidth:"860px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5rem",alignItems:"stretch"}}>
+        <div style={{maxWidth:"680px",margin:"0 auto"}}>
 
           {/* PRICING + NOTES */}
           <div>
@@ -258,27 +257,7 @@ export default function RoutesPage() {
 
           </div>
 
-          {/* WHAT'S INCLUDED */}
-          <div>
-            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>What&apos;s included</div>
-            <div style={{display:"flex",flexDirection:"column",gap:"0"}}>
-              {INCLUDED.map((item, i) => {
-                const isBreakfast = item.title === 'Premium breakfast in LaSalle'
-                return (
-                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"1.2rem",padding:"1rem",borderBottom:"0.5px solid rgba(0,0,0,0.07)",marginLeft: isBreakfast ? "-1rem" : undefined, marginRight: isBreakfast ? "-0rem" : undefined, background:isBreakfast?"#c5a882":"transparent"}}>
-                    <div style={{width:"5px",height:"5px",background:isBreakfast?"#0F1E14":"rgba(197,168,130,0.75)",flexShrink:0,marginTop:"6px"}} />
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:"0.875rem",color:isBreakfast?"#0F1E14":"#1a1a1a",lineHeight:"1.5",letterSpacing:"0.01em",fontWeight:"600",marginBottom:"0.2rem"}}>{item.title}</div>
-                      <div style={{fontSize:"0.8rem",color:isBreakfast?"rgba(15,30,20,0.7)":"#888",lineHeight:"1.6"}}>{item.sub}</div>
-                    </div>
-                    {isBreakfast && <div style={{fontSize:"10px",letterSpacing:"0.16em",textTransform:"uppercase",color:"rgba(15,30,20,0.55)",flexShrink:0,alignSelf:"center"}}>7:00 AM</div>}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          <div style={{gridColumn:"1 / -1",textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+          <div style={{textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
             <div style={{fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited &nbsp;·&nbsp; Selection is curated.</div>
           </div>
 
@@ -378,6 +357,11 @@ export default function RoutesPage() {
                 <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Details sent to you after application is reviewed</div>
               </div>
             </div>
+          </div>
+
+          <div style={{marginTop:"1.5rem",textAlign:"center"}}>
+            <span style={{fontSize:"12px",color:"rgba(245,241,236,0.35)",lineHeight:"1.8"}}>Questions about weather or cancellations? </span>
+            <Link href="/faq" style={{fontSize:"12px",color:"rgba(197,168,130,0.6)",textDecoration:"underline",textUnderlineOffset:"3px"}}>See our FAQ</Link>
           </div>
 
         </div>
@@ -524,6 +508,11 @@ export default function RoutesPage() {
                     <Chevron />
                   </div>
                   {errors.passengers && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  {(form.passengers === '3' || form.passengers === '4+') && (
+                    <div style={{marginTop:"0.6rem",padding:"0.75rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
+                      <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>The base price covers 2 people. Additional passengers are subject to an extra charge — details will be sent with your confirmation.</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Children */}
@@ -604,9 +593,6 @@ export default function RoutesPage() {
                   {status === 'loading' ? 'Submitting...' : 'Apply — $200 per car'}
                 </button>
                 {status === 'error' && <div style={{fontSize:"12px",color:"#7B2032",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
-                <p style={{fontSize:"13px",color:"#777",lineHeight:"1.8",textAlign:"center",marginTop:"0.75rem"}}>
-                  Full event details will be sent upon confirmation.
-                </p>
 
               </form>
             </>
