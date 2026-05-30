@@ -292,7 +292,7 @@ export default function RoutesPage() {
             <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · June 7, 2026</div>
             <h2 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.6rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",margin:0}}>What Your Day Looks Like</h2>
             <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.4)",margin:"1.5rem auto"}} />
-            <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.5)",lineHeight:"1.9",maxWidth:"400px",margin:"0 auto"}}>Every stop is planned. Every meal is on us. All you need to bring is your car and show up at 7.</p>
+            <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.5)",lineHeight:"1.9",maxWidth:"400px",margin:"0 auto"}}>Every stop is planned. Every meal is on us.</p>
           </div>
 
           {/* Stops */}
