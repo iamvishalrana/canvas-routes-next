@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
-const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
+const META_PIXEL_ID = '1499785301931870'
 
 function loadGA() {
   if (!GA_ID || document.getElementById('ga-script')) return
