@@ -514,6 +514,103 @@ export default function RoutesPage() {
         </div>
       </section>
 
+      {/* ITINERARY */}
+      <section style={{background:"#0F1E14",padding:"6rem 2rem 7rem"}}>
+        <style>{`@media(max-width:600px){.incl-grid{grid-template-columns:1fr !important;gap:2rem !important}}`}</style>
+        <div style={{maxWidth:"560px",margin:"0 auto"}}>
+
+          {/* Heading */}
+          <div style={{textAlign:"center",marginBottom:"4rem"}}>
+            <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · June 7, 2026</div>
+            <h2 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.6rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",margin:0}}>What Your Day Looks Like</h2>
+            <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.4)",margin:"1.5rem auto 0"}} />
+          </div>
+
+          {/* Stops */}
+          {[
+            { label:'Breakfast', venue:'Petinos Restaurant', address:'LaSalle, Montreal', desc:'Premium breakfast together before we hit the road.', pays:true },
+            { label:'Convoy Departs', venue:null, address:null, desc:'LaSalle, heading north through the Laurentians backroads.', pays:false },
+            { label:'Regroup', venue:null, address:'Saint-Sauveur', desc:'Fuel stop.', pays:false },
+            { label:'Lake View Photo Stop', venue:null, address:'Sainte-Agathe-des-Monts, Lac des Sables', desc:null, pays:false },
+            { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'653 Rue Principale, Mont-Blanc QC', desc:'Coffee and pastry.', pays:true },
+            { label:'Free Time', venue:'Mont-Tremblant Pedestrian Village', address:null, desc:'Wander the village on your own time. P1 VIP parking at $30 per car — at your cost. Any activities in the village are on you. Meet back at the cars at 3:00 PM sharp.', pays:false },
+            { label:'Group Lunch', venue:'Pizzeria No.900', address:'175 Mnt Ryan, Mont-Tremblant QC', desc:'Sit-down lunch together.', pays:true },
+            { label:'Return Convoy', venue:null, address:null, desc:'QC-117 South to A-15 South.', pays:false },
+            { label:'Farewell', venue:'Aloe Cafe', address:'1000 Boul. Saint-Jean #20, Pointe-Claire', desc:'Close the day over coffees and snacks on the West Island.', pays:true },
+          ].map((stop, i, arr) => (
+            <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.5rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
+              <div style={{width:"6px",height:"6px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"5px"}} />
+              <div style={{flex:1}}>
+                <div style={{fontSize:"9px",letterSpacing:"0.25em",textTransform:"uppercase",color:"rgba(197,168,130,0.65)",marginBottom:"0.35rem"}}>{stop.label}</div>
+                {stop.venue && <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",fontWeight:"400",color:"#F5F1EC",marginBottom:"0.2rem",lineHeight:"1.3"}}>{stop.venue}</div>}
+                {stop.address && <div style={{fontSize:"11px",color:"rgba(245,241,236,0.3)",marginBottom:"0.5rem",letterSpacing:"0.02em"}}>{stop.address}</div>}
+                {(stop.desc || stop.pays) && (
+                  <div style={{fontSize:"13px",color:"rgba(245,241,236,0.55)",lineHeight:"1.8"}}>
+                    {stop.desc}{stop.pays && <span style={{color:"#c5a882",marginLeft: stop.desc ? "0.35rem" : 0}}>Canvas Routes pays.</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Divider */}
+          <div style={{height:"0.5px",background:"rgba(197,168,130,0.15)",margin:"4rem 0"}} />
+
+          {/* Included / Not Included */}
+          <div className="incl-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3rem",marginBottom:"4rem"}}>
+            <div>
+              <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>What&apos;s included</div>
+              {[
+                'Breakfast at Petinos LaSalle',
+                'Coffee and pastry at Café Mont-Blanc',
+                'Group lunch at Pizzeria No.900',
+                'Farewell coffees and snacks at Aloe Cafe',
+                'Personal car photography throughout the day',
+              ].map((item, i) => (
+                <div key={i} style={{display:"flex",gap:"0.75rem",alignItems:"flex-start",marginBottom:"0.75rem"}}>
+                  <div style={{width:"4px",height:"4px",borderRadius:"50%",background:"#3B6B2F",flexShrink:0,marginTop:"7px"}} />
+                  <span style={{fontSize:"13px",color:"rgba(245,241,236,0.65)",lineHeight:"1.7"}}>{item}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Not included</div>
+              {[
+                'Gas',
+                'Parking in Tremblant ($30 per car)',
+                'Personal activities in Tremblant village',
+              ].map((item, i) => (
+                <div key={i} style={{display:"flex",gap:"0.75rem",alignItems:"flex-start",marginBottom:"0.75rem"}}>
+                  <div style={{width:"4px",height:"4px",borderRadius:"50%",background:"rgba(245,241,236,0.2)",flexShrink:0,marginTop:"7px"}} />
+                  <span style={{fontSize:"13px",color:"rgba(245,241,236,0.4)",lineHeight:"1.7"}}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Registration box */}
+          <div style={{border:"0.5px solid rgba(197,168,130,0.25)",padding:"2rem",background:"rgba(197,168,130,0.05)"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"0.85rem",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.04em",textTransform:"uppercase",fontSize:"11px"}}>per car · 2 people</span></div>
+              </div>
+              <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Register by</div>
+                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
+              </div>
+              <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
+                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Interac E-transfer → <span style={{color:"#c5a882"}}>info@canvasroutes.com</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer className="routes-footer" style={{borderTop:"0.5px solid rgba(0,0,0,0.12)",padding:"2rem 3rem",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"1rem",background:"#F5F1EC"}}>
         <div style={{display:"flex",flexDirection:"column",gap:"0.4rem"}}>
