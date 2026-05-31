@@ -1,10 +1,8 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, ClipboardList } from 'lucide-react'
-import FadeIn from '../components/FadeIn'
 import ErrorBoundary from '../components/ErrorBoundary'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -335,7 +333,7 @@ export default function Home() {
 
       {/* ABOUT */}
       <section id="about" style={{background:"#EDE8E1",padding:"6rem 3rem"}}>
-        <FadeIn><div className="about-grid">
+        <div className="about-grid">
           <div>
             <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>About Us</div>
             <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#7B2032"}}>art form.</em><br/>We treat it like one.</div>
@@ -355,7 +353,7 @@ export default function Home() {
             <div style={{width:"100%",height:"100%",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
             <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
           </div>
-        </div></FadeIn>
+        </div>
       </section>
 
       {/* CAR MEETS */}
@@ -437,7 +435,7 @@ export default function Home() {
 
       {/* EVENTS */}
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
-        <FadeIn><div style={{textAlign:"center",marginBottom:"4rem"}}>
+        <div style={{textAlign:"center",marginBottom:"4rem"}}>
           <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>On the calendar</div>
           <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
           <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
@@ -481,12 +479,12 @@ export default function Home() {
               }
             </div>
           ))}
-        </div></FadeIn>
+        </div>
       </section>
 
       {/* CONTACT */}
       <section id="contact" style={{background:"#EDE8E1",padding:"6rem 3rem",textAlign:"center"}}>
-        <FadeIn><div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Get in touch</div>
+        <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Get in touch</div>
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>Let's talk <em style={{color:"#7B2032"}}>routes.</em></div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem auto"}}></div>
         <p style={{fontSize:"0.95rem",lineHeight:"1.8",color:"#555",maxWidth:"420px",margin:"0 auto 3rem"}}>Have a question, a partnership idea, or just want to know more? Reach out — we'd love to hear from you.</p>
@@ -531,12 +529,12 @@ export default function Home() {
             </div>
           </a>
           </div>
-        </div></FadeIn>
+        </div>
       </section>
 
       {/* JOIN */}
       <section id="join" style={{textAlign:"center",padding:"8rem 2rem",background:"#F5F1EC"}}>
-        <FadeIn><div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
+        <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
         <div className="join-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
         <div style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Membership is by application. Tell us about yourself.</div>
         {routesLaunched && !laurentiansIsPast && (
@@ -788,25 +786,21 @@ export default function Home() {
               <input ref={honeypotRef} type="text" name="cr_field" tabIndex={-1} autoComplete="off" />
             </div>
           </form>
-        )}</FadeIn>
+        )}
       </section>
 
 
 
       {/* PAST EVENT MODAL */}
-      <AnimatePresence>
-        {pastModalEvent && (() => {
+      {pastModalEvent && (() => {
           const d = PAST_EVENTS[pastModalEvent.name] || { meta: pastModalEvent.date, title: pastModalEvent.name, sub: null, tags: [], img: null }
           return (
-            <motion.div
+            <div
               key="past-modal"
-              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.2}}
               onClick={() => setPastModalEvent(null)}
               style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
             >
-              <motion.div
-                initial={{opacity:0,scale:0.92,y:20}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.94,y:10}}
-                transition={{duration:0.3,ease:[0.16,1,0.3,1]}}
+              <div
                 onClick={ev => ev.stopPropagation()}
                 style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)"}}
               >
@@ -830,28 +824,18 @@ export default function Home() {
                     <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
                   </div>
                 </div>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )
         })()}
-      </AnimatePresence>
 
       {/* EVENTS POPUP */}
-      <AnimatePresence>
-        {showEventsPopup && (
-          <motion.div
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            exit={{opacity:0}}
-            transition={{duration:0.25}}
+      {showEventsPopup && (
+          <div
             onClick={dismissEventsPopup}
             style={{position:"fixed",inset:0,background:"rgba(10,22,14,0.94)",zIndex:1002,display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"2rem 1.25rem",overflowY:"auto"}}
           >
-            <motion.div
-              initial={{opacity:0,y:28}}
-              animate={{opacity:1,y:0}}
-              exit={{opacity:0,y:12}}
-              transition={{duration:0.38,ease:[0.16,1,0.3,1]}}
+            <div
               onClick={e => e.stopPropagation()}
               className="events-popup-cards"
               style={{display:"flex",gap:"1.25rem",position:"relative"}}
@@ -878,10 +862,9 @@ export default function Home() {
                 </div>
               </div>
 
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* STICKY MOBILE CTA */}
       <div className={`sticky-cta${showStickyCta ? ' sticky-cta--visible' : ''}`} style={cookieBannerVisible ? {bottom:'var(--cookie-banner-height, 80px)'} : {}}>

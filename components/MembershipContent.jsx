@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 
 // ── Typography tokens ────────────────────────────────────────────────────────
 // LABEL:   Inter 9px / uppercase / 0.28em              → color varies
@@ -21,34 +20,12 @@ const LABEL = { fontSize: '10px', letterSpacing: '0.22em', textTransform: 'upper
 const BODY  = { fontSize: '14px', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }
 const SMALL = { fontSize: '12px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }
 
-const fadeUp = {
-  hidden:  { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] } },
-}
-const stagger = { visible: { transition: { staggerChildren: 0.1 } } }
-const fadeIn  = {
-  hidden:  { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.9, ease: 'easeOut' } },
-}
-
 function FadeUp({ children, delay = 0, style, className }) {
-  return (
-    <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1], delay }}
-      style={style} className={className}>
-      {children}
-    </motion.div>
-  )
+  return <div style={style} className={className}>{children}</div>
 }
 
 function StaggerGrid({ children, style, className }) {
-  return (
-    <motion.div variants={stagger} initial="hidden" whileInView="visible"
-      viewport={{ once: true, margin: '-60px' }} style={style} className={className}>
-      {children}
-    </motion.div>
-  )
+  return <div style={style} className={className}>{children}</div>
 }
 
 const TIER1 = [
@@ -238,32 +215,29 @@ export default function MembershipContent() {
 
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
 
-        <motion.div initial="hidden" animate="visible" variants={stagger}
-          style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
-          <motion.div variants={fadeUp} style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1.75rem' }}>
+        <div style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
+          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1.75rem' }}>
             Canvas Routes · Season 2026
-          </motion.div>
-          <motion.h1 variants={fadeUp}
-            style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.8rem,8vw,6.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.8rem,8vw,6.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
             For those who chose<br />their car
             <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.65)' }}> on purpose.</span>
-          </motion.h1>
-          <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <motion.div variants={fadeUp} style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', letterSpacing: '0.28em' }}>
+          </h1>
+          <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
+          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', letterSpacing: '0.28em' }}>
             Season 2026 &nbsp;·&nbsp; Limited spots &nbsp;·&nbsp; Two tiers
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* Scroll indicator */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.8 }}
-          style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
+        <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
           <span style={{ ...LABEL, color: 'rgba(197,168,130,0.35)' }}>Scroll</span>
-          <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}>
+          <div>
             <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.35)" strokeWidth="1.2" strokeLinecap="round">
               <line x1="6" y1="0" x2="6" y2="12"/><polyline points="2 8 6 12 10 8"/>
             </svg>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.15),transparent)' }} />
       </section>
 
@@ -309,8 +283,7 @@ export default function MembershipContent() {
       </section>
 
       {/* ── PHOTO BREAK 1 ───────────────────────────────────────────── */}
-      <motion.div variants={fadeIn} initial="hidden" whileInView="visible" viewport={{ once: true }}
-        style={{ position: 'relative', height: 'clamp(260px,36vw,460px)', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: 'clamp(260px,36vw,460px)', overflow: 'hidden' }}>
         <img src="/events/may9-cars-row.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.62)' }} />
         <FadeUp style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
@@ -321,7 +294,7 @@ export default function MembershipContent() {
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginTop: '1.25rem' }}>Henry Ford</div>
           </div>
         </FadeUp>
-      </motion.div>
+      </div>
 
       {/* ── TIERS ───────────────────────────────────────────────────── */}
       <section style={{ background: '#EDE8E1', padding: 'clamp(5rem,8vw,8rem) clamp(1.5rem,5vw,5rem)' }}>
@@ -449,11 +422,10 @@ export default function MembershipContent() {
       </section>
 
       {/* ── PHOTO BREAK 2 ───────────────────────────────────────────── */}
-      <motion.div variants={fadeIn} initial="hidden" whileInView="visible" viewport={{ once: true }}
-        style={{ position: 'relative', height: 'clamp(200px,28vw,360px)', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: 'clamp(200px,28vw,360px)', overflow: 'hidden' }}>
         <img src="/events/may9-cars2.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.4)' }} />
-      </motion.div>
+      </div>
 
       {/* ── PHYSICAL PERKS ──────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(5rem,8vw,8rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
@@ -467,7 +439,7 @@ export default function MembershipContent() {
 
           <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-perks">
             {PERKS.map((p, i) => (
-              <motion.div key={i} variants={fadeUp}
+              <div key={i}
                 style={{ background: p.tier === 2 ? '#0F1E14' : '#F5F1EC', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <div style={{ width: '20px', height: '0.5px', background: p.tier === 2 ? 'rgba(197,168,130,0.5)' : '#c5a882' }} />
@@ -477,7 +449,7 @@ export default function MembershipContent() {
                 </div>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.25rem', fontWeight: '300', color: p.tier === 2 ? '#F5F1EC' : '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.3 }}>{p.label}</div>
                 <div style={{ ...BODY, color: p.tier === 2 ? 'rgba(245,241,236,0.72)' : '#555' }}>{p.sub}</div>
-              </motion.div>
+              </div>
             ))}
           </StaggerGrid>
         </div>
@@ -496,11 +468,11 @@ export default function MembershipContent() {
               { n: '02', title: 'We reach out', body: 'Every application is reviewed personally. We contact you directly to confirm your spot and tier.' },
               { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and collect your welcome kit at your first event of the season.' },
             ].map((s, i) => (
-              <motion.div key={i} variants={fadeUp} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
+              <div key={i} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.35)', lineHeight: 1, marginBottom: '1.25rem' }}>{s.n}</div>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3 }}>{s.title}</div>
                 <div style={{ ...BODY, color: '#666' }}>{s.body}</div>
-              </motion.div>
+              </div>
             ))}
           </StaggerGrid>
         </div>
