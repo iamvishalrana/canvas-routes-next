@@ -9,6 +9,14 @@ Sentry.init({
 
   tracesSampleRate: 0.1,
   enableLogs: true,
+
+  beforeSend(event) {
+    const msg = event.exception?.values?.[0]?.value || ''
+    // Instagram in-app browser on Android crashes its own Java WebView bridge —
+    // not our code, not actionable.
+    if (msg.includes('enableDidUserTypeOnKeyboardLogging') || msg.includes('Java object is gone')) return null
+    return event
+  },
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
