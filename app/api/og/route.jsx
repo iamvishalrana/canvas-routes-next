@@ -64,11 +64,9 @@ export async function GET(request) {
         display: 'flex', flexDirection: 'column',
         justifyContent: 'center', alignItems: 'center',
         width: '100%', height: '100%',
-        background: '#0F1E14', position: 'relative',
+        background: '#F5F1EC', position: 'relative',
       }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.6), transparent)', display: 'flex' }} />
         <img src={logoUrl} style={{ width: '380px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'rgba(197,168,130,0.2)', display: 'flex' }} />
       </div>
     ),
     { width: 1200, height: 630 }
