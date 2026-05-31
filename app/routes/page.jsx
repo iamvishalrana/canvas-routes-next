@@ -17,15 +17,6 @@ function Chevron() {
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
-const INCLUDED = [
-  { title: 'Welcome gift for your car', sub: 'A handpicked keepsake from us, waiting for you at the start.' },
-  { title: 'Premium breakfast in LaSalle', sub: 'We meet at 7 AM in LaSalle — a leisurely breakfast before the road opens up.' },
-  { title: 'Cars, Coffee & Horology stop', sub: 'Step out halfway through — coffee in hand, fine watches on display, and a moment to take in the cars around you before the road opens up again.' },
-  { title: 'Full media coverage', sub: 'Your car on the road it was built for — captured by our media team and shared with every attendee after the trip.' },
-  { title: 'Stroll the village at Tremblant', sub: 'Time to decompress in the pedestrian village — wander, explore, and take in the mountain scenery on foot.' },
-  { title: 'Artisanal lunch in the Laurentians', sub: 'Hand-picked and worth the drive — great food, great setting, earned after a morning on the backroads.' },
-  { title: 'Send-off over drinks', sub: 'After driving back to Montreal, we close the day over coffee and cold drinks — a relaxed end to a day well driven.' },
-]
 
 export default function RoutesPage() {
   const [launched, setLaunched] = useState(false)
@@ -162,8 +153,11 @@ export default function RoutesPage() {
         @media (max-width: 768px) {
           .routes-hero { padding: clamp(100px,14vw,160px) 1.25rem 4rem !important; }
           .routes-details { padding: 3.5rem 1.25rem !important; }
+          .routes-itinerary { padding: 4rem 1.25rem 5rem !important; }
           .routes-form-section { padding: 3rem 1.25rem 5rem !important; }
           .routes-footer { padding: 1.5rem 1.25rem !important; }
+          .incl-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          .reg-box-row { flex-direction: column !important; gap: 0.25rem !important; }
         }
       `}</style>
 
@@ -231,7 +225,7 @@ export default function RoutesPage() {
             {/* Membership note */}
             <div style={{marginBottom:"1rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
               <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
-              <Link href="/membership" style={{fontSize:"12px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>canvasroutes.com/membership</Link>
+              <Link href="/membership" style={{fontSize:"12px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>Join the waitlist →</Link>
             </div>
 
             {/* Notes */}
@@ -265,8 +259,7 @@ export default function RoutesPage() {
       </section>
 
       {/* ITINERARY */}
-      <section style={{background:"#0F1E14",padding:"6rem 2rem 7rem"}}>
-        <style>{`@media(max-width:600px){.incl-grid{grid-template-columns:1fr !important;gap:2rem !important}}`}</style>
+      <section className="routes-itinerary" style={{background:"#0F1E14",padding:"6rem 2rem 7rem"}}>
         <div style={{maxWidth:"560px",margin:"0 auto"}}>
 
           {/* Heading */}
@@ -342,17 +335,17 @@ export default function RoutesPage() {
           {/* Registration box */}
           <div style={{border:"0.5px solid rgba(197,168,130,0.25)",padding:"2rem",background:"rgba(197,168,130,0.05)"}}>
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+              <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
                 <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"0.85rem",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.04em",textTransform:"uppercase",fontSize:"11px"}}>per car · 2 people</span></div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+              <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
                 <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+              <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
                 <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Details sent to you after application is reviewed</div>
               </div>
