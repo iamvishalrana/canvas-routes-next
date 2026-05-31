@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { getConsent, setConsent as saveConsent, clearConsent } from '../lib/consent'
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
@@ -42,10 +43,10 @@ function denyConsent() {
 
 export default function CookieBanner() {
   const pathname = usePathname()
-  const [consent, setConsent] = useState('loading')
+  const [consent, setConsentState] = useState('loading')
 
   useEffect(() => {
-    try { setConsent(localStorage.getItem('cookieConsent')) } catch { setConsent('declined') }
+    setConsentState(getConsent())
   }, [])
 
   useEffect(() => {
@@ -58,17 +59,17 @@ export default function CookieBanner() {
 
   useEffect(() => {
     function handleReset() {
-      try { localStorage.removeItem('cookieConsent') } catch {}
+      clearConsent()
       denyConsent()
-      setConsent(null)
+      setConsentState(null)
     }
     window.addEventListener('cookieConsentReset', handleReset)
     return () => window.removeEventListener('cookieConsentReset', handleReset)
   }, [])
 
   function handleAccept() {
-    try { localStorage.setItem('cookieConsent', 'accepted') } catch {}
-    setConsent('accepted')
+    saveConsent('accepted')
+    setConsentState('accepted')
     grantConsent()
     loadGA()
     loadFbPixel()
@@ -76,8 +77,8 @@ export default function CookieBanner() {
   }
 
   function handleDecline() {
-    try { localStorage.setItem('cookieConsent', 'declined') } catch {}
-    setConsent('declined')
+    saveConsent('declined')
+    setConsentState('declined')
     denyConsent()
     window.dispatchEvent(new Event('cookieConsentChanged'))
   }

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, ClipboardList } from 'lucide-react'
 import ErrorBoundary from '../components/ErrorBoundary'
+import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -65,10 +66,8 @@ export default function Home() {
   }, [pastModalEvent, showEventsPopup])
 
   useEffect(() => {
-    try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
-    function handleConsentChanged() {
-      try { setCookieBannerVisible(localStorage.getItem('cookieConsent') === null) } catch { setCookieBannerVisible(false) }
-    }
+    setCookieBannerVisible(getConsent() === null)
+    function handleConsentChanged() { setCookieBannerVisible(getConsent() === null) }
     window.addEventListener('cookieConsentChanged', handleConsentChanged)
     window.addEventListener('cookieConsentReset', handleConsentChanged)
     return () => {
@@ -221,7 +220,7 @@ export default function Home() {
         setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
         if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined') {
-          if (localStorage.getItem('cookieConsent') === 'accepted' && window.gtag) window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
+          if (getConsent() === 'accepted' && window.gtag) window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
           if (window.fbq) window.fbq('track', 'Lead')
         }
       } else {
