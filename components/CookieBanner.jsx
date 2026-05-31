@@ -18,6 +18,20 @@ function loadGA() {
   document.head.appendChild(script)
 }
 
+function loadFbPixel() {
+  if (window.fbq || document.getElementById('fb-pixel-script')) return
+  const fbq = function() { fbq.callMethod ? fbq.callMethod.apply(fbq, arguments) : fbq.queue.push(arguments) }
+  window.fbq = window._fbq = fbq
+  fbq.push = fbq; fbq.loaded = true; fbq.version = '2.0'; fbq.queue = []
+  const script = document.createElement('script')
+  script.id = 'fb-pixel-script'
+  script.async = true
+  script.src = 'https://connect.facebook.net/en_US/fbevents.js'
+  document.head.appendChild(script)
+  fbq('init', '1499785301931870')
+  fbq('track', 'PageView')
+}
+
 function grantConsent() {
   if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'granted', ad_storage: 'granted' })
 }
@@ -38,6 +52,7 @@ export default function CookieBanner() {
     if (consent === 'accepted') {
       grantConsent()
       loadGA()
+      loadFbPixel()
     }
   }, [consent])
 
@@ -56,6 +71,7 @@ export default function CookieBanner() {
     setConsent('accepted')
     grantConsent()
     loadGA()
+    loadFbPixel()
     window.dispatchEvent(new Event('cookieConsentChanged'))
   }
 
