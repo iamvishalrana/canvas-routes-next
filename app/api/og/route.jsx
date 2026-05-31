@@ -66,7 +66,7 @@ export async function GET(request) {
         width: '100%', height: '100%',
         background: '#F5F1EC', position: 'relative',
       }}>
-        <img src={logoUrl} style={{ width: '380px', objectFit: 'contain' }} />
+        <img src={logoUrl} style={{ width: '600px', objectFit: 'contain' }} />
       </div>
     ),
     { width: 1200, height: 630 }
