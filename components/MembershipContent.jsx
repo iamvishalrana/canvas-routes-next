@@ -152,20 +152,40 @@ export default function MembershipContent() {
     e.preventDefault()
     if (status === 'loading') return
     const errs = validate()
-    if (Object.keys(errs).length) return
+    if (Object.keys(errs).length) {
+      const order = ['name','email','phone','year','carMake','tier','source','termsAccepted']
+      const first = order.find(f => errs[f])
+      if (first) {
+        const el = document.getElementById(`mem-field-${first}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
     setStatus('loading'); setSubmitError(null)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30000)
     try {
       const res = await fetch('/api/membership-waitlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
+        signal: controller.signal,
       })
+      clearTimeout(timeout)
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setStatus('success')
         if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'Lead')
       }
       else { setSubmitError(data.error || 'Something went wrong. Please try again.'); setStatus('error') }
-    } catch { setSubmitError('Something went wrong. Please try again.'); setStatus('error') }
+    } catch (err) {
+      clearTimeout(timeout)
+      if (err?.name === 'AbortError') {
+        setSubmitError('Request timed out. Please check your connection and try again.')
+      } else {
+        setSubmitError('Something went wrong. Please try again.')
+      }
+      setStatus('error')
+    }
   }
 
   return (
@@ -516,7 +536,7 @@ export default function MembershipContent() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
 
                 {/* Name */}
-                <div>
+                <div id="mem-field-name">
                   <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Full name</div>
                   <input type="text" value={form.name} placeholder="First and last name" autoComplete="name"
                     onChange={e => set('name', capitaliseName(e.target.value))}
@@ -525,7 +545,7 @@ export default function MembershipContent() {
                 </div>
 
                 {/* Email */}
-                <div>
+                <div id="mem-field-email">
                   <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Email</div>
                   <input type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
                     onChange={e => set('email', e.target.value)}
@@ -534,7 +554,7 @@ export default function MembershipContent() {
                 </div>
 
                 {/* Phone */}
-                <div>
+                <div id="mem-field-phone">
                   <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone</div>
                   <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
                     onChange={e => set('phone', formatPhone(e.target.value))}
@@ -544,7 +564,7 @@ export default function MembershipContent() {
 
                 {/* Year + Make */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
-                  <div>
+                  <div id="mem-field-year">
                     <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year</div>
                     <div style={{ position: 'relative' }}>
                       <select value={form.year} onChange={e => set('year', e.target.value)}
@@ -558,7 +578,7 @@ export default function MembershipContent() {
                       <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
                   </div>
-                  <div>
+                  <div id="mem-field-carMake">
                     <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Make</div>
                     <div style={{ position: 'relative' }}>
                       <select value={form.carMake} onChange={e => set('carMake', e.target.value)}
@@ -582,7 +602,7 @@ export default function MembershipContent() {
                 </div>
 
                 {/* Tier */}
-                <div style={{ marginTop: '1rem' }}>
+                <div id="mem-field-tier" style={{ marginTop: '1rem' }}>
                   <div style={{ ...LABEL, color: errors.tier ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.75rem' }}>Membership tier</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: errors.tier ? 'rgba(208,96,112,0.3)' : 'rgba(197,168,130,0.1)' }}>
                     {[['Routes Member', '$99'], ['Inner Circle', '$249']].map(([t, price]) => (
@@ -599,7 +619,7 @@ export default function MembershipContent() {
                 </div>
 
                 {/* Source */}
-                <div>
+                <div id="mem-field-source">
                   <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>How did you hear about us</div>
                   <div style={{ position: 'relative' }}>
                     <select value={form.source} onChange={e => set('source', e.target.value)}
@@ -623,7 +643,7 @@ export default function MembershipContent() {
 
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '1.5rem', padding: '0.75rem', border: `0.5px solid ${errors.termsAccepted ? 'rgba(208,96,112,0.7)' : 'transparent'}`, background: errors.termsAccepted ? 'rgba(208,96,112,0.06)' : 'transparent', cursor: 'pointer' }}>
+              <label id="mem-field-termsAccepted" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '1.5rem', padding: '0.75rem', border: `0.5px solid ${errors.termsAccepted ? 'rgba(208,96,112,0.7)' : 'transparent'}`, background: errors.termsAccepted ? 'rgba(208,96,112,0.06)' : 'transparent', cursor: 'pointer' }}>
                 <input type="checkbox" checked={termsAccepted} onChange={e => { setTermsAccepted(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, termsAccepted: false })) }} style={{ accentColor: '#c5a882', width: '12px', height: '12px', flexShrink: 0, marginTop: '1px' }} />
                 <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter),sans-serif' }}>
                   I have read and agree to the{' '}

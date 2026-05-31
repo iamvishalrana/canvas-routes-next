@@ -41,7 +41,7 @@ export default function Home() {
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
   const [pastModalEvent, setPastModalEvent] = useState(null)
-  const [routesLaunched, setRoutesLaunched] = useState(false)
+  const [routesLaunched, setRoutesLaunched] = useState(true)
   const [showEventsPopup, setShowEventsPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
@@ -60,17 +60,6 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [])
 
-  useEffect(() => {
-    const LAUNCH = new Date('2026-05-13T23:00:00Z').getTime()
-    const preview = new URLSearchParams(window.location.search).has('preview')
-    if (Date.now() >= LAUNCH || preview) setRoutesLaunched(true)
-    else {
-      const interval = setInterval(() => {
-        if (Date.now() >= LAUNCH) { setRoutesLaunched(true); clearInterval(interval) }
-      }, 1000)
-      return () => clearInterval(interval)
-    }
-  }, [])
 
   useEffect(() => {
     document.body.style.overflow = (pastModalEvent !== null || showEventsPopup) ? 'hidden' : ''
