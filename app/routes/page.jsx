@@ -3,26 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime() // midnight EDT June 8
-
-const fadeUp = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0 } }
-const fadeUpTransition = { duration: 0.65, ease: [0.25, 0.1, 0.25, 1] }
-const stagger = { visible: { transition: { staggerChildren: 0.09 } } }
-
-function FadeUp({ children, delay = 0, style, className }) {
-  return (
-    <motion.div
-      initial="hidden" whileInView="visible"
-      viewport={{ once: true, margin: '-60px' }}
-      variants={fadeUp}
-      transition={{ ...fadeUpTransition, delay }}
-      style={style} className={className}>
-      {children}
-    </motion.div>
-  )
-}
 
 function Chevron() {
   return (
@@ -195,34 +177,20 @@ export default function RoutesPage() {
       {/* HERO */}
       <section className="routes-hero" style={{background:"#0F1E14",backgroundImage:"linear-gradient(rgba(10,20,12,0.72),rgba(10,20,12,0.72)),url('/trem-trip.png')",backgroundSize:"cover",backgroundPosition:"70% 80%",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
-
-        <motion.div initial="hidden" animate="visible" variants={stagger} style={{position:"relative",zIndex:1}}>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes</motion.div>
-          <motion.h1 variants={fadeUp} transition={fadeUpTransition} style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
-            Into the Laurentians
-          </motion.h1>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.1rem,2.5vw,1.4rem)",fontStyle:"italic",color:"rgba(245,241,236,0.4)",marginBottom:"1.2rem"}}>
-            Mont-Tremblant, QC
-          </motion.div>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{display:"inline-block",padding:"0.45rem 1.2rem",border:"0.5px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"2.5rem"}}>
-            June 7, 2026
-          </motion.div>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
-          <motion.p variants={fadeUp} transition={fadeUpTransition} style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
-            The road starts at 7 AM in LaSalle. By the time you reach the Laurentians, the city feels far away. That&apos;s the point.
-          </motion.p>
-        </motion.div>
-
-        <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.2,duration:0.8}}
-          style={{position:"absolute",bottom:"2.5rem",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:"0.5rem",zIndex:1}}>
-          <span style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",fontFamily:"var(--font-inter),sans-serif",color:"rgba(197,168,130,0.35)"}}>Scroll</span>
-          <motion.div animate={{y:[0,6,0]}} transition={{repeat:Infinity,duration:1.6,ease:"easeInOut"}}>
-            <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.35)" strokeWidth="1.2" strokeLinecap="round">
-              <line x1="6" y1="0" x2="6" y2="12"/><polyline points="2 8 6 12 10 8"/>
-            </svg>
-          </motion.div>
-        </motion.div>
-
+        <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes</div>
+        <h1 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
+          Into the Laurentians
+        </h1>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.1rem,2.5vw,1.4rem)",fontStyle:"italic",color:"rgba(245,241,236,0.4)",marginBottom:"1.2rem"}}>
+          Mont-Tremblant, QC
+        </div>
+        <div style={{display:"inline-block",padding:"0.45rem 1.2rem",border:"0.5px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"2.5rem"}}>
+          June 7, 2026
+        </div>
+        <div style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
+        <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
+          The road starts at 7 AM in LaSalle. By the time you reach the Laurentians, the city feels far away. That&apos;s the point.
+        </p>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)"}} />
       </section>
 
@@ -232,25 +200,19 @@ export default function RoutesPage() {
 
           {/* PRICING + NOTES */}
           <div>
-            <FadeUp>
-              <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>Pricing &amp; details</div>
-            </FadeUp>
+            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>Pricing &amp; details</div>
 
             {/* Price block */}
-            <FadeUp delay={0.05}>
-              <div style={{border:"0.5px solid rgba(0,0,0,0.12)",padding:"1.8rem",marginBottom:"1.5rem",background:"#F5F1EC"}}>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1",marginBottom:"0.4rem"}}>$200</div>
-                <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B5B2E"}}>per car · 2 people included</div>
-              </div>
-            </FadeUp>
+            <div style={{border:"0.5px solid rgba(0,0,0,0.12)",padding:"1.8rem",marginBottom:"1.5rem",background:"#F5F1EC"}}>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1",marginBottom:"0.4rem"}}>$200</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B5B2E"}}>per car · 2 people included</div>
+            </div>
 
             {/* Membership note */}
-            <FadeUp delay={0.1}>
-              <div style={{marginBottom:"1rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
-                <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
-                <Link href="/membership" style={{fontSize:"12px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>Join the waitlist →</Link>
-              </div>
-            </FadeUp>
+            <div style={{marginBottom:"1rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
+              <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
+              <Link href="/membership" style={{fontSize:"12px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>Join the waitlist →</Link>
+            </div>
 
             {/* Notes */}
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
@@ -264,27 +226,20 @@ export default function RoutesPage() {
                 { text: 'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.' },
                 { text: 'All future road trips will be exclusive to members. This is your way in — to be around like-minded people who take cars seriously.' },
               ].map((note, i) => (
-                <motion.div key={i}
-                  initial="hidden" whileInView="visible"
-                  viewport={{ once: true, margin: '-40px' }}
-                  variants={fadeUp}
-                  transition={{ ...fadeUpTransition, delay: i * 0.04 }}
-                  style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
                   <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"8px"}} />
                   <span style={{fontSize:"0.85rem",color:"#555",lineHeight:"1.7"}}>
                     {note.text}{note.grey && <span style={{color:"#aaa",marginLeft:"0.4rem"}}>{note.grey}</span>}
                   </span>
-                </motion.div>
+                </div>
               ))}
             </div>
 
           </div>
 
-          <FadeUp>
-            <div style={{textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
-              <div style={{fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited &nbsp;·&nbsp; Selection is curated.</div>
-            </div>
-          </FadeUp>
+          <div style={{textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
+            <div style={{fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited &nbsp;·&nbsp; Selection is curated.</div>
+          </div>
 
         </div>
       </section>
@@ -294,12 +249,12 @@ export default function RoutesPage() {
         <div style={{maxWidth:"560px",margin:"0 auto"}}>
 
           {/* Heading */}
-          <FadeUp style={{textAlign:"center",marginBottom:"4rem"}}>
+          <div style={{textAlign:"center",marginBottom:"4rem"}}>
             <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · June 7, 2026</div>
             <h2 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.6rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",margin:0}}>What Your Day Looks Like</h2>
             <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.4)",margin:"1.5rem auto"}} />
             <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.5)",lineHeight:"1.9",maxWidth:"400px",margin:"0 auto"}}>Every stop is planned. Every meal is on us.</p>
-          </FadeUp>
+          </div>
 
           {/* Stops */}
           {[
@@ -313,12 +268,7 @@ export default function RoutesPage() {
             { label:'Return Convoy', venue:null, address:null, desc:'The way home is just as good as the way up.', pays:false },
             { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:'The day closes over coffees and snacks on the West Island — a relaxed end to a day well driven.', pays:true },
           ].map((stop, i, arr) => (
-            <motion.div key={i}
-              initial="hidden" whileInView="visible"
-              viewport={{ once: true, margin: '-50px' }}
-              variants={fadeUp}
-              transition={{ ...fadeUpTransition, delay: 0 }}
-              style={{display:"flex",gap:"1.5rem",padding:"1.75rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
+            <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.75rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
               <div style={{width:"6px",height:"6px",borderRadius:"50%",background:stop.pays?"#c5a882":"rgba(197,168,130,0.4)",flexShrink:0,marginTop:"5px"}} />
               <div style={{flex:1}}>
                 <div style={{fontSize:"9px",letterSpacing:"0.25em",textTransform:"uppercase",color:"rgba(197,168,130,0.65)",marginBottom:"0.35rem"}}>{stop.label}</div>
@@ -330,14 +280,14 @@ export default function RoutesPage() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           ))}
 
           {/* Divider */}
           <div style={{height:"0.5px",background:"rgba(197,168,130,0.15)",margin:"4rem 0"}} />
 
           {/* Included / Not Included */}
-          <FadeUp className="incl-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3rem",marginBottom:"4rem"}}>
+          <div className="incl-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3rem",marginBottom:"4rem"}}>
             <div>
               <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>What&apos;s included</div>
               {[
@@ -366,36 +316,32 @@ export default function RoutesPage() {
                 </div>
               ))}
             </div>
-          </FadeUp>
+          </div>
 
           {/* Registration box */}
-          <FadeUp>
-            <div style={{border:"0.5px solid rgba(197,168,130,0.25)",padding:"2rem",background:"rgba(197,168,130,0.05)"}}>
-              <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
-                <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                  <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
-                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.04em",textTransform:"uppercase"}}>per car · 2 people</span></div>
-                </div>
-                <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
-                <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                  <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
-                  <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
-                </div>
-                <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
-                <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                  <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
-                  <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Details sent to you after application is reviewed</div>
-                </div>
+          <div style={{border:"0.5px solid rgba(197,168,130,0.25)",padding:"2rem",background:"rgba(197,168,130,0.05)"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+              <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.04em",textTransform:"uppercase"}}>per car · 2 people</span></div>
+              </div>
+              <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
+              <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
+                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
+              </div>
+              <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
+              <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
+                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
+                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Details sent to you after application is reviewed</div>
               </div>
             </div>
-          </FadeUp>
+          </div>
 
-          <FadeUp>
-            <div style={{marginTop:"1.5rem",textAlign:"center"}}>
-              <span style={{fontSize:"12px",color:"rgba(245,241,236,0.35)",lineHeight:"1.8"}}>Questions about weather or cancellations? </span>
-              <Link href="/faq" style={{fontSize:"12px",color:"rgba(197,168,130,0.6)",textDecoration:"underline",textUnderlineOffset:"3px"}}>See our FAQ</Link>
-            </div>
-          </FadeUp>
+          <div style={{marginTop:"1.5rem",textAlign:"center"}}>
+            <span style={{fontSize:"12px",color:"rgba(245,241,236,0.35)",lineHeight:"1.8"}}>Questions about weather or cancellations? </span>
+            <Link href="/faq" style={{fontSize:"12px",color:"rgba(197,168,130,0.6)",textDecoration:"underline",textUnderlineOffset:"3px"}}>See our FAQ</Link>
+          </div>
 
         </div>
       </section>
@@ -432,10 +378,10 @@ export default function RoutesPage() {
           {/* FORM */}
           {showForm && (
             <>
-              <FadeUp style={{textAlign:"center",marginBottom:"3.5rem"}}>
+              <div style={{textAlign:"center",marginBottom:"3.5rem"}}>
                 <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.4rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem"}}>Apply for your spot</div>
                 <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto 0"}} />
-              </FadeUp>
+              </div>
 
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
 
