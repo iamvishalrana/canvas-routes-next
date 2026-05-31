@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { motion } from 'framer-motion'
 
 // ── Typography tokens ────────────────────────────────────────────────────────
 // LABEL:   Inter 9px / uppercase / 0.28em              → color varies
@@ -19,6 +20,12 @@ const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other
 const LABEL = { fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }
 const BODY  = { fontSize: '14px', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }
 const SMALL = { fontSize: '12px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }
+
+const fadeUp = {
+  hidden:  { opacity: 0, y: 32 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] } },
+}
+const stagger = { visible: { transition: { staggerChildren: 0.1 } } }
 
 function FadeUp({ children, delay = 0, style, className }) {
   return <div style={style} className={className}>{children}</div>
@@ -215,29 +222,32 @@ export default function MembershipContent() {
 
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
 
-        <div style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
-          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1.75rem' }}>
+        <motion.div initial="hidden" animate="visible" variants={stagger}
+          style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
+          <motion.div variants={fadeUp} style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1.75rem' }}>
             Canvas Routes · Season 2026
-          </div>
-          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.8rem,8vw,6.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+          </motion.div>
+          <motion.h1 variants={fadeUp}
+            style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.8rem,8vw,6.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
             For those who chose<br />their car
             <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.65)' }}> on purpose.</span>
-          </h1>
-          <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', letterSpacing: '0.28em' }}>
+          </motion.h1>
+          <motion.div variants={fadeUp} style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
+          <motion.div variants={fadeUp} style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', letterSpacing: '0.28em' }}>
             Season 2026 &nbsp;·&nbsp; Limited spots &nbsp;·&nbsp; Two tiers
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Scroll indicator */}
-        <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.8 }}
+          style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
           <span style={{ ...LABEL, color: 'rgba(197,168,130,0.35)' }}>Scroll</span>
-          <div>
+          <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}>
             <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.35)" strokeWidth="1.2" strokeLinecap="round">
               <line x1="6" y1="0" x2="6" y2="12"/><polyline points="2 8 6 12 10 8"/>
             </svg>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.15),transparent)' }} />
       </section>
 
