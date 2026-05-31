@@ -279,7 +279,7 @@ export default function RoutesPage() {
             { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'Mont-Blanc, QC', desc:'Halfway through the drive, a proper coffee break deep in the Laurentians. Step out, take in the cars around you, and enjoy the quiet before the road opens back up.', pays:true },
             { label:'Free Time', venue:'Mont-Tremblant Pedestrian Village', address:null, desc:'The pedestrian village is yours — wander, explore, take in the mountain. P1 VIP parking available at $30 per car, at your cost. We regroup and drive together to Pizzeria No.900 for lunch.', pays:false },
             { label:'Group Lunch', venue:'Pizzeria No.900', address:'Mont-Tremblant, QC', desc:'A proper sit-down lunch together at one of the best spots in the village. A meal worth the drive.', pays:true },
-            { label:'Return Convoy', venue:null, address:null, desc:'QC-117 South to A-15 South. The way home is just as good as the way up.', pays:false },
+            { label:'Return Convoy', venue:null, address:null, desc:'The way home is just as good as the way up.', pays:false },
             { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:'The day closes over coffees and snacks on the West Island — a relaxed end to a day well driven.', pays:true },
           ].map((stop, i, arr) => (
             <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.75rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
