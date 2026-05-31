@@ -1,4 +1,5 @@
 import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { createAdminClient } from '../../../lib/supabase/admin'
 
 function h(str) {
   return String(str ?? '')
@@ -191,6 +192,35 @@ export async function POST(request) {
 
   const firstName = h(name.trim().split(' ')[0])
   const fullCar = [carMake, carModel].filter(Boolean).join(' ')
+  const normalEmail = email.toLowerCase().trim()
+
+  // Save to DB first so data is never lost if email sending fails
+  try {
+    const supabase = createAdminClient()
+    const { data: existing } = await supabase
+      .from('applications')
+      .select('registrations')
+      .eq('email', normalEmail)
+      .maybeSingle()
+
+    const membershipReg = { event: 'Canvas Routes Membership', tier, registered_at: new Date().toISOString(), attended: null }
+    const prevRegs = (existing?.registrations || []).filter(r => r.event !== 'Canvas Routes Membership')
+    const registrations = [...prevRegs, membershipReg]
+
+    await supabase.from('applications').upsert({
+      email: normalEmail,
+      name: name.trim(),
+      car_year: year.trim(),
+      car_model: fullCar || carMake,
+      phone: phone || null,
+      source: source || null,
+      more: more || null,
+      registrations,
+      ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
+    }, { onConflict: 'email' })
+  } catch (e) {
+    console.error('Failed to store membership application:', e.message)
+  }
 
   // Confirmation email to applicant
   try {
@@ -208,12 +238,10 @@ export async function POST(request) {
     })
     if (!res.ok) {
       const err = await res.text().catch(() => 'unknown')
-      console.error('Membership confirm email error:', err)
-      return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
+      console.error(`ALERT: Membership confirm email failed — application from: ${normalEmail} — ${err}`)
     }
   } catch (err) {
-    console.error('Membership confirm email network error:', err)
-    return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
+    console.error(`ALERT: Membership confirm email network error — application from: ${normalEmail} — ${err}`)
   }
 
   // Notification email to admin
