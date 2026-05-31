@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
+
 
 const SECTIONS = [
   {
@@ -191,27 +191,15 @@ function AccordionItem({ item, isOpen, onToggle }) {
         }}>
           {item.q}
         </span>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.22, ease: 'easeInOut' }}
-          style={{ flexShrink: 0, color: isOpen ? '#c5a882' : '#aaa', display: 'flex' }}
-        >
+        <div style={{ flexShrink: 0, color: isOpen ? '#c5a882' : '#aaa', display: 'flex', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.22s ease-in-out, color 0.15s' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
           </svg>
-        </motion.div>
+        </div>
       </button>
 
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            key="content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ height: { duration: 0.26, ease: [0.4, 0, 0.2, 1] }, opacity: { duration: 0.18 } }}
-            style={{ overflow: 'hidden' }}
-          >
+      {isOpen && (
+          <div style={{ overflow: 'hidden' }}>
             <p style={{
               fontSize: '14px',
               color: '#666',
@@ -264,9 +252,8 @@ function AccordionItem({ item, isOpen, onToggle }) {
                 </Link>
               </div>
             )}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   )
 }
