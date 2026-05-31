@@ -109,7 +109,7 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'How much does Canvas Routes membership cost?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Routes Member is $99 CAD per season (June — November). Inner Circle is $249 CAD per season, with access extending through December and additional exclusive perks. Full details at canvasroutes.com/membership.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Membership hasn\'t launched yet. Pricing and full details will be available at canvasroutes.com/membership when we go live.' },
     },
     {
       '@type': 'Question',
