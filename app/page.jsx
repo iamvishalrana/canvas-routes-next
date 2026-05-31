@@ -53,7 +53,7 @@ export default function Home() {
 
   useEffect(() => {
     if (Date.now() >= new Date('2026-06-08T04:00:00Z').getTime()) return
-    try { if (sessionStorage.getItem('eventsPopupDismissed')) return } catch {}
+    try { if (sessionStorage.getItem('laurentiansPopupDismissed')) return } catch {}
     const t = setTimeout(() => setShowEventsPopup(true), 800)
     return () => clearTimeout(t)
   }, [])
@@ -241,7 +241,7 @@ export default function Home() {
   }
 
   function dismissEventsPopup() {
-    try { sessionStorage.setItem('eventsPopupDismissed', '1') } catch {}
+    try { sessionStorage.setItem('laurentiansPopupDismissed', '1') } catch {}
     setShowEventsPopup(false)
   }
 
