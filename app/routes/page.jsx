@@ -323,7 +323,7 @@ export default function RoutesPage() {
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"0.85rem",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.04em",textTransform:"uppercase",fontSize:"11px"}}>per car · 2 people</span></div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.04em",textTransform:"uppercase"}}>per car · 2 people</span></div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>

@@ -189,6 +189,11 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
+  const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime()
+  if (Date.now() >= ROUTES_CLOSED) {
+    return Response.json({ error: 'Registration is now closed.' }, { status: 410 })
+  }
+
   const { name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, _hp } = body
   if (_hp) return Response.json({ success: true })
 
@@ -204,6 +209,9 @@ export async function POST(request) {
   }
   if (!hasChildren || !['yes','no'].includes(hasChildren)) {
     return Response.json({ error: 'Please answer the children question.' }, { status: 400 })
+  }
+  if (hasChildren === 'yes' && !childrenAges?.trim()) {
+    return Response.json({ error: 'Please enter the ages of children attending.' }, { status: 400 })
   }
   if (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other'].includes(source)) {
     return Response.json({ error: 'Please select how you heard about us.' }, { status: 400 })
@@ -306,6 +314,9 @@ export async function POST(request) {
       phone: phone || null,
       source: source || null,
       more: more || null,
+      passengers: passengers || null,
+      has_children: hasChildren || null,
+      children_ages: hasChildren === 'yes' ? (childrenAges || null) : null,
       registrations,
       ...(isReRegistration ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' })
