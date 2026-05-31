@@ -7,17 +7,17 @@ import { motion } from 'framer-motion'
 
 const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime() // midnight EDT June 8
 
-const fadeUp = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0 } }
-const fadeUpTransition = { duration: 0.65, ease: [0.25, 0.1, 0.25, 1] }
-const stagger = { visible: { transition: { staggerChildren: 0.09 } } }
+const EASE = [0.25, 0.1, 0.25, 1]
+const HIDDEN = { opacity: 0, y: 24 }
+const VISIBLE = { opacity: 1, y: 0 }
 
 function FadeUp({ children, delay = 0, style, className }) {
   return (
     <motion.div
-      initial="hidden" whileInView="visible"
-      viewport={{ once: true, margin: '-60px' }}
-      variants={fadeUp}
-      transition={{ ...fadeUpTransition, delay }}
+      initial={HIDDEN}
+      whileInView={VISIBLE}
+      viewport={{ once: true, margin: '0px' }}
+      transition={{ duration: 0.6, ease: EASE, delay }}
       style={style} className={className}>
       {children}
     </motion.div>
@@ -196,22 +196,22 @@ export default function RoutesPage() {
       <section className="routes-hero" style={{background:"#0F1E14",backgroundImage:"linear-gradient(rgba(10,20,12,0.72),rgba(10,20,12,0.72)),url('/trem-trip.png')",backgroundSize:"cover",backgroundPosition:"70% 80%",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
 
-        <motion.div initial="hidden" animate="visible" variants={stagger} style={{position:"relative",zIndex:1}}>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes</motion.div>
-          <motion.h1 variants={fadeUp} transition={fadeUpTransition} style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
+        <div style={{position:"relative",zIndex:1}}>
+          <motion.div initial={HIDDEN} animate={VISIBLE} transition={{duration:0.6,ease:EASE,delay:0.1}} style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes</motion.div>
+          <motion.div initial={HIDDEN} animate={VISIBLE} transition={{duration:0.6,ease:EASE,delay:0.22}} style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
             Into the Laurentians
-          </motion.h1>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.1rem,2.5vw,1.4rem)",fontStyle:"italic",color:"rgba(245,241,236,0.4)",marginBottom:"1.2rem"}}>
+          </motion.div>
+          <motion.div initial={HIDDEN} animate={VISIBLE} transition={{duration:0.6,ease:EASE,delay:0.34}} style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.1rem,2.5vw,1.4rem)",fontStyle:"italic",color:"rgba(245,241,236,0.4)",marginBottom:"1.2rem"}}>
             Mont-Tremblant, QC
           </motion.div>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{display:"inline-block",padding:"0.45rem 1.2rem",border:"0.5px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"2.5rem"}}>
+          <motion.div initial={HIDDEN} animate={VISIBLE} transition={{duration:0.6,ease:EASE,delay:0.44}} style={{display:"inline-block",padding:"0.45rem 1.2rem",border:"0.5px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"2.5rem"}}>
             June 7, 2026
           </motion.div>
-          <motion.div variants={fadeUp} transition={fadeUpTransition} style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
-          <motion.p variants={fadeUp} transition={fadeUpTransition} style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
+          <motion.div initial={HIDDEN} animate={VISIBLE} transition={{duration:0.6,ease:EASE,delay:0.52}} style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
+          <motion.div initial={HIDDEN} animate={VISIBLE} transition={{duration:0.6,ease:EASE,delay:0.6}} style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
             The road starts at 7 AM in LaSalle. By the time you reach the Laurentians, the city feels far away. That&apos;s the point.
-          </motion.p>
-        </motion.div>
+          </motion.div>
+        </div>
 
         <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.2,duration:0.8}}
           style={{position:"absolute",bottom:"2.5rem",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:"0.5rem",zIndex:1}}>
@@ -265,10 +265,10 @@ export default function RoutesPage() {
                 { text: 'All future road trips will be exclusive to members. This is your way in — to be around like-minded people who take cars seriously.' },
               ].map((note, i) => (
                 <motion.div key={i}
-                  initial="hidden" whileInView="visible"
-                  viewport={{ once: true, margin: '-40px' }}
-                  variants={fadeUp}
-                  transition={{ ...fadeUpTransition, delay: i * 0.04 }}
+                  initial={HIDDEN}
+                  whileInView={VISIBLE}
+                  viewport={{ once: true, margin: '0px' }}
+                  transition={{ duration: 0.6, ease: EASE, delay: i * 0.04 }}
                   style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
                   <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"8px"}} />
                   <span style={{fontSize:"0.85rem",color:"#555",lineHeight:"1.7"}}>
@@ -314,10 +314,10 @@ export default function RoutesPage() {
             { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:'The day closes over coffees and snacks on the West Island — a relaxed end to a day well driven.', pays:true },
           ].map((stop, i, arr) => (
             <motion.div key={i}
-              initial="hidden" whileInView="visible"
-              viewport={{ once: true, margin: '-50px' }}
-              variants={fadeUp}
-              transition={{ ...fadeUpTransition, delay: 0 }}
+              initial={HIDDEN}
+              whileInView={VISIBLE}
+              viewport={{ once: true, margin: '0px' }}
+              transition={{ duration: 0.6, ease: EASE }}
               style={{display:"flex",gap:"1.5rem",padding:"1.75rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
               <div style={{width:"6px",height:"6px",borderRadius:"50%",background:stop.pays?"#c5a882":"rgba(197,168,130,0.4)",flexShrink:0,marginTop:"5px"}} />
               <div style={{flex:1}}>
