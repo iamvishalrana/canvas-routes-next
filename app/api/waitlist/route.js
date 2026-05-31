@@ -114,7 +114,7 @@ If this email landed in your spam folder, please move it to your inbox and mark 
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise }) {
+function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, ref }) {
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const dobStr = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''
   const row = (label, value) => value
@@ -150,6 +150,7 @@ function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_d
                 ${row('Downtown cruise', downtown_cruise === 'yes' ? 'Yes' : downtown_cruise === 'no' ? 'No' : '')}
                 ${row('Tell us more', more ? h(more) : '')}
                 ${row('How they heard', source ? h(source) : '')}
+                ${row('Referred by', ref ? `<strong>${h(ref)}</strong>` : '')}
               </table>
             </td>
           </tr>
@@ -176,7 +177,7 @@ export async function POST(request) {
   try { body = await request.json() } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, more, phone, instagram, source, downtown_cruise, _hp } = body
+  const { registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, more, phone, instagram, source, downtown_cruise, ref, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim()) {
@@ -245,8 +246,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `New Application — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
-    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise }),
-    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}`,
+    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, ref }),
+    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}${ref ? `\nReferred by: ${ref}` : ''}`,
   })
 
   let notifyOk = false
@@ -312,6 +313,7 @@ export async function POST(request) {
       instagram: instagram || null,
       more: more || null,
       source: source || null,
+      referred_by: ref || null,
       registrations,
       ...(isReRegistration ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' })

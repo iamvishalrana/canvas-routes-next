@@ -45,6 +45,13 @@ export default function Home() {
   const [showEventsPopup, setShowEventsPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
+  const refSource = useRef('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const ref = params.get('ref')
+    if (ref) refSource.current = ref.slice(0, 100)
+  }, [])
 
   useEffect(() => {
     if (Date.now() >= new Date('2026-06-08T04:00:00Z').getTime()) return
@@ -218,7 +225,7 @@ export default function Home() {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), instagram: form.instagram.trim().replace(/^@+/, ''), _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), instagram: form.instagram.trim().replace(/^@+/, ''), ref: refSource.current || undefined, _hp: honeypotRef.current?.value || '' }),
         ...(controller ? { signal: controller.signal } : {}),
       })
       clearTimeout(timeout)
