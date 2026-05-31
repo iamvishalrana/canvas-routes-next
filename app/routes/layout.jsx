@@ -7,13 +7,13 @@ export const metadata = {
     title: 'Into the Laurentians — June 7, 2026 | Canvas Routes',
     description: 'Curated convoy road trip from Montreal through the Laurentians — June 7, 2026. Scenic backroads, premium breakfast, artisanal lunch, full media coverage. $200 per car. Limited spots remaining.',
     url: 'https://canvasroutes.com/routes',
-    images: [{ url: 'https://canvasroutes.com/api/og?title=Into+the+Laurentians&subtitle=Montreal+to+Mont-Tremblant+%C2%B7+June+7%2C+2026&label=Canvas+Routes+%C2%B7+Road+Trip', width: 1200, height: 630, alt: 'Into the Laurentians — Canvas Routes Road Trip June 7 2026' }],
+    images: [{ url: 'https://canvasroutes.com/api/og?type=event&title=Into+the+Laurentians&date=June+7%2C+2026&bg=/trem-trip.png', width: 1200, height: 630, alt: 'Into the Laurentians — Canvas Routes Road Trip June 7 2026' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Into the Laurentians — June 7, 2026 | Canvas Routes',
     description: 'Curated convoy road trip from Montreal through the Laurentians. June 7, 2026. $200 per car. Spots are limited.',
-    images: ['https://canvasroutes.com/api/og?title=Into+the+Laurentians&subtitle=Montreal+to+Mont-Tremblant+%C2%B7+June+7%2C+2026&label=Canvas+Routes+%C2%B7+Road+Trip'],
+    images: ['https://canvasroutes.com/api/og?type=event&title=Into+the+Laurentians&date=June+7%2C+2026&bg=/trem-trip.png'],
   },
 }
 

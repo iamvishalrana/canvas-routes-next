@@ -39,14 +39,14 @@ export const metadata = {
     title: 'Canvas Routes | Car Meets, Road Trips & Scenic Drives — Montreal',
     description: "Montreal's premier car club. Curated road trips through the Laurentians and Eastern Townships, invite-only Cars and Coffee events, and scenic convoy drives across Quebec and beyond.",
     url: 'https://canvasroutes.com',
-    images: [{ url: 'https://canvasroutes.com/api/og?title=Car+Meets+%26+Road+Trips&subtitle=Cars+%26+Coffee+%C2%B7+Curated+Routes+%C2%B7+Members+Community&label=Canvas+Routes+%C2%B7+Montreal', width: 1200, height: 630, alt: 'Canvas Routes — Car Meets & Road Trips Montreal' }],
+    images: [{ url: 'https://canvasroutes.com/api/og', width: 1200, height: 630, alt: 'Canvas Routes — Car Meets & Road Trips Montreal' }],
     locale: 'en_CA',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Canvas Routes | Car Meets, Road Trips & Scenic Drives — Montreal',
     description: "Montreal's premier car club. Curated road trips, invite-only Cars and Coffee, scenic drives through the Laurentians and Eastern Townships.",
-    images: ['https://canvasroutes.com/api/og?title=Car+Meets+%26+Road+Trips&subtitle=Cars+%26+Coffee+%C2%B7+Curated+Routes+%C2%B7+Members+Community&label=Canvas+Routes+%C2%B7+Montreal'],
+    images: ['https://canvasroutes.com/api/og'],
   },
   icons: {
     icon: [
