@@ -4,7 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 
-const ROUTES_LAUNCH = new Date('2026-05-13T23:00:00Z').getTime() // 7 PM EDT
 const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime() // midnight EDT June 8
 
 function Chevron() {
@@ -19,7 +18,6 @@ const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley'
 
 
 export default function RoutesPage() {
-  const [launched, setLaunched] = useState(false)
   const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
@@ -28,18 +26,6 @@ export default function RoutesPage() {
   const [focusedField, setFocusedField] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const honeypotRef = useRef(null)
-
-  useEffect(() => {
-    const preview = new URLSearchParams(window.location.search).has('preview')
-    if (Date.now() >= ROUTES_LAUNCH || preview) {
-      setLaunched(true)
-    } else {
-      const interval = setInterval(() => {
-        if (Date.now() >= ROUTES_LAUNCH) { setLaunched(true); clearInterval(interval) }
-      }, 1000)
-      return () => clearInterval(interval)
-    }
-  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'ViewContent', { content_name: 'Into the Laurentians' })
@@ -145,7 +131,7 @@ export default function RoutesPage() {
   }
 
   const registrationClosed = Date.now() >= ROUTES_CLOSED
-  const showForm = launched && !registrationClosed && status !== 'success'
+  const showForm = !registrationClosed && status !== 'success'
 
   return (
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",minHeight:"100vh"}}>
@@ -364,17 +350,6 @@ export default function RoutesPage() {
       <section id="form" className="routes-form-section" style={{padding:"6rem 2rem 8rem",background:"#F5F1EC"}}>
         <div style={{maxWidth:"560px",margin:"0 auto"}}>
 
-          {/* PRE-LAUNCH */}
-          {!launched && !registrationClosed && (
-            <div style={{textAlign:"center",padding:"5rem 0"}}>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration opens tonight</div>
-              <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
-              <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"380px",margin:"0 auto"}}>
-                Spots are limited. Registration opens at 7 PM Eastern — check back then to apply.
-              </p>
-            </div>
-          )}
-
           {/* REGISTRATION CLOSED */}
           {registrationClosed && status !== 'success' && (
             <div style={{textAlign:"center",padding:"5rem 0"}}>
@@ -390,7 +365,7 @@ export default function RoutesPage() {
           )}
 
           {/* SUCCESS */}
-          {launched && !registrationClosed && status === 'success' && (
+          {!registrationClosed && status === 'success' && (
             <div style={{textAlign:"center",padding:"5rem 0"}}>
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"1rem"}}>Application received.</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
