@@ -223,6 +223,53 @@ export async function POST(request) {
 
   const firstName = h(name.trim().split(' ')[0])
   const rawFirstName = name.trim().split(' ')[0]
+  const normalEmail = email.toLowerCase().trim()
+
+  // Save to DB first so data is never lost if email sending fails
+  try {
+    const supabase = createAdminClient()
+    const ITL_EVENT = 'Into the Laurentians — June 7, 2026'
+    const CANONICAL_EVENTS_LIST = [
+      'Cars & Coffee — May 9, 2026',
+      'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+      ITL_EVENT,
+    ]
+    const newReg = { event: ITL_EVENT, registered_at: new Date().toISOString(), attended: null }
+    const { data: existing } = await supabase
+      .from('applications')
+      .select('registrations')
+      .eq('email', normalEmail)
+      .maybeSingle()
+    const isReRegistration = !!existing
+    const NAME_ALIASES = {
+      'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+      'Into the Laurentians — May 31, 2026': ITL_EVENT,
+    }
+    const prevRegs = (existing?.registrations || [])
+      .map(r => NAME_ALIASES[r.event] ? { ...r, event: NAME_ALIASES[r.event] } : r)
+      .filter(r => r.event !== ITL_EVENT)
+    const existingEventNames = new Set(prevRegs.map(r => r.event))
+    const missingCanonical = CANONICAL_EVENTS_LIST
+      .filter(ev => !existingEventNames.has(ev) && ev !== ITL_EVENT)
+      .map(ev => ({ event: ev, registered_at: null, attended: null }))
+    const registrations = [...prevRegs, ...missingCanonical, newReg]
+    await supabase.from('applications').upsert({
+      email: normalEmail,
+      name: name.trim(),
+      car_year: year.trim(),
+      car_model: carModel.trim(),
+      phone: phone || null,
+      source: source || null,
+      more: more || null,
+      passengers: passengers || null,
+      has_children: hasChildren || null,
+      children_ages: hasChildren === 'yes' ? (childrenAges || null) : null,
+      registrations,
+      ...(isReRegistration ? { reregistered_at: new Date().toISOString() } : {}),
+    }, { onConflict: 'email' })
+  } catch (e) {
+    console.error('Failed to store route registration:', e.message)
+  }
 
   // EMAIL 1 — Customer confirmation
   let customerEmail
@@ -240,14 +287,12 @@ export async function POST(request) {
       }),
     })
   } catch (err) {
-    console.error('Customer email network error:', err)
-    return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
+    console.error(`ALERT: Routes confirm email network error — registration from: ${normalEmail} — ${err}`)
   }
 
-  if (!customerEmail.ok) {
+  if (customerEmail && !customerEmail.ok) {
     const err = await customerEmail.text().catch(() => 'unknown')
-    console.error('Customer email error:', err)
-    return Response.json({ error: 'Failed to send confirmation email.' }, { status: 500 })
+    console.error(`ALERT: Routes confirm email failed — registration from: ${normalEmail} — ${err}`)
   }
 
   // EMAIL 2 — Internal notification
@@ -276,52 +321,6 @@ export async function POST(request) {
   }
   if (!notifyOk) {
     console.error(`ALERT: Notify email failed after retry — registration from: ${email}`)
-  }
-
-  try {
-    const supabase = createAdminClient()
-    const normalEmail = email.toLowerCase().trim()
-    const ITL_EVENT = 'Into the Laurentians — June 7, 2026'
-    const CANONICAL_EVENTS = [
-      'Cars & Coffee — May 9, 2026',
-      'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
-      ITL_EVENT,
-    ]
-    const newReg = { event: ITL_EVENT, registered_at: new Date().toISOString(), attended: null }
-    const { data: existing } = await supabase
-      .from('applications')
-      .select('registrations')
-      .eq('email', normalEmail)
-      .maybeSingle()
-    const isReRegistration = !!existing
-    const NAME_ALIASES = {
-      'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
-      'Into the Laurentians — May 31, 2026': 'Into the Laurentians — June 7, 2026',
-    }
-    const prevRegs = (existing?.registrations || [])
-      .map(r => NAME_ALIASES[r.event] ? { ...r, event: NAME_ALIASES[r.event] } : r)
-      .filter(r => r.event !== ITL_EVENT)
-    const existingEventNames = new Set(prevRegs.map(r => r.event))
-    const missingCanonical = CANONICAL_EVENTS
-      .filter(ev => !existingEventNames.has(ev) && ev !== ITL_EVENT)
-      .map(ev => ({ event: ev, registered_at: null, attended: null }))
-    const registrations = [...prevRegs, ...missingCanonical, newReg]
-    await supabase.from('applications').upsert({
-      email: normalEmail,
-      name: name.trim(),
-      car_year: year.trim(),
-      car_model: carModel.trim(),
-      phone: phone || null,
-      source: source || null,
-      more: more || null,
-      passengers: passengers || null,
-      has_children: hasChildren || null,
-      children_ages: hasChildren === 'yes' ? (childrenAges || null) : null,
-      registrations,
-      ...(isReRegistration ? { reregistered_at: new Date().toISOString() } : {}),
-    }, { onConflict: 'email' })
-  } catch (e) {
-    console.error('Failed to store route registration:', e.message)
   }
 
   return Response.json({ success: true })

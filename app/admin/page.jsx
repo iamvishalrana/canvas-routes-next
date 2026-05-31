@@ -21,15 +21,16 @@ const EVENT_TYPES = ['Road Trip', 'Cars & Coffee', 'Social', 'Track Day', 'Other
 const CANONICAL_EVENTS = [
   { name: 'Cars & Coffee — May 9, 2026', date: '2026-05-09' },
   { name: 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026', date: '2026-05-23' },
-  { name: 'Into the Laurentians — May 31, 2026', date: '2026-05-31' },
+  { name: 'Into the Laurentians — June 7, 2026', date: '2026-06-07' },
 ]
 const MEMBER_ATTENDANCE_KEYS = {
   'Cars & Coffee — May 9, 2026': 'cc_may9',
   'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026': 'gp_may23',
-  'Into the Laurentians — May 31, 2026': 'laurentians_may31',
+  'Into the Laurentians — June 7, 2026': 'laurentians_jun7',
 }
 const NAME_ALIASES = {
   'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+  'Into the Laurentians — May 31, 2026': 'Into the Laurentians — June 7, 2026',
 }
 function normalizeEventName(name) { return NAME_ALIASES[name] || name }
 
