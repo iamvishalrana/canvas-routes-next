@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { User, Mail, Phone, Car, Users, Share2, Calendar } from 'lucide-react'
+import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 
 const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime() // midnight EDT June 8
 
@@ -18,7 +18,7 @@ const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley'
 
 
 export default function RoutesPage() {
-  const [form, setForm] = useState({ name:'', email:'', phone:'', dob:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
+  const [form, setForm] = useState({ name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [status, setStatus] = useState(null)
@@ -76,7 +76,8 @@ export default function RoutesPage() {
     if (form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
     if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) e.phone = true
-    if (!form.dob) e.dob = true
+    if (!form.dob_month) e.dob_month = true
+    if (!form.dob_day) e.dob_day = true
     if (!form.year) e.year = true
     if (!form.carMake) e.carMake = true
     if (!form.carModel.trim()) e.carModel = true
@@ -92,7 +93,7 @@ export default function RoutesPage() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
-      const order = ['name','email','phone','dob','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
+      const order = ['name','email','phone','dob_month','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) {
         const el = document.getElementById(`field-${first}`)
@@ -108,7 +109,7 @@ export default function RoutesPage() {
       const res = await fetch('/api/routes', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), dob: [['January','February','March','April','May','June','July','August','September','October','November','December'][+form.dob_month-1], form.dob_day, form.dob_year].filter(Boolean).join(' '), _hp: honeypotRef.current?.value || '' }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
@@ -424,12 +425,41 @@ export default function RoutesPage() {
                 </div>
 
                 {/* Date of birth */}
-                <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <label htmlFor="field-dob" className="join-label">Date of birth<Calendar size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                  <input id="field-dob" type="date" value={form.dob}
-                    onChange={e => updateForm('dob', e.target.value)} style={{...inputStyle('dob'), colorScheme:'light'}}
-                    onFocus={() => setFocusedField('dob')} onBlur={() => setFocusedField(null)} />
-                  {errors.dob && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                <div id="field-dob_month" className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
+                  <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1.2fr",gap:"0.75rem"}}>
+                    <div style={{position:"relative"}}>
+                      <select value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
+                        style={{...inputStyle('dob_month'), cursor:"pointer", paddingRight:"2rem"}}>
+                        <option value="">Month *</option>
+                        {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i) => (
+                          <option key={i+1} value={String(i+1)}>{m}</option>
+                        ))}
+                      </select>
+                      <Chevron />
+                    </div>
+                    <div style={{position:"relative"}}>
+                      <select value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)}
+                        style={{...inputStyle('dob_day'), cursor:"pointer", paddingRight:"2rem"}}>
+                        <option value="">Day *</option>
+                        {Array.from({length:31},(_,i)=>i+1).map(d => (
+                          <option key={d} value={String(d)}>{d}</option>
+                        ))}
+                      </select>
+                      <Chevron />
+                    </div>
+                    <div style={{position:"relative"}}>
+                      <select value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)}
+                        style={{...inputStyle('dob_year'), cursor:"pointer", paddingRight:"2rem"}}>
+                        <option value="">Year</option>
+                        {Array.from({length:2015-1945+1},(_,i)=>2015-i).map(y => (
+                          <option key={y} value={String(y)}>{y}</option>
+                        ))}
+                      </select>
+                      <Chevron />
+                    </div>
+                  </div>
+                  {(errors.dob_month || errors.dob_day) && <span style={{fontSize:"11px",color:"#7B2032"}}>Month and day are required</span>}
                 </div>
 
                 {/* Year + Make */}
