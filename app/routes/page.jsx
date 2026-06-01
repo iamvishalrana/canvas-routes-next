@@ -221,7 +221,6 @@ export default function RoutesPage() {
               'Driver-focused cars only. This is not a show-and-shine — we drive the entire route together.',
               'We leave together, stop together, arrive together. The convoy is part of what makes the day.',
               'Your car photographed on the road by our photographer. Candid shots on the best stretches — no setup required.',
-              'All future road trips will be exclusive to Canvas Routes members. This one is open to everyone.',
             ].map((note, i) => (
               <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
                 <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"9px"}} />
