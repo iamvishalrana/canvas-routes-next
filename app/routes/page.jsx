@@ -179,7 +179,7 @@ export default function RoutesPage() {
       {/* HERO */}
       <section className="routes-hero" style={{background:"#0F1E14",backgroundImage:"linear-gradient(rgba(10,20,12,0.72),rgba(10,20,12,0.72)),url('/trem-trip.png')",backgroundSize:"cover",backgroundPosition:"70% 80%",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)"}} />
-        <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes</div>
+        <div style={{fontSize:"11px",letterSpacing:"0.25em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes</div>
         <h1 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.05",marginBottom:"0.75rem",letterSpacing:"-0.01em"}}>
           Into the Laurentians
         </h1>
@@ -190,7 +190,7 @@ export default function RoutesPage() {
           June 7, 2026
         </div>
         <div style={{width:"40px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"0 auto 2.5rem"}} />
-        <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.02em"}}>
+        <p style={{fontSize:"15px",color:"rgba(245,241,236,0.55)",maxWidth:"460px",margin:"0 auto",lineHeight:"1.9",letterSpacing:"0.01em"}}>
           The road starts at 7 AM in LaSalle. By the time you reach the Laurentians, the city feels far away. That&apos;s the point.
         </p>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)"}} />
@@ -200,43 +200,34 @@ export default function RoutesPage() {
       <section className="routes-details" style={{background:"#EDE8E1",padding:"5rem 3rem"}}>
         <div style={{maxWidth:"680px",margin:"0 auto"}}>
 
-          {/* PRICING + NOTES */}
-          <div>
-            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"1.5rem"}}>Pricing &amp; details</div>
+          <div style={{fontSize:"11px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#888",marginBottom:"2rem"}}>Pricing &amp; details</div>
 
-            {/* Price block */}
-            <div style={{border:"0.5px solid rgba(0,0,0,0.12)",padding:"1.8rem",marginBottom:"1.5rem",background:"#F5F1EC"}}>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1",marginBottom:"0.4rem"}}>$200</div>
-              <div style={{fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#7B5B2E"}}>per car · 2 people included</div>
-            </div>
+          {/* Price block */}
+          <div style={{border:"0.5px solid rgba(0,0,0,0.12)",padding:"1.8rem",marginBottom:"1.5rem",background:"#F5F1EC",display:"flex",alignItems:"baseline",gap:"1rem",flexWrap:"wrap"}}>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1"}}>$200</div>
+            <div style={{fontSize:"13px",color:"#888",letterSpacing:"0.04em"}}>per car — up to 2 people</div>
+          </div>
 
-            {/* Membership note */}
-            <div style={{marginBottom:"1rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
-              <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
-              <Link href="/membership" style={{fontSize:"12px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>Join the waitlist →</Link>
-            </div>
+          {/* Membership note */}
+          <div style={{marginBottom:"2rem",padding:"1rem 1.1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
+            <span style={{fontSize:"14px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
+            <Link href="/membership" style={{fontSize:"14px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>Join the waitlist →</Link>
+          </div>
 
-            {/* Notes */}
-            <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
-              {[
-                { text: 'Your car photographed on the road it was built for — personal shots from our photographer on the best stretches of the day.' },
-                { text: 'Driver-focused cars only — this route is built for cars that were made to be driven.' },
-                { text: 'Convoy all the way — we leave together, move together, and arrive together. The group is half the experience.' },
-                { text: 'Backroads all the way to Mont-Tremblant — the kind where your car finally gets to breathe and you actually get to enjoy it.' },
-                { text: 'We drive in style, not speed. This is not a race.' },
-                { text: 'Gas and $30 VIP parking available, at your cost.', grey: 'Free parking also available nearby.' },
-                { text: 'This trip is a preview of what Canvas Routes membership offers — this is just the tasting menu.' },
-                { text: 'All future road trips will be exclusive to members. This is your way in — to be around like-minded people who take cars seriously.' },
-              ].map((note, i) => (
-                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
-                  <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"8px"}} />
-                  <span style={{fontSize:"0.85rem",color:"#555",lineHeight:"1.7"}}>
-                    {note.text}{note.grey && <span style={{color:"#aaa",marginLeft:"0.4rem"}}>{note.grey}</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
-
+          {/* Notes */}
+          <div style={{display:"flex",flexDirection:"column",gap:"1rem",marginBottom:"2.5rem"}}>
+            {[
+              'We drive backroads the whole way — no highway, no shortcuts. LaSalle to Mont-Tremblant the way it should be done.',
+              'Driver-focused cars only. This is not a show-and-shine — we drive the entire route together.',
+              'We leave together, stop together, arrive together. The convoy is part of what makes the day.',
+              'Your car photographed on the road by our photographer. Candid shots on the best stretches — no setup required.',
+              'All future road trips will be exclusive to Canvas Routes members. This one is open to everyone.',
+            ].map((note, i) => (
+              <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"0.75rem"}}>
+                <div style={{width:"3px",height:"3px",borderRadius:"50%",background:"#c5a882",flexShrink:0,marginTop:"9px"}} />
+                <span style={{fontSize:"14px",color:"#555",lineHeight:"1.75"}}>{note}</span>
+              </div>
+            ))}
           </div>
 
           <div style={{textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
@@ -252,35 +243,33 @@ export default function RoutesPage() {
 
           {/* Heading */}
           <div style={{textAlign:"center",marginBottom:"4rem"}}>
-            <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · June 7, 2026</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.25em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes · June 7, 2026</div>
             <h2 style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.6rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",margin:0}}>What Your Day Looks Like</h2>
             <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.4)",margin:"1.5rem auto"}} />
-            <p style={{fontSize:"0.9rem",color:"rgba(245,241,236,0.5)",lineHeight:"1.9",maxWidth:"400px",margin:"0 auto"}}>Every stop is planned. Every meal is on us.</p>
+            <p style={{fontSize:"15px",color:"rgba(245,241,236,0.5)",lineHeight:"1.8",maxWidth:"400px",margin:"0 auto"}}>Every stop is planned. Every meal is on us.</p>
           </div>
 
           {/* Stops */}
           {[
-            { label:'Breakfast', venue:'Petinos Restaurant', address:'LaSalle, Montreal', desc:"The day starts with a proper sit-down breakfast — not a grab-and-go. You'll leave the table full and ready.", pays:true },
-            { label:'Convoy Departs', venue:null, address:null, desc:'The city falls behind you fast once you\'re north of LaSalle. From the first regroup stop, it\'s nothing but backroads all the way.', pays:false },
-            { label:'Regroup', venue:null, address:'Saint-Sauveur', desc:'Quick stop to refuel and regroup before the real roads begin.', pays:false },
-            { label:'Lake View Photo Stop', venue:null, address:'Sainte-Agathe-des-Monts, Lac des Sables', desc:'Pull off at Lac des Sables for a moment to breathe — windows down, engines off, water in view.', pays:false },
-            { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'Mont-Blanc, QC', desc:'Halfway through the drive, a proper coffee break deep in the Laurentians. Step out, take in the cars around you, and enjoy the quiet before the road opens back up.', pays:true },
-            { label:'Free Time', venue:'Mont-Tremblant Pedestrian Village', address:null, desc:'The pedestrian village is yours — wander, explore, take in the mountain. P1 VIP parking available at $30 per car, at your cost. We regroup and drive together to Pizzeria No.900 for lunch.', pays:false },
-            { label:'Group Lunch', venue:'Pizzeria No.900', address:'Mont-Tremblant, QC', desc:'A proper sit-down lunch together at one of the best spots in the village. A meal worth the drive.', pays:true },
-            { label:'Return Convoy', venue:null, address:null, desc:'The way home is just as good as the way up.', pays:false },
-            { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:'The day closes over coffees and snacks on the West Island — a relaxed end to a day well driven.', pays:true },
+            { label:'Breakfast', venue:'Petinos Restaurant', address:'LaSalle, Montreal', desc:"Doors open at 7 AM. The group gathers, the coffees come out, and the cars line up outside. A proper sit-down breakfast before the road — not a grab-and-go.", pays:true },
+            { label:'Convoy Departs', venue:null, address:'LaSalle → Laurentians', desc:"Once everyone's ready, we leave together. The city clears out quickly heading north. By the time you hit the first stretch of backroads, you'll know why we picked this route.", pays:false },
+            { label:'Regroup Stop', venue:null, address:'Saint-Sauveur', desc:'A short stop in the hills before the Laurentians open up properly. Stretch your legs, check in with the group. The best stretch of road is still ahead.', pays:false },
+            { label:'Lake View Photo Stop', venue:null, address:'Lac des Sables, Sainte-Agathe-des-Monts', desc:"Lac des Sables sits just off the road. We pull over, shut the engines off, and take it in. Our photographer works the group here — some of the best shots of the day come from this stop.", pays:false },
+            { label:'Coffee Stop', venue:'Café Mont-Blanc', address:'Mont-Blanc, QC', desc:"This is what halfway looks like. Deep in the Laurentians, far enough from the city that it doesn't feel like a day trip anymore. A real coffee break, outside if the weather holds.", pays:true },
+            { label:'Free Time', venue:'Mont-Tremblant Village', address:'Mont-Tremblant, QC', desc:"The pedestrian village is yours for about an hour. Walk around, explore, take in the mountain. VIP parking is $30 per car — free parking is a short walk away. We regroup at the top of the hour and head to lunch together.", pays:false },
+            { label:'Group Lunch', venue:'Pizzeria No.900', address:'Mont-Tremblant, QC', desc:"Sit-down lunch with the whole group at one of the better spots in the village. Long table, good food — this is where the morning gets talked about.", pays:true },
+            { label:'Return Convoy', venue:null, address:'Mont-Tremblant → Montreal', desc:"The drive back south through the Laurentians has a different feel — easier, more familiar. You know the roads now. We make it back to the city together.", pays:false },
+            { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:"The day ends on the West Island terrace. Coffees and snacks, no rush to leave. The cars stay parked outside a little longer than they need to.", pays:true },
           ].map((stop, i, arr) => (
             <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.75rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
-              <div style={{width:"6px",height:"6px",borderRadius:"50%",background:stop.pays?"#c5a882":"rgba(197,168,130,0.4)",flexShrink:0,marginTop:"5px"}} />
+              <div style={{width:"6px",height:"6px",borderRadius:"50%",background:stop.pays?"#c5a882":"rgba(197,168,130,0.35)",flexShrink:0,marginTop:"6px"}} />
               <div style={{flex:1}}>
-                <div style={{fontSize:"9px",letterSpacing:"0.25em",textTransform:"uppercase",color:"rgba(197,168,130,0.65)",marginBottom:"0.35rem"}}>{stop.label}</div>
-                {stop.venue && <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.25rem",fontWeight:"400",color:"#F5F1EC",marginBottom:"0.2rem",lineHeight:"1.3"}}>{stop.venue}</div>}
-                {stop.address && <div style={{fontSize:"11px",color:"rgba(245,241,236,0.3)",marginBottom:"0.6rem",letterSpacing:"0.02em"}}>{stop.address}</div>}
-                {(stop.desc || stop.pays) && (
-                  <div style={{fontSize:"13px",color:"rgba(245,241,236,0.65)",lineHeight:"1.85"}}>
-                    {stop.desc}{stop.pays && <span style={{color:"#c5a882",marginLeft: stop.desc ? "0.35rem" : 0}}>Canvas Routes pays.</span>}
-                  </div>
-                )}
+                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"0.35rem"}}>{stop.label}</div>
+                {stop.venue && <div style={{fontSize:"15px",fontWeight:"500",color:"#F5F1EC",marginBottom:"0.2rem",lineHeight:"1.4"}}>{stop.venue}</div>}
+                {stop.address && <div style={{fontSize:"12px",color:"rgba(245,241,236,0.35)",marginBottom:"0.65rem",letterSpacing:"0.02em"}}>{stop.address}</div>}
+                <div style={{fontSize:"14px",color:"rgba(245,241,236,0.65)",lineHeight:"1.8"}}>
+                  {stop.desc}{stop.pays && <span style={{color:"#c5a882",marginLeft:"0.35rem"}}>Canvas Routes covers this.</span>}
+                </div>
               </div>
             </div>
           ))}
@@ -291,30 +280,31 @@ export default function RoutesPage() {
           {/* Included / Not Included */}
           <div className="incl-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3rem",marginBottom:"4rem"}}>
             <div>
-              <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>What&apos;s included</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.25rem"}}>What&apos;s included</div>
               {[
-                'Breakfast at Petinos LaSalle',
+                'Sit-down breakfast at Petinos, LaSalle',
                 'Coffee and pastry at Café Mont-Blanc',
-                'Group lunch at Pizzeria No.900',
+                'Group lunch at Pizzeria No.900, Mont-Tremblant',
                 'Farewell coffees and snacks at Aloe Cafe',
                 'Personal car photography throughout the day',
               ].map((item, i) => (
-                <div key={i} style={{display:"flex",gap:"0.75rem",alignItems:"flex-start",marginBottom:"0.75rem"}}>
-                  <div style={{width:"4px",height:"4px",borderRadius:"50%",background:"#3B6B2F",flexShrink:0,marginTop:"7px"}} />
-                  <span style={{fontSize:"13px",color:"rgba(245,241,236,0.65)",lineHeight:"1.7"}}>{item}</span>
+                <div key={i} style={{display:"flex",gap:"0.65rem",alignItems:"flex-start",marginBottom:"0.85rem"}}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:"2px"}}><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style={{fontSize:"14px",color:"rgba(245,241,236,0.7)",lineHeight:"1.65"}}>{item}</span>
                 </div>
               ))}
             </div>
             <div>
-              <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Not included</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.25rem"}}>Not included</div>
               {[
-                'Gas',
-                'Parking in Tremblant ($30 per car)',
-                'Personal activities in Tremblant village',
+                'Gas — fill up before you leave',
+                'VIP parking at Mont-Tremblant ($30/car — free options nearby)',
+                'Personal purchases at the village',
+                'Any drinks or food beyond what\'s listed above',
               ].map((item, i) => (
-                <div key={i} style={{display:"flex",gap:"0.75rem",alignItems:"flex-start",marginBottom:"0.75rem"}}>
-                  <div style={{width:"4px",height:"4px",borderRadius:"50%",background:"rgba(245,241,236,0.2)",flexShrink:0,marginTop:"7px"}} />
-                  <span style={{fontSize:"13px",color:"rgba(245,241,236,0.4)",lineHeight:"1.7"}}>{item}</span>
+                <div key={i} style={{display:"flex",gap:"0.65rem",alignItems:"flex-start",marginBottom:"0.85rem"}}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,236,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:"2px"}}><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span style={{fontSize:"14px",color:"rgba(245,241,236,0.45)",lineHeight:"1.65"}}>{item}</span>
                 </div>
               ))}
             </div>
@@ -324,25 +314,25 @@ export default function RoutesPage() {
           <div style={{border:"0.5px solid rgba(197,168,130,0.25)",padding:"2rem",background:"rgba(197,168,130,0.05)"}}>
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"11px",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.04em",textTransform:"uppercase"}}>per car · 2 people</span></div>
+                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"13px",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.02em"}}>per car · 2 people</span></div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
-                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
+                <div style={{fontSize:"14px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
-                <div style={{fontSize:"13px",color:"rgba(245,241,236,0.7)"}}>Details sent to you after application is reviewed</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
+                <div style={{fontSize:"14px",color:"rgba(245,241,236,0.7)"}}>Details sent after your application is reviewed</div>
               </div>
             </div>
           </div>
 
           <div style={{marginTop:"1.5rem",textAlign:"center"}}>
-            <span style={{fontSize:"12px",color:"rgba(245,241,236,0.35)",lineHeight:"1.8"}}>Questions about weather or cancellations? </span>
-            <Link href="/faq" style={{fontSize:"12px",color:"rgba(197,168,130,0.6)",textDecoration:"underline",textUnderlineOffset:"3px"}}>See our FAQ</Link>
+            <span style={{fontSize:"14px",color:"rgba(245,241,236,0.35)",lineHeight:"1.8"}}>Questions about weather or cancellations? </span>
+            <Link href="/faq" style={{fontSize:"14px",color:"rgba(197,168,130,0.6)",textDecoration:"underline",textUnderlineOffset:"3px"}}>See our FAQ</Link>
           </div>
 
         </div>
