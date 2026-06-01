@@ -251,7 +251,7 @@ export default function RoutesPage() {
 
           {/* Stops */}
           {[
-            { label:'Breakfast', venue:'Petinos Restaurant', address:'LaSalle, Montreal', desc:"Doors open at 7 AM. The group gathers, the coffees come out, and the cars line up outside. A proper sit-down breakfast before the road — not a grab-and-go.", pays:true },
+            { label:'Breakfast', venue:'Petinos Restaurant', address:'LaSalle, Montreal', desc:"The group gathers, the coffees come out, and the cars line up outside. A proper sit-down breakfast before the road — not a grab-and-go.", pays:true },
             { label:'Convoy Departs', venue:null, address:'LaSalle → Laurentians', desc:"Once everyone's ready, we leave together. The city clears out quickly heading north. By the time you hit the first stretch of backroads, you'll know why we picked this route.", pays:false },
             { label:'Regroup Stop', venue:null, address:'Saint-Sauveur', desc:'A short stop in the hills before the Laurentians open up properly. Stretch your legs, check in with the group. The best stretch of road is still ahead.', pays:false },
             { label:'Lake View Photo Stop', venue:null, address:'Lac des Sables, Sainte-Agathe-des-Monts', desc:"Lac des Sables sits just off the road. We pull over, shut the engines off, and take it in. Our photographer works the group here — some of the best shots of the day come from this stop.", pays:false },
