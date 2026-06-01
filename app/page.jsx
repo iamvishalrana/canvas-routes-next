@@ -684,7 +684,7 @@ export default function Home() {
                   <select value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
                     style={{...inputStyle('dob_month'), cursor:"pointer", paddingRight:"2rem"}}
                     aria-required="true">
-                    <option value="">Month *</option>
+                    <option value="">Month</option>
                     {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i) => (
                       <option key={i+1} value={String(i+1)}>{m}</option>
                     ))}
@@ -695,7 +695,7 @@ export default function Home() {
                   <select value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)}
                     style={{...inputStyle('dob_day'), cursor:"pointer", paddingRight:"2rem"}}
                     aria-required="true">
-                    <option value="">Day *</option>
+                    <option value="">Day</option>
                     {Array.from({length:31},(_,i)=>i+1).map(d => (
                       <option key={d} value={String(d)}>{d}</option>
                     ))}
