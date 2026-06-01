@@ -130,7 +130,7 @@ Follow us on Instagram: https://www.instagram.com/canvasroutes
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
-function notifyHtml({ name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }) {
+function notifyHtml({ name, email, phone, dob, year, carModel, passengers, hasChildren, childrenAges, source, more }) {
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -156,6 +156,7 @@ function notifyHtml({ name, email, phone, year, carModel, passengers, hasChildre
                 ${row('Full name', `<strong>${h(name)}</strong>`)}
                 ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
                 ${row('Phone', h(phone))}
+                ${row('Date of birth', h(dob))}
                 ${row('Year', h(year))}
                 ${row('Make & Model', h(carModel))}
                 ${row('Passengers', h(passengers))}
@@ -194,11 +195,14 @@ export async function POST(request) {
     return Response.json({ error: 'Registration is now closed.' }, { status: 410 })
   }
 
-  const { name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more, _hp } = body
+  const { name, email, phone, dob, year, carModel, passengers, hasChildren, childrenAges, source, more, _hp } = body
   if (_hp) return Response.json({ success: true })
 
-  if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim()) {
+  if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim() || !dob?.trim()) {
     return Response.json({ error: 'Please fill in all required fields.' }, { status: 400 })
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || isNaN(Date.parse(dob))) {
+    return Response.json({ error: 'Invalid date of birth.' }, { status: 400 })
   }
   if (phone && phone.length > 30) return Response.json({ error: 'Phone too long.' }, { status: 400 })
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -256,6 +260,7 @@ export async function POST(request) {
     await supabase.from('applications').upsert({
       email: normalEmail,
       name: name.trim(),
+      dob: dob || null,
       car_year: year.trim(),
       car_model: carModel.trim(),
       phone: phone || null,
@@ -300,8 +305,8 @@ export async function POST(request) {
     from: 'Canvas Routes <info@canvasroutes.com>',
     to: 'info@canvasroutes.com',
     subject: `Laurentians Registration — ${year} ${carModel} — ${name.trim()}`,
-    html: notifyHtml({ name, email, phone, year, carModel, passengers, hasChildren, childrenAges, source, more }),
-    text: `Laurentians Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}`,
+    html: notifyHtml({ name, email, phone, dob, year, carModel, passengers, hasChildren, childrenAges, source, more }),
+    text: `Laurentians Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nDate of birth: ${dob}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}`,
   })
 
   let notifyOk = false

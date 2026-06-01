@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
+import { User, Mail, Phone, Car, Users, Share2, Calendar } from 'lucide-react'
 
 const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime() // midnight EDT June 8
 
@@ -18,7 +18,7 @@ const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley'
 
 
 export default function RoutesPage() {
-  const [form, setForm] = useState({ name:'', email:'', phone:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
+  const [form, setForm] = useState({ name:'', email:'', phone:'', dob:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [status, setStatus] = useState(null)
@@ -76,6 +76,7 @@ export default function RoutesPage() {
     if (form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
     if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) e.phone = true
+    if (!form.dob) e.dob = true
     if (!form.year) e.year = true
     if (!form.carMake) e.carMake = true
     if (!form.carModel.trim()) e.carModel = true
@@ -91,7 +92,7 @@ export default function RoutesPage() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
-      const order = ['name','email','phone','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
+      const order = ['name','email','phone','dob','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) {
         const el = document.getElementById(`field-${first}`)
@@ -420,6 +421,15 @@ export default function RoutesPage() {
                       <button type="button" onClick={() => { setPhoneOptOut(true); setForm(p => ({...p, phone:''})); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:"0.3rem 0",fontSize:"11px",color:"#aaa",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Prefer not to share my number</button>
                     </>
                   )}
+                </div>
+
+                {/* Date of birth */}
+                <div className="join-form-field" style={{marginBottom:"1rem"}}>
+                  <label htmlFor="field-dob" className="join-label">Date of birth<Calendar size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <input id="field-dob" type="date" value={form.dob}
+                    onChange={e => updateForm('dob', e.target.value)} style={{...inputStyle('dob'), colorScheme:'light'}}
+                    onFocus={() => setFocusedField('dob')} onBlur={() => setFocusedField(null)} />
+                  {errors.dob && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                 </div>
 
                 {/* Year + Make */}
