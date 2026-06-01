@@ -259,7 +259,7 @@ export default function RoutesPage() {
             { label:'Free Time', venue:'Mont-Tremblant Village', address:'Mont-Tremblant, QC', desc:"The pedestrian village is yours for about an hour. Walk around, explore, take in the mountain. VIP parking is $30 per car — free parking is a short walk away. We regroup at the top of the hour and head to lunch together.", pays:false },
             { label:'Group Lunch', venue:'Pizzeria No.900', address:'Mont-Tremblant, QC', desc:"Sit-down lunch with the whole group at one of the better spots in the village. Long table, good food — this is where the morning gets talked about.", pays:true },
             { label:'Return Convoy', venue:null, address:'Mont-Tremblant → Montreal', desc:"The drive back south through the Laurentians has a different feel — easier, more familiar. You know the roads now. We make it back to the city together.", pays:false },
-            { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:"The day ends on the West Island terrace. Coffees and snacks, no rush to leave. The cars stay parked outside a little longer than they need to.", pays:true },
+            { label:'Farewell', venue:'Aloe Cafe', address:'Pointe-Claire, QC', desc:"The day ends on the West Island. Coffees and snacks, no rush to leave. The cars stay parked outside a little longer than they need to.", pays:true },
           ].map((stop, i, arr) => (
             <div key={i} style={{display:"flex",gap:"1.5rem",padding:"1.75rem 0",borderBottom: i < arr.length-1 ? "0.5px solid rgba(197,168,130,0.1)" : "none"}}>
               <div style={{width:"6px",height:"6px",borderRadius:"50%",background:stop.pays?"#c5a882":"rgba(197,168,130,0.35)",flexShrink:0,marginTop:"6px"}} />
