@@ -16,9 +16,9 @@ import Image from 'next/image'
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
 
-const LABEL = { fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }
+const LABEL = { fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }
 const BODY  = { fontSize: '14px', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }
-const SMALL = { fontSize: '12px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif' }
+const SMALL = { fontSize: '13px', letterSpacing: '0.02em', fontFamily: 'var(--font-inter),sans-serif' }
 
 function FadeUp({ children, delay = 0, style, className }) {
   return <div style={style} className={className}>{children}</div>
@@ -43,7 +43,7 @@ const TIER2_EXTRA = [
   '25% referral discount when referring a Tier 2 member',
   'Professional car photoshoot on a Canvas Routes road trip',
   '$70 off one of the next two road trips — your membership starts paying for itself from day one',
-  'We are actively onboarding partners — Inner Circle members will receive exclusive discounts from every partner we bring on board',
+  'Exclusive discounts from all Canvas Routes partners — new partners added throughout the season',
   'Canvas Routes merchandise baseball cap',
 ]
 
@@ -219,9 +219,8 @@ export default function MembershipContent() {
           <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1.75rem' }}>
             Canvas Routes · Season 2026
           </div>
-          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.8rem,8vw,6.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
-            For those who chose<br />their car
-            <span style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.65)' }}> on purpose.</span>
+          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.01em' }}>
+            For those who chose<br />their car on purpose.
           </h1>
           <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
           <div style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', letterSpacing: '0.28em' }}>
@@ -283,15 +282,6 @@ export default function MembershipContent() {
       {/* ── PHOTO BREAK 1 ───────────────────────────────────────────── */}
       <div style={{ position: 'relative', height: 'clamp(260px,36vw,460px)', overflow: 'hidden' }}>
         <img src="/events/may9-cars-row.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.62)' }} />
-        <FadeUp style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
-          <div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: '1.5', maxWidth: '520px', textShadow: '0 1px 12px rgba(0,0,0,0.4)' }}>
-              &ldquo;A car is not just a machine — it&apos;s an extension of yourself.&rdquo;
-            </div>
-            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginTop: '1.25rem' }}>Henry Ford</div>
-          </div>
-        </FadeUp>
       </div>
 
       {/* ── TIERS ───────────────────────────────────────────────────── */}
@@ -310,12 +300,12 @@ export default function MembershipContent() {
               <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.09)', height: '100%' }}>
                 <div className="mem-tier-inner" style={{ padding: '2.25rem 2.25rem 0' }}>
                   <div style={{ ...LABEL, color: '#999', marginBottom: '0.5rem' }}>Tier 1</div>
-                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '2rem', lineHeight: 1.2 }}>
-                    Routes<br />Member
+                  <div style={{ fontSize: '1.15rem', fontWeight: '600', color: '#1a1a1a', marginBottom: '2rem', lineHeight: 1.2, fontFamily: 'var(--font-inter),sans-serif' }}>
+                    Routes Member
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.5rem,5.5vw,4.5rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>$99</span>
-                    <span style={{ ...SMALL, color: '#999', paddingBottom: '0.5rem' }}>CAD</span>
+                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>$99</span>
+                    <span style={{ ...SMALL, color: '#999', paddingBottom: '0.4rem' }}>CAD</span>
                   </div>
                   <div style={{ ...SMALL, color: '#999', marginBottom: '2rem' }}>per season</div>
                   <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.07)', marginBottom: '1.25rem' }} />
@@ -345,12 +335,12 @@ export default function MembershipContent() {
 
                 <div className="mem-tier-inner" style={{ padding: '2.25rem 2.25rem 0' }}>
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '0.5rem' }}>Tier 2</div>
-                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '2rem', lineHeight: 1.2 }}>
-                    Canvas Routes<br />Inner Circle
+                  <div style={{ fontSize: '1.15rem', fontWeight: '600', color: '#F5F1EC', marginBottom: '2rem', lineHeight: 1.2, fontFamily: 'var(--font-inter),sans-serif' }}>
+                    Inner Circle
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.5rem,5.5vw,4.5rem)', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$249</span>
-                    <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.5rem' }}>CAD</span>
+                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$249</span>
+                    <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.4rem' }}>CAD</span>
                   </div>
                   <div style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', marginBottom: '2rem' }}>per season</div>
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
@@ -400,8 +390,8 @@ export default function MembershipContent() {
             <FadeUp delay={0.1}>
               <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: 'rgba(197,168,130,0.04)', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
                 <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Member rate</div>
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.6rem,3vw,2rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.3', marginBottom: '1.25rem' }}>
-                  Every road trip,<br />at a rate built for you.
+                <div style={{ fontSize: '1.05rem', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.4', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  Every road trip, at a rate built for members.
                 </div>
                 <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.25)', marginBottom: '1.25rem' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -449,7 +439,7 @@ export default function MembershipContent() {
                     {p.tier === 2 ? 'Inner Circle' : 'All members'}
                   </span>
                 </div>
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.25rem', fontWeight: '300', color: p.tier === 2 ? '#F5F1EC' : '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.3 }}>{p.label}</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: '600', color: p.tier === 2 ? '#F5F1EC' : '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3, fontFamily: 'var(--font-inter),sans-serif' }}>{p.label}</div>
                 <div style={{ ...BODY, color: p.tier === 2 ? 'rgba(245,241,236,0.72)' : '#555' }}>{p.sub}</div>
               </div>
             ))}
@@ -471,8 +461,8 @@ export default function MembershipContent() {
               { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and collect your welcome kit at your first event of the season.' },
             ].map((s, i) => (
               <div key={i} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.35)', lineHeight: 1, marginBottom: '1.25rem' }}>{s.n}</div>
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3 }}>{s.title}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.45)', lineHeight: 1, marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.n}</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: '600', color: '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3, fontFamily: 'var(--font-inter),sans-serif' }}>{s.title}</div>
                 <div style={{ ...BODY, color: '#666' }}>{s.body}</div>
               </div>
             ))}
@@ -583,7 +573,7 @@ export default function MembershipContent() {
                       <button key={t} type="button" onClick={() => set('tier', t)}
                         style={{ padding: '1.1rem 1rem', background: form.tier === t ? '#c5a882' : 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative' }}>
                         <div style={{ ...SMALL, color: form.tier === t ? '#0F1E14' : 'rgba(245,241,236,0.5)', marginBottom: '0.2rem', fontWeight: form.tier === t ? '600' : '400' }}>{t}</div>
-                        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.3rem', fontWeight: '300', color: form.tier === t ? '#0F1E14' : 'rgba(245,241,236,0.3)' }}>{price} <span style={{ fontSize: '0.7rem', color: form.tier === t ? 'rgba(15,30,20,0.6)' : 'rgba(245,241,236,0.3)' }}>CAD / season</span></div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', color: form.tier === t ? '#0F1E14' : 'rgba(245,241,236,0.4)' }}>{price} <span style={{ fontSize: '11px', color: form.tier === t ? 'rgba(15,30,20,0.6)' : 'rgba(245,241,236,0.3)', fontWeight: '400' }}>CAD / season</span></div>
                         {form.tier === t && (
                           <svg style={{ position: 'absolute', top: '0.6rem', right: '0.75rem' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F1E14" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         )}
@@ -629,7 +619,7 @@ export default function MembershipContent() {
               {submitError && <div style={{ ...SMALL, color: '#d06070', marginTop: '1rem' }}>{submitError}</div>}
 
               <button type="submit" disabled={status === 'loading'}
-                style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', ...LABEL, letterSpacing: '0.2em', fontWeight: '600', fontSize: '10px', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+                style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', ...LABEL, letterSpacing: '0.2em', fontWeight: '600', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
                 {status === 'loading' ? 'Submitting…' : 'Register interest'}
               </button>
             </form>
