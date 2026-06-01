@@ -385,65 +385,31 @@ export default function MembershipContent() {
         <style>{`
           .rt-savings{display:grid;grid-template-columns:1fr 1fr;gap:clamp(3rem,6vw,7rem);align-items:start}
           @media(max-width:680px){.rt-savings{grid-template-columns:1fr !important}}
-          .rt-compare{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(0,0,0,0.07)}
-          @media(max-width:480px){.rt-compare{grid-template-columns:1fr !important}}
         `}</style>
         <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
           <div className="rt-savings">
             <FadeUp>
               <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Road trips</div>
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.5rem' }}>
-                Members get in first —<br />and pay less.
+                Your seat is held<br />before the doors open.
               </div>
-              <p style={{ ...BODY, color: '#555', marginBottom: '1.5rem' }}>
-                Every Canvas Routes road trip opens to members before the public. Members register first, at a preferred rate. Non-members can join remaining spots at full price — if any are left.
+              <p style={{ ...BODY, color: '#555' }}>
+                Every Canvas Routes road trip begins with a dedicated window exclusive to members — at a rate that reflects the commitment you've made to this community. Once that window closes, remaining spots are made available to the public. The drive is open to everyone. Members simply never have to wonder if there's room for them.
               </p>
-              <div className="rt-compare">
-                <div style={{ background: '#0F1E14', padding: '1.5rem 1.25rem' }}>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '0.6rem' }}>Members</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                    {[
-                      'Priority registration window',
-                      'Preferred member pricing',
-                      'Guaranteed access to every route',
-                    ].map((line, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '3px' }}><polyline points="20 6 9 17 4 12"/></svg>
-                        <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.75)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: '1.55' }}>{line}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ background: '#EDE8E1', padding: '1.5rem 1.25rem' }}>
-                  <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.6rem' }}>Non-members</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                    {[
-                      'Register after members',
-                      'Full public pricing',
-                      'Subject to availability',
-                    ].map((line, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ccc', flexShrink: 0, marginTop: '6px' }} />
-                        <span style={{ fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif', lineHeight: '1.55' }}>{line}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </FadeUp>
             <FadeUp delay={0.1}>
               <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: 'rgba(197,168,130,0.04)', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
                 <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Member rate</div>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.6rem,3vw,2rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.3', marginBottom: '1.25rem' }}>
-                  Preferred pricing<br />on every road trip.
+                  Every road trip,<br />at a rate built for you.
                 </div>
                 <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.25)', marginBottom: '1.25rem' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                   {[
-                    'Applies to every road trip on the calendar',
-                    'Both Routes Member and Inner Circle tiers',
+                    'Early access window on every road trip',
+                    'Preferred member pricing across both tiers',
                     'Inner Circle members receive an additional $70 credit',
-                    'Non-members pay full price — spots permitting',
+                    'Public registration opens once the member window closes',
                   ].map((line, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
                       <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#c5a882', flexShrink: 0, marginTop: '7px' }} />
