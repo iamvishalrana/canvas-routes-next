@@ -204,10 +204,12 @@ export async function POST(request) {
         const errText = await res.text().catch(() => 'unknown')
         console.error('Invite email send error:', errText)
         captureMessage(`Member invite email failed — ${email}`, { response: errText })
+        return Response.json({ error: 'Member was created but the invite email failed to send. Check Sentry and resend manually.' }, { status: 500 })
       }
     } catch (err) {
       console.error('Invite email network error:', err)
       captureException(err, { context: 'member-invite-email-network', email })
+      return Response.json({ error: 'Member was created but the invite email failed to send. Check Sentry and resend manually.' }, { status: 500 })
     }
   } else {
     console.warn('RESEND_API_KEY not set — invite email not sent.')
