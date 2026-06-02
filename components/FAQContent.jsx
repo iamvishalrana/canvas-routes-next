@@ -388,13 +388,12 @@ export default function FAQContent() {
       // ── Mobile: scroll-driven horizontal car at nav bottom edge ──────────
       ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', ''))
 
-      const navEl  = document.querySelector('.nav')
-      const navH   = navEl?.offsetHeight || 110
-      const logoEl = navEl?.querySelector('a')
-      const hamEl  = navEl?.querySelector('.hamburger')
-      const xMin = (logoEl?.getBoundingClientRect().right ?? 150) + 8
-      const xMax = (hamEl?.getBoundingClientRect().left   ?? (window.innerWidth - 55)) - 8
-      // carRef has marginTop:-31px → translateY=navH lands wheels on nav bottom line
+      const navEl = document.querySelector('.nav')
+      const navH  = navEl?.offsetHeight || 110
+      // Full screen width: carRef is 50px wide, marginLeft=-25, so center at x=25 puts left edge at 0
+      const xMin = 25
+      const xMax = window.innerWidth - 25
+      // carRef marginTop:-16px → translateY=navH lands car wheels on nav bottom line
       const y = navH
 
       let lastScrollY = window.scrollY
@@ -466,10 +465,10 @@ export default function FAQContent() {
       {/* Fixed car */}
       <div ref={carRef} style={{
         position: 'fixed', top: 0, left: 0,
-        width:       isMobile ? '90px'    : '46px',
-        height:      isMobile ? '32px'    : '21px',
-        marginLeft:  isMobile ? '-45px'   : '-23px',
-        marginTop:   isMobile ? '-31px'   : '-10.5px',
+        width:       isMobile ? '50px'    : '46px',
+        height:      isMobile ? '17px'    : '21px',
+        marginLeft:  isMobile ? '-25px'   : '-23px',
+        marginTop:   isMobile ? '-16px'   : '-10.5px',
         willChange: 'transform', pointerEvents: 'none',
         zIndex: isMobile ? 101 : 12, opacity: 0, overflow: 'visible',
       }}>
@@ -492,39 +491,35 @@ export default function FAQContent() {
         ))}
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isMobile ? (
-            /* ── Mobile: F40 side profile ── */
-            <svg viewBox="0 0 120 42" width="90" height="32" style={{ display: 'block', overflow: 'visible' }}>
+            /* ── Mobile: sports car side profile, front = right ── */
+            <svg viewBox="0 0 60 20" width="50" height="17" style={{ display: 'block', overflow: 'visible' }}>
               {/* Shadow */}
-              <ellipse cx="60" cy="41" rx="52" ry="1.8" fill="rgba(0,0,0,0.12)" />
-              {/* Rear wing */}
-              <rect x="2"  y="7"   width="2.5" height="14" rx="1"   fill="#1c1c1c" />
-              <rect x="2"  y="7"   width="20"  height="2"  rx="0.8" fill="#1a1a1a" />
-              <rect x="6"  y="9"   width="1.5" height="9"  rx="0.5" fill="#222" />
-              <rect x="18" y="9"   width="1.5" height="9"  rx="0.5" fill="#222" />
-              {/* Rear tyre */}
-              <circle cx="28" cy="33" r="8.5" fill="#111" />
-              <circle cx="28" cy="33" r="5"   fill="#1e1e1e" />
-              <circle cx="28" cy="33" r="2"   fill="#333" />
-              {/* Front tyre */}
-              <circle cx="94" cy="33" r="7.5" fill="#111" />
-              <circle cx="94" cy="33" r="4.5" fill="#1e1e1e" />
-              <circle cx="94" cy="33" r="2"   fill="#333" />
-              {/* Body — F40 side profile with wheel arch cutouts, front = right */}
-              <path d="M 6,22 C 4.5,20 4,17.5 4.5,15.5 C 6,13 16,12.5 28,12.5 C 40,12 50,11.5 56,11.5 L 69,11.5 L 80,12.5 C 84.5,13.5 89.5,15.5 94,17.5 C 102,20.5 110,21.5 114.5,21.5 C 117.5,21.5 119.5,22.5 120,25 C 120.5,27 119,28 117,28 L 102,28 C 101,21.5 87,21.5 86,28 L 38,28 C 37,21 19,21 18,28 L 11,28 C 8.5,26 6.5,23.5 6,22 Z" fill="#CC0000" />
+              <ellipse cx="30" cy="19.5" rx="26" ry="1.1" fill="rgba(0,0,0,0.14)" />
+              {/* Tyres — drawn before body so body covers inner area */}
+              <circle cx="11" cy="15" r="5"   fill="#111" />
+              <circle cx="11" cy="15" r="3"   fill="#252525" />
+              <circle cx="11" cy="15" r="1.2" fill="#111" />
+              <circle cx="47" cy="15" r="4.5" fill="#111" />
+              <circle cx="47" cy="15" r="2.7" fill="#252525" />
+              <circle cx="47" cy="15" r="1.2" fill="#111" />
+              {/* Body */}
+              <path d="M 5,14 C 4,12 4,10 5.5,9 C 8,7.5 15,7 21,7 C 27,7 31,6.5 35,6.5 C 39,6.5 43,7 47,8 L 54,10 C 57,11.5 58,13 58,15 L 4,15 C 4,14.5 4.5,14 5,14 Z" fill="#CC0000" />
+              {/* Cabin dark overlay */}
+              <path d="M 17,9 L 21,7 C 27,7 31,6.5 35,6.5 C 39,6.5 43,7 46,8.5 L 43,12 L 19,12 Z" fill="rgba(10,8,8,0.45)" />
               {/* Windshield glass */}
-              <path d="M 69,11.5 L 80,12.5 C 85,14 90,15.5 91,17.5 L 83,17 C 80,15.5 75,13.5 69,11.5 Z" fill="rgba(130,195,225,0.45)" />
-              {/* Rear quarter window */}
-              <path d="M 56,11.5 L 69,11.5 L 65,14.5 L 53,14.5 Z" fill="rgba(130,195,225,0.28)" />
+              <path d="M 35,6.5 C 39,6.5 43,7 46,8.5 L 43,12 L 34,12 Z" fill="rgba(140,200,230,0.45)" />
+              {/* Side window */}
+              <path d="M 21,7 L 34,6.5 L 34,12 L 20,12 Z" fill="rgba(140,200,230,0.3)" />
+              {/* Rear quarter glass */}
+              <path d="M 17,9 L 21,7 L 20,12 L 16,12 Z" fill="rgba(140,200,230,0.2)" />
               {/* Door seam */}
-              <line x1="64" y1="11.5" x2="62" y2="28" stroke="rgba(0,0,0,0.14)" strokeWidth="0.8" />
-              {/* Body crease */}
-              <path d="M 28,15 C 42,15.5 56,16 66,16.5 C 76,17 86,18 92,19.5" fill="none" stroke="rgba(255,80,80,0.15)" strokeWidth="0.9" />
-              {/* Side NACA duct */}
-              <ellipse cx="74" cy="21.5" rx="5" ry="1.5" fill="rgba(0,0,0,0.22)" />
-              {/* Headlight (front = right) */}
-              <rect x="110" y="20.5" width="8.5" height="3.5" rx="0.8" fill="rgba(255,250,200,0.85)" />
+              <line x1="32" y1="6.8" x2="31" y2="15" stroke="rgba(0,0,0,0.14)" strokeWidth="0.6" />
+              {/* Headlight */}
+              <path d="M 54,11 L 58,13 L 57.5,15 L 53.5,13.5 Z" fill="rgba(255,250,200,0.92)" />
               {/* Tail light */}
-              <rect x="4.5" y="18" width="2.5" height="5" rx="0.5" fill="rgba(220,55,55,0.95)" />
+              <rect x="4" y="11" width="1.5" height="4" rx="0.4" fill="rgba(220,55,55,0.95)" />
+              {/* Spoiler lip */}
+              <rect x="4" y="14" width="2" height="1" rx="0.3" fill="rgba(80,0,0,0.8)" />
             </svg>
           ) : (
             /* ── Desktop: F40 top-down view ── */
