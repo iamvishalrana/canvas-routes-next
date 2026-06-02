@@ -202,7 +202,7 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
   const attendedCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === true).length
   const noShowCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === false).length
   const upcomingCount = CANONICAL_EVENTS.filter(ev => new Date(ev.date) > today).length
-  const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}` : null
+  const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}${m.dob_year ? `, ${m.dob_year}` : ''}` : null
 
   return (
     <div style={{ background: 'rgba(197,168,130,0.025)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '3px solid #c5a882' }}>
@@ -559,7 +559,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
         {appData && (
           <div style={{ marginTop: '0.75rem', fontSize: '12px', color: '#3B6B2F', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.25)', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            Application found — <strong>{appData.name}</strong>{appData.car_year ? ` · ${appData.car_year} ${appData.car_model}` : ''}{appData.dob_month ? ` · DOB ${appData.dob_month}/${appData.dob_day}${appData.dob_year ? `/${appData.dob_year}` : ''}` : ''}. Profile will be pre-populated on invite.
+            Application found — <strong>{appData.name}</strong>{appData.car_year ? ` · ${appData.car_year} ${appData.car_model}` : ''}{appData.dob_month ? ` · DOB ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][appData.dob_month - 1]} ${appData.dob_day}${appData.dob_year ? `, ${appData.dob_year}` : ''}` : ''}. Profile will be pre-populated on invite.
           </div>
         )}
         <Err msg={inviteError} />
