@@ -24,7 +24,9 @@ export default function RoutesIndexPage() {
 
   function parseEventDate(dateStr) {
     if (!dateStr) return null
-    // Try ISO format first, then "Month Day, Year" format
+    // ISO dates like "2026-06-07" parse as UTC midnight — add local noon to avoid timezone shifts
+    const isoMatch = dateStr.match(/^\d{4}-\d{2}-\d{2}$/)
+    if (isoMatch) return new Date(dateStr + 'T12:00:00')
     const d = new Date(dateStr)
     return isNaN(d.getTime()) ? null : d
   }
@@ -80,7 +82,7 @@ export default function RoutesIndexPage() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
         <div style={{ fontSize: '11px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', marginBottom: '1.2rem' }}>Canvas Routes</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,6vw,4.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: '1.05', marginBottom: '1rem', letterSpacing: '-0.01em' }}>
-          Road Trips
+          Routes
         </h1>
         <div style={{ width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.75rem' }} />
         <p style={{ fontSize: '15px', color: 'rgba(245,241,236,0.5)', maxWidth: '420px', margin: '0 auto', lineHeight: '1.9' }}>
