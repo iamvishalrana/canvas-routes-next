@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 
-const ROUTES_CLOSED = new Date('2026-06-06T16:00:00Z').getTime() // noon EDT June 6
+const ROUTES_CLOSED = new Date('2026-06-07T03:00:00Z').getTime() // 11 PM EDT June 6
 
 function Chevron() {
   return (
