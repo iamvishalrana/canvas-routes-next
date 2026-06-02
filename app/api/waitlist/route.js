@@ -28,7 +28,7 @@ function customerHtml(firstName) {
           <!-- Logo -->
           <tr>
             <td style="padding-bottom:32px;">
-              <img src="https://canvasroutes.com/White%20outline.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
+              <img src="https://canvasroutes.com/white-outline.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
             </td>
           </tr>
 
