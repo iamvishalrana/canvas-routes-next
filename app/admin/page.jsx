@@ -2987,7 +2987,7 @@ export default function AdminPage() {
           position: 'fixed', top: 0, left: sidebarOpen ? 0 : '-220px', height: '100vh',
           zIndex: 299, transition: 'left 0.25s ease', overflowY: 'auto',
         } : {
-          height: '100vh', overflowY: 'hidden',
+          height: '100vh', overflowY: 'auto',
         }),
       }}>
         {sidebarContent}
