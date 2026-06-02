@@ -516,7 +516,7 @@ export default function FAQContent() {
             if (carRef.current)      carRef.current.style.transform      = `translate(${curPt.x}px,${curPt.y}px)`
             if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${curPt.angle + facingOffsetRef.current}deg)`
             resumeQmarks()
-            stopTimerR.current = setTimeout(startDonut, 800)
+            stopTimerR.current = setTimeout(startDonut, 3000)
           }
         }
         recoverRafRef.current = requestAnimationFrame(recoverFrame)
@@ -543,12 +543,12 @@ export default function FAQContent() {
         clearTimeout(stopTimerR.current)
         if (rafRef.current) cancelAnimationFrame(rafRef.current)
         rafRef.current = requestAnimationFrame(update)
-        stopTimerR.current = setTimeout(startDonut, 600)
+        stopTimerR.current = setTimeout(startDonut, 3000)
       }
       const onResize = () => { if (!isSlidingRef.current && !isRecoveringRef.current) { init(false); update() } }
       window.addEventListener('scroll', onScroll, { passive: true })
       window.addEventListener('resize', onResize)
-      stopTimerR.current = setTimeout(startDonut, 1500)
+      stopTimerR.current = setTimeout(startDonut, 3000)
       return () => {
         window.removeEventListener('scroll', onScroll)
         window.removeEventListener('resize', onResize)

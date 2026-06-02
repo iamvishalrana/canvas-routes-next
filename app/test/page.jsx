@@ -177,7 +177,7 @@ export default function TestPage() {
       if (isDonuting.current) stopDonut()
       clearTimeout(stopTimer.current)
       clearTimeout(flashTimer.current)
-      stopTimer.current  = setTimeout(startDonut, 800)
+      stopTimer.current  = setTimeout(startDonut, 3000)
       flashTimer.current = setTimeout(flashHeadlights, 49000)
     }
 
@@ -185,13 +185,13 @@ export default function TestPage() {
       if (cursorDotRef.current) cursorDotRef.current.style.opacity = '0'
       clearTimeout(stopTimer.current)
       clearTimeout(flashTimer.current)
-      stopTimer.current = setTimeout(startDonut, 1200)
+      stopTimer.current = setTimeout(startDonut, 3000)
     }
 
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseleave', onMouseLeave)
     // Donut on page load while cursor is still outside
-    stopTimer.current = setTimeout(startDonut, 1500)
+    stopTimer.current = setTimeout(startDonut, 3000)
 
     return () => {
       document.removeEventListener('mousemove', onMouseMove)
