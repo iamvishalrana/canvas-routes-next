@@ -2,7 +2,7 @@
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }
-body { background: #F5F1EC; color: #1a1a1a; }
+body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 
 .nav {
   position: fixed;

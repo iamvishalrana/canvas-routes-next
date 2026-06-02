@@ -442,7 +442,7 @@ export default function FAQContent() {
 
       const navEl = document.querySelector('.nav')
       const navH  = navEl?.offsetHeight || 110
-      // Full screen width: carRef is 90px wide, marginLeft=-45, so center at x=45 puts left edge at 0
+      // carRef is 65px wide, marginLeft=-33; xMin=45 keeps ~12px margin from each edge
       const xMin = 45
       const xMax = window.innerWidth - 45
       // carRef marginTop:-16px → translateY=navH lands car wheels on nav bottom line
@@ -522,7 +522,7 @@ export default function FAQContent() {
         marginLeft:  isMobile ? '-33px'   : '-23px',
         marginTop:   isMobile ? '-26px'   : '-10.5px',
         willChange: 'transform', pointerEvents: 'none',
-        zIndex: isMobile ? 101 : 12, opacity: 0, overflow: 'visible',
+        zIndex: isMobile ? (menuOpen ? 98 : 101) : 12, opacity: 0, overflow: 'visible',
       }}>
         {/* Question marks — desktop only */}
         {!isMobile && [
