@@ -120,7 +120,9 @@ function confirmHtml(firstName) {
 </html>`
 }
 
-function notifyHtml({ name, email, phone, year, carModel, tier, source, more }) {
+function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel, tier, source, more }) {
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const dobStr = dob_month ? `${MONTHS_SHORT[parseInt(dob_month) - 1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : null
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -139,6 +141,7 @@ function notifyHtml({ name, email, phone, year, carModel, tier, source, more }) 
                 ${row('Full name', `<strong>${h(name)}</strong>`)}
                 ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
                 ${row('Phone', phone ? h(phone) : '—')}
+                ${row('Date of birth', dobStr ? h(dobStr) : '')}
                 ${row('Year', h(year))}
                 ${row('Car', h(carModel))}
                 ${row('Tier', h(tier))}
@@ -171,7 +174,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { name, email, phone, year, carMake, carModel, tier, source, more, _hp } = body
+  const { name, email, phone, dob_month, dob_day, dob_year, year, carMake, carModel, tier, source, more, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -214,6 +217,9 @@ export async function POST(request) {
       car_year: year.trim(),
       car_model: fullCar || carMake,
       phone: phone || null,
+      dob_month: dob_month ? parseInt(dob_month) : null,
+      dob_day: dob_day ? parseInt(dob_day) : null,
+      dob_year: dob_year ? parseInt(dob_year) : null,
       source: source || null,
       more: more || null,
       registrations,
@@ -257,8 +263,8 @@ export async function POST(request) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'info@canvasroutes.com',
         subject: `Membership Registration — ${tier} — ${name.trim()}`,
-        html: notifyHtml({ name, email, phone, year, carModel: fullCar, tier, source, more }),
-        text: `Membership Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nYear: ${year}\nCar: ${fullCar}\nTier: ${tier}\nHow they heard: ${source}${more ? `\nMessage: ${more}` : ''}`,
+        html: notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel: fullCar, tier, source, more }),
+        text: `Membership Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nDOB: ${dob_month ? `${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : '—'}\nYear: ${year}\nCar: ${fullCar}\nTier: ${tier}\nHow they heard: ${source}${more ? `\nMessage: ${more}` : ''}`,
       }),
     })
     if (!notifyRes.ok) {

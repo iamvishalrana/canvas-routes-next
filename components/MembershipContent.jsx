@@ -65,7 +65,8 @@ function CheckIcon({ gold }) {
   )
 }
 
-const INIT_FORM = { name:'', email:'', phone:'', year:'', carMake:'', carModel:'', tier:'', source:'', more:'' }
+const INIT_FORM = { name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', tier:'', source:'', more:'' }
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default function MembershipContent() {
   useEffect(() => {
@@ -116,6 +117,8 @@ export default function MembershipContent() {
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
     if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 11) e.phone = true
+    if (!form.dob_month) e.dob_month = true
+    if (!form.dob_day) e.dob_day = true
     if (!form.year.trim()) e.year = true
     if (!form.carMake) e.carMake = true
     if (!form.tier) e.tier = true
@@ -130,7 +133,7 @@ export default function MembershipContent() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length) {
-      const order = ['name','email','phone','year','carMake','tier','source','termsAccepted']
+      const order = ['name','email','phone','dob_month','year','carMake','tier','source','termsAccepted']
       const first = order.find(f => errs[f])
       if (first) {
         const el = document.getElementById(`mem-field-${first}`)
@@ -524,6 +527,43 @@ export default function MembershipContent() {
                     onChange={e => set('phone', formatPhone(e.target.value))}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
                     style={inp('phone')} />
+                </div>
+
+                {/* Date of birth */}
+                <div id="mem-field-dob_month" style={{ marginTop: '1rem' }}>
+                  <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>
+                    Date of birth <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>year optional</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '1px' }}>
+                    <div style={{ position: 'relative' }}>
+                      <select value={form.dob_month} onChange={e => set('dob_month', e.target.value)}
+                        onFocus={() => setFocusedField('dob_month')} onBlur={() => setFocusedField(null)}
+                        style={{ ...inp('dob_month'), paddingRight: '2rem', cursor: 'pointer' }}>
+                        <option value="">Month</option>
+                        {MONTHS.map((m, i) => <option key={i + 1} value={String(i + 1)}>{m}</option>)}
+                      </select>
+                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <select value={form.dob_day} onChange={e => set('dob_day', e.target.value)}
+                        onFocus={() => setFocusedField('dob_day')} onBlur={() => setFocusedField(null)}
+                        style={{ ...inp('dob_day'), paddingRight: '2rem', cursor: 'pointer' }}>
+                        <option value="">Day</option>
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
+                      </select>
+                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <select value={form.dob_year} onChange={e => set('dob_year', e.target.value)}
+                        onFocus={() => setFocusedField('dob_year')} onBlur={() => setFocusedField(null)}
+                        style={{ ...inp('dob_year'), paddingRight: '2rem', cursor: 'pointer' }}>
+                        <option value="">Year</option>
+                        {Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i).map(y => <option key={y} value={String(y)}>{y}</option>)}
+                      </select>
+                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                  {(errors.dob_month || errors.dob_day) && <div style={{ fontSize: '11px', color: '#d06070', marginTop: '0.3rem' }}>Month and day are required</div>}
                 </div>
 
                 {/* Year + Make */}
