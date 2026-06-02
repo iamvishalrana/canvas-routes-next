@@ -36,6 +36,9 @@ export default function TestPage() {
   const donutPivotY     = useRef(0)
   const donutCarX       = useRef(0)
   const donutCarY       = useRef(0)
+  const headlight1Ref   = useRef(null)
+  const headlight2Ref   = useRef(null)
+  const flashTimer      = useRef(null)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -146,6 +149,23 @@ export default function TestPage() {
     }
     rafRef.current = requestAnimationFrame(loop)
 
+    // ── Headlight flash (two quick blinks after 49s idle) ────────────────────
+    function flashHeadlights() {
+      const h1 = headlight1Ref.current, h2 = headlight2Ref.current
+      if (!h1 || !h2) return
+      const on  = 'rgba(255,250,195,0.9)', off = 'rgba(30,20,10,0.55)'
+      h1.setAttribute('fill', off);  h2.setAttribute('fill', off)
+      setTimeout(() => {
+        h1.setAttribute('fill', on);  h2.setAttribute('fill', on)
+        setTimeout(() => {
+          h1.setAttribute('fill', off); h2.setAttribute('fill', off)
+          setTimeout(() => {
+            h1.setAttribute('fill', on);  h2.setAttribute('fill', on)
+          }, 130)
+        }, 220)
+      }, 130)
+    }
+
     // ── Mouse events ──────────────────────────────────────────────────────────
     function onMouseMove(e) {
       px = e.clientX; py = e.clientY
@@ -156,12 +176,15 @@ export default function TestPage() {
       }
       if (isDonuting.current) stopDonut()
       clearTimeout(stopTimer.current)
-      stopTimer.current = setTimeout(startDonut, 800)
+      clearTimeout(flashTimer.current)
+      stopTimer.current  = setTimeout(startDonut, 800)
+      flashTimer.current = setTimeout(flashHeadlights, 49000)
     }
 
     function onMouseLeave() {
       if (cursorDotRef.current) cursorDotRef.current.style.opacity = '0'
       clearTimeout(stopTimer.current)
+      clearTimeout(flashTimer.current)
       stopTimer.current = setTimeout(startDonut, 1200)
     }
 
@@ -173,7 +196,7 @@ export default function TestPage() {
     return () => {
       document.removeEventListener('mousemove', onMouseMove)
       document.removeEventListener('mouseleave', onMouseLeave)
-      clearTimeout(stopTimer.current); clearTimeout(donutStopTimer.current)
+      clearTimeout(stopTimer.current); clearTimeout(donutStopTimer.current); clearTimeout(flashTimer.current)
       clearInterval(tireInterval.current)
       cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
       if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
@@ -237,8 +260,8 @@ export default function TestPage() {
               <rect x="0.5" y="27.5" width="8"   height="5.5" rx="1.2" fill="#242424" />
               <rect x="3.5" y="4.5"  width="9"   height="2.5" rx="0.8" fill="#181818" />
               <rect x="3.5" y="19"   width="9"   height="2.5" rx="0.8" fill="#181818" />
-              <rect x="49" y="1"    width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
-              <rect x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
+              <rect ref={headlight1Ref} x="49" y="1"    width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
+              <rect ref={headlight2Ref} x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
             </svg>
           </div>
         </div>
