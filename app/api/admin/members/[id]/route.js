@@ -41,6 +41,15 @@ export async function PATCH(request, { params }) {
     if (Object.keys(appSync).length > 0) {
       await supabase.from('applications').update(appSync).eq('email', memberEmail)
     }
+
+    // Sync notes to contacts.notes if notes changed
+    if ('notes' in body) {
+      const { data: app } = await supabase.from('applications').select('id').eq('email', memberEmail).maybeSingle()
+      if (app) {
+        const { data: contact } = await supabase.from('contacts').select('id').eq('application_id', app.id).maybeSingle()
+        if (contact) await supabase.from('contacts').update({ notes: body.notes ?? null }).eq('id', contact.id)
+      }
+    }
   }
 
   return Response.json({ success: true })

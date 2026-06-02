@@ -7,14 +7,12 @@ export async function PATCH(request, { params }) {
   const { notes } = await request.json()
   const supabase = createAdminClient()
 
-  // Get the application linked to this contact
-  const { data: contact } = await supabase.from('contacts').select('application_id').eq('id', id).single()
-  if (!contact) return Response.json({ error: 'Contact not found' }, { status: 404 })
+  // Update contacts.notes directly
+  const { data: contact, error: contactErr } = await supabase
+    .from('contacts').update({ notes: notes ?? null }).eq('id', id).select('application_id').single()
+  if (contactErr || !contact) return Response.json({ error: 'Contact not found' }, { status: 404 })
 
-  // Write notes to applications (single source of truth)
-  await supabase.from('applications').update({ notes: notes ?? null }).eq('id', contact.application_id)
-
-  // Sync to members via email lookup
+  // Sync to members via email lookup through the application
   const { data: app } = await supabase.from('applications').select('email').eq('id', contact.application_id).single()
   if (app?.email) {
     const { data: mem } = await supabase.from('members').select('id').eq('email', app.email.toLowerCase()).maybeSingle()
