@@ -29,7 +29,7 @@ function poly(pts) {
   return pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
 }
 
-const DONUT_SPEED = 2200   // ms per revolution — slow and dramatic
+const DONUT_SPEED = 4500   // ms per revolution — very slow and dramatic
 const TIRE_INTERVAL = 90   // ms between mark drops
 // Rear-tyre offsets in car-local space (car faces +x)
 const REAR_TYRES = [{ lx: -13, ly: 8 }, { lx: -13, ly: -8 }]
@@ -45,6 +45,7 @@ export default function TestPage() {
   const rafRef          = useRef(null)
   const stopTimer       = useRef(null)
   const tireInterval    = useRef(null)
+  const donutStopTimer  = useRef(null)   // 30 s auto-stop
   const isDonuting      = useRef(false)
   const lastAngle       = useRef(90)
   const lastX           = useRef(0)
@@ -114,20 +115,23 @@ export default function TestPage() {
       })
     }
 
-    function startDonut() {
-      if (!carInnerRef.current || isDonuting.current) return
-      isDonuting.current  = true
-      donutStart.current  = Date.now()
-      carInnerRef.current.style.animation = `cr-donut ${DONUT_SPEED}ms linear infinite`
-      tireInterval.current = setInterval(dropMark, TIRE_INTERVAL)
-    }
-
     function stopDonut() {
       if (!carInnerRef.current) return
       isDonuting.current = false
       clearInterval(tireInterval.current)
-      carInnerRef.current.style.animation  = 'none'
-      carInnerRef.current.style.transform  = `rotate(${lastAngle.current}deg)`
+      clearTimeout(donutStopTimer.current)
+      carInnerRef.current.style.animation = 'none'
+      carInnerRef.current.style.transform = `rotate(${lastAngle.current}deg)`
+    }
+
+    function startDonut() {
+      if (!carInnerRef.current || isDonuting.current) return
+      isDonuting.current   = true
+      donutStart.current   = Date.now()
+      carInnerRef.current.style.animation = `cr-donut ${DONUT_SPEED}ms linear infinite`
+      tireInterval.current = setInterval(dropMark, TIRE_INTERVAL)
+      // Auto-stop after 30 s — car parks until next scroll
+      donutStopTimer.current = setTimeout(stopDonut, 30000)
     }
 
     function update() {
@@ -153,6 +157,7 @@ export default function TestPage() {
     return () => {
       window.removeEventListener('scroll', onScroll)
       clearTimeout(stopTimer.current)
+      clearTimeout(donutStopTimer.current)
       clearInterval(tireInterval.current)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
