@@ -1,13 +1,13 @@
 import FAQContent from '../../components/FAQContent'
 
 export const metadata = {
-  title: 'FAQ | Canvas Routes — Montreal Car Club',
-  description: "Frequently asked questions about Canvas Routes — Montreal's car club. Cars and Coffee events, road trips from Montreal, scenic drives through the Laurentians and Eastern Townships, membership, and more.",
+  title: 'FAQ | Canvas Routes — Montreal Car Community',
+  description: "Frequently asked questions about Canvas Routes — Montreal's car community. Cars and Coffee events, road trips from Montreal, scenic drives through the Laurentians and Eastern Townships, membership, and more.",
   keywords: 'Canvas Routes FAQ, car club Montreal, road trips from Montreal, cars and coffee Montreal, automotive community Montreal, Laurentians road trip, Eastern Townships drive, car meets Quebec, scenic drives Quebec',
   alternates: { canonical: 'https://canvasroutes.com/faq' },
   openGraph: {
-    title: 'FAQ | Canvas Routes — Montreal Car Club',
-    description: "Frequently asked questions about Canvas Routes — Montreal's car club. Cars and Coffee, road trips, scenic drives and membership.",
+    title: 'FAQ | Canvas Routes — Montreal Car Community',
+    description: "Frequently asked questions about Canvas Routes — Montreal's car community. Cars and Coffee, road trips, scenic drives and membership.",
     url: 'https://canvasroutes.com/faq',
   },
 }
@@ -19,7 +19,7 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'What is Canvas Routes?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Canvas Routes is a Montreal-based car club built around curated road trips, scenic convoy drives, and invite-only Cars and Coffee events across Quebec, Ontario, Vermont, Maine, New York and beyond. We organize road trips through the Laurentians, Eastern Townships, Charlevoix and further afield, including overnight adventures. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Canvas Routes is a Montreal-based car community built around curated road trips, scenic convoy drives, and invite-only Cars and Coffee events across Quebec, Ontario, Vermont, Maine, New York and beyond. We organize road trips through the Laurentians, Eastern Townships, Charlevoix and further afield, including overnight adventures. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.' },
     },
     {
       '@type': 'Question',

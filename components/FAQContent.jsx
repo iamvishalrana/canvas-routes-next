@@ -296,7 +296,7 @@ export default function FAQContent() {
         </div>
         <div style={{ width: '40px', height: '1px', background: '#c5a882', marginBottom: '1.5rem' }} />
         <p style={{ fontSize: '15px', color: '#777', lineHeight: '1.75', maxWidth: '480px' }}>
-          Everything you need to know about Canvas Routes — the car club, the events, and the road ahead.
+          Everything you need to know about Canvas Routes — the community, the events, and the road ahead.
         </p>
       </div>
 
