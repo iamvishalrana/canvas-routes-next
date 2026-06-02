@@ -444,7 +444,7 @@ export default function FAQContent() {
       `}</style>
 
       {/* Fixed road */}
-      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible' }}>
+      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, overflow: 'visible' }}>
         <polyline ref={rl1} fill="none" stroke="rgba(130,110,80,0.12)"  strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl2} fill="none" stroke="rgba(160,135,95,0.2)"  strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl3} fill="none" stroke="rgba(18,14,10,0.88)"   strokeWidth="5"  strokeLinecap="round" strokeLinejoin="round" />
@@ -452,7 +452,7 @@ export default function FAQContent() {
       </svg>
 
       {/* Fixed tire marks */}
-      <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }} />
+      <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* Fixed car + question marks */}
       <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '46px', height: '21px', marginLeft: '-23px', marginTop: '-10.5px', willChange: 'transform', pointerEvents: 'none', zIndex: isMobile ? 101 : 12, opacity: 0, overflow: 'visible' }}>
@@ -550,7 +550,7 @@ export default function FAQContent() {
       </section>
 
       {/* Content */}
-      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2.5rem) 2rem' }}>
+      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2.5rem) 2rem', position: 'relative' }}>
         {isMobile ? (
           /* Mobile: stacked, section label above items */
           SECTIONS.map((section, si) => (
@@ -589,7 +589,7 @@ export default function FAQContent() {
       </div>
 
       {/* CTA + Footer */}
-      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem' }}>
+      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem', position: 'relative' }}>
 
         {/* CTA */}
         <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: '#0F1E14', textAlign: 'center' }}>
