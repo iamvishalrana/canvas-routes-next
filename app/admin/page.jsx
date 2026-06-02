@@ -2881,7 +2881,7 @@ export default function AdminPage() {
         <Link href="/">
           <div style={{ width: '128px', height: '38px', overflow: 'hidden' }}>
             <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
-              style={{ width: '128px', height: 'auto', marginTop: '-66px', display: 'block', opacity: 0.9 }} />
+              style={{ width: '128px', height: 'auto', marginTop: '-82px', display: 'block', opacity: 0.9 }} />
           </div>
         </Link>
         <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginTop: '0.75rem' }}>Admin Panel</div>
@@ -2959,7 +2959,7 @@ export default function AdminPage() {
           <Link href="/">
             <div style={{ width: '96px', height: '25px', overflow: 'hidden' }}>
               <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
-                style={{ width: '96px', height: 'auto', marginTop: '-49px', display: 'block', opacity: 0.9 }} />
+                style={{ width: '96px', height: 'auto', marginTop: '-62px', display: 'block', opacity: 0.9 }} />
             </div>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
