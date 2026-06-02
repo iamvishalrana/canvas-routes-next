@@ -190,7 +190,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const ROUTES_CLOSED = new Date('2026-06-08T04:00:00Z').getTime()
+  const ROUTES_CLOSED = new Date('2026-06-07T03:00:00Z').getTime()
   if (Date.now() >= ROUTES_CLOSED) {
     return Response.json({ error: 'Registration is now closed.' }, { status: 410 })
   }
