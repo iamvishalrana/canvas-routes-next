@@ -301,7 +301,7 @@ export default function FAQContent() {
       const { x, y, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
       lastAngle.current = angle; lastX.current = x; lastY.current = y
       carRef.current.style.transform      = `translate(${x}px,${y}px)`
-      carRef.current.style.opacity        = '1'
+      carRef.current.style.opacity        = isMobile ? '0.5' : '1'
       carInnerRef.current.style.transform = `rotate(${angle}deg)`
     }
     function dropMark() {
@@ -400,7 +400,7 @@ export default function FAQContent() {
       `}</style>
 
       {/* Fixed road */}
-      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible' }}>
+      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible', opacity: isMobile ? 0.5 : 1 }}>
         <polyline ref={rl1} fill="none" stroke="rgba(130,110,80,0.12)"  strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl2} fill="none" stroke="rgba(160,135,95,0.2)"  strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl3} fill="none" stroke="rgba(18,14,10,0.88)"   strokeWidth="5"  strokeLinecap="round" strokeLinejoin="round" />
@@ -429,8 +429,8 @@ export default function FAQContent() {
             lineHeight: 1,
           }}>?</span>
         ))}
-        <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
-          <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
+        <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg viewBox="0 0 56 26" width={isMobile ? 34 : 46} height={isMobile ? 16 : 21} style={{ display: 'block', overflow: 'visible' }}>
             <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
             <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
             <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
