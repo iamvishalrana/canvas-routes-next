@@ -94,7 +94,7 @@ export default function TestPage() {
       const cx       = donutCarX.current
       const cy       = donutCarY.current
       const elapsed  = Date.now() - donutStart.current
-      const spinRad  = (elapsed / DONUT_SPEED) * Math.PI * 2
+      const spinRad  = -(elapsed / DONUT_SPEED) * Math.PI * 2
       const totalRad = donutBaseAngleRef.current + spinRad
       const ns       = 'http://www.w3.org/2000/svg'
 
@@ -148,9 +148,9 @@ export default function TestPage() {
       function spinFrame() {
         if (!isDonuting.current || !carInnerRef.current || !carRef.current) return
         const elapsed  = Date.now() - donutStart.current
-        const spinRad  = (elapsed / DONUT_SPEED) * Math.PI * 2
+        const spinRad  = -(elapsed / DONUT_SPEED) * Math.PI * 2
         const totalRad = baseAngleRad + spinRad
-        const totalDeg = baseAngle + (elapsed / DONUT_SPEED) * 360
+        const totalDeg = baseAngle - (elapsed / DONUT_SPEED) * 360
 
         // Car center orbits the fixed front-axle pivot
         const cx = donutPivotX.current - FRONT_AXLE_OFFSET * Math.cos(totalRad)
