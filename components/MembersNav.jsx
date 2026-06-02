@@ -39,7 +39,7 @@ export default function MembersNav({ email, isAdmin }) {
         height: '72px', position: 'sticky', top: 0, zIndex: 50,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={120} height={80}
+          <Image src="/White%20outline.png" alt="Canvas Routes" width={120} height={80}
             style={{ opacity: 0.9, display: 'block' }} />
         </Link>
 
