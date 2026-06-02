@@ -296,6 +296,7 @@ export default function FAQContent() {
   const slideRafRef       = useRef(null)
   const recoverRafRef     = useRef(null)
   const speechRef         = useRef(null)
+  const qmarksRef         = useRef(null)
 
   useEffect(() => {
     if (!isMobile) {
@@ -424,8 +425,13 @@ export default function FAQContent() {
         speechRef.current.style.animation = 'none'
         speechRef.current.style.opacity = '0'
       }
+      function pauseQmarks() { if (qmarksRef.current) qmarksRef.current.style.visibility = 'hidden' }
+      function resumeQmarks() { if (qmarksRef.current) qmarksRef.current.style.visibility = '' }
       function triggerSlideOff() {
         if (isSlidingRef.current || isRecoveringRef.current) return
+        // Capture actual visual position before stopping donut (car may be mid-circle)
+        const startX = isDonuting.current ? donutCarX.current : lastX.current
+        const startY = isDonuting.current ? donutCarY.current : lastY.current
         if (isDonuting.current) stopDonut()
         cancelAnimationFrame(rafRef.current)
         cancelAnimationFrame(halfDonutRafRef.current)
@@ -433,15 +439,14 @@ export default function FAQContent() {
         clearTimeout(stopTimerR.current)
         isSlidingRef.current = true
 
-        // Snapshot road state at trigger moment
-        const startX = lastX.current, startY = lastY.current
         const roadRad   = lastAngle.current * Math.PI / 180
         // LEFT perpendicular: car slides off toward the content side
         const perpX     = -Math.sin(roadRad), perpY = Math.cos(roadRad)
         const startFacing = lastAngle.current + facingOffsetRef.current
 
-        // Phase 1: bubble appears, car freezes so user reads it (500ms)
+        // Phase 1: bubble appears, ?-marks hide, car freezes so user reads it (500ms)
         showBubble()
+        pauseQmarks()
 
         setTimeout(() => {
           // Phase 2: skid — ease-in, 380px off road, nose swings toward road (CCW when going down, CW when going up)
@@ -510,6 +515,7 @@ export default function FAQContent() {
             lastX.current = curPt.x; lastY.current = curPt.y; lastAngle.current = curPt.angle
             if (carRef.current)      carRef.current.style.transform      = `translate(${curPt.x}px,${curPt.y}px)`
             if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${curPt.angle + facingOffsetRef.current}deg)`
+            resumeQmarks()
             stopTimerR.current = setTimeout(startDonut, 800)
           }
         }
@@ -677,12 +683,14 @@ export default function FAQContent() {
           </div>
         )}
         {/* Question marks — desktop only */}
-        {!isMobile && [
-          { top: '-26px', left: '2px',  delay: '0s'     },
-          { top: '-34px', left: '17px', delay: '0.93s'  },
-          { top: '-24px', left: '32px', delay: '1.87s'  },
-        ].map((pos, i) => (
-          <span key={i} style={{
+        {!isMobile && (
+          <div ref={qmarksRef}>
+          {[
+            { top: '-26px', left: '2px',  delay: '0s'     },
+            { top: '-34px', left: '17px', delay: '0.93s'  },
+            { top: '-24px', left: '32px', delay: '1.87s'  },
+          ].map((pos, i) => (
+            <span key={i} style={{
             position: 'absolute', top: pos.top, left: pos.left,
             fontFamily: 'var(--font-cormorant),serif', fontSize: '15px', fontWeight: '300',
             color: 'rgba(0,0,0,0.72)',
@@ -692,7 +700,9 @@ export default function FAQContent() {
             animationDelay: pos.delay,
             lineHeight: 1,
           }}>?</span>
-        ))}
+          ))}
+          </div>
+        )}
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isMobile ? (
             /* ── Mobile: car photo 65×26 ── */
