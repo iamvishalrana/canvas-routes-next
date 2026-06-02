@@ -1,7 +1,8 @@
 import { createClient } from '../../../lib/supabase/server'
-
-export const metadata = { title: { absolute: 'Members Portal | Canvas Routes' } }
 import MembersNav from '../../../components/MembersNav'
+
+export const dynamic = 'force-dynamic'
+export const metadata = { title: { absolute: 'Members Portal | Canvas Routes' } }
 
 export default async function PortalLayout({ children }) {
   const supabase = await createClient()
