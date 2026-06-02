@@ -36,11 +36,35 @@ export async function GET() {
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const { application_id } = await request.json()
-  if (!application_id) return Response.json({ error: 'application_id required' }, { status: 400 })
-
+  const body = await request.json()
   const supabase = createAdminClient()
-  const { error } = await supabase.from('contacts').insert({ application_id })
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  // Existing flow: link an existing application to contacts
+  if (body.application_id) {
+    const { error } = await supabase.from('contacts').insert({ application_id: body.application_id })
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json({ ok: true })
+  }
+
+  // New flow: create application record + contact directly (no email sent)
+  const { name, email, phone, car_year, car_model } = body
+  if (!name?.trim() || !email?.trim()) return Response.json({ error: 'Name and email are required.' }, { status: 400 })
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Invalid email address.' }, { status: 400 })
+
+  const { data: app, error: appErr } = await supabase.from('applications').upsert({
+    email: email.toLowerCase().trim(),
+    name: name.trim(),
+    phone: phone?.trim() || null,
+    car_year: car_year?.trim() || null,
+    car_model: car_model?.trim() || null,
+    registrations: [],
+  }, { onConflict: 'email' }).select('id').single()
+
+  if (appErr) return Response.json({ error: appErr.message }, { status: 500 })
+
+  const { error: contactErr } = await supabase.from('contacts')
+    .upsert({ application_id: app.id }, { onConflict: 'application_id', ignoreDuplicates: true })
+
+  if (contactErr) return Response.json({ error: contactErr.message }, { status: 500 })
   return Response.json({ ok: true })
 }

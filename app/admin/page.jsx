@@ -1725,6 +1725,10 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [editContactForm, setEditContactForm] = useState({})
   const [savingContact, setSavingContact] = useState(false)
   const [saveContactErr, setSaveContactErr] = useState(null)
+  const [addingNew, setAddingNew] = useState(false)
+  const [newForm, setNewForm] = useState({ name: '', email: '', phone: '', car_year: '', car_model: '' })
+  const [newErr, setNewErr] = useState(null)
+  const [savingNew, setSavingNew] = useState(false)
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -1871,6 +1875,22 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     a.click()
   }
 
+  async function addNewContact(e) {
+    e.preventDefault()
+    setNewErr(null)
+    if (!newForm.name.trim() || !newForm.email.trim()) { setNewErr('Name and email are required.'); return }
+    setSavingNew(true)
+    const res = await fetch('/api/admin/contacts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newForm),
+    })
+    const data = await res.json().catch(() => ({}))
+    setSavingNew(false)
+    if (!res.ok) { setNewErr(data.error || 'Failed to add contact.'); return }
+    setAddingNew(false)
+    setNewForm({ name: '', email: '', phone: '', car_year: '', car_model: '' })
+    loadContacts()
+  }
+
   const filtered = contacts
     .filter(c => !search || [c.name, c.email, c.car_year, c.car_model, c.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && c.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))))
     .sort((a, b) => {
@@ -1927,6 +1947,10 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
           )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
+          <button onClick={() => { setAddingNew(v => !v); setNewErr(null) }}
+            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: addingNew ? '#7B2032' : '#3B6B2F', background: 'none', border: `0.5px solid ${addingNew ? 'rgba(123,32,50,0.35)' : 'rgba(59,107,47,0.35)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+            {addingNew ? 'Cancel' : '+ New Contact'}
+          </button>
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <select value={sortContacts} onChange={e => setSortContacts(e.target.value)}
               style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
@@ -1943,6 +1967,24 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
           </div>
         </div>
       </div>
+
+      {addingNew && (
+        <form onSubmit={addNewContact} style={{ marginBottom: '1.5rem', padding: '1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#888', marginBottom: '1rem' }}>New Contact</div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <div><L>Name *</L><input style={inp} value={newForm.name} onChange={e => setNewForm(p => ({ ...p, name: e.target.value }))} placeholder="Full name" maxLength={100} /></div>
+            <div><L>Email *</L><input style={inp} type="email" value={newForm.email} onChange={e => setNewForm(p => ({ ...p, email: e.target.value }))} placeholder="email@example.com" maxLength={254} /></div>
+            <div><L>Phone</L><input style={inp} value={newForm.phone} onChange={e => setNewForm(p => ({ ...p, phone: e.target.value }))} placeholder="(514) 000-0000" maxLength={30} /></div>
+            <div><L>Car Year</L><input style={inp} value={newForm.car_year} onChange={e => setNewForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
+            <div style={{ gridColumn: isMobile ? undefined : 'span 2' }}><L>Make &amp; Model</L><input style={inp} value={newForm.car_model} onChange={e => setNewForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. BMW M3" maxLength={100} /></div>
+          </div>
+          {newErr && <div style={{ fontSize: '11px', color: '#7B2032', marginBottom: '0.75rem' }}>{newErr}</div>}
+          <button type="submit" disabled={savingNew}
+            style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#fff', background: '#1a1a1a', border: 'none', padding: '8px 20px', cursor: savingNew ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            {savingNew ? 'Adding…' : 'Add Contact'}
+          </button>
+        </form>
+      )}
 
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
