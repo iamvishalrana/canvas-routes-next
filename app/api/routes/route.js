@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 
@@ -274,6 +275,7 @@ export async function POST(request) {
     }, { onConflict: 'email' })
   } catch (e) {
     console.error('Failed to store route registration:', e.message)
+    Sentry.captureException(e, { extra: { context: 'routes-db-save', email: normalEmail } })
   }
 
   // EMAIL 1 — Customer confirmation
@@ -293,11 +295,13 @@ export async function POST(request) {
     })
   } catch (err) {
     console.error(`ALERT: Routes confirm email network error — registration from: ${normalEmail} — ${err}`)
+    Sentry.captureException(err, { extra: { context: 'routes-confirm-email-network', email: normalEmail } })
   }
 
   if (customerEmail && !customerEmail.ok) {
-    const err = await customerEmail.text().catch(() => 'unknown')
-    console.error(`ALERT: Routes confirm email failed — registration from: ${normalEmail} — ${err}`)
+    const errText = await customerEmail.text().catch(() => 'unknown')
+    console.error(`ALERT: Routes confirm email failed — registration from: ${normalEmail} — ${errText}`)
+    Sentry.captureMessage(`Routes confirm email failed — ${normalEmail}`, { level: 'error', extra: { response: errText } })
   }
 
   // EMAIL 2 — Internal notification
@@ -326,6 +330,7 @@ export async function POST(request) {
   }
   if (!notifyOk) {
     console.error(`ALERT: Notify email failed after retry — registration from: ${email}`)
+    Sentry.captureMessage(`Routes notify email failed — ${email}`, { level: 'error', extra: { name, email, year, carModel } })
   }
 
   return Response.json({ success: true })
