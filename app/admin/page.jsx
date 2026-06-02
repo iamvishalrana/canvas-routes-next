@@ -2239,7 +2239,16 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         </div>
                         <div>
                           <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Instagram</div>
-                          <div style={{ fontSize: '13px', color: c.instagram ? '#444' : '#ddd' }}>{c.instagram ? `@${c.instagram}` : '—'}</div>
+                          <div style={{ fontSize: '13px', color: c.instagram ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            {c.instagram ? (
+                              <>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+                                </svg>
+                                <a href={`https://instagram.com/${c.instagram}`} target="_blank" rel="noreferrer" style={{ color: '#444', textDecoration: 'none' }}>@{c.instagram}</a>
+                              </>
+                            ) : '—'}
+                          </div>
                         </div>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
