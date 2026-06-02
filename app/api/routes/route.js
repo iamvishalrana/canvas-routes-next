@@ -131,6 +131,15 @@ Follow us on Instagram: https://www.instagram.com/canvasroutes
 © 2026 Canvas Routes. Montreal, QC.`
 }
 
+function formatDob(dob) {
+  if (!dob) return ''
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const [yr, mo, dy] = dob.split('-')
+  const month = MONTHS[parseInt(mo, 10) - 1] || ''
+  const day = parseInt(dy, 10)
+  return yr === '0000' ? `${month} ${day}` : `${month} ${day}, ${yr}`
+}
+
 function notifyHtml({ name, email, phone, dob, year, carModel, passengers, hasChildren, childrenAges, source, more }) {
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
@@ -157,7 +166,7 @@ function notifyHtml({ name, email, phone, dob, year, carModel, passengers, hasCh
                 ${row('Full name', `<strong>${h(name)}</strong>`)}
                 ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
                 ${row('Phone', h(phone))}
-                ${row('Date of birth', h(dob))}
+                ${row('Date of birth', h(formatDob(dob)))}
                 ${row('Year', h(year))}
                 ${row('Make & Model', h(carModel))}
                 ${row('Passengers', h(passengers))}
@@ -310,7 +319,7 @@ export async function POST(request) {
     to: 'info@canvasroutes.com',
     subject: `Laurentians Registration — ${year} ${carModel} — ${name.trim()}`,
     html: notifyHtml({ name, email, phone, dob, year, carModel, passengers, hasChildren, childrenAges, source, more }),
-    text: `Laurentians Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nDate of birth: ${dob}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}`,
+    text: `Laurentians Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nDate of birth: ${formatDob(dob)}\nYear: ${year}\nMake & Model: ${carModel}\nPassengers: ${passengers}\nChildren: ${hasChildren === 'yes' ? `Yes — ${childrenAges}` : 'No'}\nHow they heard: ${source}${more ? `\nTell us more: ${more}` : ''}`,
   })
 
   let notifyOk = false
