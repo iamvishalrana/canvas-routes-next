@@ -2877,7 +2877,7 @@ export default function AdminPage() {
 
   const sidebarContent = (
     <>
-      <div style={{ padding: '1.75rem 1.5rem 1.5rem', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ padding: '1.75rem 1.5rem 1.5rem', borderBottom: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Link href="/">
           <div style={{ width: '128px', height: '58px', overflow: 'hidden' }}>
             <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
