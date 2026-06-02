@@ -2,43 +2,40 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
+// ── Donut constants (same F40 geometry as FAQ page) ──────────────────────────
 const DONUT_SPEED   = 4500
 const TIRE_INTERVAL = 90
 const REAR_TYRES    = [{ lx: -16.8, ly: -6.9 }, { lx: -16.8, ly: 6.9 }]
 const FRONT_AXLE    = 17
 
-// Dual-angle drift constants
-const MOVE_K   = 0.14   // how fast movement angle tracks cursor direction
-const BODY_K   = 0.07   // how fast body follows movement (lower = more drift)
-const MAX_SLIP = 32     // max degrees of slip angle before clamping
+// ── Spring constants ──────────────────────────────────────────────────────────
+const SPRING  = 0.09   // position lag — lower = heavier, more inertia
+const ANGLE_K = 0.13   // angle smoothing — lower = slower turn-in
 
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 768
   )
 
-  const carRef         = useRef(null)
-  const carInnerRef    = useRef(null)
-  const frontWheelsRef = useRef(null)   // steerable front axle group
-  const tireMarksSvg   = useRef(null)
-  const beam1Ref       = useRef(null)   // headlight beam top
-  const beam2Ref       = useRef(null)   // headlight beam bottom
-  const cursorDotRef   = useRef(null)
-  const rafRef         = useRef(null)
-  const donutRafRef    = useRef(null)
-  const stopTimer      = useRef(null)
-  const tireInterval   = useRef(null)
-  const donutStopTimer = useRef(null)
-  const isDonuting     = useRef(false)
-  const lastX          = useRef(0)
-  const lastY          = useRef(0)
-  const lastAngle      = useRef(0)
-  const donutStart     = useRef(0)
-  const donutBaseAngle = useRef(0)
-  const donutPivotX    = useRef(0)
-  const donutPivotY    = useRef(0)
-  const donutCarX      = useRef(0)
-  const donutCarY      = useRef(0)
+  const carRef          = useRef(null)
+  const carInnerRef     = useRef(null)
+  const tireMarksSvg    = useRef(null)
+  const cursorDotRef    = useRef(null)
+  const rafRef          = useRef(null)
+  const donutRafRef     = useRef(null)
+  const stopTimer       = useRef(null)
+  const tireInterval    = useRef(null)
+  const donutStopTimer  = useRef(null)
+  const isDonuting      = useRef(false)
+  const lastX           = useRef(0)
+  const lastY           = useRef(0)
+  const lastAngle       = useRef(0)
+  const donutStart      = useRef(0)
+  const donutBaseAngle  = useRef(0)
+  const donutPivotX     = useRef(0)
+  const donutPivotY     = useRef(0)
+  const donutCarX       = useRef(0)
+  const donutCarY       = useRef(0)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -50,20 +47,20 @@ export default function TestPage() {
   useEffect(() => {
     if (typeof window === 'undefined' || window.innerWidth < 768) return
 
-    // ── Spring state (plain closure vars — zero React overhead) ───────────────
-    let px = window.innerWidth / 2, py = window.innerHeight / 2  // cursor target
-    let sx = px, sy = py   // smoothed (spring) position
-    let ox = px, oy = py   // previous frame position (for velocity)
-    let moveAngle = 0      // direction the car is actually moving (updates fast)
-    let bodyAngle = 0      // where the body points (lags = visible drift)
+    // ── Spring state (plain vars in closure — no React overhead) ──────────────
+    let px = window.innerWidth / 2,  py = window.innerHeight / 2  // cursor target
+    let sx = px, sy = py   // smoothed position
+    let ox = px, oy = py   // previous smoothed position (for velocity)
+    let angle = 0          // smoothed angle (degrees)
 
+    // Place car at viewport centre immediately
     if (carRef.current) {
       carRef.current.style.transform = `translate(${sx}px,${sy}px)`
       carRef.current.style.opacity   = '1'
     }
-    lastX.current = sx; lastY.current = sy; lastAngle.current = 0
+    lastX.current = sx; lastY.current = sy; lastAngle.current = angle
 
-    // ── Tire marks ────────────────────────────────────────────────────────────
+    // ── Tire mark helpers ─────────────────────────────────────────────────────
     function dropMark() {
       const svg = tireMarksSvg.current; if (!svg) return
       const elapsed  = Date.now() - donutStart.current
@@ -77,7 +74,8 @@ export default function TestPage() {
         el.setAttribute('cx', wx.toFixed(1)); el.setAttribute('cy', wy.toFixed(1))
         el.setAttribute('rx', '3.5');         el.setAttribute('ry', '1.8')
         el.setAttribute('transform', `rotate(${(totalRad * 180/Math.PI + 90).toFixed(1)} ${wx.toFixed(1)} ${wy.toFixed(1)})`)
-        el.setAttribute('fill', 'rgba(197,168,130,0.65)'); el.style.opacity = '1'
+        el.setAttribute('fill', 'rgba(197,168,130,0.65)')
+        el.style.opacity = '1'
         svg.appendChild(el)
         requestAnimationFrame(() => { el.style.transition = 'opacity 2.5s ease-out'; el.style.opacity = '0' })
         setTimeout(() => el.remove(), 2600)
@@ -90,34 +88,32 @@ export default function TestPage() {
       isDonuting.current = false
       cancelAnimationFrame(donutRafRef.current)
       clearInterval(tireInterval.current); clearTimeout(donutStopTimer.current)
-      // Re-anchor spring from donut landing position
+      // Re-anchor spring from wherever the donut landed
       sx = donutCarX.current; sy = donutCarY.current; ox = sx; oy = sy
-      bodyAngle = lastAngle.current; moveAngle = lastAngle.current
       lastX.current = sx; lastY.current = sy
       carRef.current.style.transform      = `translate(${sx}px,${sy}px)`
-      carInnerRef.current.style.transform = `rotate(${bodyAngle}deg)`
+      carInnerRef.current.style.transform = `rotate(${angle}deg)`
     }
 
     function startDonut() {
       if (!carRef.current || !carInnerRef.current || isDonuting.current) return
       isDonuting.current = true; donutStart.current = Date.now()
-      lastAngle.current      = bodyAngle
-      const baseRad          = bodyAngle * Math.PI / 180
-      donutBaseAngle.current = baseRad
-      donutPivotX.current    = lastX.current + FRONT_AXLE * Math.cos(baseRad)
-      donutPivotY.current    = lastY.current + FRONT_AXLE * Math.sin(baseRad)
-      donutCarX.current      = lastX.current
-      donutCarY.current      = lastY.current
+      const baseAngleRad       = lastAngle.current * Math.PI / 180
+      donutBaseAngle.current   = baseAngleRad
+      donutPivotX.current      = lastX.current + FRONT_AXLE * Math.cos(baseAngleRad)
+      donutPivotY.current      = lastY.current + FRONT_AXLE * Math.sin(baseAngleRad)
+      donutCarX.current        = lastX.current
+      donutCarY.current        = lastY.current
       function spinFrame() {
         if (!isDonuting.current || !carRef.current || !carInnerRef.current) return
         const elapsed  = Date.now() - donutStart.current
         const spinRad  = -(elapsed / DONUT_SPEED) * Math.PI * 2
-        const totalRad = baseRad + spinRad
+        const totalRad = baseAngleRad + spinRad
         const cx = donutPivotX.current - FRONT_AXLE * Math.cos(totalRad)
         const cy = donutPivotY.current - FRONT_AXLE * Math.sin(totalRad)
         donutCarX.current = cx; donutCarY.current = cy
         carRef.current.style.transform      = `translate(${cx}px,${cy}px)`
-        carInnerRef.current.style.transform = `rotate(${bodyAngle - (elapsed / DONUT_SPEED) * 360}deg)`
+        carInnerRef.current.style.transform = `rotate(${lastAngle.current - (elapsed/DONUT_SPEED)*360}deg)`
         donutRafRef.current = requestAnimationFrame(spinFrame)
       }
       donutRafRef.current    = requestAnimationFrame(spinFrame)
@@ -125,75 +121,35 @@ export default function TestPage() {
       donutStopTimer.current = setTimeout(stopDonut, 30000)
     }
 
-    // ── Main RAF loop ─────────────────────────────────────────────────────────
+    // ── Cursor spring RAF loop ────────────────────────────────────────────────
     function loop() {
-      // 1. Speed-adaptive spring: tight when near cursor, heavy when far
-      const dist = Math.sqrt((px - sx) * (px - sx) + (py - sy) * (py - sy))
-      const s    = Math.min(0.16, 0.055 + dist * 0.00035)
-      sx += (px - sx) * s
-      sy += (py - sy) * s
+      // Spring toward cursor
+      sx += (px - sx) * SPRING
+      sy += (py - sy) * SPRING
+      // Velocity this frame
       const vx = sx - ox, vy = sy - oy
       ox = sx; oy = sy
       const speed = Math.sqrt(vx * vx + vy * vy)
-
-      // 2. Dual-angle: movement direction updates fast, body lags behind → drift
+      // Update angle only when actually moving (avoids drift at rest)
       if (speed > 0.07) {
-        const raw      = Math.atan2(vy, vx) * 180 / Math.PI
-        const moveDiff = ((raw - moveAngle) % 360 + 540) % 360 - 180
-        moveAngle += moveDiff * MOVE_K
+        const raw  = Math.atan2(vy, vx) * 180 / Math.PI
+        const diff = ((raw - angle) % 360 + 540) % 360 - 180
+        angle += diff * ANGLE_K
       }
-      let bodyDiff = ((moveAngle - bodyAngle) % 360 + 540) % 360 - 180
-      bodyDiff     = Math.max(-MAX_SLIP, Math.min(MAX_SLIP, bodyDiff))
-      bodyAngle   += bodyDiff * (speed > 0.07 ? BODY_K : 0.05)
-
-      // 3. Front wheel steering — driven by current slip angle
-      const slip       = ((moveAngle - bodyAngle) % 360 + 540) % 360 - 180
-      const steerAngle = Math.max(-28, Math.min(28, slip * 0.65))
-      if (frontWheelsRef.current) {
-        if (isDonuting.current) {
-          frontWheelsRef.current.setAttribute('transform', 'rotate(0,49,13)')
-        } else {
-          frontWheelsRef.current.setAttribute('transform', `rotate(${steerAngle.toFixed(1)},49,13)`)
-        }
-      }
-
-      // 4. Headlight beams — two triangular fans from each headlight
-      if (!isDonuting.current && beam1Ref.current && beam2Ref.current) {
-        const rad = bodyAngle * Math.PI / 180
-        const cr  = Math.cos(rad), sr = Math.sin(rad)
-        const pr  = -sr, ps = cr   // perpendicular unit vector
-        const bLen = 240, bHW = 62
-        // Headlight local positions (F40 SVG at 46×21, scaled from 56×26)
-        const lights = [{ lx: 20, ly: -6.7 }, { lx: 20, ly: 6.7 }]
-        const refs   = [beam1Ref, beam2Ref]
-        lights.forEach(({ lx, ly }, i) => {
-          const hx = sx + lx * cr - ly * sr
-          const hy = sy + lx * sr + ly * cr
-          const fx = hx + cr * bLen, fy = hy + sr * bLen
-          refs[i].current.setAttribute('points',
-            `${hx.toFixed(1)},${hy.toFixed(1)} ` +
-            `${(fx + pr * bHW).toFixed(1)},${(fy + ps * bHW).toFixed(1)} ` +
-            `${(fx - pr * bHW).toFixed(1)},${(fy - ps * bHW).toFixed(1)}`)
-        })
-      } else {
-        beam1Ref.current?.setAttribute('points', '')
-        beam2Ref.current?.setAttribute('points', '')
-      }
-
-      // 5. Write car to DOM (donut manages its own transforms)
+      // Only write to DOM when not donuting
       if (!isDonuting.current && carRef.current && carInnerRef.current) {
-        lastX.current = sx; lastY.current = sy; lastAngle.current = bodyAngle
+        lastX.current = sx; lastY.current = sy; lastAngle.current = angle
         carRef.current.style.transform      = `translate(${sx}px,${sy}px)`
-        carInnerRef.current.style.transform = `rotate(${bodyAngle}deg)`
+        carInnerRef.current.style.transform = `rotate(${angle}deg)`
       }
-
       rafRef.current = requestAnimationFrame(loop)
     }
     rafRef.current = requestAnimationFrame(loop)
 
-    // ── Input ─────────────────────────────────────────────────────────────────
+    // ── Mouse events ──────────────────────────────────────────────────────────
     function onMouseMove(e) {
       px = e.clientX; py = e.clientY
+      // Update cursor dot
       if (cursorDotRef.current) {
         cursorDotRef.current.style.transform = `translate(${e.clientX}px,${e.clientY}px)`
         cursorDotRef.current.style.opacity   = '1'
@@ -202,6 +158,7 @@ export default function TestPage() {
       clearTimeout(stopTimer.current)
       stopTimer.current = setTimeout(startDonut, 800)
     }
+
     function onMouseLeave() {
       if (cursorDotRef.current) cursorDotRef.current.style.opacity = '0'
       clearTimeout(stopTimer.current)
@@ -210,6 +167,7 @@ export default function TestPage() {
 
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseleave', onMouseLeave)
+    // Donut on page load while cursor is still outside
     stopTimer.current = setTimeout(startDonut, 1500)
 
     return () => {
@@ -231,21 +189,14 @@ export default function TestPage() {
           position: 'fixed', top: 0, left: 0,
           width: '5px', height: '5px', borderRadius: '50%',
           background: 'rgba(197,168,130,0.45)',
-          border: '0.5px solid rgba(197,168,130,0.7)',
+          border: '0.5px solid rgba(197,168,130,0.65)',
           marginLeft: '-2.5px', marginTop: '-2.5px',
-          pointerEvents: 'none', zIndex: 20, opacity: 0, willChange: 'transform',
+          pointerEvents: 'none', zIndex: 20, opacity: 0,
+          willChange: 'transform',
         }} />
       )}
 
-      {/* Headlight beams — sit below car and tire marks */}
-      {!isMobile && (
-        <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
-          <polygon ref={beam1Ref} fill="rgba(255,248,200,0.07)" />
-          <polygon ref={beam2Ref} fill="rgba(255,248,200,0.07)" />
-        </svg>
-      )}
-
-      {/* Tire marks */}
+      {/* Tire marks layer */}
       <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 11 }} />
 
       {/* Car */}
@@ -260,14 +211,10 @@ export default function TestPage() {
           <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
             <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
               <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
-              {/* Rear wheels — fixed */}
               <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
               <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
-              {/* Front wheels — steerable group, rotates around axle centre (49,13) */}
-              <g ref={frontWheelsRef}>
-                <rect x="45" y="0"   width="8" height="9"  rx="2" fill="#111" />
-                <rect x="45" y="17"  width="8" height="9"  rx="2" fill="#111" />
-              </g>
+              <rect x="45" y="0"   width="8" height="9"  rx="2" fill="#111" />
+              <rect x="45" y="17"  width="8" height="9"  rx="2" fill="#111" />
               <path d="M55,13 C53,9 49,6.5 46,5.5 C41,4.5 35,4.5 28,5 C21,5.5 14,3 8,1 C5,0.5 3,2 3,4.5 L3,21.5 C3,24 5,25.5 8,25 C14,23 21,20.5 28,21 C35,21.5 41,21.5 46,20.5 C49,19.5 53,17 55,13Z" fill="#CC0000" />
               <path d="M46,5.5 C38,6.2 30,6.8 22,7.2 C16,7.5 9,6.2 4.5,5.5"    fill="none" stroke="rgba(255,80,80,0.2)" strokeWidth="1" />
               <path d="M46,20.5 C38,19.8 30,19.2 22,18.8 C16,18.5 9,19.8 4.5,20.5" fill="none" stroke="rgba(255,80,80,0.2)" strokeWidth="1" />
@@ -306,8 +253,9 @@ export default function TestPage() {
         <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Back</Link>
       </nav>
 
-      {/* Content */}
+      {/* Scrollable content */}
       <div style={{ paddingTop: '68px' }}>
+
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '11px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1.25rem' }}>Canvas Routes · Season 2026</div>
@@ -327,7 +275,9 @@ export default function TestPage() {
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1rem' }}>The Route</div>
-            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '1rem' }}>Backroads.<br />No shortcuts.</h2>
+            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '1rem' }}>
+              Backroads.<br />No shortcuts.
+            </h2>
             <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.45)', lineHeight: 1.9, maxWidth: '320px' }}>
               We plan every route to avoid highways. Winding two-lane roads, elevation changes and long sweeping corners.
             </p>
@@ -337,7 +287,9 @@ export default function TestPage() {
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1rem' }}>The Experience</div>
-            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '1rem' }}>Every detail<br />is handled.</h2>
+            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '1rem' }}>
+              Every detail<br />is handled.
+            </h2>
             <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.45)', lineHeight: 1.9, maxWidth: '320px' }}>
               Breakfast before departure. Stops along the route. Group lunch, farewell drinks, and your car photographed on the road.
             </p>
@@ -347,12 +299,15 @@ export default function TestPage() {
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1rem' }}>Membership</div>
-            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '1rem' }}>Your seat<br />is held.</h2>
+            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '1rem' }}>
+              Your seat<br />is held.
+            </h2>
             <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.45)', lineHeight: 1.9, maxWidth: '320px' }}>
               Members get first access to every route before public registration opens.
             </p>
           </div>
         </section>
+
       </div>
 
       <section style={{ background: '#F5F1EC', padding: '6rem 1.5rem', textAlign: 'center' }}>
