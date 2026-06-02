@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -229,6 +229,33 @@ function AccordionItem({ item, isOpen, onToggle }) {
 export default function FAQContent() {
   const [open, setOpen] = useState({})
   const [menuOpen, setMenuOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+  const sectionRefs = useRef([])
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    const observers = sectionRefs.current.map((el, i) => {
+      if (!el) return null
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(i) },
+        { rootMargin: '-20% 0px -60% 0px' }
+      )
+      obs.observe(el)
+      return obs
+    })
+    return () => observers.forEach(o => o?.disconnect())
+  }, [])
+
+  function scrollToSection(i) {
+    sectionRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   function toggle(key) {
     setOpen(prev => ({ ...prev, [key]: !prev[key] }))
@@ -279,9 +306,44 @@ export default function FAQContent() {
       </section>
 
       {/* Content */}
-      <div style={{ maxWidth: '720px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2rem) 6rem' }}>
+      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2.5rem) 6rem', display: isMobile ? 'block' : 'grid', gridTemplateColumns: '160px 1fr', gap: '0 4rem', alignItems: 'start' }}>
+
+        {/* Sticky sidebar */}
+        {!isMobile && (
+          <div style={{ position: 'sticky', top: '100px' }}>
+            {SECTIONS.map((section, si) => (
+              <button
+                key={si}
+                onClick={() => scrollToSection(si)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  textAlign: 'left',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.5rem 0 0.5rem 0.75rem',
+                  marginBottom: '0.15rem',
+                  borderLeft: `2px solid ${activeSection === si ? '#c5a882' : 'transparent'}`,
+                  fontFamily: 'var(--font-inter),sans-serif',
+                  fontSize: '11px',
+                  letterSpacing: '0.06em',
+                  color: activeSection === si ? '#1a1a1a' : '#bbb',
+                  fontWeight: activeSection === si ? '500' : '400',
+                  transition: 'color 0.2s, border-color 0.2s',
+                  lineHeight: '1.4',
+                }}
+              >
+                {section.title}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Accordion content */}
+        <div>
         {SECTIONS.map((section, si) => (
-          <div key={si} style={{ marginBottom: '3.5rem' }}>
+          <div key={si} ref={el => sectionRefs.current[si] = el} style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>
                 {section.title}
@@ -302,6 +364,11 @@ export default function FAQContent() {
             })}
           </div>
         ))}
+        </div>
+      </div>
+
+      {/* CTA + Footer in full-width wrapper */}
+      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem' }}>
 
         {/* CTA */}
         <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: '#0F1E14', textAlign: 'center' }}>
@@ -326,6 +393,7 @@ export default function FAQContent() {
           </div>
         </div>
       </div>
+
     </div>
   )
 }
