@@ -24,10 +24,12 @@ export default function RoutesIndexPage() {
 
   function parseEventDate(dateStr) {
     if (!dateStr) return null
-    // ISO dates like "2026-06-07" parse as UTC midnight — add local noon to avoid timezone shifts
-    const isoMatch = dateStr.match(/^\d{4}-\d{2}-\d{2}$/)
-    if (isoMatch) return new Date(dateStr + 'T12:00:00')
-    const d = new Date(dateStr)
+    const str = dateStr.trim()
+    // ISO format "2026-06-07" → construct in local time to avoid UTC midnight shifting the day
+    const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3])
+    // Text format "June 7, 2026" etc.
+    const d = new Date(str)
     return isNaN(d.getTime()) ? null : d
   }
 
@@ -38,7 +40,7 @@ export default function RoutesIndexPage() {
 
   const past = events.filter(e => {
     const d = parseEventDate(e.date)
-    return !d || d < today
+    return d && d < today
   }).sort((a, b) => parseEventDate(b.date) - parseEventDate(a.date))
 
   function formatDate(dateStr) {
