@@ -2614,12 +2614,12 @@ function DashboardTab({ isMobile, onNavigate }) {
               {recentSignups.length === 0 ? (
                 <div style={{ fontSize: '12px', color: '#ccc' }}>None yet.</div>
               ) : recentSignups.map((r, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: i < recentSignups.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
-                  <div>
-                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{r.name || '—'}</div>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.55rem 0', borderBottom: i < recentSignups.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || '—'}</div>
                     <div style={{ fontSize: '10px', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '2px' }}>{r.type}</div>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#bbb' }}>
+                  <div style={{ fontSize: '11px', color: '#bbb', flexShrink: 0 }}>
                     {new Date(r.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </div>
                 </div>
@@ -2632,12 +2632,12 @@ function DashboardTab({ isMobile, onNavigate }) {
               {upcomingEvents.length === 0 ? (
                 <div style={{ fontSize: '12px', color: '#ccc' }}>No upcoming events in the next 90 days.</div>
               ) : upcomingEvents.map((e, i) => (
-                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
-                  <div>
-                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{e.name}</div>
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.55rem 0', borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
                     {e.type && <div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A6535', marginTop: '2px' }}>{e.type}</div>}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#c5a882' }}>{e.date}</div>
+                  <div style={{ fontSize: '11px', color: '#c5a882', flexShrink: 0 }}>{e.date}</div>
                 </div>
               ))}
             </div>
