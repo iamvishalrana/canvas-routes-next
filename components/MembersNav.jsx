@@ -39,9 +39,9 @@ export default function MembersNav({ email, isAdmin }) {
         height: '72px', position: 'sticky', top: 0, zIndex: 50,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ width: '160px', height: '52px', overflow: 'hidden', flexShrink: 0 }}>
+          <div style={{ width: '149px', height: '48px', overflow: 'hidden', flexShrink: 0 }}>
             <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
-              style={{ width: '160px', height: 'auto', marginTop: '-72px', display: 'block', opacity: 0.9 }} />
+              style={{ width: '149px', height: 'auto', marginTop: '-67px', display: 'block', opacity: 0.9 }} />
           </div>
         </Link>
 
