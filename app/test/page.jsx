@@ -31,11 +31,11 @@ function poly(pts) {
 
 const DONUT_SPEED   = 4500
 const TIRE_INTERVAL = 90
-// Rear-tyre offsets in car-local space (56×26 viewBox, car faces +x, center at 28,13)
-// Rear wheel rects: x=3 w=9 → centerX=7.5; y=-1 h=11 → centerY=4.5, y=16 h=11 → centerY=21.5
-const REAR_TYRES = [{ lx: -20.5, ly: -8.5 }, { lx: -20.5, ly: 8.5 }]
-// Front axle offset from car center (front wheels at x=45 w=8 → centerX=49, car center=28)
-const FRONT_AXLE_OFFSET = 21
+// Rear-tyre offsets in screen pixels (SVG viewBox 56×26 displayed at 46×21, center at 23,10.5)
+// SVG rear wheel centers (7.5,4.5)/(7.5,21.5) scaled by 46/56 and 21/26
+const REAR_TYRES = [{ lx: -16.8, ly: -6.9 }, { lx: -16.8, ly: 6.9 }]
+// Front axle: SVG centerX=49, scaled 49×(46/56)=40.2, offset from screen center 23 → 17.2
+const FRONT_AXLE_OFFSET = 17
 
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(false)
@@ -222,10 +222,10 @@ export default function TestPage() {
       <svg ref={tireMarksSvgRef} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }} />
 
       {/* Fixed car — opacity:0 until first tick to avoid flash at (0,0) */}
-      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '56px', height: '26px', marginLeft: '-28px', marginTop: '-13px', willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0 }}>
+      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '46px', height: '21px', marginLeft: '-23px', marginTop: '-10.5px', willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0 }}>
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}>
-          {/* Ferrari F40 — top-down view, front = right (+x), 56×26 viewBox, center (28,13) */}
-          <svg viewBox="0 0 56 26" width="56" height="26" style={{ display: 'block', overflow: 'visible' }}>
+          {/* Ferrari F40 — top-down view, front = right (+x), 56×26 viewBox displayed at 46×21 */}
+          <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
             {/* Shadow */}
             <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
 
