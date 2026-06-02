@@ -385,42 +385,51 @@ export default function FAQContent() {
         if (carRef.current) carRef.current.style.opacity = '0'
       }
     } else {
-      // ── Mobile: horizontal bounce in the nav header ─────────────────────
-      // Clear any road points so the vertical path doesn't show
+      // ── Mobile: scroll-driven horizontal car at nav bottom edge ──────────
       ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', ''))
 
       const navEl  = document.querySelector('.nav')
       const navH   = navEl?.offsetHeight || 110
       const logoEl = navEl?.querySelector('a')
       const hamEl  = navEl?.querySelector('.hamburger')
-      const xMin = (logoEl?.getBoundingClientRect().right ?? 150) + 10
-      const xMax = (hamEl?.getBoundingClientRect().left   ?? (window.innerWidth - 55)) - 10
-      const y    = navH / 2
+      const xMin = (logoEl?.getBoundingClientRect().right ?? 150) + 8
+      const xMax = (hamEl?.getBoundingClientRect().left   ?? (window.innerWidth - 55)) - 8
+      // carRef has marginTop:-31px → translateY=navH lands wheels on nav bottom line
+      const y = navH
 
-      let x = xMin, dir = 1
+      let lastScrollY = window.scrollY
+      let facingRight = true
 
-      if (carRef.current) {
-        carRef.current.style.opacity   = '1'
-        carRef.current.style.transform = `translate(${x}px,${y}px)`
+      function getMobileX() {
+        const max = document.documentElement.scrollHeight - window.innerHeight
+        if (max <= 0) return xMin
+        return xMin + Math.max(0, Math.min(1, window.scrollY / max)) * (xMax - xMin)
       }
-      if (carInnerRef.current) carInnerRef.current.style.transform = 'scaleX(1)'
 
-      function mobileFrame() {
-        x += dir * 1.5
-        if (x >= xMax) { x = xMax; dir = -1 }
-        if (x <= xMin) { x = xMin; dir =  1 }
+      function updateMobile() {
+        const sy = window.scrollY
+        if (sy > lastScrollY + 1)      facingRight = true
+        else if (sy < lastScrollY - 1) facingRight = false
+        lastScrollY = sy
+        const x = getMobileX()
         if (carRef.current) {
           carRef.current.style.transform = `translate(${x}px,${y}px)`
           carRef.current.style.opacity   = '1'
         }
         if (carInnerRef.current) {
-          carInnerRef.current.style.transform = dir === 1 ? 'scaleX(1)' : 'scaleX(-1)'
+          carInnerRef.current.style.transform = facingRight ? 'scaleX(1)' : 'scaleX(-1)'
         }
-        rafRef.current = requestAnimationFrame(mobileFrame)
       }
-      rafRef.current = requestAnimationFrame(mobileFrame)
+
+      updateMobile()
+      const onScroll = () => {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        rafRef.current = requestAnimationFrame(updateMobile)
+      }
+      window.addEventListener('scroll', onScroll, { passive: true })
 
       return () => {
+        window.removeEventListener('scroll', onScroll)
         cancelAnimationFrame(rafRef.current)
         if (carRef.current) carRef.current.style.opacity = '0'
       }
@@ -454,10 +463,18 @@ export default function FAQContent() {
       {/* Fixed tire marks */}
       <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }} />
 
-      {/* Fixed car + question marks */}
-      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '46px', height: '21px', marginLeft: '-23px', marginTop: '-10.5px', willChange: 'transform', pointerEvents: 'none', zIndex: isMobile ? 101 : 12, opacity: 0, overflow: 'visible' }}>
-        {/* Floating question marks — FAQ-only */}
-        {[
+      {/* Fixed car */}
+      <div ref={carRef} style={{
+        position: 'fixed', top: 0, left: 0,
+        width:       isMobile ? '90px'    : '46px',
+        height:      isMobile ? '32px'    : '21px',
+        marginLeft:  isMobile ? '-45px'   : '-23px',
+        marginTop:   isMobile ? '-31px'   : '-10.5px',
+        willChange: 'transform', pointerEvents: 'none',
+        zIndex: isMobile ? 101 : 12, opacity: 0, overflow: 'visible',
+      }}>
+        {/* Question marks — desktop only */}
+        {!isMobile && [
           { top: '-26px', left: '2px',  delay: '0s'     },
           { top: '-34px', left: '17px', delay: '0.93s'  },
           { top: '-24px', left: '32px', delay: '1.87s'  },
@@ -474,7 +491,44 @@ export default function FAQContent() {
           }}>?</span>
         ))}
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
+          {isMobile ? (
+            /* ── Mobile: F40 side profile ── */
+            <svg viewBox="0 0 120 42" width="90" height="32" style={{ display: 'block', overflow: 'visible' }}>
+              {/* Shadow */}
+              <ellipse cx="60" cy="41" rx="52" ry="1.8" fill="rgba(0,0,0,0.12)" />
+              {/* Rear wing */}
+              <rect x="2"  y="7"   width="2.5" height="14" rx="1"   fill="#1c1c1c" />
+              <rect x="2"  y="7"   width="20"  height="2"  rx="0.8" fill="#1a1a1a" />
+              <rect x="6"  y="9"   width="1.5" height="9"  rx="0.5" fill="#222" />
+              <rect x="18" y="9"   width="1.5" height="9"  rx="0.5" fill="#222" />
+              {/* Rear tyre */}
+              <circle cx="28" cy="33" r="8.5" fill="#111" />
+              <circle cx="28" cy="33" r="5"   fill="#1e1e1e" />
+              <circle cx="28" cy="33" r="2"   fill="#333" />
+              {/* Front tyre */}
+              <circle cx="94" cy="33" r="7.5" fill="#111" />
+              <circle cx="94" cy="33" r="4.5" fill="#1e1e1e" />
+              <circle cx="94" cy="33" r="2"   fill="#333" />
+              {/* Body — F40 side profile with wheel arch cutouts, front = right */}
+              <path d="M 6,22 C 4.5,20 4,17.5 4.5,15.5 C 6,13 16,12.5 28,12.5 C 40,12 50,11.5 56,11.5 L 69,11.5 L 80,12.5 C 84.5,13.5 89.5,15.5 94,17.5 C 102,20.5 110,21.5 114.5,21.5 C 117.5,21.5 119.5,22.5 120,25 C 120.5,27 119,28 117,28 L 102,28 C 101,21.5 87,21.5 86,28 L 38,28 C 37,21 19,21 18,28 L 11,28 C 8.5,26 6.5,23.5 6,22 Z" fill="#CC0000" />
+              {/* Windshield glass */}
+              <path d="M 69,11.5 L 80,12.5 C 85,14 90,15.5 91,17.5 L 83,17 C 80,15.5 75,13.5 69,11.5 Z" fill="rgba(130,195,225,0.45)" />
+              {/* Rear quarter window */}
+              <path d="M 56,11.5 L 69,11.5 L 65,14.5 L 53,14.5 Z" fill="rgba(130,195,225,0.28)" />
+              {/* Door seam */}
+              <line x1="64" y1="11.5" x2="62" y2="28" stroke="rgba(0,0,0,0.14)" strokeWidth="0.8" />
+              {/* Body crease */}
+              <path d="M 28,15 C 42,15.5 56,16 66,16.5 C 76,17 86,18 92,19.5" fill="none" stroke="rgba(255,80,80,0.15)" strokeWidth="0.9" />
+              {/* Side NACA duct */}
+              <ellipse cx="74" cy="21.5" rx="5" ry="1.5" fill="rgba(0,0,0,0.22)" />
+              {/* Headlight (front = right) */}
+              <rect x="110" y="20.5" width="8.5" height="3.5" rx="0.8" fill="rgba(255,250,200,0.85)" />
+              {/* Tail light */}
+              <rect x="4.5" y="18" width="2.5" height="5" rx="0.5" fill="rgba(220,55,55,0.95)" />
+            </svg>
+          ) : (
+            /* ── Desktop: F40 top-down view ── */
+            <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
             <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
             <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
             <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
@@ -505,6 +559,7 @@ export default function FAQContent() {
             <rect x="49" y="1"    width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
             <rect x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
           </svg>
+          )}
         </div>
       </div>
 
