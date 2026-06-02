@@ -271,7 +271,7 @@ export default function RoutesPage() {
                 {stop.venue && <div style={{fontSize:"15px",fontWeight:"500",color:"#F5F1EC",marginBottom:"0.2rem",lineHeight:"1.4"}}>{stop.venue}</div>}
                 {stop.address && <div style={{fontSize:"12px",color:"rgba(245,241,236,0.35)",marginBottom:"0.65rem",letterSpacing:"0.02em"}}>{stop.address}</div>}
                 <div style={{fontSize:"14px",color:"rgba(245,241,236,0.65)",lineHeight:"1.8"}}>
-                  {stop.desc}{stop.pays && <span style={{color:"#c5a882",marginLeft:"0.35rem"}}>Canvas Routes covers this.</span>}
+                  {stop.desc}{stop.pays && <span style={{color:"#c5a882",marginLeft:"0.35rem"}}>Included in the fee.</span>}
                 </div>
               </div>
             </div>
