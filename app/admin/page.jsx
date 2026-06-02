@@ -1280,8 +1280,7 @@ function EventsTab({ isMobile }) {
                         <div style={{ fontSize: '12px', color: '#ccc' }}>Loading…</div>
                       ) : !registrantsData[item.name] || registrantsData[item.name].length === 0 ? (
                         <div style={{ fontSize: '12px', color: '#ccc' }}>No registrants on record.</div>
-                      ) : (
-                        {isMobile ? (
+                      ) : isMobile ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {registrantsData[item.name].map((r, ri) => (
                               <div key={ri} style={{ padding: '0.6rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9' }}>
@@ -1294,25 +1293,24 @@ function EventsTab({ isMobile }) {
                               </div>
                             ))}
                           </div>
-                        ) : (
+                      ) : (
                         <div style={{ overflowX: 'auto' }}>
-                        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: '480px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-                            {['Name', 'Email', 'Phone', 'Type'].map(h => (
-                              <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
+                          <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: '480px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                              {['Name', 'Email', 'Phone', 'Type'].map(h => (
+                                <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
+                              ))}
+                            </div>
+                            {registrantsData[item.name].map((r, ri) => (
+                              <div key={ri} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.name].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                                <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
+                                <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
+                                <div style={{ fontSize: '12px', color: '#888' }}>{r.phone || '—'}</div>
+                                <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535' }}>{r.type}</div>
+                              </div>
                             ))}
                           </div>
-                          {registrantsData[item.name].map((r, ri) => (
-                            <div key={ri} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.name].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
-                              <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
-                              <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
-                              <div style={{ fontSize: '12px', color: '#888' }}>{r.phone || '—'}</div>
-                              <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535' }}>{r.type}</div>
-                            </div>
-                          ))}
                         </div>
-                        </div>
-                        )}
                       )}
                     </div>
                   )}
