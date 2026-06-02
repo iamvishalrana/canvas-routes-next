@@ -248,7 +248,7 @@ export async function POST(request) {
     to: 'info@canvasroutes.com',
     subject: `New Application — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
     html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, ref }),
-    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}${ref ? `\nReferred by: ${ref}` : ''}`,
+    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${['January','February','March','April','May','June','July','August','September','October','November','December'][Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}${ref ? `\nReferred by: ${ref}` : ''}`,
   })
 
   let notifyOk = false
