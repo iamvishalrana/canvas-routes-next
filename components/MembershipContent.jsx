@@ -133,10 +133,12 @@ export default function MembershipContent() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length) {
-      const order = ['name','email','phone','dob_month','year','carMake','tier','source','termsAccepted']
+      const order = ['name','email','phone','dob_month','dob_day','year','carMake','tier','source','termsAccepted']
       const first = order.find(f => errs[f])
       if (first) {
-        const el = document.getElementById(`mem-field-${first}`)
+        // dob_day lives inside the dob_month container — scroll to that
+        const scrollTarget = first === 'dob_day' ? 'dob_month' : first
+        const el = document.getElementById(`mem-field-${scrollTarget}`)
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
       return

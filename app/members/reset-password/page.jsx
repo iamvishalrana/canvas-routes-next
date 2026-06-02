@@ -52,18 +52,23 @@ export default function ResetPasswordPage() {
     if (!passwordsMatch) { setError('Passwords do not match.'); return }
     setLoading(true)
     setError(null)
-    const res = await fetch('/api/auth/set-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, accessToken }),
-    })
-    const data = await res.json()
-    setLoading(false)
-    if (!res.ok) {
-      setError(data.error || 'Could not update password.')
-    } else {
-      setDone(true)
-      setTimeout(() => router.push('/members/login?setup=1'), 2000)
+    try {
+      const res = await fetch('/api/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, accessToken }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || 'Could not update password.')
+      } else {
+        setDone(true)
+        setTimeout(() => router.push('/members/login?setup=1'), 2000)
+      }
+    } catch {
+      setError('Connection error. Please check your network and try again.')
+    } finally {
+      setLoading(false)
     }
   }
 

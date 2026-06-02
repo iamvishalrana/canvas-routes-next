@@ -9,7 +9,8 @@ function Handler() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const next = searchParams.get('next') || '/members/reset-password'
+    const rawNext = searchParams.get('next') || '/members/reset-password'
+    const next = rawNext.startsWith('/') ? rawNext : '/members/reset-password'
     const errorParam = searchParams.get('error')
     const token_hash = searchParams.get('token_hash')
     const type = searchParams.get('type')
@@ -31,6 +32,7 @@ function Handler() {
             router.replace(`/members/login?error=${encodeURIComponent(error?.message || 'Link expired or already used.')}`)
           }
         })
+        .catch(() => router.replace('/members/login?error=Something+went+wrong.'))
       return
     }
 

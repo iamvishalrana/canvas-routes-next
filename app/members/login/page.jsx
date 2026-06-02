@@ -15,7 +15,9 @@ export default function LoginPage() {
   const [error, setError] = useState(null)
   const [resetSent, setResetSent] = useState(false)
   const [setupMsg, setSetupMsg] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768
+  )
   const [focused, setFocused] = useState(null)
 
   useEffect(() => { document.title = 'Sign In — Canvas Routes' }, [])
@@ -37,25 +39,35 @@ export default function LoginPage() {
   async function handleLogin(e) {
     e.preventDefault()
     setLoading(true); setError(null)
-    const res = await fetch('/api/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) { setError(data.error || 'Incorrect email or password.'); setLoading(false) }
-    else { router.push('/members/dashboard'); router.refresh() }
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setError(data.error || 'Incorrect email or password.'); setLoading(false) }
+      else { router.push('/members/dashboard'); router.refresh() }
+    } catch {
+      setError('Connection error. Please check your network and try again.')
+      setLoading(false)
+    }
   }
 
   async function handleForgot(e) {
     e.preventDefault()
     setLoading(true); setError(null)
-    const res = await fetch('/api/auth/forgot-password', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    setLoading(false)
-    if (!res.ok) setError('Could not send reset email. Please check the address and try again.')
-    else setResetSent(true)
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) setError('Could not send reset email. Please check the address and try again.')
+      else setResetSent(true)
+    } catch {
+      setError('Connection error. Please check your network and try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function inputStyle(field) {
