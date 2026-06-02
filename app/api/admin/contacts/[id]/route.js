@@ -12,15 +12,11 @@ export async function PATCH(request, { params }) {
   if (!contact) return Response.json({ error: 'Contact not found' }, { status: 404 })
 
   // Write notes to applications (single source of truth)
-  const { data: app } = await supabase.from('applications')
-    .update({ notes: notes ?? null })
-    .eq('id', contact.application_id)
-    .select('email')
-    .single()
-  if (!app) return Response.json({ error: 'Application not found' }, { status: 404 })
+  await supabase.from('applications').update({ notes: notes ?? null }).eq('id', contact.application_id)
 
-  // Sync to members
-  if (app.email) {
+  // Sync to members via email lookup
+  const { data: app } = await supabase.from('applications').select('email').eq('id', contact.application_id).single()
+  if (app?.email) {
     const { data: mem } = await supabase.from('members').select('id').eq('email', app.email.toLowerCase()).maybeSingle()
     if (mem) await supabase.from('members').update({ notes: notes ?? null }).eq('id', mem.id)
   }

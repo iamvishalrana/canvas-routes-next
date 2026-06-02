@@ -316,12 +316,17 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
       <div style={{ padding: '0 1.5rem 0' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Quick Note</div>
         {editingNote === m.id ? (
-          <input autoFocus value={noteValue} maxLength={200}
-            onChange={e => setNoteValue(e.target.value)}
-            onBlur={() => onSaveNote(m.id, noteValue)}
-            onKeyDown={e => { if (e.key === 'Enter') onSaveNote(m.id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
-            style={{ ...inp, fontSize: '13px', marginBottom: '1.25rem' }}
-            placeholder="e.g. Referred 3 friends, inner circle candidate" />
+          <div style={{ marginBottom: '1.25rem' }}>
+            <input autoFocus value={noteValue} maxLength={200}
+              onChange={e => setNoteValue(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') onSaveNote(m.id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+              style={{ ...inp, fontSize: '13px', marginBottom: '0.5rem' }}
+              placeholder="e.g. Referred 3 friends, inner circle candidate" />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <GhostBtn small onClick={() => onSaveNote(m.id, noteValue)}>Save</GhostBtn>
+              <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
+            </div>
+          </div>
         ) : (
           <div onClick={() => { setEditingNote(m.id); setNoteValue(m.notes || '') }}
             style={{ fontSize: '13px', color: m.notes ? '#444' : '#ccc', cursor: 'text', padding: '0.5rem 0.75rem', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', minHeight: '36px', marginBottom: '1.25rem' }}>
@@ -2381,12 +2386,17 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       <div style={{ marginBottom: '0.5rem' }}>
                         <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Quick Note</div>
                         {editingNote === c.contact_id ? (
-                          <input autoFocus value={noteValue} maxLength={200}
-                            onChange={e => setNoteValue(e.target.value)}
-                            onBlur={() => saveNote(c.contact_id, noteValue)}
-                            onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
-                            style={{ ...inp, fontSize: '13px' }}
-                            placeholder="e.g. Steve — Rangers business" />
+                          <div>
+                            <input autoFocus value={noteValue} maxLength={200}
+                              onChange={e => setNoteValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+                              style={{ ...inp, fontSize: '13px', marginBottom: '0.5rem' }}
+                              placeholder="e.g. Steve — Rangers business" />
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <GhostBtn small onClick={() => saveNote(c.contact_id, noteValue)}>Save</GhostBtn>
+                              <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
+                            </div>
+                          </div>
                         ) : (
                           <div onClick={() => { setEditingNote(c.contact_id); setNoteValue(c.notes || '') }}
                             style={{ fontSize: '13px', color: c.notes ? '#444' : '#ccc', cursor: 'text', padding: '0.5rem 0.75rem', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', minHeight: '36px' }}>
