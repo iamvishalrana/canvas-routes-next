@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/nextjs'
+import { captureException, captureMessage } from '../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 
@@ -203,11 +203,11 @@ export async function POST(request) {
       if (!res.ok) {
         const errText = await res.text().catch(() => 'unknown')
         console.error('Invite email send error:', errText)
-        Sentry.captureMessage(`Member invite email failed — ${email}`, { level: 'error', extra: { response: errText } })
+        captureMessage(`Member invite email failed — ${email}`, { response: errText })
       }
     } catch (err) {
       console.error('Invite email network error:', err)
-      Sentry.captureException(err, { extra: { context: 'member-invite-email-network', email } })
+      captureException(err, { context: 'member-invite-email-network', email })
     }
   } else {
     console.warn('RESEND_API_KEY not set — invite email not sent.')

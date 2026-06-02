@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/nextjs'
+import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
@@ -221,7 +221,7 @@ export async function POST(request) {
     }, { onConflict: 'email' })
   } catch (e) {
     console.error('Failed to store membership application:', e.message)
-    Sentry.captureException(e, { extra: { context: 'membership-waitlist-db-save', email: normalEmail } })
+    captureException(e, { context: 'membership-waitlist-db-save', email: normalEmail })
   }
 
   // Confirmation email to applicant
@@ -241,11 +241,11 @@ export async function POST(request) {
     if (!res.ok) {
       const errText = await res.text().catch(() => 'unknown')
       console.error(`ALERT: Membership confirm email failed — application from: ${normalEmail} — ${errText}`)
-      Sentry.captureMessage(`Membership confirm email failed — ${normalEmail}`, { level: 'error', extra: { response: errText } })
+      captureMessage(`Membership confirm email failed — ${normalEmail}`, { response: errText })
     }
   } catch (err) {
     console.error(`ALERT: Membership confirm email network error — application from: ${normalEmail} — ${err}`)
-    Sentry.captureException(err, { extra: { context: 'membership-confirm-email-network', email: normalEmail } })
+    captureException(err, { context: 'membership-confirm-email-network', email: normalEmail })
   }
 
   // Notification email to admin
@@ -264,11 +264,11 @@ export async function POST(request) {
     if (!notifyRes.ok) {
       const errText = await notifyRes.text().catch(() => 'unknown')
       console.error('Membership notify email failed:', errText)
-      Sentry.captureMessage(`Membership notify email failed — ${normalEmail}`, { level: 'error', extra: { name, email, tier } })
+      captureMessage(`Membership notify email failed — ${normalEmail}`, { name, email, tier })
     }
   } catch (err) {
     console.error('Membership notify email error:', err)
-    Sentry.captureException(err, { extra: { context: 'membership-notify-email-network', email: normalEmail } })
+    captureException(err, { context: 'membership-notify-email-network', email: normalEmail })
   }
 
   return Response.json({ success: true })
