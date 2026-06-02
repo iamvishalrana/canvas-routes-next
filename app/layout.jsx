@@ -1,6 +1,7 @@
 import { Cormorant_Garamond, Inter } from 'next/font/google'
 import CookieBanner from '../components/CookieBanner'
 import RouteTracker from '../components/RouteTracker'
+import BackToTop from '../components/BackToTop'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -168,6 +169,7 @@ export default function RootLayout({ children }) {
       <body>
         <RouteTracker />
         <CookieBanner />
+        <BackToTop />
         <div style={{ overflowX: 'hidden' }}>
           {children}
         </div>
