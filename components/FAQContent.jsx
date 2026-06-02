@@ -3,14 +3,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-
 const SECTIONS = [
   {
-    title: 'About Canvas Routes',
+    title: 'About',
     items: [
       {
         q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a premier automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
+        a: 'Canvas Routes is a Montreal-based automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
       },
       {
         q: 'Who is Canvas Routes for?',
@@ -27,16 +26,15 @@ const SECTIONS = [
       {
         q: 'How do I stay updated on upcoming events?',
         a: 'Follow us on Instagram @canvasroutes and on Facebook. All event announcements drop there first. You can also register at canvasroutes.com to be on our list.',
-        cta: true,
       },
       {
         q: 'I registered — what should I expect?',
-        a: 'All Canvas Routes communication happens by email — confirmations, event details, payment information and updates are all sent directly to your inbox. Please make sure to check your junk or spam folder as our emails can sometimes land there. We recommend adding info@canvasroutes.com to your contacts so nothing gets missed.',
+        a: 'All Canvas Routes communication happens by email — confirmations, event details, payment information and updates are all sent directly to your inbox. Please check your junk or spam folder as our emails can sometimes land there. We recommend adding info@canvasroutes.com to your contacts so nothing gets missed.',
       },
     ],
   },
   {
-    title: 'Cars and Coffee',
+    title: 'Cars & Coffee',
     items: [
       {
         q: 'What is a Canvas Routes Cars and Coffee?',
@@ -45,7 +43,6 @@ const SECTIONS = [
       {
         q: 'How do I get an invite?',
         a: 'Register at canvasroutes.com. All registrations are personally reviewed and confirmed. This is not a first come first served event — we take care with every registration to make sure the right fit is there.',
-        cta: true,
       },
       {
         q: 'Is there a cost to attend?',
@@ -53,20 +50,15 @@ const SECTIONS = [
       },
       {
         q: 'What kind of cars show up?',
-        a: 'A mix of exotics, classics, performance cars and enthusiast builds. Themed events like Exotics and Classics give preference to specific categories but all passionate enthusiasts are welcome.',
+        a: 'A mix of exotics, classics, performance cars and enthusiast builds. Themed events give preference to specific categories but all passionate enthusiasts are welcome.',
       },
       {
         q: 'What if it rains?',
-        a: 'Rain or shine we go ahead — car meets have a great energy regardless of the weather. We only postpone in the case of severe weather conditions. You will always be notified in advance if anything changes.',
+        a: 'Rain or shine we go ahead — meets have a great energy regardless of the weather. We only postpone in the case of severe weather. You will always be notified in advance if anything changes.',
       },
       {
         q: 'Can I bring a friend or spectator?',
         a: 'Absolutely. If they have a car they love, have them register at canvasroutes.com. Spectators are also welcome to come and enjoy the morning.',
-        cta: true,
-      },
-      {
-        q: 'Can I bring my kids?',
-        a: 'Yes — Canvas Routes is a welcoming community for all ages.',
       },
       {
         q: 'What are the rules?',
@@ -75,11 +67,11 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Road Trips — Routes',
+    title: 'Road Trips',
     items: [
       {
         q: 'What is a Canvas Routes road trip?',
-        a: 'A fully planned curated convoy through some of the most scenic backroads in North America and beyond. Every detail is handled — breakfast before departure, stops along the route, group lunch, farewell drinks and personal photography of your car on the road. All you bring is your car and your energy.',
+        a: 'A fully planned curated convoy through some of the most scenic backroads in North America. Every detail is handled — breakfast before departure, stops along the route, group lunch, farewell drinks and personal photography of your car on the road. All you bring is your car and your energy.',
       },
       {
         q: 'What kind of roads can I expect?',
@@ -91,12 +83,7 @@ const SECTIONS = [
       },
       {
         q: 'What is included in the road trip fee?',
-        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day.',
-        note: 'Parking fees (if needed) and your car\'s gas are at your own cost and are not included in the road trip fee.',
-      },
-      {
-        q: 'What makes each road trip unique?',
-        a: 'Every Canvas Routes road trip is built around a signature experience that goes beyond just driving. We plan something special and unexpected at each stop along the way — the kind of moment you did not see coming and will not forget. We keep the details close until the day, but trust us when we say it is worth showing up for.',
+        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are not included.',
       },
       {
         q: 'Can I bring a passenger?',
@@ -108,25 +95,20 @@ const SECTIONS = [
       },
       {
         q: 'What is your cancellation and refund policy?',
-        a: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel or have any questions about a refund, we always encourage you to reach out to us directly — we will do our best to work with you.',
-      },
-      {
-        q: 'What cars are eligible for road trips?',
-        a: 'Performance and driver\'s cars across all eras. The real standard is the person driving — someone who loves the road and shows up with the right attitude. If you are unsure whether your car qualifies, reach out at info@canvasroutes.com.',
+        a: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel, reach out directly — we will always do our best to work with you.',
       },
       {
         q: 'Are road trips members only?',
-        a: 'From June 2026, Canvas Routes members get first access to every road trip — spots open to members before anyone else. Members also get significantly better pricing on every trip. The Into the Laurentians road trip on June 7 is the last trip with open registration before membership launches.',
+        a: 'From June 2026, Canvas Routes members get first access to every road trip — spots open to members before anyone else, at preferred member pricing. The Into the Laurentians road trip on June 7 is the last trip with open registration before membership launches.',
       },
       {
         q: 'How do I register and pay?',
-        a: 'Road trip pricing varies based on membership status. Members receive preferred pricing on all Canvas Routes road trips. Full membership details at canvasroutes.com/membership.',
-        a2: 'To register send an Interac E-transfer to info@canvasroutes.com with your name, car and membership status in the message. Spots are strictly limited and confirmed on a first paid basis. Registration deadlines apply for each trip.',
+        a: 'Registration is handled through canvasroutes.com. Once confirmed, payment details are sent by email. Spots are strictly limited and confirmed on a first paid basis. Registration deadlines apply for each trip.',
       },
     ],
   },
   {
-    title: 'Overnight and Long Distance Trips',
+    title: 'Overnight & Long Distance',
     items: [
       {
         q: 'Do you organize overnight trips?',
@@ -134,7 +116,7 @@ const SECTIONS = [
       },
       {
         q: 'What is the Canvas Routes flagship road trip?',
-        a: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, one of the greatest driving roads in North America. This is a trip we are actively planning for this season or next depending on interest. If you want to be part of it reach out at info@canvasroutes.com and we will keep you in the loop.',
+        a: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, one of the greatest driving roads in North America. This is a trip we are actively planning. Reach out at info@canvasroutes.com to be kept in the loop.',
       },
       {
         q: 'How far do your road trips go?',
@@ -147,16 +129,19 @@ const SECTIONS = [
     items: [
       {
         q: 'When do memberships launch?',
-        a: 'Canvas Routes memberships launch June 2026. Register your interest at canvasroutes.com/membership to secure early access before we open to the public.',
-        cta: true,
+        a: 'Canvas Routes memberships have launched for the 2026 season. Register your interest at canvasroutes.com/membership.',
       },
       {
-        q: 'What will membership include?',
-        a: 'Priority registration for all events and road trips, access to members only experiences, partner discounts, a Canvas Routes welcome kit and more. Full details dropping at launch.',
+        q: 'What does membership include?',
+        a: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes welcome kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.',
       },
       {
         q: 'How much does membership cost?',
-        a: 'Membership hasn\'t launched yet. Pricing and full details will be available at canvasroutes.com/membership when we go live.',
+        a: 'Routes Member is $99 CAD per season. Inner Circle is $249 CAD per season. Full details and benefits at canvasroutes.com/membership.',
+      },
+      {
+        q: 'What is the difference between Routes Member and Inner Circle?',
+        a: 'Routes Member gives you full access to every Canvas Routes event and road trip with priority registration all season. Inner Circle includes everything in Routes Member plus 48hr exclusive early access to all events, a $70 road trip credit, a professional car photoshoot on a road trip, exclusive partner discounts, and a Canvas Routes cap.',
       },
     ],
   },
@@ -164,7 +149,7 @@ const SECTIONS = [
 
 function AccordionItem({ item, isOpen, onToggle }) {
   return (
-    <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+    <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
       <button
         onClick={onToggle}
         style={{
@@ -173,7 +158,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '2rem',
-          padding: '1.4rem 0',
+          padding: '1.35rem 0',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
@@ -182,84 +167,68 @@ function AccordionItem({ item, isOpen, onToggle }) {
         }}
       >
         <span style={{
-          fontSize: '15px',
+          fontSize: '14px',
           fontWeight: '400',
-          color: isOpen ? '#1a1a1a' : '#3a3a3a',
+          color: '#1a1a1a',
           lineHeight: '1.5',
           flex: 1,
-          transition: 'color 0.15s',
         }}>
           {item.q}
         </span>
-        <div style={{ flexShrink: 0, color: isOpen ? '#c5a882' : '#aaa', display: 'flex', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.22s ease-in-out, color 0.15s' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{
+          flexShrink: 0,
+          width: '22px',
+          height: '22px',
+          border: `0.5px solid ${isOpen ? 'rgba(197,168,130,0.5)' : 'rgba(0,0,0,0.12)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: isOpen ? '#c5a882' : '#aaa',
+          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.22s ease, border-color 0.15s, color 0.15s',
+        }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </div>
       </button>
 
-      {isOpen && (
-          <div style={{ overflow: 'hidden' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateRows: isOpen ? '1fr' : '0fr',
+        transition: 'grid-template-rows 0.25s ease',
+      }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ paddingBottom: '1.5rem', paddingRight: '2rem' }}>
             <p style={{
               fontSize: '14px',
               color: '#666',
               lineHeight: '1.9',
-              margin: (item.a2 || item.note || item.cta || item.ctaRoute) ? '0 0 0.6rem' : '0 0 1.6rem',
-              paddingRight: '2.5rem',
+              margin: 0,
               fontFamily: 'var(--font-inter),sans-serif',
             }}>
               {item.a}
             </p>
             {item.a2 && (
-              <p style={{
-                fontSize: '14px',
-                color: '#666',
-                lineHeight: '1.9',
-                margin: (item.note || item.cta || item.ctaRoute) ? '0 0 0.6rem' : '0 0 1.6rem',
-                paddingRight: '2.5rem',
-                fontFamily: 'var(--font-inter),sans-serif',
-              }}>
+              <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.9', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
                 {item.a2}
               </p>
             )}
             {item.note && (
-              <p style={{
-                fontSize: '14px',
-                color: '#1a1a1a',
-                fontWeight: '500',
-                lineHeight: '1.9',
-                margin: (item.cta || item.ctaRoute) ? '0 0 1rem' : '0 0 1.6rem',
-                paddingRight: '2.5rem',
-                fontFamily: 'var(--font-inter),sans-serif',
-              }}>
+              <p style={{ fontSize: '14px', color: '#444', fontWeight: '500', lineHeight: '1.9', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
                 {item.note}
               </p>
             )}
-            {(item.cta || item.ctaRoute) && (
-              <div style={{ marginBottom: '1.6rem' }}>
-                <Link href={item.ctaRoute ? '/routes' : '/#join'} style={{
-                  display: 'inline-block',
-                  padding: '0.6rem 1.4rem',
-                  background: '#7B2032',
-                  color: '#fff',
-                  fontSize: '11px',
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  fontFamily: 'var(--font-inter),sans-serif',
-                }}>
-                  Register
-                </Link>
-              </div>
-            )}
           </div>
-        )}
+        </div>
+      </div>
     </div>
   )
 }
 
 export default function FAQContent() {
   const [open, setOpen] = useState({})
+  const [menuOpen, setMenuOpen] = useState(false)
 
   function toggle(key) {
     setOpen(prev => ({ ...prev, [key]: !prev[key] }))
@@ -269,47 +238,55 @@ export default function FAQContent() {
     <div style={{ background: '#F5F1EC', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif' }}>
 
       {/* Nav */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '0 3rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)',
-        background: '#F5F1EC', height: '72px',
-      }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ display: 'block' }} />
+      <nav className="nav">
+        <Link href="/">
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#888', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            ← Back
-          </Link>
-          <Link href="/#join" style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none', background: '#7B2032', padding: '0.55rem 1.4rem' }}>
-            Join
-          </Link>
+        <div className="nav-links">
+          <Link href="/" style={{ color: '#555', textDecoration: 'none' }}>Home</Link>
+          <Link href="/#events" style={{ color: '#555', textDecoration: 'none' }}>Events</Link>
+          <Link href="/#contact" style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
+          <Link href="/faq" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: '500' }}>FAQ</Link>
         </div>
+        <Link href="/#join" className="nav-join">Join</Link>
+        <button className="hamburger btn-push" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
+          <span /><span /><span />
+        </button>
       </nav>
-
-      {/* Hero */}
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '5rem 2rem 4rem' }}>
-        <div style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1rem' }}>Community</div>
-        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '3rem', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.1', marginBottom: '1.5rem' }}>
-          Frequently asked questions.
-        </div>
-        <div style={{ width: '40px', height: '1px', background: '#c5a882', marginBottom: '1.5rem' }} />
-        <p style={{ fontSize: '15px', color: '#777', lineHeight: '1.75', maxWidth: '480px' }}>
-          Everything you need to know about Canvas Routes — the community, the events, and the road ahead.
-        </p>
+      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+        <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Home</Link>
+        <Link href="/#events" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Events</Link>
+        <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
+        <Link href="/faq" onClick={() => setMenuOpen(false)} style={{ color: '#1a1a1a', fontWeight: '500' }}>FAQ</Link>
+        <Link href="/#join" onClick={() => setMenuOpen(false)} style={{ color: '#1a1a1a', fontWeight: '500' }}>Join</Link>
+        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#3B6B2F', fontWeight: '500' }}>Members Login</Link>
       </div>
 
-      {/* Sections */}
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 2rem 6rem' }}>
+      {/* Hero */}
+      <section style={{ background: '#0F1E14', padding: 'clamp(120px,14vw,180px) 2rem 5rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
+        <div style={{ fontSize: '11px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+          Canvas Routes
+        </div>
+        <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,6vw,4.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.25rem', letterSpacing: '-0.01em' }}>
+          Frequently Asked Questions
+        </h1>
+        <div style={{ width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
+        <p style={{ fontSize: '15px', color: 'rgba(245,241,236,0.5)', maxWidth: '400px', margin: '0 auto', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }}>
+          Everything you need to know about the community, the events and the road ahead.
+        </p>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)' }} />
+      </section>
+
+      {/* Content */}
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2rem) 6rem' }}>
         {SECTIONS.map((section, si) => (
-          <div key={si} style={{ marginBottom: '4rem' }}>
-            <div style={{
-              fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase',
-              color: '#7B2032', marginBottom: '1.5rem', paddingBottom: '1.2rem',
-              borderBottom: '0.5px solid rgba(0,0,0,0.12)',
-            }}>
-              {section.title}
+          <div key={si} style={{ marginBottom: '3.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>
+                {section.title}
+              </div>
+              <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.25)' }} />
             </div>
 
             {section.items.map((item, ii) => {
@@ -327,30 +304,28 @@ export default function FAQContent() {
         ))}
 
         {/* CTA */}
-        <div style={{ marginTop: '2rem', padding: '3rem', background: '#0F1E14', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
+        <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: '#0F1E14', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.6rem,3.5vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
             Still have questions?
           </div>
           <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.25rem' }} />
-          <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.85', maxWidth: '360px', margin: '0 auto' }}>
+          <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.85', maxWidth: '340px', margin: '0 auto', fontFamily: 'var(--font-inter),sans-serif' }}>
             Reach out at{' '}
-            <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none' }}>
-              info@canvasroutes.com
-            </a>
+            <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none' }}>info@canvasroutes.com</a>
             {' '}or follow us at{' '}
-            <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none' }}>
-              @canvasroutes
-            </a>
+            <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none' }}>@canvasroutes</a>
           </p>
         </div>
 
         {/* Footer */}
-        <div style={{ paddingTop: '2.5rem', marginTop: '3rem', borderTop: '0.5px solid rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <p style={{ fontSize: '11px', color: '#aaa' }}>© 2026 Canvas Routes. Montreal, QC. — info@canvasroutes.com</p>
-          <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none', letterSpacing: '0.03em' }}>Privacy Policy</Link>
+        <div style={{ paddingTop: '2.5rem', marginTop: '3rem', borderTop: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <p style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>© 2026 Canvas Routes. Montreal, QC.</p>
+          <div style={{ display: 'flex', gap: '1.25rem' }}>
+            <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link href="/terms" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Terms</Link>
+          </div>
         </div>
       </div>
-
     </div>
   )
 }
