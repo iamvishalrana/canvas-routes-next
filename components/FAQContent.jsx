@@ -436,16 +436,17 @@ export default function FAQContent() {
         // Snapshot road state at trigger moment
         const startX = lastX.current, startY = lastY.current
         const roadRad   = lastAngle.current * Math.PI / 180
-        const perpX     = Math.sin(roadRad), perpY = -Math.cos(roadRad)
+        // LEFT perpendicular: car slides off toward the content side
+        const perpX     = -Math.sin(roadRad), perpY = Math.cos(roadRad)
         const startFacing = lastAngle.current + facingOffsetRef.current
 
         // Phase 1: bubble appears, car freezes so user reads it (500ms)
         showBubble()
 
         setTimeout(() => {
-          // Phase 2: skid — ease-in (acceleration), 220px off road, 52° skid rotation
-          const endX = startX + perpX * 220, endY = startY + perpY * 220
-          const endFacing = startFacing + 52
+          // Phase 2: skid — ease-in, 380px off road, nose swings toward road (CCW when going down, CW when going up)
+          const endX = startX + perpX * 380, endY = startY + perpY * 380
+          const endFacing = startFacing + (facingOffsetRef.current === 180 ? 52 : -52)
           const dur = 700, t0 = Date.now()
           function slideFrame() {
             const t    = Math.min(1, (Date.now() - t0) / dur)
@@ -503,10 +504,12 @@ export default function FAQContent() {
             recoverRafRef.current = requestAnimationFrame(recoverFrame)
           } else {
             isRecoveringRef.current = false
-            // Manually settle car onto road (avoids scroll-jump from update())
-            lastX.current = toX; lastY.current = toY; lastAngle.current = toAngle
-            if (carRef.current)      carRef.current.style.transform      = `translate(${toX}px,${toY}px)`
-            if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${finalFacing}deg)`
+            // Settle at current scroll position (user may have scrolled during the 3s recovery)
+            const curIdx = Math.min(Math.round(getScrollProgress() * C_STEPS), C_STEPS)
+            const curPt  = pointsRef.current[curIdx]
+            lastX.current = curPt.x; lastY.current = curPt.y; lastAngle.current = curPt.angle
+            if (carRef.current)      carRef.current.style.transform      = `translate(${curPt.x}px,${curPt.y}px)`
+            if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${curPt.angle + facingOffsetRef.current}deg)`
             stopTimerR.current = setTimeout(startDonut, 800)
           }
         }
@@ -666,7 +669,7 @@ export default function FAQContent() {
             transformOrigin: 'right center',
             boxShadow: '0 2px 12px rgba(0,0,0,0.09)',
           }}>
-            Slow down! Slow down!
+            SLOW DOWN! SLOW DOWN!
             {/* Tail border */}
             <span style={{ position:'absolute', right:'-7px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'5px solid transparent', borderBottom:'5px solid transparent', borderLeft:'7px solid rgba(197,168,130,0.5)' }} />
             {/* Tail fill */}
