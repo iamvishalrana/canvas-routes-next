@@ -31,8 +31,8 @@ function poly(pts) {
 
 const DONUT_SPEED = 4500   // ms per revolution — very slow and dramatic
 const TIRE_INTERVAL = 90   // ms between mark drops
-// Rear-tyre offsets in car-local space (car faces +x)
-const REAR_TYRES = [{ lx: -13, ly: 8 }, { lx: -13, ly: -8 }]
+// Rear-tyre offsets in car-local space (car faces +x, 60×30 viewBox centred at 30,15)
+const REAR_TYRES = [{ lx: -20, ly: -11 }, { lx: -20, ly: 11 }]
 
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(false)
@@ -192,30 +192,31 @@ export default function TestPage() {
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}>
           <svg viewBox="0 0 44 22" width="44" height="22" style={{ display: 'block', overflow: 'visible' }}>
             {/* Shadow */}
-            <ellipse cx="23" cy="13" rx="19" ry="9" fill="rgba(0,0,0,0.35)" />
-            {/* Body */}
-            <rect x="2" y="3" width="40" height="16" rx="5" fill="#c5a882" />
-            {/* Cabin roof */}
-            <rect x="11" y="4" width="18" height="14" rx="3" fill="rgba(10,20,14,0.22)" />
+            <ellipse cx="22" cy="13.5" rx="19.5" ry="8" fill="rgba(0,0,0,0.4)" />
+            {/* Rear spoiler (sits behind body) */}
+            <rect x="0.5" y="7" width="2" height="8" rx="0.8" fill="rgba(80,60,35,0.9)" />
+            {/* Body — wide rear, narrow pointed nose; front = right */}
+            <path d="M43,11 C42,8.5 40,6 37,5 C33,4 27,4 20,4.5 C14,5 10,4.5 6,4 C3.5,3.8 2.5,5.5 2.5,7.5 L2.5,14.5 C2.5,16.5 3.5,18.2 6,18 C10,17.5 14,17 20,17.5 C27,18 33,18 37,17 C40,16 42,13.5 43,11Z" fill="#c5a882" />
+            {/* Hood crease */}
+            <path d="M37,5 C40,7 42,9 43,11 C42,13 40,15 37,17" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="1" />
             {/* Windshield (front = right) */}
-            <rect x="27" y="4.5" width="9" height="13" rx="2.5" fill="rgba(160,210,235,0.35)" stroke="rgba(197,168,130,0.25)" strokeWidth="0.5" />
+            <path d="M36,6 C39,8 39,14 36,16 L30,15 L30,7Z" fill="rgba(155,210,235,0.42)" stroke="rgba(197,168,130,0.3)" strokeWidth="0.5" />
+            {/* Cabin roof */}
+            <path d="M30,7 L36,6 L36,16 L30,15 L19,14.5 L19,7.5Z" fill="rgba(8,18,12,0.32)" />
             {/* Rear window */}
-            <rect x="5"  y="5"   width="7" height="12" rx="2"   fill="rgba(160,210,235,0.2)"  stroke="rgba(197,168,130,0.15)" strokeWidth="0.5" />
-            {/* Roof highlight */}
-            <rect x="13" y="4.5" width="9" height="13" rx="2"   fill="rgba(255,255,255,0.07)" />
-            {/* Door line */}
-            <line x1="22" y1="3" x2="22" y2="19" stroke="rgba(0,0,0,0.18)" strokeWidth="0.6" />
-            {/* Wheels — 4 corners */}
-            <rect x="1"  y="1"  width="7" height="5" rx="1.5" fill="#111" />
-            <rect x="1"  y="16" width="7" height="5" rx="1.5" fill="#111" />
-            <rect x="36" y="1"  width="7" height="5" rx="1.5" fill="#111" />
-            <rect x="36" y="16" width="7" height="5" rx="1.5" fill="#111" />
-            {/* Headlights (front = right) */}
-            <circle cx="42.5" cy="5"  r="2"   fill="rgba(255,250,190,0.95)" />
-            <circle cx="42.5" cy="17" r="2"   fill="rgba(255,250,190,0.95)" />
-            {/* Tail lights */}
-            <circle cx="1.5"  cy="5"  r="1.5" fill="rgba(220,60,60,0.75)" />
-            <circle cx="1.5"  cy="17" r="1.5" fill="rgba(220,60,60,0.75)" />
+            <path d="M19,7.5 L19,14.5 L14.5,14 L14.5,8Z" fill="rgba(155,210,235,0.22)" stroke="rgba(197,168,130,0.18)" strokeWidth="0.4" />
+            {/* Front wheels */}
+            <rect x="37" y="0"  width="5.5" height="7"   rx="1.5" fill="#111" />
+            <rect x="37" y="15" width="5.5" height="7"   rx="1.5" fill="#111" />
+            {/* Rear wheels — wider than front */}
+            <rect x="2"  y="-0.5" width="7" height="8"  rx="1.5" fill="#111" />
+            <rect x="2"  y="14.5" width="7" height="8"  rx="1.5" fill="#111" />
+            {/* Headlights — angular sweep */}
+            <path d="M42,8.5 L43.5,10.5 L43.5,11.5 L42,13.5 L39.5,12.5 L39.5,9.5Z" fill="rgba(255,252,200,0.95)" />
+            {/* Tail light bar */}
+            <rect x="2.5" y="8"   width="1.5" height="6"   rx="0.5" fill="rgba(220,55,55,0.9)" />
+            <rect x="2.5" y="5.5" width="1.5" height="2.5" rx="0.5" fill="rgba(200,50,50,0.7)" />
+            <rect x="2.5" y="14"  width="1.5" height="2.5" rx="0.5" fill="rgba(200,50,50,0.7)" />
           </svg>
         </div>
       </div>
