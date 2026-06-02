@@ -191,7 +191,7 @@ function AdminNotesPanel({ initialNotes, onSave }) {
 
 // ─── Member Expanded Panel ───────────────────────────────────────────────────
 
-function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
+function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, noteValue, setEditingNote, setNoteValue, onSaveNote }) {
 
   const initials = (m.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const memberSinceRaw = m.created_at || m.password_set_at
@@ -312,6 +312,24 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile }) {
         })}
       </div>
 
+      {/* Quick Note */}
+      <div style={{ padding: '0 1.5rem 0' }}>
+        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Quick Note</div>
+        {editingNote === m.id ? (
+          <input autoFocus value={noteValue} maxLength={200}
+            onChange={e => setNoteValue(e.target.value)}
+            onBlur={() => onSaveNote(m.id, noteValue)}
+            onKeyDown={e => { if (e.key === 'Enter') onSaveNote(m.id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+            style={{ ...inp, fontSize: '13px', marginBottom: '1.25rem' }}
+            placeholder="e.g. Referred 3 friends, inner circle candidate" />
+        ) : (
+          <div onClick={() => { setEditingNote(m.id); setNoteValue(m.notes || '') }}
+            style={{ fontSize: '13px', color: m.notes ? '#444' : '#ccc', cursor: 'text', padding: '0.5rem 0.75rem', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', minHeight: '36px', marginBottom: '1.25rem' }}>
+            {m.notes || 'Click to add a note…'}
+          </div>
+        )}
+      </div>
+
       {/* Admin Notes */}
       <div style={{ padding: '1.25rem 1.5rem' }}>
         <AdminNotesPanel
@@ -352,6 +370,8 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [selected, setSelected] = useState(new Set())
   const [sort, setSort] = useState('newest')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [editingNote, setEditingNote] = useState(null)
+  const [noteValue, setNoteValue] = useState('')
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -431,6 +451,16 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     const res = await fetch(`/api/admin/members/${m.id}`, { method: 'DELETE' })
     if (!res.ok) { const d = await res.json(); setActionError(d.error || 'Failed to delete.'); return }
     load()
+  }
+
+  async function saveMemberNote(memberId, value) {
+    const trimmed = value.trim()
+    await fetch(`/api/admin/members/${memberId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: trimmed || null }),
+    })
+    setMembers(prev => prev.map(x => x.id === memberId ? { ...x, notes: trimmed || null } : x))
+    setEditingNote(null)
   }
 
   async function toggleMemberAttendance(m, eventName, value) {
@@ -788,7 +818,10 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                               style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
                             />
                           </div>
-                          <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
+                          <div>
+                            <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</div>
+                            {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '1px' }}>{m.notes}</div>}
+                          </div>
                           <Badge status={m.membership_status} />
                         </div>
                         <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
@@ -821,7 +854,10 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
                       />
                     </div>
-                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
+                      {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{m.notes}</div>}
+                    </div>
                     <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
                     <div><Badge status={m.membership_status} /></div>
                     <div style={{ fontSize: '12px', color: '#888' }}>
@@ -849,7 +885,8 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   )}
 
                   {expanded === m.id && (
-                    <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile} />
+                    <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile}
+                      editingNote={editingNote} noteValue={noteValue} setEditingNote={setEditingNote} setNoteValue={setNoteValue} onSaveNote={saveMemberNote} />
                   )}
                 </>
               )}
