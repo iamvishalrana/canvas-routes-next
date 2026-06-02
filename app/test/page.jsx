@@ -8,8 +8,8 @@ const NAV_H = 68
 function buildPoints(isMobile) {
   const vw     = window.innerWidth
   const vh     = window.innerHeight
-  const cx     = isMobile ? vw * 0.50 : vw * 0.88
-  const amp    = isMobile ? vw * 0.16 : vw * 0.04
+  const cx     = isMobile ? vw * 0.82 : vw * 0.88
+  const amp    = isMobile ? vw * 0.06 : vw * 0.04
   const yStart = NAV_H
   const yEnd   = vh - 12
   const cycles = 2.5
