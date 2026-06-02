@@ -10,7 +10,7 @@ const SECTIONS = [
     items: [
       {
         q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a luxury automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
+        a: 'Canvas Routes is a premier automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a high curatorial standard across all our events.',
       },
       {
         q: 'Who is Canvas Routes for?',
@@ -112,7 +112,7 @@ const SECTIONS = [
       },
       {
         q: 'What cars are eligible for road trips?',
-        a: 'Performance and luxury vehicles across all eras. The real standard is the person driving — someone who loves the road and shows up with the right attitude. If you are unsure whether your car qualifies, reach out at info@canvasroutes.com.',
+        a: 'Performance and driver\'s cars across all eras. The real standard is the person driving — someone who loves the road and shows up with the right attitude. If you are unsure whether your car qualifies, reach out at info@canvasroutes.com.',
       },
       {
         q: 'Are road trips members only?',
