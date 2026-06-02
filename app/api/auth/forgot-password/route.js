@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit.js'
@@ -141,11 +142,13 @@ export async function POST(request) {
     })
 
     if (!res.ok) {
-      const err = await res.text().catch(() => 'unknown')
-      console.error('Password reset email send error:', err)
+      const errText = await res.text().catch(() => 'unknown')
+      console.error('Password reset email send error:', errText)
+      Sentry.captureMessage(`Password reset email failed — ${email.trim()}`, { level: 'error', extra: { response: errText } })
     }
   } catch (err) {
     console.error('Password reset email network error:', err)
+    Sentry.captureException(err, { extra: { context: 'forgot-password-email-network', email: email.trim() } })
   }
 
   return Response.json({ success: true })
