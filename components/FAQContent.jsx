@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -229,9 +229,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
 export default function FAQContent() {
   const [open, setOpen] = useState({})
   const [menuOpen, setMenuOpen] = useState(false)
-  const [activeSection, setActiveSection] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
-  const sectionRefs = useRef([])
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -239,23 +237,6 @@ export default function FAQContent() {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
-
-  useEffect(() => {
-    const observers = sectionRefs.current.map((el, i) => {
-      if (!el) return null
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(i) },
-        { rootMargin: '-20% 0px -60% 0px' }
-      )
-      obs.observe(el)
-      return obs
-    })
-    return () => observers.forEach(o => o?.disconnect())
-  }, [])
-
-  function scrollToSection(i) {
-    sectionRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
 
   function toggle(key) {
     setOpen(prev => ({ ...prev, [key]: !prev[key] }))
@@ -306,68 +287,45 @@ export default function FAQContent() {
       </section>
 
       {/* Content */}
-      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2.5rem) 6rem', display: isMobile ? 'block' : 'grid', gridTemplateColumns: '160px 1fr', gap: '0 4rem', alignItems: 'start' }}>
-
-        {/* Sticky sidebar */}
-        {!isMobile && (
-          <div style={{ position: 'sticky', top: '100px' }}>
+      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2.5rem) 2rem' }}>
+        {isMobile ? (
+          /* Mobile: stacked, section label above items */
+          SECTIONS.map((section, si) => (
+            <div key={si} style={{ marginBottom: '3.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
+                <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>{section.title}</div>
+                <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.25)' }} />
+              </div>
+              {section.items.map((item, ii) => (
+                <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
+              ))}
+            </div>
+          ))
+        ) : (
+          /* Desktop: 2-col grid, label sticky in its own row */
+          <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', columnGap: '4rem', rowGap: '3.5rem', alignItems: 'start' }}>
             {SECTIONS.map((section, si) => (
-              <button
-                key={si}
-                onClick={() => scrollToSection(si)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  textAlign: 'left',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0.5rem 0 0.5rem 0.75rem',
-                  marginBottom: '0.15rem',
-                  borderLeft: `2px solid ${activeSection === si ? '#c5a882' : 'transparent'}`,
-                  fontFamily: 'var(--font-inter),sans-serif',
-                  fontSize: '11px',
-                  letterSpacing: '0.06em',
-                  color: activeSection === si ? '#1a1a1a' : '#bbb',
-                  fontWeight: activeSection === si ? '500' : '400',
-                  transition: 'color 0.2s, border-color 0.2s',
-                  lineHeight: '1.4',
-                }}
-              >
-                {section.title}
-              </button>
+              <>
+                {/* Label — sticky within this grid row (the row is as tall as the section content) */}
+                <div key={`label-${si}`} style={{ position: 'sticky', top: '100px' }}>
+                  <div style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', lineHeight: '1.5' }}>
+                    {section.title}
+                  </div>
+                </div>
+
+                {/* Accordion items */}
+                <div key={`items-${si}`}>
+                  {section.items.map((item, ii) => (
+                    <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
+                  ))}
+                </div>
+              </>
             ))}
           </div>
         )}
-
-        {/* Accordion content */}
-        <div>
-        {SECTIONS.map((section, si) => (
-          <div key={si} ref={el => sectionRefs.current[si] = el} style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
-              <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>
-                {section.title}
-              </div>
-              <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.25)' }} />
-            </div>
-
-            {section.items.map((item, ii) => {
-              const key = `${si}-${ii}`
-              return (
-                <AccordionItem
-                  key={key}
-                  item={item}
-                  isOpen={!!open[key]}
-                  onToggle={() => toggle(key)}
-                />
-              )
-            })}
-          </div>
-        ))}
-        </div>
       </div>
 
-      {/* CTA + Footer in full-width wrapper */}
+      {/* CTA + Footer */}
       <div style={{ maxWidth: '1020px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem' }}>
 
         {/* CTA */}
