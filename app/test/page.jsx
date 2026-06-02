@@ -32,10 +32,14 @@ function poly(pts) {
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(false)
 
-  const pointsRef = useRef([])
-  const carRef    = useRef(null)
+  const pointsRef    = useRef([])
+  const carRef       = useRef(null)   // outer div — handles translate only
+  const carInnerRef  = useRef(null)   // inner div — handles rotate (+ donut spin)
   const rl1 = useRef(null), rl2 = useRef(null), rl3 = useRef(null), rl4 = useRef(null)
-  const rafRef    = useRef(null)
+  const rafRef       = useRef(null)
+  const stopTimer    = useRef(null)
+  const isDonuting   = useRef(false)
+  const lastAngle    = useRef(90)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -54,9 +58,25 @@ export default function TestPage() {
     }
 
     function tick(p) {
-      if (!carRef.current || !pointsRef.current.length) return
+      if (!carRef.current || !carInnerRef.current || !pointsRef.current.length) return
       const { x, y, angle } = pointsRef.current[Math.min(Math.round(p * STEPS), STEPS)]
-      carRef.current.style.transform = `translate(${x}px,${y}px) rotate(${angle}deg)`
+      lastAngle.current = angle
+      // outer = position, inner = direction
+      carRef.current.style.transform     = `translate(${x}px,${y}px)`
+      carInnerRef.current.style.transform = `rotate(${angle}deg)`
+    }
+
+    function startDonut() {
+      if (!carInnerRef.current) return
+      isDonuting.current = true
+      carInnerRef.current.style.animation = 'cr-donut 0.55s linear infinite'
+    }
+
+    function stopDonut() {
+      if (!carInnerRef.current) return
+      isDonuting.current = false
+      carInnerRef.current.style.animation  = 'none'
+      carInnerRef.current.style.transform  = `rotate(${lastAngle.current}deg)`
     }
 
     function update() {
@@ -68,19 +88,31 @@ export default function TestPage() {
     update()
 
     const onScroll = () => {
+      // Stop donut the moment scrolling resumes
+      if (isDonuting.current) stopDonut()
+      clearTimeout(stopTimer.current)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(update)
+      // Start donut 600 ms after scroll stops
+      stopTimer.current = setTimeout(startDonut, 600)
     }
+
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', () => { init(); update() })
+
+    // Start donuts if user hasn't scrolled after 1.5 s
+    stopTimer.current = setTimeout(startDonut, 1500)
+
     return () => {
       window.removeEventListener('scroll', onScroll)
+      clearTimeout(stopTimer.current)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [isMobile])
 
   return (
     <div style={{ background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif' }}>
+      <style>{`@keyframes cr-donut { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
 
       {/* Nav */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.5rem', height: `${NAV_H}px`, background: 'rgba(10,20,13,0.9)', backdropFilter: 'blur(12px)', borderBottom: '0.5px solid rgba(197,168,130,0.12)' }}>
@@ -96,17 +128,19 @@ export default function TestPage() {
         <polyline ref={rl4} fill="none" stroke="rgba(197,168,130,0.6)"  strokeWidth="1"  strokeLinecap="round" strokeLinejoin="round" strokeDasharray="8 12" />
       </svg>
 
-      {/* ── FIXED car — moves with scroll ── */}
-      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '28px', height: '12px', marginLeft: '-14px', marginTop: '-6px', willChange: 'transform', pointerEvents: 'none', zIndex: 11, transformOrigin: '50% 50%' }}>
-        <svg viewBox="0 0 28 12" width="28" height="12" style={{ display: 'block' }}>
-          <ellipse cx="14" cy="11.5" rx="12" ry="1.5" fill="rgba(0,0,0,0.45)" />
-          <rect    x="1"  y="4"  width="26" height="7" rx="2"             fill="#c5a882" />
-          <path    d="M 6 4 L 9 1 L 19 1 L 22 4 Z"                        fill="#c5a882" />
-          <path    d="M 7.5 4 L 10 1.5 L 18 1.5 L 20.5 4 Z"              fill="rgba(10,20,14,0.72)" />
-          <circle  cx="6"  cy="11" r="2.5" fill="#0F1E14" stroke="#F5F1EC" strokeWidth="1" />
-          <circle  cx="22" cy="11" r="2.5" fill="#0F1E14" stroke="#F5F1EC" strokeWidth="1" />
-          <rect    x="25.5" y="6" width="2" height="2.5" rx="0.4"         fill="rgba(255,245,180,0.95)" />
-        </svg>
+      {/* ── FIXED car — outer=position, inner=rotation+donut ── */}
+      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '28px', height: '12px', marginLeft: '-14px', marginTop: '-6px', willChange: 'transform', pointerEvents: 'none', zIndex: 11 }}>
+        <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}>
+          <svg viewBox="0 0 28 12" width="28" height="12" style={{ display: 'block' }}>
+            <ellipse cx="14" cy="11.5" rx="12" ry="1.5" fill="rgba(0,0,0,0.45)" />
+            <rect    x="1"  y="4"  width="26" height="7" rx="2"             fill="#c5a882" />
+            <path    d="M 6 4 L 9 1 L 19 1 L 22 4 Z"                        fill="#c5a882" />
+            <path    d="M 7.5 4 L 10 1.5 L 18 1.5 L 20.5 4 Z"              fill="rgba(10,20,14,0.72)" />
+            <circle  cx="6"  cy="11" r="2.5" fill="#0F1E14" stroke="#F5F1EC" strokeWidth="1" />
+            <circle  cx="22" cy="11" r="2.5" fill="#0F1E14" stroke="#F5F1EC" strokeWidth="1" />
+            <rect    x="25.5" y="6" width="2" height="2.5" rx="0.4"         fill="rgba(255,245,180,0.95)" />
+          </svg>
+        </div>
       </div>
 
       {/* ── Scrollable page content ── */}
