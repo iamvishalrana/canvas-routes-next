@@ -447,8 +447,8 @@ export default function Home() {
               ? [{date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true}]
               : [{date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Route",href:"/routes"}]
             ),
-            {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route",teaser:"Wine country roads and sweeping valleys through the Eastern Townships — a route built for a summer day.",membersOnly:true},
-            {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route",teaser:"Quebec's most dramatic coastline — clifftop roads, river views, and countryside that earns every kilometre.",membersOnly:true},
+            {date:"June 2026",name:"Whips to Eastern Townships",loc:"Cantons-de-l'Est, QC",type:"Route",teaser:"Wine country roads and sweeping valleys through the Eastern Townships — a route built for a summer day."},
+            {date:"August 2026",name:"Charlevoix Coastal Route",loc:"Charlevoix, QC",type:"Route",teaser:"Quebec's most dramatic coastline — clifftop roads, river views, and countryside that earns every kilometre."},
           ].map((e,i) => (
             <div key={i} className="event-card" style={e.past
               ? {background:"#0F1E14",border:"1px solid rgba(197,168,130,0.55)",padding:"2rem",position:"relative",overflow:"hidden",cursor:"pointer"}
