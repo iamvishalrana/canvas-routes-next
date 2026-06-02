@@ -34,6 +34,8 @@ const TIRE_INTERVAL = 90
 // Rear-tyre offsets in car-local space (44×22 viewBox, car faces +x, center at 22,11)
 // Rear wheel rects: x=4 w=7 → centerX=7.5; y=-0.5 h=8.5 → centerY=3.75, y=14 h=8.5 → centerY=18.25
 const REAR_TYRES = [{ lx: -14.5, ly: -7.25 }, { lx: -14.5, ly: 7.25 }]
+// Front axle offset from car center in local +x direction (front wheels at x=36.5+5.5/2=39.25, center=22)
+const FRONT_AXLE_OFFSET = 17
 
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(false)
@@ -54,6 +56,10 @@ export default function TestPage() {
   const lastY             = useRef(0)
   const donutStart        = useRef(0)
   const donutBaseAngleRef = useRef(0)
+  const donutPivotX       = useRef(0)
+  const donutPivotY       = useRef(0)
+  const donutCarX         = useRef(0)
+  const donutCarY         = useRef(0)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -85,8 +91,8 @@ export default function TestPage() {
     function dropMark() {
       const svg = tireMarksSvgRef.current
       if (!svg) return
-      const cx       = lastX.current
-      const cy       = lastY.current
+      const cx       = donutCarX.current
+      const cy       = donutCarY.current
       const elapsed  = Date.now() - donutStart.current
       const spinRad  = (elapsed / DONUT_SPEED) * Math.PI * 2
       const totalRad = donutBaseAngleRef.current + spinRad
@@ -116,26 +122,44 @@ export default function TestPage() {
     }
 
     function stopDonut() {
-      if (!carInnerRef.current) return
+      if (!carInnerRef.current || !carRef.current) return
       isDonuting.current = false
       cancelAnimationFrame(donutRafRef.current)
       clearInterval(tireInterval.current)
       clearTimeout(donutStopTimer.current)
+      carRef.current.style.transform      = `translate(${lastX.current}px,${lastY.current}px)`
       carInnerRef.current.style.transform = `rotate(${lastAngle.current}deg)`
     }
 
     function startDonut() {
-      if (!carInnerRef.current || isDonuting.current) return
+      if (!carInnerRef.current || !carRef.current || isDonuting.current) return
       isDonuting.current        = true
       donutStart.current        = Date.now()
       const baseAngle           = lastAngle.current
-      donutBaseAngleRef.current = baseAngle * Math.PI / 180
+      const baseAngleRad        = baseAngle * Math.PI / 180
+      donutBaseAngleRef.current = baseAngleRad
+
+      // Front axle world position — stays fixed as the pivot point
+      donutPivotX.current = lastX.current + FRONT_AXLE_OFFSET * Math.cos(baseAngleRad)
+      donutPivotY.current = lastY.current + FRONT_AXLE_OFFSET * Math.sin(baseAngleRad)
+      donutCarX.current   = lastX.current
+      donutCarY.current   = lastY.current
 
       function spinFrame() {
-        if (!isDonuting.current || !carInnerRef.current) return
-        const elapsed = Date.now() - donutStart.current
-        const spinDeg = (elapsed / DONUT_SPEED) * 360
-        carInnerRef.current.style.transform = `rotate(${baseAngle + spinDeg}deg)`
+        if (!isDonuting.current || !carInnerRef.current || !carRef.current) return
+        const elapsed  = Date.now() - donutStart.current
+        const spinRad  = (elapsed / DONUT_SPEED) * Math.PI * 2
+        const totalRad = baseAngleRad + spinRad
+        const totalDeg = baseAngle + (elapsed / DONUT_SPEED) * 360
+
+        // Car center orbits the fixed front-axle pivot
+        const cx = donutPivotX.current - FRONT_AXLE_OFFSET * Math.cos(totalRad)
+        const cy = donutPivotY.current - FRONT_AXLE_OFFSET * Math.sin(totalRad)
+        donutCarX.current = cx
+        donutCarY.current = cy
+
+        carRef.current.style.transform      = `translate(${cx}px,${cy}px)`
+        carInnerRef.current.style.transform = `rotate(${totalDeg}deg)`
         donutRafRef.current = requestAnimationFrame(spinFrame)
       }
       donutRafRef.current    = requestAnimationFrame(spinFrame)
