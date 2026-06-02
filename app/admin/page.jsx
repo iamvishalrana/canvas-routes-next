@@ -2879,7 +2879,10 @@ export default function AdminPage() {
     <>
       <div style={{ padding: '1.75rem 1.5rem 1.5rem', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
         <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} style={{ height: '52px', width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.9, display: 'block' }} />
+          <div style={{ width: '160px', height: '56px', overflow: 'hidden' }}>
+            <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+              style={{ width: '160px', height: 'auto', marginTop: '-72px', display: 'block', opacity: 0.9 }} />
+          </div>
         </Link>
         <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginTop: '0.75rem' }}>Admin Panel</div>
       </div>
@@ -2954,7 +2957,10 @@ export default function AdminPage() {
       {isMobile && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '56px', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem', zIndex: 300, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
           <Link href="/">
-            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} style={{ height: '34px', width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.9, display: 'block' }} />
+            <div style={{ width: '120px', height: '38px', overflow: 'hidden' }}>
+              <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+                style={{ width: '120px', height: 'auto', marginTop: '-54px', display: 'block', opacity: 0.9 }} />
+            </div>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882' }}>{tab}</span>
