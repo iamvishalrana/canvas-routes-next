@@ -544,7 +544,7 @@ export default function FAQContent() {
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isMobile ? (
             /* ── Mobile: car photo 65×26 ── */
-            <img src="/IMG_5513.jpeg" alt="" style={{ width: '65px', height: '26px', objectFit: 'contain', display: 'block' }} />
+            <Image src="/IMG_5513.jpeg" alt="" width={65} height={26} style={{ objectFit: 'contain', display: 'block' }} priority unoptimized />
           ) : (
             /* ── Desktop: F40 top-down view ── */
             <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
