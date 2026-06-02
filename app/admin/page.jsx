@@ -349,6 +349,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [actionError, setActionError] = useState(null)
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(null)
+  const [selected, setSelected] = useState(new Set())
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -474,7 +475,8 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   )
 
   function exportCSV() {
-    const rows = members.map(m => ({
+    const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : members
+    const rows = source.map(m => ({
       Name: m.name || '',
       Email: m.email || '',
       Status: m.membership_status || '',
@@ -492,7 +494,8 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   }
 
   function copyEmails() {
-    const emails = filtered.map(m => m.email).filter(Boolean).join(', ')
+    const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : filtered
+    const emails = source.map(m => m.email).filter(Boolean).join(', ')
     navigator.clipboard?.writeText(emails).then(() => {
       setEmailsCopied(true)
       setTimeout(() => setEmailsCopied(false), 1500)
@@ -569,17 +572,26 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       {/* Member List */}
       {actionError && <Err msg={actionError} />}
 
+      {selected.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
+          <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
+          <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Export CSV</button>
+          <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
+          <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
             {filtered.length} of {members.length} member{members.length !== 1 ? 's' : ''}
           </div>
-          {members.length > 0 && (
+          {members.length > 0 && selected.size === 0 && (
             <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               Export CSV
             </button>
           )}
-          {members.length > 0 && (
+          {members.length > 0 && selected.size === 0 && (
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>
@@ -596,7 +608,16 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       ) : (
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
           {!isMobile && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+              <input type="checkbox"
+                checked={filtered.length > 0 && filtered.every(m => selected.has(m.id))}
+                ref={el => { if (el) el.indeterminate = filtered.some(m => selected.has(m.id)) && !filtered.every(m => selected.has(m.id)) }}
+                onChange={e => {
+                  if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(m => m.id)]))
+                  else setSelected(prev => { const n = new Set(prev); filtered.forEach(m => n.delete(m.id)); return n })
+                }}
+                style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+              />
               {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
               ))}
@@ -727,6 +748,13 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                     <div style={{ padding: '0.9rem 1rem', cursor: 'pointer' }} onClick={() => setExpanded(expanded === m.id ? null : m.id)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.35rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', minWidth: 0 }}>
+                          <div onClick={e => e.stopPropagation()}>
+                            <input type="checkbox"
+                              checked={selected.has(m.id)}
+                              onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(m.id) : n.delete(m.id); return n })}
+                              style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                            />
+                          </div>
                           <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
                           <Badge status={m.membership_status} />
                         </div>
@@ -750,9 +778,16 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                     </div>
                   ) : (
                   <div
-                    style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                    style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
                     onClick={() => setExpanded(expanded === m.id ? null : m.id)}
                   >
+                    <div onClick={e => e.stopPropagation()}>
+                      <input type="checkbox"
+                        checked={selected.has(m.id)}
+                        onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(m.id) : n.delete(m.id); return n })}
+                        style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                      />
+                    </div>
                     <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
                     <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
                     <div><Badge status={m.membership_status} /></div>
