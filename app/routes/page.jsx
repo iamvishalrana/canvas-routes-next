@@ -298,7 +298,7 @@ export default function RoutesPage() {
               {[
                 'Gas — fill up before you leave',
                 'VIP parking at Mont-Tremblant ($30/car — free options nearby)',
-                'Personal purchases at the village',
+                'Personal purchases or activities at the village',
                 'Any drinks or food beyond what\'s listed above',
               ].map((item, i) => (
                 <div key={i} style={{display:"flex",gap:"0.65rem",alignItems:"flex-start",marginBottom:"0.85rem"}}>
