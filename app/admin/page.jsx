@@ -258,6 +258,12 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
               {dobStr}
             </span>
           )}
+          {(m.join_date || m.created_at) && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '12px', color: '#999' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+          )}
         </div>
       )}
 
@@ -697,7 +703,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       ) : (
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
           {!isMobile && (
-            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 0.85fr 0.85fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
               <input type="checkbox"
                 checked={filtered.length > 0 && filtered.every(m => selected.has(m.id))}
                 ref={el => { if (el) el.indeterminate = filtered.some(m => selected.has(m.id)) && !filtered.every(m => selected.has(m.id)) }}
@@ -707,7 +713,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                 }}
                 style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
               />
-              {['Name', 'Email', 'Status', 'Car', 'Setup', ''].map((h, i) => (
+              {['Name', 'Email', 'Status', 'Car', 'Joined', 'Setup', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
               ))}
             </div>
@@ -866,11 +872,16 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         <span style={{ fontSize: '11px', color: m.password_set_at ? '#3B6B2F' : '#bbb' }}>
                           {m.password_set_at ? `✓ ${new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Awaiting'}
                         </span>
+                        {(m.join_date || m.created_at) && (
+                          <span style={{ fontSize: '11px', color: '#bbb' }}>
+                            Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ) : (
                   <div
-                    style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 1fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                    style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 0.85fr 0.85fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
                     onClick={() => setExpanded(expanded === m.id ? null : m.id)}
                   >
                     <div onClick={e => e.stopPropagation()}>
@@ -892,6 +903,9 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
                       }
                       {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#bbb' }}>
+                      {(m.join_date || m.created_at) ? new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                     </div>
                     <div>
                       {m.password_set_at ? (
@@ -1665,7 +1679,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                     {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
                   </div>
                   <div style={{ fontSize: '11px', color: '#bbb' }}>
-                    {new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                    {new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </div>
                   {inviteCell}
                 </div>
@@ -2210,7 +2224,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', color: '#888' }}>{[c.car_year, c.car_model].filter(Boolean).join(' ') || '—'}</span>
-                    {c.created_at && <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>}
+                    {c.created_at && <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
                   </div>
                 </div>
               ) : (
@@ -2240,7 +2254,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   {c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? `, ${c.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
                 </div>
                 <div style={{ fontSize: '11px', color: '#bbb' }}>
-                  {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}
+                  {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                 </div>
                 <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
