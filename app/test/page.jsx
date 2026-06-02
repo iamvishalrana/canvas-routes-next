@@ -5,36 +5,39 @@ import Link from 'next/link'
 // Wavy vertical path — right side of screen, top → bottom
 // SVG viewBox 0 0 1200 800
 const PATH_D = [
-  'M 960 20',
-  'C 1120 100, 780 200, 920 320',
-  'C 1060 440, 1120 540, 920 640',
-  'C 760 720, 1000 760, 940 790',
+  'M 900 60',
+  'C 1060 140, 720 260, 880 380',
+  'C 1040 500, 1080 580, 880 680',
+  'C 720 760, 960 790, 900 800',
 ].join(' ')
 
 function CarSVG() {
-  // Side-profile car, front facing RIGHT — rotation will tilt it to match path direction
+  // Scaled up 1.6× so it's clearly visible. Front faces right.
   return (
-    <g transform="translate(-58, -22)">
-      <ellipse cx="58" cy="40" rx="52" ry="5" fill="rgba(0,0,0,0.4)" />
-      {/* Body lower */}
-      <path d="M 8 30 Q 8 36 16 36 L 100 36 Q 108 36 108 30 L 108 24 Q 104 20 96 20 L 20 20 Q 12 20 8 24 Z" fill="#1a1a1a" />
+    <g transform="translate(-93, -35) scale(1.6)">
+      {/* Drop shadow */}
+      <ellipse cx="58" cy="42" rx="52" ry="6" fill="rgba(0,0,0,0.5)" />
+      {/* Body lower — gold so it pops on dark bg */}
+      <path d="M 8 30 Q 8 37 16 37 L 100 37 Q 108 37 108 30 L 108 23 Q 104 19 96 19 L 20 19 Q 12 19 8 23 Z"
+        fill="#c5a882" stroke="rgba(197,168,130,0.4)" strokeWidth="0.5" />
       {/* Body upper */}
-      <path d="M 24 20 L 34 8 Q 38 4 44 4 L 76 4 Q 82 4 86 8 L 96 20 Z" fill="#1a1a1a" />
-      {/* Window */}
-      <path d="M 36 19 L 44 7 L 76 7 L 84 19 Z" fill="rgba(197,168,130,0.22)" />
-      <line x1="60" y1="7" x2="60" y2="19" stroke="rgba(197,168,130,0.35)" strokeWidth="1" />
+      <path d="M 24 19 L 34 7 Q 38 3 44 3 L 76 3 Q 82 3 86 7 L 96 19 Z"
+        fill="#c5a882" stroke="rgba(197,168,130,0.4)" strokeWidth="0.5" />
+      {/* Window — dark tint */}
+      <path d="M 36 18 L 44 6 L 76 6 L 84 18 Z" fill="rgba(10,20,14,0.75)" />
+      <line x1="60" y1="6" x2="60" y2="18" stroke="rgba(197,168,130,0.3)" strokeWidth="0.8" />
       {/* Wheel arches */}
-      <path d="M 8 30 Q 8 20 28 20 L 42 20 Q 50 20 50 30" fill="#0d0d0d" />
-      <path d="M 66 30 Q 66 20 76 20 L 90 20 Q 108 20 108 30" fill="#0d0d0d" />
+      <path d="M 8 30 Q 8 19 28 19 L 42 19 Q 50 19 50 30" fill="#0F1E14" />
+      <path d="M 66 30 Q 66 19 76 19 L 90 19 Q 108 19 108 30" fill="#0F1E14" />
       {/* Wheels */}
-      <circle cx="29" cy="34" r="9" fill="#111" stroke="#c5a882" strokeWidth="1.5" />
-      <circle cx="29" cy="34" r="4" fill="#222" stroke="#c5a882" strokeWidth="0.8" />
-      <circle cx="87" cy="34" r="9" fill="#111" stroke="#c5a882" strokeWidth="1.5" />
-      <circle cx="87" cy="34" r="4" fill="#222" stroke="#c5a882" strokeWidth="0.8" />
+      <circle cx="29" cy="35" r="10" fill="#0F1E14" stroke="#F5F1EC" strokeWidth="2" />
+      <circle cx="29" cy="35" r="4.5" fill="#1a1a1a" stroke="rgba(245,241,236,0.5)" strokeWidth="1" />
+      <circle cx="87" cy="35" r="10" fill="#0F1E14" stroke="#F5F1EC" strokeWidth="2" />
+      <circle cx="87" cy="35" r="4.5" fill="#1a1a1a" stroke="rgba(245,241,236,0.5)" strokeWidth="1" />
       {/* Headlight */}
-      <path d="M 106 24 L 112 26 L 112 30 L 106 30 Z" fill="rgba(255,240,180,0.75)" />
-      {/* Gold trim */}
-      <line x1="10" y1="26" x2="96" y2="26" stroke="rgba(197,168,130,0.45)" strokeWidth="0.8" />
+      <path d="M 106 23 L 114 26 L 114 31 L 106 31 Z" fill="rgba(255,245,200,0.9)" />
+      {/* Dark lower trim line */}
+      <line x1="10" y1="28" x2="96" y2="28" stroke="rgba(10,20,14,0.6)" strokeWidth="1.5" />
     </g>
   )
 }
@@ -43,7 +46,7 @@ export default function TestPage() {
   const containerRef = useRef(null)
   const pathRef = useRef(null)
   const rafRef = useRef(null)
-  const [carPos, setCarPos] = useState({ x: 960, y: 20, angle: 80 })
+  const [carPos, setCarPos] = useState({ x: 900, y: 60, angle: 80 })
   const [scrollPct, setScrollPct] = useState(0)
 
   useEffect(() => {
@@ -128,7 +131,7 @@ export default function TestPage() {
           <svg
             viewBox="0 0 1200 800"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-            preserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="xMidYMid slice"
           >
             {/* Hidden path for measurement */}
             <path ref={pathRef} d={PATH_D} fill="none" stroke="none" />
