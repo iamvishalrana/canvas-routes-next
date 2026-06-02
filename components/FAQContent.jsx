@@ -155,11 +155,11 @@ const C_TIRE_INTERVAL = 90
 const C_REAR_TYRES = [{ lx: -16.8, ly: -6.9 }, { lx: -16.8, ly: 6.9 }]
 const C_FRONT_AXLE = 17
 
-function cBuildPoints(isMobile) {
+function cBuildPoints(isMobile, navH = C_NAV_H) {
   const vw = window.innerWidth, vh = window.innerHeight
   const cx  = isMobile ? vw * 0.82 : vw * 0.88
   const amp = isMobile ? vw * 0.06 : vw * 0.04
-  const yStart = C_NAV_H, yEnd = vh - 12, cycles = 2.5
+  const yStart = navH, yEnd = vh - 12, cycles = 2.5
   return Array.from({ length: C_STEPS + 1 }, (_, i) => {
     const t  = i / C_STEPS
     const x  = cx + amp * Math.sin(t * cycles * Math.PI * 2)
@@ -289,7 +289,8 @@ export default function FAQContent() {
 
   useEffect(() => {
     function init(mobile = isMobile) {
-      const pts = cBuildPoints(mobile)
+      const navH = document.querySelector('.nav')?.offsetHeight || 155
+      const pts = cBuildPoints(mobile, navH)
       pointsRef.current = pts
       const p = cPoly(pts)
       ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
@@ -400,10 +401,10 @@ export default function FAQContent() {
 
       {/* Fixed road */}
       <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible' }}>
-        <polyline ref={rl1} fill="none" stroke="rgba(197,168,130,0.06)" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
-        <polyline ref={rl2} fill="none" stroke="rgba(197,168,130,0.14)" strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
-        <polyline ref={rl3} fill="none" stroke="rgba(8,18,12,0.9)"      strokeWidth="5"  strokeLinecap="round" strokeLinejoin="round" />
-        <polyline ref={rl4} fill="none" stroke="rgba(197,168,130,0.55)" strokeWidth="1"  strokeLinecap="round" strokeLinejoin="round" strokeDasharray="8 12" />
+        <polyline ref={rl1} fill="none" stroke="rgba(130,110,80,0.12)"  strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline ref={rl2} fill="none" stroke="rgba(160,135,95,0.2)"  strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
+        <polyline ref={rl3} fill="none" stroke="rgba(18,14,10,0.88)"   strokeWidth="5"  strokeLinecap="round" strokeLinejoin="round" />
+        <polyline ref={rl4} fill="none" stroke="rgba(197,168,130,0.6)" strokeWidth="1"  strokeLinecap="round" strokeLinejoin="round" strokeDasharray="8 12" />
       </svg>
 
       {/* Fixed tire marks */}
@@ -420,8 +421,8 @@ export default function FAQContent() {
           <span key={i} style={{
             position: 'absolute', top: pos.top, left: pos.left,
             fontFamily: 'var(--font-cormorant),serif', fontSize: '15px', fontWeight: '300',
-            color: '#c5a882',
-            textShadow: '0 0 6px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.2)',
+            color: 'rgba(0,0,0,0.72)',
+            textShadow: '0 1px 3px rgba(255,255,255,0.5)',
             opacity: 0,
             animation: `faq-qfloat 2.8s ease-in-out infinite`,
             animationDelay: pos.delay,
