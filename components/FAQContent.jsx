@@ -10,7 +10,7 @@ const SECTIONS = [
     items: [
       {
         q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a premier automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a high curatorial standard across all our events.',
+        a: 'Canvas Routes is a premier automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
       },
       {
         q: 'Who is Canvas Routes for?',
