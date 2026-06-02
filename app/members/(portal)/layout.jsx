@@ -1,5 +1,6 @@
 import { createClient } from '../../../lib/supabase/server'
 import MembersNav from '../../../components/MembersNav'
+import MembersCar from '../../../components/MembersCar'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Members Portal | Canvas Routes' } }
@@ -13,6 +14,7 @@ export default async function PortalLayout({ children }) {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif' }}>
       <MembersNav email={user?.email} isAdmin={isAdmin} />
+      <MembersCar />
       <main style={{ maxWidth: '1040px', margin: '0 auto', padding: '3rem 2rem 6rem' }} className="portal-main">
         {children}
       </main>
