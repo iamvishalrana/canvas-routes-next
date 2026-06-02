@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
@@ -267,6 +268,7 @@ export async function POST(request) {
   }
   if (!notifyOk) {
     console.error(`ALERT: Notify email failed after retry — application from: ${email}`)
+    Sentry.captureMessage(`Waitlist notify email failed — ${email}`, { level: 'error', extra: { name, email, year, carModel } })
   }
 
   // Store application data so admin can auto-populate member records
@@ -287,10 +289,11 @@ export async function POST(request) {
     const CANONICAL_EVENTS = [
       'Cars & Coffee — May 9, 2026',
       'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
-      'Into the Laurentians — May 31, 2026',
+      'Into the Laurentians — June 7, 2026',
     ]
     const NAME_ALIASES = {
       'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+      'Into the Laurentians — May 31, 2026': 'Into the Laurentians — June 7, 2026',
     }
     const prevRegs = (existing?.registrations || [])
       .map(r => NAME_ALIASES[r.event] ? { ...r, event: NAME_ALIASES[r.event] } : r)
@@ -319,6 +322,7 @@ export async function POST(request) {
     }, { onConflict: 'email' })
   } catch (e) {
     console.error('Failed to store application:', e.message)
+    Sentry.captureException(e, { extra: { context: 'waitlist-db-save', email: email.toLowerCase().trim() } })
   }
 
   return Response.json({ success: true })
