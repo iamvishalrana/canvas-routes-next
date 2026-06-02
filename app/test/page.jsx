@@ -31,11 +31,11 @@ function poly(pts) {
 
 const DONUT_SPEED   = 4500
 const TIRE_INTERVAL = 90
-// Rear-tyre offsets in car-local space (44×22 viewBox, car faces +x, center at 22,11)
-// Rear wheel rects: x=4 w=7 → centerX=7.5; y=-0.5 h=8.5 → centerY=3.75, y=14 h=8.5 → centerY=18.25
-const REAR_TYRES = [{ lx: -14.5, ly: -7.25 }, { lx: -14.5, ly: 7.25 }]
-// Front axle offset from car center in local +x direction (front wheels at x=36.5+5.5/2=39.25, center=22)
-const FRONT_AXLE_OFFSET = 17
+// Rear-tyre offsets in car-local space (56×26 viewBox, car faces +x, center at 28,13)
+// Rear wheel rects: x=3 w=9 → centerX=7.5; y=-1 h=11 → centerY=4.5, y=16 h=11 → centerY=21.5
+const REAR_TYRES = [{ lx: -20.5, ly: -8.5 }, { lx: -20.5, ly: 8.5 }]
+// Front axle offset from car center (front wheels at x=45 w=8 → centerX=49, car center=28)
+const FRONT_AXLE_OFFSET = 21
 
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(false)
@@ -222,58 +222,66 @@ export default function TestPage() {
       <svg ref={tireMarksSvgRef} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }} />
 
       {/* Fixed car — opacity:0 until first tick to avoid flash at (0,0) */}
-      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '44px', height: '22px', marginLeft: '-22px', marginTop: '-11px', willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0 }}>
+      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '56px', height: '26px', marginLeft: '-28px', marginTop: '-13px', willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0 }}>
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}>
-          {/* Ferrari F40 — top-down view, front = right (+x) */}
-          <svg viewBox="0 0 44 22" width="44" height="22" style={{ display: 'block', overflow: 'visible' }}>
+          {/* Ferrari F40 — top-down view, front = right (+x), 56×26 viewBox, center (28,13) */}
+          <svg viewBox="0 0 56 26" width="56" height="26" style={{ display: 'block', overflow: 'visible' }}>
             {/* Shadow */}
-            <ellipse cx="22" cy="14" rx="21" ry="8.5" fill="rgba(0,0,0,0.45)" />
+            <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
 
-            {/* Rear wheels — very wide track */}
-            <rect x="4"    y="-0.5" width="7"   height="8.5" rx="1.5" fill="#111" />
-            <rect x="4"    y="14"   width="7"   height="8.5" rx="1.5" fill="#111" />
-            {/* Front wheels */}
-            <rect x="36.5" y="0.5"  width="5.5" height="6.5" rx="1.5" fill="#111" />
-            <rect x="36.5" y="15"   width="5.5" height="6.5" rx="1.5" fill="#111" />
+            {/* Rear wheels — very wide track, F40 had massive rear rubber */}
+            <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
+            <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
+            {/* Front wheels — narrower track */}
+            <rect x="45" y="0"   width="8" height="9"  rx="2" fill="#111" />
+            <rect x="45" y="17"  width="8" height="9"  rx="2" fill="#111" />
 
-            {/* Body — wide rear haunches, narrow wedge nose */}
-            <path d="M43,11 C42,8 39,5.5 36,4.5 C31,3.5 26,3.5 20,4 C14,4.5 10.5,3.5 7,3 C5.2,2.8 4.5,4 4.5,6 L4.5,16 C4.5,18 5.2,19.2 7,19 C10.5,18.5 14,17.5 20,18 C26,18.5 31,18.5 36,17.5 C39,16.5 42,14 43,11Z" fill="#CC0000" />
+            {/* Body — extremely wide rear haunches, narrow wedge nose */}
+            <path d="M55,13 C53,9 49,6.5 46,5.5 C41,4.5 35,4.5 28,5 C21,5.5 14,3 8,1 C5,0.5 3,2 3,4.5 L3,21.5 C3,24 5,25.5 8,25 C14,23 21,20.5 28,21 C35,21.5 41,21.5 46,20.5 C49,19.5 53,17 55,13Z" fill="#CC0000" />
 
-            {/* Body crease lines */}
-            <path d="M36,4.5 C28,5 20,5.5 12,5 C8,4.8 5.5,5.2 4.5,6"    fill="none" stroke="rgba(255,80,80,0.18)" strokeWidth="0.8" />
-            <path d="M36,17.5 C28,17 20,16.5 12,17 C8,17.2 5.5,16.8 4.5,16" fill="none" stroke="rgba(255,80,80,0.18)" strokeWidth="0.8" />
+            {/* Body highlight — upper crease line */}
+            <path d="M46,5.5 C38,6.2 30,6.8 22,7.2 C16,7.5 9,6.2 4.5,5.5"    fill="none" stroke="rgba(255,80,80,0.2)" strokeWidth="1" />
+            <path d="M46,20.5 C38,19.8 30,19.2 22,18.8 C16,18.5 9,19.8 4.5,20.5" fill="none" stroke="rgba(255,80,80,0.2)" strokeWidth="1" />
 
-            {/* Twin NACA scoops — feeds the twin turbos, signature F40 detail */}
-            <rect x="12.5" y="3.5" width="4.5" height="2.5" rx="0.8" fill="rgba(0,0,0,0.55)" />
-            <rect x="12.5" y="16"  width="4.5" height="2.5" rx="0.8" fill="rgba(0,0,0,0.55)" />
+            {/* Windshield — very raked, F40 had aggressive rake */}
+            <path d="M43,7.5 C47,9.5 48,11 48,13 C48,15 47,16.5 43,18.5 L36,17.5 L36,8.5Z" fill="rgba(120,175,205,0.45)" stroke="rgba(200,175,135,0.3)" strokeWidth="0.6" />
 
-            {/* Windshield — steeply raked */}
-            <path d="M35,5.5 C38,7.5 39,9 39,11 C39,13 38,14.5 35,16.5 L29,15.5 L29,6.5Z" fill="rgba(130,185,210,0.42)" stroke="rgba(200,175,135,0.28)" strokeWidth="0.5" />
-
-            {/* Cabin roof */}
-            <path d="M29,6.5 L35,5.5 L35,16.5 L29,15.5 L20,15 L20,7Z" fill="rgba(70,0,0,0.5)" />
+            {/* Cabin roof — narrow greenhouse */}
+            <path d="M36,8.5 L43,7.5 L43,18.5 L36,17.5 L24,17 L24,9Z" fill="rgba(55,0,0,0.55)" />
 
             {/* Rear window */}
-            <path d="M20,7 L20,15 L15.5,14.5 L15.5,7.5Z" fill="rgba(130,185,210,0.2)" stroke="rgba(200,175,135,0.15)" strokeWidth="0.4" />
+            <path d="M24,9 L24,17 L18,16.5 L18,9.5Z" fill="rgba(120,175,205,0.22)" stroke="rgba(200,175,135,0.15)" strokeWidth="0.5" />
 
-            {/* Tail lights — positioned in front of wing blade */}
-            <rect x="5.5" y="5.5" width="2" height="3.5" rx="0.5" fill="rgba(220,55,55,0.95)" />
-            <rect x="5.5" y="13"  width="2" height="3.5" rx="0.5" fill="rgba(220,55,55,0.95)" />
-            <rect x="5"   y="9.5" width="2" height="3"   rx="0.5" fill="rgba(185,40,40,0.75)" />
+            {/* NACA side scoops — signature F40 feature, feeds the twin turbos */}
+            <path d="M19,5.5 C22,5 26,5 29,5.5 L29,8.5 C26,9 22,9 19,8.5Z"    fill="rgba(0,0,0,0.6)" />
+            <path d="M19,17.5 C22,17 26,17 29,17.5 L29,20.5 C26,21 22,21 19,20.5Z" fill="rgba(0,0,0,0.6)" />
 
-            {/* Rear wing — wider than body, F40's defining feature */}
+            {/* Engine deck louvers — F40's vented engine cover behind cabin */}
+            <rect x="8"  y="8.2"  width="8" height="0.9" rx="0.3" fill="rgba(0,0,0,0.28)" />
+            <rect x="8"  y="10"   width="8" height="0.9" rx="0.3" fill="rgba(0,0,0,0.28)" />
+            <rect x="8"  y="11.8" width="8" height="0.9" rx="0.3" fill="rgba(0,0,0,0.28)" />
+            <rect x="8"  y="13.6" width="8" height="0.9" rx="0.3" fill="rgba(0,0,0,0.28)" />
+            <rect x="8"  y="15.4" width="8" height="0.9" rx="0.3" fill="rgba(0,0,0,0.28)" />
+            <rect x="8"  y="17.2" width="8" height="0.9" rx="0.3" fill="rgba(0,0,0,0.28)" />
+
+            {/* Tail lights — wide strip in front of wing */}
+            <rect x="5" y="7"    width="3" height="5"   rx="0.8" fill="rgba(220,55,55,0.95)" />
+            <rect x="5" y="14"   width="3" height="5"   rx="0.8" fill="rgba(220,55,55,0.95)" />
+            <rect x="4.5" y="12" width="3" height="2.5" rx="0.6" fill="rgba(185,40,40,0.75)" />
+
+            {/* Rear wing — F40's massive iconic wing, much wider than body */}
             {/* Main blade */}
-            <rect x="1.5" y="-3"   width="3.5" height="28" rx="1"   fill="#1c1c1c" />
-            {/* End caps */}
-            <rect x="1.5" y="-3.5" width="5.5" height="4"  rx="0.8" fill="#222" />
-            <rect x="1.5" y="21.5" width="5.5" height="4"  rx="0.8" fill="#222" />
-            {/* Support struts connecting blade to body */}
-            <rect x="4"   y="3.5"  width="5"   height="1.5" rx="0.5" fill="#181818" />
-            <rect x="4"   y="17"   width="5"   height="1.5" rx="0.5" fill="#181818" />
+            <rect x="0.5" y="-6"   width="4.5" height="38" rx="1.5" fill="#1c1c1c" />
+            {/* End caps — the wing endplates */}
+            <rect x="0.5" y="-7"   width="8"   height="5.5" rx="1.2" fill="#242424" />
+            <rect x="0.5" y="27.5" width="8"   height="5.5" rx="1.2" fill="#242424" />
+            {/* Support struts — thick structural pillars */}
+            <rect x="3.5" y="4.5"  width="9"   height="2.5" rx="0.8" fill="#181818" />
+            <rect x="3.5" y="19"   width="9"   height="2.5" rx="0.8" fill="#181818" />
 
-            {/* Pop-up headlights — rectangular, flush, F40 signature */}
-            <rect x="38.5" y="1"  width="4.5" height="5" rx="1" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.3" />
-            <rect x="38.5" y="16" width="4.5" height="5" rx="1" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.3" />
+            {/* Pop-up headlights — rectangular flush housings */}
+            <rect x="49" y="1"   width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
+            <rect x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
           </svg>
         </div>
       </div>
