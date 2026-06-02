@@ -1110,7 +1110,7 @@ function AnnouncementsTab() {
 
 // ─── Events Tab ───────────────────────────────────────────────────────────────
 
-function EventsTab() {
+function EventsTab({ isMobile }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '' })
@@ -1200,7 +1200,7 @@ function EventsTab() {
       <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>New Event</div>
         <form onSubmit={post}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div>
               <L>Event Name *</L>
               <input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Into the Laurentians" maxLength={200} />
@@ -1241,7 +1241,7 @@ function EventsTab() {
             <div key={item.id} style={{ padding: '1.5rem', borderBottom: idx < items.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
               {editing === item.id ? (
                 <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
                     <div><L>Name</L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
                     <div><L>Date</L><input style={inp} value={editForm.date} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} /></div>
                     <div><L>Type</L><SelectWrap value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
@@ -1257,8 +1257,8 @@ function EventsTab() {
                 </div>
               ) : (
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
-                    <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.name}</div>
                         <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.45)', padding: '2px 7px' }}>{item.type}</span>
@@ -1267,7 +1267,7 @@ function EventsTab() {
                       {item.location && <div style={{ fontSize: '12px', color: '#888' }}>{item.location}</div>}
                       {item.description && <div style={{ fontSize: '12px', color: '#777', marginTop: '0.3rem', lineHeight: '1.55' }}>{item.description}</div>}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
                       <GhostBtn onClick={() => toggleRegistrants(item.name)} small>{showRegistrants === item.name ? 'Hide' : 'Registrants'}</GhostBtn>
                       <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '' }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
@@ -1281,7 +1281,22 @@ function EventsTab() {
                       ) : !registrantsData[item.name] || registrantsData[item.name].length === 0 ? (
                         <div style={{ fontSize: '12px', color: '#ccc' }}>No registrants on record.</div>
                       ) : (
-                        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)' }}>
+                        {isMobile ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {registrantsData[item.name].map((r, ri) => (
+                              <div key={ri} style={{ padding: '0.6rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9' }}>
+                                <div style={{ fontSize: '12px', color: '#333', fontWeight: '500', marginBottom: '0.15rem' }}>{r.name || '—'}</div>
+                                <div style={{ fontSize: '11px', color: '#666', marginBottom: '0.1rem' }}>{r.email || '—'}</div>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                  <span style={{ fontSize: '11px', color: '#888' }}>{r.phone || '—'}</span>
+                                  <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535' }}>{r.type}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: '480px' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
                             {['Name', 'Email', 'Phone', 'Type'].map(h => (
                               <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
@@ -1296,6 +1311,8 @@ function EventsTab() {
                             </div>
                           ))}
                         </div>
+                        </div>
+                        )}
                       )}
                     </div>
                   )}
@@ -2148,8 +2165,8 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       ) : filtered.length === 0 ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No contacts yet.</div>
       ) : (
-        <div>
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+        <div style={isMobile ? {} : { overflowX: 'auto' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', ...(isMobile ? {} : { minWidth: '700px' }) }}>
           {!isMobile && (
             <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
               <input type="checkbox"
@@ -2633,7 +2650,7 @@ function DashboardTab({ isMobile, onNavigate }) {
 
 // ─── Cars Tab ─────────────────────────────────────────────────────────────────
 
-function CarsTab() {
+function CarsTab({ isMobile }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [assignInputs, setAssignInputs] = useState({})
@@ -2753,13 +2770,19 @@ function CarsTab() {
               </div>
               {brandGroups[brand].map(({ member: m, car, carIndex }, i) => (
                 <div key={`${m.id}-${i}`}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr auto', padding: '0.75rem 1.25rem', borderBottom: isEditing(m, carIndex) ? 'none' : i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
-                    <div style={{ fontSize: '12px', color: '#888' }}>
-                      {[car.year, car.model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
-                      {car.mods?.length > 0 && <span style={{ marginLeft: '0.4rem', fontSize: '10px', color: '#c5a882', letterSpacing: '0.06em' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr auto' : '1.5fr 1.5fr 1fr auto', padding: '0.75rem 1.25rem', borderBottom: isEditing(m, carIndex) ? 'none' : i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                      {isMobile && <div style={{ fontSize: '11px', color: '#888', marginTop: '1px' }}>{[car.year, car.model].filter(Boolean).join(' ') || '—'}{car.mods?.length > 0 && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}</div>}
+                      {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{m.email}</div>}
                     </div>
+                    {!isMobile && <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>}
+                    {!isMobile && (
+                      <div style={{ fontSize: '12px', color: '#888' }}>
+                        {[car.year, car.model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                        {car.mods?.length > 0 && <span style={{ marginLeft: '0.4rem', fontSize: '10px', color: '#c5a882', letterSpacing: '0.06em' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}
+                      </div>
+                    )}
                     {carIndex >= 0 && (
                       <GhostBtn small onClick={() => isEditing(m, carIndex) ? cancelEdit() : startEdit(m, carIndex, car)}>
                         {isEditing(m, carIndex) ? 'Cancel' : 'Edit'}
@@ -2770,7 +2793,7 @@ function CarsTab() {
                   {isEditing(m, carIndex) && (
                     <div style={{ padding: '1rem 1.25rem 1.25rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', background: 'rgba(197,168,130,0.03)', borderBottom: i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
                       {/* Car fields */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 2fr', gap: '0.5rem', marginBottom: '1rem' }}>
                         {[['Year', 'year'], ['Make', 'make'], ['Model', 'model']].map(([label, field]) => (
                           <div key={field}>
                             <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.3rem' }}>{label}</div>
@@ -2819,9 +2842,12 @@ function CarsTab() {
                 <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{unassigned.length} member{unassigned.length !== 1 ? 's' : ''}</div>
               </div>
               {unassigned.map((m, i) => (
-                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr', padding: '0.75rem 1.25rem', borderBottom: i < unassigned.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
+                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1.5fr 1fr', padding: '0.75rem 1.25rem', borderBottom: i < unassigned.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                    {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{m.email}</div>}
+                  </div>
+                  {!isMobile && <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>}
                   <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                     <input
                       style={{ ...inp, width: '120px', padding: '0.4rem 0.6rem', fontSize: '12px' }}
@@ -3175,11 +3201,11 @@ export default function AdminPage() {
 
           {tab === 'Dashboard' && <DashboardTab isMobile={isMobile} onNavigate={selectTab} />}
           {tab === 'Members' && <MembersTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
-          {tab === 'Cars' && <CarsTab />}
+          {tab === 'Cars' && <CarsTab isMobile={isMobile} />}
           {tab === 'Applications' && <ApplicationsTab isMobile={isMobile} onUnseenCountChange={setUnseenAppsCount} />}
           {tab === 'Contacts' && <ContactsTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
           {tab === 'Announcements' && <AnnouncementsTab />}
-          {tab === 'Events' && <EventsTab />}
+          {tab === 'Events' && <EventsTab isMobile={isMobile} />}
 
         </div>
       </main>
