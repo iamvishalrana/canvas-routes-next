@@ -222,11 +222,11 @@ export default function MembersCar() {
                 Hidden by default; flash function toggles opacity.
                 Brand-gold fill is subtle but readable on the cream portal background. */}
             <polygon ref={beam1Ref}
-              points="53,4.75 460,-115 460,52"
+              points="53,4.75 257,-55 257,28"
               fill="rgba(197,168,130,0.38)"
               style={{ opacity: 0, transition: 'opacity 0.04s' }} />
             <polygon ref={beam2Ref}
-              points="53,21.25 460,-30 460,132"
+              points="53,21.25 257,-4 257,77"
               fill="rgba(197,168,130,0.38)"
               style={{ opacity: 0, transition: 'opacity 0.04s' }} />
 
