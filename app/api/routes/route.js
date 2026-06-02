@@ -201,7 +201,7 @@ export async function POST(request) {
   if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim() || !dob?.trim()) {
     return Response.json({ error: 'Please fill in all required fields.' }, { status: 400 })
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || isNaN(Date.parse(dob))) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || (dob.slice(0, 4) !== '0000' && isNaN(Date.parse(dob)))) {
     return Response.json({ error: 'Invalid date of birth.' }, { status: 400 })
   }
   if (phone && phone.length > 30) return Response.json({ error: 'Phone too long.' }, { status: 400 })

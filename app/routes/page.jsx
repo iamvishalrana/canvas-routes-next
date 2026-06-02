@@ -109,7 +109,7 @@ export default function RoutesPage() {
       const res = await fetch('/api/routes', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), dob: [['January','February','March','April','May','June','July','August','September','October','November','December'][+form.dob_month-1], form.dob_day, form.dob_year].filter(Boolean).join(' '), _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`, _hp: honeypotRef.current?.value || '' }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
