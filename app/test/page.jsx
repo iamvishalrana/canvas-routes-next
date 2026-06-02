@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
 const STEPS = 500
-const NAV_H = 68  // keep car below fixed nav
+const NAV_H = 68
 
 function buildPoints(isMobile) {
   const vw     = window.innerWidth
@@ -15,11 +15,11 @@ function buildPoints(isMobile) {
   const cycles = 2.5
 
   return Array.from({ length: STEPS + 1 }, (_, i) => {
-    const t     = i / STEPS
-    const x     = cx + amp * Math.sin(t * cycles * Math.PI * 2)
-    const y     = yStart + t * (yEnd - yStart)
-    const dx    = amp * cycles * Math.PI * 2 * Math.cos(t * cycles * Math.PI * 2)
-    const dy    = yEnd - yStart
+    const t  = i / STEPS
+    const x  = cx + amp * Math.sin(t * cycles * Math.PI * 2)
+    const y  = yStart + t * (yEnd - yStart)
+    const dx = amp * cycles * Math.PI * 2 * Math.cos(t * cycles * Math.PI * 2)
+    const dy = yEnd - yStart
     const angle = Math.atan2(dy, dx) * 180 / Math.PI
     return { x, y, angle }
   })
@@ -29,28 +29,31 @@ function poly(pts) {
   return pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
 }
 
-const DONUT_SPEED = 4500   // ms per revolution — very slow and dramatic
-const TIRE_INTERVAL = 90   // ms between mark drops
-// Rear-tyre offsets in car-local space (car faces +x, 60×30 viewBox centred at 30,15)
-const REAR_TYRES = [{ lx: -20, ly: -11 }, { lx: -20, ly: 11 }]
+const DONUT_SPEED   = 4500
+const TIRE_INTERVAL = 90
+// Rear-tyre offsets in car-local space (44×22 viewBox, car faces +x, center at 22,11)
+// Rear wheel rects: x=4 w=7 → centerX=7.5; y=-0.5 h=8.5 → centerY=3.75, y=14 h=8.5 → centerY=18.25
+const REAR_TYRES = [{ lx: -14.5, ly: -7.25 }, { lx: -14.5, ly: 7.25 }]
 
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(false)
 
-  const pointsRef       = useRef([])
-  const carRef          = useRef(null)    // outer div: translate
-  const carInnerRef     = useRef(null)    // inner div: rotate + donut
-  const tireMarksSvgRef = useRef(null)    // fixed SVG layer for skid marks
+  const pointsRef         = useRef([])
+  const carRef            = useRef(null)
+  const carInnerRef       = useRef(null)
+  const tireMarksSvgRef   = useRef(null)
   const rl1 = useRef(null), rl2 = useRef(null), rl3 = useRef(null), rl4 = useRef(null)
-  const rafRef          = useRef(null)
-  const stopTimer       = useRef(null)
-  const tireInterval    = useRef(null)
-  const donutStopTimer  = useRef(null)   // 30 s auto-stop
-  const isDonuting      = useRef(false)
-  const lastAngle       = useRef(90)
-  const lastX           = useRef(0)
-  const lastY           = useRef(0)
-  const donutStart      = useRef(0)       // timestamp when donut began
+  const rafRef            = useRef(null)
+  const donutRafRef       = useRef(null)
+  const stopTimer         = useRef(null)
+  const tireInterval      = useRef(null)
+  const donutStopTimer    = useRef(null)
+  const isDonuting        = useRef(false)
+  const lastAngle         = useRef(90)
+  const lastX             = useRef(0)
+  const lastY             = useRef(0)
+  const donutStart        = useRef(0)
+  const donutBaseAngleRef = useRef(0)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -74,39 +77,36 @@ export default function TestPage() {
       lastAngle.current = angle
       lastX.current = x
       lastY.current = y
-      carRef.current.style.transform      = `translate(${x}px,${y}px)`
-      carInnerRef.current.style.transform = `rotate(${angle}deg)`
+      carRef.current.style.transform          = `translate(${x}px,${y}px)`
+      carRef.current.style.opacity            = '1'
+      carInnerRef.current.style.transform     = `rotate(${angle}deg)`
     }
 
-    // ── Tire marks ──────────────────────────────────────────────────
     function dropMark() {
       const svg = tireMarksSvgRef.current
       if (!svg) return
-      const cx  = lastX.current
-      const cy  = lastY.current
-      // Elapsed time in ms → current spin angle in radians
-      const elapsed   = Date.now() - donutStart.current
-      const spinRad   = (elapsed / DONUT_SPEED) * Math.PI * 2
-      const ns = 'http://www.w3.org/2000/svg'
+      const cx       = lastX.current
+      const cy       = lastY.current
+      const elapsed  = Date.now() - donutStart.current
+      const spinRad  = (elapsed / DONUT_SPEED) * Math.PI * 2
+      const totalRad = donutBaseAngleRef.current + spinRad
+      const ns       = 'http://www.w3.org/2000/svg'
 
       REAR_TYRES.forEach(({ lx, ly }) => {
-        // Rotate local offset by current spin angle → world position
-        const wx = cx + lx * Math.cos(spinRad) - ly * Math.sin(spinRad)
-        const wy = cy + lx * Math.sin(spinRad) + ly * Math.cos(spinRad)
+        const wx = cx + lx * Math.cos(totalRad) - ly * Math.sin(totalRad)
+        const wy = cy + lx * Math.sin(totalRad) + ly * Math.cos(totalRad)
 
         const ellipse = document.createElementNS(ns, 'ellipse')
         ellipse.setAttribute('cx', wx.toFixed(1))
         ellipse.setAttribute('cy', wy.toFixed(1))
         ellipse.setAttribute('rx', '3.5')
         ellipse.setAttribute('ry', '1.8')
-        // Orient the mark perpendicular to the radius (tangent of the circle)
-        const tangentDeg = (spinRad * 180 / Math.PI) + 90
+        const tangentDeg = (totalRad * 180 / Math.PI) + 90
         ellipse.setAttribute('transform', `rotate(${tangentDeg.toFixed(1)} ${wx.toFixed(1)} ${wy.toFixed(1)})`)
         ellipse.setAttribute('fill', 'rgba(0,0,0,0.75)')
         ellipse.style.opacity = '1'
         svg.appendChild(ellipse)
 
-        // Fade out over 2 s
         requestAnimationFrame(() => {
           ellipse.style.transition = 'opacity 2s ease-out'
           ellipse.style.opacity    = '0'
@@ -118,19 +118,28 @@ export default function TestPage() {
     function stopDonut() {
       if (!carInnerRef.current) return
       isDonuting.current = false
+      cancelAnimationFrame(donutRafRef.current)
       clearInterval(tireInterval.current)
       clearTimeout(donutStopTimer.current)
-      carInnerRef.current.style.animation = 'none'
       carInnerRef.current.style.transform = `rotate(${lastAngle.current}deg)`
     }
 
     function startDonut() {
       if (!carInnerRef.current || isDonuting.current) return
-      isDonuting.current   = true
-      donutStart.current   = Date.now()
-      carInnerRef.current.style.animation = `cr-donut ${DONUT_SPEED}ms linear infinite`
-      tireInterval.current = setInterval(dropMark, TIRE_INTERVAL)
-      // Auto-stop after 30 s — car parks until next scroll
+      isDonuting.current        = true
+      donutStart.current        = Date.now()
+      const baseAngle           = lastAngle.current
+      donutBaseAngleRef.current = baseAngle * Math.PI / 180
+
+      function spinFrame() {
+        if (!isDonuting.current || !carInnerRef.current) return
+        const elapsed = Date.now() - donutStart.current
+        const spinDeg = (elapsed / DONUT_SPEED) * 360
+        carInnerRef.current.style.transform = `rotate(${baseAngle + spinDeg}deg)`
+        donutRafRef.current = requestAnimationFrame(spinFrame)
+      }
+      donutRafRef.current    = requestAnimationFrame(spinFrame)
+      tireInterval.current   = setInterval(dropMark, TIRE_INTERVAL)
       donutStopTimer.current = setTimeout(stopDonut, 30000)
     }
 
@@ -150,23 +159,26 @@ export default function TestPage() {
       stopTimer.current = setTimeout(startDonut, 600)
     }
 
+    const onResize = () => { init(); update() }
+
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', () => { init(); update() })
+    window.addEventListener('resize', onResize)
     stopTimer.current = setTimeout(startDonut, 1500)
 
     return () => {
       window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
       clearTimeout(stopTimer.current)
       clearTimeout(donutStopTimer.current)
       clearInterval(tireInterval.current)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      cancelAnimationFrame(rafRef.current)
+      cancelAnimationFrame(donutRafRef.current)
+      if (tireMarksSvgRef.current) tireMarksSvgRef.current.innerHTML = ''
     }
   }, [isMobile])
 
   return (
     <div style={{ background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif' }}>
-      <style>{`@keyframes cr-donut { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-       .cr-tyre-mark { transition: opacity 2s ease-out; }`}</style>
 
       {/* Nav */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.5rem', height: `${NAV_H}px`, background: 'rgba(10,20,13,0.9)', backdropFilter: 'blur(12px)', borderBottom: '0.5px solid rgba(197,168,130,0.12)' }}>
@@ -174,7 +186,7 @@ export default function TestPage() {
         <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Back</Link>
       </nav>
 
-      {/* ── FIXED road — covers full viewport, always visible ── */}
+      {/* Fixed road */}
       <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible' }}>
         <polyline ref={rl1} fill="none" stroke="rgba(197,168,130,0.06)" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl2} fill="none" stroke="rgba(197,168,130,0.14)" strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
@@ -182,49 +194,69 @@ export default function TestPage() {
         <polyline ref={rl4} fill="none" stroke="rgba(197,168,130,0.6)"  strokeWidth="1"  strokeLinecap="round" strokeLinejoin="round" strokeDasharray="8 12" />
       </svg>
 
-      {/* ── FIXED tire marks layer (below car) ── */}
+      {/* Fixed tire marks layer */}
       <svg ref={tireMarksSvgRef} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }} />
 
-      {/* ── FIXED car — top-down satellite view ── */}
-      {/* outer div: translate (position on road) */}
-      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '44px', height: '22px', marginLeft: '-22px', marginTop: '-11px', willChange: 'transform', pointerEvents: 'none', zIndex: 12 }}>
-        {/* inner div: rotate (facing direction + donut spin) */}
+      {/* Fixed car — opacity:0 until first tick to avoid flash at (0,0) */}
+      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '44px', height: '22px', marginLeft: '-22px', marginTop: '-11px', willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0 }}>
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}>
+          {/* Ferrari F40 — top-down view, front = right (+x) */}
           <svg viewBox="0 0 44 22" width="44" height="22" style={{ display: 'block', overflow: 'visible' }}>
             {/* Shadow */}
-            <ellipse cx="22" cy="13.5" rx="19.5" ry="8" fill="rgba(0,0,0,0.4)" />
-            {/* Rear spoiler (sits behind body) */}
-            <rect x="0.5" y="7" width="2" height="8" rx="0.8" fill="rgba(80,60,35,0.9)" />
-            {/* Body — wide rear, narrow pointed nose; front = right */}
-            <path d="M43,11 C42,8.5 40,6 37,5 C33,4 27,4 20,4.5 C14,5 10,4.5 6,4 C3.5,3.8 2.5,5.5 2.5,7.5 L2.5,14.5 C2.5,16.5 3.5,18.2 6,18 C10,17.5 14,17 20,17.5 C27,18 33,18 37,17 C40,16 42,13.5 43,11Z" fill="#c5a882" />
-            {/* Hood crease */}
-            <path d="M37,5 C40,7 42,9 43,11 C42,13 40,15 37,17" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="1" />
-            {/* Windshield (front = right) */}
-            <path d="M36,6 C39,8 39,14 36,16 L30,15 L30,7Z" fill="rgba(155,210,235,0.42)" stroke="rgba(197,168,130,0.3)" strokeWidth="0.5" />
-            {/* Cabin roof */}
-            <path d="M30,7 L36,6 L36,16 L30,15 L19,14.5 L19,7.5Z" fill="rgba(8,18,12,0.32)" />
-            {/* Rear window */}
-            <path d="M19,7.5 L19,14.5 L14.5,14 L14.5,8Z" fill="rgba(155,210,235,0.22)" stroke="rgba(197,168,130,0.18)" strokeWidth="0.4" />
+            <ellipse cx="22" cy="14" rx="21" ry="8.5" fill="rgba(0,0,0,0.45)" />
+
+            {/* Rear wheels — very wide track */}
+            <rect x="4"    y="-0.5" width="7"   height="8.5" rx="1.5" fill="#111" />
+            <rect x="4"    y="14"   width="7"   height="8.5" rx="1.5" fill="#111" />
             {/* Front wheels */}
-            <rect x="37" y="0"  width="5.5" height="7"   rx="1.5" fill="#111" />
-            <rect x="37" y="15" width="5.5" height="7"   rx="1.5" fill="#111" />
-            {/* Rear wheels — wider than front */}
-            <rect x="2"  y="-0.5" width="7" height="8"  rx="1.5" fill="#111" />
-            <rect x="2"  y="14.5" width="7" height="8"  rx="1.5" fill="#111" />
-            {/* Headlights — angular sweep */}
-            <path d="M42,8.5 L43.5,10.5 L43.5,11.5 L42,13.5 L39.5,12.5 L39.5,9.5Z" fill="rgba(255,252,200,0.95)" />
-            {/* Tail light bar */}
-            <rect x="2.5" y="8"   width="1.5" height="6"   rx="0.5" fill="rgba(220,55,55,0.9)" />
-            <rect x="2.5" y="5.5" width="1.5" height="2.5" rx="0.5" fill="rgba(200,50,50,0.7)" />
-            <rect x="2.5" y="14"  width="1.5" height="2.5" rx="0.5" fill="rgba(200,50,50,0.7)" />
+            <rect x="36.5" y="0.5"  width="5.5" height="6.5" rx="1.5" fill="#111" />
+            <rect x="36.5" y="15"   width="5.5" height="6.5" rx="1.5" fill="#111" />
+
+            {/* Body — wide rear haunches, narrow wedge nose */}
+            <path d="M43,11 C42,8 39,5.5 36,4.5 C31,3.5 26,3.5 20,4 C14,4.5 10.5,3.5 7,3 C5.2,2.8 4.5,4 4.5,6 L4.5,16 C4.5,18 5.2,19.2 7,19 C10.5,18.5 14,17.5 20,18 C26,18.5 31,18.5 36,17.5 C39,16.5 42,14 43,11Z" fill="#CC0000" />
+
+            {/* Body crease lines */}
+            <path d="M36,4.5 C28,5 20,5.5 12,5 C8,4.8 5.5,5.2 4.5,6"    fill="none" stroke="rgba(255,80,80,0.18)" strokeWidth="0.8" />
+            <path d="M36,17.5 C28,17 20,16.5 12,17 C8,17.2 5.5,16.8 4.5,16" fill="none" stroke="rgba(255,80,80,0.18)" strokeWidth="0.8" />
+
+            {/* Twin NACA scoops — feeds the twin turbos, signature F40 detail */}
+            <rect x="12.5" y="3.5" width="4.5" height="2.5" rx="0.8" fill="rgba(0,0,0,0.55)" />
+            <rect x="12.5" y="16"  width="4.5" height="2.5" rx="0.8" fill="rgba(0,0,0,0.55)" />
+
+            {/* Windshield — steeply raked */}
+            <path d="M35,5.5 C38,7.5 39,9 39,11 C39,13 38,14.5 35,16.5 L29,15.5 L29,6.5Z" fill="rgba(130,185,210,0.42)" stroke="rgba(200,175,135,0.28)" strokeWidth="0.5" />
+
+            {/* Cabin roof */}
+            <path d="M29,6.5 L35,5.5 L35,16.5 L29,15.5 L20,15 L20,7Z" fill="rgba(70,0,0,0.5)" />
+
+            {/* Rear window */}
+            <path d="M20,7 L20,15 L15.5,14.5 L15.5,7.5Z" fill="rgba(130,185,210,0.2)" stroke="rgba(200,175,135,0.15)" strokeWidth="0.4" />
+
+            {/* Tail lights — positioned in front of wing blade */}
+            <rect x="5.5" y="5.5" width="2" height="3.5" rx="0.5" fill="rgba(220,55,55,0.95)" />
+            <rect x="5.5" y="13"  width="2" height="3.5" rx="0.5" fill="rgba(220,55,55,0.95)" />
+            <rect x="5"   y="9.5" width="2" height="3"   rx="0.5" fill="rgba(185,40,40,0.75)" />
+
+            {/* Rear wing — wider than body, F40's defining feature */}
+            {/* Main blade */}
+            <rect x="1.5" y="-3"   width="3.5" height="28" rx="1"   fill="#1c1c1c" />
+            {/* End caps */}
+            <rect x="1.5" y="-3.5" width="5.5" height="4"  rx="0.8" fill="#222" />
+            <rect x="1.5" y="21.5" width="5.5" height="4"  rx="0.8" fill="#222" />
+            {/* Support struts connecting blade to body */}
+            <rect x="4"   y="3.5"  width="5"   height="1.5" rx="0.5" fill="#181818" />
+            <rect x="4"   y="17"   width="5"   height="1.5" rx="0.5" fill="#181818" />
+
+            {/* Pop-up headlights — rectangular, flush, F40 signature */}
+            <rect x="38.5" y="1"  width="4.5" height="5" rx="1" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.3" />
+            <rect x="38.5" y="16" width="4.5" height="5" rx="1" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.3" />
           </svg>
         </div>
       </div>
 
-      {/* ── Scrollable page content ── */}
+      {/* Scrollable content */}
       <div style={{ paddingTop: `${NAV_H}px` }}>
 
-        {/* Hero */}
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem', position: 'relative' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '11px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1.25rem' }}>Canvas Routes · Season 2026</div>
@@ -247,7 +279,6 @@ export default function TestPage() {
           </div>
         </section>
 
-        {/* Section 2 */}
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1rem' }}>The Route</div>
@@ -260,7 +291,6 @@ export default function TestPage() {
           </div>
         </section>
 
-        {/* Section 3 */}
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1rem' }}>The Experience</div>
@@ -273,7 +303,6 @@ export default function TestPage() {
           </div>
         </section>
 
-        {/* Section 4 */}
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1rem' }}>Membership</div>
@@ -288,7 +317,6 @@ export default function TestPage() {
 
       </div>
 
-      {/* Below fold */}
       <section style={{ background: '#F5F1EC', padding: '6rem 1.5rem', textAlign: 'center' }}>
         <div style={{ maxWidth: '480px', margin: '0 auto' }}>
           <div style={{ fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>You made it</div>
