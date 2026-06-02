@@ -164,7 +164,7 @@ export default function Home() {
     if (!form.dob_day) newErrors.dob_day = true
     if (!form.source) newErrors.source = true
     if (form.registerFor === GPCC && !form.downtown_cruise) newErrors.downtown_cruise = true
-    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length !== 10)) newErrors.phone = true
+    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) newErrors.phone = true
     if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.replace(/^@+/, '').trim())) newErrors.instagram = true
     setErrors(newErrors)
     return newErrors
@@ -180,7 +180,7 @@ export default function Home() {
         else delete next.email
       }
       if (field === 'phone') {
-        if (form.phone.trim() && form.phone.replace(/\D/g,'').length !== 10) next.phone = true
+        if (form.phone.trim() && form.phone.replace(/\D/g,'').length < 10) next.phone = true
         else delete next.phone
       }
       if (field === 'instagram') {
