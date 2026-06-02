@@ -13,6 +13,8 @@ export default function BackToTop() {
   if (!visible) return null
 
   return (
+    <>
+    <style>{`@keyframes btt-in{from{opacity:0;transform:translateY(6px)}to{opacity:0.85;transform:translateY(0)}}`}</style>
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Back to top"
@@ -33,6 +35,7 @@ export default function BackToTop() {
         opacity: 0.85,
         transition: 'opacity 0.2s',
         boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+        animation: 'btt-in 0.25s ease forwards',
       }}
       onMouseEnter={e => e.currentTarget.style.opacity = '1'}
       onMouseLeave={e => e.currentTarget.style.opacity = '0.85'}
@@ -41,5 +44,6 @@ export default function BackToTop() {
         <polyline points="18 15 12 9 6 15"/>
       </svg>
     </button>
+    </>
   )
 }
