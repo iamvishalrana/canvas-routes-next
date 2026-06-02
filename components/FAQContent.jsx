@@ -297,6 +297,11 @@ export default function FAQContent() {
   const recoverRafRef     = useRef(null)
   const speechRef         = useRef(null)
   const qmarksRef         = useRef(null)
+  const flashTimerR       = useRef(null)
+  const faqHL1Ref         = useRef(null)
+  const faqHL2Ref         = useRef(null)
+  const faqBeam1Ref       = useRef(null)
+  const faqBeam2Ref       = useRef(null)
 
   useEffect(() => {
     if (!isMobile) {
@@ -521,6 +526,26 @@ export default function FAQContent() {
         }
         recoverRafRef.current = requestAnimationFrame(recoverFrame)
       }
+      function flashHeadlights() {
+        const h1 = faqHL1Ref.current, h2 = faqHL2Ref.current
+        const b1 = faqBeam1Ref.current, b2 = faqBeam2Ref.current
+        if (!h1 || !h2) return
+        const normal = 'rgba(255,250,195,0.9)', bright = 'rgba(255,255,215,1.0)', dark = 'rgba(18,12,4,0.65)'
+        function beams(on) { const op = on ? '1' : '0'; if (b1) b1.style.opacity = op; if (b2) b2.style.opacity = op }
+        h1.setAttribute('fill', dark);   h2.setAttribute('fill', dark);   beams(false)
+        setTimeout(() => {
+          h1.setAttribute('fill', bright); h2.setAttribute('fill', bright); beams(true)
+          setTimeout(() => {
+            h1.setAttribute('fill', dark);   h2.setAttribute('fill', dark);   beams(false)
+            setTimeout(() => {
+              h1.setAttribute('fill', bright); h2.setAttribute('fill', bright); beams(true)
+              setTimeout(() => {
+                h1.setAttribute('fill', normal); h2.setAttribute('fill', normal); beams(false)
+              }, 220)
+            }, 110)
+          }, 220)
+        }, 110)
+      }
       init(); update()
       // Velocity accumulator: decays each event, fires only on hard sustained scroll
       let scrollVel = 0
@@ -540,10 +565,11 @@ export default function FAQContent() {
           scrollDirRef.current = newDir
         }
         if (isDonuting.current) stopDonut()
-        clearTimeout(stopTimerR.current)
+        clearTimeout(stopTimerR.current); clearTimeout(flashTimerR.current)
         if (rafRef.current) cancelAnimationFrame(rafRef.current)
         rafRef.current = requestAnimationFrame(update)
-        stopTimerR.current = setTimeout(startDonut, 3000)
+        stopTimerR.current  = setTimeout(startDonut, 3000)
+        flashTimerR.current = setTimeout(flashHeadlights, 49000)
       }
       const onResize = () => { if (!isSlidingRef.current && !isRecoveringRef.current) { init(false); update() } }
       window.addEventListener('scroll', onScroll, { passive: true })
@@ -552,7 +578,7 @@ export default function FAQContent() {
       return () => {
         window.removeEventListener('scroll', onScroll)
         window.removeEventListener('resize', onResize)
-        clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current)
+        clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current); clearTimeout(flashTimerR.current)
         clearInterval(tireIntervalR.current)
         cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
         cancelAnimationFrame(halfDonutRafRef.current)
@@ -710,6 +736,8 @@ export default function FAQContent() {
           ) : (
             /* ── Desktop: F40 top-down view ── */
             <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
+            <polygon ref={faqBeam1Ref} points="53,4.75 257,-55 257,28"   fill="rgba(197,168,130,0.38)" style={{ opacity: 0, transition: 'opacity 0.04s' }} />
+            <polygon ref={faqBeam2Ref} points="53,21.25 257,-4 257,77"  fill="rgba(197,168,130,0.38)" style={{ opacity: 0, transition: 'opacity 0.04s' }} />
             <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
             <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
             <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
@@ -737,8 +765,8 @@ export default function FAQContent() {
             <rect x="0.5" y="27.5" width="8"   height="5.5" rx="1.2" fill="#242424" />
             <rect x="3.5" y="4.5"  width="9"   height="2.5" rx="0.8" fill="#181818" />
             <rect x="3.5" y="19"   width="9"   height="2.5" rx="0.8" fill="#181818" />
-            <rect x="49" y="1"    width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
-            <rect x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
+            <rect ref={faqHL1Ref} x="49" y="1"    width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
+            <rect ref={faqHL2Ref} x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
           </svg>
           )}
         </div>
