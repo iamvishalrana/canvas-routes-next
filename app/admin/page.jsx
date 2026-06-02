@@ -195,7 +195,7 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
 
   const initials = (m.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const memberSinceRaw = m.created_at || m.password_set_at
-  const memberSinceStr = memberSinceRaw ? new Date(memberSinceRaw).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null
+  const memberSinceStr = memberSinceRaw ? new Date(memberSinceRaw).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : null
   const cars = m.cars?.length > 0 ? m.cars : (m.car_year || m.car_make || m.car_model ? [{ year: m.car_year, make: m.car_make, model: m.car_model, license_plate: m.license_plate }] : [])
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const pastEvents = CANONICAL_EVENTS.filter(ev => new Date(ev.date) <= today)
@@ -203,149 +203,150 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
   const noShowCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === false).length
   const upcomingCount = CANONICAL_EVENTS.filter(ev => new Date(ev.date) > today).length
   const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}${m.dob_year ? `, ${m.dob_year}` : ''}` : null
+  const validCars = cars.filter(c => c.year || c.make || c.model)
+
+  const rowSep = { borderBottom: '0.5px solid rgba(0,0,0,0.05)' }
+  const micro = { fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb' }
 
   return (
     <div style={{ background: 'rgba(197,168,130,0.025)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '3px solid #c5a882' }}>
 
-      {/* Header */}
-      <div style={{ padding: '1.5rem 1.5rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
-        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #c5a882, #a8885f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(197,168,130,0.35)' }}>
-          <span style={{ fontSize: '15px', color: '#fff', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500', letterSpacing: '0.06em' }}>{initials}</span>
+      {/* ── Compact header ── */}
+      <div style={{ padding: '0.75rem 1rem', ...rowSep, display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #c5a882, #a8885f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: '12px', color: '#fff', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500', letterSpacing: '0.05em' }}>{initials}</span>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.01em' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
-            <Badge status={m.membership_status} />
-            {m.tier && (
-              <span style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', border: m.tier === 'inner_circle' ? '0.5px solid rgba(197,168,130,0.6)' : '0.5px solid rgba(0,0,0,0.15)', color: m.tier === 'inner_circle' ? '#c5a882' : '#888', background: m.tier === 'inner_circle' ? 'rgba(197,168,130,0.08)' : 'transparent' }}>
-                {m.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'}
-              </span>
-            )}
-          </div>
-          {memberSinceStr && (
-            <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem', letterSpacing: '0.04em' }}>Member since {memberSinceStr}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
+          <Badge status={m.membership_status} />
+          {m.tier && (
+            <span style={{ fontSize: '9px', letterSpacing: '0.13em', textTransform: 'uppercase', padding: '2px 6px', border: m.tier === 'inner_circle' ? '0.5px solid rgba(197,168,130,0.6)' : '0.5px solid rgba(0,0,0,0.15)', color: m.tier === 'inner_circle' ? '#c5a882' : '#999', background: m.tier === 'inner_circle' ? 'rgba(197,168,130,0.08)' : 'transparent' }}>
+              {m.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'}
+            </span>
           )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.6rem' }}>
-            {m.email && <a href={`mailto:${m.email}`} style={{ fontSize: '11px', color: '#888', textDecoration: 'none', letterSpacing: '0.02em' }}>{m.email}</a>}
-            {m.phone && <a href={`tel:${m.phone}`} style={{ fontSize: '11px', color: '#888', textDecoration: 'none', letterSpacing: '0.02em' }}>{m.phone}</a>}
-            {m.instagram && <a href={`https://instagram.com/${m.instagram.replace(/^@/, '')}`} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none', letterSpacing: '0.02em' }}>@{m.instagram.replace(/^@/, '')}</a>}
-            {dobStr && <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.02em' }}>🎂 {dobStr}</span>}
-          </div>
+          {memberSinceStr && <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.03em' }}>since {memberSinceStr}</span>}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem 1rem', alignItems: 'center' }}>
+          {m.email && <a href={`mailto:${m.email}`} style={{ fontSize: '11px', color: '#777', textDecoration: 'none' }}>{m.email}</a>}
+          {m.phone && <a href={`tel:${m.phone}`} style={{ fontSize: '11px', color: '#777', textDecoration: 'none' }}>{m.phone}</a>}
+          {m.instagram && <a href={`https://instagram.com/${m.instagram.replace(/^@/, '')}`} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none' }}>@{m.instagram.replace(/^@/, '')}</a>}
+          {dobStr && <span style={{ fontSize: '11px', color: '#bbb' }}>🎂 {dobStr}</span>}
         </div>
       </div>
 
-      {/* Car centrepiece */}
-      {cars.filter(c => c.year || c.make || c.model).length > 0 && (
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.5)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {cars.map((car, i) => {
-            const parts = [car.year, car.make, car.model].filter(Boolean)
-            if (!parts.length) return null
+      {/* ── Two-column body ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.6fr', ...rowSep }}>
+
+        {/* Left: cars + photo */}
+        <div style={{ borderRight: isMobile ? 'none' : '0.5px solid rgba(0,0,0,0.06)', ...(!isMobile ? {} : rowSep) }}>
+          {validCars.length > 0 && (
+            <div style={{ padding: '0.75rem 1rem', ...rowSep }}>
+              <div style={{ ...micro, marginBottom: '0.5rem' }}>Garage</div>
+              {validCars.map((car, i) => {
+                const parts = [car.year, car.make, car.model].filter(Boolean)
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: i < validCars.length - 1 ? '0.35rem' : 0 }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/><rect x="11" y="13" width="10" height="8" rx="2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>
+                    <span style={{ fontSize: '12px', color: '#1a1a1a' }}>
+                      {parts.map((p, pi) => <span key={pi}>{pi > 0 && <span style={{ color: '#c5a882', margin: '0 0.3rem', fontSize: '9px' }}>·</span>}{p}</span>)}
+                    </span>
+                    {car.license_plate && (
+                      <span style={{ fontSize: '9px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1px 5px' }}>{car.license_plate}</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          {m.car_photo_url && (
+            <div style={{ padding: '0.75rem 1rem' }}>
+              <div style={{ ...micro, marginBottom: '0.45rem' }}>Photo</div>
+              <a href={m.car_photo_url} target="_blank" rel="noreferrer">
+                <img src={m.car_photo_url} alt={m.name} style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', display: 'block' }} />
+              </a>
+            </div>
+          )}
+          {validCars.length === 0 && !m.car_photo_url && (
+            <div style={{ padding: '0.75rem 1rem', fontSize: '11px', color: '#ddd' }}>No vehicle on file</div>
+          )}
+        </div>
+
+        {/* Right: attendance */}
+        <div style={{ padding: '0.75rem 1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
+            <span style={micro}>Event Attendance</span>
+            {pastEvents.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <span style={{ fontSize: '10px', padding: '1px 7px', background: attendedCount > 0 ? 'rgba(59,107,47,0.1)' : 'transparent', border: '0.5px solid ' + (attendedCount > 0 ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.1)'), color: attendedCount > 0 ? '#3B6B2F' : '#bbb' }}>{attendedCount} ✓</span>
+                <span style={{ fontSize: '10px', padding: '1px 7px', background: noShowCount > 0 ? 'rgba(123,32,50,0.08)' : 'transparent', border: '0.5px solid ' + (noShowCount > 0 ? 'rgba(123,32,50,0.3)' : 'rgba(0,0,0,0.1)'), color: noShowCount > 0 ? '#7B2032' : '#bbb' }}>{noShowCount} ✗</span>
+                {upcomingCount > 0 && <span style={{ fontSize: '10px', padding: '1px 7px', border: '0.5px solid rgba(0,0,0,0.1)', color: '#bbb' }}>{upcomingCount} upcoming</span>}
+              </div>
+            )}
+          </div>
+          {CANONICAL_EVENTS.map(ev => {
+            const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
+            const attended = m.event_attendance?.[key]
+            const isPast = new Date(ev.date) <= today
             return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/><rect x="11" y="13" width="10" height="8" rx="2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>
-                <span style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.03em' }}>
-                  {parts.map((p, pi) => (
-                    <span key={pi}>{pi > 0 && <span style={{ color: '#c5a882', margin: '0 0.4rem', fontSize: '10px' }}>·</span>}{p}</span>
-                  ))}
-                </span>
-                {car.license_plate && (
-                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1px 7px', marginLeft: '0.25rem' }}>{car.license_plate}</span>
+              <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                <span style={{ fontSize: '11px', color: '#555', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ev.name}>{ev.name}</span>
+                {isPast ? (
+                  <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+                    <button onClick={() => onToggleAttendance(m, ev.name, true)}
+                      style={{ fontSize: '10px', letterSpacing: '0.06em', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.12)', background: attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: attended === true ? '#3B6B2F' : '#aaa' }}>
+                      ✓
+                    </button>
+                    <button onClick={() => onToggleAttendance(m, ev.name, false)}
+                      style={{ fontSize: '10px', letterSpacing: '0.06em', padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.12)', background: attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: attended === false ? '#7B2032' : '#aaa' }}>
+                      ✗
+                    </button>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '9px', color: '#ccc', letterSpacing: '0.06em', flexShrink: 0 }}>upcoming</span>
                 )}
               </div>
             )
           })}
         </div>
-      )}
-
-      {/* Member photo */}
-      {m.car_photo_url && (
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.5)' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Photo</div>
-          <a href={m.car_photo_url} target="_blank" rel="noreferrer">
-            <img src={m.car_photo_url} alt={m.name} style={{ width: '100%', maxHeight: '220px', objectFit: 'cover', display: 'block' }} />
-          </a>
-        </div>
-      )}
-
-      {/* Stats strip */}
-      {pastEvents.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
-          {[
-            { value: attendedCount, label: 'Attended', color: attendedCount > 0 ? '#3B6B2F' : '#1a1a1a' },
-            { value: noShowCount, label: 'No-shows', color: noShowCount > 0 ? '#7B2032' : '#1a1a1a' },
-            { value: upcomingCount, label: 'Upcoming', color: '#1a1a1a' },
-          ].map((s, i) => (
-            <div key={i} style={{ padding: '0.85rem 1.5rem', borderRight: i < 2 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.25rem' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Event Attendance */}
-      <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
-        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.9rem' }}>Event Attendance</div>
-        {CANONICAL_EVENTS.map(ev => {
-          const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
-          const attended = m.event_attendance?.[key]
-          const isPast = new Date(ev.date) <= today
-          return (
-            <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '280px' }}>{ev.name}</span>
-              {isPast ? (
-                <>
-                  <button onClick={() => onToggleAttendance(m, ev.name, true)}
-                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: attended === true ? '#3B6B2F' : '#888' }}>
-                    ✓ Attended
-                  </button>
-                  <button onClick={() => onToggleAttendance(m, ev.name, false)}
-                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: attended === false ? '#7B2032' : '#888' }}>
-                    ✗ No-show
-                  </button>
-                </>
-              ) : (
-                <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
-              )}
-            </div>
-          )
-        })}
       </div>
 
-      {/* Quick Note */}
-      <div style={{ padding: '0 1.5rem 0' }}>
-        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Quick Note</div>
-        {editingNote === m.id ? (
-          <div style={{ marginBottom: '1.25rem' }}>
-            <input autoFocus value={noteValue} maxLength={200}
-              onChange={e => setNoteValue(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') onSaveNote(m.id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
-              style={{ ...inp, fontSize: '13px', marginBottom: '0.5rem' }}
-              placeholder="e.g. Referred 3 friends, inner circle candidate" />
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <GhostBtn small onClick={() => onSaveNote(m.id, noteValue)}>Save</GhostBtn>
-              <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
+      {/* ── Notes row ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
+        {/* Quick Note */}
+        <div style={{ padding: '0.75rem 1rem', borderRight: isMobile ? 'none' : '0.5px solid rgba(0,0,0,0.06)', ...(!isMobile ? {} : rowSep) }}>
+          <div style={{ ...micro, marginBottom: '0.4rem' }}>Quick Note</div>
+          {editingNote === m.id ? (
+            <div>
+              <input autoFocus value={noteValue} maxLength={200}
+                onChange={e => setNoteValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') onSaveNote(m.id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+                style={{ ...inp, fontSize: '12px', marginBottom: '0.4rem' }}
+                placeholder="e.g. Referred 3 friends, inner circle candidate" />
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <GhostBtn small onClick={() => onSaveNote(m.id, noteValue)}>Save</GhostBtn>
+                <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div onClick={() => { setEditingNote(m.id); setNoteValue(m.notes || '') }}
-            style={{ fontSize: '13px', color: m.notes ? '#444' : '#ccc', cursor: 'text', padding: '0.5rem 0.75rem', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', minHeight: '36px', marginBottom: '1.25rem' }}>
-            {m.notes || 'Click to add a note…'}
-          </div>
-        )}
-      </div>
+          ) : (
+            <div onClick={() => { setEditingNote(m.id); setNoteValue(m.notes || '') }}
+              style={{ fontSize: '12px', color: m.notes ? '#444' : '#ccc', cursor: 'text', padding: '0.4rem 0.6rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', minHeight: '32px' }}>
+              {m.notes || 'Click to add…'}
+            </div>
+          )}
+        </div>
 
-      {/* Admin Notes */}
-      <div style={{ padding: '1.25rem 1.5rem' }}>
-        <AdminNotesPanel
-          initialNotes={m.admin_notes}
-          onSave={async (json) => {
-            await fetch(`/api/admin/members/${m.id}`, {
-              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ admin_notes: json }),
-            })
-          }}
-        />
+        {/* Admin Notes */}
+        <div style={{ padding: '0.75rem 1rem' }}>
+          <AdminNotesPanel
+            initialNotes={m.admin_notes}
+            onSave={async (json) => {
+              await fetch(`/api/admin/members/${m.id}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin_notes: json }),
+              })
+            }}
+          />
+        </div>
       </div>
     </div>
   )
