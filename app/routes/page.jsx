@@ -19,34 +19,15 @@ export default function RoutesIndexPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  function parseEventDate(dateStr) {
-    if (!dateStr) return null
-    const str = dateStr.trim()
-    // ISO format "2026-06-07" → construct in local time to avoid UTC midnight shifting the day
-    const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-    if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3])
-    // Text format "June 7, 2026" etc.
-    const d = new Date(str)
-    return isNaN(d.getTime()) ? null : d
-  }
-
-  const upcoming = events.filter(e => {
-    const d = parseEventDate(e.date)
-    return d && d >= today
-  }).sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date))
-
-  const past = events.filter(e => {
-    const d = parseEventDate(e.date)
-    return d && d < today
-  }).sort((a, b) => parseEventDate(b.date) - parseEventDate(a.date))
-
   function formatDate(dateStr) {
-    const d = parseEventDate(dateStr)
-    if (!d) return dateStr
-    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    if (!dateStr) return ''
+    const str = dateStr.trim()
+    const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (iso) {
+      const d = new Date(+iso[1], +iso[2] - 1, +iso[3])
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    }
+    return str
   }
 
   return (
@@ -98,70 +79,33 @@ export default function RoutesIndexPage() {
 
         {loading ? (
           <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#bbb', letterSpacing: '0.06em' }}>Loading…</div>
+        ) : events.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>No routes yet.</div>
+            <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1rem auto' }} />
+            <p style={{ fontSize: '14px', color: '#888', lineHeight: '1.8' }}>Check back soon — the first one is just getting planned.</p>
+          </div>
         ) : (
-          <>
-            {/* Upcoming */}
-            {upcoming.length > 0 && (
-              <div style={{ marginBottom: '4rem' }}>
-                <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#888', marginBottom: '1.5rem' }}>Upcoming</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(0,0,0,0.08)' }}>
-                  {upcoming.map(e => (
-                    <div key={e.id} style={{ background: '#F5F1EC', padding: '1.5rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap' }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: '16px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '500', color: '#1a1a1a', marginBottom: '0.3rem' }}>{e.name}</div>
-                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <span style={{ fontSize: '12px', color: '#c5a882' }}>{formatDate(e.date)}</span>
-                          {e.location && <span style={{ fontSize: '11px', color: '#aaa' }}>{e.location}</span>}
-                        </div>
-                        {e.description && <div style={{ fontSize: '13px', color: '#777', marginTop: '0.5rem', lineHeight: '1.65', maxWidth: '520px' }}>{e.description}</div>}
-                      </div>
-                      {e.registration_url && (
-                        <Link href={e.registration_url}
-                          style={{ flexShrink: 0, padding: '0.65rem 1.4rem', background: '#0F1E14', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                          View details →
-                        </Link>
-                      )}
-                    </div>
-                  ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(0,0,0,0.08)' }}>
+            {events.map(e => (
+              <div key={e.id} style={{ background: '#F5F1EC', padding: '1.5rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '16px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '500', color: '#1a1a1a', marginBottom: '0.3rem' }}>{e.name}</div>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#c5a882' }}>{formatDate(e.date)}</span>
+                    {e.location && <span style={{ fontSize: '11px', color: '#aaa' }}>{e.location}</span>}
+                  </div>
+                  {e.description && <div style={{ fontSize: '13px', color: '#777', marginTop: '0.5rem', lineHeight: '1.65', maxWidth: '520px' }}>{e.description}</div>}
                 </div>
+                {e.registration_url && (
+                  <Link href={e.registration_url}
+                    style={{ flexShrink: 0, padding: '0.65rem 1.4rem', background: '#0F1E14', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                    View details →
+                  </Link>
+                )}
               </div>
-            )}
-
-            {/* Past */}
-            {past.length > 0 && (
-              <div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb', marginBottom: '1.5rem' }}>Past routes</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(0,0,0,0.06)' }}>
-                  {past.map(e => (
-                    <div key={e.id} style={{ background: '#F5F1EC', padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap', opacity: 0.6 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: '15px', fontFamily: 'var(--font-cormorant),serif', color: '#444', marginBottom: '0.2rem' }}>{e.name}</div>
-                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <span style={{ fontSize: '11px', color: '#888' }}>{formatDate(e.date)}</span>
-                          {e.location && <span style={{ fontSize: '11px', color: '#bbb' }}>{e.location}</span>}
-                        </div>
-                      </div>
-                      {e.registration_url && (
-                        <Link href={e.registration_url}
-                          style={{ flexShrink: 0, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', textDecoration: 'none' }}>
-                          View →
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Empty state */}
-            {!loading && upcoming.length === 0 && past.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>No routes yet.</div>
-                <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1rem auto' }} />
-                <p style={{ fontSize: '14px', color: '#888', lineHeight: '1.8' }}>Check back soon — the first one is just getting planned.</p>
-              </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </section>
 
