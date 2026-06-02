@@ -2037,20 +2037,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       />
                       <div>
                         <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
-                        {editingNote === c.contact_id ? (
-                          <input autoFocus value={noteValue} maxLength={200}
-                            onChange={e => setNoteValue(e.target.value)}
-                            onBlur={() => saveNote(c.contact_id, noteValue)}
-                            onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
-                            onClick={e => e.stopPropagation()}
-                            style={{ fontSize: '11px', color: '#888', border: 'none', borderBottom: '1px solid #ccc', outline: 'none', background: 'transparent', width: '100%', padding: '1px 0', fontFamily: 'var(--font-inter),sans-serif' }}
-                            placeholder="Add note…" />
-                        ) : (
-                          <div onClick={e => { e.stopPropagation(); setEditingNote(c.contact_id); setNoteValue(c.notes || '') }}
-                            style={{ fontSize: '11px', color: c.notes ? '#999' : '#ddd', cursor: 'text', marginTop: '1px', fontStyle: c.notes ? 'italic' : 'normal' }}>
-                            {c.notes || '+ note'}
-                          </div>
-                        )}
+                        {c.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{c.notes}</div>}
                       </div>
                     </div>
                     <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
@@ -2106,20 +2093,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                 </div>
                 <div>
                   <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
-                  {editingNote === c.contact_id ? (
-                    <input autoFocus value={noteValue} maxLength={200}
-                      onChange={e => setNoteValue(e.target.value)}
-                      onBlur={() => saveNote(c.contact_id, noteValue)}
-                      onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
-                      onClick={e => e.stopPropagation()}
-                      style={{ fontSize: '11px', color: '#888', border: 'none', borderBottom: '1px solid #ccc', outline: 'none', background: 'transparent', width: '100%', padding: '1px 0', fontFamily: 'var(--font-inter),sans-serif' }}
-                      placeholder="Add note…" />
-                  ) : (
-                    <div onClick={e => { e.stopPropagation(); setEditingNote(c.contact_id); setNoteValue(c.notes || '') }}
-                      style={{ fontSize: '11px', color: c.notes ? '#999' : '#ddd', cursor: 'text', marginTop: '1px', fontStyle: c.notes ? 'italic' : 'normal' }}>
-                      {c.notes || '+ note'}
-                    </div>
-                  )}
+                  {c.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{c.notes}</div>}
                 </div>
                 <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
@@ -2284,6 +2258,22 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                           <div style={{ fontSize: '13px', color: '#444', lineHeight: '1.65' }}>{c.more}</div>
                         </div>
                       )}
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Quick Note</div>
+                        {editingNote === c.contact_id ? (
+                          <input autoFocus value={noteValue} maxLength={200}
+                            onChange={e => setNoteValue(e.target.value)}
+                            onBlur={() => saveNote(c.contact_id, noteValue)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+                            style={{ ...inp, fontSize: '13px' }}
+                            placeholder="e.g. Steve — Rangers business" />
+                        ) : (
+                          <div onClick={() => { setEditingNote(c.contact_id); setNoteValue(c.notes || '') }}
+                            style={{ fontSize: '13px', color: c.notes ? '#444' : '#ccc', cursor: 'text', padding: '0.5rem 0.75rem', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', minHeight: '36px' }}>
+                            {c.notes || 'Click to add a note…'}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
