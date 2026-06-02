@@ -284,8 +284,13 @@ export default function FAQContent() {
   const donutBaseAngle = useRef(0)
   const donutPivotX    = useRef(0)
   const donutPivotY    = useRef(0)
-  const donutCarX      = useRef(0)
-  const donutCarY      = useRef(0)
+  const donutCarX         = useRef(0)
+  const donutCarY         = useRef(0)
+  const scrollLastY       = useRef(0)
+  const scrollDirRef      = useRef(1)
+  const halfDonutActiveRef = useRef(false)
+  const halfDonutRafRef   = useRef(null)
+  const facingOffsetRef   = useRef(0)   // 0 = forward, 180 = backward
 
   useEffect(() => {
     if (!isMobile) {
@@ -296,15 +301,21 @@ export default function FAQContent() {
         pointsRef.current = pts
         const p = cPoly(pts)
         ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
+        scrollLastY.current      = window.scrollY
+        scrollDirRef.current     = 1
+        facingOffsetRef.current  = 0
+        halfDonutActiveRef.current = false
         tick(0)
       }
       function tick(p) {
         if (!carRef.current || !carInnerRef.current || !pointsRef.current.length) return
         const { x, y, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
         lastAngle.current = angle; lastX.current = x; lastY.current = y
-        carRef.current.style.transform      = `translate(${x}px,${y}px)`
-        carRef.current.style.opacity        = '1'
-        carInnerRef.current.style.transform = `rotate(${angle}deg)`
+        carRef.current.style.transform = `translate(${x}px,${y}px)`
+        carRef.current.style.opacity   = '1'
+        if (!halfDonutActiveRef.current) {
+          carInnerRef.current.style.transform = `rotate(${angle + facingOffsetRef.current}deg)`
+        }
       }
       function dropMark() {
         const svg = tireMarksSvg.current; if (!svg) return
@@ -332,13 +343,43 @@ export default function FAQContent() {
         isDonuting.current = false
         cancelAnimationFrame(donutRafRef.current)
         clearInterval(tireIntervalR.current); clearTimeout(donutStopR.current)
-        carRef.current.style.transform      = `translate(${lastX.current}px,${lastY.current}px)`
-        carInnerRef.current.style.transform = `rotate(${lastAngle.current}deg)`
+        carRef.current.style.transform = `translate(${lastX.current}px,${lastY.current}px)`
+        if (!halfDonutActiveRef.current) {
+          carInnerRef.current.style.transform = `rotate(${lastAngle.current + facingOffsetRef.current}deg)`
+        }
+      }
+      function startHalfDonut() {
+        if (halfDonutActiveRef.current) return
+        if (isDonuting.current) stopDonut()
+        halfDonutActiveRef.current = true
+        const startAngle   = lastAngle.current + facingOffsetRef.current
+        const targetOffset = facingOffsetRef.current === 0 ? 180 : 0
+        const duration     = 650
+        const t0           = Date.now()
+        function halfFrame() {
+          const t    = Math.min(1, (Date.now() - t0) / duration)
+          const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+          if (carInnerRef.current) {
+            carInnerRef.current.style.transform = `rotate(${startAngle - ease * 180}deg)`
+          }
+          if (t < 1) {
+            halfDonutRafRef.current = requestAnimationFrame(halfFrame)
+          } else {
+            facingOffsetRef.current    = targetOffset
+            halfDonutActiveRef.current = false
+            if (carInnerRef.current) {
+              carInnerRef.current.style.transform = `rotate(${lastAngle.current + facingOffsetRef.current}deg)`
+            }
+          }
+        }
+        halfDonutRafRef.current = requestAnimationFrame(halfFrame)
       }
       function startDonut() {
         if (!carInnerRef.current || !carRef.current || isDonuting.current) return
+        if (halfDonutActiveRef.current) return
         isDonuting.current = true; donutStart.current = Date.now()
-        const baseAngle = lastAngle.current, baseRad = baseAngle * Math.PI / 180
+        const baseAngle = lastAngle.current + facingOffsetRef.current
+        const baseRad   = baseAngle * Math.PI / 180
         donutBaseAngle.current = baseRad
         donutPivotX.current = lastX.current + C_FRONT_AXLE * Math.cos(baseRad)
         donutPivotY.current = lastY.current + C_FRONT_AXLE * Math.sin(baseRad)
@@ -365,6 +406,16 @@ export default function FAQContent() {
       }
       init(); update()
       const onScroll = () => {
+        const currentY = window.scrollY
+        const delta    = currentY - scrollLastY.current
+        scrollLastY.current = currentY
+        if (Math.abs(delta) > 2) {
+          const newDir = delta > 0 ? 1 : -1
+          if (newDir !== scrollDirRef.current && !halfDonutActiveRef.current) {
+            startHalfDonut()
+          }
+          scrollDirRef.current = newDir
+        }
         if (isDonuting.current) stopDonut()
         clearTimeout(stopTimerR.current)
         if (rafRef.current) cancelAnimationFrame(rafRef.current)
@@ -381,6 +432,7 @@ export default function FAQContent() {
         clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current)
         clearInterval(tireIntervalR.current)
         cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
+        cancelAnimationFrame(halfDonutRafRef.current)
         if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
         if (carRef.current) carRef.current.style.opacity = '0'
       }
