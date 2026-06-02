@@ -428,66 +428,101 @@ export default function FAQContent() {
         if (isSlidingRef.current || isRecoveringRef.current) return
         if (isDonuting.current) stopDonut()
         cancelAnimationFrame(rafRef.current)
+        cancelAnimationFrame(halfDonutRafRef.current)
+        halfDonutActiveRef.current = false
         clearTimeout(stopTimerR.current)
         isSlidingRef.current = true
-        showBubble()
+
+        // Snapshot road state at trigger moment
         const startX = lastX.current, startY = lastY.current
-        const roadRad = lastAngle.current * Math.PI / 180
-        // Perpendicular right of road = car slides off the right side of the path
-        const perpX = Math.sin(roadRad), perpY = -Math.cos(roadRad)
-        const toX = startX + perpX * 90, toY = startY + perpY * 90
+        const roadRad   = lastAngle.current * Math.PI / 180
+        const perpX     = Math.sin(roadRad), perpY = -Math.cos(roadRad)
         const startFacing = lastAngle.current + facingOffsetRef.current
-        const toFacing    = startFacing + 26   // rear swings out (skid)
-        const dur = 580, t0 = Date.now()
-        function slideFrame() {
-          const t    = Math.min(1, (Date.now() - t0) / dur)
-          const ease = 1 - Math.pow(1 - t, 3)  // ease-out cubic
-          if (carRef.current)
-            carRef.current.style.transform = `translate(${startX + (toX - startX) * ease}px,${startY + (toY - startY) * ease}px)`
-          if (carInnerRef.current)
-            carInnerRef.current.style.transform = `rotate(${startFacing + (toFacing - startFacing) * ease}deg)`
-          if (t < 1) { slideRafRef.current = requestAnimationFrame(slideFrame) }
-          else { isSlidingRef.current = false; setTimeout(() => startRecovery(toX, toY, toFacing), 320) }
-        }
-        slideRafRef.current = requestAnimationFrame(slideFrame)
+
+        // Phase 1: bubble appears, car freezes so user reads it (500ms)
+        showBubble()
+
+        setTimeout(() => {
+          // Phase 2: skid — ease-in (acceleration), 220px off road, 52° skid rotation
+          const endX = startX + perpX * 220, endY = startY + perpY * 220
+          const endFacing = startFacing + 52
+          const dur = 700, t0 = Date.now()
+          function slideFrame() {
+            const t    = Math.min(1, (Date.now() - t0) / dur)
+            const ease = t * t   // ease-in: rear breaks loose, accelerates outward
+            if (carRef.current)
+              carRef.current.style.transform = `translate(${startX + (endX - startX) * ease}px,${startY + (endY - startY) * ease}px)`
+            if (carInnerRef.current)
+              carInnerRef.current.style.transform = `rotate(${startFacing + (endFacing - startFacing) * ease}deg)`
+            if (t < 1) { slideRafRef.current = requestAnimationFrame(slideFrame) }
+            else { isSlidingRef.current = false; setTimeout(() => startRecovery(endX, endY, endFacing), 380) }
+          }
+          slideRafRef.current = requestAnimationFrame(slideFrame)
+        }, 500)
       }
-      function startRecovery(fromX, fromY, fromFacing) {
+      function startRecovery(fromX, fromY, fromFacingDeg) {
         isRecoveringRef.current = true
-        const roadRad = lastAngle.current * Math.PI / 180
-        const perpX = Math.sin(roadRad), perpY = -Math.cos(roadRad)
-        const dur = 2500, t0 = Date.now()
+        // Snap target road position once (don't chase scroll during recovery)
+        const idx    = Math.min(Math.round(getScrollProgress() * C_STEPS), C_STEPS)
+        const roadPt = pointsRef.current[idx]
+        const toX = roadPt.x, toY = roadPt.y
+        const toAngle = roadPt.angle
+        // Approach angle: road direction + facingOffset so bezier arrives correctly
+        const toApproachAngle = toAngle + facingOffsetRef.current
+        // Cubic bezier control points
+        const dx = toX - fromX, dy = toY - fromY
+        const ctrl   = Math.max(120, Math.sqrt(dx*dx + dy*dy) * 0.42)
+        const fromRad = fromFacingDeg * Math.PI / 180
+        const toRad   = toApproachAngle * Math.PI / 180
+        const p1x = fromX + Math.cos(fromRad) * ctrl, p1y = fromY + Math.sin(fromRad) * ctrl
+        const p2x = toX   - Math.cos(toRad)   * ctrl, p2y = toY   - Math.sin(toRad)   * ctrl
+        function bez(t, a, b, c, d) { const u=1-t; return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d }
+        function bezT(t, a, b, c, d) { const u=1-t; return 3*u*u*(b-a)+6*u*t*(c-b)+3*t*t*(d-c) }
+        const finalFacing = toAngle + facingOffsetRef.current
+        const dur = 3200, t0 = Date.now()
         let bubbleHidden = false
         function recoverFrame() {
           const t    = Math.min(1, (Date.now() - t0) / dur)
-          const ease = t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t
-          const roadPt = pointsRef.current[Math.min(Math.round(getScrollProgress() * C_STEPS), C_STEPS)]
-          const baseX = fromX + (roadPt.x - fromX) * ease
-          const baseY = fromY + (roadPt.y - fromY) * ease
-          // Wavy path: sinusoidal perpendicular offset that decays to 0
-          const wave   = Math.sin(t * 3 * Math.PI * 2) * 50 * (1 - t)
-          const wobble = Math.sin(t * 3 * Math.PI * 2) * 22 * (1 - t)
-          const ca = fromFacing + (roadPt.angle + facingOffsetRef.current - fromFacing) * ease + wobble
+          const ease = t < 0.5 ? 2*t*t : -1 + (4-2*t)*t
+          const cx = bez(ease, fromX, p1x, p2x, toX)
+          const cy = bez(ease, fromY, p1y, p2y, toY)
+          // Car faces its direction of travel along the bezier
+          const tx = bezT(ease, fromX, p1x, p2x, toX)
+          const ty = bezT(ease, fromY, p1y, p2y, toY)
+          const movingAngle = (tx !== 0 || ty !== 0) ? Math.atan2(ty, tx) * 180/Math.PI : finalFacing
+          // Blend toward final road facing in last 20% to eliminate snap at handoff
+          const blendT = Math.max(0, (t - 0.8) / 0.2)
+          const diff = ((finalFacing - movingAngle) % 360 + 540) % 360 - 180
+          const ca = movingAngle + diff * blendT
           if (carRef.current)
-            carRef.current.style.transform = `translate(${baseX + perpX * wave}px,${baseY + perpY * wave}px)`
+            carRef.current.style.transform = `translate(${cx}px,${cy}px)`
           if (carInnerRef.current)
             carInnerRef.current.style.transform = `rotate(${ca}deg)`
-          if (t >= 0.5 && !bubbleHidden) { bubbleHidden = true; hideBubble() }
-          if (t < 1) { recoverRafRef.current = requestAnimationFrame(recoverFrame) }
-          else {
+          if (t >= 0.65 && !bubbleHidden) { bubbleHidden = true; hideBubble() }
+          if (t < 1) {
+            recoverRafRef.current = requestAnimationFrame(recoverFrame)
+          } else {
             isRecoveringRef.current = false
-            update()
+            // Manually settle car onto road (avoids scroll-jump from update())
+            lastX.current = toX; lastY.current = toY; lastAngle.current = toAngle
+            if (carRef.current)      carRef.current.style.transform      = `translate(${toX}px,${toY}px)`
+            if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${finalFacing}deg)`
             stopTimerR.current = setTimeout(startDonut, 800)
           }
         }
         recoverRafRef.current = requestAnimationFrame(recoverFrame)
       }
       init(); update()
+      // Velocity accumulator: decays each event, fires only on hard sustained scroll
+      let scrollVel = 0
       const onScroll = () => {
         const currentY = window.scrollY
         const delta    = currentY - scrollLastY.current
         scrollLastY.current = currentY
         if (isSlidingRef.current || isRecoveringRef.current) return
-        if (Math.abs(delta) > 80) { triggerSlideOff(); return }
+        // Accumulate speed; decay toward 0 each event so brief spikes don't trigger
+        scrollVel = scrollVel * 0.55 + Math.abs(delta) * 0.45
+        if (scrollVel > 140) { scrollVel = 0; triggerSlideOff(); return }
         if (Math.abs(delta) > 2) {
           const newDir = delta > 0 ? 1 : -1
           if (newDir !== scrollDirRef.current && !halfDonutActiveRef.current) {
@@ -501,7 +536,7 @@ export default function FAQContent() {
         rafRef.current = requestAnimationFrame(update)
         stopTimerR.current = setTimeout(startDonut, 600)
       }
-      const onResize = () => { init(false); update() }
+      const onResize = () => { if (!isSlidingRef.current && !isRecoveringRef.current) { init(false); update() } }
       window.addEventListener('scroll', onScroll, { passive: true })
       window.addEventListener('resize', onResize)
       stopTimerR.current = setTimeout(startDonut, 1500)
