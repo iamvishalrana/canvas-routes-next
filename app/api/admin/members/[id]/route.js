@@ -31,7 +31,6 @@ export async function PATCH(request, { params }) {
     if ('dob_month' in body) appSync.dob_month = body.dob_month ?? null
     if ('dob_day' in body) appSync.dob_day = body.dob_day ?? null
     if ('dob_year' in body) appSync.dob_year = body.dob_year ?? null
-    if ('notes' in body) appSync.notes = body.notes || null
     if ('cars' in body || 'car_year' in body || 'car_make' in body || 'car_model' in body) {
       const primary = (body.cars || [])[0] || {}
       if (primary.year || body.car_year) appSync.car_year = primary.year || body.car_year || null
@@ -42,12 +41,15 @@ export async function PATCH(request, { params }) {
       await supabase.from('applications').update(appSync).eq('email', memberEmail)
     }
 
-    // Sync notes to contacts.notes if notes changed
+    // Sync notes to contacts.notes
     if ('notes' in body) {
+      const noteVal = body.notes ?? null
       const { data: app } = await supabase.from('applications').select('id').eq('email', memberEmail).maybeSingle()
-      if (app) {
+      if (app?.id) {
         const { data: contact } = await supabase.from('contacts').select('id').eq('application_id', app.id).maybeSingle()
-        if (contact) await supabase.from('contacts').update({ notes: body.notes ?? null }).eq('id', contact.id)
+        if (contact?.id) {
+          await supabase.from('contacts').update({ notes: noteVal }).eq('id', contact.id)
+        }
       }
     }
   }
