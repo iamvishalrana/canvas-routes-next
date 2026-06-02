@@ -291,6 +291,11 @@ export default function FAQContent() {
   const halfDonutActiveRef = useRef(false)
   const halfDonutRafRef   = useRef(null)
   const facingOffsetRef   = useRef(0)   // 0 = forward, 180 = backward
+  const isSlidingRef      = useRef(false)
+  const isRecoveringRef   = useRef(false)
+  const slideRafRef       = useRef(null)
+  const recoverRafRef     = useRef(null)
+  const speechRef         = useRef(null)
 
   useEffect(() => {
     if (!isMobile) {
@@ -404,11 +409,85 @@ export default function FAQContent() {
         const max = document.documentElement.scrollHeight - window.innerHeight
         tick(max > 0 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0)
       }
+      function getScrollProgress() {
+        const max = document.documentElement.scrollHeight - window.innerHeight
+        return max > 0 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0
+      }
+      function showBubble() {
+        if (!speechRef.current) return
+        speechRef.current.style.animation = 'none'
+        void speechRef.current.offsetHeight
+        speechRef.current.style.animation = 'faq-bubble-pop 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards'
+      }
+      function hideBubble() {
+        if (!speechRef.current) return
+        speechRef.current.style.animation = 'none'
+        speechRef.current.style.opacity = '0'
+      }
+      function triggerSlideOff() {
+        if (isSlidingRef.current || isRecoveringRef.current) return
+        if (isDonuting.current) stopDonut()
+        cancelAnimationFrame(rafRef.current)
+        clearTimeout(stopTimerR.current)
+        isSlidingRef.current = true
+        showBubble()
+        const startX = lastX.current, startY = lastY.current
+        const roadRad = lastAngle.current * Math.PI / 180
+        // Perpendicular right of road = car slides off the right side of the path
+        const perpX = Math.sin(roadRad), perpY = -Math.cos(roadRad)
+        const toX = startX + perpX * 90, toY = startY + perpY * 90
+        const startFacing = lastAngle.current + facingOffsetRef.current
+        const toFacing    = startFacing + 26   // rear swings out (skid)
+        const dur = 580, t0 = Date.now()
+        function slideFrame() {
+          const t    = Math.min(1, (Date.now() - t0) / dur)
+          const ease = 1 - Math.pow(1 - t, 3)  // ease-out cubic
+          if (carRef.current)
+            carRef.current.style.transform = `translate(${startX + (toX - startX) * ease}px,${startY + (toY - startY) * ease}px)`
+          if (carInnerRef.current)
+            carInnerRef.current.style.transform = `rotate(${startFacing + (toFacing - startFacing) * ease}deg)`
+          if (t < 1) { slideRafRef.current = requestAnimationFrame(slideFrame) }
+          else { isSlidingRef.current = false; setTimeout(() => startRecovery(toX, toY, toFacing), 320) }
+        }
+        slideRafRef.current = requestAnimationFrame(slideFrame)
+      }
+      function startRecovery(fromX, fromY, fromFacing) {
+        isRecoveringRef.current = true
+        const roadRad = lastAngle.current * Math.PI / 180
+        const perpX = Math.sin(roadRad), perpY = -Math.cos(roadRad)
+        const dur = 2500, t0 = Date.now()
+        let bubbleHidden = false
+        function recoverFrame() {
+          const t    = Math.min(1, (Date.now() - t0) / dur)
+          const ease = t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t
+          const roadPt = pointsRef.current[Math.min(Math.round(getScrollProgress() * C_STEPS), C_STEPS)]
+          const baseX = fromX + (roadPt.x - fromX) * ease
+          const baseY = fromY + (roadPt.y - fromY) * ease
+          // Wavy path: sinusoidal perpendicular offset that decays to 0
+          const wave   = Math.sin(t * 3 * Math.PI * 2) * 50 * (1 - t)
+          const wobble = Math.sin(t * 3 * Math.PI * 2) * 22 * (1 - t)
+          const ca = fromFacing + (roadPt.angle + facingOffsetRef.current - fromFacing) * ease + wobble
+          if (carRef.current)
+            carRef.current.style.transform = `translate(${baseX + perpX * wave}px,${baseY + perpY * wave}px)`
+          if (carInnerRef.current)
+            carInnerRef.current.style.transform = `rotate(${ca}deg)`
+          if (t >= 0.5 && !bubbleHidden) { bubbleHidden = true; hideBubble() }
+          if (t < 1) { recoverRafRef.current = requestAnimationFrame(recoverFrame) }
+          else {
+            isRecoveringRef.current = false
+            update()
+            stopTimerR.current = setTimeout(startDonut, 800)
+          }
+        }
+        recoverRafRef.current = requestAnimationFrame(recoverFrame)
+      }
       init(); update()
       const onScroll = () => {
         const currentY = window.scrollY
         const delta    = currentY - scrollLastY.current
         scrollLastY.current = currentY
+        if (isSlidingRef.current || isRecoveringRef.current) return
+        if (Math.abs(delta) > 80) { triggerSlideOff(); return }
         if (Math.abs(delta) > 2) {
           const newDir = delta > 0 ? 1 : -1
           if (newDir !== scrollDirRef.current && !halfDonutActiveRef.current) {
@@ -433,6 +512,7 @@ export default function FAQContent() {
         clearInterval(tireIntervalR.current)
         cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
         cancelAnimationFrame(halfDonutRafRef.current)
+        cancelAnimationFrame(slideRafRef.current); cancelAnimationFrame(recoverRafRef.current)
         if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
         if (carRef.current) carRef.current.style.opacity = '0'
       }
@@ -501,6 +581,11 @@ export default function FAQContent() {
           58%  { opacity: 0.82; transform: translateY(-8px);  }
           100% { opacity: 0;    transform: translateY(-16px); }
         }
+        @keyframes faq-bubble-pop {
+          0%   { opacity: 0; transform: scale(0.6) translateY(5px);  }
+          65%  { opacity: 1; transform: scale(1.07) translateY(-1px); }
+          100% { opacity: 1; transform: scale(1) translateY(0);      }
+        }
       `}</style>
 
       {/* Fixed road */}
@@ -524,6 +609,35 @@ export default function FAQContent() {
         willChange: 'transform', pointerEvents: 'none',
         zIndex: isMobile ? (menuOpen ? 98 : 101) : 12, opacity: 0, overflow: 'visible',
       }}>
+        {/* Speech bubble — desktop only, shown on fast scroll */}
+        {!isMobile && (
+          <div ref={speechRef} style={{
+            position: 'absolute',
+            right: 'calc(100% + 10px)',
+            top: '-20px',
+            background: '#FAFAF8',
+            border: '0.5px solid rgba(197,168,130,0.5)',
+            borderRadius: '8px 8px 2px 8px',
+            padding: '5px 12px',
+            whiteSpace: 'nowrap',
+            fontSize: '11.5px',
+            fontFamily: 'var(--font-cormorant),serif',
+            fontWeight: '600',
+            fontStyle: 'italic',
+            letterSpacing: '0.02em',
+            color: '#8B1F1F',
+            opacity: 0,
+            pointerEvents: 'none',
+            transformOrigin: 'right center',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.09)',
+          }}>
+            Slow down! Slow down!
+            {/* Tail border */}
+            <span style={{ position:'absolute', right:'-7px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'5px solid transparent', borderBottom:'5px solid transparent', borderLeft:'7px solid rgba(197,168,130,0.5)' }} />
+            {/* Tail fill */}
+            <span style={{ position:'absolute', right:'-6px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'4px solid transparent', borderBottom:'4px solid transparent', borderLeft:'6px solid #FAFAF8' }} />
+          </div>
+        )}
         {/* Question marks — desktop only */}
         {!isMobile && [
           { top: '-26px', left: '2px',  delay: '0s'     },
