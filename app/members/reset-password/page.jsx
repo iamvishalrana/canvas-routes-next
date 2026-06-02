@@ -74,7 +74,10 @@ export default function ResetPasswordPage() {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)' }} />
 
       <Link href="/" style={{ marginBottom: '3rem', display: 'block' }}>
-        <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={160} height={107} style={{ filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
+        <div style={{ width: '142px', height: '64px', overflow: 'hidden' }}>
+          <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+            style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
+        </div>
       </Link>
 
       <div style={{ width: '100%', maxWidth: '400px', background: '#F5F1EC', padding: '2.5rem' }}>

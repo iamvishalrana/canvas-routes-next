@@ -191,7 +191,10 @@ export default function LoginPage() {
         <div style={{ background: '#0F1E14', paddingTop: 'max(1.75rem, env(safe-area-inset-top))', paddingBottom: '1.75rem', paddingLeft: '1.5rem', paddingRight: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)' }} />
           <Link href="/" style={{ display: 'inline-block' }}>
-            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={110} height={73} style={{ filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
+            <div style={{ width: '107px', height: '49px', overflow: 'hidden' }}>
+              <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+                style={{ width: '107px', height: 'auto', marginTop: '-51px', display: 'block', opacity: 0.9 }} />
+            </div>
           </Link>
         </div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1.5rem 2rem' }}>
@@ -212,7 +215,10 @@ export default function LoginPage() {
         <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(197,168,130,0.2) 25%, rgba(197,168,130,0.2) 75%, transparent 100%)' }} />
 
         <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={150} height={100} style={{ filter: 'brightness(0) invert(1)', opacity: 0.85, display: 'block' }} />
+          <div style={{ width: '142px', height: '64px', overflow: 'hidden' }}>
+            <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+              style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
+          </div>
         </Link>
 
         <div>
