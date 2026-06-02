@@ -1,12 +1,12 @@
 import FAQContent from '../../components/FAQContent'
 
 export const metadata = {
-  title: 'FAQ | Canvas Routes — Montreal Car Community',
+  title: { absolute: 'FAQ | Canvas Routes' },
   description: "Frequently asked questions about Canvas Routes — Montreal's car community. Cars and Coffee events, road trips from Montreal, scenic drives through the Laurentians and Eastern Townships, membership, and more.",
   keywords: 'Canvas Routes FAQ, car club Montreal, road trips from Montreal, cars and coffee Montreal, automotive community Montreal, Laurentians road trip, Eastern Townships drive, car meets Quebec, scenic drives Quebec',
   alternates: { canonical: 'https://canvasroutes.com/faq' },
   openGraph: {
-    title: 'FAQ | Canvas Routes — Montreal Car Community',
+    title: 'FAQ | Canvas Routes',
     description: "Frequently asked questions about Canvas Routes — Montreal's car community. Cars and Coffee, road trips, scenic drives and membership.",
     url: 'https://canvasroutes.com/faq',
   },

@@ -27,7 +27,7 @@ export const viewport = {
 export const metadata = {
   title: {
     default: 'Canvas Routes | Car Meets, Road Trips & Scenic Drives — Montreal',
-    template: '%s — Canvas Routes',
+    template: '%s | Canvas Routes',
   },
   description: "Canvas Routes is Montreal's premier car community. Curated road trips through the Laurentians and Eastern Townships, invite-only Cars and Coffee events, scenic convoy drives across Quebec, Ontario, Vermont and beyond. Join a community of drivers who love the road.",
   keywords: 'car meets Montreal, road trips Montreal, cars and coffee Montreal, scenic drives Quebec, Montreal car club, road trip from Montreal, Laurentians road trip, Eastern Townships scenic drive, curated road trips Quebec, automotive community Montreal, car enthusiasts Montreal, private car meets Montreal, canvas routes, Montreal road trips, Quebec driving routes, cars and coffee invite only, Montreal automotive events 2026, convoy drive Montreal, car club Montreal 2026, Quebec road trip, Montreal exotic cars, cars and coffee Quebec, scenic drive Laurentians, road trip Quebec 2026, Montreal cars and coffee 2026, curated car events Montreal, Grand Prix car meet Montreal, Mont-Tremblant drive, Charlevoix road trip, Nova Scotia road trip, Cabot Trail road trip, luxury car meets Montreal, scenic backroads Quebec, overnight road trip Montreal, car convoy Quebec, car community Montreal, weekend road trip Quebec, Montreal car enthusiasts 2026',

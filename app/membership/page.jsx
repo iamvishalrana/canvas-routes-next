@@ -1,7 +1,7 @@
 import MembershipContent from '../../components/MembershipContent'
 
 export const metadata = {
-  title: 'Membership | Canvas Routes',
+  title: { absolute: 'Membership | Canvas Routes' },
   robots: { index: false, follow: false },
 }
 

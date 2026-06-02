@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Into the Laurentians — June 7, 2026 | Canvas Routes Road Trip',
+  title: { absolute: 'Into the Laurentians | Canvas Routes' },
   description: 'A curated convoy road trip from Montreal into the Laurentians on June 7, 2026. Scenic backroads to Mont-Tremblant, premium breakfast, artisanal lunch, full media coverage and farewell drinks. $200 per car. Spots are limited.',
   keywords: 'Laurentians road trip Montreal, road trip from Montreal 2026, Canvas Routes road trip, curated driving event Quebec, Mont-Tremblant drive, scenic drive Laurentians, convoy drive Quebec, car road trip Montreal, Quebec backroads driving, road trip June 2026',
   alternates: { canonical: 'https://canvasroutes.com/routes' },
