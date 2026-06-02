@@ -38,7 +38,10 @@ const REAR_TYRES = [{ lx: -16.8, ly: -6.9 }, { lx: -16.8, ly: 6.9 }]
 const FRONT_AXLE_OFFSET = 17
 
 export default function TestPage() {
-  const [isMobile, setIsMobile] = useState(false)
+  // Lazy init reads window immediately on the client — no mobile flash on first render
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768
+  )
 
   const pointsRef         = useRef([])
   const carRef            = useRef(null)
@@ -69,8 +72,8 @@ export default function TestPage() {
   }, [])
 
   useEffect(() => {
-    function init() {
-      const pts = buildPoints(isMobile)
+    function init(mobile = isMobile) {
+      const pts = buildPoints(mobile)
       pointsRef.current = pts
       const p = poly(pts)
       ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
@@ -183,7 +186,8 @@ export default function TestPage() {
       stopTimer.current = setTimeout(startDonut, 600)
     }
 
-    const onResize = () => { init(); update() }
+    // Read window width directly so we never use stale isMobile from the closure
+    const onResize = () => { init(window.innerWidth < 768); update() }
 
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onResize)
@@ -202,7 +206,7 @@ export default function TestPage() {
   }, [isMobile])
 
   return (
-    <div style={{ background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <div suppressHydrationWarning style={{ background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif' }}>
 
       {/* Nav */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.5rem', height: `${NAV_H}px`, background: 'rgba(10,20,13,0.9)', backdropFilter: 'blur(12px)', borderBottom: '0.5px solid rgba(197,168,130,0.12)' }}>
@@ -223,7 +227,7 @@ export default function TestPage() {
 
       {/* Fixed car — opacity:0 until first tick to avoid flash at (0,0) */}
       <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '46px', height: '21px', marginLeft: '-23px', marginTop: '-10.5px', willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0 }}>
-        <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%' }}>
+        <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
           {/* Ferrari F40 — top-down view, front = right (+x), 56×26 viewBox displayed at 46×21 */}
           <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
             {/* Shadow */}
