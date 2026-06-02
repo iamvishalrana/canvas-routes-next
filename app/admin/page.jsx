@@ -350,6 +350,8 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(null)
   const [selected, setSelected] = useState(new Set())
+  const [sort, setSort] = useState('newest')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -470,9 +472,17 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     setTimeout(() => setInviteSuccess(false), 4000)
   }
 
-  const filtered = members.filter(m =>
-    !search || [m.name, m.email, m.membership_status, m.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
-  )
+  const filtered = members
+    .filter(m =>
+      (statusFilter === 'all' || m.membership_status === statusFilter) &&
+      (!search || [m.name, m.email, m.membership_status, m.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))))
+    )
+    .sort((a, b) => {
+      if (sort === 'name_az') return (a.name || '').localeCompare(b.name || '')
+      if (sort === 'name_za') return (b.name || '').localeCompare(a.name || '')
+      if (sort === 'oldest') return new Date(a.join_date || a.created_at) - new Date(b.join_date || b.created_at)
+      return new Date(b.join_date || b.created_at) - new Date(a.join_date || a.created_at) // newest
+    })
 
   function exportCSV() {
     const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : members
@@ -597,9 +607,32 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
             </button>
           )}
         </div>
-        <div style={{ position: 'relative', width: isMobile ? '100%' : '340px' }}>
-          <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, status…" value={search} onChange={e => setSearch(e.target.value)} />
-          {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+              style={{ ...sel, width: '130px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+              <option value="expired">Expired</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={sort} onChange={e => setSort(e.target.value)}
+              style={{ ...sel, width: '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="name_az">Name A → Z</option>
+              <option value="name_za">Name Z → A</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', width: isMobile ? '100%' : '260px' }}>
+            <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, status…" value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+          </div>
         </div>
       </div>
 
