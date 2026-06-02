@@ -220,7 +220,7 @@ export default function MembershipContent() {
 
         <div style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
           <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1.75rem' }}>
-            Canvas Routes · Season 2026
+            Canvas Routes · Membership · Season 2026
           </div>
           <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.01em' }}>
             For those who chose<br />their car on purpose.
