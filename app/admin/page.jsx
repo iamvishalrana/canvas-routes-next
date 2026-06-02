@@ -1729,6 +1729,8 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [newForm, setNewForm] = useState({ name: '', email: '', phone: '', car_year: '', car_model: '' })
   const [newErr, setNewErr] = useState(null)
   const [savingNew, setSavingNew] = useState(false)
+  const [editingNote, setEditingNote] = useState(null)
+  const [noteValue, setNoteValue] = useState('')
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -1873,6 +1875,16 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     a.download = `canvas-routes-contacts-${new Date().toISOString().slice(0,10)}.csv`
     a.click()
+  }
+
+  async function saveNote(contactId, value) {
+    const trimmed = value.trim()
+    await fetch(`/api/admin/contacts/${contactId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: trimmed || null }),
+    })
+    setContacts(prev => prev.map(x => x.contact_id === contactId ? { ...x, notes: trimmed || null } : x))
+    setEditingNote(null)
   }
 
   async function addNewContact(e) {
@@ -2023,7 +2035,23 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(c.contact_id) : n.delete(c.contact_id); return n })}
                         style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px', flexShrink: 0 }}
                       />
-                      <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</span>
+                      <div>
+                        <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                        {editingNote === c.contact_id ? (
+                          <input autoFocus value={noteValue} maxLength={200}
+                            onChange={e => setNoteValue(e.target.value)}
+                            onBlur={() => saveNote(c.contact_id, noteValue)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+                            onClick={e => e.stopPropagation()}
+                            style={{ fontSize: '11px', color: '#888', border: 'none', borderBottom: '1px solid #ccc', outline: 'none', background: 'transparent', width: '100%', padding: '1px 0', fontFamily: 'var(--font-inter),sans-serif' }}
+                            placeholder="Add note…" />
+                        ) : (
+                          <div onClick={e => { e.stopPropagation(); setEditingNote(c.contact_id); setNoteValue(c.notes || '') }}
+                            style={{ fontSize: '11px', color: c.notes ? '#999' : '#ddd', cursor: 'text', marginTop: '1px', fontStyle: c.notes ? 'italic' : 'normal' }}>
+                            {c.notes || '+ note'}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                       {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
@@ -2076,7 +2104,23 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                     style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
                   />
                 </div>
-                <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                <div>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{c.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                  {editingNote === c.contact_id ? (
+                    <input autoFocus value={noteValue} maxLength={200}
+                      onChange={e => setNoteValue(e.target.value)}
+                      onBlur={() => saveNote(c.contact_id, noteValue)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+                      onClick={e => e.stopPropagation()}
+                      style={{ fontSize: '11px', color: '#888', border: 'none', borderBottom: '1px solid #ccc', outline: 'none', background: 'transparent', width: '100%', padding: '1px 0', fontFamily: 'var(--font-inter),sans-serif' }}
+                      placeholder="Add note…" />
+                  ) : (
+                    <div onClick={e => { e.stopPropagation(); setEditingNote(c.contact_id); setNoteValue(c.notes || '') }}
+                      style={{ fontSize: '11px', color: c.notes ? '#999' : '#ddd', cursor: 'text', marginTop: '1px', fontStyle: c.notes ? 'italic' : 'normal' }}>
+                      {c.notes || '+ note'}
+                    </div>
+                  )}
+                </div>
                 <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
                   {[c.car_year, c.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
