@@ -26,7 +26,7 @@ export async function GET() {
     contact_id: c.id,
     application_id: c.application_id,
     contact_created_at: c.created_at,
-    notes: c.notes || null,
+    notes: appMap[c.application_id]?.notes || null,
   }))
 
   const { data: members } = await supabase.from('members').select('email')

@@ -19,6 +19,30 @@ export async function PATCH(request, { params }) {
 
   const { error } = await supabase.from('members').update(update).eq('id', id)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  // Sync shared fields to applications table
+  const { data: member } = await supabase.from('members').select('email').eq('id', id).single()
+  const memberEmail = (update.email || member?.email)?.toLowerCase().trim()
+  if (memberEmail) {
+    const appSync = {}
+    if ('name' in body) appSync.name = body.name?.trim() || null
+    if ('phone' in body) appSync.phone = body.phone || null
+    if ('instagram' in body) appSync.instagram = body.instagram || null
+    if ('dob_month' in body) appSync.dob_month = body.dob_month ?? null
+    if ('dob_day' in body) appSync.dob_day = body.dob_day ?? null
+    if ('dob_year' in body) appSync.dob_year = body.dob_year ?? null
+    if ('notes' in body) appSync.notes = body.notes || null
+    if ('cars' in body || 'car_year' in body || 'car_make' in body || 'car_model' in body) {
+      const primary = (body.cars || [])[0] || {}
+      if (primary.year || body.car_year) appSync.car_year = primary.year || body.car_year || null
+      const combined = [primary.make || body.car_make, primary.model || body.car_model].filter(Boolean).join(' ')
+      if (combined) appSync.car_model = combined
+    }
+    if (Object.keys(appSync).length > 0) {
+      await supabase.from('applications').update(appSync).eq('email', memberEmail)
+    }
+  }
+
   return Response.json({ success: true })
 }
 
