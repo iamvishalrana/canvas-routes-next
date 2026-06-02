@@ -288,98 +288,142 @@ export default function FAQContent() {
   const donutCarY      = useRef(0)
 
   useEffect(() => {
-    function init(mobile = isMobile) {
-      const navH = document.querySelector('.nav')?.offsetHeight || 155
-      const pts = cBuildPoints(mobile, navH)
-      pointsRef.current = pts
-      const p = cPoly(pts)
-      ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
-      tick(0)
-    }
-    function tick(p) {
-      if (!carRef.current || !carInnerRef.current || !pointsRef.current.length) return
-      const { x, y, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
-      lastAngle.current = angle; lastX.current = x; lastY.current = y
-      carRef.current.style.transform      = `translate(${x}px,${y}px)`
-      carRef.current.style.opacity        = isMobile ? '0.5' : '1'
-      carInnerRef.current.style.transform = `rotate(${angle}deg)`
-    }
-    function dropMark() {
-      const svg = tireMarksSvg.current; if (!svg) return
-      const cx = donutCarX.current, cy = donutCarY.current
-      const elapsed  = Date.now() - donutStart.current
-      const spinRad  = -(elapsed / C_DONUT_SPEED) * Math.PI * 2
-      const totalRad = donutBaseAngle.current + spinRad
-      const ns = 'http://www.w3.org/2000/svg'
-      C_REAR_TYRES.forEach(({ lx, ly }) => {
-        const wx = cx + lx * Math.cos(totalRad) - ly * Math.sin(totalRad)
-        const wy = cy + lx * Math.sin(totalRad) + ly * Math.cos(totalRad)
-        const el = document.createElementNS(ns, 'ellipse')
-        el.setAttribute('cx', wx.toFixed(1)); el.setAttribute('cy', wy.toFixed(1))
-        el.setAttribute('rx', '3.5'); el.setAttribute('ry', '1.8')
-        const td = (totalRad * 180 / Math.PI) + 90
-        el.setAttribute('transform', `rotate(${td.toFixed(1)} ${wx.toFixed(1)} ${wy.toFixed(1)})`)
-        el.setAttribute('fill', 'rgba(0,0,0,0.75)'); el.style.opacity = '1'
-        svg.appendChild(el)
-        requestAnimationFrame(() => { el.style.transition = 'opacity 2s ease-out'; el.style.opacity = '0' })
-        setTimeout(() => el.remove(), 2100)
-      })
-    }
-    function stopDonut() {
-      if (!carInnerRef.current || !carRef.current) return
-      isDonuting.current = false
-      cancelAnimationFrame(donutRafRef.current)
-      clearInterval(tireIntervalR.current); clearTimeout(donutStopR.current)
-      carRef.current.style.transform      = `translate(${lastX.current}px,${lastY.current}px)`
-      carInnerRef.current.style.transform = `rotate(${lastAngle.current}deg)`
-    }
-    function startDonut() {
-      if (!carInnerRef.current || !carRef.current || isDonuting.current) return
-      isDonuting.current = true; donutStart.current = Date.now()
-      const baseAngle = lastAngle.current, baseRad = baseAngle * Math.PI / 180
-      donutBaseAngle.current = baseRad
-      donutPivotX.current = lastX.current + C_FRONT_AXLE * Math.cos(baseRad)
-      donutPivotY.current = lastY.current + C_FRONT_AXLE * Math.sin(baseRad)
-      donutCarX.current = lastX.current; donutCarY.current = lastY.current
-      function spinFrame() {
-        if (!isDonuting.current || !carInnerRef.current || !carRef.current) return
-        const elapsed = Date.now() - donutStart.current
-        const spinRad = -(elapsed / C_DONUT_SPEED) * Math.PI * 2
-        const totalRad = baseRad + spinRad
-        const cx = donutPivotX.current - C_FRONT_AXLE * Math.cos(totalRad)
-        const cy = donutPivotY.current - C_FRONT_AXLE * Math.sin(totalRad)
-        donutCarX.current = cx; donutCarY.current = cy
-        carRef.current.style.transform      = `translate(${cx}px,${cy}px)`
-        carInnerRef.current.style.transform = `rotate(${baseAngle - (elapsed / C_DONUT_SPEED) * 360}deg)`
-        donutRafRef.current = requestAnimationFrame(spinFrame)
+    if (!isMobile) {
+      // ── Desktop: scroll-driven vertical animation ──────────────────────
+      function init(mobile = false) {
+        const navH = document.querySelector('.nav')?.offsetHeight || 155
+        const pts = cBuildPoints(mobile, navH)
+        pointsRef.current = pts
+        const p = cPoly(pts)
+        ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
+        tick(0)
       }
-      donutRafRef.current  = requestAnimationFrame(spinFrame)
-      tireIntervalR.current = setInterval(dropMark, C_TIRE_INTERVAL)
-      donutStopR.current    = setTimeout(stopDonut, 30000)
-    }
-    function update() {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      tick(max > 0 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0)
-    }
-    init(); update()
-    const onScroll = () => {
-      if (isDonuting.current) stopDonut()
-      clearTimeout(stopTimerR.current)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(update)
-      stopTimerR.current = setTimeout(startDonut, 600)
-    }
-    const onResize = () => { init(window.innerWidth < 768); update() }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onResize)
-    stopTimerR.current = setTimeout(startDonut, 1500)
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onResize)
-      clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current)
-      clearInterval(tireIntervalR.current)
-      cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
-      if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
+      function tick(p) {
+        if (!carRef.current || !carInnerRef.current || !pointsRef.current.length) return
+        const { x, y, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
+        lastAngle.current = angle; lastX.current = x; lastY.current = y
+        carRef.current.style.transform      = `translate(${x}px,${y}px)`
+        carRef.current.style.opacity        = '1'
+        carInnerRef.current.style.transform = `rotate(${angle}deg)`
+      }
+      function dropMark() {
+        const svg = tireMarksSvg.current; if (!svg) return
+        const cx = donutCarX.current, cy = donutCarY.current
+        const elapsed  = Date.now() - donutStart.current
+        const spinRad  = -(elapsed / C_DONUT_SPEED) * Math.PI * 2
+        const totalRad = donutBaseAngle.current + spinRad
+        const ns = 'http://www.w3.org/2000/svg'
+        C_REAR_TYRES.forEach(({ lx, ly }) => {
+          const wx = cx + lx * Math.cos(totalRad) - ly * Math.sin(totalRad)
+          const wy = cy + lx * Math.sin(totalRad) + ly * Math.cos(totalRad)
+          const el = document.createElementNS(ns, 'ellipse')
+          el.setAttribute('cx', wx.toFixed(1)); el.setAttribute('cy', wy.toFixed(1))
+          el.setAttribute('rx', '3.5'); el.setAttribute('ry', '1.8')
+          const td = (totalRad * 180 / Math.PI) + 90
+          el.setAttribute('transform', `rotate(${td.toFixed(1)} ${wx.toFixed(1)} ${wy.toFixed(1)})`)
+          el.setAttribute('fill', 'rgba(0,0,0,0.75)'); el.style.opacity = '1'
+          svg.appendChild(el)
+          requestAnimationFrame(() => { el.style.transition = 'opacity 2s ease-out'; el.style.opacity = '0' })
+          setTimeout(() => el.remove(), 2100)
+        })
+      }
+      function stopDonut() {
+        if (!carInnerRef.current || !carRef.current) return
+        isDonuting.current = false
+        cancelAnimationFrame(donutRafRef.current)
+        clearInterval(tireIntervalR.current); clearTimeout(donutStopR.current)
+        carRef.current.style.transform      = `translate(${lastX.current}px,${lastY.current}px)`
+        carInnerRef.current.style.transform = `rotate(${lastAngle.current}deg)`
+      }
+      function startDonut() {
+        if (!carInnerRef.current || !carRef.current || isDonuting.current) return
+        isDonuting.current = true; donutStart.current = Date.now()
+        const baseAngle = lastAngle.current, baseRad = baseAngle * Math.PI / 180
+        donutBaseAngle.current = baseRad
+        donutPivotX.current = lastX.current + C_FRONT_AXLE * Math.cos(baseRad)
+        donutPivotY.current = lastY.current + C_FRONT_AXLE * Math.sin(baseRad)
+        donutCarX.current = lastX.current; donutCarY.current = lastY.current
+        function spinFrame() {
+          if (!isDonuting.current || !carInnerRef.current || !carRef.current) return
+          const elapsed = Date.now() - donutStart.current
+          const spinRad = -(elapsed / C_DONUT_SPEED) * Math.PI * 2
+          const totalRad = baseRad + spinRad
+          const cx = donutPivotX.current - C_FRONT_AXLE * Math.cos(totalRad)
+          const cy = donutPivotY.current - C_FRONT_AXLE * Math.sin(totalRad)
+          donutCarX.current = cx; donutCarY.current = cy
+          carRef.current.style.transform      = `translate(${cx}px,${cy}px)`
+          carInnerRef.current.style.transform = `rotate(${baseAngle - (elapsed / C_DONUT_SPEED) * 360}deg)`
+          donutRafRef.current = requestAnimationFrame(spinFrame)
+        }
+        donutRafRef.current   = requestAnimationFrame(spinFrame)
+        tireIntervalR.current = setInterval(dropMark, C_TIRE_INTERVAL)
+        donutStopR.current    = setTimeout(stopDonut, 30000)
+      }
+      function update() {
+        const max = document.documentElement.scrollHeight - window.innerHeight
+        tick(max > 0 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0)
+      }
+      init(); update()
+      const onScroll = () => {
+        if (isDonuting.current) stopDonut()
+        clearTimeout(stopTimerR.current)
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        rafRef.current = requestAnimationFrame(update)
+        stopTimerR.current = setTimeout(startDonut, 600)
+      }
+      const onResize = () => { init(false); update() }
+      window.addEventListener('scroll', onScroll, { passive: true })
+      window.addEventListener('resize', onResize)
+      stopTimerR.current = setTimeout(startDonut, 1500)
+      return () => {
+        window.removeEventListener('scroll', onScroll)
+        window.removeEventListener('resize', onResize)
+        clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current)
+        clearInterval(tireIntervalR.current)
+        cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
+        if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
+        if (carRef.current) carRef.current.style.opacity = '0'
+      }
+    } else {
+      // ── Mobile: horizontal bounce in the nav header ─────────────────────
+      // Clear any road points so the vertical path doesn't show
+      ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', ''))
+
+      const navEl  = document.querySelector('.nav')
+      const navH   = navEl?.offsetHeight || 110
+      const logoEl = navEl?.querySelector('a')
+      const hamEl  = navEl?.querySelector('.hamburger')
+      const xMin = (logoEl?.getBoundingClientRect().right ?? 150) + 10
+      const xMax = (hamEl?.getBoundingClientRect().left   ?? (window.innerWidth - 55)) - 10
+      const y    = navH / 2
+
+      let x = xMin, dir = 1
+
+      if (carRef.current) {
+        carRef.current.style.opacity   = '1'
+        carRef.current.style.transform = `translate(${x}px,${y}px)`
+      }
+      if (carInnerRef.current) carInnerRef.current.style.transform = 'scaleX(1)'
+
+      function mobileFrame() {
+        x += dir * 1.5
+        if (x >= xMax) { x = xMax; dir = -1 }
+        if (x <= xMin) { x = xMin; dir =  1 }
+        if (carRef.current) {
+          carRef.current.style.transform = `translate(${x}px,${y}px)`
+          carRef.current.style.opacity   = '1'
+        }
+        if (carInnerRef.current) {
+          carInnerRef.current.style.transform = dir === 1 ? 'scaleX(1)' : 'scaleX(-1)'
+        }
+        rafRef.current = requestAnimationFrame(mobileFrame)
+      }
+      rafRef.current = requestAnimationFrame(mobileFrame)
+
+      return () => {
+        cancelAnimationFrame(rafRef.current)
+        if (carRef.current) carRef.current.style.opacity = '0'
+      }
     }
   }, [isMobile])
   // ────────────────────────────────────────────────────────────────────────────
@@ -400,7 +444,7 @@ export default function FAQContent() {
       `}</style>
 
       {/* Fixed road */}
-      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible', opacity: isMobile ? 0.5 : 1 }}>
+      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible' }}>
         <polyline ref={rl1} fill="none" stroke="rgba(130,110,80,0.12)"  strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl2} fill="none" stroke="rgba(160,135,95,0.2)"  strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl3} fill="none" stroke="rgba(18,14,10,0.88)"   strokeWidth="5"  strokeLinecap="round" strokeLinejoin="round" />
@@ -411,7 +455,7 @@ export default function FAQContent() {
       <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }} />
 
       {/* Fixed car + question marks */}
-      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '46px', height: '21px', marginLeft: '-23px', marginTop: '-10.5px', willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0, overflow: 'visible' }}>
+      <div ref={carRef} style={{ position: 'fixed', top: 0, left: 0, width: '46px', height: '21px', marginLeft: '-23px', marginTop: '-10.5px', willChange: 'transform', pointerEvents: 'none', zIndex: isMobile ? 101 : 12, opacity: 0, overflow: 'visible' }}>
         {/* Floating question marks — FAQ-only */}
         {[
           { top: '-26px', left: '2px',  delay: '0s'     },
@@ -430,7 +474,7 @@ export default function FAQContent() {
           }}>?</span>
         ))}
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg viewBox="0 0 56 26" width={isMobile ? 34 : 46} height={isMobile ? 16 : 21} style={{ display: 'block', overflow: 'visible' }}>
+          <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
             <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
             <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
             <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
