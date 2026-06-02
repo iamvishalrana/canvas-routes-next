@@ -580,7 +580,7 @@ export default function RoutesPage() {
                 </div>
 
                 {/* Honeypot */}
-                <div style={{position:'absolute',left:'-9999px',width:1,height:1,overflow:'hidden'}} aria-hidden="true">
+                <div style={{display:'none'}} aria-hidden="true">
                   <input ref={honeypotRef} type="text" name="cr_rt_field" tabIndex={-1} autoComplete="off" />
                 </div>
 

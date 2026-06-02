@@ -781,7 +781,7 @@ export default function Home() {
               {status === 'loading' ? 'Sending...' : 'Register'}
             </button>
             {status === 'error' && <div style={{marginTop:"1rem",fontSize:"12px",color:"#7B2032"}}>{serverError}</div>}
-            <div style={{position:'absolute',left:'-9999px',width:1,height:1,overflow:'hidden'}} aria-hidden="true">
+            <div style={{display:'none'}} aria-hidden="true">
               <input ref={honeypotRef} type="text" name="cr_field" tabIndex={-1} autoComplete="off" />
             </div>
           </form>
