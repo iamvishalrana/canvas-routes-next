@@ -442,9 +442,9 @@ export default function FAQContent() {
 
       const navEl = document.querySelector('.nav')
       const navH  = navEl?.offsetHeight || 110
-      // Full screen width: carRef is 65px wide, marginLeft=-33, so center at x=33 puts left edge at 0
-      const xMin = 33
-      const xMax = window.innerWidth - 33
+      // Full screen width: carRef is 90px wide, marginLeft=-45, so center at x=45 puts left edge at 0
+      const xMin = 45
+      const xMax = window.innerWidth - 45
       // carRef marginTop:-16px → translateY=navH lands car wheels on nav bottom line
       const y = navH
 
@@ -518,9 +518,9 @@ export default function FAQContent() {
       <div ref={carRef} style={{
         position: 'fixed', top: 0, left: 0,
         width:       isMobile ? '65px'    : '46px',
-        height:      isMobile ? '24px'    : '21px',
+        height:      isMobile ? '26px'    : '21px',
         marginLeft:  isMobile ? '-33px'   : '-23px',
-        marginTop:   isMobile ? '-24px'   : '-10.5px',
+        marginTop:   isMobile ? '-26px'   : '-10.5px',
         willChange: 'transform', pointerEvents: 'none',
         zIndex: isMobile ? 101 : 12, opacity: 0, overflow: 'visible',
       }}>
@@ -543,67 +543,8 @@ export default function FAQContent() {
         ))}
         <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isMobile ? (
-            /* ── Mobile: sports car side profile 65×24, front = right ── */
-            <svg viewBox="0 0 80 30" width="65" height="24" style={{ display: 'block', overflow: 'visible' }}>
-              {/* Ground shadow */}
-              <ellipse cx="40" cy="29.5" rx="37" ry="1.4" fill="rgba(0,0,0,0.15)" />
-
-              {/* Rear tyre — 5-spoke rim */}
-              <circle cx="15" cy="22" r="8"   fill="#0d0d0d" />
-              <circle cx="15" cy="22" r="5.5" fill="#1e1e1e" />
-              <line x1="15" y1="22" x2="15"   y2="16.5" stroke="#3d3d3d" strokeWidth="1.3" strokeLinecap="round" />
-              <line x1="15" y1="22" x2="20.2" y2="20.3" stroke="#3d3d3d" strokeWidth="1.3" strokeLinecap="round" />
-              <line x1="15" y1="22" x2="18.2" y2="26.4" stroke="#3d3d3d" strokeWidth="1.3" strokeLinecap="round" />
-              <line x1="15" y1="22" x2="11.8" y2="26.4" stroke="#3d3d3d" strokeWidth="1.3" strokeLinecap="round" />
-              <line x1="15" y1="22" x2="9.8"  y2="20.3" stroke="#3d3d3d" strokeWidth="1.3" strokeLinecap="round" />
-              <circle cx="15" cy="22" r="2"   fill="#3a3a3a" />
-              <circle cx="15" cy="22" r="0.8" fill="#555" />
-
-              {/* Front tyre — 5-spoke rim */}
-              <circle cx="64" cy="22" r="7"   fill="#0d0d0d" />
-              <circle cx="64" cy="22" r="4.8" fill="#1e1e1e" />
-              <line x1="64" y1="22" x2="64"   y2="17.2" stroke="#3d3d3d" strokeWidth="1.2" strokeLinecap="round" />
-              <line x1="64" y1="22" x2="68.6" y2="20.5" stroke="#3d3d3d" strokeWidth="1.2" strokeLinecap="round" />
-              <line x1="64" y1="22" x2="66.8" y2="25.9" stroke="#3d3d3d" strokeWidth="1.2" strokeLinecap="round" />
-              <line x1="64" y1="22" x2="61.2" y2="25.9" stroke="#3d3d3d" strokeWidth="1.2" strokeLinecap="round" />
-              <line x1="64" y1="22" x2="59.4" y2="20.5" stroke="#3d3d3d" strokeWidth="1.2" strokeLinecap="round" />
-              <circle cx="64" cy="22" r="1.7" fill="#3a3a3a" />
-              <circle cx="64" cy="22" r="0.7" fill="#555" />
-
-              {/* Body — low sports car with wheel arch cutouts */}
-              <path d="M 5,18 C 4,16 4,13 6,12 C 9,11 18,10.5 25,10 C 32,9.5 38,9 44,9 L 55,9.5 C 59,10 63,11 66,13 C 70,15 74,16 77,18 C 79,19 80,20 80,22 C 80,23 79,24.5 77,25 L 71,25 C 71,10 57,10 57,25 L 23,25 C 23,10 7,10 7,25 L 5,22 Z" fill="#CC0000" />
-
-              {/* Body highlight crease */}
-              <path d="M 6,12 C 12,11.3 22,10.7 30,10.3 C 38,9.9 44,9.6 50,9.6 L 56,9.8" fill="none" stroke="rgba(255,110,110,0.22)" strokeWidth="1.1" />
-              <path d="M 7,17 C 22,16.5 40,16.5 55,17 C 63,17.4 71,18.5 75.5,20" fill="none" stroke="rgba(150,0,0,0.3)" strokeWidth="0.8" />
-
-              {/* Cabin — dark base + glass */}
-              <path d="M 27,10.2 C 35,9.7 43,9.2 54,9.5 C 59,10 63,11 65.5,13 L 65.5,18.5 L 26.5,18 Z" fill="rgba(10,7,8,0.55)" />
-              <path d="M 27,10.2 C 35,9.7 43,9.2 54,9.5 C 59,10 63,11 65.5,13 L 65.5,18.5 L 26.5,18 Z" fill="rgba(130,195,225,0.32)" />
-
-              {/* Glass highlight — top shine strip */}
-              <path d="M 27,10.2 C 35,9.7 43,9.2 54,9.5 C 58,9.8 62,10.8 65,12.5 L 64,11.2 C 61,9.8 56,9.2 51,9 C 43,8.7 35,9.1 27,10.2 Z" fill="rgba(255,255,255,0.13)" />
-
-              {/* Door seam */}
-              <line x1="42" y1="9.3" x2="41" y2="25" stroke="rgba(0,0,0,0.18)" strokeWidth="0.9" />
-
-              {/* Door mirror */}
-              <path d="M 64,13.5 L 68.5,13.5 L 68.5,15.2 L 65,15.4 Z" fill="rgba(110,0,0,0.9)" />
-
-              {/* Headlight — angular, DRL strip */}
-              <path d="M 75,15.5 C 77.5,16.5 79.5,18 80,20 L 77.5,20.5 C 77,18.5 75.5,17 73.5,16.2 Z" fill="rgba(255,252,218,0.93)" />
-              <line x1="75.5" y1="15.8" x2="80" y2="18.5" stroke="rgba(200,220,255,0.55)" strokeWidth="0.9" strokeLinecap="round" />
-
-              {/* Tail light */}
-              <rect x="4.5" y="14"  width="2.2" height="5.5" rx="0.6" fill="rgba(220,55,55,0.95)" />
-              <rect x="5"   y="14.5" width="1.1" height="4.5" rx="0.3" fill="rgba(255,90,90,0.45)" />
-
-              {/* Rear spoiler lip */}
-              <rect x="4.5" y="17.5" width="2.5" height="1.2" rx="0.4" fill="rgba(70,0,0,0.95)" />
-
-              {/* Front splitter */}
-              <rect x="78" y="24.8" width="2.5" height="0.8" rx="0.3" fill="rgba(18,18,18,0.7)" />
-            </svg>
+            /* ── Mobile: car photo 65×26 ── */
+            <img src="/IMG_5513.jpeg" alt="" style={{ width: '65px', height: '26px', objectFit: 'contain', display: 'block' }} />
           ) : (
             /* ── Desktop: F40 top-down view ── */
             <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
