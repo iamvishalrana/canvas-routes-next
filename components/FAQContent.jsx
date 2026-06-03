@@ -536,10 +536,11 @@ export default function FAQContent() {
       // ── Section label ─────────────────────────────────────────────────────
       let sectionFadeTimer = null
       function updateSectionLabel() {
-        const mid = window.scrollY + window.innerHeight * 0.5
+        // Use the car's actual screen Y position so the label changes exactly when the car passes each section
+        const carY = lastY.current
         let newActive = -1
         sectionRefsArr.current.forEach((el, i) => {
-          if (el && el.getBoundingClientRect().top + window.scrollY <= mid) newActive = i
+          if (el && el.getBoundingClientRect().top <= carY) newActive = i
         })
         if (newActive === activeSectionRef.current) return
         activeSectionRef.current = newActive
@@ -722,7 +723,7 @@ export default function FAQContent() {
               transform: 'translateY(-50%)',
               whiteSpace: 'nowrap',
               fontFamily: 'var(--font-playfair),serif',
-              fontSize: '13px',
+              fontSize: '18px',
               fontWeight: '400',
               fontStyle: 'italic',
               color: '#1a1a1a',
