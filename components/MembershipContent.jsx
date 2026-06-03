@@ -186,6 +186,7 @@ export default function MembershipContent() {
           .mem-perks { grid-template-columns: 1fr !important; }
         }
         @media(max-width:720px){
+          .mem-hero-img { transform: scale(0.75) !important; transform-origin: center center !important; }
           .mem-photo-break img { object-position: center 20% !important; }
         }
       `}</style>
@@ -214,10 +215,10 @@ export default function MembershipContent() {
       </div>
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden', background: '#060c08' }}>
         {/* Background photo */}
         <div style={{ position: 'absolute', inset: 0 }}>
-          <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
+          <img src="/membership-hero.jpeg" alt="" className="mem-hero-img" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
         </div>
 
