@@ -836,9 +836,9 @@ export default function FAQContent() {
           /* Mobile: stacked, section label above items */
           SECTIONS.map((section, si) => (
             <div key={si} style={{ marginBottom: '3.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
-                <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>{section.title}</div>
-                <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.25)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.35rem,4vw,1.6rem)', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1, whiteSpace: 'nowrap' }}>{section.title}</div>
+                <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.3)' }} />
               </div>
               {section.items.map((item, ii) => (
                 <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
@@ -852,7 +852,7 @@ export default function FAQContent() {
               <>
                 {/* Label — sticky within this grid row (the row is as tall as the section content) */}
                 <div key={`label-${si}`} style={{ position: 'sticky', top: '100px' }}>
-                  <div style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', lineHeight: '1.5' }}>
+                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.45rem', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1.2 }}>
                     {section.title}
                   </div>
                 </div>
