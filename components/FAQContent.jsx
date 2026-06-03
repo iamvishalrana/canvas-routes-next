@@ -303,7 +303,8 @@ export default function FAQContent() {
   const scrollDirRef      = useRef(1)
   const halfDonutActiveRef = useRef(false)
   const halfDonutRafRef   = useRef(null)
-  const facingOffsetRef   = useRef(0)   // 0 = forward, 180 = backward
+  const facingOffsetRef   = useRef(0)
+  const facingAngleRef    = useRef(90)
   const isSlidingRef      = useRef(false)
   const isRecoveringRef   = useRef(false)
   const slideRafRef       = useRef(null)
@@ -325,20 +326,28 @@ export default function FAQContent() {
         pointsRef.current = pts
         const p = cPoly(pts)
         ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
-        scrollLastY.current      = window.scrollY
-        scrollDirRef.current     = 1
-        facingOffsetRef.current  = 0
+        scrollLastY.current        = window.scrollY
+        scrollDirRef.current       = 1
+        facingOffsetRef.current    = 0
         halfDonutActiveRef.current = false
+        facingAngleRef.current     = 90
         tick(0)
       }
       function tick(p) {
         if (!carRef.current || !carInnerRef.current || !pointsRef.current.length) return
         const { x, y, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
+        const dx = x - lastX.current, dy = y - lastY.current
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist > 0.4) {
+          const movAngle = Math.atan2(dy, dx) * 180 / Math.PI
+          const diff = ((movAngle - facingAngleRef.current) % 360 + 540) % 360 - 180
+          facingAngleRef.current += diff * 0.3
+        }
         lastAngle.current = angle; lastX.current = x; lastY.current = y
         carRef.current.style.transform = `translate(${x}px,${y}px)`
         carRef.current.style.opacity   = '1'
         if (!halfDonutActiveRef.current) {
-          carInnerRef.current.style.transform = `rotate(${angle + facingOffsetRef.current}deg)`
+          carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
         }
       }
       function dropMark() {
@@ -369,7 +378,7 @@ export default function FAQContent() {
         clearInterval(tireIntervalR.current); clearTimeout(donutStopR.current)
         carRef.current.style.transform = `translate(${lastX.current}px,${lastY.current}px)`
         if (!halfDonutActiveRef.current) {
-          carInnerRef.current.style.transform = `rotate(${lastAngle.current + facingOffsetRef.current}deg)`
+          carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
         }
       }
       function startHalfDonut() {
@@ -402,7 +411,7 @@ export default function FAQContent() {
         if (!carInnerRef.current || !carRef.current || isDonuting.current) return
         if (halfDonutActiveRef.current) return
         isDonuting.current = true; donutStart.current = Date.now()
-        const baseAngle = lastAngle.current + facingOffsetRef.current
+        const baseAngle = facingAngleRef.current
         const baseRad   = baseAngle * Math.PI / 180
         donutBaseAngle.current = baseRad
         donutPivotX.current = lastX.current + C_FRONT_AXLE * Math.cos(baseRad)
@@ -492,7 +501,7 @@ export default function FAQContent() {
         const toX = roadPt.x, toY = roadPt.y
         const toAngle = roadPt.angle
         // Approach angle: road direction + facingOffset so bezier arrives correctly
-        const toApproachAngle = toAngle + facingOffsetRef.current
+        const toApproachAngle = toAngle
         // Cubic bezier control points
         const dx = toX - fromX, dy = toY - fromY
         const ctrl   = Math.max(120, Math.sqrt(dx*dx + dy*dy) * 0.42)
@@ -502,7 +511,7 @@ export default function FAQContent() {
         const p2x = toX   - Math.cos(toRad)   * ctrl, p2y = toY   - Math.sin(toRad)   * ctrl
         function bez(t, a, b, c, d) { const u=1-t; return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d }
         function bezT(t, a, b, c, d) { const u=1-t; return 3*u*u*(b-a)+6*u*t*(c-b)+3*t*t*(d-c) }
-        const finalFacing = toAngle + facingOffsetRef.current
+        const finalFacing = toAngle
         const dur = 3200, t0 = Date.now()
         let bubbleHidden = false
         function recoverFrame() {
@@ -518,6 +527,7 @@ export default function FAQContent() {
           const blendT = Math.max(0, (t - 0.8) / 0.2)
           const diff = ((finalFacing - movingAngle) % 360 + 540) % 360 - 180
           const ca = movingAngle + diff * blendT
+          facingAngleRef.current = ca
           if (carRef.current)
             carRef.current.style.transform = `translate(${cx}px,${cy}px)`
           if (carInnerRef.current)
@@ -531,8 +541,9 @@ export default function FAQContent() {
             const curIdx = Math.min(Math.round(getScrollProgress() * C_STEPS), C_STEPS)
             const curPt  = pointsRef.current[curIdx]
             lastX.current = curPt.x; lastY.current = curPt.y; lastAngle.current = curPt.angle
+            facingAngleRef.current = curPt.angle
             if (carRef.current)      carRef.current.style.transform      = `translate(${curPt.x}px,${curPt.y}px)`
-            if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${curPt.angle + facingOffsetRef.current}deg)`
+            if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
             resumeQmarks()
             stopTimerR.current = setTimeout(startDonut, 3000)
           }
