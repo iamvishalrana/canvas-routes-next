@@ -1,5 +1,5 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-img, video {
+img, video, svg {
   -webkit-user-drag: none;
   -khtml-user-drag: none;
   -moz-user-drag: none;

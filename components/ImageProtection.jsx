@@ -11,7 +11,7 @@ export default function ImageProtection() {
   useEffect(() => {
     // Block right-click on images and videos
     function block(e) {
-      if (e.target.closest('img, video, [data-protect]')) {
+      if (e.target.closest('img, video, svg, [data-protect]')) {
         e.preventDefault()
         return false
       }
