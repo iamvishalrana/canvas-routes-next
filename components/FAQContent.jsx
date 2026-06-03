@@ -313,6 +313,7 @@ export default function FAQContent() {
   const activeSectionRef  = useRef(-1)
   const ctaSectionRef     = useRef(null)
   const footerRef         = useRef(null)
+  const wrapperRef        = useRef(null)
   const lastYDoc          = useRef(0)
   const flashTimerR       = useRef(null)
   const faqHL1Ref         = useRef(null)
@@ -546,6 +547,9 @@ export default function FAQContent() {
         }, 110)
       }
       init(); update()
+      // Recalculate after fonts swap in — display:swap can shorten the page
+      // and leave the road drawn past the (moved-up) footer.
+      document.fonts.ready.then(() => { init(false); update() })
       // ── Section label ─────────────────────────────────────────────────────
       let sectionFadeTimer = null
       function updateSectionLabel() {
