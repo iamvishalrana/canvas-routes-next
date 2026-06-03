@@ -668,7 +668,7 @@ export default function FAQContent() {
       `}</style>
 
       {/* Fixed road */}
-      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 5, overflow: 'visible' }}>
+      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50, overflow: 'visible' }}>
         <polyline ref={rl1} fill="none" stroke="rgba(130,110,80,0.12)"  strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl2} fill="none" stroke="rgba(160,135,95,0.2)"  strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl3} fill="none" stroke="rgba(18,14,10,0.88)"   strokeWidth="5"  strokeLinecap="round" strokeLinejoin="round" />
@@ -676,7 +676,7 @@ export default function FAQContent() {
       </svg>
 
       {/* Fixed tire marks */}
-      <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 5 }} />
+      <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }} />
 
       {/* Fixed car */}
       <div ref={carRef} style={{
@@ -686,7 +686,7 @@ export default function FAQContent() {
         marginLeft:  isMobile ? '-33px'   : '-23px',
         marginTop:   isMobile ? '-26px'   : '-10.5px',
         willChange: 'transform', pointerEvents: 'none',
-        zIndex: isMobile ? (menuOpen ? 98 : 101) : 12, opacity: 0, overflow: 'visible',
+        zIndex: isMobile ? (menuOpen ? 98 : 101) : 55, opacity: 0, overflow: 'visible',
       }}>
         {/* Speech bubble — desktop only, shown on fast scroll */}
         {!isMobile && (
