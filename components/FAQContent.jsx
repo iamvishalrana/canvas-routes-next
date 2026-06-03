@@ -329,7 +329,7 @@ export default function FAQContent() {
         let yEndDoc
         if (!mobile && footerRef.current) {
           const r = footerRef.current.getBoundingClientRect()
-          yEndDoc = r.bottom + window.scrollY
+          yEndDoc = r.top + window.scrollY
         }
         const pts = cBuildPoints(mobile, navH, yEndDoc)
         pointsRef.current = pts
