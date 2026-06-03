@@ -157,8 +157,8 @@ const C_FRONT_AXLE = 17
 
 function cBuildPoints(isMobile, navH = C_NAV_H) {
   const vw = window.innerWidth, vh = window.innerHeight
-  const cx  = isMobile ? vw * 0.82 : vw * 0.88
-  const amp = isMobile ? vw * 0.06 : vw * 0.04
+  const cx  = isMobile ? vw * 0.82 : vw * 0.08
+  const amp = isMobile ? vw * 0.06 : vw * 0.02
   const yStart = navH, yEnd = vh - 12, cycles = 2.5
   return Array.from({ length: C_STEPS + 1 }, (_, i) => {
     const t  = i / C_STEPS
@@ -721,16 +721,15 @@ export default function FAQContent() {
             {/* Section label — updated by JS on scroll */}
             <span ref={sectionLabelRef} style={{
               position: 'absolute',
-              top: '-52px',
-              left: '50%',
-              transform: 'translateX(-50%)',
+              top: '50%',
+              left: 'calc(100% + 14px)',
+              transform: 'translateY(-50%)',
               whiteSpace: 'nowrap',
               fontFamily: 'var(--font-playfair),serif',
-              fontSize: '12px',
+              fontSize: '13px',
               fontWeight: '400',
               fontStyle: 'italic',
-              color: 'rgba(197,168,130,0.88)',
-              textShadow: '0 1px 4px rgba(255,255,255,0.35)',
+              color: '#1a1a1a',
               opacity: 0,
               transition: 'opacity 0.32s ease',
               lineHeight: 1,
@@ -883,13 +882,8 @@ export default function FAQContent() {
           <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', columnGap: 'clamp(3rem,5vw,5rem)', rowGap: '4rem', alignItems: 'start' }}>
             {SECTIONS.map((section, si) => (
               <>
-                {/* Label — sticky within this grid row (the row is as tall as the section content) */}
-                <div key={`label-${si}`} style={{ position: 'sticky', top: '100px' }}>
-                  <div style={{ fontFamily: 'var(--font-playfair),serif', fontSize: '1.45rem', fontWeight: '400', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1.2, marginBottom: '0.8rem' }}>
-                    {section.title}
-                  </div>
-                  <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.55)' }} />
-                </div>
+                {/* Label column — intentionally empty, car carries the heading */}
+                <div key={`label-${si}`} />
 
                 {/* Accordion items */}
                 <div key={`items-${si}`} ref={el => sectionRefsArr.current[si] = el}>
