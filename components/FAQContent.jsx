@@ -434,6 +434,8 @@ export default function FAQContent() {
 
         showBubble()
         pauseQmarks()
+        clearTimeout(sectionFadeTimer)
+        if (sectionLabelRef.current) sectionLabelRef.current.style.opacity = '0'
 
         // Skid immediately — ease-out (fast break, tyres bite and decelerate)
         const endX      = startX + perpX * 190
@@ -504,6 +506,7 @@ export default function FAQContent() {
             if (carRef.current)      carRef.current.style.transform      = `translate(${curPt.x}px,${curPt.y}px)`
             if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
             resumeQmarks()
+            updateSectionLabel()
             stopTimerR.current = setTimeout(startDonut, 3000)
           }
         }
@@ -656,13 +659,6 @@ export default function FAQContent() {
           65%  { opacity: 1; transform: scale(1.07) translateY(-1px); }
           100% { opacity: 1; transform: scale(1) translateY(0);      }
         }
-        @keyframes faq-gotq {
-          0%   { opacity: 0; }
-          12%  { opacity: 0.72; }
-          68%  { opacity: 0.72; }
-          82%  { opacity: 0; }
-          100% { opacity: 0; }
-        }
       `}</style>
 
       {/* Fixed road */}
@@ -690,11 +686,11 @@ export default function FAQContent() {
         {!isMobile && (
           <div ref={speechRef} style={{
             position: 'absolute',
-            right: 'calc(100% + 10px)',
+            left: 'calc(100% + 10px)',
             top: '-20px',
             background: '#FAFAF8',
             border: '0.5px solid rgba(197,168,130,0.5)',
-            borderRadius: '8px 8px 2px 8px',
+            borderRadius: '8px 8px 8px 2px',
             padding: '5px 12px',
             whiteSpace: 'nowrap',
             fontSize: '11.5px',
@@ -710,9 +706,9 @@ export default function FAQContent() {
           }}>
             SLOW DOWN! SLOW DOWN!
             {/* Tail border */}
-            <span style={{ position:'absolute', right:'-7px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'5px solid transparent', borderBottom:'5px solid transparent', borderLeft:'7px solid rgba(197,168,130,0.5)' }} />
+            <span style={{ position:'absolute', left:'-7px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'5px solid transparent', borderBottom:'5px solid transparent', borderRight:'7px solid rgba(197,168,130,0.5)' }} />
             {/* Tail fill */}
-            <span style={{ position:'absolute', right:'-6px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'4px solid transparent', borderBottom:'4px solid transparent', borderLeft:'6px solid #FAFAF8' }} />
+            <span style={{ position:'absolute', left:'-6px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'4px solid transparent', borderBottom:'4px solid transparent', borderRight:'6px solid #FAFAF8' }} />
           </div>
         )}
         {/* Question marks — desktop only */}
