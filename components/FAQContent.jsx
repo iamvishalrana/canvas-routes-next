@@ -577,6 +577,8 @@ export default function FAQContent() {
 
       // Velocity accumulator: decays each event, fires only on hard sustained scroll
       let scrollVel = 0
+      let slideReady = false
+      setTimeout(() => { slideReady = true }, 1200)
       const onScroll = () => {
         const currentY = window.scrollY
         const delta    = currentY - scrollLastY.current
@@ -584,7 +586,7 @@ export default function FAQContent() {
         if (isSlidingRef.current || isRecoveringRef.current) return
         // Accumulate speed; decay toward 0 each event so brief spikes don't trigger
         scrollVel = scrollVel * 0.55 + Math.abs(delta) * 0.45
-        if (scrollVel > 220) { scrollVel = 0; triggerSlideOff(); return }
+        if (slideReady && scrollVel > 220) { scrollVel = 0; triggerSlideOff(); return }
         if (Math.abs(delta) > 2) {
           scrollDirRef.current = delta > 0 ? 1 : -1
         }
