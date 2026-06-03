@@ -156,10 +156,13 @@ const C_REAR_TYRES = [{ lx: -16.8, ly: -6.9 }, { lx: -16.8, ly: 6.9 }]
 const C_FRONT_AXLE = 17
 
 function cBuildPoints(isMobile, navH = C_NAV_H) {
-  const vw = window.innerWidth, vh = window.innerHeight
+  const vw  = window.innerWidth, vh = window.innerHeight
+  const docH = document.documentElement.scrollHeight
   const cx  = isMobile ? vw * 0.82 : vw * 0.08
   const amp = isMobile ? vw * 0.06 : vw * 0.02
-  const yStart = navH, yEnd = vh - 12, cycles = 2.5
+  // Desktop: path spans full document height so road is anchored to the page
+  // Mobile: path spans viewport height (horizontal car uses different system)
+  const yStart = navH, yEnd = isMobile ? vh - 12 : docH - 20, cycles = 2.5
   return Array.from({ length: C_STEPS + 1 }, (_, i) => {
     const t  = i / C_STEPS
     const x  = cx + amp * Math.sin(t * cycles * Math.PI * 2)
@@ -332,7 +335,9 @@ export default function FAQContent() {
       }
       function tick(p) {
         if (!carRef.current || !carInnerRef.current || !pointsRef.current.length) return
-        const { x, y, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
+        const { x, y: yDoc, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
+        // Road points are in document coordinates; convert Y to viewport for the fixed car
+        const y = yDoc - window.scrollY
         const dx = x - lastX.current, dy = y - lastY.current
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist > 0.4) {
@@ -662,7 +667,7 @@ export default function FAQContent() {
   }
 
   return (
-    <div suppressHydrationWarning style={{ background: '#F5F1EC', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <div suppressHydrationWarning style={{ background: '#F5F1EC', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif', position: 'relative' }}>
       <style>{`
         @keyframes faq-qfloat {
           0%   { opacity: 0;    transform: translateY(0);     }
@@ -677,8 +682,8 @@ export default function FAQContent() {
         }
       `}</style>
 
-      {/* Fixed road */}
-      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50, overflow: 'visible' }}>
+      {/* Road — in page flow, scrolls with content */}
+      <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1, overflow: 'visible' }}>
         <polyline ref={rl1} fill="none" stroke="rgba(130,110,80,0.12)"  strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl2} fill="none" stroke="rgba(160,135,95,0.2)"  strokeWidth="7"  strokeLinecap="round" strokeLinejoin="round" />
         <polyline ref={rl3} fill="none" stroke="rgba(18,14,10,0.88)"   strokeWidth="5"  strokeLinecap="round" strokeLinejoin="round" />
@@ -851,7 +856,7 @@ export default function FAQContent() {
       </div>
 
       {/* Hero */}
-      <section style={{ minHeight: 'clamp(420px,60vh,560px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(140px,16vw,200px) 2rem clamp(4rem,8vw,6rem)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ minHeight: 'clamp(420px,60vh,560px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(140px,16vw,200px) 2rem clamp(4rem,8vw,6rem)', textAlign: 'center', position: 'relative', overflow: 'hidden', zIndex: 2 }}>
         {/* Background image */}
         <div style={{ position: 'absolute', inset: 0 }}>
           <img src="/faq-page.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%' }} />
