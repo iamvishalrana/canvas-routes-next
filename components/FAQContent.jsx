@@ -656,6 +656,10 @@ export default function FAQContent() {
           65%  { opacity: 1; transform: scale(1.07) translateY(-1px); }
           100% { opacity: 1; transform: scale(1) translateY(0);      }
         }
+        @keyframes faq-exhaust {
+          0%   { opacity: 0.5; transform: translate(0px,0px)   scale(1);   }
+          100% { opacity: 0;   transform: translate(-8px,0px) scale(2.4); }
+        }
       `}</style>
 
       {/* Fixed road */}
@@ -729,16 +733,33 @@ export default function FAQContent() {
           ))}
           </div>
         )}
-        <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div ref={carInnerRef} style={{ position: 'relative', width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isMobile ? (
-            /* ── Mobile: car photo 65×26 ── */
-            <Image src="/IMG_5513.png" alt="" width={65} height={26} style={{ objectFit: 'contain', display: 'block' }} priority unoptimized />
+            /* ── Mobile: car photo 65×26 + exhaust overlay ── */
+            <>
+              <Image src="/IMG_5513.png" alt="" width={65} height={26} style={{ objectFit: 'contain', display: 'block' }} priority unoptimized />
+              <svg style={{ position: 'absolute', top: 0, left: 0, width: '65px', height: '26px', overflow: 'visible', pointerEvents: 'none' }}>
+                {[0, 0.42, 0.84].map(d => (
+                  <circle key={d} cx="5" cy="21" r="1" fill="rgba(170,170,170,0.45)"
+                    style={{ animation: 'faq-exhaust 1.2s ease-out infinite', animationDelay: `${d}s`, transformBox: 'fill-box', transformOrigin: 'center' }} />
+                ))}
+              </svg>
+            </>
           ) : (
             /* ── Desktop: F40 top-down view ── */
             <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
             <polygon ref={faqBeam1Ref} points="53,4.75 257,-55 257,28"   fill="rgba(197,168,130,0.38)" style={{ opacity: 0, transition: 'opacity 0.04s' }} />
             <polygon ref={faqBeam2Ref} points="53,21.25 257,-4 257,77"  fill="rgba(197,168,130,0.38)" style={{ opacity: 0, transition: 'opacity 0.04s' }} />
             <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
+            {/* Exhaust puffs — two rear pipes, 3 staggered puffs each */}
+            {[0, 0.42, 0.84].map(d => (
+              <circle key={`ea${d}`} cx="2" cy="9"  r="1" fill="rgba(175,175,175,0.45)"
+                style={{ animation: 'faq-exhaust 1.2s ease-out infinite', animationDelay: `${d}s`, transformBox: 'fill-box', transformOrigin: 'center' }} />
+            ))}
+            {[0, 0.42, 0.84].map(d => (
+              <circle key={`eb${d}`} cx="2" cy="17" r="1" fill="rgba(175,175,175,0.45)"
+                style={{ animation: 'faq-exhaust 1.2s ease-out infinite', animationDelay: `${d}s`, transformBox: 'fill-box', transformOrigin: 'center' }} />
+            ))}
             <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
             <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
             <rect x="45" y="0"   width="8" height="9"  rx="2" fill="#111" />
