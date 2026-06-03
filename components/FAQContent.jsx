@@ -320,6 +320,9 @@ export default function FAQContent() {
   const faqHL2Ref         = useRef(null)
   const faqBeam1Ref       = useRef(null)
   const faqBeam2Ref       = useRef(null)
+  const isTurningRef      = useRef(false)
+  const turnRafRef        = useRef(null)
+  const carFacingUpRef    = useRef(false)
 
   useEffect(() => {
     if (!isMobile) {
@@ -339,6 +342,8 @@ export default function FAQContent() {
         scrollDirRef.current   = 1
         facingAngleRef.current = 90
         lastYDoc.current       = 0
+        carFacingUpRef.current = false
+        if (isTurningRef.current) stopUTurn()
         tick(0)
       }
       function tick(p) {
@@ -357,6 +362,7 @@ export default function FAQContent() {
         carRef.current.style.transform = `translate(${x}px,${y}px)`
         carRef.current.style.opacity   = '1'
         carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
+        if (sectionLabelRef.current) sectionLabelRef.current.style.top = `${y}px`
       }
       function dropMark() {
         const svg = tireMarksSvg.current; if (!svg) return
@@ -412,6 +418,77 @@ export default function FAQContent() {
         tireIntervalR.current = setInterval(dropMark, C_TIRE_INTERVAL)
         donutStopR.current    = setTimeout(stopDonut, 30000)
       }
+      function stopUTurn() {
+        isTurningRef.current = false
+        cancelAnimationFrame(turnRafRef.current)
+      }
+      // atEnd=true  → spinning at road end, car will face up  (90° → -90°)
+      // atEnd=false → spinning at road start, car will face down (-90° → 90°)
+      function startUTurn(atEnd) {
+        if (isTurningRef.current || !carRef.current || !carInnerRef.current) return
+        if (isDonuting.current) stopDonut()
+        isTurningRef.current = true
+        const baseAngle = facingAngleRef.current
+        const baseRad   = baseAngle * Math.PI / 180
+        const pivotX    = lastX.current + C_FRONT_AXLE * Math.cos(baseRad)
+        const pivotY    = lastY.current + C_FRONT_AXLE * Math.sin(baseRad)
+        const turnDur   = 1600
+        const t0 = Date.now()
+        let lastMarkAt  = 0
+        function turnFrame() {
+          if (!isTurningRef.current) return
+          const elapsed = Date.now() - t0
+          const t = Math.min(1, elapsed / turnDur)
+          const ease = t < 0.5 ? 2*t*t : -1 + (4-2*t)*t
+          const spinRad  = -ease * Math.PI
+          const totalRad = baseRad + spinRad
+          const cx = pivotX - C_FRONT_AXLE * Math.cos(totalRad)
+          const cy = pivotY - C_FRONT_AXLE * Math.sin(totalRad)
+          const curAngle = baseAngle - ease * 180
+          carRef.current.style.transform      = `translate(${cx}px,${cy}px)`
+          carInnerRef.current.style.transform = `rotate(${curAngle}deg)`
+          facingAngleRef.current = curAngle
+          // Drop tire marks at burnout interval
+          const now = Date.now()
+          if (now - lastMarkAt > C_TIRE_INTERVAL && tireMarksSvg.current) {
+            lastMarkAt = now
+            const svg = tireMarksSvg.current, ns = 'http://www.w3.org/2000/svg'
+            C_REAR_TYRES.forEach(({ lx, ly }) => {
+              const wx = cx + lx * Math.cos(totalRad) - ly * Math.sin(totalRad)
+              const wy = cy + lx * Math.sin(totalRad) + ly * Math.cos(totalRad)
+              const el = document.createElementNS(ns, 'ellipse')
+              el.setAttribute('cx', wx.toFixed(1)); el.setAttribute('cy', wy.toFixed(1))
+              el.setAttribute('rx', '3.5'); el.setAttribute('ry', '1.8')
+              const td = (totalRad * 180 / Math.PI) + 90
+              el.setAttribute('transform', `rotate(${td.toFixed(1)} ${wx.toFixed(1)} ${wy.toFixed(1)})`)
+              el.setAttribute('fill', 'rgba(0,0,0,0.75)'); el.style.opacity = '1'
+              svg.appendChild(el)
+              requestAnimationFrame(() => { el.style.transition = 'opacity 2s ease-out'; el.style.opacity = '0' })
+              setTimeout(() => el.remove(), 2100)
+            })
+          }
+          if (t < 1) {
+            turnRafRef.current = requestAnimationFrame(turnFrame)
+          } else {
+            isTurningRef.current    = false
+            carFacingUpRef.current  = atEnd
+            lastX.current = cx; lastY.current = cy
+            flashHeadlights()
+          }
+        }
+        turnRafRef.current = requestAnimationFrame(turnFrame)
+      }
+      // Decide what idle animation to play: U-turn at endpoints, donut elsewhere
+      function scheduleIdle() {
+        clearTimeout(stopTimerR.current)
+        stopTimerR.current = setTimeout(() => {
+          if (isSlidingRef.current || isRecoveringRef.current || isTurningRef.current) return
+          const p = getScrollProgress()
+          if      (p >= 0.98 && !carFacingUpRef.current) startUTurn(true)
+          else if (p <= 0.02 &&  carFacingUpRef.current) startUTurn(false)
+          else startDonut()
+        }, 3000)
+      }
       function update() {
         const max = document.documentElement.scrollHeight - window.innerHeight
         tick(max > 0 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0)
@@ -435,9 +512,10 @@ export default function FAQContent() {
       function resumeQmarks() { if (qmarksRef.current) qmarksRef.current.style.visibility = '' }
       function triggerSlideOff() {
         if (isSlidingRef.current || isRecoveringRef.current) return
-        const startX = isDonuting.current ? donutCarX.current : lastX.current
+        const startX = isDonuting.current ? donutCarX.current : isTurningRef.current ? lastX.current : lastX.current
         const startY = isDonuting.current ? donutCarY.current : lastY.current
         if (isDonuting.current) stopDonut()
+        if (isTurningRef.current) stopUTurn()
         cancelAnimationFrame(rafRef.current)
         clearTimeout(stopTimerR.current)
         isSlidingRef.current = true
@@ -524,7 +602,7 @@ export default function FAQContent() {
             if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
             resumeQmarks()
             updateSectionLabel()
-            stopTimerR.current = setTimeout(startDonut, 3000)
+            scheduleIdle()
           }
         }
         recoverRafRef.current = requestAnimationFrame(recoverFrame)
@@ -602,17 +680,18 @@ export default function FAQContent() {
           scrollDirRef.current = delta > 0 ? 1 : -1
         }
         if (isDonuting.current) stopDonut()
+        if (isTurningRef.current) stopUTurn()
         clearTimeout(stopTimerR.current); clearTimeout(flashTimerR.current)
         if (rafRef.current) cancelAnimationFrame(rafRef.current)
         rafRef.current = requestAnimationFrame(update)
-        stopTimerR.current  = setTimeout(startDonut, 3000)
+        scheduleIdle()
         flashTimerR.current = setTimeout(flashHeadlights, 49000)
         updateSectionLabel()
       }
       const onResize = () => { if (!isSlidingRef.current && !isRecoveringRef.current) { init(false); update() } }
       window.addEventListener('scroll', onScroll, { passive: true })
       window.addEventListener('resize', onResize)
-      stopTimerR.current = setTimeout(startDonut, 3000)
+      scheduleIdle()
       updateSectionLabel()
       return () => {
         window.removeEventListener('scroll', onScroll)
@@ -621,6 +700,7 @@ export default function FAQContent() {
         clearInterval(tireIntervalR.current)
         cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
         cancelAnimationFrame(slideRafRef.current); cancelAnimationFrame(recoverRafRef.current)
+        cancelAnimationFrame(turnRafRef.current); isTurningRef.current = false
         if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
         if (carRef.current) carRef.current.style.opacity = '0'
       }
@@ -749,23 +829,6 @@ export default function FAQContent() {
         {/* Question marks — desktop only */}
         {!isMobile && (
           <div ref={qmarksRef}>
-            {/* Section label — updated by JS on scroll */}
-            <span ref={sectionLabelRef} style={{
-              position: 'absolute',
-              top: '50%',
-              left: 'calc(100% + 14px)',
-              transform: 'translateY(-50%)',
-              whiteSpace: 'nowrap',
-              fontFamily: 'var(--font-playfair),serif',
-              fontSize: '18px',
-              fontWeight: '400',
-              fontStyle: 'italic',
-              color: '#1a1a1a',
-              opacity: 0,
-              transition: 'opacity 0.32s ease',
-              lineHeight: 1,
-              pointerEvents: 'none',
-            }} />
           {[
             { top: '-26px', left: '2px',  delay: '0s'     },
             { top: '-34px', left: '17px', delay: '0.93s'  },
@@ -843,6 +906,20 @@ export default function FAQContent() {
           )}
         </div>
       </div>
+
+      {/* Section label — outside carRef so it doesn't oscillate with the car's sine path */}
+      {!isMobile && (
+        <span ref={sectionLabelRef} style={{
+          position: 'fixed', top: 0, left: 'calc(8vw + 37px)',
+          transform: 'translateY(-50%)',
+          whiteSpace: 'nowrap',
+          fontFamily: 'var(--font-playfair),serif',
+          fontSize: '18px', fontWeight: '400', fontStyle: 'italic',
+          color: '#1a1a1a', opacity: 0,
+          transition: 'opacity 0.32s ease',
+          lineHeight: 1, pointerEvents: 'none', zIndex: 55,
+        }} />
+      )}
 
       {/* Nav */}
       <nav className="nav">
