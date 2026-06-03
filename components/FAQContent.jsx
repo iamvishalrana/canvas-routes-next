@@ -539,7 +539,7 @@ export default function FAQContent() {
         if (isSlidingRef.current || isRecoveringRef.current) return
         // Accumulate speed; decay toward 0 each event so brief spikes don't trigger
         scrollVel = scrollVel * 0.55 + Math.abs(delta) * 0.45
-        if (scrollVel > 140) { scrollVel = 0; triggerSlideOff(); return }
+        if (scrollVel > 220) { scrollVel = 0; triggerSlideOff(); return }
         if (Math.abs(delta) > 2) {
           scrollDirRef.current = delta > 0 ? 1 : -1
         }
@@ -669,10 +669,10 @@ export default function FAQContent() {
             padding: '5px 12px',
             whiteSpace: 'nowrap',
             fontSize: '11.5px',
-            fontFamily: 'var(--font-cormorant),serif',
+            fontFamily: 'var(--font-inter),sans-serif',
             fontWeight: '600',
-            fontStyle: 'italic',
-            letterSpacing: '0.02em',
+            fontStyle: 'normal',
+            letterSpacing: '0.04em',
             color: '#8B1F1F',
             opacity: 0,
             pointerEvents: 'none',
