@@ -418,7 +418,6 @@ export default function FAQContent() {
       function resumeQmarks() { if (qmarksRef.current) qmarksRef.current.style.visibility = '' }
       function triggerSlideOff() {
         if (isSlidingRef.current || isRecoveringRef.current) return
-        // Capture actual visual position before stopping donut (car may be mid-circle)
         const startX = isDonuting.current ? donutCarX.current : lastX.current
         const startY = isDonuting.current ? donutCarY.current : lastY.current
         if (isDonuting.current) stopDonut()
@@ -430,27 +429,25 @@ export default function FAQContent() {
         const perpX       = -Math.sin(roadRad), perpY = Math.cos(roadRad)
         const startFacing = facingAngleRef.current
 
-        // Phase 1: bubble appears, ?-marks hide, car freezes so user reads it (500ms)
         showBubble()
         pauseQmarks()
 
-        setTimeout(() => {
-          // Phase 2: skid — ease-in, 380px off road, nose swings toward road (CCW when going down, CW when going up)
-          const endX = startX + perpX * 380, endY = startY + perpY * 380
-          const endFacing = startFacing - 52
-          const dur = 700, t0 = Date.now()
-          function slideFrame() {
-            const t    = Math.min(1, (Date.now() - t0) / dur)
-            const ease = t * t   // ease-in: rear breaks loose, accelerates outward
-            if (carRef.current)
-              carRef.current.style.transform = `translate(${startX + (endX - startX) * ease}px,${startY + (endY - startY) * ease}px)`
-            if (carInnerRef.current)
-              carInnerRef.current.style.transform = `rotate(${startFacing + (endFacing - startFacing) * ease}deg)`
-            if (t < 1) { slideRafRef.current = requestAnimationFrame(slideFrame) }
-            else { isSlidingRef.current = false; setTimeout(() => startRecovery(endX, endY, endFacing), 380) }
-          }
-          slideRafRef.current = requestAnimationFrame(slideFrame)
-        }, 500)
+        // Skid immediately — ease-out (fast break, tyres bite and decelerate)
+        const endX      = startX + perpX * 190
+        const endY      = startY + perpY * 190
+        const endFacing = startFacing - 38
+        const dur = 480, t0 = Date.now()
+        function slideFrame() {
+          const t    = Math.min(1, (Date.now() - t0) / dur)
+          const ease = 1 - (1 - t) * (1 - t)  // ease-out
+          if (carRef.current)
+            carRef.current.style.transform = `translate(${startX + (endX - startX) * ease}px,${startY + (endY - startY) * ease}px)`
+          if (carInnerRef.current)
+            carInnerRef.current.style.transform = `rotate(${startFacing + (endFacing - startFacing) * ease}deg)`
+          if (t < 1) { slideRafRef.current = requestAnimationFrame(slideFrame) }
+          else { isSlidingRef.current = false; setTimeout(() => startRecovery(endX, endY, endFacing), 160) }
+        }
+        slideRafRef.current = requestAnimationFrame(slideFrame)
       }
       function startRecovery(fromX, fromY, fromFacingDeg) {
         isRecoveringRef.current = true
@@ -463,7 +460,7 @@ export default function FAQContent() {
         const toApproachAngle = toAngle
         // Cubic bezier control points
         const dx = toX - fromX, dy = toY - fromY
-        const ctrl   = Math.max(120, Math.sqrt(dx*dx + dy*dy) * 0.42)
+        const ctrl   = Math.max(80, Math.sqrt(dx*dx + dy*dy) * 0.28)
         const fromRad = fromFacingDeg * Math.PI / 180
         const toRad   = toApproachAngle * Math.PI / 180
         const p1x = fromX + Math.cos(fromRad) * ctrl, p1y = fromY + Math.sin(fromRad) * ctrl
@@ -471,7 +468,7 @@ export default function FAQContent() {
         function bez(t, a, b, c, d) { const u=1-t; return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d }
         function bezT(t, a, b, c, d) { const u=1-t; return 3*u*u*(b-a)+6*u*t*(c-b)+3*t*t*(d-c) }
         const finalFacing = toAngle
-        const dur = 3200, t0 = Date.now()
+        const dur = 1600, t0 = Date.now()
         let bubbleHidden = false
         function recoverFrame() {
           const t    = Math.min(1, (Date.now() - t0) / dur)
@@ -491,7 +488,7 @@ export default function FAQContent() {
             carRef.current.style.transform = `translate(${cx}px,${cy}px)`
           if (carInnerRef.current)
             carInnerRef.current.style.transform = `rotate(${ca}deg)`
-          if (t >= 0.65 && !bubbleHidden) { bubbleHidden = true; hideBubble() }
+          if (t >= 0.45 && !bubbleHidden) { bubbleHidden = true; hideBubble() }
           if (t < 1) {
             recoverRafRef.current = requestAnimationFrame(recoverFrame)
           } else {
