@@ -309,6 +309,7 @@ export default function FAQContent() {
   const sectionLabelRef   = useRef(null)
   const sectionRefsArr    = useRef([])
   const activeSectionRef  = useRef(-1)
+  const ctaSectionRef     = useRef(null)
   const flashTimerR       = useRef(null)
   const faqHL1Ref         = useRef(null)
   const faqHL2Ref         = useRef(null)
@@ -536,8 +537,19 @@ export default function FAQContent() {
       // ── Section label ─────────────────────────────────────────────────────
       let sectionFadeTimer = null
       function updateSectionLabel() {
-        // Use the car's actual screen Y position so the label changes exactly when the car passes each section
         const carY = lastY.current
+        // If car has entered the CTA zone, clear label and flip ? marks to white
+        const ctaEl = ctaSectionRef.current
+        if (ctaEl && ctaEl.getBoundingClientRect().top <= carY) {
+          if (qmarksRef.current) qmarksRef.current.style.filter = 'invert(1)'
+          if (activeSectionRef.current !== -1) {
+            activeSectionRef.current = -1
+            clearTimeout(sectionFadeTimer)
+            if (sectionLabelRef.current) sectionLabelRef.current.style.opacity = '0'
+          }
+          return
+        }
+        if (qmarksRef.current) qmarksRef.current.style.filter = ''
         let newActive = -1
         sectionRefsArr.current.forEach((el, i) => {
           if (el && el.getBoundingClientRect().top <= carY) newActive = i
@@ -551,7 +563,7 @@ export default function FAQContent() {
         if (newActive < 0) return
         sectionFadeTimer = setTimeout(() => {
           label.textContent = SECTIONS[newActive].title
-          label.style.opacity = '0.78'
+          label.style.opacity = '1'
         }, 320)
       }
 
@@ -580,6 +592,7 @@ export default function FAQContent() {
       window.addEventListener('scroll', onScroll, { passive: true })
       window.addEventListener('resize', onResize)
       stopTimerR.current = setTimeout(startDonut, 3000)
+      updateSectionLabel()
       return () => {
         window.removeEventListener('scroll', onScroll)
         window.removeEventListener('resize', onResize)
@@ -702,7 +715,7 @@ export default function FAQContent() {
             color: '#8B1F1F',
             opacity: 0,
             pointerEvents: 'none',
-            transformOrigin: 'right center',
+            transformOrigin: 'left center',
             boxShadow: '0 2px 12px rgba(0,0,0,0.09)',
           }}>
             SLOW DOWN! SLOW DOWN!
@@ -895,7 +908,7 @@ export default function FAQContent() {
       </div>
 
       {/* CTA */}
-      <div style={{ background: '#0F1E14', position: 'relative', zIndex: 6, textAlign: 'center', padding: 'clamp(3rem,6vw,5rem) 2rem' }}>
+      <div ref={ctaSectionRef} style={{ background: '#0F1E14', position: 'relative', zIndex: 6, textAlign: 'center', padding: 'clamp(3rem,6vw,5rem) 2rem' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)' }} />
         <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.8rem,3.5vw,2.4rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
           Still have questions?
