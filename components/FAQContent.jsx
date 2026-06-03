@@ -306,6 +306,9 @@ export default function FAQContent() {
   const recoverRafRef     = useRef(null)
   const speechRef         = useRef(null)
   const qmarksRef         = useRef(null)
+  const sectionLabelRef   = useRef(null)
+  const sectionRefsArr    = useRef([])
+  const activeSectionRef  = useRef(-1)
   const flashTimerR       = useRef(null)
   const faqHL1Ref         = useRef(null)
   const faqHL2Ref         = useRef(null)
@@ -527,6 +530,27 @@ export default function FAQContent() {
         }, 110)
       }
       init(); update()
+      // ── Section label ─────────────────────────────────────────────────────
+      let sectionFadeTimer = null
+      function updateSectionLabel() {
+        const mid = window.scrollY + window.innerHeight * 0.5
+        let newActive = -1
+        sectionRefsArr.current.forEach((el, i) => {
+          if (el && el.getBoundingClientRect().top + window.scrollY <= mid) newActive = i
+        })
+        if (newActive === activeSectionRef.current) return
+        activeSectionRef.current = newActive
+        const label = sectionLabelRef.current
+        if (!label) return
+        clearTimeout(sectionFadeTimer)
+        label.style.opacity = '0'
+        if (newActive < 0) return
+        sectionFadeTimer = setTimeout(() => {
+          label.textContent = SECTIONS[newActive].title
+          label.style.opacity = '0.78'
+        }, 320)
+      }
+
       // Velocity accumulator: decays each event, fires only on hard sustained scroll
       let scrollVel = 0
       const onScroll = () => {
@@ -546,6 +570,7 @@ export default function FAQContent() {
         rafRef.current = requestAnimationFrame(update)
         stopTimerR.current  = setTimeout(startDonut, 3000)
         flashTimerR.current = setTimeout(flashHeadlights, 49000)
+        updateSectionLabel()
       }
       const onResize = () => { if (!isSlidingRef.current && !isRecoveringRef.current) { init(false); update() } }
       window.addEventListener('scroll', onScroll, { passive: true })
@@ -554,7 +579,7 @@ export default function FAQContent() {
       return () => {
         window.removeEventListener('scroll', onScroll)
         window.removeEventListener('resize', onResize)
-        clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current); clearTimeout(flashTimerR.current)
+        clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current); clearTimeout(flashTimerR.current); clearTimeout(sectionFadeTimer)
         clearInterval(tireIntervalR.current)
         cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
         cancelAnimationFrame(slideRafRef.current); cancelAnimationFrame(recoverRafRef.current)
@@ -693,25 +718,24 @@ export default function FAQContent() {
         {/* Question marks — desktop only */}
         {!isMobile && (
           <div ref={qmarksRef}>
-            {/* Got questions? label */}
-            <span style={{
+            {/* Section label — updated by JS on scroll */}
+            <span ref={sectionLabelRef} style={{
               position: 'absolute',
               top: '-52px',
               left: '50%',
               transform: 'translateX(-50%)',
               whiteSpace: 'nowrap',
-              fontFamily: 'var(--font-cormorant),serif',
-              fontSize: '13px',
-              fontWeight: '300',
+              fontFamily: 'var(--font-playfair),serif',
+              fontSize: '12px',
+              fontWeight: '400',
               fontStyle: 'italic',
-              color: 'rgba(197,168,130,0.85)',
-              textShadow: '0 1px 4px rgba(255,255,255,0.4)',
+              color: 'rgba(197,168,130,0.88)',
+              textShadow: '0 1px 4px rgba(255,255,255,0.35)',
               opacity: 0,
-              animation: 'faq-gotq 7s ease-in-out infinite',
-              animationDelay: '2.2s',
+              transition: 'opacity 0.32s ease',
               lineHeight: 1,
               pointerEvents: 'none',
-            }}>Got questions?</span>
+            }} />
           {[
             { top: '-26px', left: '2px',  delay: '0s'     },
             { top: '-34px', left: '17px', delay: '0.93s'  },
@@ -844,7 +868,7 @@ export default function FAQContent() {
         {isMobile ? (
           /* Mobile: stacked, section label above items */
           SECTIONS.map((section, si) => (
-            <div key={si} style={{ marginBottom: '4rem' }}>
+            <div key={si} ref={el => sectionRefsArr.current[si] = el} style={{ marginBottom: '4rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div style={{ fontFamily: 'var(--font-playfair),serif', fontSize: 'clamp(1.25rem,4vw,1.5rem)', fontWeight: '400', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1, whiteSpace: 'nowrap' }}>{section.title}</div>
                 <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.3)' }} />
@@ -868,7 +892,7 @@ export default function FAQContent() {
                 </div>
 
                 {/* Accordion items */}
-                <div key={`items-${si}`}>
+                <div key={`items-${si}`} ref={el => sectionRefsArr.current[si] = el}>
                   {section.items.map((item, ii) => (
                     <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
                   ))}
