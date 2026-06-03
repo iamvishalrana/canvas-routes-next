@@ -185,6 +185,9 @@ export default function MembershipContent() {
         @media(max-width:480px){
           .mem-perks { grid-template-columns: 1fr !important; }
         }
+        @media(max-width:720px){
+          .mem-photo-break img { object-position: center 20% !important; }
+        }
       `}</style>
 
       {/* NAV */}
@@ -285,7 +288,7 @@ export default function MembershipContent() {
       </section>
 
       {/* ── PHOTO BREAK 1 ───────────────────────────────────────────── */}
-      <div style={{ position: 'relative', height: 'clamp(260px,36vw,460px)', overflow: 'hidden' }}>
+      <div className="mem-photo-break" style={{ position: 'relative', height: 'clamp(260px,36vw,460px)', overflow: 'hidden' }}>
         <img src="/events/may9-cars-row.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
       </div>
