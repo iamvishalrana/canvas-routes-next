@@ -228,7 +228,7 @@ export default function MembershipContent() {
             For those who chose<br />their car on purpose.
           </h1>
           <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.7)', letterSpacing: '0.28em', textShadow: '0 1px 10px rgba(0,0,0,0.8)' }}>
+          <div style={{ ...LABEL, color: '#c5a882', letterSpacing: '0.28em', textShadow: '0 1px 12px rgba(0,0,0,1), 0 0 24px rgba(0,0,0,0.9)' }}>
             Season 2026 &nbsp;·&nbsp; Limited spots &nbsp;·&nbsp; Two tiers
           </div>
         </div>
