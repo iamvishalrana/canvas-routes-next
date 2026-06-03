@@ -273,7 +273,7 @@ export default function MembershipContent() {
 
           <FadeUp delay={0.15} style={{ display: 'flex', flexDirection: 'column' }} className="mem-about-img">
             <div style={{ overflow: 'hidden', height: 'clamp(240px,30vw,380px)' }}>
-              <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: '117%', objectFit: 'cover', objectPosition: 'center top', display: 'block', marginTop: '-7%' }} />
+              <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: '128%', objectFit: 'cover', objectPosition: 'center top', display: 'block', marginTop: '-12.8%' }} />
             </div>
             <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderTop: 'none' }}>
               {[['Season', 'June — November'], ['Membership', 'Limited spots per season'], ['Events', 'Cars & Coffee · Cruises · Road Trips']].map(([k, v], i, arr) => (
