@@ -571,11 +571,7 @@ export default function FAQContent() {
         scrollVel = scrollVel * 0.55 + Math.abs(delta) * 0.45
         if (scrollVel > 140) { scrollVel = 0; triggerSlideOff(); return }
         if (Math.abs(delta) > 2) {
-          const newDir = delta > 0 ? 1 : -1
-          if (newDir !== scrollDirRef.current && !halfDonutActiveRef.current) {
-            startHalfDonut()
-          }
-          scrollDirRef.current = newDir
+          scrollDirRef.current = delta > 0 ? 1 : -1
         }
         if (isDonuting.current) stopDonut()
         clearTimeout(stopTimerR.current); clearTimeout(flashTimerR.current)
