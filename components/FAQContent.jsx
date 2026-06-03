@@ -155,14 +155,13 @@ const C_TIRE_INTERVAL = 90
 const C_REAR_TYRES = [{ lx: -16.8, ly: -6.9 }, { lx: -16.8, ly: 6.9 }]
 const C_FRONT_AXLE = 17
 
-function cBuildPoints(isMobile, navH = C_NAV_H) {
+function cBuildPoints(isMobile, navH = C_NAV_H, yEndDoc) {
   const vw  = window.innerWidth, vh = window.innerHeight
-  const docH = document.documentElement.scrollHeight
   const cx  = isMobile ? vw * 0.82 : vw * 0.08
   const amp = isMobile ? vw * 0.06 : vw * 0.02
-  // Desktop: path spans full document height so road is anchored to the page
-  // Mobile: path spans viewport height (horizontal car uses different system)
-  const yStart = navH, yEnd = isMobile ? vh - 12 : docH - 20, cycles = 2.5
+  const yStart = navH
+  const yEnd = isMobile ? vh - 12 : (yEndDoc || document.documentElement.scrollHeight - 20)
+  const cycles = 2.5
   return Array.from({ length: C_STEPS + 1 }, (_, i) => {
     const t  = i / C_STEPS
     const x  = cx + amp * Math.sin(t * cycles * Math.PI * 2)
@@ -313,6 +312,8 @@ export default function FAQContent() {
   const sectionRefsArr    = useRef([])
   const activeSectionRef  = useRef(-1)
   const ctaSectionRef     = useRef(null)
+  const footerRef         = useRef(null)
+  const lastYDoc          = useRef(0)
   const flashTimerR       = useRef(null)
   const faqHL1Ref         = useRef(null)
   const faqHL2Ref         = useRef(null)
@@ -324,28 +325,34 @@ export default function FAQContent() {
       // ── Desktop: scroll-driven vertical animation ──────────────────────
       function init(mobile = false) {
         const navH = document.querySelector('.nav')?.offsetHeight || 155
-        const pts = cBuildPoints(mobile, navH)
+        let yEndDoc
+        if (!mobile && footerRef.current) {
+          const r = footerRef.current.getBoundingClientRect()
+          yEndDoc = r.bottom + window.scrollY
+        }
+        const pts = cBuildPoints(mobile, navH, yEndDoc)
         pointsRef.current = pts
         const p = cPoly(pts)
         ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
         scrollLastY.current    = window.scrollY
         scrollDirRef.current   = 1
         facingAngleRef.current = 90
+        lastYDoc.current       = 0
         tick(0)
       }
       function tick(p) {
         if (!carRef.current || !carInnerRef.current || !pointsRef.current.length) return
         const { x, y: yDoc, angle } = pointsRef.current[Math.min(Math.round(p * C_STEPS), C_STEPS)]
-        // Road points are in document coordinates; convert Y to viewport for the fixed car
-        const y = yDoc - window.scrollY
-        const dx = x - lastX.current, dy = y - lastY.current
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist > 0.4) {
-          const movAngle = Math.atan2(dy, dx) * 180 / Math.PI
+        const y = yDoc - window.scrollY  // viewport Y for the fixed car
+        // Use document-coordinate delta for facing (viewport delta is ~0 so velocity would break)
+        const dx = x - lastX.current, dyDoc = yDoc - lastYDoc.current
+        const dist = Math.sqrt(dx * dx + dyDoc * dyDoc)
+        if (dist > 0.5) {
+          const movAngle = Math.atan2(dyDoc, dx) * 180 / Math.PI
           const diff = ((movAngle - facingAngleRef.current) % 360 + 540) % 360 - 180
-          facingAngleRef.current += diff * 0.3
+          facingAngleRef.current += diff * 0.25
         }
-        lastAngle.current = angle; lastX.current = x; lastY.current = y
+        lastAngle.current = angle; lastX.current = x; lastY.current = y; lastYDoc.current = yDoc
         carRef.current.style.transform = `translate(${x}px,${y}px)`
         carRef.current.style.opacity   = '1'
         carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
@@ -931,7 +938,7 @@ export default function FAQContent() {
       </div>
 
       {/* Footer */}
-      <div style={{ position: 'relative', zIndex: 6, padding: '2rem clamp(1.25rem,5vw,2.5rem)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div ref={footerRef} style={{ position: 'relative', zIndex: 6, padding: '2rem clamp(1.25rem,5vw,2.5rem)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <p style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>© 2026 Canvas Routes. Montreal, QC.</p>
         <div style={{ display: 'flex', gap: '1.25rem' }}>
           <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Privacy Policy</Link>
