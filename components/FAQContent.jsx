@@ -267,9 +267,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
 export default function FAQContent() {
   const [open, setOpen]       = useState({})
   const [menuOpen, setMenuOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768
-  )
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -301,9 +299,6 @@ export default function FAQContent() {
   const donutCarY         = useRef(0)
   const scrollLastY       = useRef(0)
   const scrollDirRef      = useRef(1)
-  const halfDonutActiveRef = useRef(false)
-  const halfDonutRafRef   = useRef(null)
-  const facingOffsetRef   = useRef(0)
   const facingAngleRef    = useRef(90)
   const isSlidingRef      = useRef(false)
   const isRecoveringRef   = useRef(false)
@@ -326,11 +321,9 @@ export default function FAQContent() {
         pointsRef.current = pts
         const p = cPoly(pts)
         ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
-        scrollLastY.current        = window.scrollY
-        scrollDirRef.current       = 1
-        facingOffsetRef.current    = 0
-        halfDonutActiveRef.current = false
-        facingAngleRef.current     = 90
+        scrollLastY.current    = window.scrollY
+        scrollDirRef.current   = 1
+        facingAngleRef.current = 90
         tick(0)
       }
       function tick(p) {
@@ -346,9 +339,7 @@ export default function FAQContent() {
         lastAngle.current = angle; lastX.current = x; lastY.current = y
         carRef.current.style.transform = `translate(${x}px,${y}px)`
         carRef.current.style.opacity   = '1'
-        if (!halfDonutActiveRef.current) {
-          carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
-        }
+        carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
       }
       function dropMark() {
         const svg = tireMarksSvg.current; if (!svg) return
@@ -376,40 +367,11 @@ export default function FAQContent() {
         isDonuting.current = false
         cancelAnimationFrame(donutRafRef.current)
         clearInterval(tireIntervalR.current); clearTimeout(donutStopR.current)
-        carRef.current.style.transform = `translate(${lastX.current}px,${lastY.current}px)`
-        if (!halfDonutActiveRef.current) {
-          carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
-        }
-      }
-      function startHalfDonut() {
-        if (halfDonutActiveRef.current) return
-        if (isDonuting.current) stopDonut()
-        halfDonutActiveRef.current = true
-        const startAngle   = lastAngle.current + facingOffsetRef.current
-        const targetOffset = facingOffsetRef.current === 0 ? 180 : 0
-        const duration     = 650
-        const t0           = Date.now()
-        function halfFrame() {
-          const t    = Math.min(1, (Date.now() - t0) / duration)
-          const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
-          if (carInnerRef.current) {
-            carInnerRef.current.style.transform = `rotate(${startAngle - ease * 180}deg)`
-          }
-          if (t < 1) {
-            halfDonutRafRef.current = requestAnimationFrame(halfFrame)
-          } else {
-            facingOffsetRef.current    = targetOffset
-            halfDonutActiveRef.current = false
-            if (carInnerRef.current) {
-              carInnerRef.current.style.transform = `rotate(${lastAngle.current + facingOffsetRef.current}deg)`
-            }
-          }
-        }
-        halfDonutRafRef.current = requestAnimationFrame(halfFrame)
+        carRef.current.style.transform      = `translate(${lastX.current}px,${lastY.current}px)`
+        carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
       }
       function startDonut() {
         if (!carInnerRef.current || !carRef.current || isDonuting.current) return
-        if (halfDonutActiveRef.current) return
         isDonuting.current = true; donutStart.current = Date.now()
         const baseAngle = facingAngleRef.current
         const baseRad   = baseAngle * Math.PI / 180
@@ -461,15 +423,12 @@ export default function FAQContent() {
         const startY = isDonuting.current ? donutCarY.current : lastY.current
         if (isDonuting.current) stopDonut()
         cancelAnimationFrame(rafRef.current)
-        cancelAnimationFrame(halfDonutRafRef.current)
-        halfDonutActiveRef.current = false
         clearTimeout(stopTimerR.current)
         isSlidingRef.current = true
 
-        const roadRad   = lastAngle.current * Math.PI / 180
-        // LEFT perpendicular: car slides off toward the content side
-        const perpX     = -Math.sin(roadRad), perpY = Math.cos(roadRad)
-        const startFacing = lastAngle.current + facingOffsetRef.current
+        const roadRad     = lastAngle.current * Math.PI / 180
+        const perpX       = -Math.sin(roadRad), perpY = Math.cos(roadRad)
+        const startFacing = facingAngleRef.current
 
         // Phase 1: bubble appears, ?-marks hide, car freezes so user reads it (500ms)
         showBubble()
@@ -478,7 +437,7 @@ export default function FAQContent() {
         setTimeout(() => {
           // Phase 2: skid — ease-in, 380px off road, nose swings toward road (CCW when going down, CW when going up)
           const endX = startX + perpX * 380, endY = startY + perpY * 380
-          const endFacing = startFacing + (facingOffsetRef.current === 180 ? 52 : -52)
+          const endFacing = startFacing - 52
           const dur = 700, t0 = Date.now()
           function slideFrame() {
             const t    = Math.min(1, (Date.now() - t0) / dur)
@@ -601,7 +560,6 @@ export default function FAQContent() {
         clearTimeout(stopTimerR.current); clearTimeout(donutStopR.current); clearTimeout(flashTimerR.current)
         clearInterval(tireIntervalR.current)
         cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
-        cancelAnimationFrame(halfDonutRafRef.current)
         cancelAnimationFrame(slideRafRef.current); cancelAnimationFrame(recoverRafRef.current)
         if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
         if (carRef.current) carRef.current.style.opacity = '0'
