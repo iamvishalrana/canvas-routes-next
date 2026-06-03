@@ -828,10 +828,8 @@ export default function FAQContent() {
       </div>
 
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(160deg, #0E0C09 0%, #131109 100%)', padding: 'clamp(120px,14vw,180px) 2rem clamp(4rem,7vw,6rem)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        {/* Subtle radial glow behind heading */}
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-60%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse at center, rgba(197,168,130,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.7),transparent)' }} />
+      <section style={{ background: '#0F1E14', minHeight: 'clamp(420px,60vh,560px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(140px,16vw,200px) 2rem clamp(4rem,8vw,6rem)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
         <div style={{ fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '2rem', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
           <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.4)' }} />
           Canvas Routes
@@ -841,7 +839,7 @@ export default function FAQContent() {
           Frequently Asked<br />
           <em style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.75)' }}>Questions</em>
         </h1>
-        <div style={{ width: '40px', height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.8), transparent)', margin: '0 auto 1.75rem' }} />
+        <div style={{ width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.75rem' }} />
         <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.42)', maxWidth: '360px', margin: '0 auto', lineHeight: '1.9', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.01em' }}>
           From your first meet to the open road — answered.
         </p>
@@ -855,12 +853,7 @@ export default function FAQContent() {
           SECTIONS.map((section, si) => (
             <div key={si} style={{ marginBottom: '4rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-                <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.2rem' }}>
-                    {String(si + 1).padStart(2, '0')}
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.35rem,4vw,1.65rem)', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1, whiteSpace: 'nowrap' }}>{section.title}</div>
-                </div>
+                <div style={{ fontFamily: 'var(--font-playfair),serif', fontSize: 'clamp(1.25rem,4vw,1.5rem)', fontWeight: '400', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1, whiteSpace: 'nowrap' }}>{section.title}</div>
                 <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.3)' }} />
               </div>
               {section.items.map((item, ii) => (
@@ -875,10 +868,7 @@ export default function FAQContent() {
               <>
                 {/* Label — sticky within this grid row (the row is as tall as the section content) */}
                 <div key={`label-${si}`} style={{ position: 'sticky', top: '100px' }}>
-                  <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.55rem', fontWeight: '400' }}>
-                    {String(si + 1).padStart(2, '0')}
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.65rem', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1.15, marginBottom: '0.8rem' }}>
+                  <div style={{ fontFamily: 'var(--font-playfair),serif', fontSize: '1.45rem', fontWeight: '400', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1.2, marginBottom: '0.8rem' }}>
                     {section.title}
                   </div>
                   <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.55)' }} />
@@ -900,7 +890,7 @@ export default function FAQContent() {
       <div style={{ maxWidth: '1040px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem', position: 'relative', zIndex: 6 }}>
 
         {/* CTA */}
-        <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: 'linear-gradient(160deg, #0E0C09 0%, #131109 100%)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: '#0F1E14', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)', pointerEvents: 'none' }} />
           <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.6rem,3.5vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
             Still have questions?
