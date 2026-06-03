@@ -656,10 +656,6 @@ export default function FAQContent() {
           65%  { opacity: 1; transform: scale(1.07) translateY(-1px); }
           100% { opacity: 1; transform: scale(1) translateY(0);      }
         }
-        @keyframes faq-exhaust {
-          0%   { opacity: 0.5; transform: translate(0px,0px)   scale(1);   }
-          100% { opacity: 0;   transform: translate(-8px,0px) scale(2.4); }
-        }
       `}</style>
 
       {/* Fixed road */}

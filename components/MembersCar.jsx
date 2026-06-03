@@ -231,6 +231,14 @@ export default function MembersCar() {
               style={{ opacity: 0, transition: 'opacity 0.04s' }} />
 
             <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.1)" />
+            {[0, 0.42, 0.84].map(d => (
+              <circle key={`ea${d}`} cx="2" cy="9"  r="1" fill="rgba(175,175,175,0.45)"
+                style={{ animation: 'faq-exhaust 1.2s ease-out infinite', animationDelay: `${d}s`, transformBox: 'fill-box', transformOrigin: 'center' }} />
+            ))}
+            {[0, 0.42, 0.84].map(d => (
+              <circle key={`eb${d}`} cx="2" cy="17" r="1" fill="rgba(175,175,175,0.45)"
+                style={{ animation: 'faq-exhaust 1.2s ease-out infinite', animationDelay: `${d}s`, transformBox: 'fill-box', transformOrigin: 'center' }} />
+            ))}
             <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
             <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
             <rect x="45" y="0"   width="8" height="9"  rx="2" fill="#111" />
