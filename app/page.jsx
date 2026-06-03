@@ -542,7 +542,7 @@ export default function Home() {
               <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"0.3rem"}}>Road Trip · 7 Jun 2026</div>
               <div style={{fontSize:"0.9rem",color:"#1a1a1a",lineHeight:"1.4"}}>Into the Laurentians — First Route</div>
             </div>
-            <Link href="/routes#form" style={{fontSize:"11px",letterSpacing:"0.14em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.5rem 1.1rem",textDecoration:"none",whiteSpace:"nowrap",flexShrink:0}}>Register →</Link>
+            <Link href="/routes/into-the-laurentians" style={{fontSize:"11px",letterSpacing:"0.14em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.5rem 1.1rem",textDecoration:"none",whiteSpace:"nowrap",flexShrink:0}}>Register →</Link>
           </div>
         )}
         {status === 'success' ? (
@@ -854,7 +854,7 @@ export default function Home() {
                       <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
                     ))}
                   </div>
-                  <Link href="/routes#form" onClick={dismissEventsPopup}
+                  <Link href="/routes/into-the-laurentians" onClick={dismissEventsPopup}
                     style={{display:"inline-block",padding:"0.8rem 1.8rem",background:"rgba(197,168,130,0.1)",border:"1px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
                     Register
                   </Link>
