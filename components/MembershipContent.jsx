@@ -80,6 +80,7 @@ export default function MembershipContent() {
   const [status, setStatus]             = useState(null)
   const [submitError, setSubmitError]   = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [phoneOptOut, setPhoneOptOut]   = useState(false)
   const honeypotRef                     = useRef(null)
 
   function set(field, val) {
@@ -116,7 +117,7 @@ export default function MembershipContent() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 11) e.phone = true
+    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 11)) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true
     if (!form.year.trim()) e.year = true
@@ -528,9 +529,14 @@ export default function MembershipContent() {
                 <div id="mem-field-phone">
                   <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone</div>
                   <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
+                    disabled={phoneOptOut}
                     onChange={e => set('phone', formatPhone(e.target.value))}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
-                    style={inp('phone')} />
+                    style={{ ...inp('phone'), opacity: phoneOptOut ? 0.35 : 1 }} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={phoneOptOut} onChange={e => { setPhoneOptOut(e.target.checked); if (e.target.checked) { set('phone', ''); setErrors(er => ({ ...er, phone: false })) } }} style={{ accentColor: '#c5a882', width: '12px', height: '12px', flexShrink: 0 }} />
+                    <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter),sans-serif' }}>I don't have a phone number</span>
+                  </label>
                 </div>
 
                 {/* Date of birth */}
