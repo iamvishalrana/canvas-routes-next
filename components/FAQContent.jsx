@@ -473,7 +473,9 @@ export default function FAQContent() {
         // Snap target road position once (don't chase scroll during recovery)
         const idx    = Math.min(Math.round(getScrollProgress() * C_STEPS), C_STEPS)
         const roadPt = pointsRef.current[idx]
-        const toX = roadPt.x, toY = roadPt.y
+        const toX = roadPt.x
+        // roadPt.y is document-space; car is position:fixed so convert to viewport y
+        const toY = roadPt.y - window.scrollY
         const toAngle = roadPt.angle
         // Approach angle: road direction + facingOffset so bezier arrives correctly
         const toApproachAngle = toAngle
@@ -515,9 +517,10 @@ export default function FAQContent() {
             // Settle at current scroll position (user may have scrolled during the 3s recovery)
             const curIdx = Math.min(Math.round(getScrollProgress() * C_STEPS), C_STEPS)
             const curPt  = pointsRef.current[curIdx]
-            lastX.current = curPt.x; lastY.current = curPt.y; lastAngle.current = curPt.angle
+            const curVY = curPt.y - window.scrollY
+            lastX.current = curPt.x; lastY.current = curVY; lastYDoc.current = curPt.y; lastAngle.current = curPt.angle
             facingAngleRef.current = curPt.angle
-            if (carRef.current)      carRef.current.style.transform      = `translate(${curPt.x}px,${curPt.y}px)`
+            if (carRef.current)      carRef.current.style.transform      = `translate(${curPt.x}px,${curVY}px)`
             if (carInnerRef.current) carInnerRef.current.style.transform = `rotate(${facingAngleRef.current}deg)`
             resumeQmarks()
             updateSectionLabel()
