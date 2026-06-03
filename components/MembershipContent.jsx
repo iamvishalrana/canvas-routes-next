@@ -181,13 +181,10 @@ export default function MembershipContent() {
           .mem-steps      { grid-template-columns: 1fr !important; }
           .mem-tier-inner { padding: 1.5rem 1.5rem 0 !important; }
           .mem-tier-body  { padding: 0 1.5rem 1.5rem !important; }
+          .mem-photo-break img { object-position: center 20% !important; }
         }
         @media(max-width:480px){
           .mem-perks { grid-template-columns: 1fr !important; }
-        }
-        @media(max-width:720px){
-          .mem-hero-img { transform: scale(0.75) !important; transform-origin: center center !important; }
-          .mem-photo-break img { object-position: center 20% !important; }
         }
       `}</style>
 
@@ -215,10 +212,10 @@ export default function MembershipContent() {
       </div>
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden', background: '#060c08' }}>
+      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
         {/* Background photo */}
         <div style={{ position: 'absolute', inset: 0 }}>
-          <img src="/membership-hero.jpeg" alt="" className="mem-hero-img" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
+          <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
         </div>
 
@@ -239,8 +236,8 @@ export default function MembershipContent() {
 
         {/* Scroll indicator */}
         <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
-          <span style={{ ...LABEL, color: 'rgba(197,168,130,0.35)' }}>Scroll</span>
-          <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.35)" strokeWidth="1.2" strokeLinecap="round">
+          <span style={{ ...LABEL, color: 'rgba(197,168,130,0.55)' }}>Scroll</span>
+          <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.55)" strokeWidth="1.2" strokeLinecap="round">
             <line x1="6" y1="0" x2="6" y2="12"/><polyline points="2 8 6 12 10 8"/>
           </svg>
         </div>
@@ -299,7 +296,7 @@ export default function MembershipContent() {
         <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
 
           <FadeUp style={{ textAlign: 'center', marginBottom: 'clamp(3rem,5vw,5rem)' }}>
-            <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.75rem' }}>2026 Season</div>
+            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.75rem' }}>2026 Season</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a' }}>Choose your tier</div>
           </FadeUp>
 
@@ -307,7 +304,7 @@ export default function MembershipContent() {
 
             {/* TIER 1 */}
             <FadeUp delay={0.05}>
-              <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.09)', height: '100%' }}>
+              <div style={{ background: '#F5F1EC', border: '0.5px solid rgba(0,0,0,0.09)', height: '100%' }}>
                 <div className="mem-tier-inner" style={{ padding: '2.25rem 2.25rem 0' }}>
                   <div style={{ ...LABEL, color: '#999', marginBottom: '0.5rem' }}>Tier 1</div>
                   <div style={{ fontSize: '1.15rem', fontWeight: '600', color: '#1a1a1a', marginBottom: '2rem', lineHeight: 1.2, fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -433,7 +430,7 @@ export default function MembershipContent() {
       <section style={{ padding: 'clamp(5rem,8vw,8rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
         <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
           <FadeUp style={{ marginBottom: 'clamp(2.5rem,4vw,4rem)' }}>
-            <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.75rem' }}>What you receive</div>
+            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.75rem' }}>What you receive</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a' }}>
               Membership you can hold.
             </div>
@@ -461,7 +458,7 @@ export default function MembershipContent() {
       <section style={{ background: '#EDE8E1', padding: 'clamp(4rem,6vw,6rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
         <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
           <FadeUp style={{ marginBottom: 'clamp(2.5rem,4vw,4rem)' }}>
-            <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.75rem' }}>After you register</div>
+            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.75rem' }}>After you register</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a' }}>What happens next.</div>
           </FadeUp>
           <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-steps">
@@ -471,7 +468,7 @@ export default function MembershipContent() {
               { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and collect your welcome kit at your first event of the season.' },
             ].map((s, i) => (
               <div key={i} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.45)', lineHeight: 1, marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.n}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.65)', lineHeight: 1, marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.n}</div>
                 <div style={{ fontSize: '0.95rem', fontWeight: '600', color: '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3, fontFamily: 'var(--font-inter),sans-serif' }}>{s.title}</div>
                 <div style={{ ...BODY, color: '#666' }}>{s.body}</div>
               </div>
