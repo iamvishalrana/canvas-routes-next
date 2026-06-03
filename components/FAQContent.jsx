@@ -155,13 +155,11 @@ const C_TIRE_INTERVAL = 90
 const C_REAR_TYRES = [{ lx: -16.8, ly: -6.9 }, { lx: -16.8, ly: 6.9 }]
 const C_FRONT_AXLE = 17
 
-function cBuildPoints(isMobile, navH = C_NAV_H, yEndOverride) {
+function cBuildPoints(isMobile, navH = C_NAV_H) {
   const vw = window.innerWidth, vh = window.innerHeight
   const cx  = isMobile ? vw * 0.82 : vw * 0.08
   const amp = isMobile ? vw * 0.06 : vw * 0.02
-  const yStart = navH
-  const yEnd = (yEndOverride !== undefined && yEndOverride > navH + 80) ? yEndOverride : vh - 12
-  const cycles = 2.5
+  const yStart = navH, yEnd = vh - 12, cycles = 2.5
   return Array.from({ length: C_STEPS + 1 }, (_, i) => {
     const t  = i / C_STEPS
     const x  = cx + amp * Math.sin(t * cycles * Math.PI * 2)
@@ -323,13 +321,7 @@ export default function FAQContent() {
       // ── Desktop: scroll-driven vertical animation ──────────────────────
       function init(mobile = false) {
         const navH = document.querySelector('.nav')?.offsetHeight || 155
-        let yEndOverride
-        if (!mobile && ctaSectionRef.current) {
-          const ctaDocTop = ctaSectionRef.current.getBoundingClientRect().top + window.scrollY
-          const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-          yEndOverride = maxScroll > 0 ? ctaDocTop - maxScroll : undefined
-        }
-        const pts = cBuildPoints(mobile, navH, yEndOverride)
+        const pts = cBuildPoints(mobile, navH)
         pointsRef.current = pts
         const p = cPoly(pts)
         ;[rl1, rl2, rl3, rl4].forEach(r => r.current?.setAttribute('points', p))
