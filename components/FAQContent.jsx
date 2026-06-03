@@ -182,7 +182,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '2rem',
+          gap: 'clamp(1rem,3vw,2rem)',
           padding: '1.35rem 0',
           background: 'transparent',
           border: 'none',
@@ -193,7 +193,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
       >
         <span style={{
           fontSize: '14px',
-          fontWeight: '400',
+          fontWeight: '500',
           color: '#1a1a1a',
           lineHeight: '1.5',
           flex: 1,
@@ -227,7 +227,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
           <div style={{ paddingBottom: '1.5rem', paddingRight: '2rem' }}>
             <p style={{
               fontSize: '14px',
-              color: '#666',
+              color: '#4a4a4a',
               lineHeight: '1.9',
               margin: 0,
               fontFamily: 'var(--font-inter),sans-serif',
@@ -825,7 +825,7 @@ export default function FAQContent() {
         </h1>
         <div style={{ width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
         <p style={{ fontSize: '15px', color: 'rgba(245,241,236,0.5)', maxWidth: '400px', margin: '0 auto', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }}>
-          Everything you need to know about the community, the events and the road ahead.
+          From your first meet to the open road — answered.
         </p>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)' }} />
       </section>
