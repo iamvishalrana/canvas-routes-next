@@ -173,8 +173,19 @@ function cPoly(pts) { return pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AccordionItem({ item, isOpen, onToggle }) {
+  const [hovered, setHovered] = useState(false)
   return (
-    <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        borderBottom: '0.5px solid rgba(197,168,130,0.18)',
+        borderLeft: isOpen ? '2px solid rgba(197,168,130,0.55)' : '2px solid transparent',
+        paddingLeft: isOpen ? '1.1rem' : '0',
+        transition: 'border-color 0.22s ease, padding-left 0.22s ease',
+        background: isOpen ? 'rgba(197,168,130,0.04)' : hovered ? 'rgba(0,0,0,0.012)' : 'transparent',
+      }}
+    >
       <button
         onClick={onToggle}
         style={{
@@ -183,7 +194,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 'clamp(1rem,3vw,2rem)',
-          padding: '1.35rem 0',
+          padding: '1.4rem 0',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
@@ -194,25 +205,27 @@ function AccordionItem({ item, isOpen, onToggle }) {
         <span style={{
           fontSize: '14px',
           fontWeight: '500',
-          color: '#1a1a1a',
-          lineHeight: '1.5',
+          color: isOpen ? '#111' : '#1a1a1a',
+          lineHeight: '1.55',
           flex: 1,
+          transition: 'color 0.15s',
         }}>
           {item.q}
         </span>
         <div style={{
           flexShrink: 0,
-          width: '22px',
-          height: '22px',
-          border: `0.5px solid ${isOpen ? 'rgba(197,168,130,0.5)' : 'rgba(0,0,0,0.12)'}`,
+          width: '20px',
+          height: '20px',
+          border: `0.5px solid ${isOpen ? 'rgba(197,168,130,0.7)' : 'rgba(0,0,0,0.14)'}`,
+          background: isOpen ? 'rgba(197,168,130,0.08)' : 'transparent',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: isOpen ? '#c5a882' : '#aaa',
           transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.22s ease, border-color 0.15s, color 0.15s',
+          transition: 'transform 0.22s ease, border-color 0.15s, color 0.15s, background 0.15s',
         }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </div>
@@ -221,26 +234,26 @@ function AccordionItem({ item, isOpen, onToggle }) {
       <div style={{
         display: 'grid',
         gridTemplateRows: isOpen ? '1fr' : '0fr',
-        transition: 'grid-template-rows 0.25s ease',
+        transition: 'grid-template-rows 0.28s ease',
       }}>
         <div style={{ overflow: 'hidden' }}>
-          <div style={{ paddingBottom: '1.5rem', paddingRight: '2rem' }}>
+          <div style={{ paddingBottom: '1.6rem', paddingRight: '2.5rem' }}>
             <p style={{
-              fontSize: '14px',
-              color: '#4a4a4a',
-              lineHeight: '1.9',
+              fontSize: '13.5px',
+              color: '#4d4d4d',
+              lineHeight: '1.95',
               margin: 0,
               fontFamily: 'var(--font-inter),sans-serif',
             }}>
               {item.a}
             </p>
             {item.a2 && (
-              <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.9', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
+              <p style={{ fontSize: '13.5px', color: '#666', lineHeight: '1.95', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
                 {item.a2}
               </p>
             )}
             {item.note && (
-              <p style={{ fontSize: '14px', color: '#444', fontWeight: '500', lineHeight: '1.9', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
+              <p style={{ fontSize: '13.5px', color: '#444', fontWeight: '500', lineHeight: '1.95', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
                 {item.note}
               </p>
             )}
@@ -815,29 +828,39 @@ export default function FAQContent() {
       </div>
 
       {/* Hero */}
-      <section style={{ background: '#0F1E14', padding: 'clamp(120px,14vw,180px) 2rem 5rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
-        <div style={{ fontSize: '11px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+      <section style={{ background: 'linear-gradient(160deg, #0E0C09 0%, #131109 100%)', padding: 'clamp(120px,14vw,180px) 2rem clamp(4rem,7vw,6rem)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        {/* Subtle radial glow behind heading */}
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-60%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse at center, rgba(197,168,130,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.7),transparent)' }} />
+        <div style={{ fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '2rem', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
+          <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.4)' }} />
           Canvas Routes
+          <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.4)' }} />
         </div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,6vw,4.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.25rem', letterSpacing: '-0.01em' }}>
-          Frequently Asked Questions
+        <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6.5vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+          Frequently Asked<br />
+          <em style={{ fontStyle: 'italic', color: 'rgba(245,241,236,0.75)' }}>Questions</em>
         </h1>
-        <div style={{ width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-        <p style={{ fontSize: '15px', color: 'rgba(245,241,236,0.5)', maxWidth: '400px', margin: '0 auto', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }}>
+        <div style={{ width: '40px', height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.8), transparent)', margin: '0 auto 1.75rem' }} />
+        <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.42)', maxWidth: '360px', margin: '0 auto', lineHeight: '1.9', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.01em' }}>
           From your first meet to the open road — answered.
         </p>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.25),transparent)' }} />
       </section>
 
       {/* Content */}
-      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: 'clamp(3rem,6vw,5rem) clamp(1.25rem,5vw,2.5rem) 2rem', position: 'relative', zIndex: 6 }}>
+      <div style={{ maxWidth: '1040px', margin: '0 auto', padding: 'clamp(3.5rem,7vw,5.5rem) clamp(1.25rem,5vw,2.5rem) 2rem', position: 'relative', zIndex: 6 }}>
         {isMobile ? (
           /* Mobile: stacked, section label above items */
           SECTIONS.map((section, si) => (
-            <div key={si} style={{ marginBottom: '3.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.35rem,4vw,1.6rem)', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1, whiteSpace: 'nowrap' }}>{section.title}</div>
+            <div key={si} style={{ marginBottom: '4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.2rem' }}>
+                    {String(si + 1).padStart(2, '0')}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.35rem,4vw,1.65rem)', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1, whiteSpace: 'nowrap' }}>{section.title}</div>
+                </div>
                 <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.3)' }} />
               </div>
               {section.items.map((item, ii) => (
@@ -847,14 +870,18 @@ export default function FAQContent() {
           ))
         ) : (
           /* Desktop: 2-col grid, label sticky in its own row */
-          <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', columnGap: '4rem', rowGap: '3.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', columnGap: 'clamp(3rem,5vw,5rem)', rowGap: '4rem', alignItems: 'start' }}>
             {SECTIONS.map((section, si) => (
               <>
                 {/* Label — sticky within this grid row (the row is as tall as the section content) */}
                 <div key={`label-${si}`} style={{ position: 'sticky', top: '100px' }}>
-                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.45rem', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1.2 }}>
+                  <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.55rem', fontWeight: '400' }}>
+                    {String(si + 1).padStart(2, '0')}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.65rem', fontWeight: '300', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1.15, marginBottom: '0.8rem' }}>
                     {section.title}
                   </div>
+                  <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.55)' }} />
                 </div>
 
                 {/* Accordion items */}
@@ -870,10 +897,11 @@ export default function FAQContent() {
       </div>
 
       {/* CTA + Footer */}
-      <div style={{ maxWidth: '1020px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem', position: 'relative', zIndex: 6 }}>
+      <div style={{ maxWidth: '1040px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem', position: 'relative', zIndex: 6 }}>
 
         {/* CTA */}
-        <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: '#0F1E14', textAlign: 'center' }}>
+        <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: 'linear-gradient(160deg, #0E0C09 0%, #131109 100%)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)', pointerEvents: 'none' }} />
           <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.6rem,3.5vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
             Still have questions?
           </div>
