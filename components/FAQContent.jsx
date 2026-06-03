@@ -887,31 +887,28 @@ export default function FAQContent() {
         )}
       </div>
 
-      {/* CTA + Footer */}
-      <div style={{ maxWidth: '1040px', margin: '0 auto', padding: '0 clamp(1.25rem,5vw,2.5rem) 6rem', position: 'relative', zIndex: 6 }}>
-
-        {/* CTA */}
-        <div style={{ marginTop: '1rem', padding: 'clamp(2rem,4vw,3rem)', background: '#0F1E14', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)', pointerEvents: 'none' }} />
-          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.6rem,3.5vw,2.2rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
-            Still have questions?
-          </div>
-          <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.25rem' }} />
-          <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.85', maxWidth: '340px', margin: '0 auto', fontFamily: 'var(--font-inter),sans-serif' }}>
-            Reach out at{' '}
-            <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none' }}>info@canvasroutes.com</a>
-            {' '}or follow us at{' '}
-            <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none' }}>@canvasroutes</a>
-          </p>
+      {/* CTA */}
+      <div style={{ background: '#0F1E14', position: 'relative', zIndex: 6, textAlign: 'center', padding: 'clamp(3rem,6vw,5rem) 2rem' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)' }} />
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.8rem,3.5vw,2.4rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
+          Still have questions?
         </div>
+        <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.25rem' }} />
+        <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.5)', lineHeight: '1.85', maxWidth: '340px', margin: '0 auto', fontFamily: 'var(--font-inter),sans-serif' }}>
+          Reach out at{' '}
+          <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none' }}>info@canvasroutes.com</a>
+          {' '}or follow us at{' '}
+          <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none' }}>@canvasroutes</a>
+        </p>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.15),transparent)' }} />
+      </div>
 
-        {/* Footer */}
-        <div style={{ paddingTop: '2.5rem', marginTop: '3rem', borderTop: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <p style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>© 2026 Canvas Routes. Montreal, QC.</p>
-          <div style={{ display: 'flex', gap: '1.25rem' }}>
-            <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Privacy Policy</Link>
-            <Link href="/terms" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Terms</Link>
-          </div>
+      {/* Footer */}
+      <div style={{ position: 'relative', zIndex: 6, padding: '2rem clamp(1.25rem,5vw,2.5rem)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <p style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>© 2026 Canvas Routes. Montreal, QC.</p>
+        <div style={{ display: 'flex', gap: '1.25rem' }}>
+          <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Privacy Policy</Link>
+          <Link href="/terms" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Terms</Link>
         </div>
       </div>
 
