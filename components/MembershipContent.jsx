@@ -215,20 +215,20 @@ export default function MembershipContent() {
         {/* Background photo */}
         <div style={{ position: 'absolute', inset: 0 }}>
           <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.82) 0%, rgba(6,12,8,0.78) 50%, rgba(6,12,8,0.9) 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
         </div>
 
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
 
         <div style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
-          <div style={{ fontSize: '13px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', color: '#c5a882', marginBottom: '1.75rem' }}>
+          <div style={{ fontSize: '13px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', color: '#c5a882', marginBottom: '1.75rem', textShadow: '0 1px 10px rgba(0,0,0,0.8)' }}>
             Canvas Routes · Membership · Season 2026
           </div>
-          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.01em' }}>
+          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.01em', textShadow: '0 2px 20px rgba(0,0,0,0.85)' }}>
             For those who chose<br />their car on purpose.
           </h1>
           <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.45)', letterSpacing: '0.28em' }}>
+          <div style={{ ...LABEL, color: 'rgba(197,168,130,0.7)', letterSpacing: '0.28em', textShadow: '0 1px 10px rgba(0,0,0,0.8)' }}>
             Season 2026 &nbsp;·&nbsp; Limited spots &nbsp;·&nbsp; Two tiers
           </div>
         </div>
