@@ -631,6 +631,13 @@ export default function FAQContent() {
           65%  { opacity: 1; transform: scale(1.07) translateY(-1px); }
           100% { opacity: 1; transform: scale(1) translateY(0);      }
         }
+        @keyframes faq-gotq {
+          0%   { opacity: 0; }
+          12%  { opacity: 0.72; }
+          68%  { opacity: 0.72; }
+          82%  { opacity: 0; }
+          100% { opacity: 0; }
+        }
       `}</style>
 
       {/* Fixed road */}
@@ -686,6 +693,25 @@ export default function FAQContent() {
         {/* Question marks — desktop only */}
         {!isMobile && (
           <div ref={qmarksRef}>
+            {/* Got questions? label */}
+            <span style={{
+              position: 'absolute',
+              top: '-52px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              whiteSpace: 'nowrap',
+              fontFamily: 'var(--font-cormorant),serif',
+              fontSize: '13px',
+              fontWeight: '300',
+              fontStyle: 'italic',
+              color: 'rgba(197,168,130,0.85)',
+              textShadow: '0 1px 4px rgba(255,255,255,0.4)',
+              opacity: 0,
+              animation: 'faq-gotq 7s ease-in-out infinite',
+              animationDelay: '2.2s',
+              lineHeight: 1,
+              pointerEvents: 'none',
+            }}>Got questions?</span>
           {[
             { top: '-26px', left: '2px',  delay: '0s'     },
             { top: '-34px', left: '17px', delay: '0.93s'  },
