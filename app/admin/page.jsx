@@ -3079,6 +3079,9 @@ function BirthdayCalendar({ people, onPersonClick }) {
 
 function ToolsTab() {
   const [hcStatus, setHcStatus] = useState(null) // null | 'loading' | 'ok' | 'error'
+  const hcTimer = useRef(null)
+
+  useEffect(() => () => clearTimeout(hcTimer.current), [])
 
   async function runHealthCheck() {
     if (hcStatus === 'loading') return
@@ -3089,7 +3092,7 @@ function ToolsTab() {
     } catch {
       setHcStatus('error')
     }
-    setTimeout(() => setHcStatus(null), 4000)
+    hcTimer.current = setTimeout(() => setHcStatus(null), 4000)
   }
 
   const tool = { heading: '#1a1a1a', sub: '#888', border: 'rgba(0,0,0,0.08)', bg: '#fff' }
