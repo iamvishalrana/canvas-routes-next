@@ -10,6 +10,7 @@ export default function SiteFooter({ background = '#F5F1EC', borderColor = 'rgba
           <Link href="/privacy" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>Privacy Policy</Link>
           <Link href="/terms" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>Terms</Link>
           <Link href="/faq" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>FAQ</Link>
+          <Link href="/partners" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>Partner with us</Link>
           <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{ background: 'none', border: 'none', padding: 0, fontSize: '10px', color: linkColor, cursor: 'pointer', letterSpacing: '0.03em', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>Manage cookies</button>
         </div>
       </div>

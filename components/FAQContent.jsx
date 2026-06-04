@@ -1041,6 +1041,7 @@ export default function FAQContent() {
         <div style={{ display: 'flex', gap: '1.25rem' }}>
           <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Privacy Policy</Link>
           <Link href="/terms" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Terms</Link>
+          <Link href="/partners" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Partner with us</Link>
         </div>
       </div>
 
