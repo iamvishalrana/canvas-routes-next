@@ -1,4 +1,4 @@
-import { captureException } from '../../../lib/sentry.js'
+import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 
 function h(str) {
@@ -49,6 +49,84 @@ function notifyHtml({ name, business, type, email, message }) {
 </body></html>`
 }
 
+function confirmHtml({ name, business }) {
+  const firstName = name.split(' ')[0]
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Partner inquiry received — Canvas Routes</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0F1E14;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
+  <tr><td align="center" style="padding:48px 16px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
+
+      <!-- Logo -->
+      <tr><td style="padding-bottom:36px;">
+        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;"/>
+      </td></tr>
+
+      <!-- Gold divider -->
+      <tr><td style="padding-bottom:32px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40">
+          <tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr>
+        </table>
+      </td></tr>
+
+      <!-- Heading -->
+      <tr><td style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#F5F1EC;line-height:1.2;padding-bottom:20px;">
+        Inquiry received.
+      </td></tr>
+
+      <!-- Body -->
+      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(245,241,236,0.65);line-height:1.85;padding-bottom:16px;">
+        Hi ${h(firstName)},
+      </td></tr>
+      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(245,241,236,0.65);line-height:1.85;padding-bottom:16px;">
+        Thank you for reaching out about a partnership with Canvas Routes. We've received your inquiry for <span style="color:#F5F1EC;">${h(business)}</span> and will review it personally.
+      </td></tr>
+      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(245,241,236,0.65);line-height:1.85;padding-bottom:32px;">
+        We take care with every partnership — if there's a genuine fit, you'll hear from us within a few days to set up a conversation. In the meantime, feel free to follow us on Instagram at <a href="https://www.instagram.com/canvasroutes" style="color:#c5a882;text-decoration:none;">@canvasroutes</a> to get a feel for what we do.
+      </td></tr>
+
+      <!-- Divider -->
+      <tr><td style="padding-bottom:28px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:rgba(197,168,130,0.18);">&nbsp;</td></tr>
+        </table>
+      </td></tr>
+
+      <!-- Sign-off -->
+      <tr><td style="font-family:Georgia,'Times New Roman',serif;font-size:16px;font-style:italic;color:rgba(245,241,236,0.5);line-height:1.6;padding-bottom:8px;">
+        The road is the product. We build the community around it.
+      </td></tr>
+      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.3);letter-spacing:0.1em;padding-bottom:36px;">
+        CANVAS ROUTES — MONTREAL
+      </td></tr>
+
+      <!-- Divider -->
+      <tr><td style="padding-bottom:24px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:rgba(197,168,130,0.12);">&nbsp;</td></tr>
+        </table>
+      </td></tr>
+
+      <!-- Footer -->
+      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.22);line-height:1.7;">
+        Canvas Routes &nbsp;·&nbsp; Montreal, QC &nbsp;·&nbsp;
+        <a href="https://canvasroutes.com" style="color:rgba(245,241,236,0.22);text-decoration:none;">canvasroutes.com</a>
+        &nbsp;·&nbsp;
+        <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.22);text-decoration:none;">info@canvasroutes.com</a>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body></html>`
+}
+
 export async function POST(req) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   const limited = await checkRateLimit(`partners:${ip}`, 5, 3600)
@@ -94,6 +172,28 @@ export async function POST(req) {
   } catch (err) {
     console.error('Partner inquiry email network error:', err)
     captureException(err, { context: 'partner-inquiry-email', email: e })
+  }
+
+  // Confirmation email to the partner
+  try {
+    const confirmRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: e,
+        subject: 'Your partnership inquiry — Canvas Routes',
+        html: confirmHtml({ name: n, business: b }),
+        text: `Hi ${n.split(' ')[0]},\n\nThank you for reaching out about a partnership with Canvas Routes. We've received your inquiry for ${b} and will review it personally.\n\nWe take care with every partnership — if there's a genuine fit, you'll hear from us within a few days.\n\nCanvas Routes\nMontreal, QC\ninfo@canvasroutes.com`,
+      }),
+    })
+    if (!confirmRes.ok) {
+      const err = await confirmRes.text().catch(() => 'unknown')
+      console.error('Partner confirm email failed:', err)
+    }
+  } catch (err) {
+    console.error('Partner confirm email network error:', err)
+    captureException(err, { context: 'partner-confirm-email', email: e })
   }
 
   return Response.json({ success: true })
