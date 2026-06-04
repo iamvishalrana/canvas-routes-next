@@ -84,6 +84,47 @@ test('membership API rejects invalid tier', async ({ request }) => {
   }
 })
 
+// ─── Partners ────────────────────────────────────────────────────────────────
+
+test('partners page loads', async ({ page }) => {
+  await page.goto('/partners')
+  await expect(page.getByRole('heading', { name: /Be part of/i })).toBeVisible({ timeout: 15000 })
+})
+
+test('partners page form inputs render', async ({ page }) => {
+  await page.goto('/partners')
+  await expect(page.locator('input[autocomplete="organization"]')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('input[type="email"]')).toBeVisible()
+  await expect(page.locator('button[type="submit"]')).toBeVisible()
+})
+
+test('partners API reachable (honeypot — no email sent)', async ({ request }) => {
+  const res = await request.post('/api/partners', {
+    data: { name: 'Health Check', business: 'Health Check Co', city: 'Montreal', type: 'Other', email: 'healthcheck@example.com', message: 'Health check test.', _hp: 'healthcheck' },
+  })
+  expect([200, 429]).toContain(res.status())
+})
+
+test('partners API validation logic works', async ({ request }) => {
+  const res = await request.post('/api/partners', { data: {} })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBeTruthy()
+  }
+})
+
+test('partners API rejects invalid business type', async ({ request }) => {
+  const res = await request.post('/api/partners', {
+    data: { name: 'Health Check', business: 'Health Check Co', city: 'Montreal', type: 'INVALID_TYPE', email: 'healthcheck@example.com', message: 'Health check test.' },
+  })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Please select a valid business type.')
+  }
+})
+
 // ─── Members Portal ───────────────────────────────────────────────────────────
 
 test('portal dashboard redirects to login when unauthenticated', async ({ page }) => {
