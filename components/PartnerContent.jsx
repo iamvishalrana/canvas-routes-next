@@ -238,23 +238,6 @@ export default function PartnerContent() {
         </div>
       </section>
 
-      {/* ── Full-bleed image break ─────────────────────────────────────────────── */}
-      <div style={{ position: 'relative', height: 'clamp(280px,40vw,460px)', overflow: 'hidden' }}>
-        <img src="/cc-page.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(8,15,10,0.78) 0%, rgba(8,15,10,0.35) 60%, rgba(8,15,10,0.1) 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: 'clamp(2rem,6vw,5rem)' }}>
-          <div style={{ maxWidth: '520px' }}>
-            <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.7)', marginBottom: '1.5rem' }} />
-            <blockquote style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: '300', fontStyle: 'italic', color: '#F5F1EC', lineHeight: 1.35, margin: 0, letterSpacing: '-0.01em', textShadow: '0 1px 12px rgba(0,0,0,0.5)' }}>
-              "The road is the product. We just build the community around it."
-            </blockquote>
-            <div style={{ marginTop: '1.25rem', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Canvas Routes
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ── Our audience ──────────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,6vw,5rem)', maxWidth: '1080px', margin: '0 auto' }}>
         <div style={{ marginBottom: 'clamp(2.5rem,5vw,4rem)' }}>
@@ -266,7 +249,6 @@ export default function PartnerContent() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 'clamp(2rem,4vw,3.5rem)' }}>
           {[
             { heading: 'Intentional buyers', body: 'Canvas Routes members chose their car specifically. They research, they compare, and they invest — in their machine and in everything around it. They do not buy impulsively and they do not forget a brand that earns their trust.' },
-            { heading: 'Highly engaged', body: 'These are not passive followers. Canvas Routes events require registration, commitment and showing up. The people in the room chose to be there. That kind of engagement is rare and it carries into how they interact with the brands they encounter.' },
             { heading: 'Influential network', body: 'Word of mouth is how Canvas Routes grows. Members bring other members. A recommendation from someone in this community carries weight. A brand that resonates here spreads through a network that is hard to buy into any other way.' },
             { heading: 'Across Quebec and beyond', body: 'Based in Montreal with events stretching across Quebec, Ontario, Vermont and Nova Scotia. The Canvas Routes community is growing and so is the geographic reach of every partnership.' },
           ].map(item => (
