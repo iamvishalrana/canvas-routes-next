@@ -93,7 +93,7 @@ export default function RoutesPage() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
-      const order = ['name','email','phone','dob_month','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
+      const order = ['name','email','phone','dob_month','dob_day','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) {
         const el = document.getElementById(`field-${first}`)
@@ -323,7 +323,7 @@ export default function RoutesPage() {
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
-                <div style={{fontSize:"14px",color:"rgba(245,241,236,0.7)"}}>June 6 at noon</div>
+                <div style={{fontSize:"14px",color:"rgba(245,241,236,0.7)"}}>June 6 at 11 PM</div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>

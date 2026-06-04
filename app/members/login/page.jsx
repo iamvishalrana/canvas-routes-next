@@ -45,10 +45,11 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setError(data.error || 'Incorrect email or password.'); setLoading(false) }
+      if (!res.ok) setError(data.error || 'Incorrect email or password.')
       else { router.push('/members/dashboard'); router.refresh() }
     } catch {
       setError('Connection error. Please check your network and try again.')
+    } finally {
       setLoading(false)
     }
   }

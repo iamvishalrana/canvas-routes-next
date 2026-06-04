@@ -232,7 +232,7 @@ export async function POST(request) {
   }
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })
-  if (carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
+  if (carModel.length > 150) return Response.json({ error: 'Car model too long.' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long.' }, { status: 400 })
 
   const firstName = h(name.trim().split(' ')[0])

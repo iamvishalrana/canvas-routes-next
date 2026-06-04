@@ -150,13 +150,17 @@ export default function MembershipContent() {
     try {
       const res = await fetch('/api/membership-waitlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, termsAccepted, _hp: honeypotRef.current?.value || '' }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setStatus('success')
+        setForm(INIT_FORM)
+        setErrors({})
+        setTermsAccepted(false)
+        setPhoneOptOut(false)
         if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'Lead')
       }
       else { setSubmitError(data.error || 'Something went wrong. Please try again.'); setStatus('error') }

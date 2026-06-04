@@ -120,7 +120,7 @@ function inputStyle(err) {
 
 export default function PartnerContent() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', business: '', city: '', type: '', email: '', phone: '', message: '' })
+  const [form, setForm] = useState({ _hp: '', name: '', business: '', city: '', type: '', email: '', phone: '', message: '' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState('')
@@ -129,6 +129,7 @@ export default function PartnerContent() {
   function setField(key, val) {
     setForm(p => ({ ...p, [key]: val }))
     if (errors[key]) setErrors(p => ({ ...p, [key]: undefined }))
+    if (serverError) setServerError('')
   }
 
   function formatPhone(v) {
@@ -161,7 +162,12 @@ export default function PartnerContent() {
         body: JSON.stringify({ ...form, phone: phoneOptOut ? '' : form.phone }),
       })
       const data = await res.json().catch(() => ({}))
-      if (res.ok) { setStatus('success') }
+      if (res.ok) {
+        setStatus('success')
+        setForm({ _hp: '', name: '', business: '', city: '', type: '', email: '', phone: '', message: '' })
+        setErrors({})
+        setPhoneOptOut(false)
+      }
       else { setStatus('error'); setServerError(data.error || 'Something went wrong. Please try again.') }
     } catch {
       setStatus('error')
@@ -385,12 +391,12 @@ export default function PartnerContent() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <input type="text" name="_hp" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+                <input type="text" name="_hp" value={form._hp} onChange={e => setField('_hp', e.target.value)} style={{ display: 'none' }} tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
                 {/* Business name — prominent, full width */}
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: errors.business ? 'rgba(180,60,60,0.8)' : 'rgba(197,168,130,0.9)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>Business name<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
-                  <input type="text" autoComplete="organization" value={form.business} onChange={e => setField('business', e.target.value)}
+                  <input type="text" autoComplete="organization" value={form.business} onChange={e => setField('business', e.target.value)} maxLength={150}
                     style={{ width: '100%', padding: '0.95rem 1rem', background: 'transparent', border: `0.5px solid ${errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                     onBlur={e => e.target.style.borderColor = errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
@@ -404,7 +410,7 @@ export default function PartnerContent() {
                   ].map(f => (
                     <div key={f.key}>
                       <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors[f.key] ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{f.label}<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
-                      <input type={f.type} autoComplete={f.autoComplete} value={form[f.key]} onChange={e => setField(f.key, e.target.value)}
+                      <input type={f.type} autoComplete={f.autoComplete} value={form[f.key]} onChange={e => setField(f.key, e.target.value)} maxLength={f.key === 'name' ? 100 : undefined}
                         style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                         onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                         onBlur={e => e.target.style.borderColor = errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
@@ -462,7 +468,7 @@ export default function PartnerContent() {
                 {/* Message */}
                 <div>
                   <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.message ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>How you'd like to partner<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
-                  <textarea rows={4} value={form.message} onChange={e => setField('message', e.target.value)}
+                  <textarea rows={4} value={form.message} onChange={e => setField('message', e.target.value)} maxLength={1000}
                     placeholder="Tell us about your business and what a partnership might look like…"
                     style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: '110px', lineHeight: '1.75', transition: 'border-color 0.18s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}

@@ -184,7 +184,7 @@ export default function Home() {
         else delete next.phone
       }
       if (field === 'instagram') {
-        if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.trim())) next.instagram = true
+        if (form.instagram.replace(/^@+/, '').trim() && /\S\s+\S/.test(form.instagram.replace(/^@+/, '').trim())) next.instagram = true
         else delete next.instagram
       }
       return next
@@ -195,7 +195,7 @@ export default function Home() {
     if (status === 'loading') return
     const newErrors = validate()
     if (Object.keys(newErrors).length > 0) {
-      const fieldOrder = ['registerFor', 'downtown_cruise', 'name', 'email', 'year', 'carMake', 'carModel', 'dob_month', 'phone', 'instagram', 'more', 'source']
+      const fieldOrder = ['registerFor', 'downtown_cruise', 'name', 'email', 'year', 'carMake', 'carModel', 'dob_month', 'dob_day', 'phone', 'instagram', 'more', 'source']
       const firstError = fieldOrder.find(f => newErrors[f])
       if (firstError) {
         const el = document.getElementById(`field-${firstError}`)
@@ -218,6 +218,7 @@ export default function Home() {
       if (res.ok) {
         setStatus('success')
         setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
+        setPhoneOptOut(false)
         if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined') {
           if (getConsent() === 'accepted' && window.gtag) window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
@@ -549,7 +550,7 @@ export default function Home() {
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you — usually within 48 hours.</div>
             <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>A confirmation email is on its way from <strong style={{color:"#555",fontWeight:"500"}}>info@canvasroutes.com</strong> or <strong style={{color:"#555",fontWeight:"500"}}>jerry@canvasroutes.com</strong> — add both to your contacts and check your spam/junk folder so you don't miss it. Once we've reviewed your application, you'll hear from our team directly. If you don't hear from us, reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
-            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
+            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}); setPhoneOptOut(false) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
