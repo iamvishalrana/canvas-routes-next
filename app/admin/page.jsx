@@ -2079,11 +2079,11 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     a.click()
   }
 
-  async function saveNote(contactId, value) {
+  async function saveNote(contactId, value, email) {
     const trimmed = value.trim()
     await fetch(`/api/admin/contacts/${contactId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: trimmed || null }),
+      body: JSON.stringify({ notes: trimmed || null, email: email || undefined }),
     })
     setContacts(prev => prev.map(x => x.contact_id === contactId ? { ...x, notes: trimmed || null } : x))
     setEditingNote(null)
@@ -2517,11 +2517,11 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                           <div>
                             <input autoFocus value={noteValue} maxLength={200}
                               onChange={e => setNoteValue(e.target.value)}
-                              onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+                              onKeyDown={e => { if (e.key === 'Enter') saveNote(c.contact_id, noteValue, c.email); if (e.key === 'Escape') setEditingNote(null) }}
                               style={{ ...inp, fontSize: '13px', marginBottom: '0.5rem' }}
                               placeholder="e.g. Steve — Rangers business" />
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <GhostBtn small onClick={() => saveNote(c.contact_id, noteValue)}>Save</GhostBtn>
+                              <GhostBtn small onClick={() => saveNote(c.contact_id, noteValue, c.email)}>Save</GhostBtn>
                               <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
                             </div>
                           </div>
