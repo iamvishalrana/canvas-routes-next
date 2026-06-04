@@ -2,7 +2,10 @@ name: Site Health Check
 
 on:
   schedule:
-    - cron: '0 12 * * *'   # 8 AM EDT (noon UTC) every day
+    - cron: '0 8 * * *'    # 4 AM EDT (8 AM UTC)
+    - cron: '0 14 * * *'   # 10 AM EDT (2 PM UTC)
+    - cron: '0 20 * * *'   # 4 PM EDT (8 PM UTC)
+    - cron: '0 2 * * *'    # 10 PM EDT (2 AM UTC next day)
   workflow_dispatch:         # run manually from GitHub Actions tab anytime
 
 jobs:
