@@ -7,5 +7,7 @@ Sentry.init({
 
   ignoreErrors: [
     /runtime\.sendMessage/,
+    /window\.webkit\.messageHandlers/,
+    /webkit\.messageHandlers/,
   ],
 });
