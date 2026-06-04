@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import SiteFooter from './SiteFooter'
 
 const PARTNER_TYPES = [
   'Cafe or Restaurant',
@@ -487,14 +488,7 @@ export default function PartnerContent() {
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <div style={{ borderTop: '0.5px solid rgba(197,168,130,0.2)', padding: '2rem clamp(1.25rem,5vw,2.5rem)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <p style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>© 2026 Canvas Routes. Montreal, QC.</p>
-        <div style={{ display: 'flex', gap: '1.25rem' }}>
-          <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Privacy Policy</Link>
-          <Link href="/terms" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Terms</Link>
-        </div>
-      </div>
+      <SiteFooter />
 
     </div>
   )

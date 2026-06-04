@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
+import SiteFooter from '../../../components/SiteFooter'
 
 const ROUTES_CLOSED = new Date('2026-06-07T03:00:00Z').getTime() // 11 PM EDT June 6
 
@@ -603,17 +604,7 @@ export default function RoutesPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="routes-footer" style={{borderTop:"0.5px solid rgba(0,0,0,0.12)",padding:"2rem 3rem",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"1rem",background:"#F5F1EC"}}>
-        <div style={{display:"flex",flexDirection:"column",gap:"0.4rem"}}>
-          <div style={{fontSize:"11px",color:"#888",letterSpacing:"0.05em"}}>© 2026 Canvas Routes. Montreal, QC.</div>
-          <div style={{display:"flex",gap:"1rem"}}>
-            <Link href="/privacy" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>Privacy Policy</Link>
-            <Link href="/terms" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>Terms</Link>
-            <Link href="/faq" style={{fontSize:"10px",color:"#aaa",textDecoration:"none",letterSpacing:"0.03em"}}>FAQ</Link>
-          </div>
-        </div>
-        <Link href="/" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#888",textDecoration:"none"}}>← Back to home</Link>
-      </footer>
+      <SiteFooter />
 
     </div>
   )

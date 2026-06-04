@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import SiteFooter from './SiteFooter'
 
 // ── Typography tokens ────────────────────────────────────────────────────────
 // LABEL:   Inter 9px / uppercase / 0.28em              → color varies
@@ -682,13 +683,7 @@ export default function MembershipContent() {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.15),transparent)' }} />
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ padding: '2rem 3rem', textAlign: 'center', borderTop: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <span style={{ ...SMALL, color: '#ccc' }}>© 2026 Canvas Routes. Montreal, QC.</span>
-        <Link href="/terms" style={{ ...SMALL, color: '#ccc', textDecoration: 'none' }}>Terms</Link>
-        <Link href="/privacy" style={{ ...SMALL, color: '#ccc', textDecoration: 'none' }}>Privacy</Link>
-        <a href="https://instagram.com/canvasroutes" target="_blank" rel="noreferrer" style={{ ...LABEL, color: '#c5a882', textDecoration: 'none', borderBottom: '0.5px solid rgba(197,168,130,0.3)', paddingBottom: '1px' }}>@canvasroutes</a>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
