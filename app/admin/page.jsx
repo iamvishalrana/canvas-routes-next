@@ -3070,6 +3070,29 @@ function BirthdayCalendar({ people, onPersonClick }) {
   )
 }
 
+function HealthCheckButton() {
+  const [status, setStatus] = useState(null) // null | 'loading' | 'ok' | 'error'
+  async function run() {
+    if (status === 'loading') return
+    setStatus('loading')
+    try {
+      const res = await fetch('/api/admin/health-check', { method: 'POST' })
+      setStatus(res.ok ? 'ok' : 'error')
+    } catch {
+      setStatus('error')
+    }
+    setTimeout(() => setStatus(null), 4000)
+  }
+  const label = status === 'loading' ? 'Running…' : status === 'ok' ? 'Triggered ✓' : status === 'error' ? 'Failed ✗' : 'Run Health Check'
+  const color = status === 'ok' ? 'rgba(90,158,79,0.7)' : status === 'error' ? 'rgba(123,32,50,0.7)' : 'rgba(255,255,255,0.3)'
+  return (
+    <button onClick={run} disabled={status === 'loading'}
+      style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.12)', padding: '0.45rem 0', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color, cursor: status === 'loading' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.2s' }}>
+      {label}
+    </button>
+  )
+}
+
 export default function AdminPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -3211,6 +3234,7 @@ export default function AdminPage() {
         <Link href="/members/profile" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
           → Profile
         </Link>
+        <HealthCheckButton />
         <button onClick={signOut}
           style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.12)', padding: '0.45rem 0', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginTop: '0.25rem' }}>
           Sign Out

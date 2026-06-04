@@ -6,6 +6,7 @@ on:
     - cron: '0 14 * * *'   # 10 AM Montreal (EDT, UTC-4)
     - cron: '0 20 * * *'   # 4 PM Montreal (EDT, UTC-4)
     - cron: '0 2 * * *'    # 10 PM Montreal (EDT, UTC-4)
+  workflow_dispatch:         # triggered from admin panel
 
 jobs:
   health-check:
