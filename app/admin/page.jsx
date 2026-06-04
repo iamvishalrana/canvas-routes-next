@@ -2954,7 +2954,7 @@ function CarsTab({ isMobile }) {
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-const TABS = ['Dashboard', 'Members', 'Cars', 'Applications', 'Contacts', 'Announcements', 'Events']
+const TABS = ['Dashboard', 'Members', 'Cars', 'Applications', 'Contacts', 'Announcements', 'Events', 'Tools']
 const TAB_ICONS = {
   Dashboard: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -2994,6 +2994,11 @@ const TAB_ICONS = {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
       <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  ),
+  Tools: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
     </svg>
   ),
 }
@@ -3070,26 +3075,59 @@ function BirthdayCalendar({ people, onPersonClick }) {
   )
 }
 
-function HealthCheckButton() {
-  const [status, setStatus] = useState(null) // null | 'loading' | 'ok' | 'error'
-  async function run() {
-    if (status === 'loading') return
-    setStatus('loading')
+// ─── Tools Tab ────────────────────────────────────────────────────────────────
+
+function ToolsTab() {
+  const [hcStatus, setHcStatus] = useState(null) // null | 'loading' | 'ok' | 'error'
+
+  async function runHealthCheck() {
+    if (hcStatus === 'loading') return
+    setHcStatus('loading')
     try {
       const res = await fetch('/api/admin/health-check', { method: 'POST' })
-      setStatus(res.ok ? 'ok' : 'error')
+      setHcStatus(res.ok ? 'ok' : 'error')
     } catch {
-      setStatus('error')
+      setHcStatus('error')
     }
-    setTimeout(() => setStatus(null), 4000)
+    setTimeout(() => setHcStatus(null), 4000)
   }
-  const label = status === 'loading' ? 'Running…' : status === 'ok' ? 'Triggered ✓' : status === 'error' ? 'Failed ✗' : 'Run Health Check'
-  const color = status === 'ok' ? 'rgba(90,158,79,0.7)' : status === 'error' ? 'rgba(123,32,50,0.7)' : 'rgba(255,255,255,0.3)'
+
+  const tool = { heading: '#1a1a1a', sub: '#888', border: 'rgba(0,0,0,0.08)', bg: '#fff' }
+
   return (
-    <button onClick={run} disabled={status === 'loading'}
-      style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.12)', padding: '0.45rem 0', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color, cursor: status === 'loading' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.2s' }}>
-      {label}
-    </button>
+    <div style={{ padding: '2rem 2.5rem', maxWidth: '680px' }}>
+      <div style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', marginBottom: '2rem' }}>Tools</div>
+
+      {/* Site Health Check */}
+      <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: tool.heading, marginBottom: '0.35rem' }}>Site Health Check</div>
+            <div style={{ fontSize: '12px', color: tool.sub, lineHeight: '1.6', maxWidth: '380px' }}>
+              Runs Playwright tests against all registration pages and APIs — route form, membership form, and member login. Scheduled automatically 4× daily. Results visible on GitHub Actions.
+            </div>
+            <a href="https://github.com/iamvishalrana/canvas-routes-next/actions/workflows/health-check.yml"
+              target="_blank" rel="noreferrer"
+              style={{ display: 'inline-block', marginTop: '0.75rem', fontSize: '11px', color: '#c5a882', textDecoration: 'none', letterSpacing: '0.04em' }}>
+              View results on GitHub →
+            </a>
+          </div>
+          <button onClick={runHealthCheck} disabled={hcStatus === 'loading'}
+            style={{
+              flexShrink: 0, padding: '0.6rem 1.25rem',
+              background: hcStatus === 'ok' ? 'rgba(59,107,47,0.08)' : hcStatus === 'error' ? 'rgba(123,32,50,0.06)' : 'transparent',
+              border: `0.5px solid ${hcStatus === 'ok' ? 'rgba(59,107,47,0.4)' : hcStatus === 'error' ? 'rgba(123,32,50,0.4)' : 'rgba(0,0,0,0.2)'}`,
+              fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: hcStatus === 'ok' ? '#3B6B2F' : hcStatus === 'error' ? '#7B2032' : '#1a1a1a',
+              cursor: hcStatus === 'loading' ? 'wait' : 'pointer',
+              fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
+            }}>
+            {hcStatus === 'loading' ? 'Triggering…' : hcStatus === 'ok' ? 'Triggered ✓' : hcStatus === 'error' ? 'Failed ✗' : 'Run Now'}
+          </button>
+        </div>
+      </div>
+
+    </div>
   )
 }
 
@@ -3234,7 +3272,6 @@ export default function AdminPage() {
         <Link href="/members/profile" style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
           → Profile
         </Link>
-        <HealthCheckButton />
         <button onClick={signOut}
           style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.12)', padding: '0.45rem 0', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginTop: '0.25rem' }}>
           Sign Out
@@ -3308,6 +3345,7 @@ export default function AdminPage() {
           {tab === 'Contacts' && <ContactsTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
           {tab === 'Announcements' && <AnnouncementsTab />}
           {tab === 'Events' && <EventsTab isMobile={isMobile} />}
+          {tab === 'Tools' && <ToolsTab />}
 
         </div>
       </main>
