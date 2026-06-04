@@ -9,6 +9,7 @@ const PARTNER_TYPES = [
   'Photography or Videography',
   'Media or Content',
   'Automotive',
+  'Car Care & Detailing',
   'Hotel or Hospitality',
   'Retail or Lifestyle brand',
   'Other',
@@ -39,6 +40,15 @@ const CATEGORIES = [
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v10a2 2 0 0 1-2 2h-2"/><circle cx="9" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>
+      </svg>
+    ),
+  },
+  {
+    name: 'Car Care & Detailing',
+    body: 'Detailing studios, ceramic coating, PPF, auto spas and paint correction. Our members take care of their cars — a partner who does the same speaks their language immediately.',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       </svg>
     ),
   },

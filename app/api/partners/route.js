@@ -9,8 +9,8 @@ function h(str) {
 
 const VALID_TYPES = [
   'Cafe or Restaurant', 'Bar or Lounge', 'Photography or Videography',
-  'Media or Content', 'Automotive', 'Hotel or Hospitality',
-  'Retail or Lifestyle brand', 'Other',
+  'Media or Content', 'Automotive', 'Car Care & Detailing',
+  'Hotel or Hospitality', 'Retail or Lifestyle brand', 'Other',
 ]
 
 function notifyHtml({ name, business, type, email, message }) {
