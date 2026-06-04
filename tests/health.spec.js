@@ -1,5 +1,48 @@
 import { test, expect } from '@playwright/test'
 
+// ─── Homepage Join Form ───────────────────────────────────────────────────────
+
+test('homepage loads', async ({ page }) => {
+  await page.goto('/')
+  await expect(page).toHaveTitle(/Canvas Routes/, { timeout: 15000 })
+  await expect(page.locator('img.hero-logo')).toBeVisible()
+})
+
+test('homepage join form renders', async ({ page }) => {
+  await page.goto('/')
+  // Scroll to the join section and confirm form inputs are present
+  await page.locator('#join').scrollIntoViewIfNeeded()
+  await expect(page.locator('#join input[type="email"]')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('#join button[type="submit"]')).toBeVisible()
+})
+
+test('waitlist API reachable (honeypot — no DB write)', async ({ request }) => {
+  const res = await request.post('/api/waitlist', {
+    data: { registerFor: 'Canvas Routes Membership', name: 'Health Check', email: 'healthcheck@example.com', year: '2020', carMake: 'BMW', carModel: '330i', dob_month: '6', dob_day: '15', source: 'Other', _hp: 'healthcheck' },
+  })
+  expect([200, 429]).toContain(res.status())
+})
+
+test('waitlist API validation logic works', async ({ request }) => {
+  const res = await request.post('/api/waitlist', { data: {} })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Name, email, year, and car model are required')
+  }
+})
+
+test('waitlist API rejects invalid registration type', async ({ request }) => {
+  const res = await request.post('/api/waitlist', {
+    data: { registerFor: 'INVALID', name: 'Health Check', email: 'healthcheck@example.com', year: '2020', carMake: 'BMW', carModel: '330i', dob_month: '6', dob_day: '15', source: 'Other' },
+  })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Invalid registration type')
+  }
+})
+
 // ─── Route Registration ───────────────────────────────────────────────────────
 
 test('route page loads', async ({ page }) => {
@@ -17,7 +60,7 @@ test('route page shows form or closed message', async ({ page }) => {
 test('route page form inputs render when open', async ({ page }) => {
   await page.goto('/routes/into-the-laurentians')
   const closed = await page.locator('text=Registration is now closed').isVisible().catch(() => false)
-  if (closed) return // registration closed — skip input checks
+  if (closed) return
   await expect(page.locator('input#field-name')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('input#field-email')).toBeVisible()
   await expect(page.locator('button[type="submit"]')).toBeVisible()
@@ -31,13 +74,11 @@ test('route API reachable (honeypot — no DB write)', async ({ request }) => {
 })
 
 test('route API validation logic works', async ({ request }) => {
-  // Sends an empty body — confirms request parsing and validation code runs correctly.
-  // 400 = validation ran (code is working), 410 = registration closed (also healthy), 429 = rate limited (API is up)
   const res = await request.post('/api/routes', { data: {} })
   expect([400, 410, 429]).toContain(res.status())
   if (res.status() === 400) {
     const body = await res.json()
-    expect(body.error).toBeTruthy()
+    expect(body.error).toBe('Please fill in all required fields.')
   }
 })
 
@@ -63,7 +104,6 @@ test('membership API reachable (honeypot — no DB write)', async ({ request }) 
 })
 
 test('membership API validation logic works', async ({ request }) => {
-  // Empty body — confirms parsing and validation code runs correctly
   const res = await request.post('/api/membership-waitlist', { data: {} })
   expect([400, 429]).toContain(res.status())
   if (res.status() === 400) {
@@ -73,7 +113,6 @@ test('membership API validation logic works', async ({ request }) => {
 })
 
 test('membership API rejects invalid tier', async ({ request }) => {
-  // Valid fields except tier — confirms tier validation specifically runs
   const res = await request.post('/api/membership-waitlist', {
     data: { name: 'Health Check', email: 'healthcheck@example.com', year: '2020', carMake: 'BMW', tier: 'INVALID_TIER', source: 'Other' },
   })
@@ -110,7 +149,7 @@ test('partners API validation logic works', async ({ request }) => {
   expect([400, 429]).toContain(res.status())
   if (res.status() === 400) {
     const body = await res.json()
-    expect(body.error).toBeTruthy()
+    expect(body.error).toBe('All fields are required.')
   }
 })
 
@@ -131,11 +170,32 @@ test('portal dashboard redirects to login when unauthenticated', async ({ page }
   await page.goto('/members/dashboard')
   await expect(page).toHaveURL(/\/members\/login/, { timeout: 15000 })
   await expect(page.locator('input[type="email"]')).toBeVisible()
+  await expect(page.locator('input[type="password"]')).toBeVisible()
 })
 
 test('portal profile redirects to login when unauthenticated', async ({ page }) => {
   await page.goto('/members/profile')
   await expect(page).toHaveURL(/\/members\/login/, { timeout: 15000 })
+  await expect(page.locator('input[type="email"]')).toBeVisible()
+  await expect(page.locator('input[type="password"]')).toBeVisible()
+})
+
+// ─── Forgot Password / Reset ─────────────────────────────────────────────────
+
+test('forgot password API validation works', async ({ request }) => {
+  // Empty body — confirms parsing and validation runs
+  const res = await request.post('/api/auth/forgot-password', { data: {} })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Email required.')
+  }
+})
+
+test('set password API validation works', async ({ request }) => {
+  // Empty body — confirms parsing and validation runs (no valid token = 400)
+  const res = await request.post('/api/auth/set-password', { data: {} })
+  expect([400, 429]).toContain(res.status())
 })
 
 // ─── Members Login ────────────────────────────────────────────────────────────
@@ -147,7 +207,6 @@ test('login page loads', async ({ page }) => {
 })
 
 test('login API validation logic works', async ({ request }) => {
-  // Empty body — confirms parsing and validation code runs correctly
   const res = await request.post('/api/auth/login', { data: {} })
   expect([400, 429]).toContain(res.status())
   if (res.status() === 400) {
