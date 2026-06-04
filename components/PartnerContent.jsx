@@ -401,6 +401,7 @@ export default function PartnerContent() {
                     style={{ width: '100%', padding: '0.95rem 1rem', background: 'transparent', border: `0.5px solid ${errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                     onBlur={e => e.target.style.borderColor = errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                  {errors.business && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span>}
                 </div>
 
                 {/* Your name + City */}
@@ -415,6 +416,7 @@ export default function PartnerContent() {
                         style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                         onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                         onBlur={e => e.target.style.borderColor = errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                      {errors[f.key] && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span>}
                     </div>
                   ))}
                 </div>
@@ -430,6 +432,7 @@ export default function PartnerContent() {
                       <option value="">Select a type</option>
                       {PARTNER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
+                    {errors.type && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span>}
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.email ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email address<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
@@ -437,6 +440,7 @@ export default function PartnerContent() {
                       style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.email ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                       onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                       onBlur={e => e.target.style.borderColor = errors.email ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                    {errors.email && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Valid email required</span>}
                   </div>
                 </div>
 
@@ -474,6 +478,10 @@ export default function PartnerContent() {
                     style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: '110px', lineHeight: '1.75', transition: 'border-color 0.18s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                     onBlur={e => e.target.style.borderColor = errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                    {errors.message ? <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span> : <span />}
+                    <span style={{ fontSize: '10px', color: form.message.length > 900 ? 'rgba(180,60,60,0.7)' : '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>{form.message.length}/1000</span>
+                  </div>
                 </div>
 
                 {serverError && <p style={{ fontSize: '13px', color: 'rgba(180,60,60,0.8)', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>{serverError}</p>}
