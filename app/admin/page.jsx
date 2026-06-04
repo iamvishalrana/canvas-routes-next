@@ -18,6 +18,16 @@ const STATUS_COLORS = {
   expired:   { bg: 'rgba(0,0,0,0.05)',      text: '#999',    border: 'rgba(0,0,0,0.15)'      },
 }
 const EVENT_TYPES = ['Road Trip', 'Cars & Coffee', 'Social', 'Track Day', 'Other']
+const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
+function parseCarMakeModel(combined) {
+  const s = (combined || '').trim()
+  if (!s) return { make: '', model: '' }
+  for (const make of CAR_MAKES) {
+    if (s.toLowerCase().startsWith(make.toLowerCase() + ' ')) return { make, model: s.slice(make.length).trim() }
+    if (s.toLowerCase() === make.toLowerCase()) return { make, model: '' }
+  }
+  return { make: '', model: s }
+}
 const CANONICAL_EVENTS = [
   { name: 'Cars & Coffee — May 9, 2026', date: '2026-05-09' },
   { name: 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026', date: '2026-05-23' },
@@ -1408,10 +1418,12 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   function startEditApp(a) {
     setEditingApp(a.id)
     setSaveAppErr(null)
+    const { make: aMake, model: aModel } = parseCarMakeModel(a.car_model)
     setEditAppForm({
       name: a.name || '',
       car_year: a.car_year || '',
-      car_model: a.car_model || '',
+      car_make: aMake,
+      car_model: aModel,
       phone: a.phone || '',
       instagram: a.instagram || '',
       dob_month: a.dob_month ? String(a.dob_month) : '',
@@ -1426,6 +1438,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
     setSavingApp(true); setSaveAppErr(null)
     const payload = {
       ...editAppForm,
+      car_model: [editAppForm.car_make, editAppForm.car_model].filter(Boolean).join(' '),
       dob_month: editAppForm.dob_month ? parseInt(editAppForm.dob_month) : null,
       dob_day: editAppForm.dob_day ? parseInt(editAppForm.dob_day) : null,
       dob_year: editAppForm.dob_year ? parseInt(editAppForm.dob_year) : null,
@@ -1670,7 +1683,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                       </div>
                       <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>{[a.car_year, a.car_model].filter(Boolean).join(' ') || '—'}</span>
+                        <span style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>{(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
                         <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
                       </div>
                     </div>
@@ -1688,7 +1701,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   </div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
-                    {[a.car_year, a.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                    {(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span> })()}
                   </div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
                     {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
@@ -1711,7 +1724,8 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                         <div><L>Name</L><input style={inp} value={editAppForm.name} onChange={e => setEditAppForm(p => ({ ...p, name: e.target.value }))} /></div>
                         <div><L>Car Year</L><input style={inp} value={editAppForm.car_year} onChange={e => setEditAppForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
-                        <div><L>Car Make & Model</L><input style={inp} value={editAppForm.car_model} onChange={e => setEditAppForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. BMW M3" maxLength={100} /></div>
+                        <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={editAppForm.car_make || ''} onChange={e => setEditAppForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
+                        <div><L>Model</L><input style={inp} value={editAppForm.car_model} onChange={e => setEditAppForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>
                         <div><L>Phone</L><input style={inp} type="tel" value={editAppForm.phone} onChange={e => setEditAppForm(p => ({ ...p, phone: e.target.value }))} maxLength={30} /></div>
                         <div><L>Instagram</L><input style={inp} value={editAppForm.instagram} onChange={e => setEditAppForm(p => ({ ...p, instagram: e.target.value }))} placeholder="handle" maxLength={50} /></div>
                       </div>
@@ -1773,7 +1787,8 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
                         <InfoCell label="Name" value={a.name} />
                         <InfoCell label="Car Year" value={a.car_year} />
-                        <InfoCell label="Car Make & Model" value={a.car_model} />
+                        <InfoCell label="Make" value={parseCarMakeModel(a.car_model).make} />
+                        <InfoCell label="Model" value={parseCarMakeModel(a.car_model).model} />
                         <InfoCell label="Phone" value={a.phone} copyable />
                         <InfoCell label="Instagram" value={a.instagram ? `@${a.instagram}` : null} />
                       </div>
@@ -1886,7 +1901,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [savingContact, setSavingContact] = useState(false)
   const [saveContactErr, setSaveContactErr] = useState(null)
   const [addingNew, setAddingNew] = useState(false)
-  const [newForm, setNewForm] = useState({ name: '', email: '', phone: '', car_year: '', car_model: '' })
+  const [newForm, setNewForm] = useState({ name: '', email: '', phone: '', car_year: '', car_make: '', car_model: '' })
   const [newErr, setNewErr] = useState(null)
   const [savingNew, setSavingNew] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
@@ -1991,10 +2006,12 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   function startEditContact(c) {
     setEditingContact(c.contact_id)
     setSaveContactErr(null)
+    const { make: cMake, model: cModel } = parseCarMakeModel(c.car_model)
     setEditContactForm({
       name: c.name || '',
       car_year: c.car_year || '',
-      car_model: c.car_model || '',
+      car_make: cMake,
+      car_model: cModel,
       phone: c.phone || '',
       instagram: c.instagram || '',
       dob_month: c.dob_month ? String(c.dob_month) : '',
@@ -2009,6 +2026,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     setSavingContact(true); setSaveContactErr(null)
     const payload = {
       ...editContactForm,
+      car_model: [editContactForm.car_make, editContactForm.car_model].filter(Boolean).join(' '),
       dob_month: editContactForm.dob_month ? parseInt(editContactForm.dob_month) : null,
       dob_day: editContactForm.dob_day ? parseInt(editContactForm.dob_day) : null,
       dob_year: editContactForm.dob_year ? parseInt(editContactForm.dob_year) : null,
@@ -2077,13 +2095,14 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     if (!newForm.name.trim() || !newForm.email.trim()) { setNewErr('Name and email are required.'); return }
     setSavingNew(true)
     const res = await fetch('/api/admin/contacts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newForm),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...newForm, car_model: [newForm.car_make, newForm.car_model].filter(Boolean).join(' ') }),
     })
     const data = await res.json().catch(() => ({}))
     setSavingNew(false)
     if (!res.ok) { setNewErr(data.error || 'Failed to add contact.'); return }
     setAddingNew(false)
-    setNewForm({ name: '', email: '', phone: '', car_year: '', car_model: '' })
+    setNewForm({ name: '', email: '', phone: '', car_year: '', car_make: '', car_model: '' })
     loadContacts()
   }
 
@@ -2172,7 +2191,8 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
             <div><L>Email *</L><input style={inp} type="email" value={newForm.email} onChange={e => setNewForm(p => ({ ...p, email: e.target.value }))} placeholder="email@example.com" maxLength={254} /></div>
             <div><L>Phone</L><input style={inp} value={newForm.phone} onChange={e => setNewForm(p => ({ ...p, phone: e.target.value }))} placeholder="(514) 000-0000" maxLength={30} /></div>
             <div><L>Car Year</L><input style={inp} value={newForm.car_year} onChange={e => setNewForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
-            <div style={{ gridColumn: isMobile ? undefined : 'span 2' }}><L>Make &amp; Model</L><input style={inp} value={newForm.car_model} onChange={e => setNewForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. BMW M3" maxLength={100} /></div>
+            <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={newForm.car_make} onChange={e => setNewForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
+            <div style={{ gridColumn: isMobile ? undefined : 'span 2' }}><L>Model</L><input style={inp} value={newForm.car_model} onChange={e => setNewForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>
           </div>
           {newErr && <div style={{ fontSize: '11px', color: '#7B2032', marginBottom: '0.75rem' }}>{newErr}</div>}
           <button type="submit" disabled={savingNew}
@@ -2295,7 +2315,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   </div>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: '#888' }}>{[c.car_year, c.car_model].filter(Boolean).join(' ') || '—'}</span>
+                    <span style={{ fontSize: '12px', color: '#888' }}>{(() => { const {make,model} = parseCarMakeModel(c.car_model); return [c.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
                     {c.created_at && <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
                   </div>
                 </div>
@@ -2378,7 +2398,8 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                         <div><L>Name</L><input style={inp} value={editContactForm.name} onChange={e => setEditContactForm(p => ({ ...p, name: e.target.value }))} /></div>
                         <div><L>Car Year</L><input style={inp} value={editContactForm.car_year} onChange={e => setEditContactForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
-                        <div><L>Car Make & Model</L><input style={inp} value={editContactForm.car_model} onChange={e => setEditContactForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. BMW M3" maxLength={100} /></div>
+                        <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={editContactForm.car_make || ''} onChange={e => setEditContactForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
+                        <div><L>Model</L><input style={inp} value={editContactForm.car_model} onChange={e => setEditContactForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>
                         <div><L>Phone</L><input style={inp} type="tel" value={editContactForm.phone} onChange={e => setEditContactForm(p => ({ ...p, phone: e.target.value }))} maxLength={30} /></div>
                         <div><L>Instagram</L><input style={inp} value={editContactForm.instagram} onChange={e => setEditContactForm(p => ({ ...p, instagram: e.target.value }))} placeholder="handle" maxLength={50} /></div>
                       </div>
