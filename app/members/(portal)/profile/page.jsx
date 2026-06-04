@@ -201,30 +201,35 @@ export default function ProfilePage() {
   async function saveProfile(e) {
     e.preventDefault()
     setSaving(true); setError(null); setSaved(false)
-    const cleanCars = cars.filter(c => c.year || c.make || c.model || c.license_plate)
-    const res = await fetch('/api/member/profile', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...form,
-        dob_day: form.dob_day ? parseInt(form.dob_day) : null,
-        dob_month: form.dob_month ? parseInt(form.dob_month) : null,
-        dob_year: form.dob_year ? parseInt(form.dob_year) : null,
-        cars: cleanCars,
-        car_year: cleanCars[0]?.year || '',
-        car_make: cleanCars[0]?.make || '',
-        car_model: cleanCars[0]?.model || '',
-      }),
-    })
-    setSaving(false)
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      setError(data.error || 'Could not save. Please try again.')
-    } else {
-      setSaved(true)
-      savedForm.current = { ...form }
-      savedCars.current = cars.map(c => ({ ...c }))
-      setEditing(false)
+    try {
+      const cleanCars = cars.filter(c => c.year || c.make || c.model || c.license_plate)
+      const res = await fetch('/api/member/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          dob_day: form.dob_day ? parseInt(form.dob_day) : null,
+          dob_month: form.dob_month ? parseInt(form.dob_month) : null,
+          dob_year: form.dob_year ? parseInt(form.dob_year) : null,
+          cars: cleanCars,
+          car_year: cleanCars[0]?.year || '',
+          car_make: cleanCars[0]?.make || '',
+          car_model: cleanCars[0]?.model || '',
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Could not save. Please try again.')
+      } else {
+        setSaved(true)
+        savedForm.current = { ...form }
+        savedCars.current = cars.map(c => ({ ...c }))
+        setEditing(false)
+      }
+    } catch {
+      setError('Connection error. Please check your network and try again.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -233,15 +238,20 @@ export default function ProfilePage() {
     if (!pwAllPass) { setPwError('Please meet all password requirements.'); return }
     if (pwForm.password !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
     setSavingPw(true); setPwError(null); setSavedPw(false)
-    const res = await fetch('/api/member/password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pwForm.password }),
-    })
-    const data = await res.json()
-    setSavingPw(false)
-    if (!res.ok) setPwError(data.error || 'Could not update password.')
-    else { setSavedPw(true); setPwForm({ password: '', confirm: '' }) }
+    try {
+      const res = await fetch('/api/member/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwForm.password }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) setPwError(data.error || 'Could not update password.')
+      else { setSavedPw(true); setPwForm({ password: '', confirm: '' }) }
+    } catch {
+      setPwError('Connection error. Please check your network and try again.')
+    } finally {
+      setSavingPw(false)
+    }
   }
 
   async function handlePhotoUpload(e) {

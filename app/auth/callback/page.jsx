@@ -82,11 +82,7 @@ function Handler() {
 
     const timeout = setTimeout(() => {
       subscription.unsubscribe()
-      const hashKeys = Array.from(hashParams.keys()).join(',')
-      const queryKeys = Array.from(searchParams.keys()).join(',')
-      router.replace(`/members/login?error=${encodeURIComponent(
-        `No auth params found. Query: [${queryKeys}] Hash: [${hashKeys}]`
-      )}`)
+      router.replace('/members/login?error=' + encodeURIComponent('Link expired or already used. Please request a new one.'))
     }, 10000)
 
     return () => { subscription.unsubscribe(); clearTimeout(timeout) }
