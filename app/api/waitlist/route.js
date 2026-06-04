@@ -194,7 +194,7 @@ export async function POST(request) {
   if (email.length > 254) return Response.json({ error: 'Email too long' }, { status: 400 })
   if (year && year.length > 10) return Response.json({ error: 'Year too long' }, { status: 400 })
   if (carModel && carModel.length > 100) return Response.json({ error: 'Car model too long' }, { status: 400 })
-  if (phone && phone.length > 30) return Response.json({ error: 'Phone too long' }, { status: 400 })
+  if (phone && (phone.length > 30 || phone.replace(/\D/g, '').length < 10)) return Response.json({ error: 'Invalid phone number' }, { status: 400 })
   if (instagram && instagram.length > 50) return Response.json({ error: 'Instagram handle too long' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long' }, { status: 400 })
 

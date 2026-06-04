@@ -14,6 +14,8 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false)
   const [accessToken, setAccessToken] = useState(null)
   const [sessionChecked, setSessionChecked] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const rules = [
     { label: 'At least 8 characters', pass: password.length >= 8 },
@@ -72,7 +74,12 @@ export default function ResetPasswordPage() {
     }
   }
 
-  const inputStyle = { width: '100%', padding: '0.85rem 1rem', border: '1px solid rgba(0,0,0,0.2)', background: 'transparent', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }
+  const inputStyle = { width: '100%', padding: '0.85rem 2.75rem 0.85rem 1rem', border: '1px solid rgba(0,0,0,0.2)', background: 'transparent', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }
+  const EyeIcon = ({ open }) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      {open ? <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></> : <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>}
+    </svg>
+  )
 
   return (
     <div style={{ minHeight: '100vh', background: '#0F1E14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -111,8 +118,13 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleReset}>
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>New Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  required autoComplete="new-password" style={inputStyle} />
+                <div style={{ position: 'relative' }}>
+                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                    required autoComplete="new-password" style={inputStyle} />
+                  <button type="button" onClick={() => setShowPassword(p => !p)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', padding: 0, display: 'flex', alignItems: 'center' }}>
+                    <EyeIcon open={showPassword} />
+                  </button>
+                </div>
               </div>
 
               {password.length > 0 && (
@@ -128,8 +140,13 @@ export default function ResetPasswordPage() {
 
               <div style={{ marginBottom: '0.5rem' }}>
                 <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Confirm Password</label>
-                <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
-                  required autoComplete="new-password" style={inputStyle} />
+                <div style={{ position: 'relative' }}>
+                  <input type={showConfirm ? 'text' : 'password'} value={confirm} onChange={e => setConfirm(e.target.value)}
+                    required autoComplete="new-password" style={inputStyle} />
+                  <button type="button" onClick={() => setShowConfirm(p => !p)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', padding: 0, display: 'flex', alignItems: 'center' }}>
+                    <EyeIcon open={showConfirm} />
+                  </button>
+                </div>
               </div>
 
               {confirm.length > 0 && (

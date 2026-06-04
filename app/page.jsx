@@ -140,7 +140,7 @@ export default function Home() {
       if (field === 'registerFor' && value === GPCC) next.downtown_cruise = 'yes'
       return next
     })
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }))
+    if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n })
     if (serverError) setServerError(null)
   }
 
