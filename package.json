@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "health": "playwright test tests/health.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.55.0",

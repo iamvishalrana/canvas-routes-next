@@ -1,0 +1,29 @@
+name: Site Health Check
+
+on:
+  schedule:
+    - cron: '0 12 * * *'   # 8 AM EDT (noon UTC) every day
+  workflow_dispatch:         # run manually from GitHub Actions tab anytime
+
+jobs:
+  health-check:
+    name: Check registration pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      - name: Run health checks
+        run: npx playwright test tests/health.spec.js --reporter=list
