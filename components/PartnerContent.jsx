@@ -120,7 +120,7 @@ function inputStyle(err) {
 
 export default function PartnerContent() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', business: '', type: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', business: '', city: '', type: '', email: '', message: '' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState('')
@@ -134,6 +134,7 @@ export default function PartnerContent() {
     const e = {}
     if (!form.name.trim()) e.name = 'Required'
     if (!form.business.trim()) e.business = 'Required'
+    if (!form.city.trim()) e.city = 'Required'
     if (!form.type) e.type = 'Required'
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Valid email required'
     if (!form.message.trim()) e.message = 'Required'
@@ -332,115 +333,118 @@ export default function PartnerContent() {
         </div>
       </section>
 
-      {/* ── Contact form — full dark section ─────────────────────────────────── */}
-      <section style={{ background: '#0a1810', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.4),transparent)' }} />
-        <div style={{ maxWidth: '1080px', margin: '0 auto', padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,6vw,5rem)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 'clamp(3rem,6vw,7rem)', alignItems: 'start' }}>
+      {/* ── Contact form ─────────────────────────────────────────────────────── */}
+      <section style={{ background: '#F5F1EC', borderTop: '0.5px solid rgba(197,168,130,0.25)', padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,6vw,5rem)' }}>
+        <div style={{ maxWidth: '1080px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 'clamp(3rem,6vw,6rem)', alignItems: 'start' }}>
 
-            {/* Left — heading + contact details */}
-            <div>
-              <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>Get in touch</div>
-              <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.2rem,4vw,3.2rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
-                Let's build<br /><em style={{ fontStyle: 'italic' }}>something together.</em>
-              </h2>
-              <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.45)', marginBottom: '1.75rem' }} />
-              <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.5)', lineHeight: '1.9', margin: '0 0 2.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                Tell us about your business and how you'd like to get involved. We review every inquiry personally and respond within a few days.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                <a href="mailto:info@canvasroutes.com" style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', textDecoration: 'none', color: 'rgba(245,241,236,0.6)', fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.18s' }}
+          {/* Left — heading + contact details */}
+          <div style={{ maxWidth: '340px' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>Get in touch</div>
+            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.2rem,4vw,3rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+              Let's build<br /><em style={{ fontStyle: 'italic' }}>something together.</em>
+            </h2>
+            <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', marginBottom: '1.5rem' }} />
+            <p style={{ fontSize: '14px', color: '#888', lineHeight: '1.9', margin: '0 0 2.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Tell us about your business and how you'd like to get involved. We review every inquiry personally and respond within a few days.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {[
+                { href: 'mailto:info@canvasroutes.com', label: 'info@canvasroutes.com', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+                { href: 'https://www.instagram.com/canvasroutes', label: '@canvasroutes', target: '_blank', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg> },
+              ].map(link => (
+                <a key={link.label} href={link.href} target={link.target} rel={link.target ? 'noopener noreferrer' : undefined}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', textDecoration: 'none', color: '#999', fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.18s' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#c5a882'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.6)'}>
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '34px', height: '34px', border: '0.5px solid rgba(197,168,130,0.25)', flexShrink: 0 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  onMouseLeave={e => e.currentTarget.style.color = '#999'}>
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', border: '0.5px solid rgba(197,168,130,0.35)', color: 'rgba(197,168,130,0.65)', flexShrink: 0 }}>
+                    {link.icon}
                   </span>
-                  info@canvasroutes.com
+                  {link.label}
                 </a>
-                <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', textDecoration: 'none', color: 'rgba(245,241,236,0.6)', fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.18s' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#c5a882'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.6)'}>
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '34px', height: '34px', border: '0.5px solid rgba(197,168,130,0.25)', flexShrink: 0 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                  </span>
-                  @canvasroutes
-                </a>
-              </div>
-            </div>
-
-            {/* Right — form */}
-            <div>
-              {status === 'success' ? (
-                <div style={{ padding: 'clamp(2.5rem,4vw,3.5rem)', border: '0.5px solid rgba(197,168,130,0.2)', textAlign: 'center' }}>
-                  <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.75rem' }} />
-                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.85rem', lineHeight: 1.2 }}>Message received.</div>
-                  <p style={{ fontSize: '13.5px', color: 'rgba(245,241,236,0.45)', lineHeight: '1.85', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>
-                    Thanks for reaching out. We'll be in touch within a few days.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <input type="text" name="_hp" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.name ? 'rgba(220,100,100,0.9)' : 'rgba(197,168,130,0.55)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Your name</label>
-                      <input type="text" autoComplete="name" value={form.name} onChange={e => setField('name', e.target.value)}
-                        style={{ width: '100%', padding: '0.85rem 1rem', background: 'rgba(245,241,236,0.05)', border: `0.5px solid ${errors.name ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: 'rgba(245,241,236,0.88)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
-                        onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.55)'}
-                        onBlur={e => e.target.style.borderColor = errors.name ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'} />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.business ? 'rgba(220,100,100,0.9)' : 'rgba(197,168,130,0.55)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Business name</label>
-                      <input type="text" autoComplete="organization" value={form.business} onChange={e => setField('business', e.target.value)}
-                        style={{ width: '100%', padding: '0.85rem 1rem', background: 'rgba(245,241,236,0.05)', border: `0.5px solid ${errors.business ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: 'rgba(245,241,236,0.88)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
-                        onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.55)'}
-                        onBlur={e => e.target.style.borderColor = errors.business ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.type ? 'rgba(220,100,100,0.9)' : 'rgba(197,168,130,0.55)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Type of business</label>
-                    <select value={form.type} onChange={e => setField('type', e.target.value)}
-                      style={{ width: '100%', padding: '0.85rem 1rem', background: 'rgba(245,241,236,0.05)', border: `0.5px solid ${errors.type ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: form.type ? 'rgba(245,241,236,0.88)' : 'rgba(245,241,236,0.35)', outline: 'none', boxSizing: 'border-box', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c5a882' stroke-width='2' opacity='0.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', cursor: 'pointer', transition: 'border-color 0.18s' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.55)'}
-                      onBlur={e => e.target.style.borderColor = errors.type ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'}>
-                      <option value="" style={{ background: '#0a1810', color: 'rgba(245,241,236,0.4)' }}>Select a type</option>
-                      {PARTNER_TYPES.map(t => <option key={t} value={t} style={{ background: '#0a1810', color: '#F5F1EC' }}>{t}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.email ? 'rgba(220,100,100,0.9)' : 'rgba(197,168,130,0.55)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email address</label>
-                    <input type="email" autoComplete="email" value={form.email} onChange={e => setField('email', e.target.value)}
-                      style={{ width: '100%', padding: '0.85rem 1rem', background: 'rgba(245,241,236,0.05)', border: `0.5px solid ${errors.email ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: 'rgba(245,241,236,0.88)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.55)'}
-                      onBlur={e => e.target.style.borderColor = errors.email ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'} />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.message ? 'rgba(220,100,100,0.9)' : 'rgba(197,168,130,0.55)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>How you'd like to partner</label>
-                    <textarea rows={5} value={form.message} onChange={e => setField('message', e.target.value)}
-                      placeholder="Tell us about your business and what a partnership might look like…"
-                      style={{ width: '100%', padding: '0.85rem 1rem', background: 'rgba(245,241,236,0.05)', border: `0.5px solid ${errors.message ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: 'rgba(245,241,236,0.88)', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: '130px', lineHeight: '1.75', transition: 'border-color 0.18s' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.55)'}
-                      onBlur={e => e.target.style.borderColor = errors.message ? 'rgba(220,100,100,0.5)' : 'rgba(197,168,130,0.2)'} />
-                  </div>
-
-                  {serverError && <p style={{ fontSize: '13px', color: 'rgba(220,100,100,0.85)', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>{serverError}</p>}
-
-                  <button type="submit" disabled={status === 'loading'}
-                    style={{ width: '100%', padding: '1rem 1.5rem', background: 'transparent', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.45)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: status === 'loading' ? 0.5 : 1, transition: 'background 0.2s, color 0.2s, border-color 0.2s' }}
-                    onMouseEnter={e => { if (status !== 'loading') { e.currentTarget.style.background = 'rgba(197,168,130,0.1)'; e.currentTarget.style.borderColor = 'rgba(197,168,130,0.7)' } }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(197,168,130,0.45)' }}>
-                    {status === 'loading' ? 'Sending…' : 'Send Inquiry'}
-                  </button>
-                </form>
-              )}
+              ))}
             </div>
           </div>
+
+          {/* Right — form card */}
+          <div style={{ background: '#FAFAF8', border: '0.5px solid rgba(197,168,130,0.3)', padding: 'clamp(2rem,4vw,2.75rem)' }}>
+            {status === 'success' ? (
+              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.55)', margin: '0 auto 1.75rem' }} />
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Message received.</div>
+                <p style={{ fontSize: '13.5px', color: '#888', lineHeight: '1.85', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>
+                  Thanks for reaching out. We'll be in touch within a few days.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <input type="text" name="_hp" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+
+                {/* Business name — prominent, full width */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: errors.business ? 'rgba(180,60,60,0.8)' : 'rgba(197,168,130,0.9)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>Business name</label>
+                  <input type="text" autoComplete="organization" value={form.business} onChange={e => setField('business', e.target.value)}
+                    style={{ width: '100%', padding: '0.95rem 1rem', background: 'transparent', border: `0.5px solid ${errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
+                    onBlur={e => e.target.style.borderColor = errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                </div>
+
+                {/* Your name + City */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {[
+                    { key: 'name', label: 'Your name', type: 'text', autoComplete: 'name' },
+                    { key: 'city', label: 'City / Town', type: 'text', autoComplete: 'address-level2' },
+                  ].map(f => (
+                    <div key={f.key}>
+                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors[f.key] ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{f.label}</label>
+                      <input type={f.type} autoComplete={f.autoComplete} value={form[f.key]} onChange={e => setField(f.key, e.target.value)}
+                        style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
+                        onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
+                        onBlur={e => e.target.style.borderColor = errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Type + Email */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.type ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Type of business</label>
+                    <select value={form.type} onChange={e => setField('type', e.target.value)}
+                      style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.type ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: form.type ? '#1a1a1a' : '#aaa', outline: 'none', boxSizing: 'border-box', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.85rem center', cursor: 'pointer', transition: 'border-color 0.18s' }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
+                      onBlur={e => e.target.style.borderColor = errors.type ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}>
+                      <option value="">Select a type</option>
+                      {PARTNER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.email ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email address</label>
+                    <input type="email" autoComplete="email" value={form.email} onChange={e => setField('email', e.target.value)}
+                      style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.email ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
+                      onBlur={e => e.target.style.borderColor = errors.email ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                  </div>
+                </div>
+
+                {/* Message */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.message ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>How you'd like to partner</label>
+                  <textarea rows={4} value={form.message} onChange={e => setField('message', e.target.value)}
+                    placeholder="Tell us about your business and what a partnership might look like…"
+                    style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: '110px', lineHeight: '1.75', transition: 'border-color 0.18s' }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
+                    onBlur={e => e.target.style.borderColor = errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
+                </div>
+
+                {serverError && <p style={{ fontSize: '13px', color: 'rgba(180,60,60,0.8)', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>{serverError}</p>}
+
+                <button type="submit" disabled={status === 'loading'}
+                  style={{ width: '100%', padding: '1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: status === 'loading' ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+                  {status === 'loading' ? 'Sending…' : 'Send Inquiry'}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.15),transparent)' }} />
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
