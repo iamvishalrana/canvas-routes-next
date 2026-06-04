@@ -13,7 +13,7 @@ const VALID_TYPES = [
   'Hotel or Hospitality', 'Retail or Lifestyle brand', 'Other',
 ]
 
-function notifyHtml({ name, business, city, type, email, message }) {
+function notifyHtml({ name, business, city, type, email, phone, message }) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
 <body style="margin:0;padding:0;background:#0F1E14;">
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#0F1E14;">
@@ -38,6 +38,8 @@ function notifyHtml({ name, business, city, type, email, message }) {
     <tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#F5F1EC;padding-bottom:16px;">${h(type)}</td></tr>
     <tr><td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c5a882;padding-bottom:4px;">Email</td></tr>
     <tr><td style="font-family:Arial,sans-serif;font-size:14px;padding-bottom:16px;"><a href="mailto:${h(email)}" style="color:#c5a882;text-decoration:none;">${h(email)}</a></td></tr>
+    ${phone ? `<tr><td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c5a882;padding-bottom:4px;">Phone</td></tr>
+    <tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#F5F1EC;padding-bottom:16px;">${h(phone)}</td></tr>` : ''}
     <tr><td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c5a882;padding-bottom:4px;">Message</td></tr>
     <tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#F5F1EC;white-space:pre-wrap;line-height:1.7;">${h(message)}</td></tr>
   </table>
@@ -137,7 +139,7 @@ export async function POST(req) {
   let body
   try { body = await req.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
 
-  const { _hp, name, business, city, type, email, message } = body
+  const { _hp, name, business, city, type, email, phone, message } = body
   if (_hp) return Response.json({ success: true })
 
   const n  = String(name     ?? '').trim()
@@ -145,9 +147,11 @@ export async function POST(req) {
   const ci = String(city     ?? '').trim()
   const t  = String(type     ?? '').trim()
   const e  = String(email    ?? '').trim().toLowerCase()
+  const p  = String(phone    ?? '').trim()
   const m  = String(message  ?? '').trim()
 
   if (!n || !b || !ci || !t || !e || !m) return Response.json({ error: 'All fields are required.' }, { status: 400 })
+  if (p && p.length > 30) return Response.json({ error: 'Phone number too long.' }, { status: 400 })
   if (!VALID_TYPES.includes(t)) return Response.json({ error: 'Please select a valid business type.' }, { status: 400 })
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   if (n.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
@@ -163,8 +167,8 @@ export async function POST(req) {
         to: 'info@canvasroutes.com',
         replyTo: e,
         subject: `Partner inquiry — ${b}`,
-        html: notifyHtml({ name: n, business: b, city: ci, type: t, email: e, message: m }),
-        text: `Partner Inquiry\n\nName: ${n}\nBusiness: ${b}\nCity: ${ci}\nType: ${t}\nEmail: ${e}\n\nMessage:\n${m}`,
+        html: notifyHtml({ name: n, business: b, city: ci, type: t, email: e, phone: p, message: m }),
+        text: `Partner Inquiry\n\nName: ${n}\nBusiness: ${b}\nCity: ${ci}\nType: ${t}\nEmail: ${e}${p ? `\nPhone: ${p}` : ''}\n\nMessage:\n${m}`,
       }),
     })
     if (!res.ok) {

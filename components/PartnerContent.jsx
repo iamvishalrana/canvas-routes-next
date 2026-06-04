@@ -120,14 +120,22 @@ function inputStyle(err) {
 
 export default function PartnerContent() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', business: '', city: '', type: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', business: '', city: '', type: '', email: '', phone: '', message: '' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState('')
+  const [phoneOptOut, setPhoneOptOut] = useState(false)
 
   function setField(key, val) {
     setForm(p => ({ ...p, [key]: val }))
     if (errors[key]) setErrors(p => ({ ...p, [key]: undefined }))
+  }
+
+  function formatPhone(v) {
+    const d = v.replace(/\D/g, '').slice(0, 10)
+    if (d.length <= 3) return d
+    if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`
+    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
   }
 
   function validate() {
@@ -150,7 +158,7 @@ export default function PartnerContent() {
       const res = await fetch('/api/partners', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, phone: phoneOptOut ? '' : form.phone }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) { setStatus('success') }
@@ -381,7 +389,7 @@ export default function PartnerContent() {
 
                 {/* Business name — prominent, full width */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: errors.business ? 'rgba(180,60,60,0.8)' : 'rgba(197,168,130,0.9)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>Business name</label>
+                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: errors.business ? 'rgba(180,60,60,0.8)' : 'rgba(197,168,130,0.9)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>Business name<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                   <input type="text" autoComplete="organization" value={form.business} onChange={e => setField('business', e.target.value)}
                     style={{ width: '100%', padding: '0.95rem 1rem', background: 'transparent', border: `0.5px solid ${errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
@@ -395,7 +403,7 @@ export default function PartnerContent() {
                     { key: 'city', label: 'City / Town', type: 'text', autoComplete: 'address-level2' },
                   ].map(f => (
                     <div key={f.key}>
-                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors[f.key] ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{f.label}</label>
+                      <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors[f.key] ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{f.label}<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                       <input type={f.type} autoComplete={f.autoComplete} value={form[f.key]} onChange={e => setField(f.key, e.target.value)}
                         style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                         onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
@@ -407,7 +415,7 @@ export default function PartnerContent() {
                 {/* Type + Email */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.type ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Type of business</label>
+                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.type ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Type of business<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                     <select value={form.type} onChange={e => setField('type', e.target.value)}
                       style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.type ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: form.type ? '#1a1a1a' : '#aaa', outline: 'none', boxSizing: 'border-box', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.85rem center', cursor: 'pointer', transition: 'border-color 0.18s' }}
                       onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
@@ -417,7 +425,7 @@ export default function PartnerContent() {
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.email ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email address</label>
+                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.email ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email address<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                     <input type="email" autoComplete="email" value={form.email} onChange={e => setField('email', e.target.value)}
                       style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.email ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                       onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
@@ -425,9 +433,35 @@ export default function PartnerContent() {
                   </div>
                 </div>
 
+                {/* Phone */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Phone number</label>
+                  {phoneOptOut ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 1rem', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                      <span style={{ fontSize: '13.5px', color: '#aaa', flex: 1, fontFamily: 'var(--font-inter),sans-serif' }}>Phone not provided</span>
+                      <button type="button" onClick={() => setPhoneOptOut(false)}
+                        style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', color: '#888', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                        Add number
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input type="tel" autoComplete="tel" placeholder="(514) 000-0000" value={form.phone}
+                        onChange={e => setField('phone', formatPhone(e.target.value))}
+                        style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: '0.5px solid rgba(0,0,0,0.14)', fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
+                        onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
+                        onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.14)'} />
+                      <button type="button" onClick={() => { setPhoneOptOut(true); setField('phone', '') }}
+                        style={{ background: 'none', border: 'none', padding: '0.3rem 0', fontSize: '11px', color: '#aaa', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>
+                        Prefer not to share my number
+                      </button>
+                    </>
+                  )}
+                </div>
+
                 {/* Message */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.message ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>How you'd like to partner</label>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.message ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>How you'd like to partner<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                   <textarea rows={4} value={form.message} onChange={e => setField('message', e.target.value)}
                     placeholder="Tell us about your business and what a partnership might look like…"
                     style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: '110px', lineHeight: '1.75', transition: 'border-color 0.18s' }}
