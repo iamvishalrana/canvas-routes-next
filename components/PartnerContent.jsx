@@ -9,7 +9,7 @@ const PARTNER_TYPES = [
   'Photography or Videography',
   'Media or Content',
   'Automotive',
-  'Car Care & Detailing',
+  'Car Care & Product Brand',
   'Hotel or Hospitality',
   'Retail or Lifestyle brand',
   'Other',
@@ -44,8 +44,8 @@ const CATEGORIES = [
     ),
   },
   {
-    name: 'Car Care & Detailing',
-    body: 'Detailing studios, ceramic coating, PPF, auto spas and paint correction. Our members take care of their cars — a partner who does the same speaks their language immediately.',
+    name: 'Car Care & Product Brands',
+    body: 'Detailing products, tire brands, engine oil and performance chemicals — Meguiar\'s, Chemical Guys, Michelin, Pirelli, Mobil 1 and the like. Our members know exactly what\'s on their car and what goes into it.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>

@@ -9,7 +9,7 @@ function h(str) {
 
 const VALID_TYPES = [
   'Cafe or Restaurant', 'Bar or Lounge', 'Photography or Videography',
-  'Media or Content', 'Automotive', 'Car Care & Detailing',
+  'Media or Content', 'Automotive', 'Car Care & Product Brand',
   'Hotel or Hospitality', 'Retail or Lifestyle brand', 'Other',
 ]
 
