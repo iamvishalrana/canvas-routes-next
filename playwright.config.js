@@ -6,7 +6,7 @@ export default defineConfig({
   retries: 1,
   use: {
     headless: true,
-    baseURL: 'https://canvasroutes.com',
+    baseURL: 'https://www.canvasroutes.com',
   },
   reporter: [['list'], ['github']],
 })

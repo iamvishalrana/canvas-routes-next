@@ -44,9 +44,7 @@ test('route API responds', async ({ request }) => {
 
 test('membership page loads', async ({ page }) => {
   await page.goto('/membership')
-  await expect(page.locator('body')).not.toBeEmpty()
-  // The membership form is always visible on this page
-  await expect(page.locator('text=Canvas Routes')).toBeVisible({ timeout: 15000 })
+  await expect(page.getByText('Routes Member').first()).toBeVisible({ timeout: 15000 })
 })
 
 test('membership API responds', async ({ request }) => {
@@ -72,8 +70,8 @@ test('membership API responds', async ({ request }) => {
 
 test('login page loads', async ({ page }) => {
   await page.goto('/members/login')
-  await expect(page.getByPlaceholder(/email/i)).toBeVisible({ timeout: 15000 })
-  await expect(page.getByPlaceholder(/password/i)).toBeVisible()
+  await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('input[type="password"]')).toBeVisible()
 })
 
 test('login API and Supabase auth reachable', async ({ request }) => {
