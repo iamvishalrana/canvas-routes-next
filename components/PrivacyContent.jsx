@@ -82,7 +82,7 @@ export default function PrivacyContent() {
           </div>
         ))}
       </div>
+      <SiteFooter />
     </div>
-    <SiteFooter />
   )
 }

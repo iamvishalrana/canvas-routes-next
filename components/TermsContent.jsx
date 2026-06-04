@@ -78,7 +78,7 @@ export default function TermsContent() {
           </div>
         ))}
       </div>
+      <SiteFooter />
     </div>
-    <SiteFooter />
   )
 }
