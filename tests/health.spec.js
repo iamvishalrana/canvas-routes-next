@@ -66,6 +66,20 @@ test('membership API responds', async ({ request }) => {
   }
 })
 
+// ─── Members Portal ──────────────────────────────────────────────────────────
+
+test('portal dashboard redirects to login when unauthenticated', async ({ page }) => {
+  await page.goto('/members/dashboard')
+  // Middleware redirects unauthenticated users to /members/login
+  await expect(page).toHaveURL(/\/members\/login/, { timeout: 15000 })
+  await expect(page.locator('input[type="email"]')).toBeVisible()
+})
+
+test('portal profile redirects to login when unauthenticated', async ({ page }) => {
+  await page.goto('/members/profile')
+  await expect(page).toHaveURL(/\/members\/login/, { timeout: 15000 })
+})
+
 // ─── Members Login ────────────────────────────────────────────────────────────
 
 test('login page loads', async ({ page }) => {
