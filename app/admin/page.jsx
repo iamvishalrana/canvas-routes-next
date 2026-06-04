@@ -1891,10 +1891,34 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [savingNew, setSavingNew] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
+  const letterRefsMap = useRef({})
+  const lastTouchedLetter = useRef(null)
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
   }, [searchOverride])
+
+  function getFirstLetter(name) {
+    const ch = (name || '').trim()[0]?.toUpperCase()
+    return (ch && /[A-Z]/.test(ch)) ? ch : '#'
+  }
+
+  function scrollToLetter(letter) {
+    const el = letterRefsMap.current[letter]
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function handleAlphaTouch(e) {
+    e.preventDefault()
+    const touch = e.touches[0]
+    if (!touch) return
+    const el = document.elementFromPoint(touch.clientX, touch.clientY)
+    const letter = el?.dataset?.alphaLetter
+    if (letter && letter !== lastTouchedLetter.current) {
+      lastTouchedLetter.current = letter
+      scrollToLetter(letter)
+    }
+  }
 
   function downloadVCard(c) {
     const esc = v => (v || '').replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\n/g, '\\n')
@@ -2163,7 +2187,29 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
       ) : filtered.length === 0 ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No contacts yet.</div>
       ) : (
-        <div style={isMobile ? {} : { overflowX: 'auto' }}>
+        <>
+        {/* A–Z index strip — mobile only, alphabetical sort only */}
+        {isMobile && sortContacts === 'name_az' && (() => {
+          const ALPHA = ['#','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+          const presentLetters = new Set(filtered.map(c => getFirstLetter(c.name)))
+          return (
+            <div
+              style={{ position: 'fixed', right: 0, top: '50%', transform: 'translateY(-50%)', zIndex: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0', background: 'rgba(250,250,248,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRadius: '10px 0 0 10px', border: '0.5px solid rgba(0,0,0,0.09)', borderRight: 'none', touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
+              onTouchStart={e => { lastTouchedLetter.current = null; handleAlphaTouch(e) }}
+              onTouchMove={handleAlphaTouch}
+              onTouchEnd={() => { lastTouchedLetter.current = null }}
+            >
+              {ALPHA.map(letter => (
+                <div key={letter} data-alpha-letter={letter}
+                  onClick={() => scrollToLetter(letter)}
+                  style={{ fontSize: '10px', fontWeight: '600', fontFamily: 'var(--font-inter),sans-serif', color: presentLetters.has(letter) ? '#1a1a1a' : 'rgba(0,0,0,0.18)', padding: '2px 8px', lineHeight: 1.5, cursor: presentLetters.has(letter) ? 'pointer' : 'default', minWidth: '24px', textAlign: 'center' }}>
+                  {letter}
+                </div>
+              ))}
+            </div>
+          )
+        })()}
+        <div style={isMobile ? { paddingRight: isMobile && sortContacts === 'name_az' ? '28px' : 0 } : { overflowX: 'auto' }}>
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', ...(isMobile ? {} : { minWidth: '700px' }) }}>
           {!isMobile && (
             <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
@@ -2182,7 +2228,18 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
             </div>
           )}
 
-          {filtered.map((c, idx) => (
+          {filtered.flatMap((c, idx) => {
+            const showLetterHeader = isMobile && sortContacts === 'name_az'
+            const letter = getFirstLetter(c.name)
+            const prevLetter = idx > 0 ? getFirstLetter(filtered[idx - 1].name) : null
+            const header = showLetterHeader && letter !== prevLetter ? (
+              <div key={`lh-${letter}`}
+                ref={el => { if (el) letterRefsMap.current[letter] = el }}
+                style={{ padding: '0.3rem 1rem 0.2rem', background: '#f5f4f2', borderBottom: '0.5px solid rgba(0,0,0,0.07)', fontSize: '11px', fontWeight: '600', color: '#888', letterSpacing: '0.1em', fontFamily: 'var(--font-inter),sans-serif' }}>
+                {letter}
+              </div>
+            ) : null
+            return [header, (
             <div key={c.contact_id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               {isMobile ? (
@@ -2522,9 +2579,11 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                 </div>
               )}
             </div>
-          ))}
+            )].filter(Boolean)
+          })}
         </div>
         </div>
+        </>
       )}
     </div>
   )
