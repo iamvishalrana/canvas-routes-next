@@ -1732,7 +1732,6 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   setExpanded(expanded === a.id ? null : a.id)
                   if (editingApp === a.id) setEditingApp(null)
                   if (appTierPick === a.id) setAppTierPick(null)
-                  markSeen(a.id)
                   if (a.reregistered_at) {
                     setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: null } : x))
                     fetch(`/api/admin/applications/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reregistered_at: null }) })
@@ -1792,7 +1791,13 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   onClick={handleRowClick}
                 >
                   <div style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
+                    {!seenAppIds.has(a.id) && (
+                      <button
+                        onClick={e => { e.stopPropagation(); markSeen(a.id) }}
+                        title="Mark as seen"
+                        style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
+                      />
+                    )}
                     {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-registered</span>}
                     {a.name || <span style={{ color: '#ccc' }}>—</span>}
                   </div>
@@ -1959,13 +1964,19 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                   {/* Action row */}
                   {editingApp !== a.id && (
                     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         {!a.is_contact ? (
                           <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
                             {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
                           </GhostBtn>
                         ) : (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
+                        )}
+                        {!seenAppIds.has(a.id) && (
+                          <GhostBtn small onClick={() => { markSeen(a.id); setExpanded(null) }}>Mark as Seen</GhostBtn>
+                        )}
+                        {seenAppIds.has(a.id) && !a.is_contact && !a.is_member && (
+                          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Reviewed</span>
                         )}
                         <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
                         <DangerBtn small onClick={() => setDeleteAppConfirm(a.id)}>Delete</DangerBtn>
