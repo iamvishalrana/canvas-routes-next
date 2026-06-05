@@ -10,125 +10,49 @@ const FRONT_AXLE    = 17
 const SPRING        = 0.09
 const ANGLE_K       = 0.13
 
-// ── Burnout car constants ─────────────────────────────────────────────────────
-const BT_FRONT      = 11
-const BT_REAR_TYRES = [{ lx: -11, ly: -4.5 }, { lx: -11, ly: 4.5 }]
-
-// ── "Membership" canonical path (500 × 75 space, baseline y = 70) ────────────
-// Each cluster of points is one letter. Car traces this entire path continuously.
-const RAW_PATH = [
-  // M
-  [0,70],[2,12],[30,40],[58,12],[60,70],
-  // connector
-  [65,70],
-  // e
-  [67,46],[70,20],[88,14],[105,25],[106,44],[68,44],[66,32],[79,13],[103,12],[107,26],[108,70],
-  // connector
-  [112,70],
-  // m
-  [113,36],[120,10],[130,36],[130,10],[142,36],[142,10],[153,36],[155,70],
-  // connector
-  [159,70],
-  // b
-  [160,8],[162,62],[165,46],[178,36],[196,38],[203,50],[204,64],[204,70],
-  // connector
-  [208,70],
-  // e
-  [210,46],[213,20],[231,14],[249,25],[250,44],[211,44],[209,32],[222,13],[247,12],[251,26],[252,70],
-  // connector
-  [256,70],
-  // r
-  [258,36],[261,12],[274,10],[288,22],[290,38],[291,70],
-  // connector
-  [295,70],
-  // s
-  [296,56],[299,40],[312,32],[330,40],[332,52],[320,57],[299,61],[296,67],[298,70],[334,70],
-  // connector
-  [338,70],
-  // h
-  [340,8],[342,42],[346,24],[360,14],[375,19],[381,36],[382,70],
-  // connector
-  [386,70],
-  // i
-  [388,32],[390,10],[392,32],[394,70],
-  // connector
-  [398,70],
-  // p (with descender)
-  [400,30],[402,8],[404,50],[407,76],[418,83],[432,76],[440,62],[440,50],[421,46],[404,52],[406,70],[448,70],
-]
-
-// ── Catmull-Rom spline interpolation ─────────────────────────────────────────
-function catmullRom(p0, p1, p2, p3, t) {
-  const t2 = t * t, t3 = t2 * t
-  return [
-    0.5 * ((2*p1[0]) + (-p0[0]+p2[0])*t + (2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2 + (-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
-    0.5 * ((2*p1[1]) + (-p0[1]+p2[1])*t + (2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2 + (-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3),
-  ]
-}
-
-// Build a dense array of evenly-spaced points along the Catmull-Rom spline
-function buildSpline(pts, density = 4) {
-  const result = []
-  const n = pts.length
-  for (let i = 0; i < n - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)]
-    const p1 = pts[i]
-    const p2 = pts[Math.min(n - 1, i + 1)]
-    const p3 = pts[Math.min(n - 1, i + 2)]
-    for (let j = 0; j < density; j++) {
-      result.push(catmullRom(p0, p1, p2, p3, j / density))
-    }
-  }
-  result.push(pts[n - 1])
-  return result
-}
-
-// Scale + offset the raw path to fit the viewport
-function buildWorldPath(vw, vh) {
-  const scale = Math.min((vw * 0.68) / 500, 1.8)
-  const wordW = 500 * scale
-  const wordH = 83 * scale // includes descender
-  const ox = (vw - wordW) / 2
-  const oy = vh / 2 - (70 * scale) / 2  // center on baseline midpoint
-  return buildSpline(RAW_PATH.map(([x, y]) => [ox + x * scale, oy + y * scale]))
-}
-
 export default function TestPage() {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 768
   )
-  const [btPhase, setBtPhase] = useState('idle') // idle | driving-in | writing | driving-out | done
+  const [phase, setPhase] = useState('idle')
+
+  // ── Animation car refs ────────────────────────────────────────────────────
+  const animCarRef      = useRef(null)
+  const animCarInnerRef = useRef(null)
+  const animRafRef      = useRef(null)
+  const carXRef         = useRef(-120)
+  const carYRef         = useRef(0)
+
+  // ── Person refs ───────────────────────────────────────────────────────────
+  const personRef    = useRef(null)
+  const armRef       = useRef(null)
+
+  // ── Text ref ──────────────────────────────────────────────────────────────
+  const textRef = useRef(null)
 
   // ── Cursor car refs ───────────────────────────────────────────────────────
-  const carRef         = useRef(null)
-  const carInnerRef    = useRef(null)
-  const tireMarksSvg   = useRef(null)
-  const cursorDotRef   = useRef(null)
-  const rafRef         = useRef(null)
-  const donutRafRef    = useRef(null)
-  const stopTimer      = useRef(null)
-  const tireInterval   = useRef(null)
-  const donutStopTimer = useRef(null)
-  const isDonuting     = useRef(false)
-  const lastX          = useRef(0)
-  const lastY          = useRef(0)
-  const lastAngle      = useRef(0)
-  const donutStart     = useRef(0)
-  const donutBaseAngle = useRef(0)
-  const donutPivotX    = useRef(0)
-  const donutPivotY    = useRef(0)
-  const donutCarX      = useRef(0)
-  const donutCarY      = useRef(0)
-  const headlight1Ref  = useRef(null)
-  const headlight2Ref  = useRef(null)
-  const flashTimer     = useRef(null)
-
-  // ── Burnout animation refs ────────────────────────────────────────────────
-  const btCarRef       = useRef(null)
-  const btCarInnerRef  = useRef(null)
-  const btMarksSvg     = useRef(null)
-  const btRafRef       = useRef(null)
-  const btReplayRef    = useRef(null)
+  const cursorCarRef      = useRef(null)
+  const cursorCarInnerRef = useRef(null)
+  const cursorRafRef      = useRef(null)
+  const donutRafRef       = useRef(null)
+  const tireMarksSvg      = useRef(null)
+  const cursorDotRef      = useRef(null)
+  const stopTimer         = useRef(null)
+  const tireInterval      = useRef(null)
+  const donutStopTimer    = useRef(null)
+  const isDonuting        = useRef(false)
+  const lastX             = useRef(0)
+  const lastY             = useRef(0)
+  const lastAngle         = useRef(0)
+  const donutStart        = useRef(0)
+  const donutBaseAngle    = useRef(0)
+  const donutPivotX       = useRef(0)
+  const donutPivotY       = useRef(0)
+  const donutCarX         = useRef(0)
+  const donutCarY         = useRef(0)
+  const headlight1Ref     = useRef(null)
+  const headlight2Ref     = useRef(null)
+  const flashTimer        = useRef(null)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -137,158 +61,129 @@ export default function TestPage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // ── Burnout animation ─────────────────────────────────────────────────────
+  // ── Main animation sequence ───────────────────────────────────────────────
   useEffect(() => {
     if (typeof window === 'undefined' || window.innerWidth < 768) return
 
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const worldPath = buildWorldPath(vw, vh)
+    const vw         = window.innerWidth
+    const vh         = window.innerHeight
+    const carStopX   = Math.round(vw * 0.28)
+    const carY       = Math.round(vh * 0.52)
+    carYRef.current  = carY
+    carXRef.current  = -120
 
-    // Persistent tire marks (don't fade during writing)
-    const droppedMarks = []
-
-    function dropBtMark(cx, cy, angleRad) {
-      const svg = btMarksSvg.current; if (!svg) return
-      const ns = 'http://www.w3.org/2000/svg'
-      BT_REAR_TYRES.forEach(({ lx, ly }) => {
-        const wx = cx + lx * Math.cos(angleRad) - ly * Math.sin(angleRad)
-        const wy = cy + lx * Math.sin(angleRad) + ly * Math.cos(angleRad)
-        const el = document.createElementNS(ns, 'ellipse')
-        el.setAttribute('cx', wx.toFixed(1))
-        el.setAttribute('cy', wy.toFixed(1))
-        el.setAttribute('rx', '2.2')
-        el.setAttribute('ry', '1.1')
-        const td = (angleRad * 180 / Math.PI) + 90
-        el.setAttribute('transform', `rotate(${td.toFixed(1)} ${wx.toFixed(1)} ${wy.toFixed(1)})`)
-        el.setAttribute('fill', 'rgba(197,168,130,0.85)')
-        svg.appendChild(el)
-        droppedMarks.push(el)
-      })
+    // Position car offscreen
+    if (animCarRef.current) {
+      animCarRef.current.style.transform = `translate(${carXRef.current}px, ${carY}px)`
+      animCarRef.current.style.opacity   = '1'
     }
 
-    function fadeAllMarks() {
-      droppedMarks.forEach(el => {
-        el.style.transition = 'opacity 2.5s ease-out'
-        el.style.opacity = '0'
-        setTimeout(() => el.remove(), 2600)
-      })
-      droppedMarks.length = 0
+    // Position the text starting just right of where person will stand
+    const personStandX = carStopX + 88
+    if (textRef.current) {
+      textRef.current.style.left      = `${personStandX + 18}px`
+      textRef.current.style.top       = `${carY}px`
+      textRef.current.style.transform = 'translateY(-52%)'
     }
 
-    function setCarPos(x, y, angleDeg) {
-      if (btCarRef.current) btCarRef.current.style.transform = `translate(${x}px,${y}px)`
-      if (btCarInnerRef.current) btCarInnerRef.current.style.transform = `rotate(${angleDeg}deg)`
-    }
-
-    function runAnimation() {
-      if (!btCarRef.current) return
-      btCarRef.current.style.opacity = '1'
-
-      // Phase 1: drive in from left to first waypoint
-      const firstPt   = worldPath[0]
-      const startX    = -60
-      const startY    = firstPt[1]
-      let cx = startX, cy = startY
-
-      setBtPhase('driving-in')
-
-      function driveIn() {
-        const dx   = firstPt[0] - cx
-        const dy   = firstPt[1] - cy
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 4) {
-          // Start writing phase
-          startWriting()
-          return
-        }
-        const speed = 5
-        cx += (dx / dist) * speed
-        cy += (dy / dist) * speed
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI
-        setCarPos(cx, cy, angle)
-        btRafRef.current = requestAnimationFrame(driveIn)
+    function driveIn() {
+      const dx    = carStopX - carXRef.current
+      const speed = Math.min(10, Math.abs(dx) * 0.12 + 3)
+      if (Math.abs(dx) < 2) {
+        carXRef.current = carStopX
+        if (animCarRef.current) animCarRef.current.style.transform = `translate(${carStopX}px, ${carY}px)`
+        onCarArrived()
+        return
       }
-      btRafRef.current = requestAnimationFrame(driveIn)
+      carXRef.current += Math.sign(dx) * speed
+      if (animCarRef.current) animCarRef.current.style.transform = `translate(${carXRef.current}px, ${carY}px)`
+      animRafRef.current = requestAnimationFrame(driveIn)
+    }
 
-      // Phase 2: follow the word path, dropping tire marks
-      let pathIdx = 0
-      function startWriting() {
-        setBtPhase('writing')
-        cx = worldPath[0][0]
-        cy = worldPath[0][1]
+    function onCarArrived() {
+      setPhase('person-exit')
+      const doorX = carStopX + 46
+      const doorY = carY - 28
 
-        function writeFrame() {
-          if (pathIdx >= worldPath.length - 1) {
-            startDriveOut()
-            return
-          }
-          const target = worldPath[pathIdx + 1]
-          const dx   = target[0] - cx
-          const dy   = target[1] - cy
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          const speed = 2.2
-
-          if (dist < speed) {
-            pathIdx++
-          } else {
-            cx += (dx / dist) * speed
-            cy += (dy / dist) * speed
-          }
-
-          const angleRad = Math.atan2(dy, dx)
-          setCarPos(cx, cy, angleRad * 180 / Math.PI)
-          dropBtMark(cx, cy, angleRad)
-          btRafRef.current = requestAnimationFrame(writeFrame)
-        }
-        btRafRef.current = requestAnimationFrame(writeFrame)
+      // Place person at car door (still hidden)
+      if (personRef.current) {
+        personRef.current.style.transition = 'none'
+        personRef.current.style.transform  = `translate(${doorX}px, ${doorY}px)`
+        personRef.current.style.opacity    = '0'
       }
 
-      // Phase 3: drive off to the right
-      function startDriveOut() {
-        setBtPhase('driving-out')
-        const endX = vw + 80
-        let speed  = 3
+      // Two rAFs so position is committed before opacity + walk transition kick in
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (!personRef.current) return
+        personRef.current.style.transition = 'transform 0.85s cubic-bezier(0.4,0,0.2,1), opacity 0.3s'
+        personRef.current.style.opacity    = '1'
+        personRef.current.style.transform  = `translate(${personStandX}px, ${doorY}px)`
 
-        function driveOut() {
-          cx    += speed
-          speed  = Math.min(speed + 0.18, 10) // accelerate
-          const angle = 0
-          setCarPos(cx, cy, angle)
-          if (cx < endX) {
-            btRafRef.current = requestAnimationFrame(driveOut)
-          } else {
-            btCarRef.current.style.opacity = '0'
-            fadeAllMarks()
-            setBtPhase('done')
-          }
-        }
-        btRafRef.current = requestAnimationFrame(driveOut)
-      }
+        setTimeout(() => {
+          setPhase('painting')
+          if (armRef.current) armRef.current.classList.add('arm-painting')
+          if (textRef.current) textRef.current.classList.add('revealed')
+
+          setTimeout(() => {
+            if (armRef.current) armRef.current.classList.remove('arm-painting')
+            setPhase('person-enter')
+
+            if (personRef.current) {
+              personRef.current.style.transition = 'transform 0.85s cubic-bezier(0.4,0,0.2,1), opacity 0.35s'
+              personRef.current.style.transform  = `translate(${doorX}px, ${doorY}px)`
+            }
+
+            setTimeout(() => {
+              if (personRef.current) personRef.current.style.opacity = '0'
+              setTimeout(() => {
+                setPhase('driving-out')
+                startDriveOut()
+              }, 320)
+            }, 870)
+          }, 3400)
+        }, 950)
+      }))
     }
 
-    // Auto-start on load
-    const startTimer = setTimeout(runAnimation, 800)
+    function startDriveOut() {
+      let speed = 3
+      function driveOut() {
+        carXRef.current += speed
+        speed = Math.min(speed + 0.25, 14)
+        if (animCarRef.current) animCarRef.current.style.transform = `translate(${carXRef.current}px, ${carY}px)`
+        if (carXRef.current < vw + 160) {
+          animRafRef.current = requestAnimationFrame(driveOut)
+        } else {
+          if (animCarRef.current) animCarRef.current.style.opacity = '0'
+          setPhase('done')
+        }
+      }
+      animRafRef.current = requestAnimationFrame(driveOut)
+    }
+
+    const startTimer = setTimeout(() => {
+      setPhase('driving-in')
+      animRafRef.current = requestAnimationFrame(driveIn)
+    }, 800)
 
     return () => {
       clearTimeout(startTimer)
-      cancelAnimationFrame(btRafRef.current)
-      if (btMarksSvg.current) btMarksSvg.current.innerHTML = ''
+      cancelAnimationFrame(animRafRef.current)
     }
   }, [])
 
-  // ── Cursor car effect (unchanged) ─────────────────────────────────────────
+  // ── Cursor car effect ─────────────────────────────────────────────────────
   useEffect(() => {
     if (typeof window === 'undefined' || window.innerWidth < 768) return
 
-    let px = window.innerWidth / 2,  py = window.innerHeight / 2
+    let px = window.innerWidth / 2, py = window.innerHeight / 2
     let sx = px, sy = py
     let ox = px, oy = py
     let angle = 0
 
-    if (carRef.current) {
-      carRef.current.style.transform = `translate(${sx}px,${sy}px)`
-      carRef.current.style.opacity   = '1'
+    if (cursorCarRef.current) {
+      cursorCarRef.current.style.transform = `translate(${sx}px,${sy}px)`
+      cursorCarRef.current.style.opacity   = '1'
     }
     lastX.current = sx; lastY.current = sy; lastAngle.current = angle
 
@@ -314,18 +209,18 @@ export default function TestPage() {
     }
 
     function stopDonut() {
-      if (!carRef.current || !carInnerRef.current) return
+      if (!cursorCarRef.current || !cursorCarInnerRef.current) return
       isDonuting.current = false
       cancelAnimationFrame(donutRafRef.current)
       clearInterval(tireInterval.current); clearTimeout(donutStopTimer.current)
       sx = donutCarX.current; sy = donutCarY.current; ox = sx; oy = sy
       lastX.current = sx; lastY.current = sy
-      carRef.current.style.transform      = `translate(${sx}px,${sy}px)`
-      carInnerRef.current.style.transform = `rotate(${angle}deg)`
+      cursorCarRef.current.style.transform      = `translate(${sx}px,${sy}px)`
+      cursorCarInnerRef.current.style.transform = `rotate(${angle}deg)`
     }
 
     function startDonut() {
-      if (!carRef.current || !carInnerRef.current || isDonuting.current) return
+      if (!cursorCarRef.current || !cursorCarInnerRef.current || isDonuting.current) return
       isDonuting.current = true; donutStart.current = Date.now()
       const baseAngleRad     = lastAngle.current * Math.PI / 180
       donutBaseAngle.current = baseAngleRad
@@ -334,15 +229,15 @@ export default function TestPage() {
       donutCarX.current      = lastX.current
       donutCarY.current      = lastY.current
       function spinFrame() {
-        if (!isDonuting.current || !carRef.current || !carInnerRef.current) return
+        if (!isDonuting.current || !cursorCarRef.current || !cursorCarInnerRef.current) return
         const elapsed  = Date.now() - donutStart.current
         const spinRad  = -(elapsed / DONUT_SPEED) * Math.PI * 2
         const totalRad = baseAngleRad + spinRad
         const cx = donutPivotX.current - FRONT_AXLE * Math.cos(totalRad)
         const cy = donutPivotY.current - FRONT_AXLE * Math.sin(totalRad)
         donutCarX.current = cx; donutCarY.current = cy
-        carRef.current.style.transform      = `translate(${cx}px,${cy}px)`
-        carInnerRef.current.style.transform = `rotate(${lastAngle.current - (elapsed/DONUT_SPEED)*360}deg)`
+        cursorCarRef.current.style.transform      = `translate(${cx}px,${cy}px)`
+        cursorCarInnerRef.current.style.transform = `rotate(${lastAngle.current - (elapsed/DONUT_SPEED)*360}deg)`
         donutRafRef.current = requestAnimationFrame(spinFrame)
       }
       donutRafRef.current    = requestAnimationFrame(spinFrame)
@@ -355,25 +250,25 @@ export default function TestPage() {
       sy += (py - sy) * SPRING
       const vx = sx - ox, vy = sy - oy
       ox = sx; oy = sy
-      const speed = Math.sqrt(vx * vx + vy * vy)
-      if (speed > 0.07) {
+      const spd = Math.sqrt(vx * vx + vy * vy)
+      if (spd > 0.07) {
         const raw  = Math.atan2(vy, vx) * 180 / Math.PI
         const diff = ((raw - angle) % 360 + 540) % 360 - 180
         angle += diff * ANGLE_K
       }
-      if (!isDonuting.current && carRef.current && carInnerRef.current) {
+      if (!isDonuting.current && cursorCarRef.current && cursorCarInnerRef.current) {
         lastX.current = sx; lastY.current = sy; lastAngle.current = angle
-        carRef.current.style.transform      = `translate(${sx}px,${sy}px)`
-        carInnerRef.current.style.transform = `rotate(${angle}deg)`
+        cursorCarRef.current.style.transform      = `translate(${sx}px,${sy}px)`
+        cursorCarInnerRef.current.style.transform = `rotate(${angle}deg)`
       }
-      rafRef.current = requestAnimationFrame(loop)
+      cursorRafRef.current = requestAnimationFrame(loop)
     }
-    rafRef.current = requestAnimationFrame(loop)
+    cursorRafRef.current = requestAnimationFrame(loop)
 
     function flashHeadlights() {
       const h1 = headlight1Ref.current, h2 = headlight2Ref.current
       if (!h1 || !h2) return
-      const on  = 'rgba(255,250,195,0.9)', off = 'rgba(30,20,10,0.55)'
+      const on = 'rgba(255,250,195,0.9)', off = 'rgba(30,20,10,0.55)'
       h1.setAttribute('fill', off);  h2.setAttribute('fill', off)
       setTimeout(() => {
         h1.setAttribute('fill', on);  h2.setAttribute('fill', on)
@@ -411,13 +306,58 @@ export default function TestPage() {
       document.removeEventListener('mouseleave', onMouseLeave)
       clearTimeout(stopTimer.current); clearTimeout(donutStopTimer.current); clearTimeout(flashTimer.current)
       clearInterval(tireInterval.current)
-      cancelAnimationFrame(rafRef.current); cancelAnimationFrame(donutRafRef.current)
+      cancelAnimationFrame(cursorRafRef.current); cancelAnimationFrame(donutRafRef.current)
       if (tireMarksSvg.current) tireMarksSvg.current.innerHTML = ''
     }
   }, [])
 
+  const phaseLabel = {
+    idle: '—',
+    'driving-in': 'Arriving…',
+    'person-exit': 'Getting out…',
+    painting: 'Painting…',
+    'person-enter': 'Getting back in…',
+    'driving-out': 'Leaving…',
+    done: 'Move cursor · stop to donut',
+  }[phase]
+
   return (
     <div style={{ background: '#0F1E14', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif' }}>
+
+      {/* ── Styles ─────────────────────────────────────────────────────────── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
+
+        @keyframes paintStroke {
+          0%   { transform: rotate(-18deg); }
+          50%  { transform: rotate(14deg);  }
+          100% { transform: rotate(-18deg); }
+        }
+        @keyframes legSwing {
+          0%,100% { transform: rotate(0deg);   }
+          50%     { transform: rotate(12deg);  }
+        }
+        .arm-painting {
+          transform-origin: 18px 16px;
+          animation: paintStroke 0.52s ease-in-out infinite;
+        }
+        .membership-text {
+          position: absolute;
+          clip-path: inset(0 100% 0 0);
+          transition: clip-path 3.2s cubic-bezier(0.22, 0.8, 0.36, 1);
+          font-family: 'Caveat', cursive;
+          font-weight: 700;
+          color: #c5a882;
+          white-space: nowrap;
+          pointer-events: none;
+          user-select: none;
+          line-height: 1;
+          font-size: clamp(3.5rem, 6.5vw, 7rem);
+        }
+        .membership-text.revealed {
+          clip-path: inset(0 0% 0 0);
+        }
+      `}</style>
 
       {/* Cursor dot */}
       {!isMobile && (
@@ -430,17 +370,17 @@ export default function TestPage() {
         }} />
       )}
 
-      {/* Cursor car tire marks */}
+      {/* Cursor tire marks */}
       <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 11 }} />
 
       {/* Cursor car */}
       {!isMobile && (
-        <div ref={carRef} style={{
+        <div ref={cursorCarRef} style={{
           position: 'fixed', top: 0, left: 0, width: '46px', height: '21px',
           marginLeft: '-23px', marginTop: '-10.5px',
           willChange: 'transform', pointerEvents: 'none', zIndex: 12, opacity: 0, overflow: 'visible',
         }}>
-          <div ref={carInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
+          <div ref={cursorCarInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
             <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
               <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.45)" />
               <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
@@ -463,33 +403,58 @@ export default function TestPage() {
         </div>
       )}
 
-      {/* ── BURNOUT TEXT SECTION ─────────────────────────────────────────────── */}
+      {/* ── HERO SECTION ───────────────────────────────────────────────────── */}
       <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
 
-        {/* Burnout tire marks (persistent until drive-out) */}
-        <svg ref={btMarksSvg} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }} />
+        {/* Nav */}
+        <nav style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.5rem', height: '68px', background: 'rgba(10,20,13,0.85)', backdropFilter: 'blur(12px)', borderBottom: '0.5px solid rgba(197,168,130,0.12)' }}>
+          <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.1rem', fontWeight: '300', color: '#F5F1EC', letterSpacing: '0.04em' }}>Canvas Routes</span>
+          <span style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.35)' }}>
+            {isMobile ? 'Desktop only' : phaseLabel}
+          </span>
+          <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Back</Link>
+        </nav>
 
-        {/* Burnout car (smaller, 30px wide) */}
-        {!isMobile && (
-          <div ref={btCarRef} style={{
-            position: 'absolute', top: 0, left: 0,
-            width: '30px', height: '14px',
-            marginLeft: '-15px', marginTop: '-7px',
-            willChange: 'transform', pointerEvents: 'none',
-            zIndex: 3, opacity: 0, overflow: 'visible',
+        {/* "Membership" painted text */}
+        <div ref={textRef} className="membership-text">
+          Membership
+        </div>
+
+        {/* Mobile fallback */}
+        {isMobile && (
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontFamily: "'Caveat', cursive",
+            fontSize: '3.2rem', fontWeight: 700,
+            color: '#c5a882', whiteSpace: 'nowrap',
+            lineHeight: 1,
           }}>
-            <div ref={btCarInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
-              <svg viewBox="0 0 56 26" width="30" height="14" style={{ display: 'block', overflow: 'visible' }}>
+            Membership
+          </div>
+        )}
+
+        {/* Animation car (larger, 80×37) */}
+        {!isMobile && (
+          <div ref={animCarRef} style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '80px', height: '37px',
+            marginLeft: '-40px', marginTop: '-18px',
+            willChange: 'transform', pointerEvents: 'none',
+            zIndex: 6, opacity: 0, overflow: 'visible',
+          }}>
+            <div ref={animCarInnerRef} style={{ width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
+              <svg viewBox="0 0 56 26" width="80" height="37" style={{ display: 'block', overflow: 'visible' }}>
                 <ellipse cx="28" cy="18" rx="26" ry="10" fill="rgba(0,0,0,0.5)" />
                 <rect x="3"  y="-1"  width="9" height="11" rx="2" fill="#111" />
                 <rect x="3"  y="16"  width="9" height="11" rx="2" fill="#111" />
                 <rect x="45" y="0"   width="8" height="9"  rx="2" fill="#111" />
                 <rect x="45" y="17"  width="8" height="9"  rx="2" fill="#111" />
-                <path d="M55,13 C53,9 49,6.5 46,5.5 C41,4.5 35,4.5 28,5 C21,5.5 14,3 8,1 C5,0.5 3,2 3,4.5 L3,21.5 C3,24 5,25.5 8,25 C14,23 21,20.5 28,21 C35,21.5 41,21.5 46,20.5 C49,19.5 53,17 55,13Z" fill="#c5a882" />
+                <path d="M55,13 C53,9 49,6.5 46,5.5 C41,4.5 35,4.5 28,5 C21,5.5 14,3 8,1 C5,0.5 3,2 3,4.5 L3,21.5 C3,24 5,25.5 8,25 C14,23 21,20.5 28,21 C35,21.5 41,21.5 46,20.5 C49,19.5 53,17 55,13Z" fill="#CC0000" />
                 <path d="M43,7.5 C47,9.5 48,11 48,13 C48,15 47,16.5 43,18.5 L36,17.5 L36,8.5Z" fill="rgba(120,175,205,0.45)" />
-                <path d="M36,8.5 L43,7.5 L43,18.5 L36,17.5 L24,17 L24,9Z" fill="rgba(80,50,0,0.6)" />
-                <rect x="5"   y="7"  width="3" height="5" rx="0.8" fill="rgba(220,190,100,0.95)" />
-                <rect x="5"   y="14" width="3" height="5" rx="0.8" fill="rgba(220,190,100,0.95)" />
+                <path d="M36,8.5 L43,7.5 L43,18.5 L36,17.5 L24,17 L24,9Z" fill="rgba(55,0,0,0.55)" />
+                <rect x="5"   y="7"  width="3" height="5"   rx="0.8" fill="rgba(220,55,55,0.95)" />
+                <rect x="5"   y="14" width="3" height="5"   rx="0.8" fill="rgba(220,55,55,0.95)" />
                 <rect x="0.5" y="-6"   width="4.5" height="38" rx="1.5" fill="#1c1c1c" />
                 <rect x="49" y="1"    width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" />
                 <rect x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" />
@@ -498,24 +463,62 @@ export default function TestPage() {
           </div>
         )}
 
-        {/* Nav */}
-        <nav style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.5rem', height: '68px', background: 'rgba(10,20,13,0.85)', backdropFilter: 'blur(12px)', borderBottom: '0.5px solid rgba(197,168,130,0.12)' }}>
-          <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.1rem', fontWeight: '300', color: '#F5F1EC', letterSpacing: '0.04em' }}>Canvas Routes</span>
-          <span style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.35)' }}>
-            {isMobile ? 'Desktop only' : btPhase === 'done' ? 'Move cursor · stop to donut' : 'Burnout text demo'}
-          </span>
-          <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Back</Link>
-        </nav>
+        {/* ── Little person ──────────────────────────────────────────────── */}
+        {!isMobile && (
+          <div
+            ref={personRef}
+            style={{
+              position: 'absolute', top: 0, left: 0,
+              opacity: 0,
+              pointerEvents: 'none',
+              zIndex: 7,
+              willChange: 'transform, opacity',
+            }}
+          >
+            {/*
+              Person is drawn facing right (toward the text).
+              viewBox 0 0 36 56 — head at top, feet at bottom.
+              Right arm is raised toward the canvas.
+            */}
+            <svg viewBox="0 0 36 56" width="32" height="50" style={{ display: 'block', overflow: 'visible' }}>
+              {/* Shadow */}
+              <ellipse cx="16" cy="54" rx="10" ry="3" fill="rgba(0,0,0,0.25)" />
+              {/* Head */}
+              <circle cx="14" cy="7" r="6.5" fill="#c5a882" />
+              {/* Body */}
+              <rect x="9" y="13" width="10" height="17" rx="4" fill="#c5a882" />
+              {/* Left arm — hanging */}
+              <line x1="9"  y1="17" x2="2"  y2="27" stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
+              {/* Right arm + brush — raised toward text */}
+              <g ref={armRef} style={{ transformOrigin: '19px 16px' }}>
+                <line x1="19" y1="16" x2="28" y2="9"  stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
+                {/* Brush handle */}
+                <line x1="27" y1="9"  x2="33" y2="4"  stroke="#7a5a1a" strokeWidth="2.2" strokeLinecap="round" />
+                {/* Brush bristles */}
+                <ellipse cx="34" cy="2.5" rx="2.2" ry="3.8" fill="#c5a882" transform="rotate(-38 34 2.5)" />
+                {/* Paint dab on bristles */}
+                <ellipse cx="35" cy="1"   rx="1.4" ry="2.2" fill="rgba(197,168,130,0.55)" transform="rotate(-38 35 1)" />
+              </g>
+              {/* Left leg */}
+              <line x1="12" y1="30" x2="8"  y2="48" stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
+              {/* Right leg */}
+              <line x1="16" y1="30" x2="20" y2="48" stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
+              {/* Shoes */}
+              <ellipse cx="7"  cy="49" rx="4" ry="2.2" fill="#7a5a1a" />
+              <ellipse cx="21" cy="49" rx="4" ry="2.2" fill="#7a5a1a" />
+            </svg>
+          </div>
+        )}
 
-        {/* Phase label */}
-        {!isMobile && btPhase !== 'idle' && btPhase !== 'done' && (
-          <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', zIndex: 10, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)' }}>
-            {{ 'driving-in': 'Entering…', writing: 'Writing…', 'driving-out': 'Leaving…' }[btPhase]}
+        {/* Phase label (bottom center) */}
+        {!isMobile && phase !== 'idle' && phase !== 'done' && (
+          <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', zIndex: 10, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.35)' }}>
+            {phaseLabel}
           </div>
         )}
       </div>
 
-      {/* Scrollable content below */}
+      {/* ── Scrollable content ────────────────────────────────────────────── */}
       <div>
         <section style={{ height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3rem' }}>
           <div style={{ maxWidth: isMobile ? '100%' : '48%' }}>
