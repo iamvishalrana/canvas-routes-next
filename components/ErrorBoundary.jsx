@@ -1,5 +1,6 @@
 'use client'
 import { Component } from 'react'
+import * as Sentry from '@sentry/nextjs'
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -11,6 +12,7 @@ export default class ErrorBoundary extends Component {
   }
   componentDidCatch(error, info) {
     console.error('Canvas Routes render error:', error, info)
+    try { Sentry.captureException(error, { contexts: { react: { componentStack: info?.componentStack } } }) } catch {}
   }
   render() {
     if (this.state.hasError) {

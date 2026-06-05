@@ -78,8 +78,10 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    let rafId = 0
     function updateBannerHeight() {
-      requestAnimationFrame(() => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
         const banner = document.querySelector('.cookie-banner')
         if (banner) {
           document.documentElement.style.setProperty('--cookie-banner-height', `${banner.offsetHeight}px`)
@@ -92,6 +94,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('resize', updateBannerHeight)
       window.removeEventListener('cookieConsentReset', updateBannerHeight)
+      cancelAnimationFrame(rafId)
     }
   }, [])
 
