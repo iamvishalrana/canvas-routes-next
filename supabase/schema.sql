@@ -65,3 +65,49 @@ CREATE POLICY "events_select" ON public.events
   FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Note: admin operations use the service role key which bypasses RLS entirely.
+
+-- Applications (membership application submissions)
+CREATE TABLE IF NOT EXISTS public.applications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  phone TEXT,
+  instagram TEXT,
+  car_year TEXT,
+  car_make TEXT,
+  car_model TEXT,
+  source TEXT,
+  more TEXT,
+  dob_month SMALLINT,
+  dob_day SMALLINT,
+  dob_year SMALLINT,
+  passengers TEXT,
+  has_children TEXT,
+  children_ages TEXT,
+  registrations JSONB DEFAULT '[]',
+  reregistered_at TIMESTAMPTZ,
+  referred_by TEXT,
+  notes TEXT,
+  admin_notes TEXT,
+  stripe_payment_intent_id TEXT,
+  stripe_payment_status TEXT,
+  stripe_amount_paid INTEGER,
+  stripe_payment_type TEXT,
+  stripe_paid_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
+-- Admin routes use service role key which bypasses RLS; this policy blocks direct client access
+CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.applications
+  USING (false) WITH CHECK (false);
+
+-- Contacts (CRM layer on top of applications)
+CREATE TABLE IF NOT EXISTS public.contacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  application_id UUID UNIQUE REFERENCES public.applications(id) ON DELETE CASCADE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.contacts
+  USING (false) WITH CHECK (false);
