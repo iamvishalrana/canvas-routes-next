@@ -179,6 +179,17 @@ export default function PartnerContent() {
   return (
     <div style={{ background: '#F5F1EC', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif' }}>
 
+      <style>{`
+        /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
+        @media(max-width:768px){
+          input, select, textarea { font-size: 16px !important; }
+        }
+        /* Stack two-column form rows on mobile */
+        @media(max-width:520px){
+          .pt-form-row { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+
       {/* Nav */}
       <nav className="nav">
         <Link href="/"><Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" /></Link>
@@ -368,7 +379,7 @@ export default function PartnerContent() {
                 { href: 'https://www.instagram.com/canvasroutes', label: '@canvasroutes', target: '_blank', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg> },
               ].map(link => (
                 <a key={link.label} href={link.href} target={link.target} rel={link.target ? 'noopener noreferrer' : undefined}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', textDecoration: 'none', color: '#999', fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.18s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', textDecoration: 'none', color: '#999', fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.18s', minHeight: '44px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#c5a882'}
                   onMouseLeave={e => e.currentTarget.style.color = '#999'}>
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', border: '0.5px solid rgba(197,168,130,0.35)', color: 'rgba(197,168,130,0.65)', flexShrink: 0 }}>
@@ -405,7 +416,7 @@ export default function PartnerContent() {
                 </div>
 
                 {/* Your name + City */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="pt-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   {[
                     { key: 'name', label: 'Your name', type: 'text', autoComplete: 'name' },
                     { key: 'city', label: 'City / Town', type: 'text', autoComplete: 'address-level2' },
@@ -422,7 +433,7 @@ export default function PartnerContent() {
                 </div>
 
                 {/* Type + Email */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="pt-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.type ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Type of business<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                     <select value={form.type} onChange={e => setField('type', e.target.value)}
@@ -451,7 +462,7 @@ export default function PartnerContent() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 1rem', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.1)' }}>
                       <span style={{ fontSize: '13.5px', color: '#aaa', flex: 1, fontFamily: 'var(--font-inter),sans-serif' }}>Phone not provided</span>
                       <button type="button" onClick={() => setPhoneOptOut(false)}
-                        style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', color: '#888', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                        style={{ background: 'none', border: 'none', padding: '0.4rem 0.25rem', fontSize: '11px', color: '#888', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
                         Add number
                       </button>
                     </div>
@@ -463,7 +474,7 @@ export default function PartnerContent() {
                         onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                         onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.14)'} />
                       <button type="button" onClick={() => { setPhoneOptOut(true); setField('phone', '') }}
-                        style={{ background: 'none', border: 'none', padding: '0.3rem 0', fontSize: '11px', color: '#aaa', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>
+                        style={{ background: 'none', border: 'none', padding: '0.5rem 0', fontSize: '11px', color: '#aaa', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>
                         Prefer not to share my number
                       </button>
                     </>
