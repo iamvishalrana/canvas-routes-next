@@ -4,13 +4,15 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
+  if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
   const supabase = createAdminClient()
   const ALLOWED = ['name', 'car_year', 'car_model', 'phone', 'instagram',
                    'dob_month', 'dob_day', 'dob_year', 'source', 'more', 'registrations', 'reregistered_at', 'admin_notes', 'notes']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => ALLOWED.includes(k)))
+  if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   const { error } = await supabase.from('applications').update(update).eq('id', id)
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
 
   // Sync shared fields to members table
   const { data: app } = await supabase.from('applications').select('email').eq('id', id).single()
@@ -31,14 +33,15 @@ export async function PATCH(request, { params }) {
     }
   }
 
-  return Response.json({ ok: true })
+  return Response.json({ success: true })
 }
 
 export async function DELETE(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
+  if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const supabase = createAdminClient()
   const { error } = await supabase.from('applications').delete().eq('id', id)
-  if (error) return Response.json({ error: error.message }, { status: 500 })
-  return Response.json({ ok: true })
+  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  return Response.json({ success: true })
 }

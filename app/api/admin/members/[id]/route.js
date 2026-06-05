@@ -4,21 +4,23 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
+  if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
   const supabase = createAdminClient()
 
   if (body.email) {
     const newEmail = body.email.trim().toLowerCase()
     const { error: authErr } = await supabase.auth.admin.updateUserById(id, { email: newEmail })
-    if (authErr) return Response.json({ error: authErr.message }, { status: 500 })
+    if (authErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? authErr.message : 'Database error' }, { status: 500 })
   }
 
   const allowed = ['membership_status', 'tier', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars', 'event_attendance', 'admin_notes', 'notes']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
+  if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if (update.email) update.email = update.email.trim().toLowerCase()
 
   const { error } = await supabase.from('members').update(update).eq('id', id)
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
 
   // Sync shared fields to applications table
   const { data: member } = await supabase.from('members').select('email').eq('id', id).single()
@@ -60,8 +62,11 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
+  if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const supabase = createAdminClient()
   const { error } = await supabase.auth.admin.deleteUser(id)
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  const { error: rowErr } = await supabase.from('members').delete().eq('id', id)
+  if (rowErr) console.error('Failed to delete member row after auth deletion:', rowErr.message)
   return Response.json({ success: true })
 }

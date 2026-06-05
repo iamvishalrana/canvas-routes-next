@@ -74,6 +74,9 @@ const CC_RECORDS = [
 
 export async function POST() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  if (process.env.IMPORT_CC_ENABLED !== 'true') {
+    return Response.json({ error: 'This endpoint is disabled. Set IMPORT_CC_ENABLED=true to enable.' }, { status: 403 })
+  }
 
   const supabase = createAdminClient()
   const rows = CC_RECORDS.map(r => ({ ...r, email: r.email.toLowerCase().trim() }))

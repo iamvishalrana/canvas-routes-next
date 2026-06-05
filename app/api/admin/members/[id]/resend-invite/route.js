@@ -1,7 +1,6 @@
-import { captureException, captureMessage } from '../../../../lib/sentry.js'
-import { createAdminClient } from '../../../../lib/supabase/admin'
-import { requireAdmin } from '../../../../lib/supabase/authCheck'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { captureException, captureMessage } from '../../../../../../lib/sentry.js'
+import { createAdminClient } from '../../../../../../lib/supabase/admin'
+import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 
 function h(str) {
   return String(str ?? '')
@@ -137,88 +136,61 @@ function inviteHtml({ firstName, tier, actionLink }) {
 </html>`
 }
 
-export async function GET(request) {
+export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
-  if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
-  const supabase = createAdminClient()
-  const { data, error } = await supabase.from('members').select('*').order('join_date', { ascending: false })
-  if (error) return Response.json({ error: error.message }, { status: 500 })
-  return Response.json(data)
-}
-
-export async function POST(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
-  if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
-  const { name, email, membership_status = 'pending', tier, dob_month, dob_day, dob_year, phone, instagram, cars } = await request.json()
-  if (!email?.trim()) return Response.json({ error: 'Email required.' }, { status: 400 })
+  const { id } = await params
+  if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
 
   const supabase = createAdminClient()
 
-  // Generate invite link without sending Supabase's default email
+  // Look up member to get email and tier
+  const { data: member, error: memberErr } = await supabase.from('members').select('email, name, tier').eq('id', id).single()
+  if (memberErr || !member) return Response.json({ error: 'Member not found' }, { status: 404 })
+
+  // Generate a new invite link
   const { data: invited, error: inviteErr } = await supabase.auth.admin.generateLink({
     type: 'invite',
-    email,
+    email: member.email,
     options: {
-      data: { name },
+      data: { name: member.name },
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/members/reset-password`,
     },
   })
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 400 })
 
-  const memberData = {
-    id: invited.user.id,
-    name: name || null,
-    email: email.toLowerCase().trim(),
-    membership_status,
-    ...(tier && { tier }),
-    ...(dob_month != null && { dob_month }),
-    ...(dob_day != null && { dob_day }),
-    ...(dob_year != null && { dob_year }),
-    ...(phone && { phone }),
-    ...(instagram && { instagram }),
-    ...(cars?.length && { cars }),
+  if (!process.env.RESEND_API_KEY) {
+    return Response.json({ success: true, warning: 'Invite email was not sent: RESEND_API_KEY is not configured' })
   }
 
-  const { error: insertErr } = await supabase.from('members').insert(memberData)
-  if (insertErr) return Response.json({ error: insertErr.message }, { status: 500 })
+  try {
+    const firstName = (member.name || member.email).trim().split(' ')[0]
+    const actionLink = invited.properties?.action_link ?? ''
 
-  // Send custom invite email via Resend
-  if (process.env.RESEND_API_KEY) {
-    try {
-      const firstName = (name || email).trim().split(' ')[0]
-      const actionLink = invited.properties?.action_link ?? ''
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Canvas Routes <membership@canvasroutes.com>',
+        to: member.email,
+        reply_to: 'info@canvasroutes.com',
+        subject: "You're in — Canvas Routes 2026",
+        html: inviteHtml({ firstName, tier: member.tier, actionLink }),
+      }),
+    })
 
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Canvas Routes <membership@canvasroutes.com>',
-          to: email,
-          reply_to: 'info@canvasroutes.com',
-          subject: "You're in — Canvas Routes 2026",
-          html: inviteHtml({ firstName, tier, actionLink }),
-        }),
-      })
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => 'unknown')
-        console.error('Invite email send error:', errText)
-        captureMessage(`Member invite email failed — ${email}`, { response: errText })
-        return Response.json({ error: 'Member was created but the invite email failed to send. Check Sentry and resend manually.' }, { status: 500 })
-      }
-    } catch (err) {
-      console.error('Invite email network error:', err)
-      captureException(err, { context: 'member-invite-email-network', email })
-      return Response.json({ error: 'Member was created but the invite email failed to send. Check Sentry and resend manually.' }, { status: 500 })
+    if (!res.ok) {
+      const errText = await res.text().catch(() => 'unknown')
+      console.error('Resend invite email error:', errText)
+      captureMessage(`Member resend-invite email failed — ${member.email}`, { response: errText })
+      return Response.json({ error: 'Invite link was generated but the email failed to send. Check Sentry and resend manually.' }, { status: 500 })
     }
-  } else {
-    console.warn('RESEND_API_KEY not set — invite email not sent.')
-    return Response.json({ success: true, warning: 'Invite email was not sent: RESEND_API_KEY is not configured' })
+  } catch (err) {
+    console.error('Resend invite email network error:', err)
+    captureException(err, { context: 'member-resend-invite-email-network', email: member.email })
+    return Response.json({ error: 'Invite link was generated but the email failed to send. Check Sentry and resend manually.' }, { status: 500 })
   }
 
   return Response.json({ success: true })
