@@ -1,6 +1,5 @@
 'use client'
-export const dynamic = 'force-dynamic'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -148,6 +147,7 @@ function AdminNotesPanel({ initialNotes, onSave }) {
   const [notes, setNotes] = useState(() => parseAdminNotes(initialNotes))
   const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
 
   async function addNote() {
     if (!draft.trim()) return
@@ -155,14 +155,24 @@ function AdminNotesPanel({ initialNotes, onSave }) {
     setNotes(updated)
     setDraft('')
     setSaving(true)
-    await onSave(JSON.stringify(updated))
+    try {
+      await onSave(JSON.stringify(updated))
+      setSaveError(null)
+    } catch {
+      setSaveError('Failed to save note.')
+    }
     setSaving(false)
   }
 
   async function deleteNote(id) {
     const updated = notes.filter(n => n.id !== id)
     setNotes(updated)
-    await onSave(JSON.stringify(updated))
+    try {
+      await onSave(JSON.stringify(updated))
+      setSaveError(null)
+    } catch {
+      setSaveError('Failed to save note.')
+    }
   }
 
   function fmt(iso) {
@@ -195,6 +205,7 @@ function AdminNotesPanel({ initialNotes, onSave }) {
       <div style={{ marginTop: '0.5rem' }}>
         <GhostBtn small onClick={addNote} disabled={saving || !draft.trim()}>{saving ? 'Saving…' : 'Add Note'}</GhostBtn>
       </div>
+      <Err msg={saveError} />
     </div>
   )
 }
@@ -414,6 +425,8 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [statusFilter, setStatusFilter] = useState('all')
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
+  const [deleteMemberConfirm, setDeleteMemberConfirm] = useState(null)
+  const [deleteMemberError, setDeleteMemberError] = useState(null)
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -488,11 +501,21 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   }
 
   async function deleteMember(m) {
-    if (!confirm(`Delete ${m.name || m.email}? This permanently removes them from Canvas Routes.`)) return
-    setActionError(null)
+    setDeleteMemberError(null)
     const res = await fetch(`/api/admin/members/${m.id}`, { method: 'DELETE' })
-    if (!res.ok) { const d = await res.json(); setActionError(d.error || 'Failed to delete.'); return }
+    if (!res.ok) { const d = await res.json(); setDeleteMemberError(d.error || 'Failed to delete.'); return }
+    setDeleteMemberConfirm(null)
     load()
+  }
+
+  async function resendInvite(m) {
+    const res = await fetch(`/api/admin/members/${m.id}/resend-invite`, { method: 'POST' })
+    if (!res.ok) {
+      const d = await res.json()
+      setActionError(d.error || 'Failed to resend invite.')
+    } else {
+      setActionError(null)
+    }
   }
 
   async function saveMemberNote(memberId, value) {
@@ -573,6 +596,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     a.download = `canvas-routes-members-${new Date().toISOString().slice(0,10)}.csv`
     a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   function copyEmails() {
@@ -730,7 +754,11 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
           )}
 
           {filtered.length === 0 && (
-            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No members found.</div>
+            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
+              {search ? (
+                <span>No members match "{search}" — <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c5a882', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>clear search</button></span>
+              ) : 'No members yet.'}
+            </div>
           )}
 
           {filtered.map((m, idx) => (
@@ -868,7 +896,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         </div>
                         <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                           <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
-                          <DangerBtn onClick={() => deleteMember(m)} small>Del</DangerBtn>
+                          <DangerBtn onClick={() => setDeleteMemberConfirm(m.id)} small>Del</DangerBtn>
                         </div>
                       </div>
                       <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.25rem' }}>{m.email}</div>
@@ -882,6 +910,11 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         <span style={{ fontSize: '11px', color: m.password_set_at ? '#3B6B2F' : '#bbb' }}>
                           {m.password_set_at ? `✓ ${new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Awaiting'}
                         </span>
+                        {!m.password_set_at && (
+                          <button onClick={e => { e.stopPropagation(); resendInvite(m) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
+                            Resend
+                          </button>
+                        )}
                         {(m.join_date || m.created_at) && (
                           <span style={{ fontSize: '11px', color: '#bbb' }}>
                             Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -924,12 +957,17 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                           <span style={{ fontSize: '11px', color: '#3B6B2F' }}>{new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
                         </div>
                       ) : (
-                        <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.05em' }}>Awaiting</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.05em' }}>Awaiting</span>
+                          <button onClick={e => { e.stopPropagation(); resendInvite(m) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
+                            Resend
+                          </button>
+                        </div>
                       )}
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem' }} onClick={e => e.stopPropagation()}>
                       <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
-                      <DangerBtn onClick={() => deleteMember(m)} small>Delete</DangerBtn>
+                      <DangerBtn onClick={() => setDeleteMemberConfirm(m.id)} small>Delete</DangerBtn>
                     </div>
                   </div>
                   )}
@@ -937,6 +975,16 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                   {expanded === m.id && (
                     <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile}
                       editingNote={editingNote} noteValue={noteValue} setEditingNote={setEditingNote} setNoteValue={setNoteValue} onSaveNote={saveMemberNote} />
+                  )}
+                  {deleteMemberConfirm === m.id && (
+                    <div style={{ padding: '0.75rem 1.25rem', background: 'rgba(123,32,50,0.04)', borderTop: '0.5px solid rgba(123,32,50,0.1)' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', color: '#7B2032' }}>Delete {m.name || m.email}? This permanently removes them.</span>
+                        <GhostBtn small onClick={() => deleteMember(m)}>Confirm</GhostBtn>
+                        <GhostBtn small onClick={() => { setDeleteMemberConfirm(null); setDeleteMemberError(null) }}>Cancel</GhostBtn>
+                      </div>
+                      {deleteMemberError && <Err msg={deleteMemberError} />}
+                    </div>
                   )}
                 </>
               )}
@@ -961,6 +1009,10 @@ function AnnouncementsTab() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [publishing, setPublishing] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
+  const [announcementSearch, setAnnouncementSearch] = useState('')
+  const [announcementFilter, setAnnouncementFilter] = useState('all')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -1008,11 +1060,18 @@ function AnnouncementsTab() {
   }
 
   async function del(id) {
-    if (!confirm('Delete this announcement?')) return
+    setDeleteError(null)
     const res = await fetch(`/api/admin/announcements/${id}`, { method: 'DELETE' })
-    if (!res.ok) { alert('Failed to delete.'); return }
+    if (!res.ok) { setDeleteError('Failed to delete announcement.'); return }
+    setDeleteConfirm(null)
     load()
   }
+
+  const filteredAnnouncements = items.filter(a => {
+    const matchesSearch = !announcementSearch || a.title.toLowerCase().includes(announcementSearch.toLowerCase()) || a.content.toLowerCase().includes(announcementSearch.toLowerCase())
+    const matchesFilter = announcementFilter === 'all' || (announcementFilter === 'published' ? a.published : !a.published)
+    return matchesSearch && matchesFilter
+  })
 
   return (
     <div>
@@ -1049,14 +1108,30 @@ function AnnouncementsTab() {
         </form>
       </div>
 
+      {!loading && items.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center' }}>
+          <input style={{ ...inp, maxWidth: '260px' }} placeholder="Search announcements…" value={announcementSearch} onChange={e => setAnnouncementSearch(e.target.value)} />
+          <div style={{ position: 'relative' }}>
+            <select style={{ ...sel, width: 'auto', paddingRight: '2rem' }} value={announcementFilter} onChange={e => setAnnouncementFilter(e.target.value)}>
+              <option value="all">All</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : items.length === 0 ? (
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No announcements yet.</div>
+      ) : filteredAnnouncements.length === 0 ? (
+        <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No announcements match your search.</div>
       ) : (
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
-          {items.map((item, idx) => (
-            <div key={item.id} style={{ padding: '1.5rem', borderBottom: idx < items.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
+          {filteredAnnouncements.map((item, idx) => (
+            <div key={item.id} style={{ padding: '1.5rem', borderBottom: idx < filteredAnnouncements.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
               {editing === item.id ? (
                 <div>
                   <div style={{ marginBottom: '0.75rem' }}>
@@ -1106,10 +1181,18 @@ function AnnouncementsTab() {
                   <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                     <GhostBtn onClick={() => togglePublish(item)} small disabled={publishing === item.id}>{publishing === item.id ? '…' : item.published ? 'Unpublish' : 'Publish'}</GhostBtn>
                     <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content, audience: item.audience || 'all' }); setSaveError(null) }} small>Edit</GhostBtn>
-                    <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
+                    <DangerBtn small onClick={() => setDeleteConfirm(item.id)}>Delete</DangerBtn>
                   </div>
                 </div>
               )}
+              {deleteConfirm === item.id && (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this announcement?</span>
+                  <GhostBtn small onClick={() => del(item.id)}>Confirm</GhostBtn>
+                  <GhostBtn small onClick={() => setDeleteConfirm(null)}>Cancel</GhostBtn>
+                </div>
+              )}
+              {deleteConfirm === item.id && deleteError && <Err msg={deleteError} />}
             </div>
           ))}
         </div>
@@ -1133,6 +1216,8 @@ function EventsTab({ isMobile }) {
   const [showRegistrants, setShowRegistrants] = useState(null)
   const [registrantsData, setRegistrantsData] = useState({})
   const [loadingRegistrants, setLoadingRegistrants] = useState(false)
+  const [deleteEventConfirm, setDeleteEventConfirm] = useState(null)
+  const [deleteEventError, setDeleteEventError] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -1170,9 +1255,10 @@ function EventsTab({ isMobile }) {
   }
 
   async function del(id) {
-    if (!confirm('Delete this event?')) return
+    setDeleteEventError(null)
     const res = await fetch(`/api/admin/events/${id}`, { method: 'DELETE' })
-    if (!res.ok) { alert('Failed to delete.'); return }
+    if (!res.ok) { setDeleteEventError('Failed to delete event.'); return }
+    setDeleteEventConfirm(null)
     load()
   }
 
@@ -1280,9 +1366,17 @@ function EventsTab({ isMobile }) {
                     <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
                       <GhostBtn onClick={() => toggleRegistrants(item.name)} small>{showRegistrants === item.name ? 'Hide' : 'Registrants'}</GhostBtn>
                       <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '' }); setSaveError(null) }} small>Edit</GhostBtn>
-                      <DangerBtn onClick={() => del(item.id)} small>Delete</DangerBtn>
+                      <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
                     </div>
                   </div>
+                  {deleteEventConfirm === item.id && (
+                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this event?</span>
+                      <GhostBtn small onClick={() => del(item.id)}>Confirm</GhostBtn>
+                      <GhostBtn small onClick={() => { setDeleteEventConfirm(null); setDeleteEventError(null) }}>Cancel</GhostBtn>
+                      {deleteEventError && <Err msg={deleteEventError} />}
+                    </div>
+                  )}
                   {showRegistrants === item.name && (
                     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                       <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Registrants</div>
@@ -1374,6 +1468,8 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [sortApps, setSortApps] = useState('newest')
   const [emailsCopied, setEmailsCopied] = useState(false)
   const [appTierPick, setAppTierPick] = useState(null)
+  const [deleteAppConfirm, setDeleteAppConfirm] = useState(null)
+  const [deleteAppError, setDeleteAppError] = useState(null)
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -1409,10 +1505,10 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   }
 
   async function deleteApp(app) {
-    if (!confirm(`Delete application from ${app.name || app.email}? This cannot be undone.`)) return
+    setDeleteAppError(null)
     const res = await fetch(`/api/admin/applications/${app.id}`, { method: 'DELETE' })
-    if (res.ok) { setExpanded(null); setEditingApp(null); loadApps() }
-    else alert('Failed to delete.')
+    if (res.ok) { setDeleteAppConfirm(null); setExpanded(null); setEditingApp(null); loadApps() }
+    else setDeleteAppError('Failed to delete.')
   }
 
   function startEditApp(a) {
@@ -1535,6 +1631,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
     el.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     el.download = `canvas-routes-applications-${new Date().toISOString().slice(0,10)}.csv`
     el.click()
+    URL.revokeObjectURL(el.href)
   }
 
   function copyEmails() {
@@ -1861,16 +1958,26 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
 
                   {/* Action row */}
                   {editingApp !== a.id && (
-                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      {!a.is_contact ? (
-                        <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
-                          {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
-                        </GhostBtn>
-                      ) : (
-                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {!a.is_contact ? (
+                          <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
+                            {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
+                          </GhostBtn>
+                        ) : (
+                          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
+                        )}
+                        <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
+                        <DangerBtn small onClick={() => setDeleteAppConfirm(a.id)}>Delete</DangerBtn>
+                      </div>
+                      {deleteAppConfirm === a.id && (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete application from {a.name || a.email}?</span>
+                          <GhostBtn small onClick={() => deleteApp(a)}>Confirm</GhostBtn>
+                          <GhostBtn small onClick={() => { setDeleteAppConfirm(null); setDeleteAppError(null) }}>Cancel</GhostBtn>
+                          {deleteAppError && <Err msg={deleteAppError} />}
+                        </div>
                       )}
-                      <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
-                      <DangerBtn onClick={() => deleteApp(a)} small>Delete</DangerBtn>
                     </div>
                   )}
                 </div>
@@ -1881,6 +1988,25 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── VCard download button (hover-safe) ──────────────────────────────────────
+
+function VCardBtn({ onClick }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      title="Save to Contacts (.vcf)"
+      style={{ background: 'none', border: `0.5px solid ${hovered ? '#c5a882' : 'rgba(0,0,0,0.15)'}`, borderRadius: '3px', padding: '0.28rem 0.45rem', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#666', transition: 'border-color 0.15s' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+    </button>
   )
 }
 
@@ -1906,6 +2032,9 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [savingNew, setSavingNew] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
+  const [removeContactConfirm, setRemoveContactConfirm] = useState(null)
+  const [removeContactError, setRemoveContactError] = useState(null)
+  const [deleteSelectedConfirm, setDeleteSelectedConfirm] = useState(false)
   const letterRefsMap = useRef({})
   const lastTouchedLetter = useRef(null)
 
@@ -1972,10 +2101,10 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   useEffect(() => { loadContacts() }, [loadContacts])
 
   async function removeContact(contactId) {
-    if (!confirm('Remove this contact?')) return
+    setRemoveContactError(null)
     const res = await fetch(`/api/admin/contacts/${contactId}`, { method: 'DELETE' })
-    if (res.ok) { setSelected(prev => { const n = new Set(prev); n.delete(contactId); return n }); loadContacts() }
-    else alert('Failed to remove contact.')
+    if (res.ok) { setRemoveContactConfirm(null); setSelected(prev => { const n = new Set(prev); n.delete(contactId); return n }); loadContacts() }
+    else setRemoveContactError('Failed to remove contact.')
   }
 
   async function inviteContact(c, tier = 'routes_member') {
@@ -1997,9 +2126,9 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
 
   async function deleteSelected() {
     if (!selected.size) return
-    if (!confirm(`Delete ${selected.size} contact${selected.size > 1 ? 's' : ''}? This cannot be undone.`)) return
     await Promise.all([...selected].map(id => fetch(`/api/admin/contacts/${id}`, { method: 'DELETE' })))
     setSelected(new Set())
+    setDeleteSelectedConfirm(false)
     loadContacts()
   }
 
@@ -2077,6 +2206,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     a.download = `canvas-routes-contacts-${new Date().toISOString().slice(0,10)}.csv`
     a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   async function saveNote(contactId, value, email) {
@@ -2128,11 +2258,18 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   return (
     <div>
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
-          <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{contacts.length}</div>
-          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>Total Contacts</div>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+        {[
+          { label: 'Total Contacts', value: contacts.length, color: '#1a1a1a' },
+          { label: 'Invited to Membership', value: contacts.filter(c => c.is_invited).length, color: '#3B6B2F' },
+          { label: 'Has Car Info', value: contacts.filter(c => c.car_year || c.car_model).length, color: '#8A6535' },
+          { label: 'With Email', value: contacts.filter(c => c.email).length, color: '#1a1a1a' },
+        ].map(s => (
+          <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
+            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>{s.label}</div>
+          </div>
+        ))}
       </div>
 
       {selected.size > 0 && (
@@ -2140,7 +2277,15 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
           <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
           <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Export CSV</button>
           <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
-          <button onClick={deleteSelected} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: '0.5px solid rgba(123,32,50,0.3)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Remove</button>
+          {deleteSelectedConfirm ? (
+            <>
+              <span style={{ fontSize: '11px', color: '#7B2032' }}>Remove {selected.size} contact{selected.size > 1 ? 's' : ''}?</span>
+              <GhostBtn small onClick={deleteSelected}>Confirm</GhostBtn>
+              <GhostBtn small onClick={() => setDeleteSelectedConfirm(false)}>Cancel</GhostBtn>
+            </>
+          ) : (
+            <button onClick={() => setDeleteSelectedConfirm(true)} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: '0.5px solid rgba(123,32,50,0.3)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Remove</button>
+          )}
           <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
         </div>
       )}
@@ -2373,17 +2518,7 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                       {contactInviteStatus[c.contact_id] === 'sending' ? '…' : typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? 'Error' : 'Invite'}
                     </button>
                   )}
-                  <button
-                    onClick={() => downloadVCard(c)}
-                    title="Save to Contacts (.vcf)"
-                    style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '3px', padding: '0.28rem 0.45rem', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#666' }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor = '#c5a882'}
-                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)'}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                    </svg>
-                  </button>
+                  <VCardBtn onClick={() => downloadVCard(c)} />
                 </div>
               </div>
               )}
@@ -2592,9 +2727,19 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
 
                   {/* Action row */}
                   {editingContact !== c.contact_id && (
-                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <GhostBtn onClick={() => startEditContact(c)} small>Edit</GhostBtn>
-                      <DangerBtn onClick={() => removeContact(c.contact_id)} small>Remove</DangerBtn>
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <GhostBtn onClick={() => startEditContact(c)} small>Edit</GhostBtn>
+                        <DangerBtn small onClick={() => setRemoveContactConfirm(c.contact_id)}>Remove</DangerBtn>
+                      </div>
+                      {removeContactConfirm === c.contact_id && (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', color: '#7B2032' }}>Remove this contact?</span>
+                          <GhostBtn small onClick={() => removeContact(c.contact_id)}>Confirm</GhostBtn>
+                          <GhostBtn small onClick={() => { setRemoveContactConfirm(null); setRemoveContactError(null) }}>Cancel</GhostBtn>
+                          {removeContactError && <Err msg={removeContactError} />}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2832,14 +2977,13 @@ function CarsTab({ isMobile }) {
 
   return (
     <div>
-      <div style={{ fontSize: '11px', color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>
-        {totalBrands} brand{totalBrands !== 1 ? 's' : ''} represented
-      </div>
-
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
         <>
+          <div style={{ fontSize: '11px', color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>
+            {totalBrands} brand{totalBrands !== 1 ? 's' : ''} represented
+          </div>
           {sortedBrands.map(brand => (
             <div key={brand} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', marginBottom: '1rem' }}>
               <div style={{ padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -3055,7 +3199,7 @@ function BirthdayCalendar({ people, onPersonClick }) {
           const isToday  = isThisMonth && d === todayDay
           return (
             <div key={i} title={hasBday ? birthdayMap[d].map(p => p.name.split(' ')[0]).join(', ') : undefined}
-              onClick={hasBday ? () => birthdayMap[d].forEach(p => onPersonClick(p)) : undefined}
+              onClick={hasBday ? () => { if (birthdayMap[d]?.[0]) onPersonClick(birthdayMap[d][0]) } : undefined}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: hasBday ? 'pointer' : 'default', gap: '2px' }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -3082,6 +3226,8 @@ function ToolsTab() {
   const [hcRuns, setHcRuns]     = useState([])   // last 4 workflow run objects
   const hcTimer = useRef(null)
   const refreshTimer = useRef(null)
+  const [importRunning, setImportRunning] = useState(false)
+  const [importResult, setImportResult] = useState(null)
 
   useEffect(() => {
     fetchRuns()
@@ -3107,6 +3253,15 @@ function ToolsTab() {
       setHcStatus('error')
     }
     hcTimer.current = setTimeout(() => setHcStatus(null), 4000)
+  }
+
+  async function runImport() {
+    setImportRunning(true)
+    setImportResult(null)
+    const res = await fetch('/api/admin/import-cc', { method: 'POST' })
+    const d = await res.json().catch(() => ({ error: 'Invalid response' }))
+    setImportResult(d)
+    setImportRunning(false)
   }
 
   function dotColor(run) {
@@ -3135,6 +3290,16 @@ function ToolsTab() {
   return (
     <div style={{ padding: 'clamp(1.25rem,4vw,2.5rem)', maxWidth: '680px' }}>
       <div style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', marginBottom: '2rem' }}>Tools</div>
+
+      {/* Legacy Import */}
+      <div style={{ marginTop: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Legacy Import</div>
+        <div style={{ fontSize: '12px', color: '#666', marginBottom: '1rem', lineHeight: '1.6' }}>
+          Import legacy Canvas Routes attendees into the applications table. This endpoint is gated by the <code>IMPORT_CC_ENABLED</code> environment variable.
+        </div>
+        <GhostBtn small onClick={runImport} disabled={importRunning}>{importRunning ? 'Importing…' : 'Run Import'}</GhostBtn>
+        {importResult && <div style={{ marginTop: '0.75rem', fontSize: '12px', color: importResult.error ? '#7B2032' : '#3B6B2F' }}>{importResult.error || importResult.message || JSON.stringify(importResult)}</div>}
+      </div>
 
       {/* Site Health Check */}
       <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
@@ -3186,7 +3351,7 @@ function ToolsTab() {
   )
 }
 
-export default function AdminPage() {
+function AdminPageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const rawTab = searchParams.get('tab')
@@ -3405,5 +3570,13 @@ export default function AdminPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>}>
+      <AdminPageInner />
+    </Suspense>
   )
 }
