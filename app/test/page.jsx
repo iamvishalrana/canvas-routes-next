@@ -27,9 +27,8 @@ export default function TestPage() {
   const personRef = useRef(null)
   const armRef    = useRef(null)
 
-  // Per-character SVG refs
+  // Per-character SVG refs (stroke-dashoffset drawing, no clip paths)
   const charRefs = useRef(Array.from({ length: N_CHARS }, () => null))
-  const clipRefs = useRef(Array.from({ length: N_CHARS }, () => null))
 
   const cursorCarRef      = useRef(null)
   const cursorCarInnerRef = useRef(null)
@@ -96,14 +95,15 @@ export default function TestPage() {
     }
     if (armRef.current) armRef.current.classList.remove('arm-painting')
 
-    // Hide all characters (collapse clip rects to zero height)
-    clipRefs.current.forEach(el => { if (el) el.setAttribute('height', '0') })
+    // Reset each character: hidden stroke, no fill
     charRefs.current.forEach(el => {
-      if (el) {
-        el.setAttribute('font-size', String(fontSize))
-        el.setAttribute('x', '0')
-        el.setAttribute('y', '0')
-      }
+      if (!el) return
+      el.setAttribute('font-size', String(fontSize))
+      el.setAttribute('x', '0')
+      el.setAttribute('y', '0')
+      el.style.strokeDasharray  = '10000'
+      el.style.strokeDashoffset = '10000'
+      el.style.fillOpacity      = '0'
     })
 
     // ── Phase 1: car drives in ─────────────────────────────────────────────
@@ -155,12 +155,12 @@ export default function TestPage() {
       }))
     }
 
-    // ── Phase 3: paint each letter ─────────────────────────────────────────
+    // ── Phase 3: draw each letter with stroke-dashoffset ──────────────────
     async function paintLetters() {
       try { await document.fonts.load(`700 ${fontSize}px Caveat`) } catch {}
       if (cancelled) return
 
-      // Measure character widths via canvas (same font as SVG text)
+      // Measure character widths (canvas uses same font as SVG)
       const mc  = document.createElement('canvas')
       const ctx = mc.getContext('2d')
       ctx.font  = `700 ${fontSize}px Caveat`
@@ -173,62 +173,85 @@ export default function TestPage() {
         return pos
       })
 
-      // Wire up each clip rect and char text position
-      const clipTop = baseline - Math.round(fontSize * 1.15) // above cap height
-      const clipH   = Math.round(fontSize * 1.55)            // cap + full descender
-
-      charData.forEach(({ x, w }, i) => {
-        const cr = clipRefs.current[i]
-        if (cr) {
-          cr.setAttribute('x',      String(x - 4))
-          cr.setAttribute('y',      String(clipTop))
-          cr.setAttribute('width',  String(w + 8))
-          cr.setAttribute('height', '0')
-        }
-        const tr = charRefs.current[i]
-        if (tr) {
-          tr.setAttribute('x', String(x))
-          tr.setAttribute('y', String(baseline))
+      // Position each text element
+      charData.forEach(({ x }, i) => {
+        const el = charRefs.current[i]
+        if (el) {
+          el.setAttribute('x', String(x))
+          el.setAttribute('y', String(baseline))
         }
       })
 
       let idx = 0
+
       function paintNext() {
         if (cancelled || idx >= N_CHARS) {
           if (!cancelled) onPaintingDone()
           return
         }
+
         const { x, w } = charData[idx]
+        const el = charRefs.current[idx]
+        if (!el) { idx++; paintNext(); return }
 
-        // Move person to stand just left of this character (brush tip reaches the letter)
+        // Estimate stroke outline path length from character metrics.
+        // Caveat glyphs: rough empirical formula gives values close to getTotalLength()
+        // without requiring SVG path conversion.
+        const pathEst = Math.max(Math.ceil(w * 5), Math.ceil(fontSize * 2))
+        // Duration: each path-unit takes ~2.2 ms — gives 400–900 ms per letter
+        const duration = Math.round(pathEst * 2.2)
+
+        // Load this character's dasharray with its estimated path length so the
+        // full animation duration is spent visibly drawing, not holding still.
+        el.style.strokeDasharray  = String(pathEst)
+        el.style.strokeDashoffset = String(pathEst)
+        el.style.fillOpacity      = '0'
+
+        // Person starts at left edge of letter and sweeps across while drawing
+        const sweepStart = x - 14
+        const sweepEnd   = x + Math.round(w * 0.8) - 14
+
+        // Snap person to start (no CSS transition — drawing starts immediately)
         if (personRef.current) {
-          personRef.current.style.transition = 'transform 0.18s linear'
-          personRef.current.style.transform  = `translate(${x - 14}px, ${doorY}px)`
+          personRef.current.style.transition = 'none'
+          personRef.current.style.transform  = `translate(${sweepStart}px, ${doorY}px)`
         }
 
-        const cr = clipRefs.current[idx]
-        if (!cr) { idx++; paintNext(); return }
-
-        // Duration scales with character width (wider = more strokes needed)
-        const dur = Math.round(180 + w * 1.4)
-        const t0  = performance.now()
-
-        function revealFrame(now) {
+        // One extra rAF so the snap position commits before the draw loop begins
+        requestAnimationFrame(() => {
           if (cancelled) return
-          const p = Math.min((now - t0) / dur, 1)
-          // Ease-out so it slows as the letter completes
-          const eased = 1 - Math.pow(1 - p, 2)
-          cr.setAttribute('height', String(Math.round(clipH * eased)))
-          if (p < 1) {
-            paintRafRef.current = requestAnimationFrame(revealFrame)
-          } else {
-            cr.setAttribute('height', String(clipH + 20)) // buffer for descenders
-            idx++
-            track(setTimeout(paintNext, 55))
+          const t0 = performance.now()
+
+          function drawFrame(now) {
+            if (cancelled) return
+            const p = Math.min((now - t0) / duration, 1)
+
+            // Unroll the stroke path: dashoffset shrinks from pathEst → 0
+            // The stroke tip visibly "draws" the glyph outline
+            el.style.strokeDashoffset = String(Math.max(0, pathEst * (1 - p)))
+
+            // Fill fades in once the stroke is ~40% drawn, completing at 100%
+            el.style.fillOpacity = String(Math.max(0, (p - 0.4) / 0.6).toFixed(3))
+
+            // Person's brush tip tracks the advancing stroke across the letter
+            if (personRef.current) {
+              const px = sweepStart + (sweepEnd - sweepStart) * p
+              personRef.current.style.transform = `translate(${px}px, ${doorY}px)`
+            }
+
+            if (p < 1) {
+              paintRafRef.current = requestAnimationFrame(drawFrame)
+            } else {
+              el.style.strokeDashoffset = '0'
+              el.style.fillOpacity      = '1'
+              idx++
+              track(setTimeout(paintNext, 120)) // 120 ms breath between letters
+            }
           }
-        }
-        paintRafRef.current = requestAnimationFrame(revealFrame)
+          paintRafRef.current = requestAnimationFrame(drawFrame)
+        })
       }
+
       paintNext()
     }
 
@@ -493,41 +516,34 @@ export default function TestPage() {
           <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Back</Link>
         </nav>
 
-        {/* ── Per-character SVG text with clip-based reveal ─────────────────── */}
+        {/* ── Per-character SVG — stroke-dashoffset draws each glyph outline ── */}
         {!isMobile && (
           <svg
             style={{
-              position: 'absolute', inset: 0,
-              width: '100%', height: '100%',
-              overflow: 'visible',
+              position:      'absolute', inset: 0,
+              width:         '100%', height: '100%',
+              overflow:      'visible',
               pointerEvents: 'none',
-              zIndex: 4,
+              zIndex:        4,
             }}
           >
-            <defs>
-              {CHARS.map((_, i) => (
-                <clipPath key={i} id={`cc-${i}`}>
-                  {/* height starts at 0; JS grows it top-to-bottom as letter is painted */}
-                  <rect
-                    ref={el => { clipRefs.current[i] = el }}
-                    x="0" y="0" width="200" height="0"
-                  />
-                </clipPath>
-              ))}
-            </defs>
             {CHARS.map((char, i) => (
-              <g key={i} clipPath={`url(#cc-${i})`}>
-                <text
-                  ref={el => { charRefs.current[i] = el }}
-                  x="0" y="0"
-                  fontFamily="'Caveat', cursive"
-                  fontWeight="700"
-                  fontSize="100"
-                  fill="#c5a882"
-                >
-                  {char}
-                </text>
-              </g>
+              <text
+                key={i}
+                ref={el => { charRefs.current[i] = el }}
+                x="0" y="0"
+                fontFamily="'Caveat', cursive"
+                fontWeight="700"
+                fontSize="100"
+                fill="#c5a882"
+                stroke="#c5a882"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ strokeDasharray: 10000, strokeDashoffset: 10000, fillOpacity: 0 }}
+              >
+                {char}
+              </text>
             ))}
           </svg>
         )}
