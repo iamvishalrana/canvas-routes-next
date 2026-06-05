@@ -1,6 +1,7 @@
 import { captureException, captureMessage } from '../../../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
+import { checkRateLimit } from '../../../../../../lib/rateLimit'
 
 function h(str) {
   return String(str ?? '')
@@ -138,6 +139,8 @@ function inviteHtml({ firstName, tier, actionLink }) {
 
 export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
+  if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
 
