@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { getConsent, setConsent as saveConsent, clearConsent } from '../lib/consent'
@@ -44,6 +44,7 @@ function denyConsent() {
 export default function CookieBanner() {
   const pathname = usePathname()
   const [consent, setConsentState] = useState('loading')
+  const bannerRef = useRef(null)
 
   useEffect(() => {
     setConsentState(getConsent())
@@ -67,6 +68,19 @@ export default function CookieBanner() {
     return () => window.removeEventListener('cookieConsentReset', handleReset)
   }, [])
 
+  // Push body down by the banner height so the footer is never covered
+  const isHidden = consent === 'loading' || consent !== null
+    || pathname.startsWith('/members') || pathname.startsWith('/admin')
+  useEffect(() => {
+    if (isHidden) { document.body.style.paddingBottom = ''; return }
+    function sync() {
+      if (bannerRef.current) document.body.style.paddingBottom = `${bannerRef.current.offsetHeight}px`
+    }
+    sync()
+    window.addEventListener('resize', sync)
+    return () => { window.removeEventListener('resize', sync); document.body.style.paddingBottom = '' }
+  }, [isHidden])
+
   function handleAccept() {
     saveConsent('accepted')
     setConsentState('accepted')
@@ -87,7 +101,7 @@ export default function CookieBanner() {
   if (pathname.startsWith('/members') || pathname.startsWith('/admin')) return null
 
   return (
-    <div className="cookie-banner">
+    <div ref={bannerRef} className="cookie-banner">
       <p style={{margin:0,fontSize:"12px",color:"#555",lineHeight:"1.7",maxWidth:"680px"}}>
         We use cookies to understand how our site is used and to show more relevant ads. See our{' '}
         <Link href="/privacy" style={{color:"#555",textDecoration:"underline"}}>Privacy Policy</Link>.
