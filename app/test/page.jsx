@@ -14,21 +14,21 @@ export default function TestPage() {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 768
   )
-  const [phase, setPhase] = useState('idle')
+  const [phase, setPhase]       = useState('idle')
+  const [replayKey, setReplayKey] = useState(0)
 
   // ── Animation car refs ────────────────────────────────────────────────────
   const animCarRef      = useRef(null)
   const animCarInnerRef = useRef(null)
   const animRafRef      = useRef(null)
+  const paintRafRef     = useRef(null)
+  const timersRef       = useRef([])
   const carXRef         = useRef(-120)
-  const carYRef         = useRef(0)
 
-  // ── Person refs ───────────────────────────────────────────────────────────
-  const personRef    = useRef(null)
-  const armRef       = useRef(null)
-
-  // ── Text ref ──────────────────────────────────────────────────────────────
-  const textRef = useRef(null)
+  // ── Person + text refs ────────────────────────────────────────────────────
+  const personRef = useRef(null)
+  const armRef    = useRef(null)
+  const textRef   = useRef(null)
 
   // ── Cursor car refs ───────────────────────────────────────────────────────
   const cursorCarRef      = useRef(null)
@@ -61,32 +61,60 @@ export default function TestPage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // ── Main animation sequence ───────────────────────────────────────────────
+  // ── Main animation (re-runs on replay) ───────────────────────────────────
   useEffect(() => {
     if (typeof window === 'undefined' || window.innerWidth < 768) return
 
-    const vw         = window.innerWidth
-    const vh         = window.innerHeight
-    const carStopX   = Math.round(vw * 0.28)
-    const carY       = Math.round(vh * 0.52)
-    carYRef.current  = carY
-    carXRef.current  = -120
-
-    // Position car offscreen
-    if (animCarRef.current) {
-      animCarRef.current.style.transform = `translate(${carXRef.current}px, ${carY}px)`
-      animCarRef.current.style.opacity   = '1'
-    }
-
-    // Position the text starting just right of where person will stand
+    const vw           = window.innerWidth
+    const vh           = window.innerHeight
+    const carStopX     = Math.round(vw * 0.28)
+    const carY         = Math.round(vh * 0.52)
+    const doorX        = carStopX + 46
+    const doorY        = carY - 28
     const personStandX = carStopX + 88
+
+    // Flag to safely abort rAF callbacks that escape cleanup
+    let cancelled = false
+
+    function track(id) { timersRef.current.push(id); return id }
+
+    // ── Reset DOM for clean replay ──────────────────────────────────────
+    setPhase('idle')
+    carXRef.current = -120
+
+    if (animCarRef.current) {
+      animCarRef.current.style.transition = 'none'
+      animCarRef.current.style.transform  = `translate(-120px, ${carY}px)`
+      animCarRef.current.style.opacity    = '0'
+    }
     if (textRef.current) {
+      textRef.current.style.transition = 'none'
+      textRef.current.classList.remove('revealed')
       textRef.current.style.left      = `${personStandX + 18}px`
       textRef.current.style.top       = `${carY}px`
       textRef.current.style.transform = 'translateY(-52%)'
     }
+    if (personRef.current) {
+      personRef.current.style.transition = 'none'
+      personRef.current.style.opacity    = '0'
+      personRef.current.style.transform  = `translate(${doorX}px, ${doorY}px)`
+    }
+    if (armRef.current) armRef.current.classList.remove('arm-painting')
 
+    // Short delay lets the 'none' transitions commit before animation begins
+    track(setTimeout(() => {
+      if (cancelled) return
+      if (animCarRef.current) {
+        animCarRef.current.style.transition = ''
+        animCarRef.current.style.opacity    = '1'
+      }
+      setPhase('driving-in')
+      animRafRef.current = requestAnimationFrame(driveIn)
+    }, 80))
+
+    // ── Phase 1: car drives in ──────────────────────────────────────────
     function driveIn() {
+      if (cancelled) return
       const dx    = carStopX - carXRef.current
       const speed = Math.min(10, Math.abs(dx) * 0.12 + 3)
       if (Math.abs(dx) < 2) {
@@ -100,54 +128,96 @@ export default function TestPage() {
       animRafRef.current = requestAnimationFrame(driveIn)
     }
 
+    // ── Phase 2: person steps out ───────────────────────────────────────
     function onCarArrived() {
       setPhase('person-exit')
-      const doorX = carStopX + 46
-      const doorY = carY - 28
 
-      // Place person at car door (still hidden)
       if (personRef.current) {
         personRef.current.style.transition = 'none'
         personRef.current.style.transform  = `translate(${doorX}px, ${doorY}px)`
         personRef.current.style.opacity    = '0'
       }
 
-      // Two rAFs so position is committed before opacity + walk transition kick in
+      // Two rAFs: commit position, then trigger fade-in + walk transition
       requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (cancelled) return
         if (!personRef.current) return
         personRef.current.style.transition = 'transform 0.85s cubic-bezier(0.4,0,0.2,1), opacity 0.3s'
         personRef.current.style.opacity    = '1'
         personRef.current.style.transform  = `translate(${personStandX}px, ${doorY}px)`
 
-        setTimeout(() => {
+        // Wait for walk-out to finish, then start painting
+        track(setTimeout(() => {
+          if (cancelled) return
+
+          // Measure text width now — font is loaded by this point
+          const measuredW = textRef.current?.getBoundingClientRect().width ?? 560
+          const textWidth = Math.max(measuredW, 300)
+
           setPhase('painting')
           if (armRef.current) armRef.current.classList.add('arm-painting')
-          if (textRef.current) textRef.current.classList.add('revealed')
 
-          setTimeout(() => {
-            if (armRef.current) armRef.current.classList.remove('arm-painting')
-            setPhase('person-enter')
+          // Re-enable CSS transition so clip-path reveal animates
+          if (textRef.current) {
+            textRef.current.style.transition = ''
+            textRef.current.classList.add('revealed')
+          }
 
+          // Person sweeps from left edge to right edge of text, synced to clip reveal
+          const paintDuration = 3200
+          const paintStart    = performance.now()
+          const sweepStartX   = personStandX
+          const sweepEndX     = personStandX + textWidth
+
+          function paintFrame(now) {
+            if (cancelled) return
+            const progress = Math.min((now - paintStart) / paintDuration, 1)
+            // Ease-in-out to match the clip-path transition feel
+            const ease = progress < 0.5
+              ? 2 * progress * progress
+              : 1 - Math.pow(-2 * progress + 2, 2) / 2
             if (personRef.current) {
-              personRef.current.style.transition = 'transform 0.85s cubic-bezier(0.4,0,0.2,1), opacity 0.35s'
-              personRef.current.style.transform  = `translate(${doorX}px, ${doorY}px)`
+              const x = sweepStartX + (sweepEndX - sweepStartX) * ease
+              personRef.current.style.transform = `translate(${x}px, ${doorY}px)`
             }
-
-            setTimeout(() => {
-              if (personRef.current) personRef.current.style.opacity = '0'
-              setTimeout(() => {
-                setPhase('driving-out')
-                startDriveOut()
-              }, 320)
-            }, 870)
-          }, 3400)
-        }, 950)
+            if (progress < 1) {
+              paintRafRef.current = requestAnimationFrame(paintFrame)
+            } else {
+              onPaintingDone(doorX, doorY)
+            }
+          }
+          paintRafRef.current = requestAnimationFrame(paintFrame)
+        }, 950))
       }))
     }
 
+    // ── Phase 3: person walks back ──────────────────────────────────────
+    function onPaintingDone(backX, backY) {
+      if (cancelled) return
+      if (armRef.current) armRef.current.classList.remove('arm-painting')
+      setPhase('person-enter')
+
+      if (personRef.current) {
+        personRef.current.style.transition = 'transform 1s cubic-bezier(0.55,0,0.45,1), opacity 0.35s'
+        personRef.current.style.transform  = `translate(${backX}px, ${backY}px)`
+      }
+
+      track(setTimeout(() => {
+        if (cancelled) return
+        if (personRef.current) personRef.current.style.opacity = '0'
+        track(setTimeout(() => {
+          if (cancelled) return
+          setPhase('driving-out')
+          startDriveOut()
+        }, 320))
+      }, 1020))
+    }
+
+    // ── Phase 4: car drives off right ───────────────────────────────────
     function startDriveOut() {
       let speed = 3
       function driveOut() {
+        if (cancelled) return
         carXRef.current += speed
         speed = Math.min(speed + 0.25, 14)
         if (animCarRef.current) animCarRef.current.style.transform = `translate(${carXRef.current}px, ${carY}px)`
@@ -161,16 +231,20 @@ export default function TestPage() {
       animRafRef.current = requestAnimationFrame(driveOut)
     }
 
-    const startTimer = setTimeout(() => {
-      setPhase('driving-in')
-      animRafRef.current = requestAnimationFrame(driveIn)
-    }, 800)
-
     return () => {
-      clearTimeout(startTimer)
+      cancelled = true
       cancelAnimationFrame(animRafRef.current)
+      cancelAnimationFrame(paintRafRef.current)
+      timersRef.current.forEach(clearTimeout)
+      timersRef.current = []
+      // Instantly reset text clip for next replay (no transition)
+      if (textRef.current) {
+        textRef.current.style.transition = 'none'
+        textRef.current.classList.remove('revealed')
+      }
+      if (armRef.current) armRef.current.classList.remove('arm-painting')
     }
-  }, [])
+  }, [replayKey])
 
   // ── Cursor car effect ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -312,13 +386,13 @@ export default function TestPage() {
   }, [])
 
   const phaseLabel = {
-    idle: '—',
-    'driving-in': 'Arriving…',
-    'person-exit': 'Getting out…',
-    painting: 'Painting…',
+    idle:           '—',
+    'driving-in':   'Arriving…',
+    'person-exit':  'Getting out…',
+    painting:       'Painting…',
     'person-enter': 'Getting back in…',
-    'driving-out': 'Leaving…',
-    done: 'Move cursor · stop to donut',
+    'driving-out':  'Leaving…',
+    done:           'Move cursor · stop to donut',
   }[phase]
 
   return (
@@ -328,31 +402,34 @@ export default function TestPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
 
+        /* Arm: transform-box + origin fix so it pivots at the shoulder joint */
         @keyframes paintStroke {
-          0%   { transform: rotate(-18deg); }
-          50%  { transform: rotate(14deg);  }
-          100% { transform: rotate(-18deg); }
-        }
-        @keyframes legSwing {
-          0%,100% { transform: rotate(0deg);   }
-          50%     { transform: rotate(12deg);  }
+          0%   { transform: rotate(-28deg); }
+          20%  { transform: rotate(8deg);   }
+          40%  { transform: rotate(-20deg); }
+          60%  { transform: rotate(12deg);  }
+          80%  { transform: rotate(-24deg); }
+          100% { transform: rotate(-28deg); }
         }
         .arm-painting {
-          transform-origin: 18px 16px;
-          animation: paintStroke 0.52s ease-in-out infinite;
+          transform-box:    fill-box;
+          transform-origin: left bottom;
+          animation: paintStroke 0.48s ease-in-out infinite;
         }
+
         .membership-text {
-          position: absolute;
-          clip-path: inset(0 100% 0 0);
-          transition: clip-path 3.2s cubic-bezier(0.22, 0.8, 0.36, 1);
+          position:    absolute;
+          clip-path:   inset(0 100% 0 0);
+          transition:  clip-path 3.2s cubic-bezier(0.22, 0.8, 0.36, 1);
           font-family: 'Caveat', cursive;
           font-weight: 700;
-          color: #c5a882;
+          color:       #c5a882;
           white-space: nowrap;
           pointer-events: none;
           user-select: none;
           line-height: 1;
-          font-size: clamp(3.5rem, 6.5vw, 7rem);
+          font-size:   clamp(3.5rem, 6.5vw, 7rem);
+          z-index:     4;
         }
         .membership-text.revealed {
           clip-path: inset(0 0% 0 0);
@@ -415,7 +492,7 @@ export default function TestPage() {
           <Link href="/" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Back</Link>
         </nav>
 
-        {/* "Membership" painted text */}
+        {/* "Membership" painted text — position set by JS */}
         <div ref={textRef} className="membership-text">
           Membership
         </div>
@@ -427,14 +504,13 @@ export default function TestPage() {
             transform: 'translate(-50%, -50%)',
             fontFamily: "'Caveat', cursive",
             fontSize: '3.2rem', fontWeight: 700,
-            color: '#c5a882', whiteSpace: 'nowrap',
-            lineHeight: 1,
+            color: '#c5a882', whiteSpace: 'nowrap', lineHeight: 1,
           }}>
             Membership
           </div>
         )}
 
-        {/* Animation car (larger, 80×37) */}
+        {/* Animation car */}
         {!isMobile && (
           <div ref={animCarRef} style={{
             position: 'absolute', top: 0, left: 0,
@@ -463,58 +539,81 @@ export default function TestPage() {
           </div>
         )}
 
-        {/* ── Little person ──────────────────────────────────────────────── */}
+        {/* ── Little person ──────────────────────────────────────────────────── */}
         {!isMobile && (
           <div
             ref={personRef}
             style={{
-              position: 'absolute', top: 0, left: 0,
-              opacity: 0,
+              position:      'absolute',
+              top:           0,
+              left:          0,
+              opacity:       0,
               pointerEvents: 'none',
-              zIndex: 7,
-              willChange: 'transform, opacity',
+              zIndex:        7,
+              willChange:    'transform, opacity',
             }}
           >
-            {/*
-              Person is drawn facing right (toward the text).
-              viewBox 0 0 36 56 — head at top, feet at bottom.
-              Right arm is raised toward the canvas.
-            */}
             <svg viewBox="0 0 36 56" width="32" height="50" style={{ display: 'block', overflow: 'visible' }}>
               {/* Shadow */}
-              <ellipse cx="16" cy="54" rx="10" ry="3" fill="rgba(0,0,0,0.25)" />
+              <ellipse cx="16" cy="54" rx="10" ry="3" fill="rgba(0,0,0,0.22)" />
               {/* Head */}
               <circle cx="14" cy="7" r="6.5" fill="#c5a882" />
               {/* Body */}
               <rect x="9" y="13" width="10" height="17" rx="4" fill="#c5a882" />
-              {/* Left arm — hanging */}
+              {/* Left arm — hanging naturally */}
               <line x1="9"  y1="17" x2="2"  y2="27" stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
-              {/* Right arm + brush — raised toward text */}
-              <g ref={armRef} style={{ transformOrigin: '19px 16px' }}>
+              {/* Right arm + brush — raised toward canvas, animates when painting */}
+              <g ref={armRef}>
+                {/* Upper arm */}
                 <line x1="19" y1="16" x2="28" y2="9"  stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
                 {/* Brush handle */}
                 <line x1="27" y1="9"  x2="33" y2="4"  stroke="#7a5a1a" strokeWidth="2.2" strokeLinecap="round" />
-                {/* Brush bristles */}
-                <ellipse cx="34" cy="2.5" rx="2.2" ry="3.8" fill="#c5a882" transform="rotate(-38 34 2.5)" />
-                {/* Paint dab on bristles */}
-                <ellipse cx="35" cy="1"   rx="1.4" ry="2.2" fill="rgba(197,168,130,0.55)" transform="rotate(-38 35 1)" />
+                {/* Brush head */}
+                <ellipse cx="33.5" cy="2.5" rx="2.2" ry="3.5" fill="#c5a882" transform="rotate(-38 33.5 2.5)" />
+                {/* Paint sheen on bristles */}
+                <ellipse cx="34.5" cy="1"   rx="1.2" ry="2"   fill="rgba(255,255,255,0.25)" transform="rotate(-38 34.5 1)" />
               </g>
               {/* Left leg */}
               <line x1="12" y1="30" x2="8"  y2="48" stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
               {/* Right leg */}
               <line x1="16" y1="30" x2="20" y2="48" stroke="#c5a882" strokeWidth="3"   strokeLinecap="round" />
               {/* Shoes */}
-              <ellipse cx="7"  cy="49" rx="4" ry="2.2" fill="#7a5a1a" />
-              <ellipse cx="21" cy="49" rx="4" ry="2.2" fill="#7a5a1a" />
+              <ellipse cx="7"  cy="49" rx="4.2" ry="2.2" fill="#7a5a1a" />
+              <ellipse cx="21" cy="49" rx="4.2" ry="2.2" fill="#7a5a1a" />
             </svg>
           </div>
         )}
 
-        {/* Phase label (bottom center) */}
+        {/* Phase label */}
         {!isMobile && phase !== 'idle' && phase !== 'done' && (
-          <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', zIndex: 10, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.35)' }}>
+          <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 10, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.35)' }}>
             {phaseLabel}
           </div>
+        )}
+
+        {/* Replay button — appears after animation completes */}
+        {!isMobile && phase === 'done' && (
+          <button
+            onClick={() => setReplayKey(k => k + 1)}
+            style={{
+              position:        'absolute',
+              bottom:          '2.5rem',
+              left:            '50%',
+              transform:       'translateX(-50%)',
+              zIndex:          10,
+              background:      'transparent',
+              border:          '0.5px solid rgba(197,168,130,0.4)',
+              color:           'rgba(197,168,130,0.7)',
+              fontSize:        '10px',
+              letterSpacing:   '0.22em',
+              textTransform:   'uppercase',
+              padding:         '0.5rem 1.5rem',
+              cursor:          'pointer',
+              fontFamily:      'var(--font-inter),sans-serif',
+            }}
+          >
+            Replay ↺
+          </button>
         )}
       </div>
 
