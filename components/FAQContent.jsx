@@ -239,7 +239,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
         transition: 'grid-template-rows 0.28s ease',
       }}>
         <div style={{ overflow: 'hidden' }}>
-          <div style={{ paddingBottom: '1.6rem', paddingRight: '2.5rem' }}>
+          <div style={{ paddingBottom: '1.6rem', paddingRight: 'clamp(1.25rem,4vw,2.5rem)' }}>
             <p style={{
               fontSize: '13.5px',
               color: '#4d4d4d',
@@ -977,7 +977,7 @@ export default function FAQContent() {
           SECTIONS.map((section, si) => (
             <div key={si} ref={el => sectionRefsArr.current[si] = el} style={{ marginBottom: '4rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-                <div style={{ fontFamily: 'var(--font-playfair),serif', fontSize: 'clamp(1.25rem,4vw,1.5rem)', fontWeight: '400', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1, whiteSpace: 'nowrap' }}>{section.title}</div>
+                <div style={{ fontFamily: 'var(--font-playfair),serif', fontSize: 'clamp(1.25rem,4vw,1.5rem)', fontWeight: '400', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1 }}>{section.title}</div>
                 <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.3)' }} />
               </div>
               {section.items.map((item, ii) => (
@@ -1017,14 +1017,14 @@ export default function FAQContent() {
           <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none' }}>info@canvasroutes.com</a>
         </p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-          <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', border: '0.5px solid rgba(197,168,130,0.3)', color: 'rgba(245,241,236,0.6)', textDecoration: 'none', transition: 'border-color 0.18s, color 0.18s' }}
+          <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px', border: '0.5px solid rgba(197,168,130,0.3)', color: 'rgba(245,241,236,0.6)', textDecoration: 'none', transition: 'border-color 0.18s, color 0.18s' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(197,168,130,0.7)'; e.currentTarget.style.color = '#c5a882' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(197,168,130,0.3)'; e.currentTarget.style.color = 'rgba(245,241,236,0.6)' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
             </svg>
           </a>
-          <a href="https://www.facebook.com/share/1B8GXiPHUe/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', border: '0.5px solid rgba(197,168,130,0.3)', color: 'rgba(245,241,236,0.6)', textDecoration: 'none', transition: 'border-color 0.18s, color 0.18s' }}
+          <a href="https://www.facebook.com/share/1B8GXiPHUe/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px', border: '0.5px solid rgba(197,168,130,0.3)', color: 'rgba(245,241,236,0.6)', textDecoration: 'none', transition: 'border-color 0.18s, color 0.18s' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(197,168,130,0.7)'; e.currentTarget.style.color = '#c5a882' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(197,168,130,0.3)'; e.currentTarget.style.color = 'rgba(245,241,236,0.6)' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
