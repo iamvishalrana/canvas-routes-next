@@ -190,7 +190,17 @@ export default function MembershipContent() {
           .mem-photo-break img { object-position: center 20% !important; }
         }
         @media(max-width:480px){
-          .mem-perks { grid-template-columns: 1fr !important; }
+          .mem-perks    { grid-template-columns: 1fr !important; }
+          /* DOB row: equal thirds so Day column never gets crushed */
+          .mem-dob-grid { grid-template-columns: repeat(3,1fr) !important; }
+          /* Car year+make: stack so Year select has full width */
+          .mem-car-grid { grid-template-columns: 1fr !important; }
+          /* Tier buttons: stack on very small screens */
+          .mem-tier-btns { grid-template-columns: 1fr !important; }
+        }
+        /* Prevent iOS Safari from zooming on input focus (font-size < 16px triggers zoom) */
+        @media(max-width:768px){
+          input, select, textarea { font-size: 16px !important; }
         }
       `}</style>
 
@@ -549,7 +559,7 @@ export default function MembershipContent() {
                   <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>
                     Date of birth <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>year optional</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '1px' }}>
+                  <div className="mem-dob-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '1px' }}>
                     <div style={{ position: 'relative' }}>
                       <select value={form.dob_month} onChange={e => set('dob_month', e.target.value)}
                         onFocus={() => setFocusedField('dob_month')} onBlur={() => setFocusedField(null)}
@@ -582,7 +592,7 @@ export default function MembershipContent() {
                 </div>
 
                 {/* Year + Make */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
+                <div className="mem-car-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
                   <div id="mem-field-year">
                     <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year</div>
                     <div style={{ position: 'relative' }}>
@@ -623,7 +633,7 @@ export default function MembershipContent() {
                 {/* Tier */}
                 <div id="mem-field-tier" style={{ marginTop: '1rem' }}>
                   <div style={{ ...LABEL, color: errors.tier ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.75rem' }}>Membership tier</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: errors.tier ? 'rgba(208,96,112,0.3)' : 'rgba(197,168,130,0.1)' }}>
+                  <div className="mem-tier-btns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: errors.tier ? 'rgba(208,96,112,0.3)' : 'rgba(197,168,130,0.1)' }}>
                     {[['Routes Member', '$99'], ['Inner Circle', '$249']].map(([t, price]) => (
                       <button key={t} type="button" onClick={() => set('tier', t)}
                         style={{ padding: '1.1rem 1rem', background: form.tier === t ? '#c5a882' : 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative' }}>

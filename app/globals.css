@@ -81,6 +81,10 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   gap: 5px;
   cursor: pointer;
   padding: 12px;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  align-items: center;
   background: none;
   border: none;
 }
