@@ -145,9 +145,11 @@ function RouteMap({ stops }) {
         </div>
       )}
       {status === 'error' && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0ede8', gap: '0.75rem' }}>
-          <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Map unavailable</span>
-          <a href={`https://www.google.com/maps/d/viewer?mid=1Nqcw4_7P3M3FSEBpdwawyizSd7dY_KA`} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Open route in Google Maps →</a>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0ede8', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? 'Map failed to load — check browser console' : 'Map API key not configured'}
+          </span>
+          <a href="https://www.google.com/maps/d/viewer?mid=1Nqcw4_7P3M3FSEBpdwawyizSd7dY_KA" target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Open route in Google Maps →</a>
         </div>
       )}
     </div>
@@ -196,7 +198,7 @@ export default function DrivePage() {
     return (
       <div style={{ minHeight: '100svh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', boxSizing: 'border-box' }}>
         <div style={{ textAlign: 'center', maxWidth: '320px', width: '100%' }}>
-          <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '180px', marginBottom: '2.5rem' }} />
+          <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '180px', marginBottom: '2.5rem', filter: 'brightness(0) invert(1)' }} />
           <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '22px', marginBottom: '0.4rem' }}>Into the Laurentians</div>
           <div style={{ color: 'rgba(245,241,236,0.4)', fontFamily: 'sans-serif', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '2.5rem' }}>June 7, 2026</div>
           <form onSubmit={submit}>
@@ -242,7 +244,7 @@ export default function DrivePage() {
 
       {/* Header */}
       <div style={{ background: '#0F1E14', padding: '2rem 1.25rem 1.75rem', textAlign: 'center' }}>
-        <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '160px', display: 'block', margin: '0 auto 1.5rem' }} />
+        <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '160px', display: 'block', margin: '0 auto 1.5rem', filter: 'brightness(0) invert(1)' }} />
         <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2' }}>Into the Laurentians</div>
         <div style={{ color: 'rgba(245,241,236,0.5)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem' }}>June 7, 2026</div>
       </div>
