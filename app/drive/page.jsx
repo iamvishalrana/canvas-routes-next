@@ -23,6 +23,7 @@ const REGISTRANTS = [
   { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red' },
   { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '' },
   { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black' },
+  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White' },
 ]
 
 function RouteMap({ stops }) {
