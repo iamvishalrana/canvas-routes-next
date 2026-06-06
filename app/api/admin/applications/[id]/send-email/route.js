@@ -42,10 +42,16 @@ function emailHtml({ subject, body, recipientEmail }) {
               ${textToHtml(body)}
             </td>
           </tr>
+          <!-- Logo footer -->
+          <tr>
+            <td align="center" style="padding:28px 32px 12px;">
+              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="110" style="display:block;width:110px;height:auto;border:0;opacity:0.55;" />
+            </td>
+          </tr>
           <!-- Footer -->
           <tr>
-            <td style="padding:20px 32px 32px;border-top:0.5px solid rgba(0,0,0,0.08);margin-top:8px;">
-              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#bbb;line-height:1.6;">
+            <td style="padding:8px 32px 32px;border-top:0.5px solid rgba(0,0,0,0.08);">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#bbb;line-height:1.6;text-align:center;">
                 Canvas Routes &nbsp;&middot;&nbsp; Montreal, QC &nbsp;&middot;&nbsp;
                 <a href="mailto:info@canvasroutes.com" style="color:#bbb;">info@canvasroutes.com</a>
               </p>

@@ -1497,6 +1497,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
   const [emailSending, setEmailSending] = useState(false)
+  const [emailGenerating, setEmailGenerating] = useState(false)
   const [emailResult, setEmailResult] = useState(null) // { id, success, error }
 
   const loadApps = useCallback(() => {
@@ -1651,6 +1652,24 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
     setEmailBody(body)
     setEmailResult(null)
     setEmailComposerId(a.id)
+  }
+
+  async function generateEmail(appId) {
+    setEmailGenerating(true)
+    setEmailResult(null)
+    try {
+      const res = await fetch(`/api/admin/applications/${appId}/generate-email`, { method: 'POST' })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok && d.body) {
+        setEmailSubject(d.subject || emailSubject)
+        setEmailBody(d.body)
+      } else {
+        setEmailResult({ id: appId, error: d.error || 'Failed to generate email.' })
+      }
+    } catch {
+      setEmailResult({ id: appId, error: 'Failed to generate email.' })
+    }
+    setEmailGenerating(false)
   }
 
   async function sendEmail(appId) {
@@ -2106,7 +2125,16 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                             />
                           </div>
                           <div style={{ marginBottom: '0.75rem' }}>
-                            <L>Body</L>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                              <L style={{ marginBottom: 0 }}>Body</L>
+                              <button
+                                onClick={() => generateEmail(a.id)}
+                                disabled={emailGenerating || emailSending}
+                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '3px 10px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: emailGenerating ? 'default' : 'pointer', color: emailGenerating ? '#bbb' : '#555', display: 'flex', alignItems: 'center', gap: '5px', transition: 'border-color 0.15s' }}
+                              >
+                                {emailGenerating ? '…writing' : '✦ Write with AI'}
+                              </button>
+                            </div>
                             <textarea
                               style={{ ...inp, height: '220px', resize: 'vertical', lineHeight: '1.65' }}
                               value={emailBody}
@@ -2114,7 +2142,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                               placeholder="Email body…"
                             />
                             <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>
-                              Double line breaks become paragraphs. Replace any [brackets] before sending.
+                              Double line breaks become paragraphs. Review and edit before sending.
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

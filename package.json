@@ -12,6 +12,7 @@
     "@playwright/test": "^1.60.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.101.0",
     "@sentry/nextjs": "^10.55.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
