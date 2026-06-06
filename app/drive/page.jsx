@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 const PASSWORD = 'laurentians'
 
 const STOPS = [
-  { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'https://www.google.com/maps?q=45.4305611,-73.6346777', lat: 45.4305611, lng: -73.6346777 },
+  { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'https://maps.app.goo.gl/okpsXCTYa4aoQiis8', lat: 45.4305611, lng: -73.6346777 },
   { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'https://www.google.com/maps?q=45.8957004,-74.1564982', lat: 45.8957004, lng: -74.1564982 },
   { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
   { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365 },
