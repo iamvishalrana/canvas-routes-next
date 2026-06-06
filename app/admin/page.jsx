@@ -1493,6 +1493,11 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [deleteAppConfirm, setDeleteAppConfirm] = useState(null)
   const [deleteAppError, setDeleteAppError] = useState(null)
   const [showFilter, setShowFilter] = useState('all') // 'all' | 'unseen' | 'pending'
+  const [emailComposerId, setEmailComposerId] = useState(null)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailResult, setEmailResult] = useState(null) // { id, success, error }
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -1621,6 +1626,49 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
     })
     setAddingContact(prev => { const n = new Set(prev); n.delete(appId); return n })
     if (res.ok) loadApps()
+  }
+
+  function openEmailComposer(a) {
+    const firstName = (a.name || '').trim().split(' ')[0] || 'there'
+    const { make, model } = parseCarMakeModel(a.car_model)
+    const car = [a.car_year, make, model].filter(Boolean).join(' ')
+    const events = (a.registrations || []).map(r => r.event).filter(Boolean)
+
+    let subject = 'Canvas Routes — You\'re In'
+    if (events.length > 0) subject = `Canvas Routes — ${events[0].split('—')[0].trim()}`
+
+    let body = `Hi ${firstName},\n\n`
+    body += `Your registration has been reviewed and we'd love to have you join us.\n\n`
+    if (car) body += `Looking forward to seeing the ${car} on the road.\n\n`
+    if (a.more?.trim()) {
+      body += `You mentioned: "${a.more.trim()}"\n\n`
+      body += `[Your response here]\n\n`
+    }
+    body += `We'll follow up shortly with payment details and everything you need for the day.\n\n`
+    body += `See you on the road,\nJerry\nCanvas Routes`
+
+    setEmailSubject(subject)
+    setEmailBody(body)
+    setEmailResult(null)
+    setEmailComposerId(a.id)
+  }
+
+  async function sendEmail(appId) {
+    setEmailSending(true)
+    setEmailResult(null)
+    const res = await fetch(`/api/admin/applications/${appId}/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject: emailSubject, body: emailBody }),
+    })
+    const d = await res.json().catch(() => ({}))
+    setEmailSending(false)
+    if (res.ok && !d.error) {
+      setEmailResult({ id: appId, success: true })
+      setTimeout(() => { setEmailComposerId(null); setEmailResult(null) }, 2500)
+    } else {
+      setEmailResult({ id: appId, error: d.error || 'Failed to send.' })
+    }
   }
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -2021,6 +2069,9 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                         ) : (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
                         )}
+                        <GhostBtn small onClick={() => emailComposerId === a.id ? setEmailComposerId(null) : openEmailComposer(a)}>
+                          {emailComposerId === a.id ? 'Cancel Email' : '✉ Send Email'}
+                        </GhostBtn>
                         {!seenAppIds.has(a.id) && (
                           <GhostBtn small onClick={() => { markSeen(a.id); setExpanded(null) }}>Mark as Seen</GhostBtn>
                         )}
@@ -2036,6 +2087,51 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                           <GhostBtn small onClick={() => deleteApp(a)}>Confirm</GhostBtn>
                           <GhostBtn small onClick={() => { setDeleteAppConfirm(null); setDeleteAppError(null) }}>Cancel</GhostBtn>
                           {deleteAppError && <Err msg={deleteAppError} />}
+                        </div>
+                      )}
+
+                      {/* Email composer */}
+                      {emailComposerId === a.id && (
+                        <div style={{ marginTop: '1rem', padding: '1.25rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.75rem' }}>
+                            From: Jerry — Canvas Routes &lt;jerry@canvasroutes.com&gt; &nbsp;·&nbsp; To: {a.email}
+                          </div>
+                          <div style={{ marginBottom: '0.6rem' }}>
+                            <L>Subject</L>
+                            <input
+                              style={inp}
+                              value={emailSubject}
+                              onChange={e => setEmailSubject(e.target.value)}
+                              placeholder="Subject line"
+                            />
+                          </div>
+                          <div style={{ marginBottom: '0.75rem' }}>
+                            <L>Body</L>
+                            <textarea
+                              style={{ ...inp, height: '220px', resize: 'vertical', lineHeight: '1.65' }}
+                              value={emailBody}
+                              onChange={e => setEmailBody(e.target.value)}
+                              placeholder="Email body…"
+                            />
+                            <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>
+                              Double line breaks become paragraphs. Replace any [brackets] before sending.
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <PrimaryBtn
+                              onClick={() => sendEmail(a.id)}
+                              disabled={emailSending || !emailSubject.trim() || !emailBody.trim()}
+                            >
+                              {emailSending ? 'Sending…' : 'Send'}
+                            </PrimaryBtn>
+                            <GhostBtn small onClick={() => setEmailComposerId(null)}>Cancel</GhostBtn>
+                          </div>
+                          {emailResult?.id === a.id && emailResult.success && (
+                            <div style={{ marginTop: '0.6rem', fontSize: '12px', color: '#3B6B2F' }}>✓ Email sent to {a.email}</div>
+                          )}
+                          {emailResult?.id === a.id && emailResult.error && (
+                            <Err msg={emailResult.error} />
+                          )}
                         </div>
                       )}
                     </div>
