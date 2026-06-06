@@ -441,6 +441,21 @@ export default function DrivePage() {
           </div>
         </div>
 
+        {/* Photographer */}
+        <div style={{ padding: '1.5rem 0', borderTop: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>Photographer</div>
+          <a
+            href="https://www.instagram.com/jidhin_paul?igsh=MTA3czU2dGZsc28wbg=="
+            target="_blank"
+            rel="noreferrer"
+            style={{ fontSize: '13px', color: '#1a1a1a', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg>
+            <span>Jidhin Paul</span>
+            <span style={{ color: '#bbb', fontSize: '11px' }}>@jidhin_paul</span>
+          </a>
+        </div>
+
       </div>
     </div>
   )
