@@ -6,13 +6,13 @@ const PASSWORD = 'laurentians'
 
 const STOPS = [
   { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'https://maps.app.goo.gl/okpsXCTYa4aoQiis8', lat: 45.4431, lng: -73.6172 },
-  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
-  { label: 'Lac des Sables Photo Stop', note: 'Sainte-Agathe-des-Monts (Park the cars along the side of the lake)', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
-  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365 },
-  { label: 'Mont-Tremblant Casino', note: '(Optional photography stop)', href: 'https://www.google.com/maps?q=46.2017179,-74.5695010', lat: 46.2017179, lng: -74.5695010 },
+  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur · ~15 min fuel stop', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
+  { label: 'Lac des Sables Photo Stop', note: 'Sainte-Agathe-des-Monts · ~20 min (park along the lake)', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
+  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc · ~20 min · Last fuel stop before the mountains', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365, fuel: true },
+  { label: 'Mont-Tremblant Casino', note: 'Optional photography stop · ~15 min', href: 'https://www.google.com/maps?q=46.2017179,-74.5695010', lat: 46.2017179, lng: -74.5695010 },
   { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.2089655,-74.5846753', lat: 46.2089655, lng: -74.5846753 },
-  { label: 'Pizzéria NO.900', note: 'Lunch Stop · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.1346041,-74.6141983', lat: 46.1346041, lng: -74.6141983 },
-  { label: 'Esso Porte du Nord', note: 'Fuel & Rest Stop · Saint-Sauveur', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
+  { label: 'Pizzéria NO.900', note: 'Lunch · ~1 hr · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.1346041,-74.6141983', lat: 46.1346041, lng: -74.6141983 },
+  { label: 'Esso Porte du Nord', note: 'Fuel & rest on the way back · Saint-Sauveur', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'https://maps.app.goo.gl/szYVavrSxRoRWZoc6', lat: 45.4600, lng: -73.8353 },
 ]
 
@@ -354,6 +354,9 @@ export default function DrivePage() {
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
         .leaflet-container { background: #f0ede8; }
+        .cars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: rgba(0,0,0,0.08); border: 0.5px solid rgba(0,0,0,0.08); }
+        @media (min-width: 640px) { .cars-grid { grid-template-columns: repeat(5, 1fr); } }
+        .shot-by { padding: 1.5rem 0; border-top: 0.5px solid rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
       `}</style>
 
       {/* Header */}
@@ -407,7 +410,10 @@ export default function DrivePage() {
 
         {/* Route stops */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.5rem' }}>Route</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999' }}>Route</div>
+            <div style={{ fontSize: '11px', color: '#aaa', fontStyle: 'italic' }}>If separated, proceed to the next stop</div>
+          </div>
           {STOPS.map((stop, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '14px' }}>
@@ -435,7 +441,9 @@ export default function DrivePage() {
                 >
                   {stop.label}
                 </a>
-                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '10px' }}>{stop.note}</div>
+                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '10px' }}>
+                  {stop.fuel && <span style={{ color: '#c5a882', fontWeight: '600', marginRight: '4px' }}>⛽</span>}{stop.note}
+                </div>
               </div>
             </div>
           ))}
@@ -480,13 +488,7 @@ export default function DrivePage() {
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.5rem' }}>
             Who&apos;s Coming — {REGISTRANTS.length} Cars · 1 Camera
           </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-            gap: '1px',
-            background: 'rgba(0,0,0,0.08)',
-            border: '0.5px solid rgba(0,0,0,0.08)',
-          }}>
+          <div className="cars-grid">
             {REGISTRANTS.map((r, i) => (
               <div key={i} style={{ background: '#fff', overflow: 'hidden' }}>
                 {r.photo ? (
@@ -515,7 +517,7 @@ export default function DrivePage() {
         </div>
 
         {/* Photographer */}
-        <div style={{ padding: '1.5rem 0', borderTop: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="shot-by">
           <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>Shot by</div>
           <a
             href="https://www.instagram.com/jidhin_paul?igsh=MTA3czU2dGZsc28wbg=="
