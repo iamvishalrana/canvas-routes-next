@@ -98,23 +98,32 @@ function RouteMap({ stops }) {
 
         if (!destroyed) setStatus('ready')
       } catch (e) {
+        console.error('[RouteMap] Map init error:', e)
         if (!destroyed) setStatus('error')
       }
+    }
+
+    // Auth failure callback — fires when key is invalid or restricted
+    window.gm_authFailure = () => {
+      console.error('[RouteMap] Google Maps auth failure — check API key and domain restrictions')
+      if (!destroyed) setStatus('error')
     }
 
     const scriptId = 'gmap-script'
     if (window.google?.maps) {
       initMap()
     } else if (document.getElementById(scriptId)) {
-      // Script already added by another instance — wait for it
       document.getElementById(scriptId).addEventListener('load', initMap)
     } else {
       const script = document.createElement('script')
       script.id = scriptId
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
       script.async = true
       script.onload = initMap
-      script.onerror = () => { if (!destroyed) setStatus('error') }
+      script.onerror = (e) => {
+        console.error('[RouteMap] Failed to load Google Maps script', e)
+        if (!destroyed) setStatus('error')
+      }
       document.head.appendChild(script)
     }
 
