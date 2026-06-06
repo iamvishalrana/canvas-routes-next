@@ -29,6 +29,31 @@ const REGISTRANTS = [
   { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/car-jerry.jpeg', desc: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.' },
 ]
 
+function CopyButton({ text, label, dark }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <button
+      onClick={copy}
+      style={{
+        background: 'none',
+        border: `0.5px solid ${dark ? 'rgba(245,241,236,0.25)' : 'rgba(0,0,0,0.18)'}`,
+        padding: '3px 10px', fontSize: '9px', letterSpacing: '0.12em',
+        textTransform: 'uppercase', cursor: 'pointer',
+        color: dark ? (copied ? '#c5a882' : 'rgba(245,241,236,0.6)') : (copied ? '#3B6B2F' : '#888'),
+        transition: 'color 0.2s, border-color 0.2s',
+      }}
+    >
+      {copied ? '✓ Copied' : label}
+    </button>
+  )
+}
+
 function CarPlaceholder({ color, name }) {
   const isFrederic = name === 'Frederic Lefebvre'
   const [uploading, setUploading] = useState(false)
@@ -362,6 +387,7 @@ export default function DrivePage() {
               <a href="tel:5144373437" style={{ fontSize: '14px', color: '#7B2032', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
               </a>
+              <CopyButton text="514-437-3437" label="Copy number" />
             </div>
 
             <div style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
@@ -373,7 +399,7 @@ export default function DrivePage() {
               >
                 Download Velox →
               </a>
-              <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px' }}>iOS only</div>
+              <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5' }}>Stay connected in real time · iOS only</div>
             </div>
 
           </div>
@@ -434,7 +460,10 @@ export default function DrivePage() {
             <div style={{ color: 'rgba(245,241,236,0.6)', fontSize: '12px', lineHeight: '1.6' }}>
               Falcon Adventure at Mont-Tremblant. Book online or over the phone with code below — let Jerry know if you book.
             </div>
-            <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '20px', letterSpacing: '0.08em' }}>CANVASR20</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '20px', letterSpacing: '0.08em' }}>CANVASR20</div>
+              <CopyButton text="CANVASR20" label="Copy code" dark />
+            </div>
             <a
               href="https://tremblant.ziptrek.com/en_US/"
               target="_blank"
@@ -449,7 +478,7 @@ export default function DrivePage() {
         {/* Who's coming */}
         <div style={{ padding: '2rem 0' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.5rem' }}>
-            Who&apos;s Coming — {REGISTRANTS.length} Cars
+            Who&apos;s Coming — {REGISTRANTS.length} Cars · 1 Camera
           </div>
           <div style={{
             display: 'grid',
