@@ -42,7 +42,7 @@ export default function Home() {
   const [routesOpen, setRoutesOpen] = useState(false)
   const [pastModalEvent, setPastModalEvent] = useState(null)
   const [routesLaunched, setRoutesLaunched] = useState(true)
-  const [showEventsPopup, setShowEventsPopup] = useState(false)
+  const [showEventsPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
   const refSource = useRef('')
@@ -53,12 +53,6 @@ export default function Home() {
     if (ref) refSource.current = ref.slice(0, 100)
   }, [])
 
-  useEffect(() => {
-    if (Date.now() >= new Date('2026-06-08T04:00:00Z').getTime()) return
-    try { if (sessionStorage.getItem('laurentiansPopupDismissed')) return } catch {}
-    const t = setTimeout(() => setShowEventsPopup(true), 800)
-    return () => clearTimeout(t)
-  }, [])
 
 
   useEffect(() => {
@@ -244,10 +238,6 @@ export default function Home() {
     }
   }
 
-  function dismissEventsPopup() {
-    try { sessionStorage.setItem('laurentiansPopupDismissed', '1') } catch {}
-    setShowEventsPopup(false)
-  }
 
   function smoothScroll(id) {
     const el = document.getElementById(id)
@@ -833,44 +823,6 @@ export default function Home() {
           )
         })()}
 
-      {/* EVENTS POPUP */}
-      {showEventsPopup && (
-          <div
-            onClick={dismissEventsPopup}
-            style={{position:"fixed",inset:0,background:"rgba(10,22,14,0.94)",zIndex:1002,display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"2rem 1.25rem",overflowY:"auto"}}
-          >
-            <div
-              onClick={e => e.stopPropagation()}
-              className="events-popup-cards"
-              style={{display:"flex",gap:"1.25rem",position:"relative"}}
-            >
-              <button onClick={dismissEventsPopup} style={{position:"absolute",top:"-0.5rem",right:"-0.5rem",zIndex:10,background:"rgba(0,0,0,0.6)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-
-              {/* Into the Laurentians */}
-              <div style={{flex:1,maxWidth:"420px",background:"#0F1E14",border:"1px solid rgba(197,168,130,0.35)",overflow:"hidden",position:"relative",fontFamily:"var(--font-inter),sans-serif"}}>
-                <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-                <div style={{position:"relative",width:"100%",height:"200px",overflow:"hidden"}}>
-                  <Image src="/june7-poster.jpg" alt="Into the Laurentians road trip" fill sizes="420px" style={{objectFit:"cover",objectPosition:"top"}} priority />
-                </div>
-                <div style={{padding:"1.6rem 1.8rem 2rem"}}>
-                  <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>Mont-Tremblant · June 7, 2026</div>
-                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.85rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.35rem"}}>Into the<br/>Laurentians</div>
-                  <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"0.95rem",fontStyle:"italic",color:"rgba(245,241,236,0.45)",marginBottom:"1.3rem"}}>First Route — Canvas Routes</div>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:"0.4rem",marginBottom:"1.5rem"}}>
-                    {["June 7, 2026","Road Trip"].map((tag,idx) => (
-                      <span key={idx} style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(197,168,130,0.75)",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.3rem 0.75rem"}}>{tag}</span>
-                    ))}
-                  </div>
-                  <Link href="/routes/into-the-laurentians" onClick={dismissEventsPopup}
-                    style={{display:"inline-block",padding:"0.8rem 1.8rem",background:"rgba(197,168,130,0.1)",border:"1px solid rgba(197,168,130,0.5)",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
-                    Register
-                  </Link>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
 
       {/* STICKY MOBILE CTA */}
       <div className={`sticky-cta${showStickyCta ? ' sticky-cta--visible' : ''}`} style={cookieBannerVisible ? {bottom:'var(--cookie-banner-height, 80px)'} : {}}>
