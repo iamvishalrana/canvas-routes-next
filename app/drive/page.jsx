@@ -287,7 +287,7 @@ export default function DrivePage() {
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
 
             <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 120px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Depart</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Meetup</div>
               <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>7:00am · Petinos, LaSalle</div>
             </div>
 
