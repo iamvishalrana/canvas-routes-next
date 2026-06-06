@@ -71,26 +71,45 @@ function CarPlaceholder({ color, name }) {
 }
 
 function Lightbox({ src, alt, name, car, desc, onClose }) {
+  const [loaded, setLoaded] = useState(false)
+
   useEffect(() => {
+    setLoaded(false)
     const handler = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
+  }, [src, onClose])
 
   return (
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.93)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.93)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '1.5rem',
+        WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)',
+      }}
     >
       <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1.25rem', background: 'none', border: 'none', color: '#fff', fontSize: '28px', cursor: 'pointer', lineHeight: 1, opacity: 0.7 }}>✕</button>
       <img
+        key={src}
         src={src}
         alt={alt}
+        loading="eager"
+        decoding="sync"
         onClick={e => e.stopPropagation()}
         onContextMenu={e => e.preventDefault()}
+        onLoad={() => setLoaded(true)}
         draggable={false}
-        style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', userSelect: 'none', WebkitUserSelect: 'none' }}
+        style={{
+          maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain',
+          userSelect: 'none', WebkitUserSelect: 'none', display: 'block',
+          opacity: loaded ? 1 : 0, transition: 'opacity 0.2s',
+          WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)',
+        }}
       />
+      {!loaded && <div style={{ position: 'absolute', color: 'rgba(255,255,255,0.3)', fontSize: '11px', letterSpacing: '0.1em' }}>Loading…</div>}
       <div onClick={e => e.stopPropagation()} style={{ marginTop: '1.25rem', textAlign: 'center', maxWidth: '480px' }}>
         <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '16px', marginBottom: '0.4rem' }}>{name}</div>
         <div style={{ color: 'rgba(245,241,236,0.5)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>{car}</div>
