@@ -13,7 +13,7 @@ export async function GET(request) {
   if (!token) return Response.json({ error: 'GITHUB_WORKFLOW_TOKEN is not configured' }, { status: 503 })
 
   try {
-    const res = await fetch(
+    const ghRes = await fetch(
       `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/runs?per_page=4`,
       {
         headers: {
@@ -23,16 +23,16 @@ export async function GET(request) {
         cache: 'no-store',
       }
     )
-    if (!res.ok) return Response.json({ runs: [] })
-    const data = await res.json()
+    if (!ghRes.ok) return Response.json({ error: `GitHub API error: ${ghRes.status}` }, { status: 502 })
+    const data = await ghRes.json()
     const runs = (data.workflow_runs || []).slice(0, 4).map(r => ({
       conclusion: r.conclusion,   // 'success' | 'failure' | 'timed_out' | null
       status: r.status,           // 'completed' | 'in_progress' | 'queued'
       created_at: r.created_at,
     }))
     return Response.json({ runs })
-  } catch {
-    return Response.json({ runs: [] })
+  } catch (err) {
+    return Response.json({ error: 'Failed to reach GitHub API' }, { status: 502 })
   }
 }
 

@@ -147,8 +147,12 @@ export async function POST(request, { params }) {
   const supabase = createAdminClient()
 
   // Look up member to get email and tier
-  const { data: member, error: memberErr } = await supabase.from('members').select('email, name, tier').eq('id', id).single()
+  const { data: member, error: memberErr } = await supabase.from('members').select('email, name, tier, password_set_at').eq('id', id).single()
   if (memberErr || !member) return Response.json({ error: 'Member not found' }, { status: 404 })
+
+  if (member.password_set_at) {
+    return Response.json({ error: 'This member has already set up their account.' }, { status: 409 })
+  }
 
   // Generate a new invite link
   const { data: invited, error: inviteErr } = await supabase.auth.admin.generateLink({

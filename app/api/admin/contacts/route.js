@@ -49,7 +49,7 @@ export async function POST(request) {
   if (body.application_id) {
     const { error } = await supabase.from('contacts').insert({ application_id: body.application_id })
     if (error) return Response.json({ error: error.message }, { status: 500 })
-    return Response.json({ ok: true })
+    return Response.json({ success: true })
   }
 
   // New flow: create application record + contact directly (no email sent)
@@ -72,5 +72,5 @@ export async function POST(request) {
     .upsert({ application_id: app.id }, { onConflict: 'application_id', ignoreDuplicates: true })
 
   if (contactErr) return Response.json({ error: contactErr.message }, { status: 500 })
-  return Response.json({ ok: true })
+  return Response.json({ success: true })
 }
