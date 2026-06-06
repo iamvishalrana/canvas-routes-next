@@ -3,28 +3,39 @@ import { useState, useEffect } from 'react'
 
 const PASSWORD = 'laurentians'
 
-// geo: URIs open in any maps app (Apple Maps, Google Maps, Waze, etc.)
 const STOPS = [
-  { label: 'LaSalle, Montreal', note: 'Meetup — 7:00am sharp', start: true, href: 'geo:45.4305611,-73.6346777?q=LaSalle,Montreal' },
-  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'geo:45.8957004,-74.1564982?q=Esso+Porte+du+Nord,Saint-Sauveur' },
-  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'geo:46.0331833,-74.2849984?q=243+Rue+St+Venant,Sainte-Agathe-des-Monts' },
-  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'geo:46.1160535,-74.4784365?q=Cafe+Mont+Blanc,Mont-Blanc' },
+  { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'geo:45.4305611,-73.6346777?q=Petinos+LaSalle+Montreal' },
+  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'geo:45.8957004,-74.1564982?q=Esso+Porte+du+Nord+Saint-Sauveur' },
+  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'geo:46.0331833,-74.2849984?q=243+Rue+St+Venant+Sainte-Agathe-des-Monts' },
+  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'geo:46.1160535,-74.4784365?q=Cafe+Mont+Blanc+Mont-Blanc' },
   { label: 'Mont-Tremblant', note: 'Convoy Point', href: 'geo:46.2017179,-74.5695010?q=Mont-Tremblant' },
-  { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'geo:46.2089655,-74.5846753?q=163+Chemin+des+Voyageurs,Mont-Tremblant' },
-  { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'geo:45.4640,-73.8314?q=Aloe+Cafe,Pointe-Claire' },
+  { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'geo:46.2089655,-74.5846753?q=163+Chemin+des+Voyageurs+Mont-Tremblant' },
+  { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'geo:45.4640,-73.8314?q=Aloe+Cafe+Pointe-Claire' },
 ]
 
 const REGISTRANTS = [
-  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T — Grey' },
-  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i — Grey' },
-  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab — Silver' },
-  { name: 'Tanya Ghingold + Mark', car: '2012 Porsche Cayman S Black Edition 71/500' },
-  { name: 'Frederic Lefebvre', car: '2020 Audi RS3' },
-  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4 — Gloss Steel Blue' },
-  { name: 'Nicholas Kong', car: '2020 Subaru BRZ — Red' },
-  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance' },
-  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab — Black' },
+  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey' },
+  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey' },
+  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver' },
+  { name: 'Tanya Ghingold + Mark', car: '2012 Porsche Cayman S Black Edition 71/500', color: '' },
+  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '' },
+  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue' },
+  { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red' },
+  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '' },
+  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black' },
 ]
+
+function CarIcon() {
+  return (
+    <svg width="60" height="30" viewBox="0 0 60 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 21h52" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M8 21L15 11h30l7 10" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M17 11l3-5h20l3 5" stroke="rgba(0,0,0,0.1)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="18" cy="23" r="3.5" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+      <circle cx="42" cy="23" r="3.5" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+    </svg>
+  )
+}
 
 export default function DrivePage() {
   const [authed, setAuthed] = useState(false)
@@ -76,21 +87,14 @@ export default function DrivePage() {
                 WebkitAppearance: 'none', borderRadius: '0',
               }}
             />
-            {err && (
-              <div style={{ color: '#c0392b', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
-                Incorrect password
-              </div>
-            )}
-            <button
-              type="submit"
-              style={{
-                width: '100%', background: '#F5F1EC', color: '#0F1E14', border: 'none',
-                padding: '0.9rem', fontSize: '11px', letterSpacing: '0.2em',
-                textTransform: 'uppercase', cursor: 'pointer',
-                fontFamily: 'sans-serif', fontWeight: '600',
-                WebkitAppearance: 'none', borderRadius: '0', minHeight: '48px',
-              }}
-            >
+            {err && <div style={{ color: '#c0392b', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>Incorrect password</div>}
+            <button type="submit" style={{
+              width: '100%', background: '#F5F1EC', color: '#0F1E14', border: 'none',
+              padding: '0.9rem', fontSize: '11px', letterSpacing: '0.2em',
+              textTransform: 'uppercase', cursor: 'pointer',
+              fontFamily: 'sans-serif', fontWeight: '600',
+              WebkitAppearance: 'none', borderRadius: '0', minHeight: '48px',
+            }}>
               Enter
             </button>
           </form>
@@ -101,6 +105,10 @@ export default function DrivePage() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
+      <style>{`
+        .map-wrap { padding-bottom: 70%; }
+        @media (min-width: 640px) { .map-wrap { padding-bottom: 0; height: 480px; } }
+      `}</style>
 
       {/* Header */}
       <div style={{ background: '#0F1E14', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -113,23 +121,24 @@ export default function DrivePage() {
 
       <div style={{ maxWidth: '740px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
 
-        {/* Quick info — stacks on mobile */}
+        {/* Quick info */}
         <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
 
-            <div style={{ padding: '1.1rem 1rem 1.1rem 0', minWidth: '120px', flex: '1 1 120px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
+            <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 120px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Depart</div>
-              <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>7:00am · LaSalle</div>
+              <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>7:00am · Petinos, LaSalle</div>
             </div>
 
-            <div style={{ padding: '1.1rem 1rem 1.1rem 0', minWidth: '160px', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Emergency</div>
-              <a href="tel:5144373437" style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '600' }}>
+            {/* Emergency — prominent red */}
+            <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #7B2032' }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>Emergency</div>
+              <a href="tel:5144373437" style={{ fontSize: '14px', color: '#7B2032', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
               </a>
             </div>
 
-            <div style={{ padding: '1.1rem 0', minWidth: '130px', flex: '1 1 130px' }}>
+            <div style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Convoy App</div>
               <a
                 href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
@@ -138,6 +147,7 @@ export default function DrivePage() {
               >
                 Download Velox →
               </a>
+              <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px' }}>iOS only</div>
             </div>
 
           </div>
@@ -148,7 +158,6 @@ export default function DrivePage() {
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.5rem' }}>Route</div>
           {STOPS.map((stop, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-              {/* Timeline spine */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '14px' }}>
                 <div style={{
                   width: stop.start || stop.end ? '10px' : '8px',
@@ -161,8 +170,7 @@ export default function DrivePage() {
                   <div style={{ width: '1px', height: '36px', background: 'rgba(0,0,0,0.1)', marginTop: '4px' }} />
                 )}
               </div>
-              {/* Stop label — tappable, min 44px touch area */}
-              <div style={{ flex: 1, paddingBottom: '2px' }}>
+              <div style={{ flex: 1 }}>
                 <a
                   href={stop.href}
                   style={{
@@ -170,7 +178,7 @@ export default function DrivePage() {
                     fontWeight: stop.start || stop.end ? '600' : '400',
                     lineHeight: '1.35', textDecoration: 'underline',
                     textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)',
-                    display: 'block', minHeight: '24px', WebkitTapHighlightColor: 'rgba(0,0,0,0.05)',
+                    display: 'block', WebkitTapHighlightColor: 'rgba(0,0,0,0.05)',
                   }}
                 >
                   {stop.label}
@@ -184,7 +192,7 @@ export default function DrivePage() {
         {/* Map */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Map</div>
-          <div style={{ position: 'relative', paddingBottom: '70%', height: 0, overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div className="map-wrap" style={{ position: 'relative', height: 0, overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
             <iframe
               src="https://www.google.com/maps/d/embed?mid=1Nqcw4_7P3M3FSEBpdwawyizSd7dY_KA"
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
@@ -208,16 +216,18 @@ export default function DrivePage() {
           }}>
             {REGISTRANTS.map((r, i) => (
               <div key={i} style={{ background: '#fff', overflow: 'hidden' }}>
+                {/* Car placeholder — light with icon */}
                 <div style={{
-                  height: '120px', background: '#0F1E14',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  height: '110px', background: '#f4f2ef',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 }}>
-                  <span style={{ fontFamily: 'Georgia, serif', fontSize: '38px', color: 'rgba(245,241,236,0.13)', userSelect: 'none' }}>
-                    {r.name.charAt(0)}
-                  </span>
+                  <CarIcon />
+                  {r.color ? (
+                    <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.08em' }}>{r.color}</div>
+                  ) : null}
                 </div>
                 <div style={{ padding: '0.8rem 0.85rem' }}>
-                  <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '3px', lineHeight: '1.3' }}>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '600', marginBottom: '4px', lineHeight: '1.3' }}>
                     {r.name}
                   </div>
                   <div style={{ fontSize: '11px', color: '#888', lineHeight: '1.5' }}>{r.car}</div>
