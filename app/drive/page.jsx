@@ -22,7 +22,7 @@ const REGISTRANTS = [
   { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg' },
   { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a' },
   { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null },
-  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg', photoScale: 1.2 },
+  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg' },
   { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg' },
   { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg' },
   { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg' },
