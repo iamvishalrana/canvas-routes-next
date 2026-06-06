@@ -12,6 +12,7 @@ const STOPS = [
   { label: 'Mont-Tremblant Casino', note: '(Optional photography stop)', href: 'https://www.google.com/maps?q=46.2017179,-74.5695010', lat: 46.2017179, lng: -74.5695010 },
   { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.2089655,-74.5846753', lat: 46.2089655, lng: -74.5846753 },
   { label: 'Pizzéria NO.900', note: 'Lunch Stop · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.1346041,-74.6141983', lat: 46.1346041, lng: -74.6141983 },
+  { label: 'Esso Porte du Nord', note: 'Fuel & Rest Stop · Saint-Sauveur', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'https://maps.app.goo.gl/szYVavrSxRoRWZoc6', lat: 45.4600, lng: -73.8353 },
 ]
 
