@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 import SiteFooter from '../../../components/SiteFooter'
 
-const ROUTES_CLOSED = new Date('2026-06-07T03:00:00Z').getTime() // 11 PM EDT June 6
+const ROUTES_CLOSED = new Date('2026-06-06T00:00:00Z').getTime() // manually closed
 
 function Chevron() {
   return (
