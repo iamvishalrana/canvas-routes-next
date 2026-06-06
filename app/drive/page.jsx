@@ -17,7 +17,7 @@ const STOPS = [
 ]
 
 const REGISTRANTS = [
-  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/car-louis-guindon.png', desc: 'Twin-turbo V6 in a sleeper — Genesis\'s answer to the BMW 3 Series, and a convincing one.' },
+  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/car-louis-guindon.png', desc: 'Twin-turbo V6 pushing 365hp in a chassis tuned for the driver — understated outside, serious where it counts.' },
   { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png', desc: 'N55 straight-six in the lightest BMW chassis of its era — one of the last truly pure driver\'s BMWs.' },
   { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg', desc: 'Naturally aspirated flat-six at its finest — the 997 generation before Porsche turbocharged everything.' },
   { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a', desc: '1 of 500 built worldwide — factory Black Edition with a mid-engine flat-six Porsche deliberately kept beneath 911 spec.' },
