@@ -32,44 +32,76 @@ function RouteMap({ stops }) {
 
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
     let cancelled = false
 
-    Promise.all([
-      import('leaflet'),
-      import('leaflet/dist/leaflet.css'),
-    ]).then(([{ default: L }]) => {
-      if (cancelled || mapRef.current) return
+    import('@googlemaps/js-api-loader').then(({ Loader }) => {
+      if (cancelled) return
+      const loader = new Loader({ apiKey, version: 'weekly', libraries: ['marker'] })
+      loader.load().then((google) => {
+        if (cancelled || mapRef.current) return
 
-      const coords = stops.map(s => [s.lat, s.lng])
-      const bounds = L.latLngBounds(coords).pad(0.15)
+        const bounds = new google.maps.LatLngBounds()
+        stops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }))
 
-      const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false }).fitBounds(bounds)
-      mapRef.current = map
+        const map = new google.maps.Map(containerRef.current, {
+          mapTypeId: 'roadmap',
+          disableDefaultUI: false,
+          zoomControl: true,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: true,
+          styles: [
+            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+            { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f5e9d6' }] },
+            { featureType: 'landscape', stylers: [{ color: '#f0ede8' }] },
+            { featureType: 'water', stylers: [{ color: '#c8d8e8' }] },
+          ],
+        })
+        map.fitBounds(bounds, 40)
+        mapRef.current = map
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 18,
-      }).addTo(map)
+        // Route polyline
+        const path = stops.map(s => ({ lat: s.lat, lng: s.lng }))
+        new google.maps.Polyline({
+          path,
+          geodesic: true,
+          strokeColor: '#0F1E14',
+          strokeOpacity: 0.75,
+          strokeWeight: 3,
+          map,
+        })
 
-      // Route line
-      L.polyline(coords, { color: '#0F1E14', weight: 2.5, opacity: 0.7 }).addTo(map)
-
-      stops.forEach((stop, i) => {
-        const isEnd = stop.start || stop.end
-        const marker = L.circleMarker([stop.lat, stop.lng], {
-          radius: isEnd ? 8 : 6,
-          fillColor: stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : '#c5a882',
-          color: '#fff',
-          weight: 2,
-          fillOpacity: 1,
-        }).addTo(map)
-        marker.bindPopup(`<strong>${stop.label}</strong><br/><span style="color:#888;font-size:12px">${stop.note}</span>`)
+        // Markers
+        stops.forEach((stop, i) => {
+          const color = stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : '#c5a882'
+          const marker = new google.maps.Marker({
+            position: { lat: stop.lat, lng: stop.lng },
+            map,
+            title: stop.label,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: stop.start || stop.end ? 9 : 7,
+              fillColor: color,
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2,
+            },
+          })
+          const infoWindow = new google.maps.InfoWindow({
+            content: `<div style="font-family:sans-serif;padding:2px 4px"><strong style="font-size:13px">${stop.label}</strong><br/><span style="color:#888;font-size:11px">${stop.note}</span></div>`,
+          })
+          marker.addListener('click', () => infoWindow.open(map, marker))
+        })
       })
     })
 
     return () => {
       cancelled = true
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
+      mapRef.current = null
     }
   }, [stops])
 
