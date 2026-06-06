@@ -213,12 +213,6 @@ export default function RoutesPage() {
             <div style={{fontSize:"13px",color:"#888",letterSpacing:"0.04em"}}>per car — up to 2 people</div>
           </div>
 
-          {/* Membership note */}
-          <div style={{marginBottom:"2rem",padding:"1rem 1.1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
-            <span style={{fontSize:"14px",color:"#7B5B2E",lineHeight:"1.7"}}>Canvas Routes members receive preferred pricing. Not a member yet? </span>
-            <Link href="/membership" style={{fontSize:"14px",color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>Join the waitlist →</Link>
-          </div>
-
           {/* Notes */}
           <div style={{display:"flex",flexDirection:"column",gap:"1rem",marginBottom:"2.5rem"}}>
             {[
@@ -234,9 +228,6 @@ export default function RoutesPage() {
             ))}
           </div>
 
-          <div style={{textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited &nbsp;·&nbsp; Selection is curated.</div>
-          </div>
 
         </div>
       </section>
@@ -323,20 +314,15 @@ export default function RoutesPage() {
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration ends</div>
-                <div style={{fontSize:"14px",color:"rgba(245,241,236,0.7)"}}>June 6 at 11 PM</div>
-              </div>
-              <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
-              <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
-                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Payment</div>
-                <div style={{fontSize:"14px",color:"rgba(245,241,236,0.7)"}}>Details sent after your application is reviewed</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Registration</div>
+                <div style={{fontSize:"14px",color:"rgba(197,168,130,0.6)",letterSpacing:"0.06em",textTransform:"uppercase",fontSize:"11px"}}>Closed</div>
               </div>
             </div>
           </div>
 
           <div style={{marginTop:"1.5rem",textAlign:"center"}}>
-            <span style={{fontSize:"14px",color:"rgba(245,241,236,0.35)",lineHeight:"1.8"}}>Questions about weather or cancellations? </span>
-            <Link href="/faq" style={{fontSize:"14px",color:"rgba(197,168,130,0.6)",textDecoration:"underline",textUnderlineOffset:"3px"}}>See our FAQ</Link>
+            <span style={{fontSize:"14px",color:"rgba(245,241,236,0.35)",lineHeight:"1.8"}}>Questions? </span>
+            <a href="mailto:info@canvasroutes.com" style={{fontSize:"14px",color:"rgba(197,168,130,0.6)",textDecoration:"underline",textUnderlineOffset:"3px"}}>info@canvasroutes.com</a>
           </div>
 
         </div>
