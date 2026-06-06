@@ -1492,6 +1492,7 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const [appTierPick, setAppTierPick] = useState(null)
   const [deleteAppConfirm, setDeleteAppConfirm] = useState(null)
   const [deleteAppError, setDeleteAppError] = useState(null)
+  const [showFilter, setShowFilter] = useState('all') // 'all' | 'unseen' | 'pending'
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -1625,7 +1626,11 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
   const filtered = apps
-    .filter(a => !search || [a.name, a.email, a.car_year, a.car_model, a.source, a.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && a.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))))
+    .filter(a => {
+      if (showFilter === 'unseen' && seenAppIds.has(a.id)) return false
+      if (showFilter === 'pending' && a.is_member) return false
+      return !search || [a.name, a.email, a.car_year, a.car_model, a.source, a.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && a.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
+    })
     .sort((a, b) => {
       if (sortApps === 'newest') return new Date(b.created_at) - new Date(a.created_at)
       if (sortApps === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
@@ -1687,9 +1692,11 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
           { label: 'Total Applications', value: apps.length, color: '#1a1a1a' },
           { label: 'Invited', value: totalInvited, color: '#3B6B2F' },
           { label: 'Pending Review', value: apps.length - totalInvited, color: '#8A6535' },
-          { label: 'New', value: unseenCount, color: unseenCount > 0 ? '#7B2032' : '#999' },
+          { label: 'New', value: unseenCount, color: unseenCount > 0 ? '#7B2032' : '#999', filter: 'unseen' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
+          <div key={s.label}
+            onClick={() => s.filter ? setShowFilter(f => f === s.filter ? 'all' : s.filter) : undefined}
+            style={{ background: '#fff', border: `0.5px solid ${s.filter && showFilter === s.filter ? 'rgba(123,32,50,0.3)' : 'rgba(0,0,0,0.1)'}`, padding: '1.25rem 1.4rem', cursor: s.filter ? 'pointer' : undefined, transition: 'border-color 0.15s' }}>
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>{s.label}</div>
           </div>
@@ -1712,7 +1719,21 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined, flexWrap: 'wrap' }}>
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'unseen', label: `Unseen${unseenCount > 0 ? ` (${unseenCount})` : ''}` },
+            { key: 'pending', label: 'Not Invited' },
+          ].map(f => (
+            <button key={f.key} onClick={() => setShowFilter(f.key)}
+              style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: '0.5px solid', transition: 'all 0.15s',
+                background: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(123,32,50,0.07)' : 'rgba(0,0,0,0.06)') : 'none',
+                color: showFilter === f.key ? (f.key === 'unseen' ? '#7B2032' : '#1a1a1a') : '#888',
+                borderColor: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(123,32,50,0.3)' : 'rgba(0,0,0,0.25)') : 'rgba(0,0,0,0.15)',
+              }}>
+              {f.label}
+            </button>
+          ))}
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <select value={sortApps} onChange={e => setSortApps(e.target.value)}
               style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
