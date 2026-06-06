@@ -18,10 +18,10 @@ const STOPS = [
 
 const REGISTRANTS = [
   { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/car-louis-guindon.png', desc: 'Twin-turbo V6 pushing 365hp in a chassis tuned for the driver — understated outside, serious where it counts.' },
-  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png', desc: 'N55 straight-six in the lightest BMW chassis of its era — one of the last truly pure driver\'s BMWs.' },
+  { name: 'Jean-Philippe Remon', nick: 'JP', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png', desc: 'N55 straight-six in the lightest BMW chassis of its era — and a turbo spool that makes you look twice every time.' },
   { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg', desc: 'Naturally aspirated flat-six at its finest — the 997 generation before Porsche turbocharged everything.' },
   { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a', desc: '1 of 500 built worldwide — factory Black Edition with a mid-engine flat-six Porsche deliberately kept beneath 911 spec.' },
-  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null, desc: '400hp from a five-cylinder turbo — a configuration so rare the exhaust note alone turns heads.' },
+  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null, desc: '400hp five-cylinder turbo with a spool that sounds like nothing else on the road — one of Audi\'s most characterful engines.' },
   { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg', desc: 'Air suspension, Quattro grip, and genuine ground clearance — equally at home on a mountain pass or a dirt road.' },
   { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg', desc: 'Rear-wheel drive, naturally aspirated, under 2,800 lbs — built purely for the corner, not the straight.' },
   { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg', desc: '630hp twin-turbo V8 in a full-size wagon — the most capable family car Audi has ever built.' },
@@ -430,11 +430,13 @@ export default function DrivePage() {
                   <CarPlaceholder color={r.color} name={r.name} />
                 )}
                 <div style={{ padding: '0.8rem 0.85rem' }}>
-                  <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '600', marginBottom: '4px', lineHeight: '1.3' }}>
-                    {r.name}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '600', lineHeight: '1.3' }}>{r.name}</div>
+                    {r.nick && <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em' }}>({r.nick})</div>}
                   </div>
                   <div style={{ fontSize: '11px', color: '#888', lineHeight: '1.5' }}>{r.car}</div>
                   {r.tag && <div style={{ fontSize: '10px', letterSpacing: '0.12em', color: '#0F1E14', marginTop: '4px', fontWeight: '600' }}>{r.tag}</div>}
+                  {!r.photo && r.desc && <div style={{ fontSize: '11px', color: '#aaa', lineHeight: '1.6', marginTop: '6px', fontStyle: 'italic' }}>{r.desc}</div>}
                 </div>
               </div>
             ))}
