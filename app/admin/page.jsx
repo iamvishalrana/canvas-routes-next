@@ -388,10 +388,12 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
         <AdminNotesPanel
           initialNotes={m.admin_notes}
           onSave={async (json) => {
-            await fetch(`/api/admin/members/${m.id}`, {
-              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            const res = await fetch(`/api/admin/members/${m.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ admin_notes: json }),
             })
+            if (!res.ok) throw new Error('Failed to save notes')
           }}
         />
       </div>
@@ -1771,7 +1773,13 @@ function ApplicationsTab({ isMobile, onUnseenCountChange }) {
                     <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: isGreyed ? 'rgba(0,0,0,0.025)' : undefined }} onClick={handleRowClick}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', minWidth: 0 }}>
-                          {!seenAppIds.has(a.id) && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block' }} />}
+                          {!seenAppIds.has(a.id) && (
+                          <button
+                            onClick={e => { e.stopPropagation(); markSeen(a.id) }}
+                            title="Mark as seen"
+                            style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
+                          />
+                        )}
                           {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-reg</span>}
                           <span style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a' }}>{a.name || <span style={{ color: '#ccc' }}>—</span>}</span>
                         </div>
