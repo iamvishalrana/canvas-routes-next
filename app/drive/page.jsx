@@ -35,74 +35,73 @@ function RouteMap({ stops }) {
     if (mapRef.current || !containerRef.current) return
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
     if (!apiKey) return
-    let cancelled = false
 
-    import('@googlemaps/js-api-loader').then(({ Loader }) => {
-      if (cancelled) return
-      const loader = new Loader({ apiKey, version: 'weekly', libraries: ['marker'] })
-      loader.load().then((google) => {
-        if (cancelled || mapRef.current) return
+    const initMap = () => {
+      if (mapRef.current) return
+      const google = window.google
+      const bounds = new google.maps.LatLngBounds()
+      stops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }))
 
-        const bounds = new google.maps.LatLngBounds()
-        stops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }))
-
-        const map = new google.maps.Map(containerRef.current, {
-          mapTypeId: 'roadmap',
-          disableDefaultUI: false,
-          zoomControl: true,
-          streetViewControl: false,
-          mapTypeControl: false,
-          fullscreenControl: true,
-          styles: [
-            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-            { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-            { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f5e9d6' }] },
-            { featureType: 'landscape', stylers: [{ color: '#f0ede8' }] },
-            { featureType: 'water', stylers: [{ color: '#c8d8e8' }] },
-          ],
-        })
-        map.fitBounds(bounds, 40)
-        mapRef.current = map
-
-        // Exact backroads route from KML
-        new google.maps.Polyline({
-          path: ROUTE_PATH,
-          geodesic: true,
-          strokeColor: '#0F1E14',
-          strokeOpacity: 0.75,
-          strokeWeight: 3,
-          map,
-        })
-
-        // Markers
-        stops.forEach((stop, i) => {
-          const color = stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : '#c5a882'
-          const marker = new google.maps.Marker({
-            position: { lat: stop.lat, lng: stop.lng },
-            map,
-            title: stop.label,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: stop.start || stop.end ? 9 : 7,
-              fillColor: color,
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2,
-            },
-          })
-          const infoWindow = new google.maps.InfoWindow({
-            content: `<div style="font-family:sans-serif;padding:2px 4px"><strong style="font-size:13px">${stop.label}</strong><br/><span style="color:#888;font-size:11px">${stop.note}</span></div>`,
-          })
-          marker.addListener('click', () => infoWindow.open(map, marker))
-        })
+      const map = new google.maps.Map(containerRef.current, {
+        mapTypeId: 'roadmap',
+        zoomControl: true,
+        streetViewControl: false,
+        mapTypeControl: false,
+        fullscreenControl: true,
+        styles: [
+          { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+          { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+          { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f5e9d6' }] },
+          { featureType: 'landscape', stylers: [{ color: '#f0ede8' }] },
+          { featureType: 'water', stylers: [{ color: '#c8d8e8' }] },
+        ],
       })
-    })
+      map.fitBounds(bounds, 40)
+      mapRef.current = map
 
-    return () => {
-      cancelled = true
-      mapRef.current = null
+      new google.maps.Polyline({
+        path: ROUTE_PATH,
+        geodesic: true,
+        strokeColor: '#0F1E14',
+        strokeOpacity: 0.75,
+        strokeWeight: 3,
+        map,
+      })
+
+      stops.forEach((stop) => {
+        const color = stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : '#c5a882'
+        const marker = new google.maps.Marker({
+          position: { lat: stop.lat, lng: stop.lng },
+          map,
+          title: stop.label,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: stop.start || stop.end ? 9 : 7,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+          },
+        })
+        const infoWindow = new google.maps.InfoWindow({
+          content: `<div style="font-family:sans-serif;padding:2px 4px"><strong style="font-size:13px">${stop.label}</strong><br/><span style="color:#888;font-size:11px">${stop.note}</span></div>`,
+        })
+        marker.addListener('click', () => infoWindow.open(map, marker))
+      })
     }
+
+    if (window.google?.maps) {
+      initMap()
+    } else {
+      const script = document.createElement('script')
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+      script.async = true
+      script.onload = initMap
+      document.head.appendChild(script)
+    }
+
+    return () => { mapRef.current = null }
   }, [stops])
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
