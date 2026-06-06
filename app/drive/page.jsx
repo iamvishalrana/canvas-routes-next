@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { ROUTE_PATH } from './routePath'
 import SiteFooter from '../../components/SiteFooter'
 
@@ -228,7 +228,13 @@ function RouteMap({ stops }) {
     if (window.google?.maps) {
       initMap()
     } else if (document.getElementById(scriptId)) {
-      document.getElementById(scriptId).addEventListener('load', initMap)
+      const existing = document.getElementById(scriptId)
+      if (existing.dataset.error) {
+        if (!destroyed) { setErrorMsg('Script failed to load previously'); setStatus('error') }
+      } else {
+        existing.addEventListener('load', initMap)
+        existing.addEventListener('error', () => { if (!destroyed) setStatus('error') })
+      }
     } else {
       const script = document.createElement('script')
       script.id = scriptId
@@ -236,6 +242,7 @@ function RouteMap({ stops }) {
       script.async = true
       script.onload = initMap
       script.onerror = () => {
+        script.dataset.error = '1'
         if (!destroyed) { setErrorMsg('Script failed to load — key may be invalid or blocked'); setStatus('error') }
       }
       document.head.appendChild(script)
@@ -288,6 +295,7 @@ export default function DrivePage() {
   const [err, setErr] = useState(false)
   const [checked, setChecked] = useState(false)
   const [lightbox, setLightbox] = useState(null)
+  const closeLightbox = useCallback(() => setLightbox(null), [])
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
@@ -360,7 +368,7 @@ export default function DrivePage() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} name={lightbox.name} car={lightbox.car} desc={lightbox.desc} onClose={() => setLightbox(null)} />}
+      {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} name={lightbox.name} car={lightbox.car} desc={lightbox.desc} onClose={closeLightbox} />}
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
