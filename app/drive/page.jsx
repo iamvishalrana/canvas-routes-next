@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { ROUTE_PATH } from './routePath'
+import SiteFooter from '../../components/SiteFooter'
 
 const PASSWORD = 'laurentians'
 
@@ -542,6 +543,7 @@ export default function DrivePage() {
         </div>
 
       </div>
+      <SiteFooter />
     </div>
   )
 }
