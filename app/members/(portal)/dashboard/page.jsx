@@ -1,5 +1,6 @@
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +40,7 @@ function CarDots({ car }) {
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/members/login')
 
   const admin = createAdminClient()
   const [{ data: member }, { data: announcements }, { data: events }, { data: application }] = await Promise.all([

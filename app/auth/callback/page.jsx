@@ -10,7 +10,7 @@ function Handler() {
 
   useEffect(() => {
     const rawNext = searchParams.get('next') || '/members/reset-password'
-    const next = rawNext.startsWith('/') ? rawNext : '/members/reset-password'
+    const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/members/reset-password'
     const errorParam = searchParams.get('error')
     const token_hash = searchParams.get('token_hash')
     const type = searchParams.get('type')
