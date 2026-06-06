@@ -18,8 +18,8 @@ const STOPS = [
 const REGISTRANTS = [
   { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey' },
   { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey' },
-  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver' },
-  { name: 'Tanya Ghingold + Mark', car: '2012 Porsche Cayman S Black Edition 71/500', color: '' },
+  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT' },
+  { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '' },
   { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '' },
   { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue' },
   { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red' },
@@ -356,6 +356,7 @@ export default function DrivePage() {
                     {r.name}
                   </div>
                   <div style={{ fontSize: '11px', color: '#888', lineHeight: '1.5' }}>{r.car}</div>
+                  {r.tag && <div style={{ fontSize: '10px', letterSpacing: '0.12em', color: '#0F1E14', marginTop: '4px', fontWeight: '600' }}>{r.tag}</div>}
                 </div>
               </div>
             ))}
