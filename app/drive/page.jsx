@@ -290,14 +290,14 @@ export default function DrivePage() {
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
-    if (urlPw?.toLowerCase() === PASSWORD) { setAuthed(true); setChecked(true); return }
+    if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
     if (localStorage.getItem('drive_auth') === '1') { setAuthed(true) }
     setChecked(true)
   }, [])
 
   function submit(e) {
     e.preventDefault()
-    if (pw.toLowerCase().trim() === PASSWORD) {
+    if (pw.trim().toLowerCase() === PASSWORD.toLowerCase()) {
       localStorage.setItem('drive_auth', '1')
       setAuthed(true)
     } else {
