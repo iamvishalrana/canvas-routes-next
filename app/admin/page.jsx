@@ -429,6 +429,7 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   const [noteValue, setNoteValue] = useState('')
   const [deleteMemberConfirm, setDeleteMemberConfirm] = useState(null)
   const [deleteMemberError, setDeleteMemberError] = useState(null)
+  const [resendStatus, setResendStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | 'error' | errorMsg }
 
   useEffect(() => {
     if (searchOverride) { setSearch(searchOverride); onSearchOverrideConsumed?.() }
@@ -511,12 +512,14 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
   }
 
   async function resendInvite(m) {
+    setResendStatus(p => ({ ...p, [m.id]: 'sending' }))
     const res = await fetch(`/api/admin/members/${m.id}/resend-invite`, { method: 'POST' })
+    const d = await res.json().catch(() => ({}))
     if (!res.ok) {
-      const d = await res.json()
-      setActionError(d.error || 'Failed to resend invite.')
+      setResendStatus(p => ({ ...p, [m.id]: d.error || 'Failed to resend.' }))
     } else {
-      setActionError(null)
+      setResendStatus(p => ({ ...p, [m.id]: 'sent' }))
+      setTimeout(() => setResendStatus(p => { const n = { ...p }; delete n[m.id]; return n }), 3000)
     }
   }
 
@@ -912,11 +915,17 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                         <span style={{ fontSize: '11px', color: m.password_set_at ? '#3B6B2F' : '#bbb' }}>
                           {m.password_set_at ? `✓ ${new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Awaiting'}
                         </span>
-                        {!m.password_set_at && (
-                          <button onClick={e => { e.stopPropagation(); resendInvite(m) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
-                            Resend
-                          </button>
-                        )}
+                        {!m.password_set_at && (() => {
+                          const rs = resendStatus[m.id]
+                          return (
+                            <button
+                              onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') resendInvite(m) }}
+                              disabled={rs === 'sending' || rs === 'sent'}
+                              style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
+                              {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}
+                            </button>
+                          )
+                        })()}
                         {(m.join_date || m.created_at) && (
                           <span style={{ fontSize: '11px', color: '#bbb' }}>
                             Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -959,11 +968,22 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
                           <span style={{ fontSize: '11px', color: '#3B6B2F' }}>{new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.05em' }}>Awaiting</span>
-                          <button onClick={e => { e.stopPropagation(); resendInvite(m) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
-                            Resend
-                          </button>
+                          {(() => {
+                            const rs = resendStatus[m.id]
+                            return (
+                              <button
+                                onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') resendInvite(m) }}
+                                disabled={rs === 'sending' || rs === 'sent'}
+                                style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
+                                {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}
+                              </button>
+                            )
+                          })()}
+                          {typeof resendStatus[m.id] === 'string' && resendStatus[m.id] !== 'sending' && resendStatus[m.id] !== 'sent' && (
+                            <span style={{ fontSize: '10px', color: '#7B2032' }}>{resendStatus[m.id]}</span>
+                          )}
                         </div>
                       )}
                     </div>
