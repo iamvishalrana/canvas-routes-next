@@ -22,7 +22,7 @@ const REGISTRANTS = [
   { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg' },
   { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a' },
   { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null },
-  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg' },
+  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg', photoScale: 1.2 },
   { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg' },
   { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg' },
   { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg' },
@@ -346,7 +346,7 @@ export default function DrivePage() {
             {REGISTRANTS.map((r, i) => (
               <div key={i} style={{ background: '#fff', overflow: 'hidden' }}>
                 {r.photo ? (
-                  <img src={r.photo} alt={r.car} style={{ width: '100%', height: '140px', objectFit: r.photoFit || 'cover', background: r.photoBg || 'transparent', display: 'block' }} />
+                  <img src={r.photo} alt={r.car} style={{ width: '100%', height: '140px', objectFit: r.photoFit || 'cover', background: r.photoBg || 'transparent', display: 'block', transform: r.photoScale ? `scale(${r.photoScale})` : undefined }} />
                 ) : (
                   <div style={{
                     height: '140px', background: '#f4f2ef',
