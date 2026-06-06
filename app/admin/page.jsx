@@ -3117,7 +3117,7 @@ function CarsTab({ isMobile }) {
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-const TABS = ['Dashboard', 'Members', 'Cars', 'Applications', 'Contacts', 'Announcements', 'Events', 'Tools']
+const TABS = ['Dashboard', 'Members', 'Cars', 'Applications', 'Contacts', 'Announcements', 'Events', 'Payments', 'Tools']
 const TAB_ICONS = {
   Dashboard: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -3157,6 +3157,11 @@ const TAB_ICONS = {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
       <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  ),
+  Payments: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
     </svg>
   ),
   Tools: (
@@ -3239,6 +3244,191 @@ function BirthdayCalendar({ people, onPersonClick }) {
 }
 
 // ─── Tools Tab ────────────────────────────────────────────────────────────────
+
+function PaymentsTab({ isMobile }) {
+  const [payments, setPayments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState('newest')
+  const [filterType, setFilterType] = useState('all')
+
+  useEffect(() => {
+    fetch('/api/admin/applications')
+      .then(r => r.json())
+      .then(data => {
+        const withPayment = (Array.isArray(data) ? data : [])
+          .filter(a => a.stripe_payment_status || a.stripe_payment_intent_id)
+        setPayments(withPayment)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const types = [...new Set(payments.map(p => p.stripe_payment_type).filter(Boolean))]
+
+  const filtered = payments
+    .filter(p => filterType === 'all' || p.stripe_payment_type === filterType)
+    .sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.stripe_paid_at || b.created_at) - new Date(a.stripe_paid_at || a.created_at)
+      if (sortBy === 'oldest') return new Date(a.stripe_paid_at || a.created_at) - new Date(b.stripe_paid_at || b.created_at)
+      if (sortBy === 'amount_desc') return (b.stripe_amount_paid || 0) - (a.stripe_amount_paid || 0)
+      if (sortBy === 'amount_asc') return (a.stripe_amount_paid || 0) - (b.stripe_amount_paid || 0)
+      return 0
+    })
+
+  const totalCents = payments
+    .filter(p => p.stripe_payment_status === 'paid')
+    .reduce((sum, p) => sum + (p.stripe_amount_paid || 0), 0)
+
+  const paidCount = payments.filter(p => p.stripe_payment_status === 'paid').length
+  const pendingCount = payments.filter(p => p.stripe_payment_status && p.stripe_payment_status !== 'paid').length
+
+  const fmtAmount = cents => `$${(cents / 100).toFixed(2)}`
+  const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+  const fmtType = t => t ? t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '—'
+
+  const statCard = (label, value, sub, color = '#1a1a1a') => (
+    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
+      <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.75rem', fontWeight: '300', color, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>{label}</div>
+      {sub && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.2rem' }}>{sub}</div>}
+    </div>
+  )
+
+  return (
+    <div>
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+        {statCard('Total Collected', fmtAmount(totalCents), `${paidCount} payment${paidCount !== 1 ? 's' : ''}`, '#1a1a1a')}
+        {statCard('Paid', paidCount, null, '#3B6B2F')}
+        {statCard('Other Status', pendingCount, null, pendingCount > 0 ? '#8A6535' : '#999')}
+        {statCard('Records', payments.length, 'with Stripe data', '#1a1a1a')}
+      </div>
+
+      {/* Filters */}
+      {!loading && payments.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative' }}>
+            <select value={filterType} onChange={e => setFilterType(e.target.value)}
+              style={{ ...sel, width: '180px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="all">All types</option>
+              {types.map(t => <option key={t} value={t}>{fmtType(t)}</option>)}
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative' }}>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+              style={{ ...sel, width: '180px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="amount_desc">Amount ↓</option>
+              <option value="amount_asc">Amount ↑</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+      {loading ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : payments.length === 0 ? (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '3rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', color: '#bbb', marginBottom: '0.5rem' }}>No payments recorded yet.</div>
+          <div style={{ fontSize: '12px', color: '#ccc', lineHeight: '1.7' }}>
+            Payment data will appear here once Stripe is live and<br />
+            the webhook is receiving <code>payment_intent.succeeded</code> events.
+          </div>
+        </div>
+      ) : (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto' }}>
+          {!isMobile && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.8fr 90px 130px 90px 130px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+              {['Name', 'Email', 'Amount', 'Type', 'Status', 'Date'].map((h, i) => (
+                <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+              ))}
+            </div>
+          )}
+          {filtered.map((p, idx) => {
+            const isPaid = p.stripe_payment_status === 'paid'
+            return (
+              <div key={p.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                {isMobile ? (
+                  <div style={{ padding: '0.85rem 1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{p.name || <span style={{ color: '#ccc' }}>—</span>}</span>
+                      <span style={{ fontSize: '13px', fontWeight: '500', color: isPaid ? '#3B6B2F' : '#8A6535' }}>{p.stripe_amount_paid ? fmtAmount(p.stripe_amount_paid) : '—'}</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#888' }}>{p.email}</div>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.3rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{fmtType(p.stripe_payment_type)}</span>
+                      <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: isPaid ? '#3B6B2F' : '#8A6535' }}>{p.stripe_payment_status || '—'}</span>
+                      <span style={{ fontSize: '10px', color: '#bbb' }}>{fmtDate(p.stripe_paid_at)}</span>
+                    </div>
+                    {p.stripe_payment_intent_id && (
+                      <div style={{ fontSize: '10px', color: '#ccc', marginTop: '0.25rem', fontFamily: 'monospace' }}>{p.stripe_payment_intent_id}</div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.8fr 90px 130px 90px 130px', padding: '0.85rem 1.25rem', alignItems: 'center' }}>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{p.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                    <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                      {p.email}<CopyBtn value={p.email} />
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: isPaid ? '#3B6B2F' : '#8A6535' }}>
+                      {p.stripe_amount_paid ? fmtAmount(p.stripe_amount_paid) : '—'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#888', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                      {fmtType(p.stripe_payment_type)}
+                    </div>
+                    <div>
+                      <span style={{
+                        fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 8px',
+                        background: isPaid ? 'rgba(59,107,47,0.08)' : 'rgba(138,101,53,0.08)',
+                        color: isPaid ? '#3B6B2F' : '#8A6535',
+                        border: `0.5px solid ${isPaid ? 'rgba(59,107,47,0.25)' : 'rgba(138,101,53,0.25)'}`,
+                      }}>
+                        {p.stripe_payment_status || '—'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#888' }}>{fmtDate(p.stripe_paid_at)}</div>
+                  </div>
+                )}
+                {/* Intent ID row on desktop */}
+                {!isMobile && p.stripe_payment_intent_id && (
+                  <div style={{ padding: '0 1.25rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <span style={{ fontSize: '10px', color: '#ccc', fontFamily: 'monospace', letterSpacing: '0.02em' }}>{p.stripe_payment_intent_id}</span>
+                    <CopyBtn value={p.stripe_payment_intent_id} />
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Coming soon sections */}
+      <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.5rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.75rem' }}>Stripe Dashboard</div>
+          <div style={{ fontSize: '12px', color: '#999', lineHeight: '1.7', marginBottom: '1rem' }}>
+            View payouts, disputes, and full transaction history directly in Stripe.
+          </div>
+          <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', padding: '0.45rem 1rem', textDecoration: 'none', display: 'inline-block', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Open Stripe →
+          </a>
+        </div>
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.5rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.75rem' }}>Refunds</div>
+          <div style={{ fontSize: '12px', color: '#999', lineHeight: '1.7' }}>
+            Refund processing will be available here once Stripe is fully configured with refund webhooks.
+          </div>
+          <div style={{ marginTop: '0.75rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc' }}>Coming soon</div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function ToolsTab() {
   const [hcStatus, setHcStatus] = useState(null) // null | 'loading' | 'ok' | 'error'
@@ -3584,6 +3774,7 @@ function AdminPageInner() {
           {tab === 'Contacts' && <ContactsTab isMobile={isMobile} searchOverride={tabSearch} onSearchOverrideConsumed={() => setTabSearch('')} />}
           {tab === 'Announcements' && <AnnouncementsTab />}
           {tab === 'Events' && <EventsTab isMobile={isMobile} />}
+          {tab === 'Payments' && <PaymentsTab isMobile={isMobile} />}
           {tab === 'Tools' && <ToolsTab />}
 
         </div>
