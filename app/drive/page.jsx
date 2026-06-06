@@ -32,6 +32,7 @@ function RouteMap({ stops }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const [status, setStatus] = useState('loading')
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -98,15 +99,12 @@ function RouteMap({ stops }) {
 
         if (!destroyed) setStatus('ready')
       } catch (e) {
-        console.error('[RouteMap] Map init error:', e)
-        if (!destroyed) setStatus('error')
+        if (!destroyed) { setErrorMsg(String(e)); setStatus('error') }
       }
     }
 
-    // Auth failure callback — fires when key is invalid or restricted
     window.gm_authFailure = () => {
-      console.error('[RouteMap] Google Maps auth failure — check API key and domain restrictions')
-      if (!destroyed) setStatus('error')
+      if (!destroyed) { setErrorMsg('Auth failure — key invalid or domain not allowed in Google Cloud restrictions'); setStatus('error') }
     }
 
     const scriptId = 'gmap-script'
@@ -120,9 +118,8 @@ function RouteMap({ stops }) {
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
       script.async = true
       script.onload = initMap
-      script.onerror = (e) => {
-        console.error('[RouteMap] Failed to load Google Maps script', e)
-        if (!destroyed) setStatus('error')
+      script.onerror = () => {
+        if (!destroyed) { setErrorMsg('Script failed to load — key may be invalid or blocked'); setStatus('error') }
       }
       document.head.appendChild(script)
     }
@@ -146,9 +143,8 @@ function RouteMap({ stops }) {
       )}
       {status === 'error' && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0ede8', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? 'Map failed to load — check browser console' : 'Map API key not configured'}
-          </span>
+          <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Map unavailable</span>
+          {errorMsg && <span style={{ fontSize: '10px', color: '#c0392b', maxWidth: '280px', lineHeight: '1.5' }}>{errorMsg}</span>}
           <a href="https://www.google.com/maps/d/viewer?mid=1Nqcw4_7P3M3FSEBpdwawyizSd7dY_KA" target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Open route in Google Maps →</a>
         </div>
       )}
