@@ -445,7 +445,7 @@ export default function DrivePage() {
 
         {/* Photographer */}
         <div style={{ padding: '1.5rem 0', borderTop: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>Photographer</div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>Shot by</div>
           <a
             href="https://www.instagram.com/jidhin_paul?igsh=MTA3czU2dGZsc28wbg=="
             target="_blank"
