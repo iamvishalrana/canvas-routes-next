@@ -240,10 +240,17 @@ export default function DrivePage() {
       `}</style>
 
       {/* Header */}
-      <div style={{ background: '#0F1E14', padding: '2rem 1.25rem 1.75rem', textAlign: 'center' }}>
-        <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '160px', display: 'block', margin: '0 auto 1.5rem' }} />
-        <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2' }}>Into the Laurentians</div>
-        <div style={{ color: 'rgba(245,241,236,0.5)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem' }}>June 7, 2026</div>
+      <div style={{
+        position: 'relative', padding: '3.5rem 1.25rem 3rem', textAlign: 'center',
+        backgroundImage: 'url(/faq-page.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center',
+        overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(15,30,20,0.82) 100%)' }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '160px', display: 'block', margin: '0 auto 1.5rem' }} />
+          <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2' }}>Into the Laurentians</div>
+          <div style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem' }}>June 7, 2026</div>
+        </div>
       </div>
 
       <div style={{ maxWidth: '740px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
