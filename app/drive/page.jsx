@@ -6,7 +6,7 @@ const PASSWORD = 'laurentians'
 const STOPS = [
   { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'https://maps.app.goo.gl/okpsXCTYa4aoQiis8', lat: 45.4305611, lng: -73.6346777 },
   { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
-  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
+  { label: 'Lac des Sables Photo Stop', note: 'Sainte-Agathe-des-Monts (Park the cars along the side of the lake)', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
   { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365 },
   { label: 'Mont-Tremblant', note: 'Convoy Point', href: 'https://www.google.com/maps?q=46.2017179,-74.5695010', lat: 46.2017179, lng: -74.5695010 },
   { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.2089655,-74.5846753', lat: 46.2089655, lng: -74.5846753 },
