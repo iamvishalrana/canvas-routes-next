@@ -115,7 +115,7 @@ function RouteMap({ stops }) {
     } else {
       const script = document.createElement('script')
       script.id = scriptId
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
       script.async = true
       script.onload = initMap
       script.onerror = () => {
