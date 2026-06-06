@@ -352,11 +352,19 @@ export default function RoutesPage() {
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration is now closed.</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
               <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"420px",margin:"1.5rem auto"}}>
-                This route has been completed. All future Canvas Routes road trips will be exclusive to members.
+                Need more information? Contact us at{' '}
+                <a href="mailto:info@canvasroutes.com" style={{color:"#7B5B2E",textDecoration:"underline",textUnderlineOffset:"2px"}}>info@canvasroutes.com</a>
               </p>
-              <Link href="/membership" style={{display:"inline-block",marginTop:"1.5rem",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",border:"1px solid rgba(0,0,0,0.25)",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
-                Join Canvas Routes
-              </Link>
+              <div style={{display:"flex",justifyContent:"center",gap:"1.5rem",marginTop:"1.75rem"}}>
+                <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{color:"#555",display:"flex",alignItems:"center",gap:"0.4rem",fontSize:"12px",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none"}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                  Instagram
+                </a>
+                <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{color:"#555",display:"flex",alignItems:"center",gap:"0.4rem",fontSize:"12px",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none"}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                  Facebook
+                </a>
+              </div>
             </div>
           )}
 
