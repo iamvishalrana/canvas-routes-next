@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { ROUTE_PATH } from './routePath'
 
 const PASSWORD = 'laurentians'
 
@@ -64,10 +65,9 @@ function RouteMap({ stops }) {
         map.fitBounds(bounds, 40)
         mapRef.current = map
 
-        // Route polyline
-        const path = stops.map(s => ({ lat: s.lat, lng: s.lng }))
+        // Exact backroads route from KML
         new google.maps.Polyline({
-          path,
+          path: ROUTE_PATH,
           geodesic: true,
           strokeColor: '#0F1E14',
           strokeOpacity: 0.75,
