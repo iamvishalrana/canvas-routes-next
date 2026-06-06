@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 const PASSWORD = 'laurentians'
 
 const STOPS = [
-  { label: 'LaSalle, Montreal', note: 'Meetup — 7:00am sharp', start: true },
-  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur' },
-  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts' },
-  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc' },
-  { label: 'Mont-Tremblant', note: 'Convoy Point' },
-  { label: '163 Chem. des Voyageurs', note: 'Mont-Tremblant' },
-  { label: 'Pizzéria NO.900', note: 'Mont-Tremblant — Final Destination', end: true },
+  { label: 'LaSalle, Montreal', note: 'Meetup — 7:00am sharp', start: true, href: 'https://www.google.com/maps?q=45.4305611,-73.6346777' },
+  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'https://www.google.com/maps?q=45.8957004,-74.1564982' },
+  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984' },
+  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365' },
+  { label: 'Mont-Tremblant', note: 'Convoy Point', href: 'https://www.google.com/maps?q=46.2017179,-74.569501' },
+  { label: '163 Chem. des Voyageurs', note: 'Mont-Tremblant', href: 'https://www.google.com/maps?q=46.2089655,-74.5846753' },
+  { label: 'Aloe Cafe', note: 'Mont-Tremblant — Final Destination', end: true, href: 'https://maps.app.goo.gl/j6kTSg7HHZdAPejH6' },
 ]
 
 const REGISTRANTS = [
@@ -158,9 +158,14 @@ export default function DrivePage() {
               </div>
               {/* Stop info */}
               <div style={{ paddingBottom: i < STOPS.length - 1 ? '0' : '0', marginBottom: i < STOPS.length - 1 ? '0' : '0' }}>
-                <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: stop.start || stop.end ? '500' : '400', lineHeight: '1.3' }}>
+                <a
+                  href={stop.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: stop.start || stop.end ? '500' : '400', lineHeight: '1.3', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.25)', display: 'block' }}
+                >
                   {stop.label}
-                </div>
+                </a>
                 <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: '8px' }}>{stop.note}</div>
               </div>
             </div>
