@@ -17,16 +17,16 @@ const STOPS = [
 ]
 
 const REGISTRANTS = [
-  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey' },
-  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey' },
-  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT' },
-  { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '' },
-  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '' },
-  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue' },
-  { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red' },
-  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '' },
-  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black' },
-  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White' },
+  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/Louis%20Guindon.png' },
+  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey', photo: null },
+  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/Julien%20Fernandez.jpeg' },
+  { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/Tanya%20Ghingold.jpg' },
+  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null },
+  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/Marc-Sauve%20Antoine.JPG' },
+  { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/Nicholas%20kong.jpeg' },
+  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/Alexandre%20Boutin.jpeg' },
+  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/Yvon%20Maggi.jpeg' },
+  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/Jerry.jpeg' },
 ]
 
 function RouteMap({ stops }) {
@@ -338,16 +338,17 @@ export default function DrivePage() {
           }}>
             {REGISTRANTS.map((r, i) => (
               <div key={i} style={{ background: '#fff', overflow: 'hidden' }}>
-                {/* Car placeholder — light with icon */}
-                <div style={{
-                  height: '110px', background: '#f4f2ef',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                }}>
-                  <CarIcon />
-                  {r.color ? (
-                    <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.08em' }}>{r.color}</div>
-                  ) : null}
-                </div>
+                {r.photo ? (
+                  <img src={r.photo} alt={r.car} style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }} />
+                ) : (
+                  <div style={{
+                    height: '140px', background: '#f4f2ef',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  }}>
+                    <CarIcon />
+                    {r.color ? <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.08em' }}>{r.color}</div> : null}
+                  </div>
+                )}
                 <div style={{ padding: '0.8rem 0.85rem' }}>
                   <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '600', marginBottom: '4px', lineHeight: '1.3' }}>
                     {r.name}
