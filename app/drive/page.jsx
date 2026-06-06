@@ -265,14 +265,14 @@ export default function DrivePage() {
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
     if (urlPw?.toLowerCase() === PASSWORD) { setAuthed(true); setChecked(true); return }
-    if (sessionStorage.getItem('drive_auth') === '1') { setAuthed(true) }
+    if (localStorage.getItem('drive_auth') === '1') { setAuthed(true) }
     setChecked(true)
   }, [])
 
   function submit(e) {
     e.preventDefault()
     if (pw.toLowerCase().trim() === PASSWORD) {
-      sessionStorage.setItem('drive_auth', '1')
+      localStorage.setItem('drive_auth', '1')
       setAuthed(true)
     } else {
       setErr(true)
@@ -369,7 +369,7 @@ export default function DrivePage() {
               <a
                 href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
                 target="_blank" rel="noreferrer"
-                style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', display: 'block' }}
+                style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', display: 'block', fontWeight: '700' }}
               >
                 Download Velox →
               </a>
@@ -420,6 +420,29 @@ export default function DrivePage() {
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Map</div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
             <RouteMap stops={STOPS} />
+          </div>
+        </div>
+
+        {/* Ziptrek discount */}
+        <div style={{ padding: '1.75rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Exclusive Perk</div>
+          <div style={{ background: '#0F1E14', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '16px' }}>Ziptrek Ecotours</div>
+              <div style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>20% Off</div>
+            </div>
+            <div style={{ color: 'rgba(245,241,236,0.6)', fontSize: '12px', lineHeight: '1.6' }}>
+              Falcon Adventure at Mont-Tremblant. Book online or over the phone with code below — let Jerry know if you book.
+            </div>
+            <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '20px', letterSpacing: '0.08em' }}>CANVASR20</div>
+            <a
+              href="https://tremblant.ziptrek.com/en_US/"
+              target="_blank"
+              rel="noreferrer"
+              style={{ marginTop: '0.25rem', display: 'inline-block', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(245,241,236,0.3)' }}
+            >
+              Book Online →
+            </a>
           </div>
         </div>
 
