@@ -452,7 +452,7 @@ export default function DrivePage() {
                   {stop.label}
                 </a>
                 <div style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '10px' }}>
-                  {stop.fuel && <span style={{ color: '#c5a882', fontWeight: '600', marginRight: '4px' }}>⛽</span>}{stop.note}
+                  {stop.note}
                 </div>
               </div>
             </div>
