@@ -17,16 +17,16 @@ const STOPS = [
 ]
 
 const REGISTRANTS = [
-  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/Louis%20Guindon.png' },
-  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey', photo: null },
-  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/Julien%20Fernandez.jpeg' },
-  { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/Tanya%20Ghingold.jpg' },
+  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/car-louis-guindon.png' },
+  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png' },
+  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg' },
+  { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg' },
   { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null },
-  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/Marc-Sauve%20Antoine.JPG' },
-  { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/Nicholas%20kong.jpeg' },
-  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/Alexandre%20Boutin.jpeg' },
-  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/Yvon%20Maggi.jpeg' },
-  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/Jerry.jpeg' },
+  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg' },
+  { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg' },
+  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg' },
+  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg' },
+  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/car-jerry.jpeg' },
 ]
 
 function RouteMap({ stops }) {
