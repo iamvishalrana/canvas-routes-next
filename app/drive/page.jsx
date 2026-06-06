@@ -283,6 +283,7 @@ function CarIcon() {
 export default function DrivePage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [err, setErr] = useState(false)
   const [checked, setChecked] = useState(false)
   const [lightbox, setLightbox] = useState(null)
@@ -315,22 +316,31 @@ export default function DrivePage() {
           <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '22px', marginBottom: '0.4rem' }}>Into the Laurentians</div>
           <div style={{ color: 'rgba(245,241,236,0.4)', fontFamily: 'sans-serif', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '2.5rem' }}>June 7, 2026</div>
           <form onSubmit={submit}>
+            <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
             <input
               value={pw}
               onChange={e => { setPw(e.target.value); setErr(false) }}
               placeholder="Password"
-              type="password"
+              type={showPw ? 'text' : 'password'}
               autoComplete="off"
               style={{
-                display: 'block', width: '100%', padding: '0.9rem 1rem',
+                display: 'block', width: '100%', padding: '0.9rem 2.75rem 0.9rem 1rem',
                 background: 'rgba(255,255,255,0.07)',
                 border: `0.5px solid ${err ? '#7B2032' : 'rgba(255,255,255,0.18)'}`,
                 color: '#F5F1EC', fontSize: '16px', outline: 'none',
-                fontFamily: 'Georgia, serif', marginBottom: '0.75rem',
+                fontFamily: 'Georgia, serif',
                 textAlign: 'center', letterSpacing: '0.12em', boxSizing: 'border-box',
                 WebkitAppearance: 'none', borderRadius: '0',
               }}
             />
+            <button
+              type="button"
+              onClick={() => setShowPw(p => !p)}
+              style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: '12px', letterSpacing: '0.06em', padding: '4px' }}
+            >
+              {showPw ? 'Hide' : 'Show'}
+            </button>
+            </div>
             {err && <div style={{ color: '#c0392b', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>Incorrect password</div>}
             <button type="submit" style={{
               width: '100%', background: '#F5F1EC', color: '#0F1E14', border: 'none',
