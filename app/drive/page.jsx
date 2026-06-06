@@ -1,16 +1,16 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const PASSWORD = 'laurentians'
 
 const STOPS = [
-  { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'geo:45.4305611,-73.6346777?q=Petinos+LaSalle+Montreal' },
-  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'geo:45.8957004,-74.1564982?q=Esso+Porte+du+Nord+Saint-Sauveur' },
-  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'geo:46.0331833,-74.2849984?q=243+Rue+St+Venant+Sainte-Agathe-des-Monts' },
-  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'geo:46.1160535,-74.4784365?q=Cafe+Mont+Blanc+Mont-Blanc' },
-  { label: 'Mont-Tremblant', note: 'Convoy Point', href: 'geo:46.2017179,-74.5695010?q=Mont-Tremblant' },
-  { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'geo:46.2089655,-74.5846753?q=163+Chemin+des+Voyageurs+Mont-Tremblant' },
-  { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'geo:45.4640,-73.8314?q=Aloe+Cafe+Pointe-Claire' },
+  { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'geo:45.4305611,-73.6346777?q=Petinos+LaSalle+Montreal', lat: 45.4305611, lng: -73.6346777 },
+  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'geo:45.8957004,-74.1564982?q=Esso+Porte+du+Nord+Saint-Sauveur', lat: 45.8957004, lng: -74.1564982 },
+  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'geo:46.0331833,-74.2849984?q=243+Rue+St+Venant+Sainte-Agathe-des-Monts', lat: 46.0331833, lng: -74.2849984 },
+  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'geo:46.1160535,-74.4784365?q=Cafe+Mont+Blanc+Mont-Blanc', lat: 46.1160535, lng: -74.4784365 },
+  { label: 'Mont-Tremblant', note: 'Convoy Point', href: 'geo:46.2017179,-74.5695010?q=Mont-Tremblant', lat: 46.2017179, lng: -74.5695010 },
+  { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'geo:46.2089655,-74.5846753?q=163+Chemin+des+Voyageurs+Mont-Tremblant', lat: 46.2089655, lng: -74.5846753 },
+  { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'geo:45.4640,-73.8314?q=Aloe+Cafe+Pointe-Claire', lat: 45.4640, lng: -73.8314 },
 ]
 
 const REGISTRANTS = [
@@ -24,6 +24,56 @@ const REGISTRANTS = [
   { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '' },
   { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black' },
 ]
+
+function RouteMap({ stops }) {
+  const containerRef = useRef(null)
+  const mapRef = useRef(null)
+
+  useEffect(() => {
+    if (mapRef.current || !containerRef.current) return
+    let cancelled = false
+
+    Promise.all([
+      import('leaflet'),
+      import('leaflet/dist/leaflet.css'),
+    ]).then(([{ default: L }]) => {
+      if (cancelled || mapRef.current) return
+
+      const coords = stops.map(s => [s.lat, s.lng])
+      const bounds = L.latLngBounds(coords).pad(0.15)
+
+      const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false }).fitBounds(bounds)
+      mapRef.current = map
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18,
+      }).addTo(map)
+
+      // Route line
+      L.polyline(coords, { color: '#0F1E14', weight: 2.5, opacity: 0.7 }).addTo(map)
+
+      stops.forEach((stop, i) => {
+        const isEnd = stop.start || stop.end
+        const marker = L.circleMarker([stop.lat, stop.lng], {
+          radius: isEnd ? 8 : 6,
+          fillColor: stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : '#c5a882',
+          color: '#fff',
+          weight: 2,
+          fillOpacity: 1,
+        }).addTo(map)
+        marker.bindPopup(`<strong>${stop.label}</strong><br/><span style="color:#888;font-size:12px">${stop.note}</span>`)
+      })
+    })
+
+    return () => {
+      cancelled = true
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
+    }
+  }, [stops])
+
+  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+}
 
 function CarIcon() {
   return (
@@ -106,8 +156,9 @@ export default function DrivePage() {
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
       <style>{`
-        .map-wrap { height: 0; padding-bottom: 70%; }
-        @media (min-width: 640px) { .map-wrap { height: 480px; padding-bottom: 0; } }
+        .map-wrap { height: 320px; }
+        @media (min-width: 640px) { .map-wrap { height: 480px; } }
+        .leaflet-container { background: #f0ede8; }
       `}</style>
 
       {/* Header */}
@@ -192,13 +243,8 @@ export default function DrivePage() {
         {/* Map */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Map</div>
-          <div className="map-wrap" style={{ position: 'relative', overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-            <iframe
-              src="https://www.google.com/maps/d/embed?mid=1Nqcw4_7P3M3FSEBpdwawyizSd7dY_KA"
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-              allowFullScreen
-              title="Route Map"
-            />
+          <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+            <RouteMap stops={STOPS} />
           </div>
         </div>
 
