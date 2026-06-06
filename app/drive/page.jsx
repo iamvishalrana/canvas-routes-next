@@ -106,8 +106,8 @@ export default function DrivePage() {
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
       <style>{`
-        .map-wrap { padding-bottom: 70%; }
-        @media (min-width: 640px) { .map-wrap { padding-bottom: 0; height: 480px; } }
+        .map-wrap { height: 0; padding-bottom: 70%; }
+        @media (min-width: 640px) { .map-wrap { height: 480px; padding-bottom: 0; } }
       `}</style>
 
       {/* Header */}
@@ -192,7 +192,7 @@ export default function DrivePage() {
         {/* Map */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Map</div>
-          <div className="map-wrap" style={{ position: 'relative', height: 0, overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div className="map-wrap" style={{ position: 'relative', overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
             <iframe
               src="https://www.google.com/maps/d/embed?mid=1Nqcw4_7P3M3FSEBpdwawyizSd7dY_KA"
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
