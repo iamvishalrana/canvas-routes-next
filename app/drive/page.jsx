@@ -29,6 +29,31 @@ const REGISTRANTS = [
   { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/car-jerry.jpeg' },
 ]
 
+function Lightbox({ src, alt, onClose }) {
+  useEffect(() => {
+    const handler = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+    >
+      <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1.25rem', background: 'none', border: 'none', color: '#fff', fontSize: '28px', cursor: 'pointer', lineHeight: 1, opacity: 0.7 }}>✕</button>
+      <img
+        src={src}
+        alt={alt}
+        onClick={e => e.stopPropagation()}
+        onContextMenu={e => e.preventDefault()}
+        draggable={false}
+        style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', userSelect: 'none', WebkitUserSelect: 'none' }}
+      />
+    </div>
+  )
+}
+
 function RouteMap({ stops }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
@@ -170,6 +195,7 @@ export default function DrivePage() {
   const [pw, setPw] = useState('')
   const [err, setErr] = useState(false)
   const [checked, setChecked] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
@@ -233,6 +259,7 @@ export default function DrivePage() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
+      {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} onClose={() => setLightbox(null)} />}
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
@@ -346,7 +373,13 @@ export default function DrivePage() {
             {REGISTRANTS.map((r, i) => (
               <div key={i} style={{ background: '#fff', overflow: 'hidden' }}>
                 {r.photo ? (
-                  <img src={r.photo} alt={r.car} style={{ width: '100%', height: '140px', objectFit: r.photoFit || 'cover', background: r.photoBg || 'transparent', display: 'block', transform: r.photoScale ? `scale(${r.photoScale})` : undefined }} />
+                  <img
+                    src={r.photo} alt={r.car}
+                    onClick={() => setLightbox({ src: r.photo, alt: r.car })}
+                    onContextMenu={e => e.preventDefault()}
+                    draggable={false}
+                    style={{ width: '100%', height: '140px', objectFit: r.photoFit || 'cover', background: r.photoBg || 'transparent', display: 'block', transform: r.photoScale ? `scale(${r.photoScale})` : undefined, cursor: 'zoom-in', userSelect: 'none', WebkitUserSelect: 'none' }}
+                  />
                 ) : (
                   <div style={{
                     height: '140px', background: '#f4f2ef',
