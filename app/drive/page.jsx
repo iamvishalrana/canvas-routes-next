@@ -17,19 +17,60 @@ const STOPS = [
 ]
 
 const REGISTRANTS = [
-  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/car-louis-guindon.png' },
-  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png' },
-  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg' },
-  { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a' },
-  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null },
-  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg' },
-  { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg' },
-  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg' },
-  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg' },
-  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/car-jerry.jpeg' },
+  { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/car-louis-guindon.png', desc: 'Twin-turbo V6 in a sleeper — Genesis\'s answer to the BMW 3 Series, and a convincing one.' },
+  { name: 'Jean-Philippe Remon', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png', desc: 'N55 straight-six in the lightest BMW chassis of its era — one of the last truly pure driver\'s BMWs.' },
+  { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg', desc: 'Naturally aspirated flat-six at its finest — the 997 generation before Porsche turbocharged everything.' },
+  { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a', desc: '1 of 500 built worldwide — factory Black Edition with a mid-engine flat-six Porsche deliberately kept beneath 911 spec.' },
+  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null, desc: '400hp from a five-cylinder turbo — a configuration so rare the exhaust note alone turns heads.' },
+  { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg', desc: 'Air suspension, Quattro grip, and genuine ground clearance — equally at home on a mountain pass or a dirt road.' },
+  { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg', desc: 'Rear-wheel drive, naturally aspirated, under 2,800 lbs — built purely for the corner, not the straight.' },
+  { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg', desc: '630hp twin-turbo V8 in a full-size wagon — the most capable family car Audi has ever built.' },
+  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg', desc: '560hp, all-wheel drive, roof down — Porsche\'s Turbo S proves savage performance and open-air driving aren\'t mutually exclusive.' },
+  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/car-jerry.jpeg', desc: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.' },
 ]
 
-function Lightbox({ src, alt, onClose }) {
+function CarPlaceholder({ color, name }) {
+  const isFrederic = name === 'Frederic Lefebvre'
+  const [uploading, setUploading] = useState(false)
+  const [uploaded, setUploaded] = useState(false)
+  const inputRef = useRef(null)
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('pw', 'laurentians')
+    const res = await fetch('/api/drive/upload-photo', { method: 'POST', body: fd })
+    setUploading(false)
+    if (res.ok) setUploaded(true)
+  }
+
+  return (
+    <div style={{ height: '140px', background: '#f4f2ef', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', position: 'relative' }}>
+      <CarIcon />
+      {color ? <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.08em' }}>{color}</div> : null}
+      {isFrederic && !uploaded && (
+        <>
+          <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            style={{ marginTop: '4px', background: 'none', border: '0.5px solid rgba(0,0,0,0.2)', padding: '3px 10px', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', color: '#666' }}
+          >
+            {uploading ? 'Uploading…' : '+ Add Photo'}
+          </button>
+        </>
+      )}
+      {isFrederic && uploaded && (
+        <div style={{ fontSize: '10px', color: '#3B6B2F', letterSpacing: '0.08em' }}>✓ Uploaded — refresh to see</div>
+      )}
+    </div>
+  )
+}
+
+function Lightbox({ src, alt, name, car, desc, onClose }) {
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
@@ -39,7 +80,7 @@ function Lightbox({ src, alt, onClose }) {
   return (
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.93)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
     >
       <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1.25rem', background: 'none', border: 'none', color: '#fff', fontSize: '28px', cursor: 'pointer', lineHeight: 1, opacity: 0.7 }}>✕</button>
       <img
@@ -48,8 +89,13 @@ function Lightbox({ src, alt, onClose }) {
         onClick={e => e.stopPropagation()}
         onContextMenu={e => e.preventDefault()}
         draggable={false}
-        style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', userSelect: 'none', WebkitUserSelect: 'none' }}
+        style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', userSelect: 'none', WebkitUserSelect: 'none' }}
       />
+      <div onClick={e => e.stopPropagation()} style={{ marginTop: '1.25rem', textAlign: 'center', maxWidth: '480px' }}>
+        <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '16px', marginBottom: '0.4rem' }}>{name}</div>
+        <div style={{ color: 'rgba(245,241,236,0.5)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>{car}</div>
+        {desc && <div style={{ color: 'rgba(245,241,236,0.75)', fontSize: '13px', lineHeight: '1.7', fontStyle: 'italic' }}>{desc}</div>}
+      </div>
     </div>
   )
 }
@@ -259,7 +305,7 @@ export default function DrivePage() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} onClose={() => setLightbox(null)} />}
+      {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} name={lightbox.name} car={lightbox.car} desc={lightbox.desc} onClose={() => setLightbox(null)} />}
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
@@ -375,19 +421,13 @@ export default function DrivePage() {
                 {r.photo ? (
                   <img
                     src={r.photo} alt={r.car}
-                    onClick={() => setLightbox({ src: r.photo, alt: r.car })}
+                    onClick={() => setLightbox({ src: r.photo, alt: r.car, name: r.name, car: r.car, desc: r.desc })}
                     onContextMenu={e => e.preventDefault()}
                     draggable={false}
                     style={{ width: '100%', height: '140px', objectFit: r.photoFit || 'cover', background: r.photoBg || 'transparent', display: 'block', transform: r.photoScale ? `scale(${r.photoScale})` : undefined, cursor: 'zoom-in', userSelect: 'none', WebkitUserSelect: 'none' }}
                   />
                 ) : (
-                  <div style={{
-                    height: '140px', background: '#f4f2ef',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                  }}>
-                    <CarIcon />
-                    {r.color ? <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.08em' }}>{r.color}</div> : null}
-                  </div>
+                  <CarPlaceholder color={r.color} name={r.name} />
                 )}
                 <div style={{ padding: '0.8rem 0.85rem' }}>
                   <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '600', marginBottom: '4px', lineHeight: '1.3' }}>
