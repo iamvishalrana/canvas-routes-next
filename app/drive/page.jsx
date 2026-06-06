@@ -195,12 +195,10 @@ export default function DrivePage() {
       `}</style>
 
       {/* Header */}
-      <div style={{ background: '#0F1E14', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '100px', display: 'block' }} />
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '15px' }}>Into the Laurentians</div>
-          <div style={{ color: 'rgba(245,241,236,0.45)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '3px' }}>June 7, 2026</div>
-        </div>
+      <div style={{ background: '#0F1E14', padding: '2rem 1.25rem 1.75rem', textAlign: 'center' }}>
+        <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '90px', display: 'block', margin: '0 auto 1.5rem' }} />
+        <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2' }}>Into the Laurentians</div>
+        <div style={{ color: 'rgba(245,241,236,0.5)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem' }}>June 7, 2026</div>
       </div>
 
       <div style={{ maxWidth: '740px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
