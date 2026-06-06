@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 const PASSWORD = 'laurentians'
 
 const STOPS = [
-  { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'geo:45.4305611,-73.6346777?q=Petinos+LaSalle+Montreal', lat: 45.4305611, lng: -73.6346777 },
-  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'geo:45.8957004,-74.1564982?q=Esso+Porte+du+Nord+Saint-Sauveur', lat: 45.8957004, lng: -74.1564982 },
-  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'geo:46.0331833,-74.2849984?q=243+Rue+St+Venant+Sainte-Agathe-des-Monts', lat: 46.0331833, lng: -74.2849984 },
-  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'geo:46.1160535,-74.4784365?q=Cafe+Mont+Blanc+Mont-Blanc', lat: 46.1160535, lng: -74.4784365 },
-  { label: 'Mont-Tremblant', note: 'Convoy Point', href: 'geo:46.2017179,-74.5695010?q=Mont-Tremblant', lat: 46.2017179, lng: -74.5695010 },
-  { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'geo:46.2089655,-74.5846753?q=163+Chemin+des+Voyageurs+Mont-Tremblant', lat: 46.2089655, lng: -74.5846753 },
-  { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'geo:45.4640,-73.8314?q=Aloe+Cafe+Pointe-Claire', lat: 45.4640, lng: -73.8314 },
+  { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'https://www.google.com/maps?q=45.4305611,-73.6346777', lat: 45.4305611, lng: -73.6346777 },
+  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur', href: 'https://www.google.com/maps?q=45.8957004,-74.1564982', lat: 45.8957004, lng: -74.1564982 },
+  { label: '243 Rue St Venant', note: 'Sainte-Agathe-des-Monts', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
+  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365 },
+  { label: 'Mont-Tremblant', note: 'Convoy Point', href: 'https://www.google.com/maps?q=46.2017179,-74.5695010', lat: 46.2017179, lng: -74.5695010 },
+  { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.2089655,-74.5846753', lat: 46.2089655, lng: -74.5846753 },
+  { label: 'Aloe Cafe', note: 'Pointe-Claire — Final Destination', end: true, href: 'https://www.google.com/maps?q=45.4640,-73.8314', lat: 45.4640, lng: -73.8314 },
 ]
 
 const REGISTRANTS = [
