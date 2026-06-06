@@ -247,7 +247,7 @@ export default function DrivePage() {
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(15,30,20,0.82) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '160px', display: 'block', margin: '0 auto 1.5rem' }} />
+          <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
           <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2' }}>Into the Laurentians</div>
           <div style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem' }}>June 7, 2026</div>
         </div>
