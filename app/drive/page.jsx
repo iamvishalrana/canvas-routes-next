@@ -447,7 +447,6 @@ export default function DrivePage() {
                 'Follow the lead car at all times — do not overtake any car in the convoy.',
                 'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.',
                 'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.',
-                'Keep your headlights on for the full duration of the drive.',
                 'If you get separated, do not panic — proceed to the next stop on the route and wait.',
                 'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
                 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
