@@ -19,7 +19,7 @@ const STOPS = [
 
 const REGISTRANTS = [
   // Porsche
-  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg', desc: '560hp, all-wheel drive, roof down — Porsche\'s Turbo S proves savage performance and open-air driving aren\'t mutually exclusive.' },
+  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cabriolet', color: 'Black', photo: '/car-yvon-maggi.jpeg', desc: '560hp, all-wheel drive, roof down — Porsche\'s Turbo S proves savage performance and open-air driving aren\'t mutually exclusive.' },
   { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg', desc: 'Naturally aspirated flat-six at its finest — the 997 generation before Porsche turbocharged everything.' },
   { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a', desc: '1 of 500 built worldwide — factory Black Edition with a mid-engine flat-six Porsche deliberately kept beneath 911 spec.' },
   // Audi
