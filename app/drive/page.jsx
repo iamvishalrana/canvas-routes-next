@@ -22,7 +22,7 @@ const REGISTRANTS = [
   { name: 'Jean-Philippe Remon', nick: 'JP', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png', desc: 'N55 straight-six in the lightest BMW chassis of its era — and a turbo spool that makes you look twice every time.' },
   { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg', desc: 'Naturally aspirated flat-six at its finest — the 997 generation before Porsche turbocharged everything.' },
   { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a', desc: '1 of 500 built worldwide — factory Black Edition with a mid-engine flat-six Porsche deliberately kept beneath 911 spec.' },
-  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: null, desc: '400hp five-cylinder turbo with a spool that sounds like nothing else on the road — one of Audi\'s most characterful engines.' },
+  { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: '/car-frederic-lefebvre.jpeg', desc: '400hp five-cylinder turbo with a spool that sounds like nothing else on the road — one of Audi\'s most characterful engines.' },
   { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg', desc: 'Full-body gloss steel blue PPF, H&R coilovers, and an upgraded rear sway bar — a properly sorted sporty wagon that earns every head turn.' },
   { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg', desc: 'Rear-wheel drive, naturally aspirated, under 2,800 lbs — built purely for the corner, not the straight.' },
   { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg', desc: '630hp twin-turbo V8 in a full-size wagon — the most capable family car Audi has ever built.' },
@@ -537,7 +537,7 @@ export default function DrivePage() {
 
         {/* Photographer */}
         <div className="shot-by">
-          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>Shot by</div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>Photographer</div>
           <a
             href="https://www.instagram.com/jidhin_paul?igsh=MTA3czU2dGZsc28wbg=="
             target="_blank"
