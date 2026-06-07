@@ -28,7 +28,7 @@ const REGISTRANTS = [
   { name: 'Alexandre Boutin', car: '2026 Audi RS6 Performance', color: '', photo: '/car-alexandre-boutin.jpeg', desc: '630hp twin-turbo V8 in a full-size wagon — the most capable family car Audi has ever built.' },
   // BMW
   { name: 'Jean-Philippe Remon', nick: 'JP', car: '2011 BMW 135i', color: 'Grey', photo: '/car-jean-philippe.png', desc: 'N55 straight-six in the lightest BMW chassis of its era — and a turbo spool that makes you look twice every time.' },
-  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/car-jerry.jpeg', desc: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.' },
+  { name: 'Jerry', car: '2021 BMW 3 Series', color: 'White', photo: '/car-jerry.jpeg', desc: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.', tag: 'Lead Car · AYX 19K' },
   // Rest
   { name: 'Louis Guindon', car: '2023 Genesis G70 3.3T', color: 'Grey', photo: '/car-louis-guindon.png', desc: 'Twin-turbo V6 pushing 365hp in a chassis tuned for the driver — understated outside, serious where it counts.' },
   { name: 'Nicholas Kong', car: '2020 Subaru BRZ', color: 'Red', photo: '/car-nicholas-kong.jpeg', desc: 'Rear-wheel drive, naturally aspirated, under 2,800 lbs — built purely for the corner, not the straight.' },
