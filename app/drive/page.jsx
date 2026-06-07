@@ -464,12 +464,10 @@ export default function DrivePage() {
 
         {/* Route stops */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999' }}>Route</div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
-              <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a stop to open in Maps</div>
-              <div style={{ fontSize: '10px', color: '#aaa', fontStyle: 'italic' }}>If separated, proceed to the next stop</div>
-            </div>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Route</div>
+            <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', marginBottom: '2px' }}>Tap a stop to open in Maps</div>
+            <div style={{ fontSize: '10px', color: '#aaa', fontStyle: 'italic' }}>If separated, proceed to the next stop</div>
           </div>
           {STOPS.map((stop, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
