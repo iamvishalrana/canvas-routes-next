@@ -19,9 +19,9 @@ const STOPS = [
 
 const REGISTRANTS = [
   // Porsche
+  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg', desc: '560hp, all-wheel drive, roof down — Porsche\'s Turbo S proves savage performance and open-air driving aren\'t mutually exclusive.' },
   { name: 'Julien Fernandez', car: '2005 Porsche 911 S Cab', color: 'Silver', tag: '6FLAT', photo: '/car-julien-fernandez.jpeg', desc: 'Naturally aspirated flat-six at its finest — the 997 generation before Porsche turbocharged everything.' },
   { name: 'Tanya Ghingold', car: '2012 Porsche Cayman S Black Edition 71/500', color: '', photo: '/car-tanya-ghingold.jpg', photoFit: 'contain', photoBg: '#1a1a1a', desc: '1 of 500 built worldwide — factory Black Edition with a mid-engine flat-six Porsche deliberately kept beneath 911 spec.' },
-  { name: 'Yvon Maggi', car: '2014 Porsche 911 Turbo S Cab', color: 'Black', photo: '/car-yvon-maggi.jpeg', desc: '560hp, all-wheel drive, roof down — Porsche\'s Turbo S proves savage performance and open-air driving aren\'t mutually exclusive.' },
   // Audi
   { name: 'Frederic Lefebvre', car: '2020 Audi RS3', color: '', photo: '/car-frederic-lefebvre.jpeg', desc: '400hp five-cylinder turbo with a spool that sounds like nothing else on the road — one of Audi\'s most characterful engines.' },
   { name: 'Marc-Antoine Sauvé', car: '2018 Audi Allroad A4', color: 'Gloss Steel Blue', photo: '/car-marc-antoine-sauve.jpg', desc: 'Full-body gloss steel blue PPF, H&R coilovers, and an upgraded rear sway bar — a properly sorted sporty wagon that earns every head turn.' },
