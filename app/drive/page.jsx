@@ -547,7 +547,7 @@ export default function DrivePage() {
             <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999' }}>
               Who&apos;s Coming — {REGISTRANTS.length} Cars · 1 Camera
             </div>
-            <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a photo for details</div>
+            <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Every car has a story — tap to find out</div>
           </div>
           <div className="cars-grid">
             {REGISTRANTS.map((r, i) => (
