@@ -431,6 +431,29 @@ export default function DrivePage() {
           </div>
         </div>
 
+        {/* Rules */}
+        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.25rem' }}>Convoy Rules</div>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {[
+              'Follow the lead car at all times — do not overtake any car in the convoy.',
+              'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.',
+              'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.',
+              'Keep your headlights on for the full duration of the drive.',
+              'If you get separated, do not panic — proceed to the next stop on the route and wait.',
+              'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
+              'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
+              'Fuel up before departure. The designated fuel stop is Café Mont Blanc — last chance before the mountain section.',
+              'Respect the roads and the communities we pass through.',
+            ].map((rule, i) => (
+              <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                <span style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
+                <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Route stops */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
