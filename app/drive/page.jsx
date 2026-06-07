@@ -7,7 +7,7 @@ const PASSWORD = 'laurentians'
 
 const STOPS = [
   { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'https://maps.app.goo.gl/okpsXCTYa4aoQiis8', lat: 45.4431, lng: -73.6172 },
-  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur · ~15 min fuel stop', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
+  { label: 'Esso Porte du Nord', note: 'Saint-Sauveur · ~15 min · fuel up before hitting the backroads', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: 'Lac des Sables Photo Stop', note: 'Sainte-Agathe-des-Monts · ~20 min (park along the lake)', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
   { label: 'Le Café Mont Blanc', note: 'Mont-Blanc · ~20 min · local coffee & snacks', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365 },
   { label: 'Mont-Tremblant Casino', note: 'Optional photography stop · ~15 min', href: 'https://www.google.com/maps?q=46.2017179,-74.5695010', lat: 46.2017179, lng: -74.5695010 },
