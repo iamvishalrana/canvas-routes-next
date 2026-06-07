@@ -9,7 +9,7 @@ const STOPS = [
   { label: 'Petinos, LaSalle', note: 'Meetup — 7:00am sharp', start: true, href: 'https://maps.app.goo.gl/okpsXCTYa4aoQiis8', lat: 45.4431, lng: -73.6172 },
   { label: 'Esso Porte du Nord', note: 'Saint-Sauveur · ~15 min fuel stop', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: 'Lac des Sables Photo Stop', note: 'Sainte-Agathe-des-Monts · ~20 min (park along the lake)', href: 'https://www.google.com/maps?q=46.0331833,-74.2849984', lat: 46.0331833, lng: -74.2849984 },
-  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc · ~20 min · Last fuel stop before the mountains', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365, fuel: true },
+  { label: 'Le Café Mont Blanc', note: 'Mont-Blanc · ~20 min coffee stop', href: 'https://www.google.com/maps?q=46.1160535,-74.4784365', lat: 46.1160535, lng: -74.4784365 },
   { label: 'Mont-Tremblant Casino', note: 'Optional photography stop · ~15 min', href: 'https://www.google.com/maps?q=46.2017179,-74.5695010', lat: 46.2017179, lng: -74.5695010 },
   { label: '163 Chem. des Voyageurs', note: 'VIP Parking · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.2089655,-74.5846753', lat: 46.2089655, lng: -74.5846753 },
   { label: 'Pizzéria NO.900', note: 'Lunch · ~1 hr · Mont-Tremblant', href: 'https://www.google.com/maps?q=46.1346041,-74.6141983', lat: 46.1346041, lng: -74.6141983 },
@@ -451,7 +451,7 @@ export default function DrivePage() {
                 'If you get separated, do not panic — proceed to the next stop on the route and wait.',
                 'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
                 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
-                'Fuel up before departure. The designated fuel stop is Café Mont Blanc — last chance before the mountain section.',
+                'Fuel up before departure. The designated fuel stop is Esso Porte du Nord in Saint-Sauveur.',
                 'Respect the roads and the communities we pass through.',
               ].map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
