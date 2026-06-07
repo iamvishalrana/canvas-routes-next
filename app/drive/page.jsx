@@ -300,6 +300,7 @@ export default function DrivePage() {
   const [checked, setChecked] = useState(false)
   const [lightbox, setLightbox] = useState(null)
   const closeLightbox = useCallback(() => setLightbox(null), [])
+  const [rulesOpen, setRulesOpen] = useState(false)
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
@@ -433,32 +434,43 @@ export default function DrivePage() {
 
         {/* Rules */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.25rem' }}>Convoy Rules</div>
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {[
-              'Follow the lead car at all times — do not overtake any car in the convoy.',
-              'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.',
-              'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.',
-              'Keep your headlights on for the full duration of the drive.',
-              'If you get separated, do not panic — proceed to the next stop on the route and wait.',
-              'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
-              'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
-              'Fuel up before departure. The designated fuel stop is Café Mont Blanc — last chance before the mountain section.',
-              'Respect the roads and the communities we pass through.',
-            ].map((rule, i) => (
-              <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                <span style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
-                <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
-              </li>
-            ))}
-          </ul>
+          <button
+            onClick={() => setRulesOpen(o => !o)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+          >
+            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999' }}>Convoy Rules</div>
+            <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? '▲ Close' : '▼ Read'}</div>
+          </button>
+          {rulesOpen && (
+            <ul style={{ margin: '1.25rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                'Follow the lead car at all times — do not overtake any car in the convoy.',
+                'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.',
+                'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.',
+                'Keep your headlights on for the full duration of the drive.',
+                'If you get separated, do not panic — proceed to the next stop on the route and wait.',
+                'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
+                'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
+                'Fuel up before departure. The designated fuel stop is Café Mont Blanc — last chance before the mountain section.',
+                'Respect the roads and the communities we pass through.',
+              ].map((rule, i) => (
+                <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                  <span style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Route stops */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999' }}>Route</div>
-            <div style={{ fontSize: '11px', color: '#aaa', fontStyle: 'italic' }}>If separated, proceed to the next stop</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+              <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a stop to open in Maps</div>
+              <div style={{ fontSize: '10px', color: '#aaa', fontStyle: 'italic' }}>If separated, proceed to the next stop</div>
+            </div>
           </div>
           {STOPS.map((stop, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
@@ -531,8 +543,11 @@ export default function DrivePage() {
 
         {/* Who's coming */}
         <div style={{ padding: '2rem 0' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.5rem' }}>
-            Who&apos;s Coming — {REGISTRANTS.length} Cars · 1 Camera
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999' }}>
+              Who&apos;s Coming — {REGISTRANTS.length} Cars · 1 Camera
+            </div>
+            <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a photo for details</div>
           </div>
           <div className="cars-grid">
             {REGISTRANTS.map((r, i) => (
