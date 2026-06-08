@@ -139,10 +139,10 @@ export default function MembershipContent() {
   const [status, setStatus]             = useState(null)
   const [submitError, setSubmitError]   = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [phoneOptOut, setPhoneOptOut]   = useState(false)
   const [paymentStep, setPaymentStep]   = useState(false)
   const [clientSecret, setClientSecret] = useState(null)
   const honeypotRef                     = useRef(null)
+
 
   function set(field, val) {
     setForm(f => ({ ...f, [field]: val }))
@@ -211,7 +211,7 @@ export default function MembershipContent() {
       const type = form.tier === 'Inner Circle' ? 'membership_inner_circle' : 'membership_routes'
       const res = await fetch('/api/stripe/create-payment-intent', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, email: form.email.trim(), name: form.name.trim() }),
+        body: JSON.stringify({ type, email: form.email.trim(), name: form.name.trim(), eventName: form.tier }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')
