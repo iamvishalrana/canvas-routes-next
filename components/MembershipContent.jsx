@@ -11,16 +11,6 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null
 
-// ── Typography tokens ────────────────────────────────────────────────────────
-// LABEL:   Inter 9px / uppercase / 0.28em              → color varies
-// BODY:    Inter 13px / 400 / lineHeight 1.85          → #555 or rgba(245,241,236,0.55)
-// SMALL:   Inter 11px / 400 / letterSpacing 0.04em     → #aaa
-// CARD H:  Cormorant 1.5rem / 300
-// SECTION: Cormorant clamp(2rem,4vw,2.8rem) / 300
-// HERO:    Cormorant clamp(3.8rem,8vw,6.5rem) / 300
-// PRICE:   Cormorant clamp(3.5rem,6vw,4.5rem) / 300
-// ────────────────────────────────────────────────────────────────────────────
-
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
 
@@ -83,7 +73,6 @@ function CheckoutForm({ formData, honeypot, tier, price, onSuccess, onBack }) {
     })
     if (confirmError) { setError(confirmError.message); setPaying(false); return }
 
-    // Payment succeeded — save the application
     await fetch('/api/membership-waitlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -96,17 +85,17 @@ function CheckoutForm({ formData, honeypot, tier, price, onSuccess, onBack }) {
   return (
     <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-        <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
-        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#c5a882', fontWeight: '300' }}>${price} <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)' }}>CAD / season</span></div>
+        <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
+        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#1a1a1a', fontWeight: '300' }}>${price} <span style={{ fontSize: '11px', color: '#999' }}>CAD / season</span></div>
       </div>
       <PaymentElement options={{ layout: 'tabs' }} />
       {error && <div style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
       <button type="submit" disabled={!stripe || paying}
-        style={{ width: '100%', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
+        style={{ width: '100%', padding: '1rem', background: '#0F1E14', border: 'none', color: '#c5a882', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
         {paying ? 'Processing…' : `Pay $${price} CAD`}
       </button>
       <button type="button" onClick={onBack}
-        style={{ background: 'none', border: 'none', color: 'rgba(245,241,236,0.4)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
+        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.35)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
         ← Back
       </button>
     </form>
@@ -132,17 +121,16 @@ export default function MembershipContent() {
     if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'ViewContent', { content_name: 'Membership' })
   }, [])
 
-  const [menuOpen, setMenuOpen]         = useState(false)
-  const [form, setForm]                 = useState(INIT_FORM)
-  const [errors, setErrors]             = useState({})
-  const [focusedField, setFocusedField] = useState(null)
-  const [status, setStatus]             = useState(null)
-  const [submitError, setSubmitError]   = useState(null)
+  const [menuOpen, setMenuOpen]           = useState(false)
+  const [form, setForm]                   = useState(INIT_FORM)
+  const [errors, setErrors]               = useState({})
+  const [focusedField, setFocusedField]   = useState(null)
+  const [status, setStatus]               = useState(null)
+  const [submitError, setSubmitError]     = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [paymentStep, setPaymentStep]   = useState(false)
-  const [clientSecret, setClientSecret] = useState(null)
-  const honeypotRef                     = useRef(null)
-
+  const [paymentStep, setPaymentStep]     = useState(false)
+  const [clientSecret, setClientSecret]   = useState(null)
+  const honeypotRef                       = useRef(null)
 
   function set(field, val) {
     setForm(f => ({ ...f, [field]: val }))
@@ -156,7 +144,6 @@ export default function MembershipContent() {
 
   function formatPhone(v) {
     let d = v.replace(/\D/g, '')
-    // Strip leading country code 1 if the user typed it themselves
     if (d.startsWith('1') && d.length > 1) d = d.slice(1)
     d = d.slice(0, 10)
     if (!d) return ''
@@ -167,11 +154,20 @@ export default function MembershipContent() {
   }
 
   function inp(field) {
-    const base = { width:'100%', padding:'0.85rem 1rem', fontSize:'13px', fontFamily:'var(--font-inter),sans-serif', color:'#F5F1EC', outline:'none', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border 0.2s, background 0.2s', boxSizing:'border-box' }
-    if (errors[field]) return { ...base, border:'0.5px solid rgba(208,96,112,0.7)', background:'rgba(208,96,112,0.06)' }
-    if (form[field])   return { ...base, border:'0.5px solid rgba(197,168,130,0.45)', background:'rgba(197,168,130,0.07)' }
-    if (focusedField === field) return { ...base, border:'0.5px solid rgba(197,168,130,0.5)', background:'rgba(255,255,255,0.06)' }
-    return { ...base, border:'0.5px solid rgba(197,168,130,0.18)', background:'rgba(255,255,255,0.04)' }
+    const base = { width:'100%', padding:'0.6rem 0', fontSize:'14px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
+    if (errors[field]) return { ...base, borderBottom:'1px solid rgba(208,96,112,0.8)' }
+    if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.9)' }
+    if (form[field]) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.6)' }
+    return base
+  }
+
+  function SectionLabel({ children }) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', gap:'1rem', margin:'2.5rem 0 1.75rem' }}>
+        <div style={{ fontSize:'8px', letterSpacing:'0.26em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter),sans-serif', whiteSpace:'nowrap' }}>{children}</div>
+        <div style={{ flex:1, height:'0.5px', background:'rgba(0,0,0,0.1)' }} />
+      </div>
+    )
   }
 
   function validate() {
@@ -199,7 +195,6 @@ export default function MembershipContent() {
       const order = ['name','email','phone','dob_month','dob_day','year','carMake','carModel','tier','source','termsAccepted']
       const first = order.find(f => errs[f])
       if (first) {
-        // dob_day lives inside the dob_month container — scroll to that
         const scrollTarget = first === 'dob_day' ? 'dob_month' : first
         const el = document.getElementById(`mem-field-${scrollTarget}`)
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -236,17 +231,17 @@ export default function MembershipContent() {
           .mem-tier-inner { padding: 1.5rem 1.5rem 0 !important; }
           .mem-tier-body  { padding: 0 1.5rem 1.5rem !important; }
           .mem-photo-break img { object-position: center 20% !important; }
+          .mem-car3-grid  { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media(max-width:580px){
+          .mem-tier-btns  { grid-template-columns: 1fr !important; }
         }
         @media(max-width:480px){
-          .mem-perks    { grid-template-columns: 1fr !important; }
-          /* DOB row: equal thirds so Day column never gets crushed */
-          .mem-dob-grid { grid-template-columns: repeat(3,1fr) !important; }
-          /* Car year+make: stack so Year select has full width */
-          .mem-car-grid { grid-template-columns: 1fr !important; }
-          /* Tier buttons: stack on very small screens */
-          .mem-tier-btns { grid-template-columns: 1fr !important; }
+          .mem-perks      { grid-template-columns: 1fr !important; }
+          .mem-dob-grid   { grid-template-columns: repeat(3,1fr) !important; }
+          .mem-car-grid   { grid-template-columns: 1fr !important; }
+          .mem-car3-grid  { grid-template-columns: 1fr !important; }
         }
-        /* Prevent iOS Safari from zooming on input focus (font-size < 16px triggers zoom) */
         @media(max-width:768px){
           input, select, textarea { font-size: 16px !important; }
         }
@@ -277,7 +272,6 @@ export default function MembershipContent() {
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
       <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
-        {/* Background photo */}
         <div style={{ position: 'absolute', inset: 0 }}>
           <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
@@ -298,7 +292,6 @@ export default function MembershipContent() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
           <span style={{ ...LABEL, color: 'rgba(197,168,130,0.55)' }}>Scroll</span>
           <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.55)" strokeWidth="1.2" strokeLinecap="round">
@@ -542,25 +535,28 @@ export default function MembershipContent() {
       </section>
 
       {/* ── REGISTRATION ────────────────────────────────────────────── */}
-      <section style={{ background: '#0F1E14', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)' }} />
-        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+      <section style={{ position: 'relative', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <img src="/membership-form.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(245,241,236,0.88)' }} />
+        </div>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '880px', margin: '0 auto' }}>
           <FadeUp style={{ marginBottom: 'clamp(2.5rem,4vw,3.5rem)' }}>
-            <div style={{ ...LABEL, color: 'rgba(197,168,130,0.85)', marginBottom: '1rem' }}>Founding access</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.1 }}>
+            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1rem' }}>Founding access</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.1 }}>
               Spots are limited.
             </div>
-            <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>
+            <p style={{ ...BODY, color: '#555' }}>
               The 2026 season has a fixed number of members. Leave your details and we&apos;ll be in touch personally.
             </p>
           </FadeUp>
 
           {status === 'success' ? (
             <FadeUp>
-              <div style={{ padding: '2rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)', textAlign: 'center' }}>
+              <div style={{ padding: '2rem', border: '0.5px solid rgba(197,168,130,0.35)', background: 'rgba(197,168,130,0.07)', textAlign: 'center' }}>
                 <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem' }}>Welcome to Canvas Routes.</div>
-                <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>Payment confirmed. Check your inbox — we&apos;ll be in touch with next steps.</p>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Welcome to Canvas Routes.</div>
+                <p style={{ ...BODY, color: '#555' }}>Payment confirmed. Check your inbox — we&apos;ll be in touch with next steps.</p>
               </div>
             </FadeUp>
           ) : paymentStep && clientSecret ? (
@@ -569,12 +565,12 @@ export default function MembershipContent() {
               options={{
                 clientSecret,
                 appearance: {
-                  theme: 'night',
+                  theme: 'stripe',
                   variables: {
                     colorPrimary: '#c5a882',
-                    colorBackground: 'rgba(255,255,255,0.04)',
-                    colorText: '#F5F1EC',
-                    colorTextSecondary: 'rgba(245,241,236,0.55)',
+                    colorBackground: '#ffffff',
+                    colorText: '#1a1a1a',
+                    colorTextSecondary: '#666',
                     colorDanger: '#d06070',
                     fontFamily: 'var(--font-inter),sans-serif',
                     borderRadius: '0px',
@@ -597,204 +593,209 @@ export default function MembershipContent() {
               <input ref={honeypotRef} type="text" name="_hp" tabIndex={-1} autoComplete="off"
                 style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0 }} />
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              {/* ── About you ── */}
+              <SectionLabel>About you</SectionLabel>
 
-                {/* Name */}
-                <div id="mem-field-name">
-                  <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}><User size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Full name <span style={{ color: '#d06070' }}>*</span></div>
-                  <input type="text" value={form.name} placeholder="First and Last name" autoComplete="name"
-                    onChange={e => set('name', capitaliseName(e.target.value))}
-                    onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
-                    style={inp('name')} />
+              <div id="mem-field-name" style={{ marginBottom: '1.75rem' }}>
+                <div style={{ ...LABEL, color: errors.name ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <User size={10} /><span>Full name</span><span style={{ color: '#d06070' }}>*</span>
                 </div>
+                <input type="text" value={form.name} placeholder="First and Last name" autoComplete="name"
+                  onChange={e => set('name', capitaliseName(e.target.value))}
+                  onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
+                  style={inp('name')} />
+              </div>
 
-                {/* Email */}
+              <div className="mem-car-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 2rem', marginBottom: '1.75rem' }}>
                 <div id="mem-field-email">
-                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}><Mail size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Email <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Mail size={10} /><span>Email</span><span style={{ color: '#d06070' }}>*</span>
+                  </div>
                   <input type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
                     onChange={e => set('email', e.target.value)}
                     onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
                     style={inp('email')} />
                 </div>
-
-                {/* Phone */}
                 <div id="mem-field-phone">
-                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}><Phone size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Phone <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Phone size={10} /><span>Phone</span><span style={{ color: '#d06070' }}>*</span>
+                  </div>
                   <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
                     onChange={e => set('phone', formatPhone(e.target.value))}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
                     style={inp('phone')} />
                 </div>
+              </div>
 
-                {/* Date of birth */}
-                <div id="mem-field-dob_month" style={{ marginTop: '1rem' }}>
-                  <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>
-                    <Calendar size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Date of birth <span style={{ color: '#d06070' }}>*</span> <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>year optional</span>
-                  </div>
-                  <div className="mem-dob-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '1px' }}>
-                    <div style={{ position: 'relative' }}>
-                      <select value={form.dob_month} onChange={e => set('dob_month', e.target.value)}
-                        onFocus={() => setFocusedField('dob_month')} onBlur={() => setFocusedField(null)}
-                        style={{ ...inp('dob_month'), paddingRight: '2rem', cursor: 'pointer' }}>
-                        <option value="">Month</option>
-                        {MONTHS.map((m, i) => <option key={i + 1} value={String(i + 1)}>{m}</option>)}
-                      </select>
-                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div style={{ position: 'relative' }}>
-                      <select value={form.dob_day} onChange={e => set('dob_day', e.target.value)}
-                        onFocus={() => setFocusedField('dob_day')} onBlur={() => setFocusedField(null)}
-                        style={{ ...inp('dob_day'), paddingRight: '2rem', cursor: 'pointer' }}>
-                        <option value="">Day</option>
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
-                      </select>
-                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div style={{ position: 'relative' }}>
-                      <select value={form.dob_year} onChange={e => set('dob_year', e.target.value)}
-                        onFocus={() => setFocusedField('dob_year')} onBlur={() => setFocusedField(null)}
-                        style={{ ...inp('dob_year'), paddingRight: '2rem', cursor: 'pointer' }}>
-                        <option value="">Year</option>
-                        {Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i).map(y => <option key={y} value={String(y)}>{y}</option>)}
-                      </select>
-                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                  </div>
-                  {(errors.dob_month || errors.dob_day) && <div style={{ fontSize: '11px', color: '#d06070', marginTop: '0.3rem' }}>Month and day are required</div>}
+              <div id="mem-field-dob_month" style={{ marginBottom: '0.5rem' }}>
+                <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Calendar size={10} /><span>Date of birth</span><span style={{ color: '#d06070' }}>*</span>
+                  <span style={{ color: 'rgba(197,168,130,0.5)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>year optional</span>
                 </div>
+                <div className="mem-dob-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '0 1.5rem' }}>
+                  {[
+                    { field: 'dob_month', placeholder: 'Month', options: MONTHS.map((m, i) => ({ v: String(i+1), l: m })) },
+                    { field: 'dob_day',   placeholder: 'Day',   options: Array.from({length:31},(_,i)=>({v:String(i+1),l:String(i+1)})) },
+                    { field: 'dob_year',  placeholder: 'Year',  options: Array.from({length:2015-1945+1},(_,i)=>({v:String(2015-i),l:String(2015-i)})) },
+                  ].map(({ field, placeholder, options }) => (
+                    <div key={field} style={{ position: 'relative' }}>
+                      <select value={form[field]} onChange={e => set(field, e.target.value)}
+                        onFocus={() => setFocusedField(field)} onBlur={() => setFocusedField(null)}
+                        style={{ ...inp(field), paddingRight: '1.5rem', cursor: 'pointer', width: '100%' }}>
+                        <option value="">{placeholder}</option>
+                        {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                      </select>
+                      <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  ))}
+                </div>
+                {(errors.dob_month || errors.dob_day) && <div style={{ fontSize: '11px', color: '#d06070', marginTop: '0.4rem' }}>Month and day are required</div>}
+              </div>
 
-                {/* Year + Make */}
-                <div className="mem-car-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
-                  <div id="mem-field-year">
-                    <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}><Car size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Year <span style={{ color: '#d06070' }}>*</span></div>
-                    <div style={{ position: 'relative' }}>
-                      <select value={form.year} onChange={e => set('year', e.target.value)}
-                        onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
-                        style={{ ...inp('year'), paddingRight: '2rem', cursor: 'pointer' }}>
-                        <option value="">Year</option>
-                        {Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i).map(y => (
-                          <option key={y} value={String(y)}>{y}</option>
-                        ))}
-                      </select>
-                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
+              {/* ── Your car ── */}
+              <SectionLabel>Your car</SectionLabel>
+
+              <div className="mem-car3-grid" style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.5fr 2fr', gap: '0 2rem', marginBottom: '1.75rem' }}>
+                <div id="mem-field-year">
+                  <div style={{ ...LABEL, color: errors.year ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Car size={10} /><span>Year</span><span style={{ color: '#d06070' }}>*</span>
                   </div>
-                  <div id="mem-field-carMake">
-                    <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}><Car size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Make <span style={{ color: '#d06070' }}>*</span></div>
-                    <div style={{ position: 'relative' }}>
-                      <select value={form.carMake} onChange={e => set('carMake', e.target.value)}
-                        onFocus={() => setFocusedField('carMake')} onBlur={() => setFocusedField(null)}
-                        style={{ ...inp('carMake'), paddingRight: '2rem' }}>
-                        <option value="">Select make</option>
-                        {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                      <svg style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
+                  <div style={{ position: 'relative' }}>
+                    <select value={form.year} onChange={e => set('year', e.target.value)}
+                      onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
+                      style={{ ...inp('year'), paddingRight: '1.5rem', cursor: 'pointer' }}>
+                      <option value="">Year</option>
+                      {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y => <option key={y} value={String(y)}>{y}</option>)}
+                    </select>
+                    <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
-
-                {/* Model */}
+                <div id="mem-field-carMake">
+                  <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Car size={10} /><span>Make</span><span style={{ color: '#d06070' }}>*</span>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <select value={form.carMake} onChange={e => set('carMake', e.target.value)}
+                      onFocus={() => setFocusedField('carMake')} onBlur={() => setFocusedField(null)}
+                      style={{ ...inp('carMake'), paddingRight: '1.5rem', cursor: 'pointer' }}>
+                      <option value="">Select make</option>
+                      {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
                 <div id="mem-field-carModel">
-                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}><Car size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Model <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Car size={10} /><span>Model</span><span style={{ color: '#d06070' }}>*</span>
+                  </div>
                   <input type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
                     onChange={e => set('carModel', e.target.value)}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)}
-                    style={inp('carModel')} id="mem-field-carModel-input" />
+                    style={inp('carModel')} />
                 </div>
-
-                {/* Tier */}
-                <div id="mem-field-tier" style={{ marginTop: '1rem' }}>
-                  <div style={{ ...LABEL, color: errors.tier ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.75rem' }}>Membership tier <span style={{ color: '#d06070' }}>*</span></div>
-                  <div className="mem-tier-btns" style={{ display: 'flex', flexDirection: 'column', gap: '8px', outline: errors.tier ? '1px solid rgba(208,96,112,0.5)' : 'none', outlineOffset: '4px' }}>
-
-                    {/* Routes Member */}
-                    <button type="button" onClick={() => set('tier', 'Routes Member')} style={{
-                      padding: '1.1rem 1.25rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative',
-                      background: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.15)' : 'rgba(255,255,255,0.03)',
-                      border: form.tier === 'Routes Member' ? '1px solid #c5a882' : '1px solid rgba(197,168,130,0.18)',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: '13px', color: form.tier === 'Routes Member' ? '#c5a882' : 'rgba(245,241,236,0.6)', fontWeight: '600', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '2px' }}>Routes Member</div>
-                          <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.35)', fontFamily: 'var(--font-inter),sans-serif' }}>Access to all events & road trips</div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                          <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', fontWeight: '300', color: form.tier === 'Routes Member' ? '#c5a882' : 'rgba(245,241,236,0.5)' }}>$99</div>
-                          <div style={{ fontSize: '9px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.08em' }}>CAD / season</div>
-                        </div>
-                      </div>
-                      {form.tier === 'Routes Member' && <svg style={{ position: 'absolute', top: '0.5rem', right: '0.6rem' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                    </button>
-
-                    {/* Inner Circle */}
-                    <button type="button" onClick={() => set('tier', 'Inner Circle')} style={{
-                      padding: '1.1rem 1.25rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative',
-                      background: form.tier === 'Inner Circle' ? '#1a2e1a' : 'rgba(197,168,130,0.04)',
-                      border: form.tier === 'Inner Circle' ? '1px solid #c5a882' : '1px solid rgba(197,168,130,0.35)',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2px' }}>
-                            <span style={{ fontSize: '13px', color: '#c5a882', fontWeight: '600', fontFamily: 'var(--font-inter),sans-serif' }}>Inner Circle</span>
-                            <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', background: '#c5a882', color: '#0F1E14', padding: '2px 6px', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '700' }}>Premium</span>
-                          </div>
-                          <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes + exclusive perks</div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                          <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', fontWeight: '300', color: '#c5a882' }}>$249</div>
-                          <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.4)', letterSpacing: '0.08em' }}>CAD / season</div>
-                        </div>
-                      </div>
-                      {form.tier === 'Inner Circle' && <svg style={{ position: 'absolute', top: '0.5rem', right: '0.6rem' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                    </button>
-
-                  </div>
-                </div>
-
-                {/* Source */}
-                <div id="mem-field-source">
-                  <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}><Share2 size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />How did you hear about us <span style={{ color: '#d06070' }}>*</span></div>
-                  <div style={{ position: 'relative' }}>
-                    <select value={form.source} onChange={e => set('source', e.target.value)}
-                      onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
-                      style={{ ...inp('source'), paddingRight: '2rem' }}>
-                      <option value="">Select</option>
-                      {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <svg style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                  </div>
-                </div>
-
-                {/* More */}
-                <div>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Anything else <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>optional</span></div>
-                  <textarea value={form.more} rows={3} placeholder="Questions, thoughts, or anything you'd like us to know."
-                    onChange={e => set('more', e.target.value)}
-                    onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)}
-                    style={{ ...inp('more'), resize: 'vertical', minHeight: '80px' }} />
-                </div>
-
               </div>
 
-              <label id="mem-field-termsAccepted" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '1.5rem', padding: '0.75rem', border: `0.5px solid ${errors.termsAccepted ? 'rgba(208,96,112,0.7)' : 'transparent'}`, background: errors.termsAccepted ? 'rgba(208,96,112,0.06)' : 'transparent', cursor: 'pointer' }}>
-                <input type="checkbox" checked={termsAccepted} onChange={e => { setTermsAccepted(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, termsAccepted: false })) }} style={{ accentColor: '#c5a882', width: '12px', height: '12px', flexShrink: 0, marginTop: '1px' }} />
-                <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {/* ── Choose your tier ── */}
+              <SectionLabel>Choose your tier</SectionLabel>
+
+              <div id="mem-field-tier" style={{ marginBottom: '0.5rem' }}>
+                {errors.tier && <div style={{ fontSize: '11px', color: '#d06070', marginBottom: '0.75rem' }}>Please select a membership tier</div>}
+                <div className="mem-tier-btns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+
+                  <button type="button" onClick={() => set('tier', 'Routes Member')} style={{
+                    padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
+                    background: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.1)' : 'rgba(0,0,0,0.03)',
+                    borderLeft: form.tier === 'Routes Member' ? '2px solid #c5a882' : '2px solid rgba(0,0,0,0.1)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '14px', color: form.tier === 'Routes Member' ? '#1a1a1a' : '#777', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
+                        <div style={{ fontSize: '11px', color: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.85)' : 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Events, road trips, community & perks</div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
+                        <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: form.tier === 'Routes Member' ? '#c5a882' : 'rgba(0,0,0,0.2)', lineHeight: 1 }}>$99</div>
+                        <div style={{ fontSize: '9px', color: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.18)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                      </div>
+                    </div>
+                    {form.tier === 'Routes Member' && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </button>
+
+                  <button type="button" onClick={() => set('tier', 'Inner Circle')} style={{
+                    padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
+                    background: form.tier === 'Inner Circle' ? '#0F1E14' : '#1c2e20',
+                    borderLeft: form.tier === 'Inner Circle' ? '2px solid #c5a882' : '2px solid rgba(197,168,130,0.25)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '3px' }}>
+                          <span style={{ fontSize: '14px', color: '#c5a882', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif' }}>Inner Circle</span>
+                          <span style={{ fontSize: '7px', letterSpacing: '0.18em', textTransform: 'uppercase', background: '#c5a882', color: '#0F1E14', padding: '2px 5px', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '700' }}>Premium</span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Everything in Routes, plus exclusive access & $70 road trip credit</div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
+                        <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$249</div>
+                        <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.4)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                      </div>
+                    </div>
+                    {form.tier === 'Inner Circle' && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </button>
+
+                </div>
+              </div>
+
+              {/* ── Final details ── */}
+              <SectionLabel>Final details</SectionLabel>
+
+              <div id="mem-field-source" style={{ marginBottom: '1.75rem' }}>
+                <div style={{ ...LABEL, color: errors.source ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Share2 size={10} /><span>How did you hear about us</span><span style={{ color: '#d06070' }}>*</span>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <select value={form.source} onChange={e => set('source', e.target.value)}
+                    onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
+                    style={{ ...inp('source'), paddingRight: '1.5rem', cursor: 'pointer' }}>
+                    <option value="">Select</option>
+                    {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.5rem' }}>
+                  Anything else <span style={{ color: 'rgba(0,0,0,0.28)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>optional</span>
+                </div>
+                <textarea value={form.more} rows={3} placeholder="Questions, thoughts, or anything you'd like us to know."
+                  onChange={e => set('more', e.target.value)}
+                  onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)}
+                  style={{ ...inp('more'), resize: 'vertical', minHeight: '80px' }} />
+              </div>
+
+              <label id="mem-field-termsAccepted" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '2rem', cursor: 'pointer', padding: errors.termsAccepted ? '0.75rem' : '0', border: errors.termsAccepted ? '0.5px solid rgba(208,96,112,0.4)' : 'none' }}>
+                <input type="checkbox" checked={termsAccepted} onChange={e => { setTermsAccepted(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, termsAccepted: false })) }}
+                  style={{ accentColor: '#c5a882', width: '13px', height: '13px', flexShrink: 0, marginTop: '2px' }} />
+                <span style={{ fontSize: '12px', color: 'rgba(0,0,0,0.45)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.6 }}>
                   I have read and agree to the{' '}
-                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'rgba(197,168,130,0.8)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>Terms &amp; Conditions</a>
-                  .
+                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms &amp; Conditions</a>
                 </span>
               </label>
 
-              {submitError && <div style={{ ...SMALL, color: '#d06070', marginTop: '1rem' }}>{submitError}</div>}
+              {submitError && <div style={{ fontSize: '12px', color: '#d06070', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{submitError}</div>}
 
-              <button type="submit" disabled={status === 'loading'}
-                style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', ...LABEL, letterSpacing: '0.2em', fontWeight: '600', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+              <button type="submit" disabled={status === 'loading'} style={{
+                width: '100%', padding: '1.1rem', background: '#0F1E14',
+                border: 'none', color: '#c5a882',
+                fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500',
+                cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.5 : 1,
+                transition: 'all 0.2s',
+              }}>
                 {status === 'loading' ? 'Processing…' : `Continue to Payment${form.tier ? ` — $${form.tier === 'Inner Circle' ? '249' : '99'}` : ''}`}
               </button>
             </form>
           )}
         </div>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.15),transparent)' }} />
       </section>
 
       <SiteFooter />
