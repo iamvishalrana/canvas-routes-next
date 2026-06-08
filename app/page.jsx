@@ -9,6 +9,24 @@ import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
+const COUNTRY_CODES = [
+  { code: '+1',   name: 'Canada / US' },
+  { code: '+44',  name: 'UK' },
+  { code: '+33',  name: 'France' },
+  { code: '+49',  name: 'Germany' },
+  { code: '+39',  name: 'Italy' },
+  { code: '+34',  name: 'Spain' },
+  { code: '+351', name: 'Portugal' },
+  { code: '+41',  name: 'Switzerland' },
+  { code: '+31',  name: 'Netherlands' },
+  { code: '+61',  name: 'Australia' },
+  { code: '+64',  name: 'New Zealand' },
+  { code: '+52',  name: 'Mexico' },
+  { code: '+55',  name: 'Brazil' },
+  { code: '+91',  name: 'India' },
+  { code: '+971', name: 'UAE' },
+]
+
 const PAST_EVENTS = {
   'Cars & Coffee': {
     img: '/cc-page.jpg', imgAlt: 'Cars & Coffee event poster', imgPos: 'top',
@@ -34,6 +52,7 @@ export default function Home() {
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
+  const [countryCode, setCountryCode] = useState('+1')
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
@@ -141,11 +160,15 @@ export default function Home() {
     if (serverError) setServerError(null)
   }
 
-  function formatPhone(value) {
-    const digits = value.replace(/\D/g, '').slice(0, 10)
-    if (digits.length < 4) return digits
-    if (digits.length < 7) return `(${digits.slice(0,3)}) ${digits.slice(3)}`
-    return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`
+  function formatPhone(value, code) {
+    const resolvedCode = code !== undefined ? code : countryCode
+    if (resolvedCode === '+1') {
+      const digits = value.replace(/\D/g, '').slice(0, 10)
+      if (digits.length < 4) return digits
+      if (digits.length < 7) return `(${digits.slice(0,3)}) ${digits.slice(3)}`
+      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`
+    }
+    return value.replace(/[^\d\s\-()]/g, '').slice(0, 20)
   }
 
   function validate() {
@@ -162,7 +185,7 @@ export default function Home() {
     if (!form.dob_day) newErrors.dob_day = true
     if (!form.source) newErrors.source = true
     if (form.registerFor === GPCC && !form.downtown_cruise) newErrors.downtown_cruise = true
-    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) newErrors.phone = true
+    if (!phoneOptOut && (!form.phone.trim() || (countryCode === '+1' ? form.phone.replace(/\D/g,'').length < 10 : form.phone.replace(/\D/g,'').length < 6))) newErrors.phone = true
     if (form.instagram.trim() && /\S\s+\S/.test(form.instagram.replace(/^@+/, '').trim())) newErrors.instagram = true
     setErrors(newErrors)
     return newErrors
@@ -178,7 +201,8 @@ export default function Home() {
         else delete next.email
       }
       if (field === 'phone') {
-        if (form.phone.trim() && form.phone.replace(/\D/g,'').length < 10) next.phone = true
+        const minDigits = countryCode === '+1' ? 10 : 6
+        if (form.phone.trim() && form.phone.replace(/\D/g,'').length < minDigits) next.phone = true
         else delete next.phone
       }
       if (field === 'instagram') {
@@ -209,7 +233,7 @@ export default function Home() {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), instagram: form.instagram.trim().replace(/^@+/, ''), ref: refSource.current || undefined, _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '', carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), instagram: form.instagram.trim().replace(/^@+/, ''), ref: refSource.current || undefined, _hp: honeypotRef.current?.value || '' }),
         ...(controller ? { signal: controller.signal } : {}),
       })
       clearTimeout(timeout)
@@ -217,6 +241,7 @@ export default function Home() {
         setStatus('success')
         setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
         setPhoneOptOut(false)
+        setCountryCode('+1')
         if (honeypotRef.current) honeypotRef.current.value = ''
         if (typeof window !== 'undefined') {
           if (getConsent() === 'accepted' && window.gtag) window.gtag('event', 'generate_lead', { event_category: 'waitlist' })
@@ -541,7 +566,7 @@ export default function Home() {
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you — usually within 48 hours.</div>
             <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>A confirmation email is on its way from <strong style={{color:"#555",fontWeight:"500"}}>info@canvasroutes.com</strong> or <strong style={{color:"#555",fontWeight:"500"}}>jerry@canvasroutes.com</strong> — add both to your contacts and check your spam/junk folder so you don't miss it. Once we've reviewed your application, you'll hear from our team directly. If you don't hear from us, reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
-            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}); setPhoneOptOut(false) }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
+            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}); setPhoneOptOut(false); setCountryCode('+1') }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
           </div>
         ) : (
           <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
@@ -718,10 +743,23 @@ export default function Home() {
                   </div>
                 ) : (
                   <>
-                    <input id="field-phone" type="tel" placeholder="Your phone number" value={form.phone}
-                      onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
-                      onFocus={() => setFocusedField('phone')} onBlur={() => { setFocusedField(null); validateField('phone') }} />
-                    {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid 10-digit number</span>}
+                    <div style={{display:"flex",alignItems:"stretch",...(() => { const s = inputStyle('phone'); return { border: s.border, background: s.background, boxShadow: s.boxShadow, transition: s.transition } })()}}>
+                      <select
+                        value={countryCode}
+                        onChange={e => { setCountryCode(e.target.value); updateForm('phone', '') }}
+                        onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
+                        style={{border:"none",background:"transparent",outline:"none",padding:"0.9rem 0.5rem 0.9rem 0.9rem",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",cursor:"pointer",flexShrink:0,WebkitAppearance:"none",MozAppearance:"none",appearance:"none",minWidth:"unset"}}>
+                        {COUNTRY_CODES.map(c => (
+                          <option key={c.code} value={c.code}>{c.code} {c.name}</option>
+                        ))}
+                      </select>
+                      <div style={{width:"1px",background:"rgba(0,0,0,0.12)",margin:"0.6rem 0",flexShrink:0}} />
+                      <input id="field-phone" type="tel" placeholder="Your phone number" value={form.phone}
+                        onChange={e => updateForm('phone', formatPhone(e.target.value))}
+                        style={{border:"none",background:"transparent",outline:"none",padding:"0.9rem 1.2rem",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",flex:1,minWidth:0,WebkitAppearance:"none",MozAppearance:"none",appearance:"none"}}
+                        onFocus={() => setFocusedField('phone')} onBlur={() => { setFocusedField(null); validateField('phone') }} />
+                    </div>
+                    {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>{countryCode === '+1' ? 'Please enter a valid 10-digit number' : 'Please enter a valid phone number'}</span>}
                     <button type="button" onClick={() => { setPhoneOptOut(true); updateForm('phone',''); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:"0.3rem 0",fontSize:"11px",color:"#aaa",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Prefer not to share my number</button>
                   </>
                 )}
