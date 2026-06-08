@@ -12,21 +12,12 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   : null
 
 const COUNTRY_CODES = [
-  { code: '+1',   name: 'Canada / US' },
-  { code: '+44',  name: 'UK' },
-  { code: '+33',  name: 'France' },
-  { code: '+49',  name: 'Germany' },
-  { code: '+39',  name: 'Italy' },
-  { code: '+34',  name: 'Spain' },
-  { code: '+351', name: 'Portugal' },
-  { code: '+41',  name: 'Switzerland' },
-  { code: '+31',  name: 'Netherlands' },
-  { code: '+61',  name: 'Australia' },
-  { code: '+64',  name: 'New Zealand' },
-  { code: '+52',  name: 'Mexico' },
-  { code: '+55',  name: 'Brazil' },
-  { code: '+91',  name: 'India' },
-  { code: '+971', name: 'UAE' },
+  '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
+  '+39', '+40', '+41', '+43', '+44', '+45', '+46', '+47', '+48', '+49',
+  '+51', '+52', '+54', '+55', '+56', '+57', '+58', '+60', '+61', '+62',
+  '+63', '+64', '+65', '+66', '+81', '+82', '+84', '+86', '+90', '+91',
+  '+92', '+94', '+351', '+352', '+353', '+358', '+380', '+420', '+852',
+  '+886', '+961', '+962', '+965', '+966', '+968', '+971', '+972', '+973', '+974',
 ]
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -737,7 +728,7 @@ export default function MembershipContent() {
                     <select value={countryCode} onChange={e => { setCountryCode(e.target.value); set('phone', '') }}
                       onFocus={() => setFocusedField('countryCode')} onBlur={() => setFocusedField(null)}
                       style={{ padding: '0.6rem 0.2rem 0.6rem 0', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', flexShrink: 0 }}>
-                      {COUNTRY_CODES.map(c => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+                      {COUNTRY_CODES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <span style={{ color: 'rgba(0,0,0,0.18)', margin: '0 0.5rem', fontSize: '13px', userSelect: 'none' }}>|</span>
                     <input type="tel" value={form.phone}

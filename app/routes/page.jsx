@@ -17,21 +17,12 @@ function Chevron() {
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
 const COUNTRY_CODES = [
-  { code: '+1',   name: 'Canada / US' },
-  { code: '+44',  name: 'UK' },
-  { code: '+33',  name: 'France' },
-  { code: '+49',  name: 'Germany' },
-  { code: '+39',  name: 'Italy' },
-  { code: '+34',  name: 'Spain' },
-  { code: '+351', name: 'Portugal' },
-  { code: '+41',  name: 'Switzerland' },
-  { code: '+31',  name: 'Netherlands' },
-  { code: '+61',  name: 'Australia' },
-  { code: '+64',  name: 'New Zealand' },
-  { code: '+52',  name: 'Mexico' },
-  { code: '+55',  name: 'Brazil' },
-  { code: '+91',  name: 'India' },
-  { code: '+971', name: 'UAE' },
+  '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
+  '+39', '+40', '+41', '+43', '+44', '+45', '+46', '+47', '+48', '+49',
+  '+51', '+52', '+54', '+55', '+56', '+57', '+58', '+60', '+61', '+62',
+  '+63', '+64', '+65', '+66', '+81', '+82', '+84', '+86', '+90', '+91',
+  '+92', '+94', '+351', '+352', '+353', '+358', '+380', '+420', '+852',
+  '+886', '+961', '+962', '+965', '+966', '+968', '+971', '+972', '+973', '+974',
 ]
 
 
@@ -439,7 +430,7 @@ export default function RoutesPage() {
                             style={{padding:"0.9rem 1.8rem 0.9rem 0.75rem",border:"none",background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",outline:"none",cursor:"pointer",WebkitAppearance:"none",MozAppearance:"none",appearance:"none",minWidth:"60px"}}
                           >
                             {COUNTRY_CODES.map(c => (
-                              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                              <option key={c} value={c}>{c}</option>
                             ))}
                           </select>
                           <svg style={{position:"absolute",right:"4px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
