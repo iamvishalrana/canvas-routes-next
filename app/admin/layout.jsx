@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }) {
   if (!admin) redirect('/members/login')
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3', fontFamily: 'var(--font-inter),sans-serif' }}>
       <AdminSidebar />
       <main style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
         {children}

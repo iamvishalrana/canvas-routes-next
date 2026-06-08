@@ -71,7 +71,7 @@ export default function BroadcastsClient() {
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>
           Communication
         </div>
-        <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-cormorant),serif', color: '#1a1a1a', letterSpacing: '0.02em' }}>
+        <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', letterSpacing: '0.02em' }}>
           Broadcasts
         </div>
       </div>
