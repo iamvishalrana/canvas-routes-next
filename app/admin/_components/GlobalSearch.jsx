@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 
 function ResultGroup({ label, items, onSelect }) {
@@ -92,7 +93,7 @@ export default function GlobalSearch() {
     </button>
   )
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '10vh' }}
       onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
@@ -125,6 +126,7 @@ export default function GlobalSearch() {
 
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

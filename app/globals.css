@@ -435,3 +435,11 @@ section[id] {
   .dashboard-grid { grid-template-columns: 1fr; }
   .events-popup-cards { flex-direction: column; }
 }
+
+/* Admin panel — mobile */
+.admin-hamburger { display: none; }
+@media (max-width: 767px) {
+  .admin-sidebar-desktop { display: none !important; }
+  .admin-hamburger { display: flex !important; }
+  .admin-main { padding-top: 3.75rem; }
+}

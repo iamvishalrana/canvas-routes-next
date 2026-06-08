@@ -41,6 +41,13 @@ export default function PromoCodesClient() {
   const [formErr, setFormErr]     = useState(null)
   const [formOk, setFormOk]       = useState(null)
   const [deactivating, setDeactivating] = useState(null)
+  const [isMobile, setIsMobile]         = useState(false)
+
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     fetch('/api/admin/promo-codes')
@@ -214,13 +221,33 @@ export default function PromoCodesClient() {
         ))}
       </div>
 
-      {/* Table */}
-      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto' }}>
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>Loading…</div>
-        ) : codes.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>No promo codes yet.</div>
-        ) : (
+      {/* Table / Cards */}
+      {loading ? (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : codes.length === 0 ? (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No promo codes yet.</div>
+      ) : isMobile ? (
+        <div>
+          {codes.map(c => (
+            <div key={c.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontFamily: 'monospace', fontWeight: '600', fontSize: '14px', letterSpacing: '0.04em' }}>{c.code}</span>
+                <StatusChip active={c.active} />
+              </div>
+              <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>{fmtDiscount(c.coupon)}</div>
+              <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.6rem' }}>
+                {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
+              </div>
+              {c.active && (
+                <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
+                  {deactivating === c.id ? 'Deactivating…' : 'Deactivate'}
+                </DangerBtn>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -255,8 +282,8 @@ export default function PromoCodesClient() {
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

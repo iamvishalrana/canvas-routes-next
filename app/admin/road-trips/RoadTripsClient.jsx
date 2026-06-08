@@ -39,6 +39,13 @@ export default function RoadTripsClient() {
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
   const [activeEvent, setActiveEvent] = useState('All Events')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     fetch('/api/admin/applications')
@@ -171,16 +178,42 @@ export default function RoadTripsClient() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table / Cards */}
       {loading ? (
-        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>Loading…</div>
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : filtered.length === 0 ? (
-        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
           {allRoadTripEvents.length === 0 ? 'No road trip registrations yet.' : 'No registrants match.'}
+        </div>
+      ) : isMobile ? (
+        <div>
+          {filtered.map(({ app, reg }, i) => {
+            const car = [app.car_year, app.car_model].filter(Boolean).join(' ') || '—'
+            return (
+              <div key={`${app.id}-${reg.event}-${i}`} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
+                <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a', marginBottom: '2px' }}>{app.name || '—'}</div>
+                <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.4rem' }}>{app.email}</div>
+                {activeEvent === 'All Events' && reg.event && (
+                  <div style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '0.4rem' }}>{reg.event}</div>
+                )}
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.6rem' }}>{car}</div>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <PaymentChip status={app.stripe_payment_status} />
+                  {app.passengers && (
+                    <span style={{ fontSize: '11px', color: '#888' }}>
+                      {app.passengers} pax{app.has_children ? ' w/ kids' : ''}
+                    </span>
+                  )}
+                  <AttendedIcon value={reg.attended} />
+                  <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto' }}>{fmtDate(reg.registered_at)}</span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       ) : (
         <div style={{ ...CARD, overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
                 <th style={TH}>Name</th>

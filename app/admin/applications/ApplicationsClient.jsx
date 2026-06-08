@@ -44,7 +44,13 @@ function AppAdminNotes({ appId, initialNotes, onSaved }) {
 
 const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
-export default function ApplicationsClient({ isMobile }) {
+export default function ApplicationsClient() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')

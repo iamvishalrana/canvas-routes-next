@@ -35,6 +35,13 @@ export default function PaymentsClient() {
   const [filter, setFilter]     = useState('')
   const [sort, setSort]         = useState('date_desc')
   const [search, setSearch]     = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     fetch('/api/admin/applications')
@@ -130,13 +137,32 @@ export default function PaymentsClient() {
         />
       </div>
 
-      {/* Table */}
-      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto' }}>
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>Loading…</div>
-        ) : filtered.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>No payment records found.</div>
-        ) : (
+      {/* Table / Cards */}
+      {loading ? (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No payment records found.</div>
+      ) : isMobile ? (
+        <div>
+          {filtered.map(r => (
+            <div key={r.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
+                <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{r.name || '—'}</div>
+                <div style={{ fontWeight: '500', color: r.stripe_payment_status === 'paid' ? '#3B6B2F' : '#1a1a1a' }}>
+                  {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
+                </div>
+              </div>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.6rem' }}>{r.email}</div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <StatusChip status={r.stripe_payment_status} />
+                {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{r.stripe_payment_type}</span>}
+                <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto' }}>{fmtDate(r.stripe_paid_at)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -167,8 +193,8 @@ export default function PaymentsClient() {
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

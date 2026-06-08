@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { inp, sel } from '../_components/shared'
 
 const ENTITY_TYPES = ['member', 'application', 'contact', 'announcement', 'event']
@@ -74,6 +74,13 @@ function MetadataCell({ metadata }) {
 export default function ActivityLogClient({ logs }) {
   const [search, setSearch] = useState('')
   const [entityTypeFilter, setEntityTypeFilter] = useState('all')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const now = new Date()
   const todayStart = startOfDay(now)
@@ -97,7 +104,7 @@ export default function ActivityLogClient({ logs }) {
   }, [logs, search, entityTypeFilter])
 
   return (
-    <div>
+    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       {/* Note banner */}
       <div style={{ marginBottom: '1.5rem', padding: '0.85rem 1.1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>
@@ -153,82 +160,60 @@ export default function ActivityLogClient({ logs }) {
         </div>
       </div>
 
-      {/* Table */}
-      <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
-        {/* Header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.4fr 1.4fr 1.6fr 1.4fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
-          {['Action', 'Entity', 'Admin', 'Metadata', 'Date / Time'].map(h => (
-            <div key={h} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+      {/* Log entries */}
+      {filtered.length === 0 ? (
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', padding: '4rem 2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', color: '#bbb', lineHeight: '1.7', maxWidth: '380px', margin: '0 auto' }}>
+            {search || entityTypeFilter !== 'all'
+              ? 'No entries match your filters.'
+              : 'No activity logged yet. Actions will appear here as admins use the panel.'
+            }
+          </div>
+        </div>
+      ) : isMobile ? (
+        <div>
+          {filtered.map((log, idx) => (
+            <div key={log.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '0.85rem 1rem', marginBottom: '0.4rem' }}>
+              <div style={{ fontFamily: 'monospace', fontWeight: '500', fontSize: '12px', color: '#1a1a1a', marginBottom: '0.3rem' }}>{log.action}</div>
+              {(log.entity_type || log.entity_name) && (
+                <div style={{ fontSize: '12px', color: '#555', marginBottom: '0.25rem' }}>
+                  {log.entity_type && <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#aaa', marginRight: '0.3rem' }}>{log.entity_type}</span>}
+                  {log.entity_name && <span style={{ color: '#333' }}>{log.entity_name}</span>}
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+                <div style={{ fontSize: '11px', color: '#888' }}>{log.admin_email || '—'}</div>
+                <div style={{ fontSize: '11px', color: '#bbb' }}>{fmtDate(log.created_at)}</div>
+              </div>
+            </div>
           ))}
         </div>
-
-        {/* Empty state */}
-        {filtered.length === 0 && (
-          <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '13px', color: '#bbb', lineHeight: '1.7', maxWidth: '380px', margin: '0 auto' }}>
-              {search || entityTypeFilter !== 'all'
-                ? 'No entries match your filters.'
-                : 'No activity logged yet. Actions will appear here as admins use the panel.'
-              }
-            </div>
+      ) : (
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.4fr 1.4fr 1.6fr 1.4fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+            {['Action', 'Entity', 'Admin', 'Metadata', 'Date / Time'].map(h => (
+              <div key={h} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
+            ))}
           </div>
-        )}
-
-        {/* Rows */}
-        {filtered.map((log, idx) => (
-          <div
-            key={log.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1.6fr 1.4fr 1.4fr 1.6fr 1.4fr',
-              padding: '0.85rem 1.25rem',
-              borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
-              alignItems: 'start',
-            }}
-          >
-            {/* Action */}
-            <div style={{ fontWeight: '500', fontSize: '12px', color: '#1a1a1a', fontFamily: 'monospace', letterSpacing: '0.02em' }}>
-              {log.action}
+          {filtered.map((log, idx) => (
+            <div key={log.id} style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.4fr 1.4fr 1.6fr 1.4fr', padding: '0.85rem 1.25rem', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', alignItems: 'start' }}>
+              <div style={{ fontWeight: '500', fontSize: '12px', color: '#1a1a1a', fontFamily: 'monospace', letterSpacing: '0.02em' }}>{log.action}</div>
+              <div style={{ fontSize: '12px', color: '#555' }}>
+                {log.entity_type || log.entity_name ? (
+                  <span>
+                    {log.entity_type && <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#aaa', marginRight: '0.3rem' }}>{log.entity_type}</span>}
+                    {log.entity_type && log.entity_name && <span style={{ color: '#c5a882', margin: '0 0.3rem', fontSize: '10px' }}>·</span>}
+                    {log.entity_name && <span style={{ color: '#333' }}>{log.entity_name}</span>}
+                  </span>
+                ) : <span style={{ color: '#ddd', fontSize: '11px' }}>—</span>}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>{log.admin_email || <span style={{ color: '#ddd' }}>—</span>}</div>
+              <div><MetadataCell metadata={log.metadata} /></div>
+              <div style={{ fontSize: '11px', color: '#999' }}>{fmtDate(log.created_at)}</div>
             </div>
-
-            {/* Entity */}
-            <div style={{ fontSize: '12px', color: '#555' }}>
-              {log.entity_type || log.entity_name ? (
-                <span>
-                  {log.entity_type && (
-                    <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#aaa', marginRight: '0.3rem' }}>
-                      {log.entity_type}
-                    </span>
-                  )}
-                  {log.entity_type && log.entity_name && (
-                    <span style={{ color: '#c5a882', margin: '0 0.3rem', fontSize: '10px' }}>·</span>
-                  )}
-                  {log.entity_name && (
-                    <span style={{ color: '#333' }}>{log.entity_name}</span>
-                  )}
-                </span>
-              ) : (
-                <span style={{ color: '#ddd', fontSize: '11px' }}>—</span>
-              )}
-            </div>
-
-            {/* Admin */}
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              {log.admin_email || <span style={{ color: '#ddd' }}>—</span>}
-            </div>
-
-            {/* Metadata */}
-            <div>
-              <MetadataCell metadata={log.metadata} />
-            </div>
-
-            {/* Date */}
-            <div style={{ fontSize: '11px', color: '#999' }}>
-              {fmtDate(log.created_at)}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

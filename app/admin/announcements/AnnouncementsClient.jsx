@@ -79,7 +79,7 @@ export default function AnnouncementsClient() {
   })
 
   return (
-    <div>
+    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>New Announcement</div>
         <form onSubmit={post}>

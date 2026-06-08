@@ -52,7 +52,13 @@ function VCardBtn({ onClick }) {
 
 // ─── Contacts Client ──────────────────────────────────────────────────────────
 
-export default function ContactsClient({ isMobile }) {
+export default function ContactsClient() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)

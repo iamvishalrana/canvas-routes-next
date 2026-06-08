@@ -2,7 +2,13 @@
 import { useState, useEffect } from 'react'
 import { inp, GhostBtn } from '../_components/shared'
 
-export default function CarsClient({ isMobile }) {
+export default function CarsClient() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [assignInputs, setAssignInputs] = useState({})
@@ -105,7 +111,7 @@ export default function CarsClient({ isMobile }) {
   const isEditing = (m, carIndex) => editing?.memberId === m.id && editing?.carIndex === carIndex
 
   return (
-    <div>
+    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
