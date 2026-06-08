@@ -8,6 +8,7 @@ import {
   L, Badge, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
   AdminNotesPanel, Pagination,
 } from '../_components/shared'
+import { ExportButton } from '../_components/ExportModal'
 
 // ─── Member Expanded Panel ────────────────────────────────────────────────────
 
@@ -501,6 +502,26 @@ export default function MembersClient({ initialMembers, total, page, pageSize, i
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>
+          )}
+          {filtered.length > 0 && selected.size === 0 && (
+            <ExportButton
+              filename="members"
+              title="Members"
+              headers={['Name', 'Email', 'Phone', 'Status', 'Tier', 'Car Year', 'Car Make', 'Car Model', 'DOB', 'Instagram', 'Joined']}
+              rows={filtered.map(m => [
+                m.name || '',
+                m.email || '',
+                m.phone || '',
+                m.membership_status || '',
+                m.tier || '',
+                m.car_year || (m.cars?.[0]?.year) || '',
+                m.car_make || (m.cars?.[0]?.make) || '',
+                m.car_model || (m.cars?.[0]?.model) || '',
+                m.dob_month ? `${m.dob_month}/${m.dob_day}${m.dob_year ? `/${m.dob_year}` : ''}` : '',
+                m.instagram || '',
+                m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA') : '',
+              ])}
+            />
           )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>

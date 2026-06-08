@@ -5,6 +5,7 @@ import {
   normalizeEventName, parseCarMakeModel,
   inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel,
 } from '../_components/shared'
+import { ExportButton } from '../_components/ExportModal'
 
 // ─── Shared Admin Notes component for Applications ────────────────────────────
 
@@ -338,6 +339,25 @@ export default function ApplicationsClient({ isMobile }) {
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>
+          )}
+          {filtered.length > 0 && (
+            <ExportButton
+              filename="applications"
+              title="Applications"
+              headers={['Name', 'Email', 'Phone', 'Car Year', 'Car Model', 'Tier', 'Source', 'Payment Status', 'Amount Paid', 'Registered']}
+              rows={filtered.map(a => [
+                a.name || '',
+                a.email || '',
+                a.phone || '',
+                a.car_year || '',
+                a.car_model || '',
+                a.registrations?.find(r => r.event === 'Canvas Routes Membership')?.tier || '',
+                a.source || '',
+                a.stripe_payment_status || '',
+                a.stripe_amount_paid ? `$${(a.stripe_amount_paid / 100).toFixed(2)}` : '',
+                a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA') : '',
+              ])}
+            />
           )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined, flexWrap: 'wrap' }}>
