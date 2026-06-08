@@ -5,6 +5,7 @@ import Image from 'next/image'
 import SiteFooter from './SiteFooter'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { User, Mail, Phone, Car, Share2, Calendar } from 'lucide-react'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -600,7 +601,7 @@ export default function MembershipContent() {
 
                 {/* Name */}
                 <div id="mem-field-name">
-                  <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Full name <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Full name <User size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span></div>
                   <input type="text" value={form.name} placeholder="First and last name" autoComplete="name"
                     onChange={e => set('name', capitaliseName(e.target.value))}
                     onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
@@ -609,7 +610,7 @@ export default function MembershipContent() {
 
                 {/* Email */}
                 <div id="mem-field-email">
-                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Email <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Email <Mail size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span></div>
                   <input type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
                     onChange={e => set('email', e.target.value)}
                     onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
@@ -618,7 +619,7 @@ export default function MembershipContent() {
 
                 {/* Phone */}
                 <div id="mem-field-phone">
-                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone <Phone size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span></div>
                   <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
                     onChange={e => set('phone', formatPhone(e.target.value))}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
@@ -628,7 +629,7 @@ export default function MembershipContent() {
                 {/* Date of birth */}
                 <div id="mem-field-dob_month" style={{ marginTop: '1rem' }}>
                   <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>
-                    Date of birth <span style={{ color: '#d06070' }}>*</span> <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>year optional</span>
+                    Date of birth <Calendar size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span> <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>year optional</span>
                   </div>
                   <div className="mem-dob-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '1px' }}>
                     <div style={{ position: 'relative' }}>
@@ -665,7 +666,7 @@ export default function MembershipContent() {
                 {/* Year + Make */}
                 <div className="mem-car-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
                   <div id="mem-field-year">
-                    <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year <span style={{ color: '#d06070' }}>*</span></div>
+                    <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year <Car size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span></div>
                     <div style={{ position: 'relative' }}>
                       <select value={form.year} onChange={e => set('year', e.target.value)}
                         onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
@@ -679,7 +680,7 @@ export default function MembershipContent() {
                     </div>
                   </div>
                   <div id="mem-field-carMake">
-                    <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Make <span style={{ color: '#d06070' }}>*</span></div>
+                    <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Make <Car size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span></div>
                     <div style={{ position: 'relative' }}>
                       <select value={form.carMake} onChange={e => set('carMake', e.target.value)}
                         onFocus={() => setFocusedField('carMake')} onBlur={() => setFocusedField(null)}
@@ -694,7 +695,7 @@ export default function MembershipContent() {
 
                 {/* Model */}
                 <div id="mem-field-carModel">
-                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Model <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Model <Car size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span></div>
                   <input type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
                     onChange={e => set('carModel', e.target.value)}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)}
@@ -727,7 +728,7 @@ export default function MembershipContent() {
 
                 {/* Source */}
                 <div id="mem-field-source">
-                  <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>How did you hear about us <span style={{ color: '#d06070' }}>*</span></div>
+                  <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>How did you hear about us <Share2 size={11} style={{ marginLeft: '3px', verticalAlign: 'middle', opacity: 0.7 }} /><span style={{ color: '#d06070' }}>*</span></div>
                   <div style={{ position: 'relative' }}>
                     <select value={form.source} onChange={e => set('source', e.target.value)}
                       onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
