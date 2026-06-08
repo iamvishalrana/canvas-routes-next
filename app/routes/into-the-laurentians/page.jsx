@@ -7,6 +7,24 @@ import SiteFooter from '../../../components/SiteFooter'
 
 const ROUTES_CLOSED = new Date('2026-06-06T00:00:00Z').getTime() // manually closed
 
+const COUNTRY_CODES = [
+  { code: '+1',   name: 'Canada / US' },
+  { code: '+44',  name: 'UK' },
+  { code: '+33',  name: 'France' },
+  { code: '+49',  name: 'Germany' },
+  { code: '+39',  name: 'Italy' },
+  { code: '+34',  name: 'Spain' },
+  { code: '+351', name: 'Portugal' },
+  { code: '+41',  name: 'Switzerland' },
+  { code: '+31',  name: 'Netherlands' },
+  { code: '+61',  name: 'Australia' },
+  { code: '+64',  name: 'New Zealand' },
+  { code: '+52',  name: 'Mexico' },
+  { code: '+55',  name: 'Brazil' },
+  { code: '+91',  name: 'India' },
+  { code: '+971', name: 'UAE' },
+]
+
 function Chevron() {
   return (
     <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -22,6 +40,7 @@ export default function RoutesPage() {
   const [form, setForm] = useState({ name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
+  const [countryCode, setCountryCode] = useState('+1')
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
@@ -42,11 +61,15 @@ export default function RoutesPage() {
     if (serverError) setServerError(null)
   }
 
-  function formatPhone(v) {
-    const d = v.replace(/\D/g,'').slice(0,10)
-    if (d.length <= 3) return d
-    if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`
-    return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+  function formatPhone(v, code) {
+    const c = code !== undefined ? code : countryCode
+    if (c === '+1') {
+      const d = v.replace(/\D/g,'').slice(0,10)
+      if (d.length <= 3) return d
+      if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`
+      return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+    }
+    return v.replace(/[^\d\s\-()]/g,'').slice(0,20)
   }
 
   function inputStyle(field) {
@@ -76,7 +99,7 @@ export default function RoutesPage() {
     const e = {}
     if (form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 10)) e.phone = true
+    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true
     if (!form.year) e.year = true
@@ -110,7 +133,7 @@ export default function RoutesPage() {
       const res = await fetch('/api/routes', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`, _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '', carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`, _hp: honeypotRef.current?.value || '' }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
@@ -403,10 +426,41 @@ export default function RoutesPage() {
                     </div>
                   ) : (
                     <>
-                      <input id="field-phone" type="tel" placeholder="(514) 000-0000" value={form.phone}
-                        onChange={e => updateForm('phone', formatPhone(e.target.value))} style={inputStyle('phone')}
-                        onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
-                      {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid 10-digit number</span>}
+                      {(() => {
+                        const isFocused = focusedField === 'phone'
+                        const hasError = !!errors.phone
+                        const hasValue = !!form.phone
+                        let border, background, boxShadow
+                        if (hasError) {
+                          border = '1px solid #7B2032'; background = 'rgba(123,32,50,0.04)'; boxShadow = 'none'
+                        } else if (hasValue) {
+                          border = '1px solid #3B6B2F'; background = 'rgba(59,107,47,0.05)'; boxShadow = 'none'
+                        } else if (isFocused) {
+                          border = '1px solid #c5a882'; background = 'transparent'; boxShadow = '0 0 0 3px rgba(197,168,130,0.2)'
+                        } else {
+                          border = '1px solid rgba(0,0,0,0.2)'; background = 'transparent'; boxShadow = 'none'
+                        }
+                        return (
+                          <div style={{display:"flex",alignItems:"stretch",border,background,boxShadow,transition:"border-color 0.2s, box-shadow 0.2s, background 0.2s"}}>
+                            <div style={{position:"relative",flexShrink:0}}>
+                              <select
+                                value={countryCode}
+                                onChange={e => { setCountryCode(e.target.value); setForm(p => ({...p, phone:''})) }}
+                                style={{height:"100%",padding:"0.9rem 1.8rem 0.9rem 0.75rem",border:"none",borderRight:"1px solid rgba(0,0,0,0.1)",background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",cursor:"pointer",outline:"none",WebkitAppearance:"none",MozAppearance:"none",appearance:"none",minWidth:"60px"}}
+                              >
+                                {COUNTRY_CODES.map(c => (
+                                  <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                                ))}
+                              </select>
+                              <Chevron />
+                            </div>
+                            <input id="field-phone" type="tel" placeholder={countryCode === '+1' ? "(514) 000-0000" : "Phone number"} value={form.phone}
+                              onChange={e => updateForm('phone', formatPhone(e.target.value))} style={{flex:1,padding:"0.9rem 1.2rem",border:"none",background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",outline:"none",color:"#1a1a1a",WebkitAppearance:"none",MozAppearance:"none",appearance:"none"}}
+                              onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
+                          </div>
+                        )
+                      })()}
+                      {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>{countryCode === '+1' ? 'Please enter a valid 10-digit number' : 'Please enter a valid phone number'}</span>}
                       <button type="button" onClick={() => { setPhoneOptOut(true); setForm(p => ({...p, phone:''})); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:"0.3rem 0",fontSize:"11px",color:"#aaa",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Prefer not to share my number</button>
                     </>
                   )}
