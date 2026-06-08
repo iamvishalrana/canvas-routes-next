@@ -3,11 +3,12 @@ import { useState } from 'react'
 import { inp, sel, L, PrimaryBtn, GhostBtn, Err } from '../_components/shared'
 
 const AUDIENCE_OPTIONS = [
-  { value: 'all_members',    label: 'All Members'         },
-  { value: 'active_members', label: 'Active Members Only' },
-  { value: 'inner_circle',   label: 'Inner Circle'        },
-  { value: 'all_contacts',   label: 'All Contacts'        },
-  { value: 'everyone',       label: 'Everyone'            },
+  { value: 'all_members',     label: 'All Members'         },
+  { value: 'active_members',  label: 'Active Members Only' },
+  { value: 'inner_circle',    label: 'Inner Circle'        },
+  { value: 'all_contacts',    label: 'All Contacts'        },
+  { value: 'everyone',        label: 'Everyone'            },
+  { value: 'specific_emails', label: 'Specific Emails'     },
 ]
 
 function buildHtml(body) {
@@ -19,22 +20,37 @@ function buildHtml(body) {
 </body></html>`
 }
 
-export default function BroadcastsClient() {
-  const [audience, setAudience]     = useState('all_members')
-  const [subject, setSubject]       = useState('')
-  const [body, setBody]             = useState('')
-  const [showPreview, setShowPreview] = useState(false)
-  const [confirm, setConfirm]       = useState(false)
-  const [sending, setSending]       = useState(false)
-  const [error, setError]           = useState(null)
-  const [result, setResult]         = useState(null) // { sent, failed }
+function parseEmails(raw) {
+  return [...new Set(
+    raw.split(/[\n,;]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => e.includes('@') && e.includes('.'))
+  )]
+}
 
-  const audienceLabel = AUDIENCE_OPTIONS.find(o => o.value === audience)?.label || audience
+export default function BroadcastsClient() {
+  const [audience, setAudience]         = useState('all_members')
+  const [specificEmails, setSpecificEmails] = useState('')
+  const [subject, setSubject]           = useState('')
+  const [body, setBody]                 = useState('')
+  const [showPreview, setShowPreview]   = useState(false)
+  const [confirm, setConfirm]           = useState(false)
+  const [sending, setSending]           = useState(false)
+  const [error, setError]               = useState(null)
+  const [result, setResult]             = useState(null)
+
+  const parsedEmails = audience === 'specific_emails' ? parseEmails(specificEmails) : []
+  const audienceLabel = audience === 'specific_emails'
+    ? `${parsedEmails.length} specific email${parsedEmails.length !== 1 ? 's' : ''}`
+    : AUDIENCE_OPTIONS.find(o => o.value === audience)?.label || audience
 
   function handleSendClick() {
     setError(null)
     if (!subject.trim()) { setError('Subject is required.'); return }
     if (!body.trim()) { setError('Message body is required.'); return }
+    if (audience === 'specific_emails' && parsedEmails.length === 0) {
+      setError('Enter at least one valid email address.'); return
+    }
     setConfirm(true)
   }
 
@@ -43,18 +59,23 @@ export default function BroadcastsClient() {
     setSending(true)
     setError(null)
     setResult(null)
-
     try {
       const res = await fetch('/api/admin/broadcasts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: subject.trim(), html: buildHtml(body), audience }),
+        body: JSON.stringify({
+          subject: subject.trim(),
+          html: buildHtml(body),
+          audience,
+          ...(audience === 'specific_emails' ? { specificEmails: parsedEmails } : {}),
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed to send broadcast.'); return }
       setResult(data)
       setSubject('')
       setBody('')
+      setSpecificEmails('')
       setShowPreview(false)
     } catch {
       setError('Network error. Please try again.')
@@ -64,16 +85,12 @@ export default function BroadcastsClient() {
   }
 
   return (
-    <div style={{ padding: '2rem 2.5rem', maxWidth: '720px' }}>
+    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', maxWidth: '720px' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '0.4rem' }}>
-          Communication
-        </div>
-        <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', letterSpacing: '0.02em' }}>
-          Broadcasts
-        </div>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
+        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Broadcasts</h1>
       </div>
 
       {/* Warning banner */}
@@ -112,8 +129,8 @@ export default function BroadcastsClient() {
           {/* Audience */}
           <div style={{ marginBottom: '1rem' }}>
             <L>Audience</L>
-            <div style={{ position: 'relative', maxWidth: '280px' }}>
-              <select style={sel} value={audience} onChange={e => setAudience(e.target.value)}>
+            <div style={{ position: 'relative' }}>
+              <select style={sel} value={audience} onChange={e => { setAudience(e.target.value); setError(null) }}>
                 {AUDIENCE_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
@@ -121,6 +138,24 @@ export default function BroadcastsClient() {
               <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
           </div>
+
+          {/* Specific emails input */}
+          {audience === 'specific_emails' && (
+            <div style={{ marginBottom: '1rem' }}>
+              <L>Email Addresses</L>
+              <textarea
+                style={{ ...inp, height: '100px', resize: 'vertical' }}
+                value={specificEmails}
+                onChange={e => setSpecificEmails(e.target.value)}
+                placeholder="Paste emails — one per line or comma-separated&#10;e.g. alice@example.com, bob@example.com"
+              />
+              {parsedEmails.length > 0 && (
+                <div style={{ fontSize: '11px', color: '#3B6B2F', marginTop: '0.35rem' }}>
+                  {parsedEmails.length} valid email{parsedEmails.length !== 1 ? 's' : ''} detected
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Subject */}
           <div style={{ marginBottom: '1rem' }}>

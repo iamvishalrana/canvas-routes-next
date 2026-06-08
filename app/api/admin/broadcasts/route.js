@@ -2,20 +2,18 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 
 const MAX_RECIPIENTS = 200
+const BATCH_SIZE = 10  // parallel sends per batch
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { subject, html, audience, previewText } = await request.json()
+  const { subject, html, audience, specificEmails } = await request.json()
 
   if (!subject?.trim()) return Response.json({ error: 'Subject is required.' }, { status: 400 })
   if (!html?.trim()) return Response.json({ error: 'Email body is required.' }, { status: 400 })
   if (!audience) return Response.json({ error: 'Audience is required.' }, { status: 400 })
 
   const supabase = createAdminClient()
-
-  // ── Build recipient list ─────────────────────────────────────────────────────
-
   let recipients = [] // [{ email, name }]
 
   async function fetchMembers(filters = {}) {
@@ -53,6 +51,21 @@ export async function POST(request) {
         const key = r.email.toLowerCase()
         if (!seen.has(key)) { seen.add(key); recipients.push(r) }
       }
+    } else if (audience === 'specific_emails') {
+      const rawEmails = Array.isArray(specificEmails) ? specificEmails : []
+      const uniqueEmails = [...new Set(
+        rawEmails.map(e => e.toLowerCase().trim()).filter(e => e.includes('@') && e.includes('.'))
+      )]
+      if (uniqueEmails.length === 0) return Response.json({ error: 'No valid email addresses provided.' }, { status: 400 })
+      // Look up names from DB
+      const [membersData, appsData] = await Promise.all([
+        supabase.from('members').select('email, name').in('email', uniqueEmails),
+        supabase.from('applications').select('email, name').in('email', uniqueEmails),
+      ])
+      const nameMap = {}
+      for (const m of (membersData.data || [])) nameMap[m.email.toLowerCase()] = m.name
+      for (const a of (appsData.data || [])) if (!nameMap[a.email.toLowerCase()]) nameMap[a.email.toLowerCase()] = a.name
+      recipients = uniqueEmails.map(email => ({ email, name: nameMap[email] || '' }))
     } else {
       return Response.json({ error: 'Invalid audience.' }, { status: 400 })
     }
@@ -60,44 +73,35 @@ export async function POST(request) {
     return Response.json({ error: err.message }, { status: 500 })
   }
 
-  // Cap at 200
   recipients = recipients.slice(0, MAX_RECIPIENTS)
+  if (recipients.length === 0) return Response.json({ sent: 0, failed: 0 })
 
-  if (recipients.length === 0) {
-    return Response.json({ sent: 0, failed: 0 })
-  }
-
-  // ── Send emails ──────────────────────────────────────────────────────────────
-
+  // Send in parallel batches
   let sent = 0
   let failed = 0
 
-  for (const recipient of recipients) {
-    try {
-      const body = {
-        from: 'Canvas Routes <info@canvasroutes.com>',
-        to: recipient.email,
-        subject: subject.trim(),
-        html,
-      }
-      if (previewText) body.text = previewText
-
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        sent++
-      } else {
-        failed++
-      }
-    } catch {
-      failed++
-    }
+  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+    const batch = recipients.slice(i, i + BATCH_SIZE)
+    const results = await Promise.all(batch.map(async recipient => {
+      try {
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: 'Canvas Routes <info@canvasroutes.com>',
+            to: recipient.email,
+            subject: subject.trim(),
+            html,
+          }),
+        })
+        return res.ok ? 'sent' : 'failed'
+      } catch { return 'failed' }
+    }))
+    sent   += results.filter(r => r === 'sent').length
+    failed += results.filter(r => r === 'failed').length
   }
 
   return Response.json({ sent, failed })
