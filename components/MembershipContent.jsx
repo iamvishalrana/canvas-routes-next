@@ -793,23 +793,30 @@ export default function MembershipContent() {
                 {errors.tier && <div style={{ fontSize: '11px', color: '#d06070', marginBottom: '0.75rem' }}>Please select a membership tier</div>}
                 <div className="mem-tier-btns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
 
-                  <button type="button" onClick={() => set('tier', 'Routes Member')} style={{
-                    padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
-                    background: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.08)' : 'rgba(0,0,0,0.03)',
-                    borderLeft: form.tier === 'Routes Member' ? '2px solid #c5a882' : '2px solid rgba(0,0,0,0.1)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <div style={{ fontSize: '14px', color: form.tier === 'Routes Member' ? '#1a1a1a' : '#777', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
-                        <div style={{ fontSize: '11px', color: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.8)' : 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Events, road trips, community & perks</div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                        <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: form.tier === 'Routes Member' ? '#c5a882' : 'rgba(0,0,0,0.2)', lineHeight: 1 }}>$99</div>
-                        <div style={{ fontSize: '9px', color: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.18)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
-                      </div>
-                    </div>
-                    {form.tier === 'Routes Member' && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                  </button>
+                  {(() => {
+                    const selected = form.tier === 'Routes Member'
+                    const dimmed   = form.tier === 'Inner Circle'
+                    return (
+                      <button type="button" onClick={() => set('tier', 'Routes Member')} style={{
+                        padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
+                        background: selected ? 'rgba(197,168,130,0.08)' : 'rgba(0,0,0,0.03)',
+                        borderLeft: selected ? '2px solid #c5a882' : dimmed ? '2px solid rgba(0,0,0,0.07)' : '2px solid rgba(0,0,0,0.12)',
+                        opacity: dimmed ? 0.45 : 1,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
+                            <div style={{ fontSize: '11px', color: selected ? 'rgba(197,168,130,0.8)' : 'rgba(0,0,0,0.45)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Events, road trips, community & perks</div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
+                            <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$99</div>
+                            <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.6)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                          </div>
+                        </div>
+                        {selected && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                      </button>
+                    )
+                  })()}
 
                   <button type="button" onClick={() => set('tier', 'Inner Circle')} style={{
                     padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
