@@ -80,8 +80,17 @@ export default function GlobalSearch() {
 
   const hasResults = results && (results.members?.length || results.applications?.length || results.contacts?.length)
 
-  const memberItems  = (results?.members || []).map(m => ({ name: m.name, email: m.email, badge: m.membership_status, sub: [m.car_make, m.car_model].filter(Boolean).join(' '), color: '#3B6B2F', href: `/admin/members` }))
-  const appItems     = (results?.applications || []).map(a => ({ name: a.name, email: a.email, badge: a.stripe_payment_status, sub: a.car_model, color: '#8A6535', href: `/admin/applications` }))
+  const q = query.toLowerCase()
+  function sub(m) {
+    const parts = []
+    const car = [m.car_make, m.car_model].filter(Boolean).join(' ')
+    if (car) parts.push(car)
+    if (m.phone && m.phone.toLowerCase().includes(q)) parts.push(m.phone)
+    if (m.instagram && m.instagram.toLowerCase().includes(q)) parts.push(m.instagram)
+    return parts.join(' · ')
+  }
+  const memberItems  = (results?.members || []).map(m => ({ name: m.name, email: m.email, badge: m.membership_status, sub: sub(m), color: '#3B6B2F', href: `/admin/members` }))
+  const appItems     = (results?.applications || []).map(a => ({ name: a.name, email: a.email, badge: a.stripe_payment_status, sub: [a.car_model, a.phone?.toLowerCase().includes(q) ? a.phone : null].filter(Boolean).join(' · '), color: '#8A6535', href: `/admin/applications` }))
   const contactItems = (results?.contacts || []).map(c => ({ name: c.applications?.name, email: c.applications?.email, sub: c.applications?.car_model, color: '#555', href: `/admin/contacts` }))
 
   if (!open) return (
