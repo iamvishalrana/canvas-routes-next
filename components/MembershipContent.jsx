@@ -112,6 +112,13 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
   async function handlePay(e) {
     e.preventDefault()
     if (!stripe || !elements) return
+
+    // Block payment if there's a promo code typed but not applied
+    if (promoInput.trim()) {
+      setError('You have a promo code entered but not applied. Click "Apply" first.')
+      return
+    }
+
     setPaying(true); setError(null)
 
     const { error: submitError } = await elements.submit()

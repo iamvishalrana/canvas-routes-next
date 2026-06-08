@@ -49,6 +49,7 @@ export async function POST(request) {
       code: code.trim().toUpperCase(),
       active: true,
       limit: 1,
+      expand: ['data.coupon'],
     })
 
     if (!promoCodes.data.length) {
