@@ -5,13 +5,23 @@ import Image from 'next/image'
 
 const NAV = [
   { href: '/admin/dashboard',     label: 'Dashboard'     },
+  { label: '─── Members', divider: true },
   { href: '/admin/members',       label: 'Members'       },
   { href: '/admin/applications',  label: 'Applications'  },
   { href: '/admin/contacts',      label: 'Contacts'      },
-  { href: '/admin/events',        label: 'Events'        },
-  { href: '/admin/announcements', label: 'Announcements' },
-  { href: '/admin/payments',      label: 'Payments'      },
   { href: '/admin/cars',          label: 'Cars'          },
+  { label: '─── Events', divider: true },
+  { href: '/admin/events',        label: 'Events'        },
+  { href: '/admin/road-trips',    label: 'Road Trips'    },
+  { label: '─── Business', divider: true },
+  { href: '/admin/payments',      label: 'Payments'      },
+  { href: '/admin/revenue',       label: 'Revenue'       },
+  { href: '/admin/promo-codes',   label: 'Promo Codes'   },
+  { label: '─── Communication', divider: true },
+  { href: '/admin/announcements', label: 'Announcements' },
+  { href: '/admin/broadcasts',    label: 'Broadcasts'    },
+  { label: '─── System', divider: true },
+  { href: '/admin/activity-log',  label: 'Activity Log'  },
   { href: '/admin/tools',         label: 'Tools'         },
 ]
 
@@ -37,11 +47,16 @@ export default function AdminSidebar() {
 
       {/* Navigation */}
       <nav style={{ flex: 1, padding: '0.75rem 0' }}>
-        {NAV.map(({ href, label }) => {
-          const active = pathname === href || pathname.startsWith(href + '/')
+        {NAV.map((item, i) => {
+          if (item.divider) return (
+            <div key={i} style={{ padding: '1rem 1.25rem 0.3rem', fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.25)', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {item.label.replace('─── ', '')}
+            </div>
+          )
+          const active = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
-            <Link key={href} href={href} style={{
-              display: 'block', padding: '0.6rem 1.25rem',
+            <Link key={item.href} href={item.href} style={{
+              display: 'block', padding: '0.55rem 1.25rem',
               fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif',
               textDecoration: 'none', transition: 'all 0.15s',
               color: active ? '#c5a882' : 'rgba(245,241,236,0.55)',
@@ -49,7 +64,7 @@ export default function AdminSidebar() {
               borderLeft: active ? '2px solid #c5a882' : '2px solid transparent',
               letterSpacing: '0.01em',
             }}>
-              {label}
+              {item.label}
             </Link>
           )
         })}
