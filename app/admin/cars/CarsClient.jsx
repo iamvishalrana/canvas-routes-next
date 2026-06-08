@@ -1,0 +1,226 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { inp, GhostBtn } from '../_components/shared'
+
+export default function CarsClient({ isMobile }) {
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [assignInputs, setAssignInputs] = useState({})
+  const [assigning, setAssigning] = useState({})
+  const [editing, setEditing] = useState(null) // { memberId, carIndex }
+  const [editForm, setEditForm] = useState({})
+  const [modDraft, setModDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/members').then(r => r.json()).then(data => {
+      setMembers(Array.isArray(data) ? data : [])
+      setLoading(false)
+    })
+  }, [])
+
+  function startEdit(m, carIndex, car) {
+    setEditing({ memberId: m.id, carIndex })
+    setEditForm({ year: car.year || '', make: car.make || '', model: car.model || '', mods: car.mods || [] })
+    setModDraft('')
+  }
+
+  function cancelEdit() { setEditing(null); setEditForm({}); setModDraft('') }
+
+  async function saveCar() {
+    setSaving(true)
+    const m = members.find(x => x.id === editing.memberId)
+    const cars = [...(m.cars || [])]
+    cars[editing.carIndex] = { ...cars[editing.carIndex], ...editForm }
+    await fetch(`/api/admin/members/${m.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cars }),
+    })
+    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars } : x))
+    setSaving(false)
+    cancelEdit()
+  }
+
+  function addMod() {
+    if (!modDraft.trim()) return
+    setEditForm(f => ({ ...f, mods: [...(f.mods || []), modDraft.trim()] }))
+    setModDraft('')
+  }
+
+  function removeMod(i) {
+    setEditForm(f => ({ ...f, mods: f.mods.filter((_, idx) => idx !== i) }))
+  }
+
+  async function assignCar(m, make) {
+    if (!make.trim()) return
+    setAssigning(p => ({ ...p, [m.id]: true }))
+    const existingCars = m.cars || []
+    let newCars
+    if (existingCars.length > 0) {
+      const hasNoMake = existingCars.some(c => !c.make)
+      if (hasNoMake) {
+        newCars = existingCars.map(c => !c.make ? { ...c, make: make.trim() } : c)
+      } else {
+        newCars = [...existingCars, { year: '', make: make.trim(), model: '', mods: [] }]
+      }
+    } else {
+      newCars = [{ year: '', make: make.trim(), model: '', mods: [] }]
+    }
+    await fetch(`/api/admin/members/${m.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cars: newCars }),
+    })
+    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars: newCars } : x))
+    setAssignInputs(p => ({ ...p, [m.id]: '' }))
+    setAssigning(p => ({ ...p, [m.id]: false }))
+  }
+
+  // Group members by car make
+  const brandGroups = {}
+  const unassigned = []
+
+  members.forEach(m => {
+    const cars = m.cars || []
+    if (m.car_make && cars.length === 0) {
+      const make = m.car_make
+      if (!brandGroups[make]) brandGroups[make] = []
+      brandGroups[make].push({ member: m, car: { year: m.car_year || '', make, model: m.car_model || '', mods: [] }, carIndex: -1 })
+      return
+    }
+    const carsWithMake = cars.filter(c => c.make)
+    if (carsWithMake.length === 0) {
+      unassigned.push(m)
+    } else {
+      carsWithMake.forEach((car, carIndex) => {
+        const make = car.make
+        if (!brandGroups[make]) brandGroups[make] = []
+        brandGroups[make].push({ member: m, car, carIndex })
+      })
+    }
+  })
+
+  const sortedBrands = Object.keys(brandGroups).sort((a, b) => a.localeCompare(b))
+  const totalBrands = sortedBrands.length
+
+  const isEditing = (m, carIndex) => editing?.memberId === m.id && editing?.carIndex === carIndex
+
+  return (
+    <div>
+      {loading ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+      ) : (
+        <>
+          <div style={{ fontSize: '11px', color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.75rem' }}>
+            {totalBrands} brand{totalBrands !== 1 ? 's' : ''} represented
+          </div>
+          {sortedBrands.map(brand => (
+            <div key={brand} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', marginBottom: '1rem' }}>
+              <div style={{ padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.02em' }}>{brand}</div>
+                <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{brandGroups[brand].length} car{brandGroups[brand].length !== 1 ? 's' : ''}</div>
+              </div>
+              {brandGroups[brand].map(({ member: m, car, carIndex }, i) => (
+                <div key={`${m.id}-${i}`}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr auto' : '1.5fr 1.5fr 1fr auto', padding: '0.75rem 1.25rem', borderBottom: isEditing(m, carIndex) ? 'none' : i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                      {isMobile && <div style={{ fontSize: '11px', color: '#888', marginTop: '1px' }}>{[car.year, car.model].filter(Boolean).join(' ') || '—'}{car.mods?.length > 0 && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}</div>}
+                      {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{m.email}</div>}
+                    </div>
+                    {!isMobile && <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>}
+                    {!isMobile && (
+                      <div style={{ fontSize: '12px', color: '#888' }}>
+                        {[car.year, car.model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                        {car.mods?.length > 0 && <span style={{ marginLeft: '0.4rem', fontSize: '10px', color: '#c5a882', letterSpacing: '0.06em' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}
+                      </div>
+                    )}
+                    {carIndex >= 0 && (
+                      <GhostBtn small onClick={() => isEditing(m, carIndex) ? cancelEdit() : startEdit(m, carIndex, car)}>
+                        {isEditing(m, carIndex) ? 'Cancel' : 'Edit'}
+                      </GhostBtn>
+                    )}
+                  </div>
+
+                  {isEditing(m, carIndex) && (
+                    <div style={{ padding: '1rem 1.25rem 1.25rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', background: 'rgba(197,168,130,0.03)', borderBottom: i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                      {/* Car fields */}
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 2fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                        {[['Year', 'year'], ['Make', 'make'], ['Model', 'model']].map(([label, field]) => (
+                          <div key={field}>
+                            <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.3rem' }}>{label}</div>
+                            <input style={{ ...inp, padding: '0.5rem 0.7rem', fontSize: '12px' }} value={editForm[field]} onChange={e => setEditForm(f => ({ ...f, [field]: e.target.value }))} />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Mods */}
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Mods &amp; Packages</div>
+                        {editForm.mods?.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                            {editForm.mods.map((mod, mi) => (
+                              <div key={mi} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px 2px 10px', fontSize: '11px', color: '#7B5B2E' }}>
+                                {mod}
+                                <button onClick={() => removeMod(mi)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 1px', color: '#bbb', fontSize: '13px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <input
+                            style={{ ...inp, padding: '0.45rem 0.7rem', fontSize: '12px', flex: 1 }}
+                            placeholder="e.g. Stage 2 tune, Carbon hood, Exhaust…"
+                            value={modDraft}
+                            onChange={e => setModDraft(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && addMod()}
+                          />
+                          <GhostBtn small onClick={addMod} disabled={!modDraft.trim()}>Add</GhostBtn>
+                        </div>
+                      </div>
+
+                      <GhostBtn small onClick={saveCar} disabled={saving}>{saving ? 'Saving…' : 'Save'}</GhostBtn>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {unassigned.length > 0 && (
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', marginBottom: '1rem' }}>
+              <div style={{ padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: '13px', fontWeight: '500', color: '#bbb', letterSpacing: '0.02em' }}>Unassigned</div>
+                <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{unassigned.length} member{unassigned.length !== 1 ? 's' : ''}</div>
+              </div>
+              {unassigned.map((m, i) => (
+                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1.5fr 1fr', padding: '0.75rem 1.25rem', borderBottom: i < unassigned.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
+                    {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{m.email}</div>}
+                  </div>
+                  {!isMobile && <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>}
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      style={{ ...inp, width: '120px', padding: '0.4rem 0.6rem', fontSize: '12px' }}
+                      placeholder="Brand"
+                      value={assignInputs[m.id] || ''}
+                      onChange={e => setAssignInputs(p => ({ ...p, [m.id]: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && assignCar(m, assignInputs[m.id] || '')}
+                    />
+                    <GhostBtn small onClick={() => assignCar(m, assignInputs[m.id] || '')} disabled={assigning[m.id]}>
+                      {assigning[m.id] ? '…' : 'Assign'}
+                    </GhostBtn>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {sortedBrands.length === 0 && unassigned.length === 0 && (
+            <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No members yet.</div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
