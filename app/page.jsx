@@ -128,7 +128,7 @@ export default function Home() {
 
   const GPCC = 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026'
   const gpccClosed = new Date() >= new Date('2026-05-23T14:00:00-04:00')
-  const laurentiansIsPast = Date.now() >= new Date('2026-06-08T04:00:00Z').getTime()
+  const laurentiansIsPast = Date.now() >= new Date('2026-06-07T12:00:00-04:00').getTime()
 
   function updateForm(field, value) {
     setForm(prev => {
