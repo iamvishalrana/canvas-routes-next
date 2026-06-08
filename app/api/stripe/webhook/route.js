@@ -73,6 +73,55 @@ export async function POST(request) {
         break
       }
 
+      case 'payment_intent.requires_capture': {
+        // Customer authorized the hold — admin approval needed before capture
+        const pi       = event.data.object
+        const { type, email, name } = pi.metadata
+        const amountHeld = pi.amount
+        const normalEmail = email?.toLowerCase().trim()
+
+        if (!normalEmail) break
+
+        const supabase = createAdminClient()
+        const { error } = await supabase
+          .from('applications')
+          .update({
+            stripe_payment_intent_id: pi.id,
+            stripe_payment_status:    'authorized',
+            stripe_amount_paid:       amountHeld,
+            stripe_payment_type:      type,
+          })
+          .eq('email', normalEmail)
+
+        if (error) {
+          // Row may not exist yet — upsert
+          await supabase.from('applications').upsert({
+            email:                    normalEmail,
+            name:                     name || '',
+            stripe_payment_intent_id: pi.id,
+            stripe_payment_status:    'authorized',
+            stripe_amount_paid:       amountHeld,
+            stripe_payment_type:      type,
+          }, { onConflict: 'email' })
+        }
+
+        console.log(`Payment authorized (held): ${type} — ${normalEmail} — $${(amountHeld / 100).toFixed(2)} CAD`)
+        break
+      }
+
+      case 'payment_intent.canceled': {
+        // Admin rejected the application — hold released
+        const pi    = event.data.object
+        const email = pi.metadata?.email?.toLowerCase().trim()
+        if (email) {
+          const supabase = createAdminClient()
+          await supabase.from('applications')
+            .update({ stripe_payment_status: 'rejected' })
+            .eq('stripe_payment_intent_id', pi.id)
+        }
+        break
+      }
+
       case 'payment_intent.payment_failed': {
         const pi       = event.data.object
         const email    = pi.metadata?.email?.toLowerCase().trim()

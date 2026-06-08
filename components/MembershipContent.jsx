@@ -195,7 +195,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       {error && <div style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
       <button type="submit" disabled={!stripe || paying}
         style={{ width: '100%', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
-        {paying ? 'Processing…' : `Pay $${displayPrice} CAD`}
+        {paying ? 'Processing…' : `Submit application — $${displayPrice} CAD`}
       </button>
       <button type="button" onClick={onBack}
         style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.35)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
@@ -664,8 +664,8 @@ export default function MembershipContent() {
             <FadeUp>
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                 <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Welcome to Canvas Routes.</div>
-                <p style={{ ...BODY, color: '#555' }}>Payment confirmed. Check your inbox — we&apos;ll be in touch with next steps.</p>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Application received.</div>
+                <p style={{ ...BODY, color: '#555' }}>Your card has been authorized and a hold placed — you won&apos;t be charged until we review and approve your application. Check your inbox for details.</p>
               </div>
             </FadeUp>
           ) : paymentStep && clientSecret ? (
