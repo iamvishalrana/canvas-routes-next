@@ -11,6 +11,24 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null
 
+const COUNTRY_CODES = [
+  { code: '+1',   name: 'Canada / US' },
+  { code: '+44',  name: 'UK' },
+  { code: '+33',  name: 'France' },
+  { code: '+49',  name: 'Germany' },
+  { code: '+39',  name: 'Italy' },
+  { code: '+34',  name: 'Spain' },
+  { code: '+351', name: 'Portugal' },
+  { code: '+41',  name: 'Switzerland' },
+  { code: '+31',  name: 'Netherlands' },
+  { code: '+61',  name: 'Australia' },
+  { code: '+64',  name: 'New Zealand' },
+  { code: '+52',  name: 'Mexico' },
+  { code: '+55',  name: 'Brazil' },
+  { code: '+91',  name: 'India' },
+  { code: '+971', name: 'UAE' },
+]
+
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Member referral','Google','Other']
 
@@ -52,7 +70,7 @@ const PERKS = [
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes road trip.', tier: 2 },
 ]
 
-function CheckoutForm({ formData, honeypot, tier, price, clientSecret, onSuccess, onBack }) {
+function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCode, onSuccess, onBack }) {
   const stripe = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
@@ -118,7 +136,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, onSuccess
     await fetch('/api/membership-waitlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...formData, termsAccepted: true, _hp: honeypot }),
+      body: JSON.stringify({ ...formData, phone: formData.phone ? `${countryCode} ${formData.phone}`.trim() : '', termsAccepted: true, _hp: honeypot }),
     }).catch(() => {})
 
     onSuccess()
@@ -226,6 +244,7 @@ export default function MembershipContent() {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [paymentStep, setPaymentStep]     = useState(false)
   const [clientSecret, setClientSecret]   = useState(null)
+  const [countryCode, setCountryCode]     = useState('+1')
   const honeypotRef                       = useRef(null)
 
   function set(field, val) {
@@ -238,15 +257,17 @@ export default function MembershipContent() {
     return v.replace(/\b\w/g, c => c.toUpperCase())
   }
 
-  function formatPhone(v) {
+  function formatPhone(v, code) {
+    if (code && code !== '+1') {
+      return v.replace(/[^\d\s\-\(\)]/g, '').slice(0, 20)
+    }
     let d = v.replace(/\D/g, '')
     if (d.startsWith('1') && d.length > 1) d = d.slice(1)
     d = d.slice(0, 10)
     if (!d) return ''
-    const p = '+1 '
-    if (d.length <= 3) return p + d
-    if (d.length <= 6) return `${p}(${d.slice(0,3)}) ${d.slice(3)}`
-    return `${p}(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+    if (d.length <= 3) return d
+    if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`
+    return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
   }
 
   function inp(field) {
@@ -261,7 +282,7 @@ export default function MembershipContent() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 11) e.phone = true
+    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6)) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true
     if (!form.year.trim()) e.year = true
@@ -675,6 +696,7 @@ export default function MembershipContent() {
                 tier={form.tier}
                 price={form.tier === 'Inner Circle' ? '249' : '99'}
                 clientSecret={clientSecret}
+                countryCode={countryCode}
                 onSuccess={() => setStatus('success')}
                 onBack={() => { setPaymentStep(false); setClientSecret(null) }}
               />
@@ -711,10 +733,20 @@ export default function MembershipContent() {
                   <div style={{ ...LABEL, color: errors.phone ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Phone size={10} /><span>Phone</span><span style={{ color: '#d06070' }}>*</span>
                   </div>
-                  <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
-                    onChange={e => set('phone', formatPhone(e.target.value))}
-                    onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
-                    style={inp('phone')} />
+                  <div style={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${errors.phone ? 'rgba(208,96,112,0.8)' : focusedField === 'phone' || focusedField === 'countryCode' ? 'rgba(197,168,130,0.9)' : form.phone ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.12)'}`, transition: 'border-color 0.2s' }}>
+                    <select value={countryCode} onChange={e => { setCountryCode(e.target.value); set('phone', '') }}
+                      onFocus={() => setFocusedField('countryCode')} onBlur={() => setFocusedField(null)}
+                      style={{ padding: '0.6rem 0.2rem 0.6rem 0', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', flexShrink: 0 }}>
+                      {COUNTRY_CODES.map(c => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+                    </select>
+                    <span style={{ color: 'rgba(0,0,0,0.18)', margin: '0 0.5rem', fontSize: '13px', userSelect: 'none' }}>|</span>
+                    <input type="tel" value={form.phone}
+                      placeholder={countryCode === '+1' ? '(514) 000-0000' : 'Phone number'}
+                      autoComplete="tel-national"
+                      onChange={e => set('phone', formatPhone(e.target.value, countryCode))}
+                      onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
+                      style={{ flex: 1, padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
                 </div>
               </div>
 
