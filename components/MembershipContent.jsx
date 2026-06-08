@@ -12,7 +12,7 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   : null
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
-const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
+const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Member referral','Google','Other']
 
 const LABEL = { fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }
 const BODY  = { fontSize: '14px', lineHeight: '1.85', fontFamily: 'var(--font-inter),sans-serif' }
@@ -52,11 +52,53 @@ const PERKS = [
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes road trip.', tier: 2 },
 ]
 
-function CheckoutForm({ formData, honeypot, tier, price, onSuccess, onBack }) {
+function CheckoutForm({ formData, honeypot, tier, price, clientSecret, onSuccess, onBack }) {
   const stripe = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState(null)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoApplied, setPromoApplied] = useState(null)
+  const [promoError, setPromoError] = useState(null)
+  const [applyingPromo, setApplyingPromo] = useState(false)
+
+  const paymentIntentId = clientSecret?.split('_secret_')[0]
+  const originalAmountCents = parseInt(price) * 100
+  const displayPrice = promoApplied
+    ? (promoApplied.discountedAmount / 100).toFixed(2)
+    : price
+
+  async function handleApplyPromo() {
+    if (!promoInput.trim()) return
+    setApplyingPromo(true); setPromoError(null)
+    try {
+      const res = await fetch('/api/stripe/apply-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoInput.trim(), paymentIntentId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setPromoError(data.error || 'Invalid promo code.'); return }
+      setPromoApplied({ code: promoInput.trim().toUpperCase(), ...data })
+      setPromoInput('')
+    } catch {
+      setPromoError('Could not apply code. Please try again.')
+    } finally {
+      setApplyingPromo(false)
+    }
+  }
+
+  async function handleRemovePromo() {
+    try {
+      await fetch('/api/stripe/apply-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remove: true, paymentIntentId, originalAmount: originalAmountCents }),
+      })
+    } catch { /* silent — amount resets on next PI creation anyway */ }
+    setPromoApplied(null)
+    setPromoError(null)
+  }
 
   async function handlePay(e) {
     e.preventDefault()
@@ -84,15 +126,60 @@ function CheckoutForm({ formData, honeypot, tier, price, onSuccess, onBack }) {
 
   return (
     <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+
+      {/* Tier + price header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
-        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#c5a882', fontWeight: '300' }}>${price} <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)' }}>CAD / season</span></div>
+        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#c5a882', fontWeight: '300', display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+          {promoApplied && (
+            <span style={{ fontSize: '1rem', color: 'rgba(197,168,130,0.35)', textDecoration: 'line-through' }}>${price}</span>
+          )}
+          ${displayPrice}
+          <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)' }}>CAD / season</span>
+        </div>
       </div>
+
+      {/* Promo code */}
+      {promoApplied ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.75rem', background: 'rgba(197,168,130,0.07)', borderLeft: '2px solid rgba(197,168,130,0.5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style={{ fontSize: '11px', letterSpacing: '0.1em', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>{promoApplied.code}</span>
+            <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {promoApplied.percentOff ? `— ${promoApplied.percentOff}% off` : `— $${(promoApplied.amountOff / 100).toFixed(2)} off`}
+            </span>
+          </div>
+          <button type="button" onClick={handleRemovePromo}
+            style={{ background: 'none', border: 'none', color: 'rgba(245,241,236,0.3)', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.25rem' }}>
+            Remove
+          </button>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.75rem' }}>
+            <input
+              type="text"
+              value={promoInput}
+              onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
+              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
+              placeholder="Promo code"
+              style={{ flex: 1, padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#F5F1EC', outline: 'none', background: 'transparent', border: 'none', borderBottom: `1px solid ${promoError ? 'rgba(208,96,112,0.8)' : 'rgba(197,168,130,0.2)'}`, WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0 }}
+            />
+            <button type="button" onClick={handleApplyPromo}
+              disabled={applyingPromo || !promoInput.trim()}
+              style={{ padding: '0.4rem 1rem', background: 'transparent', border: '0.5px solid rgba(197,168,130,0.4)', color: 'rgba(197,168,130,0.8)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo || !promoInput.trim() ? 0.4 : 1, flexShrink: 0 }}>
+              {applyingPromo ? '…' : 'Apply'}
+            </button>
+          </div>
+          {promoError && <div style={{ fontSize: '11px', color: '#d06070', marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>{promoError}</div>}
+        </div>
+      )}
+
       <PaymentElement options={{ layout: 'tabs' }} />
       {error && <div style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
       <button type="submit" disabled={!stripe || paying}
         style={{ width: '100%', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
-        {paying ? 'Processing…' : `Pay $${price} CAD`}
+        {paying ? 'Processing…' : `Pay $${displayPrice} CAD`}
       </button>
       <button type="button" onClick={onBack}
         style={{ background: 'none', border: 'none', color: 'rgba(245,241,236,0.4)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
@@ -122,7 +209,7 @@ function CheckIcon({ gold }) {
   )
 }
 
-const INIT_FORM = { name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', tier:'', source:'', more:'' }
+const INIT_FORM = { name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', tier:'', source:'', referredBy:'', more:'' }
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default function MembershipContent() {
@@ -586,6 +673,7 @@ export default function MembershipContent() {
                 honeypot={honeypotRef.current?.value || ''}
                 tier={form.tier}
                 price={form.tier === 'Inner Circle' ? '249' : '99'}
+                clientSecret={clientSecret}
                 onSuccess={() => setStatus('success')}
                 onBack={() => { setPaymentStep(false); setClientSecret(null) }}
               />
@@ -763,6 +851,18 @@ export default function MembershipContent() {
                   <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </div>
+
+              {form.source === 'Member referral' && (
+                <div style={{ marginBottom: '1.75rem' }}>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <User size={10} /><span>Referred by</span><span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>member name</span>
+                  </div>
+                  <input type="text" value={form.referredBy} placeholder="Member's name"
+                    onChange={e => set('referredBy', capitaliseName(e.target.value))}
+                    onFocus={() => setFocusedField('referredBy')} onBlur={() => setFocusedField(null)}
+                    style={inp('referredBy')} />
+                </div>
+              )}
 
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{ ...LABEL, color: 'rgba(197,168,130,0.55)', marginBottom: '0.5rem' }}>
