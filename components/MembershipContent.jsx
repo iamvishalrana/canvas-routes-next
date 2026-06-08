@@ -602,7 +602,7 @@ export default function MembershipContent() {
                 {/* Name */}
                 <div id="mem-field-name">
                   <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}><User size={11} style={{ marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />Full name <span style={{ color: '#d06070' }}>*</span></div>
-                  <input type="text" value={form.name} placeholder="First and last name" autoComplete="name"
+                  <input type="text" value={form.name} placeholder="First and Last name" autoComplete="name"
                     onChange={e => set('name', capitaliseName(e.target.value))}
                     onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
                     style={inp('name')} />
