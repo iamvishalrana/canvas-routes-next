@@ -1,0 +1,262 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { inp, L, PrimaryBtn, DangerBtn, Err, Success } from '../_components/shared'
+
+const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
+const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.5rem' }
+const TH = { padding: '0.65rem 1rem', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', fontWeight: '400', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf8', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }
+const TD = { padding: '0.75rem 1rem', fontSize: '13px', color: '#1a1a1a', borderBottom: '0.5px solid rgba(0,0,0,0.05)', fontFamily: 'var(--font-inter),sans-serif', verticalAlign: 'middle' }
+
+function fmtDiscount(coupon) {
+  if (!coupon) return '—'
+  if (coupon.percent_off) return `${coupon.percent_off}% off`
+  if (coupon.amount_off) return `$${(coupon.amount_off / 100).toFixed(2)} off`
+  return '—'
+}
+
+function fmtDate(ts) {
+  if (!ts) return 'Never'
+  return new Date(ts * 1000).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function fmtCreated(ts) {
+  if (!ts) return '—'
+  return new Date(ts * 1000).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function StatusChip({ active }) {
+  return active
+    ? <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.1)', color: '#3B6B2F', whiteSpace: 'nowrap' }}>Active</span>
+    : <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(0,0,0,0.12)', background: 'rgba(0,0,0,0.04)', color: '#999', whiteSpace: 'nowrap' }}>Inactive</span>
+}
+
+const EMPTY_FORM = { code: '', discountType: 'percent', discountValue: '', maxRedemptions: '', expiresAt: '' }
+
+export default function PromoCodesClient() {
+  const [codes, setCodes]         = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [showForm, setShowForm]   = useState(false)
+  const [form, setForm]           = useState(EMPTY_FORM)
+  const [submitting, setSubmitting] = useState(false)
+  const [formErr, setFormErr]     = useState(null)
+  const [formOk, setFormOk]       = useState(null)
+  const [deactivating, setDeactivating] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/admin/promo-codes')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setCodes(Array.isArray(data) ? data : []))
+      .catch(() => setCodes([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const activeCodes    = codes.filter(c => c.active).length
+  const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)
+
+  function setField(key, val) {
+    setForm(f => ({ ...f, [key]: val }))
+  }
+
+  async function handleCreate(e) {
+    e.preventDefault()
+    setFormErr(null)
+    setFormOk(null)
+
+    const val = parseFloat(form.discountValue)
+    if (!form.code.trim()) return setFormErr('Code is required.')
+    if (!form.discountValue || isNaN(val) || val <= 0) return setFormErr('Enter a valid discount value.')
+    if (form.discountType === 'percent' && val > 100) return setFormErr('Percent off cannot exceed 100.')
+
+    setSubmitting(true)
+    try {
+      const body = {
+        code: form.code,
+        ...(form.discountType === 'percent' ? { percentOff: val } : { amountOff: val }),
+        ...(form.maxRedemptions ? { maxRedemptions: parseInt(form.maxRedemptions, 10) } : {}),
+        ...(form.expiresAt ? { expiresAt: form.expiresAt } : {}),
+      }
+      const res = await fetch('/api/admin/promo-codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) return setFormErr(data.error || 'Failed to create code.')
+      setCodes(prev => [{ ...data, coupon: data.coupon }, ...prev])
+      setForm(EMPTY_FORM)
+      setShowForm(false)
+      setFormOk(`Code "${data.code}" created.`)
+    } catch {
+      setFormErr('Network error. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDeactivate(id, code) {
+    if (!confirm(`Deactivate promo code "${code}"?`)) return
+    setDeactivating(id)
+    try {
+      const res = await fetch(`/api/admin/promo-codes/${id}`, { method: 'PATCH' })
+      if (res.ok) {
+        setCodes(prev => prev.map(c => c.id === id ? { ...c, active: false } : c))
+      }
+    } catch {}
+    setDeactivating(null)
+  }
+
+  return (
+    <div style={SECTION}>
+      {/* Header */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem', fontFamily: 'var(--font-inter),sans-serif' }}>Admin</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>Promo Codes</h1>
+          <button
+            type="button"
+            onClick={() => { setShowForm(f => !f); setFormErr(null); setFormOk(null) }}
+            style={{ padding: '0.55rem 1.2rem', background: showForm ? 'rgba(0,0,0,0.05)' : '#0F1E14', color: showForm ? '#555' : '#F5F1EC', border: showForm ? '0.5px solid rgba(0,0,0,0.15)' : 'none', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+          >
+            {showForm ? 'Cancel' : '+ New Code'}
+          </button>
+        </div>
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <div style={{ ...CARD, marginBottom: '2rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>Create Promo Code</div>
+          <form onSubmit={handleCreate}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+              <div>
+                <L>Code</L>
+                <input
+                  style={inp}
+                  value={form.code}
+                  onChange={e => setField('code', e.target.value.toUpperCase())}
+                  placeholder="SUMMER25"
+                  maxLength={30}
+                />
+              </div>
+              <div>
+                <L>Discount Type</L>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', paddingRight: '2rem' }}
+                    value={form.discountType}
+                    onChange={e => setField('discountType', e.target.value)}
+                  >
+                    <option value="percent">% Off</option>
+                    <option value="amount">$ Off (CAD)</option>
+                  </select>
+                  <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+              <div>
+                <L>Discount Value</L>
+                <input
+                  style={inp}
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={form.discountValue}
+                  onChange={e => setField('discountValue', e.target.value)}
+                  placeholder={form.discountType === 'percent' ? '25' : '20.00'}
+                />
+              </div>
+              <div>
+                <L>Max Redemptions (optional)</L>
+                <input
+                  style={inp}
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={form.maxRedemptions}
+                  onChange={e => setField('maxRedemptions', e.target.value)}
+                  placeholder="Unlimited"
+                />
+              </div>
+              <div>
+                <L>Expires At (optional)</L>
+                <input
+                  style={inp}
+                  type="date"
+                  value={form.expiresAt}
+                  onChange={e => setField('expiresAt', e.target.value)}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <PrimaryBtn type="submit" disabled={submitting}>
+                {submitting ? 'Creating…' : 'Create Code'}
+              </PrimaryBtn>
+            </div>
+            <Err msg={formErr} />
+          </form>
+        </div>
+      )}
+
+      {formOk && !showForm && (
+        <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{formOk}</div>
+      )}
+
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        {[
+          { label: 'Active Codes',      value: activeCodes,   color: '#3B6B2F' },
+          { label: 'Total Redemptions', value: totalRedeemed, color: '#1a1a1a' },
+          { label: 'Total Codes',       value: codes.length,  color: '#1a1a1a' },
+        ].map(s => (
+          <div key={s.label} style={CARD}>
+            <div style={{ fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{s.value}</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto' }}>
+        {loading ? (
+          <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>Loading…</div>
+        ) : codes.length === 0 ? (
+          <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>No promo codes yet.</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={TH}>Code</th>
+                <th style={TH}>Discount</th>
+                <th style={TH}>Redeemed</th>
+                <th style={TH}>Expires</th>
+                <th style={TH}>Created</th>
+                <th style={TH}>Status</th>
+                <th style={TH}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {codes.map((c, i) => (
+                <tr key={c.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                  <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}>{c.code}</td>
+                  <td style={TD}>{fmtDiscount(c.coupon)}</td>
+                  <td style={{ ...TD, color: '#555' }}>
+                    {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}
+                  </td>
+                  <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
+                  <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
+                  <td style={TD}><StatusChip active={c.active} /></td>
+                  <td style={TD}>
+                    {c.active && (
+                      <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
+                        {deactivating === c.id ? 'Deactivating…' : 'Deactivate'}
+                      </DangerBtn>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
