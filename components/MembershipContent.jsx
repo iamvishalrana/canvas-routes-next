@@ -177,11 +177,12 @@ export default function MembershipContent() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 11)) e.phone = true
+    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < 11) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true
     if (!form.year.trim()) e.year = true
     if (!form.carMake) e.carMake = true
+    if (!form.carModel?.trim()) e.carModel = true
     if (!form.tier) e.tier = true
     if (!form.source) e.source = true
     if (!termsAccepted) e.termsAccepted = true
@@ -194,7 +195,7 @@ export default function MembershipContent() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length) {
-      const order = ['name','email','phone','dob_month','dob_day','year','carMake','tier','source','termsAccepted']
+      const order = ['name','email','phone','dob_month','dob_day','year','carMake','carModel','tier','source','termsAccepted']
       const first = order.find(f => errs[f])
       if (first) {
         // dob_day lives inside the dob_month container — scroll to that
@@ -599,7 +600,7 @@ export default function MembershipContent() {
 
                 {/* Name */}
                 <div id="mem-field-name">
-                  <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Full name</div>
+                  <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Full name <span style={{ color: '#d06070' }}>*</span></div>
                   <input type="text" value={form.name} placeholder="First and last name" autoComplete="name"
                     onChange={e => set('name', capitaliseName(e.target.value))}
                     onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
@@ -608,7 +609,7 @@ export default function MembershipContent() {
 
                 {/* Email */}
                 <div id="mem-field-email">
-                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Email</div>
+                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Email <span style={{ color: '#d06070' }}>*</span></div>
                   <input type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
                     onChange={e => set('email', e.target.value)}
                     onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
@@ -617,22 +618,17 @@ export default function MembershipContent() {
 
                 {/* Phone */}
                 <div id="mem-field-phone">
-                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone</div>
+                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Phone <span style={{ color: '#d06070' }}>*</span></div>
                   <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
-                    disabled={phoneOptOut}
                     onChange={e => set('phone', formatPhone(e.target.value))}
                     onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
-                    style={{ ...inp('phone'), opacity: phoneOptOut ? 0.35 : 1 }} />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={phoneOptOut} onChange={e => { setPhoneOptOut(e.target.checked); if (e.target.checked) { set('phone', ''); setErrors(er => ({ ...er, phone: false })) } }} style={{ accentColor: '#c5a882', width: '12px', height: '12px', flexShrink: 0 }} />
-                    <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter),sans-serif' }}>I don't have a phone number</span>
-                  </label>
+                    style={inp('phone')} />
                 </div>
 
                 {/* Date of birth */}
                 <div id="mem-field-dob_month" style={{ marginTop: '1rem' }}>
                   <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>
-                    Date of birth <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>year optional</span>
+                    Date of birth <span style={{ color: '#d06070' }}>*</span> <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>year optional</span>
                   </div>
                   <div className="mem-dob-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '1px' }}>
                     <div style={{ position: 'relative' }}>
@@ -669,7 +665,7 @@ export default function MembershipContent() {
                 {/* Year + Make */}
                 <div className="mem-car-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1px', marginTop: '1rem' }}>
                   <div id="mem-field-year">
-                    <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year</div>
+                    <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Year <span style={{ color: '#d06070' }}>*</span></div>
                     <div style={{ position: 'relative' }}>
                       <select value={form.year} onChange={e => set('year', e.target.value)}
                         onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
@@ -683,7 +679,7 @@ export default function MembershipContent() {
                     </div>
                   </div>
                   <div id="mem-field-carMake">
-                    <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Make</div>
+                    <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem' }}>Make <span style={{ color: '#d06070' }}>*</span></div>
                     <div style={{ position: 'relative' }}>
                       <select value={form.carMake} onChange={e => set('carMake', e.target.value)}
                         onFocus={() => setFocusedField('carMake')} onBlur={() => setFocusedField(null)}
@@ -697,34 +693,41 @@ export default function MembershipContent() {
                 </div>
 
                 {/* Model */}
-                <div>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Model <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>optional</span></div>
+                <div id="mem-field-carModel">
+                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>Model <span style={{ color: '#d06070' }}>*</span></div>
                   <input type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
                     onChange={e => set('carModel', e.target.value)}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)}
-                    style={inp('carModel')} />
+                    style={inp('carModel')} id="mem-field-carModel-input" />
                 </div>
 
                 {/* Tier */}
                 <div id="mem-field-tier" style={{ marginTop: '1rem' }}>
-                  <div style={{ ...LABEL, color: errors.tier ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.75rem' }}>Membership tier</div>
+                  <div style={{ ...LABEL, color: errors.tier ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.75rem' }}>Membership tier <span style={{ color: '#d06070' }}>*</span></div>
                   <div className="mem-tier-btns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: errors.tier ? 'rgba(208,96,112,0.3)' : 'rgba(197,168,130,0.1)' }}>
-                    {[['Routes Member', '$99'], ['Inner Circle', '$249']].map(([t, price]) => (
-                      <button key={t} type="button" onClick={() => set('tier', t)}
-                        style={{ padding: '1.1rem 1rem', background: form.tier === t ? '#c5a882' : 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative' }}>
-                        <div style={{ ...SMALL, color: form.tier === t ? '#0F1E14' : 'rgba(245,241,236,0.5)', marginBottom: '0.2rem', fontWeight: form.tier === t ? '600' : '400' }}>{t}</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', color: form.tier === t ? '#0F1E14' : 'rgba(245,241,236,0.4)' }}>{price} <span style={{ fontSize: '11px', color: form.tier === t ? 'rgba(15,30,20,0.6)' : 'rgba(245,241,236,0.3)', fontWeight: '400' }}>CAD / season</span></div>
-                        {form.tier === t && (
-                          <svg style={{ position: 'absolute', top: '0.6rem', right: '0.75rem' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F1E14" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        )}
-                      </button>
-                    ))}
+                    {/* Routes Member */}
+                    <button type="button" onClick={() => set('tier', 'Routes Member')}
+                      style={{ padding: '1.25rem 1rem', background: form.tier === 'Routes Member' ? '#c5a882' : 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative' }}>
+                      <div style={{ ...SMALL, color: form.tier === 'Routes Member' ? '#0F1E14' : 'rgba(245,241,236,0.5)', marginBottom: '0.3rem', fontWeight: form.tier === 'Routes Member' ? '600' : '400' }}>Routes Member</div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', color: form.tier === 'Routes Member' ? '#0F1E14' : 'rgba(245,241,236,0.5)' }}>$99 <span style={{ fontSize: '10px', fontWeight: '400', color: form.tier === 'Routes Member' ? 'rgba(15,30,20,0.55)' : 'rgba(245,241,236,0.3)' }}>CAD / season</span></div>
+                      {form.tier === 'Routes Member' && <svg style={{ position: 'absolute', top: '0.6rem', right: '0.75rem' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F1E14" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </button>
+                    {/* Inner Circle — premium treatment */}
+                    <button type="button" onClick={() => set('tier', 'Inner Circle')}
+                      style={{ padding: '1.25rem 1rem', background: form.tier === 'Inner Circle' ? '#0F1E14' : 'rgba(197,168,130,0.06)', border: form.tier === 'Inner Circle' ? '1px solid #c5a882' : '1px solid rgba(197,168,130,0.2)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                        <span style={{ ...SMALL, color: form.tier === 'Inner Circle' ? '#c5a882' : 'rgba(197,168,130,0.6)', fontWeight: '600' }}>Inner Circle</span>
+                        <span style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: form.tier === 'Inner Circle' ? '#0F1E14' : '#0F1E14', background: form.tier === 'Inner Circle' ? '#c5a882' : 'rgba(197,168,130,0.3)', padding: '1px 5px', fontFamily: 'var(--font-inter),sans-serif' }}>Premium</span>
+                      </div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', color: form.tier === 'Inner Circle' ? '#c5a882' : 'rgba(197,168,130,0.5)' }}>$249 <span style={{ fontSize: '10px', fontWeight: '400', color: form.tier === 'Inner Circle' ? 'rgba(197,168,130,0.55)' : 'rgba(197,168,130,0.3)' }}>CAD / season</span></div>
+                      {form.tier === 'Inner Circle' && <svg style={{ position: 'absolute', top: '0.6rem', right: '0.75rem' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </button>
                   </div>
                 </div>
 
                 {/* Source */}
                 <div id="mem-field-source">
-                  <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>How did you hear about us</div>
+                  <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.7)', marginBottom: '0.4rem', marginTop: '1rem' }}>How did you hear about us <span style={{ color: '#d06070' }}>*</span></div>
                   <div style={{ position: 'relative' }}>
                     <select value={form.source} onChange={e => set('source', e.target.value)}
                       onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
