@@ -112,6 +112,10 @@ export default function CarsClient() {
 
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
+        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Cars</h1>
+      </div>
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (

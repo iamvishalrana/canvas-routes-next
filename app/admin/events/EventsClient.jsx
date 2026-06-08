@@ -103,7 +103,11 @@ export default function EventsClient({ isMobile }) {
   }
 
   return (
-    <div>
+    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
+        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Events</h1>
+      </div>
       <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>New Event</div>
         <form onSubmit={post}>

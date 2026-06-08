@@ -105,6 +105,10 @@ export default function ActivityLogClient({ logs }) {
 
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
+        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Activity Log</h1>
+      </div>
       {/* Note banner */}
       <div style={{ marginBottom: '1.5rem', padding: '0.85rem 1.1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>

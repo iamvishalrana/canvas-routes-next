@@ -421,7 +421,11 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   )
 
   return (
-    <div>
+    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
+        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Members</h1>
+      </div>
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
         {[
