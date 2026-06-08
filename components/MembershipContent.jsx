@@ -194,7 +194,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       <PaymentElement options={{ layout: 'tabs' }} />
       {error && <div style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
       <button type="submit" disabled={!stripe || paying}
-        style={{ width: '100%', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
+        style={{ width: '100%', padding: '1rem', background: '#3B6B2F', border: 'none', color: '#fff', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
         {paying ? 'Processing…' : `Submit application — $${displayPrice} CAD`}
       </button>
       <button type="button" onClick={onBack}
