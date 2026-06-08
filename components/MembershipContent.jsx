@@ -146,7 +146,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       {/* Tier + price header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
-        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#1a1a1a', fontWeight: '300', display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', fontWeight: '300', display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
           {promoApplied && (
             <span style={{ fontSize: '1rem', color: 'rgba(0,0,0,0.25)', textDecoration: 'line-through' }}>${price}</span>
           )}
@@ -157,16 +157,16 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 
       {/* Promo code */}
       {promoApplied ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.75rem', background: 'rgba(197,168,130,0.07)', borderLeft: '2px solid rgba(197,168,130,0.5)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.75rem', background: 'rgba(59,107,47,0.07)', borderLeft: '2px solid rgba(59,107,47,0.5)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span style={{ fontSize: '11px', letterSpacing: '0.1em', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>{promoApplied.code}</span>
-            <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style={{ fontSize: '11px', letterSpacing: '0.1em', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>{promoApplied.code}</span>
+            <span style={{ fontSize: '11px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>
               {promoApplied.percentOff ? `— ${promoApplied.percentOff}% off` : `— $${(promoApplied.amountOff / 100).toFixed(2)} off`}
             </span>
           </div>
           <button type="button" onClick={handleRemovePromo}
-            style={{ background: 'none', border: 'none', color: 'rgba(245,241,236,0.3)', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.25rem' }}>
+            style={{ background: 'none', border: 'none', color: '#999', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.25rem' }}>
             Remove
           </button>
         </div>
@@ -179,11 +179,11 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
               onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
               placeholder="Promo code"
-              style={{ flex: 1, padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: 'transparent', border: 'none', borderBottom: `1px solid ${promoError ? 'rgba(208,96,112,0.8)' : 'rgba(0,0,0,0.12)'}`, WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0 }}
+              style={{ flex: 1, padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: 'transparent', border: 'none', borderBottom: `1px solid ${promoError ? 'rgba(208,96,112,0.8)' : promoInput ? 'rgba(59,107,47,0.5)' : 'rgba(0,0,0,0.12)'}`, WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0 }}
             />
             <button type="button" onClick={handleApplyPromo}
               disabled={applyingPromo || !promoInput.trim()}
-              style={{ padding: '0.4rem 1rem', background: 'transparent', border: '0.5px solid rgba(197,168,130,0.4)', color: 'rgba(197,168,130,0.8)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo || !promoInput.trim() ? 0.4 : 1, flexShrink: 0 }}>
+              style={{ padding: '0.4rem 1rem', background: promoInput.trim() ? 'rgba(59,107,47,0.08)' : 'transparent', border: `0.5px solid ${promoInput.trim() ? 'rgba(59,107,47,0.5)' : 'rgba(0,0,0,0.15)'}`, color: promoInput.trim() ? '#3B6B2F' : '#aaa', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo ? 0.5 : 1, flexShrink: 0, fontWeight: promoInput.trim() ? '500' : '400', transition: 'all 0.15s' }}>
               {applyingPromo ? '…' : 'Apply'}
             </button>
           </div>
