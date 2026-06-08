@@ -116,7 +116,7 @@ export default function AdminShell({ children }) {
       }}>
         <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <Link href="/" onClick={() => setIsOpen(false)} style={{ display: 'block' }}>
-            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ width: '100px', height: 'auto', opacity: 0.9 }} />
+            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '100px', height: 'auto', opacity: 0.9 }} />
           </Link>
           <button
             onClick={() => setIsOpen(false)}
@@ -135,7 +135,7 @@ export default function AdminShell({ children }) {
       }}>
         <div style={{ padding: '1.5rem 1.25rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
           <Link href="/" style={{ display: 'block' }}>
-            <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ width: '120px', height: 'auto', opacity: 0.9 }} />
+            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '120px', height: 'auto', opacity: 0.9 }} />
           </Link>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginTop: '0.5rem' }}>
             Admin
