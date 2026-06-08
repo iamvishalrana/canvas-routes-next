@@ -49,7 +49,20 @@ export async function DELETE(request, { params }) {
   if (!id) return Response.json({ error: 'id required' }, { status: 400 })
 
   const supabase = createAdminClient()
-  const { error } = await supabase.from('contacts').delete().eq('id', id)
-  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+
+  // Fetch application_id before deleting
+  const { data: contact } = await supabase.from('contacts').select('application_id').eq('id', id).maybeSingle()
+  if (!contact) return Response.json({ error: 'Contact not found' }, { status: 404 })
+
+  if (contact.application_id) {
+    // Delete application row — cascades to contacts via FK
+    const { error } = await supabase.from('applications').delete().eq('id', contact.application_id)
+    if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  } else {
+    // No linked application — delete contact directly
+    const { error } = await supabase.from('contacts').delete().eq('id', id)
+    if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  }
+
   return Response.json({ success: true })
 }
