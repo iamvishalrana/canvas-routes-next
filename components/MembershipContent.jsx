@@ -3,6 +3,10 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import SiteFooter from './SiteFooter'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 
 // ── Typography tokens ────────────────────────────────────────────────────────
 // LABEL:   Inter 9px / uppercase / 0.28em              → color varies
@@ -55,6 +59,57 @@ const PERKS = [
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes road trip.', tier: 2 },
 ]
 
+function CheckoutForm({ formData, honeypot, tier, price, onSuccess, onBack }) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [paying, setPaying] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handlePay(e) {
+    e.preventDefault()
+    if (!stripe || !elements) return
+    setPaying(true); setError(null)
+
+    const { error: submitError } = await elements.submit()
+    if (submitError) { setError(submitError.message); setPaying(false); return }
+
+    const { error: confirmError } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {},
+      redirect: 'if_required',
+    })
+    if (confirmError) { setError(confirmError.message); setPaying(false); return }
+
+    // Payment succeeded — save the application
+    await fetch('/api/membership-waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...formData, termsAccepted: true, _hp: honeypot }),
+    }).catch(() => {})
+
+    onSuccess()
+  }
+
+  return (
+    <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+        <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
+        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#c5a882', fontWeight: '300' }}>${price} <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)' }}>CAD / season</span></div>
+      </div>
+      <PaymentElement options={{ layout: 'tabs' }} />
+      {error && <div style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
+      <button type="submit" disabled={!stripe || paying}
+        style={{ width: '100%', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
+        {paying ? 'Processing…' : `Pay $${price} CAD`}
+      </button>
+      <button type="button" onClick={onBack}
+        style={{ background: 'none', border: 'none', color: 'rgba(245,241,236,0.4)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
+        ← Back
+      </button>
+    </form>
+  )
+}
+
 function CheckIcon({ gold }) {
   return (
     <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
@@ -82,6 +137,8 @@ export default function MembershipContent() {
   const [submitError, setSubmitError]   = useState(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [phoneOptOut, setPhoneOptOut]   = useState(false)
+  const [paymentStep, setPaymentStep]   = useState(false)
+  const [clientSecret, setClientSecret] = useState(null)
   const honeypotRef                     = useRef(null)
 
   function set(field, val) {
@@ -146,32 +203,19 @@ export default function MembershipContent() {
       return
     }
     setStatus('loading'); setSubmitError(null)
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 30000)
     try {
-      const res = await fetch('/api/membership-waitlist', {
+      const type = form.tier === 'Inner Circle' ? 'membership_inner_circle' : 'membership_routes'
+      const res = await fetch('/api/stripe/create-payment-intent', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, termsAccepted, _hp: honeypotRef.current?.value || '' }),
-        signal: controller.signal,
+        body: JSON.stringify({ type, email: form.email.trim(), name: form.name.trim() }),
       })
-      clearTimeout(timeout)
       const data = await res.json().catch(() => ({}))
-      if (res.ok) {
-        setStatus('success')
-        setForm(INIT_FORM)
-        setErrors({})
-        setTermsAccepted(false)
-        setPhoneOptOut(false)
-        if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'Lead')
-      }
-      else { setSubmitError(data.error || 'Something went wrong. Please try again.'); setStatus('error') }
+      if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')
+      setClientSecret(data.clientSecret)
+      setPaymentStep(true)
+      setStatus(null)
     } catch (err) {
-      clearTimeout(timeout)
-      if (err?.name === 'AbortError') {
-        setSubmitError('Request timed out. Please check your connection and try again.')
-      } else {
-        setSubmitError('Something went wrong. Please try again.')
-      }
+      setSubmitError(err.message || 'Something went wrong. Please try again.')
       setStatus('error')
     }
   }
@@ -511,10 +555,39 @@ export default function MembershipContent() {
             <FadeUp>
               <div style={{ padding: '2rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)', textAlign: 'center' }}>
                 <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem' }}>You&apos;re on the list.</div>
-                <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>We&apos;ll be in touch shortly. Check your inbox for a confirmation.</p>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem' }}>Welcome to Canvas Routes.</div>
+                <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>Payment confirmed. Check your inbox — we&apos;ll be in touch with next steps.</p>
               </div>
             </FadeUp>
+          ) : paymentStep && clientSecret ? (
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret,
+                appearance: {
+                  theme: 'night',
+                  variables: {
+                    colorPrimary: '#c5a882',
+                    colorBackground: 'rgba(255,255,255,0.04)',
+                    colorText: '#F5F1EC',
+                    colorTextSecondary: 'rgba(245,241,236,0.55)',
+                    colorDanger: '#d06070',
+                    fontFamily: 'var(--font-inter),sans-serif',
+                    borderRadius: '0px',
+                    spacingUnit: '4px',
+                  },
+                },
+              }}
+            >
+              <CheckoutForm
+                formData={{ ...form, termsAccepted }}
+                honeypot={honeypotRef.current?.value || ''}
+                tier={form.tier}
+                price={form.tier === 'Inner Circle' ? '249' : '99'}
+                onSuccess={() => setStatus('success')}
+                onBack={() => { setPaymentStep(false); setClientSecret(null) }}
+              />
+            </Elements>
           ) : (
             <form onSubmit={handleSubmit} noValidate>
               <input ref={honeypotRef} type="text" name="_hp" tabIndex={-1} autoComplete="off"
@@ -685,7 +758,7 @@ export default function MembershipContent() {
 
               <button type="submit" disabled={status === 'loading'}
                 style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', ...LABEL, letterSpacing: '0.2em', fontWeight: '600', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
-                {status === 'loading' ? 'Submitting…' : 'Register interest'}
+                {status === 'loading' ? 'Processing…' : `Continue to Payment${form.tier ? ` — $${form.tier === 'Inner Circle' ? '249' : '99'}` : ''}`}
               </button>
             </form>
           )}
