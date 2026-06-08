@@ -102,6 +102,15 @@ function CheckoutForm({ formData, honeypot, tier, price, onSuccess, onBack }) {
   )
 }
 
+function SectionLabel({ children }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:'1rem', margin:'2.5rem 0 1.75rem' }}>
+      <div style={{ fontSize:'8px', letterSpacing:'0.26em', textTransform:'uppercase', color:'rgba(197,168,130,0.45)', fontFamily:'var(--font-inter),sans-serif', whiteSpace:'nowrap' }}>{children}</div>
+      <div style={{ flex:1, height:'0.5px', background:'rgba(197,168,130,0.12)' }} />
+    </div>
+  )
+}
+
 function CheckIcon({ gold }) {
   return (
     <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
@@ -161,15 +170,6 @@ export default function MembershipContent() {
     return base
   }
 
-  function SectionLabel({ children }) {
-    return (
-      <div style={{ display:'flex', alignItems:'center', gap:'1rem', margin:'2.5rem 0 1.75rem' }}>
-        <div style={{ fontSize:'8px', letterSpacing:'0.26em', textTransform:'uppercase', color:'rgba(197,168,130,0.45)', fontFamily:'var(--font-inter),sans-serif', whiteSpace:'nowrap' }}>{children}</div>
-        <div style={{ flex:1, height:'0.5px', background:'rgba(197,168,130,0.12)' }} />
-      </div>
-    )
-  }
-
   function validate() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
@@ -179,7 +179,7 @@ export default function MembershipContent() {
     if (!form.dob_day) e.dob_day = true
     if (!form.year.trim()) e.year = true
     if (!form.carMake) e.carMake = true
-    if (!form.carModel?.trim()) e.carModel = true
+    if (!form.carModel.trim()) e.carModel = true
     if (!form.tier) e.tier = true
     if (!form.source) e.source = true
     if (!termsAccepted) e.termsAccepted = true
@@ -245,6 +245,7 @@ export default function MembershipContent() {
         @media(max-width:768px){
           input, select, textarea { font-size: 16px !important; }
         }
+        input::placeholder, textarea::placeholder { color: rgba(245,241,236,0.35); }
       `}</style>
 
       {/* NAV */}
