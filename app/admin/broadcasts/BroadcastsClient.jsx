@@ -1,6 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { inp, sel, L, PrimaryBtn, GhostBtn, Err } from '../_components/shared'
+
+const AUDIENCE_LABELS = {
+  all_members: 'All Members', active_members: 'Active Members Only',
+  inner_circle: 'Inner Circle', all_contacts: 'All Contacts',
+  everyone: 'Everyone', specific_emails: 'Specific Emails',
+}
 
 const AUDIENCE_OPTIONS = [
   { value: 'all_members',     label: 'All Members'         },
@@ -29,6 +35,7 @@ function parseEmails(raw) {
 }
 
 export default function BroadcastsClient() {
+  const [tab, setTab]                   = useState('compose') // 'compose' | 'history'
   const [audience, setAudience]         = useState('all_members')
   const [specificEmails, setSpecificEmails] = useState('')
   const [subject, setSubject]           = useState('')
@@ -38,6 +45,19 @@ export default function BroadcastsClient() {
   const [sending, setSending]           = useState(false)
   const [error, setError]               = useState(null)
   const [result, setResult]             = useState(null)
+  const [history, setHistory]           = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch('/api/admin/broadcasts')
+      if (res.ok) setHistory(await res.json())
+    } catch {}
+    setHistoryLoading(false)
+  }, [])
+
+  useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
 
   const parsedEmails = audience === 'specific_emails' ? parseEmails(specificEmails) : []
   const audienceLabel = audience === 'specific_emails'
@@ -77,6 +97,7 @@ export default function BroadcastsClient() {
       setBody('')
       setSpecificEmails('')
       setShowPreview(false)
+      loadHistory() // refresh history in background
     } catch {
       setError('Network error. Please try again.')
     } finally {
@@ -93,6 +114,65 @@ export default function BroadcastsClient() {
         <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Broadcasts</h1>
       </div>
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '0', marginBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        {[{ id: 'compose', label: 'Compose' }, { id: 'history', label: 'History' }].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            padding: '0.6rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase',
+            color: tab === t.id ? '#1a1a1a' : '#aaa',
+            borderBottom: tab === t.id ? '1.5px solid #1a1a1a' : '1.5px solid transparent',
+            marginBottom: '-0.5px', transition: 'all 0.15s',
+          }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'history' && (
+        <div>
+          {historyLoading ? (
+            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+          ) : history.length === 0 ? (
+            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No broadcasts sent yet.</div>
+          ) : (
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+              {history.map((h, idx) => (
+                <div key={h.id} style={{ padding: '1rem 1.5rem', borderBottom: idx < history.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.25rem' }}>{h.subject}</div>
+                      <div style={{ fontSize: '11px', color: '#888' }}>
+                        {h.audience === 'specific_emails'
+                          ? `${h.specific_emails?.length ?? 0} specific emails`
+                          : AUDIENCE_LABELS[h.audience] || h.audience}
+                      </div>
+                      {h.audience === 'specific_emails' && h.specific_emails?.length > 0 && (
+                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {h.specific_emails.slice(0, 3).join(', ')}{h.specific_emails.length > 3 ? ` +${h.specific_emails.length - 3} more` : ''}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                      <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.2rem' }}>
+                        {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {' · '}
+                        {new Date(h.sent_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                      </div>
+                      <div style={{ fontSize: '11px' }}>
+                        <span style={{ color: '#3B6B2F' }}>{h.sent_count} sent</span>
+                        {h.failed_count > 0 && <span style={{ color: '#7B2032', marginLeft: '0.5rem' }}>{h.failed_count} failed</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'compose' && <>
       {/* Warning banner */}
       <div style={{ background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '0.85rem 1.1rem', marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -232,6 +312,7 @@ export default function BroadcastsClient() {
           )}
         </div>
       )}
+      </>}
     </div>
   )
 }

@@ -2,7 +2,18 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 
 const MAX_RECIPIENTS = 200
-const BATCH_SIZE = 10  // parallel sends per batch
+const BATCH_SIZE = 10
+
+export async function GET() {
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('broadcasts')
+    .select('id, subject, audience, specific_emails, sent_count, failed_count, sent_at')
+    .order('sent_at', { ascending: false })
+    .limit(100)
+  return Response.json(data || [])
+}
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -14,7 +25,7 @@ export async function POST(request) {
   if (!audience) return Response.json({ error: 'Audience is required.' }, { status: 400 })
 
   const supabase = createAdminClient()
-  let recipients = [] // [{ email, name }]
+  let recipients = []
 
   async function fetchMembers(filters = {}) {
     let q = supabase.from('members').select('email, name, membership_status, tier')
@@ -57,7 +68,6 @@ export async function POST(request) {
         rawEmails.map(e => e.toLowerCase().trim()).filter(e => e.includes('@') && e.includes('.'))
       )]
       if (uniqueEmails.length === 0) return Response.json({ error: 'No valid email addresses provided.' }, { status: 400 })
-      // Look up names from DB
       const [membersData, appsData] = await Promise.all([
         supabase.from('members').select('email, name').in('email', uniqueEmails),
         supabase.from('applications').select('email, name').in('email', uniqueEmails),
@@ -76,7 +86,6 @@ export async function POST(request) {
   recipients = recipients.slice(0, MAX_RECIPIENTS)
   if (recipients.length === 0) return Response.json({ sent: 0, failed: 0 })
 
-  // Send in parallel batches
   let sent = 0
   let failed = 0
 
@@ -103,6 +112,15 @@ export async function POST(request) {
     sent   += results.filter(r => r === 'sent').length
     failed += results.filter(r => r === 'failed').length
   }
+
+  // Save to broadcast history
+  await supabase.from('broadcasts').insert({
+    subject: subject.trim(),
+    audience,
+    specific_emails: audience === 'specific_emails' ? (Array.isArray(specificEmails) ? specificEmails : []) : null,
+    sent_count: sent,
+    failed_count: failed,
+  }).catch(() => {}) // don't fail the response if history write fails
 
   return Response.json({ sent, failed })
 }
