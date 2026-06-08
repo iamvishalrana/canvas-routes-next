@@ -9,5 +9,3 @@ CREATE TABLE IF NOT EXISTS public.broadcasts (
 );
 
 ALTER TABLE public.broadcasts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "block_direct_client_access" ON public.broadcasts
-  USING (false) WITH CHECK (false);
