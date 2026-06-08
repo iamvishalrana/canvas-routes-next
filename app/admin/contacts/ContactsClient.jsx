@@ -6,6 +6,7 @@ import {
   inp, sel, L, CopyBtn, AdminNotesPanel,
   GhostBtn, PrimaryBtn, DangerBtn, Err,
 } from '../_components/shared'
+import { ExportButton } from '../_components/ExportModal'
 
 // ─── App sources (shared with Applications tab) ───────────────────────────────
 
@@ -336,9 +337,21 @@ export default function ContactsClient({ isMobile }) {
             {filtered.length} of {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
           </div>
           {contacts.length > 0 && selected.size === 0 && (
-            <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Export All
-            </button>
+            <ExportButton
+              filename="contacts"
+              title="Contacts"
+              headers={['Name', 'Email', 'Phone', 'Car', 'Source', 'Notes', 'Created']}
+              rows={filtered.map(c => [
+                c.name || '',
+                c.email || '',
+                c.phone || '',
+                [c.car_year, c.car_model].filter(Boolean).join(' '),
+                c.source || '',
+                c.notes || '',
+                c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA') : '',
+              ])}
+              style={{ padding: '4px 10px', fontSize: '10px' }}
+            />
           )}
           {contacts.length > 0 && selected.size === 0 && (
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>

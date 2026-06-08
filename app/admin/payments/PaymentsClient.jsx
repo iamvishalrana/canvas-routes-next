@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { inp, GhostBtn } from '../_components/shared'
+import { ExportButton } from '../_components/ExportModal'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.5rem' }
@@ -89,7 +90,7 @@ export default function PaymentsClient() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email…"
           style={{ ...inp, width: '220px', padding: '0.55rem 0.9rem', fontSize: '13px' }} />
         <div style={{ position: 'relative' }}>
@@ -113,6 +114,20 @@ export default function PaymentsClient() {
           </select>
           <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
+        <ExportButton
+          filename="payments"
+          title="Payments"
+          headers={['Name', 'Email', 'Amount (CAD)', 'Status', 'Type', 'Payment Intent', 'Date']}
+          rows={filtered.map(r => [
+            r.name || '',
+            r.email || '',
+            r.stripe_amount_paid ? `$${(r.stripe_amount_paid / 100).toFixed(2)}` : '',
+            r.stripe_payment_status || '',
+            r.stripe_payment_type || '',
+            r.stripe_payment_intent_id || '',
+            r.stripe_paid_at ? new Date(r.stripe_paid_at).toLocaleDateString('en-CA') : '',
+          ])}
+        />
       </div>
 
       {/* Table */}

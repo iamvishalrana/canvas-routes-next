@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { inp, GhostBtn, CopyBtn } from '../_components/shared'
+import { ExportButton } from '../_components/ExportModal'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }
@@ -151,7 +152,22 @@ export default function RoadTripsClient() {
               >×</button>
             )}
           </div>
-          <GhostBtn small>Export</GhostBtn>
+          <ExportButton
+            filename="road-trips"
+            title="Road Trips"
+            headers={['Name', 'Email', 'Car', 'Event', 'Passengers', 'Has Children', 'Payment', 'Registered', 'Attended']}
+            rows={filtered.map(({ app, reg }) => [
+              app.name || '',
+              app.email || '',
+              [app.car_year, app.car_model].filter(Boolean).join(' '),
+              reg.event || '',
+              app.passengers || '',
+              app.has_children ? 'Yes' : '',
+              app.stripe_payment_status || '',
+              reg.registered_at ? new Date(reg.registered_at).toLocaleDateString('en-CA') : '',
+              reg.attended === true ? 'Attended' : reg.attended === false ? 'No-show' : '',
+            ])}
+          />
         </div>
       </div>
 
