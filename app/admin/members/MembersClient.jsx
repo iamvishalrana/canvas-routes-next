@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   STATUS_OPTIONS, CAR_YEARS, MONTHS, DOB_YEARS, EMPTY_CAR,
@@ -203,9 +203,21 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
 
 // ─── Members Client ───────────────────────────────────────────────────────────
 
-export default function MembersClient({ initialMembers, total, page, pageSize, isMobile }) {
+export default function MembersClient({ initialMembers, total, page, pageSize }) {
   const router = useRouter()
   const [members, setMembers] = useState(initialMembers)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile client-side
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Sync when server re-renders with fresh paginated data after router.refresh()
+  useEffect(() => { setMembers(initialMembers) }, [initialMembers])
   const [loading, setLoading] = useState(false)
   const [forbidden, setForbidden] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -296,7 +308,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, i
     setSaving(false)
     if (!res.ok) { const d = await res.json(); setSaveError(d.error || 'Failed to save.'); return }
     setEditing(null)
-    loadMembers()
+    router.refresh()
   }
 
   async function deleteMember(m) {
@@ -304,7 +316,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, i
     const res = await fetch(`/api/admin/members/${m.id}`, { method: 'DELETE' })
     if (!res.ok) { const d = await res.json(); setDeleteMemberError(d.error || 'Failed to delete.'); return }
     setDeleteMemberConfirm(null)
-    loadMembers()
+    router.refresh()
   }
 
   async function resendInvite(m) {
@@ -364,7 +376,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, i
     setInviteForm({ name: '', email: '', membership_status: 'pending', tier: 'routes_member' })
     setAppData(null)
     setAppLookupEmail('')
-    loadMembers()
+    router.refresh()
     setTimeout(() => setInviteSuccess(false), 4000)
   }
 

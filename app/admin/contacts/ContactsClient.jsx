@@ -457,7 +457,7 @@ export default function ContactsClient({ isMobile }) {
                 {letter}
               </div>
             ) : null
-            return [header, (
+            return [header, (  // header is null when no letter divider needed — filter(Boolean) below removes it
             <div key={c.contact_id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               {isMobile ? (

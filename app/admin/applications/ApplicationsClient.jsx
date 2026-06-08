@@ -7,6 +7,20 @@ import {
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
+// ─── InfoCell — defined at module level to avoid remount on every render ────────
+
+function InfoCell({ label, value, copyable }) {
+  return (
+    <div>
+      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>{label}</div>
+      <div style={{ fontSize: '13px', color: value ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+        <span>{value || '—'}</span>
+        {copyable && <CopyBtn value={value} />}
+      </div>
+    </div>
+  )
+}
+
 // ─── Shared Admin Notes component for Applications ────────────────────────────
 
 function AppAdminNotes({ appId, initialNotes, onSaved }) {
@@ -294,17 +308,7 @@ export default function ApplicationsClient({ isMobile }) {
   }
   const unseenCount = apps.filter(a => !seenAppIds.has(a.id)).length
 
-  function InfoCell({ label, value, copyable }) {
-    return (
-      <div>
-        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>{label}</div>
-        <div style={{ fontSize: '13px', color: value ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-          <span>{value || '—'}</span>
-          {copyable && <CopyBtn value={value} />}
-        </div>
-      </div>
-    )
-  }
+
 
   return (
     <div>
