@@ -2,6 +2,7 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import GlobalSearch from './GlobalSearch'
 
 const NAV = [
   { href: '/admin/dashboard',     label: 'Dashboard'     },
@@ -45,8 +46,13 @@ export default function AdminSidebar() {
         </div>
       </div>
 
+      {/* Search */}
+      <div style={{ padding: '0.75rem 1rem 0.5rem' }}>
+        <GlobalSearch />
+      </div>
+
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: '0.75rem 0' }}>
+      <nav style={{ flex: 1, padding: '0.25rem 0' }}>
         {NAV.map((item, i) => {
           if (item.divider) return (
             <div key={i} style={{ padding: '1rem 1.25rem 0.3rem', fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.25)', fontFamily: 'var(--font-inter),sans-serif' }}>
