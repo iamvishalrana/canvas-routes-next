@@ -85,17 +85,17 @@ function CheckoutForm({ formData, honeypot, tier, price, onSuccess, onBack }) {
   return (
     <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-        <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
-        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#1a1a1a', fontWeight: '300' }}>${price} <span style={{ fontSize: '11px', color: '#999' }}>CAD / season</span></div>
+        <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
+        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-cormorant),Georgia,serif', color: '#c5a882', fontWeight: '300' }}>${price} <span style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)' }}>CAD / season</span></div>
       </div>
       <PaymentElement options={{ layout: 'tabs' }} />
       {error && <div style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
       <button type="submit" disabled={!stripe || paying}
-        style={{ width: '100%', padding: '1rem', background: '#0F1E14', border: 'none', color: '#c5a882', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
+        style={{ width: '100%', padding: '1rem', background: '#c5a882', border: 'none', color: '#0F1E14', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
         {paying ? 'Processing…' : `Pay $${price} CAD`}
       </button>
       <button type="button" onClick={onBack}
-        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.35)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
+        style={{ background: 'none', border: 'none', color: 'rgba(245,241,236,0.4)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
         ← Back
       </button>
     </form>
@@ -154,18 +154,18 @@ export default function MembershipContent() {
   }
 
   function inp(field) {
-    const base = { width:'100%', padding:'0.6rem 0', fontSize:'14px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
+    const base = { width:'100%', padding:'0.6rem 0', fontSize:'14px', fontFamily:'var(--font-inter),sans-serif', color:'#F5F1EC', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(197,168,130,0.2)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
     if (errors[field]) return { ...base, borderBottom:'1px solid rgba(208,96,112,0.8)' }
-    if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.9)' }
-    if (form[field]) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.6)' }
+    if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.8)' }
+    if (form[field]) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.45)' }
     return base
   }
 
   function SectionLabel({ children }) {
     return (
       <div style={{ display:'flex', alignItems:'center', gap:'1rem', margin:'2.5rem 0 1.75rem' }}>
-        <div style={{ fontSize:'8px', letterSpacing:'0.26em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter),sans-serif', whiteSpace:'nowrap' }}>{children}</div>
-        <div style={{ flex:1, height:'0.5px', background:'rgba(0,0,0,0.1)' }} />
+        <div style={{ fontSize:'8px', letterSpacing:'0.26em', textTransform:'uppercase', color:'rgba(197,168,130,0.45)', fontFamily:'var(--font-inter),sans-serif', whiteSpace:'nowrap' }}>{children}</div>
+        <div style={{ flex:1, height:'0.5px', background:'rgba(197,168,130,0.12)' }} />
       </div>
     )
   }
@@ -535,28 +535,29 @@ export default function MembershipContent() {
       </section>
 
       {/* ── REGISTRATION ────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+      <section style={{ position: 'relative', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img src="/membership-form.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(245,241,236,0.88)' }} />
+          <img src="/membership-form.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.88) 0%, rgba(10,20,13,0.92) 100%)' }} />
         </div>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)', zIndex: 1 }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '880px', margin: '0 auto' }}>
           <FadeUp style={{ marginBottom: 'clamp(2.5rem,4vw,3.5rem)' }}>
             <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1rem' }}>Founding access</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.1 }}>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4.5vw,3rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.1 }}>
               Spots are limited.
             </div>
-            <p style={{ ...BODY, color: '#555' }}>
+            <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>
               The 2026 season has a fixed number of members. Leave your details and we&apos;ll be in touch personally.
             </p>
           </FadeUp>
 
           {status === 'success' ? (
             <FadeUp>
-              <div style={{ padding: '2rem', border: '0.5px solid rgba(197,168,130,0.35)', background: 'rgba(197,168,130,0.07)', textAlign: 'center' }}>
+              <div style={{ padding: '2rem', border: '0.5px solid rgba(197,168,130,0.25)', background: 'rgba(197,168,130,0.06)', textAlign: 'center' }}>
                 <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Welcome to Canvas Routes.</div>
-                <p style={{ ...BODY, color: '#555' }}>Payment confirmed. Check your inbox — we&apos;ll be in touch with next steps.</p>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem' }}>Welcome to Canvas Routes.</div>
+                <p style={{ ...BODY, color: 'rgba(245,241,236,0.65)' }}>Payment confirmed. Check your inbox — we&apos;ll be in touch with next steps.</p>
               </div>
             </FadeUp>
           ) : paymentStep && clientSecret ? (
@@ -565,12 +566,12 @@ export default function MembershipContent() {
               options={{
                 clientSecret,
                 appearance: {
-                  theme: 'stripe',
+                  theme: 'night',
                   variables: {
                     colorPrimary: '#c5a882',
-                    colorBackground: '#ffffff',
-                    colorText: '#1a1a1a',
-                    colorTextSecondary: '#666',
+                    colorBackground: 'rgba(255,255,255,0.04)',
+                    colorText: '#F5F1EC',
+                    colorTextSecondary: 'rgba(245,241,236,0.55)',
                     colorDanger: '#d06070',
                     fontFamily: 'var(--font-inter),sans-serif',
                     borderRadius: '0px',
@@ -597,7 +598,7 @@ export default function MembershipContent() {
               <SectionLabel>About you</SectionLabel>
 
               <div id="mem-field-name" style={{ marginBottom: '1.75rem' }}>
-                <div style={{ ...LABEL, color: errors.name ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ ...LABEL, color: errors.name ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <User size={10} /><span>Full name</span><span style={{ color: '#d06070' }}>*</span>
                 </div>
                 <input type="text" value={form.name} placeholder="First and Last name" autoComplete="name"
@@ -608,7 +609,7 @@ export default function MembershipContent() {
 
               <div className="mem-car-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 2rem', marginBottom: '1.75rem' }}>
                 <div id="mem-field-email">
-                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Mail size={10} /><span>Email</span><span style={{ color: '#d06070' }}>*</span>
                   </div>
                   <input type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
@@ -617,7 +618,7 @@ export default function MembershipContent() {
                     style={inp('email')} />
                 </div>
                 <div id="mem-field-phone">
-                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Phone size={10} /><span>Phone</span><span style={{ color: '#d06070' }}>*</span>
                   </div>
                   <input type="tel" value={form.phone} placeholder="+1 (514) 000-0000" autoComplete="tel"
@@ -628,7 +629,7 @@ export default function MembershipContent() {
               </div>
 
               <div id="mem-field-dob_month" style={{ marginBottom: '0.5rem' }}>
-                <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ ...LABEL, color: (errors.dob_month || errors.dob_day) ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <Calendar size={10} /><span>Date of birth</span><span style={{ color: '#d06070' }}>*</span>
                   <span style={{ color: 'rgba(197,168,130,0.5)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>year optional</span>
                 </div>
@@ -645,7 +646,7 @@ export default function MembershipContent() {
                         <option value="">{placeholder}</option>
                         {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                       </select>
-                      <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
                   ))}
                 </div>
@@ -657,7 +658,7 @@ export default function MembershipContent() {
 
               <div className="mem-car3-grid" style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.5fr 2fr', gap: '0 2rem', marginBottom: '1.75rem' }}>
                 <div id="mem-field-year">
-                  <div style={{ ...LABEL, color: errors.year ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ ...LABEL, color: errors.year ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Car size={10} /><span>Year</span><span style={{ color: '#d06070' }}>*</span>
                   </div>
                   <div style={{ position: 'relative' }}>
@@ -667,11 +668,11 @@ export default function MembershipContent() {
                       <option value="">Year</option>
                       {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y => <option key={y} value={String(y)}>{y}</option>)}
                     </select>
-                    <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
                 <div id="mem-field-carMake">
-                  <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Car size={10} /><span>Make</span><span style={{ color: '#d06070' }}>*</span>
                   </div>
                   <div style={{ position: 'relative' }}>
@@ -681,11 +682,11 @@ export default function MembershipContent() {
                       <option value="">Select make</option>
                       {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
-                    <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
                 <div id="mem-field-carModel">
-                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Car size={10} /><span>Model</span><span style={{ color: '#d06070' }}>*</span>
                   </div>
                   <input type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
@@ -704,17 +705,17 @@ export default function MembershipContent() {
 
                   <button type="button" onClick={() => set('tier', 'Routes Member')} style={{
                     padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
-                    background: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.1)' : 'rgba(0,0,0,0.03)',
-                    borderLeft: form.tier === 'Routes Member' ? '2px solid #c5a882' : '2px solid rgba(0,0,0,0.1)',
+                    background: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.12)' : 'rgba(255,255,255,0.03)',
+                    borderLeft: form.tier === 'Routes Member' ? '2px solid #c5a882' : '2px solid rgba(197,168,130,0.15)',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <div style={{ fontSize: '14px', color: form.tier === 'Routes Member' ? '#1a1a1a' : '#777', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
-                        <div style={{ fontSize: '11px', color: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.85)' : 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Events, road trips, community & perks</div>
+                        <div style={{ fontSize: '14px', color: form.tier === 'Routes Member' ? '#F5F1EC' : 'rgba(245,241,236,0.55)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
+                        <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.45)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Events, road trips, community & perks</div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                        <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: form.tier === 'Routes Member' ? '#c5a882' : 'rgba(0,0,0,0.2)', lineHeight: 1 }}>$99</div>
-                        <div style={{ fontSize: '9px', color: form.tier === 'Routes Member' ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.18)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                        <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: form.tier === 'Routes Member' ? '#c5a882' : 'rgba(245,241,236,0.35)', lineHeight: 1 }}>$99</div>
+                        <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
                       </div>
                     </div>
                     {form.tier === 'Routes Member' && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
@@ -748,7 +749,7 @@ export default function MembershipContent() {
               <SectionLabel>Final details</SectionLabel>
 
               <div id="mem-field-source" style={{ marginBottom: '1.75rem' }}>
-                <div style={{ ...LABEL, color: errors.source ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ ...LABEL, color: errors.source ? '#d06070' : 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <Share2 size={10} /><span>How did you hear about us</span><span style={{ color: '#d06070' }}>*</span>
                 </div>
                 <div style={{ position: 'relative' }}>
@@ -758,13 +759,13 @@ export default function MembershipContent() {
                     <option value="">Select</option>
                     {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  <svg style={{ position:'absolute', right:'2px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </div>
 
               <div style={{ marginBottom: '2rem' }}>
-                <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.5rem' }}>
-                  Anything else <span style={{ color: 'rgba(0,0,0,0.28)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>optional</span>
+                <div style={{ ...LABEL, color: 'rgba(197,168,130,0.55)', marginBottom: '0.5rem' }}>
+                  Anything else <span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>optional</span>
                 </div>
                 <textarea value={form.more} rows={3} placeholder="Questions, thoughts, or anything you'd like us to know."
                   onChange={e => set('more', e.target.value)}
@@ -775,17 +776,17 @@ export default function MembershipContent() {
               <label id="mem-field-termsAccepted" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '2rem', cursor: 'pointer', padding: errors.termsAccepted ? '0.75rem' : '0', border: errors.termsAccepted ? '0.5px solid rgba(208,96,112,0.4)' : 'none' }}>
                 <input type="checkbox" checked={termsAccepted} onChange={e => { setTermsAccepted(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, termsAccepted: false })) }}
                   style={{ accentColor: '#c5a882', width: '13px', height: '13px', flexShrink: 0, marginTop: '2px' }} />
-                <span style={{ fontSize: '12px', color: 'rgba(0,0,0,0.45)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.6 }}>
+                <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.6 }}>
                   I have read and agree to the{' '}
-                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms &amp; Conditions</a>
+                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'rgba(197,168,130,0.7)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms &amp; Conditions</a>
                 </span>
               </label>
 
               {submitError && <div style={{ fontSize: '12px', color: '#d06070', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{submitError}</div>}
 
               <button type="submit" disabled={status === 'loading'} style={{
-                width: '100%', padding: '1.1rem', background: '#0F1E14',
-                border: 'none', color: '#c5a882',
+                width: '100%', padding: '1.1rem', background: 'transparent',
+                border: '0.5px solid rgba(197,168,130,0.6)', color: '#c5a882',
                 fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
                 fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500',
                 cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.5 : 1,
