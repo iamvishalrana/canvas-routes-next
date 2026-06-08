@@ -42,6 +42,10 @@ export default function PromoCodesClient() {
   const [formOk, setFormOk]       = useState(null)
   const [deactivating, setDeactivating] = useState(null)
   const [isMobile, setIsMobile]         = useState(false)
+  const [editing, setEditing]           = useState(null)  // code id being edited
+  const [editForm, setEditForm]         = useState({ maxRedemptions: '', expiresAt: '' })
+  const [editSaving, setEditSaving]     = useState(false)
+  const [editErr, setEditErr]           = useState(null)
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -104,12 +108,39 @@ export default function PromoCodesClient() {
     if (!confirm(`Deactivate promo code "${code}"?`)) return
     setDeactivating(id)
     try {
-      const res = await fetch(`/api/admin/promo-codes/${id}`, { method: 'PATCH' })
+      const res = await fetch(`/api/admin/promo-codes/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
       if (res.ok) {
         setCodes(prev => prev.map(c => c.id === id ? { ...c, active: false } : c))
       }
     } catch {}
     setDeactivating(null)
+  }
+
+  function startEdit(c) {
+    setEditing(c.id)
+    setEditForm({
+      maxRedemptions: c.max_redemptions ? String(c.max_redemptions) : '',
+      expiresAt: c.expires_at ? new Date(c.expires_at * 1000).toISOString().slice(0, 10) : '',
+    })
+    setEditErr(null)
+  }
+
+  async function handleSaveEdit(c) {
+    setEditSaving(true)
+    setEditErr(null)
+    try {
+      const res = await fetch(`/api/admin/promo-codes/${c.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'edit', maxRedemptions: editForm.maxRedemptions || undefined, expiresAt: editForm.expiresAt || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setEditErr(data.error || 'Failed to update.'); return }
+      // Replace old code with new code in state
+      setCodes(prev => prev.map(x => x.id === c.id ? { ...data.newCode, coupon: data.newCode.coupon } : x))
+      setEditing(null)
+    } catch { setEditErr('Network error.') }
+    finally { setEditSaving(false) }
   }
 
   return (
@@ -238,11 +269,32 @@ export default function PromoCodesClient() {
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.6rem' }}>
                 {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
               </div>
-              {c.active && (
-                <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
-                  {deactivating === c.id ? 'Deactivating…' : 'Deactivate'}
-                </DangerBtn>
-              )}
+              {c.active && editing === c.id ? (
+                <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Max Uses</div>
+                      <input style={{ ...inp, padding: '0.4rem 0.6rem', fontSize: '12px' }} type="number" min="1" placeholder="Unlimited" value={editForm.maxRedemptions} onChange={e => setEditForm(f => ({ ...f, maxRedemptions: e.target.value }))} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Expires</div>
+                      <input style={{ ...inp, padding: '0.4rem 0.6rem', fontSize: '12px' }} type="date" value={editForm.expiresAt} onChange={e => setEditForm(f => ({ ...f, expiresAt: e.target.value }))} />
+                    </div>
+                  </div>
+                  {editErr && <div style={{ fontSize: '11px', color: '#7B2032' }}>{editErr}</div>}
+                  <div style={{ display: 'flex', gap: '0.35rem' }}>
+                    <button onClick={() => handleSaveEdit(c)} disabled={editSaving} style={{ padding: '0.35rem 0.8rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: editSaving ? 'wait' : 'pointer' }}>{editSaving ? 'Saving…' : 'Save'}</button>
+                    <button onClick={() => setEditing(null)} style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              ) : c.active ? (
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <button onClick={() => startEdit(c)} style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Edit</button>
+                  <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
+                    {deactivating === c.id ? 'Deactivating…' : 'Deactivate'}
+                  </DangerBtn>
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -271,12 +323,27 @@ export default function PromoCodesClient() {
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
                   <td style={TD}><StatusChip active={c.active} /></td>
-                  <td style={TD}>
-                    {c.active && (
-                      <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
-                        {deactivating === c.id ? 'Deactivating…' : 'Deactivate'}
-                      </DangerBtn>
-                    )}
+                  <td style={{ ...TD, minWidth: editing === c.id ? '280px' : undefined }}>
+                    {c.active && editing === c.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input style={{ width: '90px', padding: '0.35rem 0.5rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff' }} type="number" min="1" placeholder="Max uses" value={editForm.maxRedemptions} onChange={e => setEditForm(f => ({ ...f, maxRedemptions: e.target.value }))} />
+                          <input style={{ width: '120px', padding: '0.35rem 0.5rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff' }} type="date" value={editForm.expiresAt} onChange={e => setEditForm(f => ({ ...f, expiresAt: e.target.value }))} />
+                        </div>
+                        {editErr && <div style={{ fontSize: '11px', color: '#7B2032' }}>{editErr}</div>}
+                        <div style={{ display: 'flex', gap: '0.35rem' }}>
+                          <button onClick={() => handleSaveEdit(c)} disabled={editSaving} style={{ padding: '0.3rem 0.7rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: editSaving ? 'wait' : 'pointer' }}>{editSaving ? '…' : 'Save'}</button>
+                          <button onClick={() => setEditing(null)} style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : c.active ? (
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        <button onClick={() => startEdit(c)} style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Edit</button>
+                        <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
+                          {deactivating === c.id ? '…' : 'Deactivate'}
+                        </DangerBtn>
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))}

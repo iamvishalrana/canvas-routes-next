@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { inp, GhostBtn } from '../_components/shared'
+import { inp, GhostBtn, DangerBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
@@ -15,13 +15,16 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+const STATUS_COLORS = {
+  paid:      { bg: 'rgba(59,107,47,0.1)',    text: '#3B6B2F', border: 'rgba(59,107,47,0.3)' },
+  refunded:  { bg: 'rgba(80,80,180,0.08)',   text: '#4040aa', border: 'rgba(80,80,180,0.3)' },
+  disputed:  { bg: 'rgba(180,60,0,0.1)',     text: '#b33c00', border: 'rgba(180,60,0,0.3)' },
+  failed:    { bg: 'rgba(123,32,50,0.1)',    text: '#7B2032', border: 'rgba(123,32,50,0.3)' },
+  pending:   { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
+}
+
 function StatusChip({ status }) {
-  const colors = {
-    paid:      { bg: 'rgba(59,107,47,0.1)',    text: '#3B6B2F', border: 'rgba(59,107,47,0.3)' },
-    pending:   { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
-    failed:    { bg: 'rgba(123,32,50,0.1)',    text: '#7B2032', border: 'rgba(123,32,50,0.3)' },
-  }
-  const c = colors[status] || colors.pending
+  const c = STATUS_COLORS[status] || STATUS_COLORS.pending
   return (
     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: `0.5px solid ${c.border}`, background: c.bg, color: c.text, whiteSpace: 'nowrap' }}>
       {status || 'unknown'}
@@ -29,13 +32,31 @@ function StatusChip({ status }) {
   )
 }
 
+const PI_BASE = 'https://dashboard.stripe.com/payments/'
+
+function PiLink({ id }) {
+  if (!id) return <span style={{ color: '#ccc' }}>—</span>
+  return (
+    <a href={PI_BASE + id} target="_blank" rel="noreferrer"
+      style={{ fontFamily: 'monospace', fontSize: '11px', color: '#888', textDecoration: 'none', borderBottom: '0.5px solid rgba(0,0,0,0.2)' }}>
+      {id.slice(0, 20)}…
+    </a>
+  )
+}
+
 export default function PaymentsClient() {
-  const [records, setRecords]   = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [filter, setFilter]     = useState('')
-  const [sort, setSort]         = useState('date_desc')
-  const [search, setSearch]     = useState('')
-  const [isMobile, setIsMobile] = useState(false)
+  const [records, setRecords]         = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [filter, setFilter]           = useState('')
+  const [sort, setSort]               = useState('date_desc')
+  const [search, setSearch]           = useState('')
+  const [isMobile, setIsMobile]       = useState(false)
+  const [refunding, setRefunding]     = useState(null)   // id being confirmed
+  const [refundBusy, setRefundBusy]   = useState(null)   // id being processed
+  const [refundErr, setRefundErr]     = useState({})     // { [id]: msg }
+  const [receiptBusy, setReceiptBusy] = useState(null)
+  const [receiptDone, setReceiptDone] = useState({})     // { [id]: true }
+  const [receiptErr, setReceiptErr]   = useState({})
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -54,14 +75,42 @@ export default function PaymentsClient() {
       .finally(() => setLoading(false))
   }, [])
 
+  async function doRefund(r) {
+    setRefundBusy(r.id)
+    setRefundErr(p => ({ ...p, [r.id]: null }))
+    try {
+      const res = await fetch(`/api/admin/applications/${r.id}/refund`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setRefundErr(p => ({ ...p, [r.id]: data.error || 'Refund failed.' })); return }
+      setRecords(prev => prev.map(x => x.id === r.id ? { ...x, stripe_payment_status: 'refunded' } : x))
+      setRefunding(null)
+    } catch { setRefundErr(p => ({ ...p, [r.id]: 'Network error.' })) }
+    finally { setRefundBusy(null) }
+  }
+
+  async function resendReceipt(r) {
+    setReceiptBusy(r.id)
+    setReceiptErr(p => ({ ...p, [r.id]: null }))
+    try {
+      const res = await fetch(`/api/admin/applications/${r.id}/resend-receipt`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setReceiptErr(p => ({ ...p, [r.id]: data.error || 'Failed.' })); return }
+      setReceiptDone(p => ({ ...p, [r.id]: true }))
+      setTimeout(() => setReceiptDone(p => ({ ...p, [r.id]: false })), 3000)
+    } catch { setReceiptErr(p => ({ ...p, [r.id]: 'Network error.' })) }
+    finally { setReceiptBusy(null) }
+  }
+
   const totalCollected = records.filter(r => r.stripe_payment_status === 'paid').reduce((s, r) => s + (r.stripe_amount_paid || 0), 0)
   const paidCount      = records.filter(r => r.stripe_payment_status === 'paid').length
   const otherCount     = records.filter(r => r.stripe_payment_status && r.stripe_payment_status !== 'paid').length
 
   let filtered = records
-  if (filter)  filtered = filtered.filter(r => r.stripe_payment_status === filter)
-  if (search)  filtered = filtered.filter(r => (r.name || '').toLowerCase().includes(search.toLowerCase()) || (r.email || '').toLowerCase().includes(search.toLowerCase()))
-
+  if (filter) filtered = filtered.filter(r => r.stripe_payment_status === filter)
+  if (search) filtered = filtered.filter(r =>
+    (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.email || '').toLowerCase().includes(search.toLowerCase())
+  )
   filtered = [...filtered].sort((a, b) => {
     if (sort === 'date_desc')   return new Date(b.stripe_paid_at || 0) - new Date(a.stripe_paid_at || 0)
     if (sort === 'date_asc')    return new Date(a.stripe_paid_at || 0) - new Date(b.stripe_paid_at || 0)
@@ -74,11 +123,43 @@ export default function PaymentsClient() {
   const TH = { padding: '0.65rem 1rem', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', fontWeight: '400', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf8', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }
   const TD = { padding: '0.75rem 1rem', fontSize: '13px', color: '#1a1a1a', borderBottom: '0.5px solid rgba(0,0,0,0.05)', fontFamily: 'var(--font-inter),sans-serif', verticalAlign: 'middle' }
 
+  function Actions({ r }) {
+    const isPaid = r.stripe_payment_status === 'paid'
+    if (!isPaid) return null
+
+    if (refunding === r.id) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
+          <div style={{ fontSize: '11px', color: '#7B2032' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
+          {refundErr[r.id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{refundErr[r.id]}</div>}
+          <div style={{ display: 'flex', gap: '0.35rem' }}>
+            <DangerBtn small onClick={() => doRefund(r)} disabled={refundBusy === r.id}>
+              {refundBusy === r.id ? '…' : 'Confirm'}
+            </DangerBtn>
+            <GhostBtn small onClick={() => setRefunding(null)}>Cancel</GhostBtn>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+        <GhostBtn small onClick={() => resendReceipt(r)} disabled={receiptBusy === r.id}>
+          {receiptDone[r.id] ? 'Sent!' : receiptBusy === r.id ? '…' : 'Receipt'}
+        </GhostBtn>
+        <DangerBtn small onClick={() => { setRefunding(r.id); setRefundErr(p => ({ ...p, [r.id]: null })) }}>
+          Refund
+        </DangerBtn>
+        {receiptErr[r.id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.id]}</div>}
+      </div>
+    )
+  }
+
   return (
     <div style={SECTION}>
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem', fontFamily: 'var(--font-inter),sans-serif' }}>Admin</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>Payments</h1>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
+        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Payments</h1>
       </div>
 
       {/* Stat cards */}
@@ -90,8 +171,8 @@ export default function PaymentsClient() {
           { label: 'Total Records',  value: records.length,       color: '#1a1a1a' },
         ].map(s => (
           <div key={s.label} style={CARD}>
-            <div style={{ fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{s.value}</div>
-            <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.label}</div>
+            <div style={{ fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -102,11 +183,13 @@ export default function PaymentsClient() {
           style={{ ...inp, width: '220px', padding: '0.55rem 0.9rem', fontSize: '13px' }} />
         <div style={{ position: 'relative' }}>
           <select value={filter} onChange={e => setFilter(e.target.value)}
-            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: '150px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
+            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: '155px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
             <option value="">All statuses</option>
             <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
+            <option value="refunded">Refunded</option>
+            <option value="disputed">Disputed</option>
             <option value="failed">Failed</option>
+            <option value="pending">Pending</option>
           </select>
           <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -152,12 +235,14 @@ export default function PaymentsClient() {
                   {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
                 </div>
               </div>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.6rem' }}>{r.email}</div>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.4rem' }}>{r.email}</div>
+              <div style={{ marginBottom: '0.5rem' }}><PiLink id={r.stripe_payment_intent_id} /></div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                 <StatusChip status={r.stripe_payment_status} />
                 {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{r.stripe_payment_type}</span>}
                 <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto' }}>{fmtDate(r.stripe_paid_at)}</span>
               </div>
+              <Actions r={r} />
             </div>
           ))}
         </div>
@@ -173,6 +258,7 @@ export default function PaymentsClient() {
                 <th style={TH}>Type</th>
                 <th style={TH}>Date</th>
                 <th style={TH}>Payment Intent</th>
+                <th style={TH}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -186,9 +272,8 @@ export default function PaymentsClient() {
                   <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type || '—'}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtDate(r.stripe_paid_at)}</td>
-                  <td style={{ ...TD, fontSize: '11px', color: '#bbb', fontFamily: 'monospace' }}>
-                    {r.stripe_payment_intent_id ? r.stripe_payment_intent_id.slice(0, 20) + '…' : '—'}
-                  </td>
+                  <td style={TD}><PiLink id={r.stripe_payment_intent_id} /></td>
+                  <td style={{ ...TD, whiteSpace: 'nowrap' }}><Actions r={r} /></td>
                 </tr>
               ))}
             </tbody>

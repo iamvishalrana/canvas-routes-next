@@ -74,11 +74,37 @@ export async function POST(request) {
       }
 
       case 'payment_intent.payment_failed': {
-        const pi    = event.data.object
-        const email = pi.metadata?.email
-        const error = pi.last_payment_error?.message || 'unknown'
-        console.error(`Payment failed: ${email} — ${error}`)
-        captureMessage(`Stripe payment failed — ${email}`, { error, piId: pi.id })
+        const pi       = event.data.object
+        const email    = pi.metadata?.email?.toLowerCase().trim()
+        const errMsg   = pi.last_payment_error?.message || 'unknown'
+        console.error(`Payment failed: ${email} — ${errMsg}`)
+        captureMessage(`Stripe payment failed — ${email}`, { error: errMsg, piId: pi.id })
+        if (email) {
+          const supabase = createAdminClient()
+          await supabase.from('applications')
+            .update({ stripe_payment_intent_id: pi.id, stripe_payment_status: 'failed' })
+            .eq('email', email)
+        }
+        break
+      }
+
+      case 'charge.dispute.created': {
+        const dispute  = event.data.object
+        const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id
+        captureMessage(`Stripe dispute created — charge ${chargeId}`, { disputeId: dispute.id, reason: dispute.reason })
+        if (chargeId) {
+          try {
+            const charge = await stripe.charges.retrieve(chargeId)
+            if (charge.payment_intent) {
+              const supabase = createAdminClient()
+              await supabase.from('applications')
+                .update({ stripe_payment_status: 'disputed' })
+                .eq('stripe_payment_intent_id', charge.payment_intent)
+            }
+          } catch (err) {
+            captureException(err, { context: 'dispute-webhook', chargeId })
+          }
+        }
         break
       }
 
