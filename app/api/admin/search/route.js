@@ -14,31 +14,36 @@ export async function GET(request) {
   const [
     { data: members },
     { data: applications },
-    { data: contacts },
+    { data: contactApps },
   ] = await Promise.all([
     supabase.from('members')
       .select('id, name, email, membership_status, tier, car_make, car_model')
       .or(`name.ilike.${pattern},email.ilike.${pattern}`)
       .limit(5),
     supabase.from('applications')
-      .select('id, name, email, car_model, stripe_payment_status, source')
+      .select('id, name, email, car_model, stripe_payment_status')
       .or(`name.ilike.${pattern},email.ilike.${pattern}`)
       .limit(5),
-    supabase.from('contacts')
-      .select('id, application_id, applications(name, email, car_model)')
-      .limit(5),
+    // Search contacts via their linked application
+    supabase.from('applications')
+      .select('id, name, email, car_model, contacts(id)')
+      .or(`name.ilike.${pattern},email.ilike.${pattern}`)
+      .limit(10),
   ])
 
-  // Filter contacts client-side since they join applications
-  const matchedContacts = (contacts || []).filter(c => {
-    const name = c.applications?.name || ''
-    const email = c.applications?.email || ''
-    return name.toLowerCase().includes(q.toLowerCase()) || email.toLowerCase().includes(q.toLowerCase())
-  }).slice(0, 5)
+  // Only keep applications that have a linked contact row
+  const contacts = (contactApps || [])
+    .filter(a => a.contacts?.length > 0)
+    .slice(0, 5)
+    .map(a => ({
+      id: a.contacts[0].id,
+      application_id: a.id,
+      applications: { name: a.name, email: a.email, car_model: a.car_model },
+    }))
 
   return Response.json({
     members: members || [],
     applications: applications || [],
-    contacts: matchedContacts,
+    contacts,
   })
 }

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   STATUS_OPTIONS, CAR_YEARS, MONTHS, DOB_YEARS, EMPTY_CAR,
@@ -243,16 +243,6 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   const [deleteMemberConfirm, setDeleteMemberConfirm] = useState(null)
   const [deleteMemberError, setDeleteMemberError] = useState(null)
   const [resendStatus, setResendStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | 'error' | errorMsg }
-
-  const loadMembers = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/admin/members')
-      if (res.status === 403) { setForbidden(true); return }
-      const data = await res.json().catch(() => [])
-      setMembers(Array.isArray(data) ? data : [])
-    } catch { setMembers([]) } finally { setLoading(false) }
-  }, [])
 
   async function lookupApplication(email) {
     if (!email?.trim() || !email.includes('@')) { setAppData(null); return }

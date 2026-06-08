@@ -31,13 +31,13 @@ export default async function DashboardPage() {
     supabase.from('contacts').select('*', { count: 'exact', head: true }),
     supabase.from('applications').select('*', { count: 'exact', head: true }).eq('stripe_payment_status', 'paid'),
     supabase.from('members').select('id, name, email, created_at, membership_status, tier').order('created_at', { ascending: false }).limit(7),
-    supabase.from('contacts').select('id, name, email, created_at').order('created_at', { ascending: false }).limit(5),
+    supabase.from('contacts').select('id, created_at, applications(name, email)').order('created_at', { ascending: false }).limit(5),
     supabase.from('events').select('id, name, date, type').gte('date', todayStr).lte('date', in90Str).order('date').limit(5),
   ])
 
   const recentSignups = [
     ...(recentMembers || []).map(m => ({ name: m.name || m.email, type: 'Member', date: m.created_at, tier: m.tier, status: m.membership_status })),
-    ...(recentContacts || []).map(c => ({ name: c.name || c.email, type: 'Contact', date: c.created_at })),
+    ...(recentContacts || []).map(c => ({ name: c.applications?.name || c.applications?.email, type: 'Contact', date: c.created_at })),
   ]
     .filter(r => r.date)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
