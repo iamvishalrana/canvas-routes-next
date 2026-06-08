@@ -437,11 +437,12 @@ function MembersTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/members')
-    if (res.status === 403) { setForbidden(true); setLoading(false); return }
-    const data = await res.json()
-    setMembers(Array.isArray(data) ? data : [])
-    setLoading(false)
+    try {
+      const res = await fetch('/api/admin/members')
+      if (res.status === 403) { setForbidden(true); return }
+      const data = await res.json().catch(() => [])
+      setMembers(Array.isArray(data) ? data : [])
+    } catch { setMembers([]) } finally { setLoading(false) }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -1038,10 +1039,11 @@ function AnnouncementsTab() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/announcements')
-    const data = await res.json()
-    setItems(Array.isArray(data) ? data : [])
-    setLoading(false)
+    try {
+      const res = await fetch('/api/admin/announcements')
+      const data = await res.json().catch(() => [])
+      setItems(Array.isArray(data) ? data : [])
+    } catch { setItems([]) } finally { setLoading(false) }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -1243,10 +1245,11 @@ function EventsTab({ isMobile }) {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/events')
-    const data = await res.json()
-    setItems(Array.isArray(data) ? data : [])
-    setLoading(false)
+    try {
+      const res = await fetch('/api/admin/events')
+      const data = await res.json().catch(() => [])
+      setItems(Array.isArray(data) ? data : [])
+    } catch { setItems([]) } finally { setLoading(false) }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -2276,10 +2279,15 @@ function ContactsTab({ isMobile, searchOverride, onSearchOverrideConsumed }) {
 
   const loadContacts = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/contacts')
-    const data = await res.json()
-    setContacts(Array.isArray(data) ? data : [])
-    setLoading(false)
+    try {
+      const res = await fetch('/api/admin/contacts')
+      const data = await res.json().catch(() => [])
+      setContacts(Array.isArray(data) ? data : [])
+    } catch {
+      setContacts([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { loadContacts() }, [loadContacts])
