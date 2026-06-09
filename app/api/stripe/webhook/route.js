@@ -44,30 +44,17 @@ export async function POST(request) {
 
         const supabase = createAdminClient()
 
-        // Mark payment on the application record
-        const { error } = await supabase
-          .from('applications')
-          .update({
-            stripe_payment_intent_id:  pi.id,
-            stripe_payment_status:     'paid',
-            stripe_amount_paid:        amountPaid,
-            stripe_payment_type:       type,
-            stripe_paid_at:            new Date().toISOString(),
-          })
-          .eq('email', normalEmail)
-
-        if (error) {
-          // Application row may not exist yet — insert a minimal record so no payment is ever lost
-          await supabase.from('applications').upsert({
-            email:                     normalEmail,
-            name:                      name || '',
-            stripe_payment_intent_id:  pi.id,
-            stripe_payment_status:     'paid',
-            stripe_amount_paid:        amountPaid,
-            stripe_payment_type:       type,
-            stripe_paid_at:            new Date().toISOString(),
-          }, { onConflict: 'email' })
-        }
+        // Upsert directly — UPDATE on conflict so stripe fields are always written,
+        // whether the application row exists yet or not.
+        await supabase.from('applications').upsert({
+          email:                     normalEmail,
+          name:                      name || '',
+          stripe_payment_intent_id:  pi.id,
+          stripe_payment_status:     'paid',
+          stripe_amount_paid:        amountPaid,
+          stripe_payment_type:       type,
+          stripe_paid_at:            new Date().toISOString(),
+        }, { onConflict: 'email' })
 
         console.log(`Payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         break
@@ -83,27 +70,14 @@ export async function POST(request) {
         if (!normalEmail) break
 
         const supabase = createAdminClient()
-        const { error } = await supabase
-          .from('applications')
-          .update({
-            stripe_payment_intent_id: pi.id,
-            stripe_payment_status:    'authorized',
-            stripe_amount_paid:       amountHeld,
-            stripe_payment_type:      type,
-          })
-          .eq('email', normalEmail)
-
-        if (error) {
-          // Row may not exist yet — upsert
-          await supabase.from('applications').upsert({
-            email:                    normalEmail,
-            name:                     name || '',
-            stripe_payment_intent_id: pi.id,
-            stripe_payment_status:    'authorized',
-            stripe_amount_paid:       amountHeld,
-            stripe_payment_type:      type,
-          }, { onConflict: 'email' })
-        }
+        await supabase.from('applications').upsert({
+          email:                    normalEmail,
+          name:                     name || '',
+          stripe_payment_intent_id: pi.id,
+          stripe_payment_status:    'authorized',
+          stripe_amount_paid:       amountHeld,
+          stripe_payment_type:      type,
+        }, { onConflict: 'email' })
 
         console.log(`Payment authorized (held): ${type} — ${normalEmail} — $${(amountHeld / 100).toFixed(2)} CAD`)
         break
