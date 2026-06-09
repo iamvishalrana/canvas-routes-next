@@ -46,9 +46,9 @@ function PiLink({ id, manual }) {
   )
 }
 
-export default function PaymentsClient() {
-  const [records, setRecords]         = useState([])
-  const [loading, setLoading]         = useState(true)
+export default function PaymentsClient({ initialRecords = [] }) {
+  const [records, setRecords]         = useState(initialRecords)
+  const [loading, setLoading]         = useState(false)
   const [filter, setFilter]           = useState('')
   const [sort, setSort]               = useState('date_desc')
   const [search, setSearch]           = useState('')
@@ -67,15 +67,6 @@ export default function PaymentsClient() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  useEffect(() => {
-    fetch('/api/admin/stripe-payments')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        setRecords(Array.isArray(data) ? data : [])
-      })
-      .catch(() => setRecords([]))
-      .finally(() => setLoading(false))
-  }, [])
 
   async function doRefund(r) {
     setRefundBusy(r.stripe_payment_intent_id)
