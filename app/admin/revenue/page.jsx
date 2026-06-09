@@ -1,4 +1,5 @@
 import { stripe } from '../../../lib/stripe.js'
+import { createAdminClient } from '../../../lib/supabase/admin'
 import RevenueClient from './RevenueClient'
 
 export const dynamic = 'force-dynamic'
@@ -33,6 +34,30 @@ export default async function RevenuePage() {
       })
       .sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
   }
+
+  // Also include manual (e-transfer) payments from DB
+  try {
+    const supabase = createAdminClient()
+    const stripeEmails = new Set(rows.map(r => r.email))
+    const { data: manualApps } = await supabase
+      .from('applications')
+      .select('name, email, stripe_amount_paid, stripe_payment_type, stripe_paid_at')
+      .eq('stripe_payment_status', 'paid')
+      .not('stripe_amount_paid', 'is', null)
+    for (const a of (manualApps || [])) {
+      const email = a.email?.toLowerCase().trim()
+      if (!email || stripeEmails.has(email)) continue
+      rows.push({
+        name:                   a.name || '—',
+        email,
+        stripe_amount_paid:     a.stripe_amount_paid,
+        stripe_amount_refunded: 0,
+        stripe_paid_at:         a.stripe_paid_at,
+        stripe_payment_type:    a.stripe_payment_type || '',
+      })
+    }
+    rows.sort((a, b) => new Date(b.stripe_paid_at || 0) - new Date(a.stripe_paid_at || 0))
+  } catch {}
 
   const totalGross    = rows.reduce((sum, r) => sum + (r.stripe_amount_paid || 0), 0) / 100
   const totalRefunded = rows.reduce((sum, r) => sum + (r.stripe_amount_refunded || 0), 0) / 100

@@ -53,6 +53,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const [sort, setSort]               = useState('date_desc')
   const [search, setSearch]           = useState('')
   const [isMobile, setIsMobile]       = useState(false)
+  const [showFailed, setShowFailed]   = useState(false)
   const [refunding, setRefunding]     = useState(null)   // id being confirmed
   const [refundBusy, setRefundBusy]   = useState(null)   // id being processed
   const [refundErr, setRefundErr]     = useState({})     // { [id]: msg }
@@ -100,12 +101,20 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const paidCount      = records.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).length
   const otherCount     = records.filter(r => r.stripe_payment_status && !['paid','partially_refunded'].includes(r.stripe_payment_status)).length
 
-  let filtered = records
+  const FAILED_STATUSES = ['failed', 'rejected']
+  let filtered = records.filter(r => !FAILED_STATUSES.includes(r.stripe_payment_status))
+  let failedRecords = records.filter(r => FAILED_STATUSES.includes(r.stripe_payment_status))
   if (filter) filtered = filtered.filter(r => r.stripe_payment_status === filter)
-  if (search) filtered = filtered.filter(r =>
-    (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (r.email || '').toLowerCase().includes(search.toLowerCase())
-  )
+  if (search) {
+    filtered = filtered.filter(r =>
+      (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.email || '').toLowerCase().includes(search.toLowerCase())
+    )
+    failedRecords = failedRecords.filter(r =>
+      (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.email || '').toLowerCase().includes(search.toLowerCase())
+    )
+  }
   filtered = [...filtered].sort((a, b) => {
     if (sort === 'date_desc')   return new Date(b.stripe_paid_at || 0) - new Date(a.stripe_paid_at || 0)
     if (sort === 'date_asc')    return new Date(a.stripe_paid_at || 0) - new Date(b.stripe_paid_at || 0)
@@ -293,6 +302,39 @@ export default function PaymentsClient({ initialRecords = [] }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Failed / Rejected — collapsed at bottom */}
+      {failedRecords.length > 0 && (
+        <div style={{ marginTop: '2rem' }}>
+          <button
+            onClick={() => setShowFailed(p => !p)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem 0', fontFamily: 'var(--font-inter),sans-serif' }}
+          >
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" style={{ transition: 'transform 0.2s', transform: showFailed ? 'rotate(0deg)' : 'rotate(-90deg)' }}><polyline points="6 9 12 15 18 9"/></svg>
+            <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb' }}>
+              Failed &amp; Rejected ({failedRecords.length})
+            </span>
+          </button>
+          {showFailed && (
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', marginTop: '0.5rem', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  {failedRecords.map((r, i) => (
+                    <tr key={r.stripe_payment_intent_id || i} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                      <td style={{ ...TD, color: '#aaa' }}>{r.name || '—'}</td>
+                      <td style={{ ...TD, fontSize: '12px', color: '#bbb' }}>{r.email}</td>
+                      <td style={{ ...TD, fontSize: '12px', color: '#bbb' }}>{r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}</td>
+                      <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
+                      <td style={{ ...TD, fontSize: '12px', color: '#bbb' }}>{fmtDate(r.stripe_paid_at)}</td>
+                      <td style={TD}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>
