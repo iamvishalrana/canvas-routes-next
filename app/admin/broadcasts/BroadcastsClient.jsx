@@ -310,13 +310,13 @@ export default function BroadcastsClient() {
                   Live Preview
                   {subject && <span style={{ marginLeft: '0.75rem', color: '#bbb', textTransform: 'none', letterSpacing: 0, fontSize: '11px', fontWeight: '400' }}>· {subject}</span>}
                 </div>
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-                  <div style={{ padding: '0.5rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', maxHeight: 'calc(100vh - 14rem)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={{ padding: '0.5rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf8', display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eee' }} />
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eee' }} />
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eee' }} />
                   </div>
-                  <div style={{ padding: '2rem 1.5rem', fontFamily: 'Arial, sans-serif', color: '#1a1a1a', minHeight: '320px' }}>
+                  <div style={{ padding: '2rem 1.5rem', fontFamily: 'Arial, sans-serif', color: '#1a1a1a', minHeight: '320px', overflowY: 'auto', flex: 1 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/canvas_routes_refined.png" width="150" style={{ display: 'block', marginBottom: '24px' }} alt="Canvas Routes" />
                     {body ? (

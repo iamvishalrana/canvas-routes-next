@@ -153,16 +153,27 @@ function BirthdaysWidget() {
         <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.2)', marginTop: '0.6rem' }}>No upcoming birthdays</div>
       ) : (
         <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', borderTop: '0.5px solid rgba(197,168,130,0.08)', paddingTop: '0.5rem' }}>
-          {birthdays.map((b, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {b.name}
-              </span>
-              <span style={{ fontSize: '10px', color: b.daysUntil === 0 ? '#c5a882' : 'rgba(245,241,236,0.3)', flexShrink: 0 }}>
-                {b.daysUntil === 0 ? '🎂' : `${MONTHS_SHORT[b.month - 1]} ${b.day}`}
-              </span>
-            </div>
-          ))}
+          {birthdays.map((b, i) => {
+            const href = b.email
+              ? `${b.type === 'member' ? '/admin/members' : '/admin/contacts'}?q=${encodeURIComponent(b.email)}`
+              : null
+            const row = (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {b.name}
+                </span>
+                <span style={{ fontSize: '10px', color: b.daysUntil === 0 ? '#c5a882' : 'rgba(245,241,236,0.3)', flexShrink: 0 }}>
+                  {b.daysUntil === 0 ? '🎂' : `${MONTHS_SHORT[b.month - 1]} ${b.day}`}
+                </span>
+              </div>
+            )
+            return href ? (
+              <Link key={i} href={href} style={{ textDecoration: 'none', borderRadius: '2px', padding: '1px 2px', margin: '0 -2px', transition: 'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(197,168,130,0.1)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >{row}</Link>
+            ) : <div key={i}>{row}</div>
+          })}
         </div>
       )}
     </div>

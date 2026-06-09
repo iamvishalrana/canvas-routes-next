@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   STATUS_OPTIONS, CAR_YEARS, MONTHS, DOB_YEARS, EMPTY_CAR,
   CANONICAL_EVENTS, MEMBER_ATTENDANCE_KEYS,
@@ -205,6 +205,7 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
 
 export default function MembersClient({ initialMembers, total, page, pageSize }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [members, setMembers] = useState(initialMembers)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -233,7 +234,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   const [appData, setAppData] = useState(null)
   const [appLookupEmail, setAppLookupEmail] = useState('')
   const [actionError, setActionError] = useState(null)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [expanded, setExpanded] = useState(null)
   const [selected, setSelected] = useState(new Set())
   const [sort, setSort] = useState('newest')

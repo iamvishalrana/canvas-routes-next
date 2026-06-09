@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   CAR_MAKES, MONTHS, DOB_YEARS, CANONICAL_EVENTS,
   normalizeEventName, parseCarMakeModel,
@@ -53,6 +54,7 @@ function VCardBtn({ onClick }) {
 // ─── Contacts Client ──────────────────────────────────────────────────────────
 
 export default function ContactsClient() {
+  const searchParams = useSearchParams()
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -62,7 +64,7 @@ export default function ContactsClient() {
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [sortContacts, setSortContacts] = useState('name_az')
   const [selected, setSelected] = useState(new Set())
   const [emailsCopied, setEmailsCopied] = useState(false)

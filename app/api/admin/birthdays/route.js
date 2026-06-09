@@ -13,8 +13,8 @@ export async function GET() {
   // Deduplicate by email — member record wins
   const seen = new Set()
   const all = []
-  for (const m of (members || [])) { seen.add(m.email?.toLowerCase()); all.push(m) }
-  for (const a of (applications || [])) { if (!seen.has(a.email?.toLowerCase())) all.push(a) }
+  for (const m of (members || [])) { seen.add(m.email?.toLowerCase()); all.push({ ...m, type: 'member' }) }
+  for (const a of (applications || [])) { if (!seen.has(a.email?.toLowerCase())) all.push({ ...a, type: 'application' }) }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -28,6 +28,8 @@ export async function GET() {
     if (daysUntil <= 30) {
       upcoming.push({
         name: m.name || m.email,
+        email: m.email,
+        type: m.type,
         month: m.dob_month,
         day: m.dob_day,
         daysUntil,
