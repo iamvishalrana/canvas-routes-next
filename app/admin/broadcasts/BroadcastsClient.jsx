@@ -140,6 +140,7 @@ export default function BroadcastsClient() {
       setSubject('')
       setBody('')
       setSpecificEmails('')
+      setAudience('canvas_routes_member')
       loadHistory()
     } catch {
       setError('Network error. Please try again.')

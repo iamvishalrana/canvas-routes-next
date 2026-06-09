@@ -95,9 +95,9 @@ export default function PaymentsClient({ initialRecords = [] }) {
     finally { setReceiptBusy(null) }
   }
 
-  const totalGross     = records.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).reduce((s, r) => s + (r.stripe_amount_paid || 0), 0)
-  const totalRefunded  = records.reduce((s, r) => s + (r.stripe_amount_refunded || 0), 0)
-  const totalCollected = totalGross - totalRefunded
+  const totalCollected = records
+    .filter(r => ['paid', 'partially_refunded'].includes(r.stripe_payment_status))
+    .reduce((s, r) => s + (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0), 0)
   const paidCount      = records.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).length
   const otherCount     = records.filter(r => r.stripe_payment_status && !['paid','partially_refunded'].includes(r.stripe_payment_status)).length
 
@@ -204,8 +204,6 @@ export default function PaymentsClient({ initialRecords = [] }) {
             <option value="paid">Paid</option>
             <option value="refunded">Refunded</option>
             <option value="disputed">Disputed</option>
-            <option value="failed">Failed</option>
-            <option value="pending">Pending</option>
           </select>
           <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -223,11 +221,13 @@ export default function PaymentsClient({ initialRecords = [] }) {
         <ExportButton
           filename="payments"
           title="Payments"
-          headers={['Name', 'Email', 'Amount (CAD)', 'Status', 'Type', 'Payment Intent', 'Date']}
+          headers={['Name', 'Email', 'Amount (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Status', 'Type', 'Payment Intent', 'Date']}
           rows={filtered.map(r => [
             r.name || '',
             r.email || '',
             r.stripe_amount_paid ? `$${(r.stripe_amount_paid / 100).toFixed(2)}` : '',
+            r.stripe_amount_refunded ? `$${(r.stripe_amount_refunded / 100).toFixed(2)}` : '',
+            `$${(((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100).toFixed(2)}`,
             r.stripe_payment_status || '',
             r.stripe_payment_type || '',
             r.stripe_payment_intent_id || '',

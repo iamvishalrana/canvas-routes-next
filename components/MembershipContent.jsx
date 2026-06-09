@@ -6,6 +6,7 @@ import SiteFooter from './SiteFooter'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { User, Mail, Phone, Car, Share2, Calendar } from 'lucide-react'
+import { captureException } from '../lib/sentry'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -133,11 +134,18 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
     })
     if (confirmError) { setError(confirmError.message); setPaying(false); return }
 
-    await fetch('/api/membership-waitlist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...formData, phone: formData.phone ? `${countryCode} ${formData.phone}`.trim() : '', termsAccepted: true, _hp: honeypot }),
-    }).catch(() => {})
+    try {
+      const waitlistRes = await fetch('/api/membership-waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, phone: formData.phone ? `${countryCode} ${formData.phone}`.trim() : '', termsAccepted: true, _hp: honeypot }),
+      })
+      if (!waitlistRes.ok) {
+        captureException(new Error(`membership-waitlist POST failed: ${waitlistRes.status}`))
+      }
+    } catch (waitlistErr) {
+      captureException(waitlistErr)
+    }
 
     onSuccess()
   }
@@ -301,7 +309,7 @@ export default function MembershipContent() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length) {
-      const order = ['name','email','phone','dob_month','dob_day','year','carMake','carModel','tier','source','termsAccepted']
+      const order = ['name','email','phone','dob_month','dob_day','year','carMake','carModel','tier','source','referredBy','termsAccepted']
       const first = order.find(f => errs[f])
       if (first) {
         const scrollTarget = first === 'dob_day' ? 'dob_month' : first
@@ -908,7 +916,7 @@ export default function MembershipContent() {
               </div>
 
               {form.source === 'Member referral' && (
-                <div style={{ marginBottom: '1.75rem' }}>
+                <div id="mem-field-referredBy" style={{ marginBottom: '1.75rem' }}>
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <User size={10} /><span>Referred by</span><span style={{ color: '#c5a882', textTransform: 'none', letterSpacing: 0, fontSize: '11px', marginLeft: '2px' }}>*</span>
                   </div>
