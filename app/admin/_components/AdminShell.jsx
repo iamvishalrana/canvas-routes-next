@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -74,60 +74,97 @@ function Chevron({ open }) {
 
 function BirthdaysWidget() {
   const [birthdays, setBirthdays] = useState(null)
-  const [open, setOpen] = useState(false)
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/birthdays')
-      if (res.ok) setBirthdays(await res.json())
-    } catch {}
+  useEffect(() => {
+    fetch('/api/admin/birthdays')
+      .then(r => r.ok ? r.json() : [])
+      .then(setBirthdays)
+      .catch(() => setBirthdays([]))
   }, [])
 
-  useEffect(() => { load() }, [load])
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const today = now.getDate()
+  const monthName = MONTHS_SHORT[month]
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstDow = new Date(year, month, 1).getDay()
 
-  const count = birthdays?.length ?? 0
+  // Build flat array of 42 slots (6 weeks × 7)
+  const slots = []
+  for (let i = 0; i < 42; i++) {
+    const day = i - firstDow + 1
+    slots.push(day >= 1 && day <= daysInMonth ? day : null)
+  }
+  // Trim trailing empty week
+  while (slots.length > 35 && slots.slice(-7).every(d => d === null)) slots.splice(-7)
+
+  const bdayDays = new Set((birthdays || []).filter(b => b.month - 1 === month).map(b => b.day))
 
   return (
-    <div style={{ borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0.75rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontWeight: '600' }}>Birthdays</span>
-          {count > 0 && (
-            <span style={{ fontSize: '9px', background: 'rgba(197,168,130,0.2)', color: '#c5a882', padding: '1px 6px', borderRadius: '999px' }}>{count}</span>
-          )}
-        </div>
-        <Chevron open={open} />
-      </button>
+    <div style={{ borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, padding: '0.85rem 1.1rem 1rem' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontWeight: '600' }}>
+          {monthName} Birthdays
+        </span>
+        {birthdays?.length > 0 && (
+          <span style={{ fontSize: '8px', background: 'rgba(197,168,130,0.18)', color: '#c5a882', padding: '1px 5px', borderRadius: '999px', marginLeft: 'auto', flexShrink: 0 }}>
+            {birthdays.length}
+          </span>
+        )}
+      </div>
 
-      {open && (
-        <div style={{ padding: '0 1.25rem 0.75rem' }}>
-          {birthdays === null ? (
-            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.25)' }}>Loading…</div>
-          ) : count === 0 ? (
-            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.25)' }}>No birthdays in the next 30 days</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              {birthdays.map((b, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '130px' }}>
-                    {b.name}
-                  </span>
-                  <span style={{ fontSize: '11px', color: b.daysUntil === 0 ? '#c5a882' : 'rgba(245,241,236,0.35)', flexShrink: 0, marginLeft: '0.5rem' }}>
-                    {b.daysUntil === 0 ? '🎂 Today' : `${MONTHS_SHORT[b.month - 1]} ${b.day}`}
-                  </span>
-                </div>
-              ))}
+      {/* Day-of-week row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '2px' }}>
+        {['S','M','T','W','T','F','S'].map((d, i) => (
+          <div key={i} style={{ textAlign: 'center', fontSize: '8px', color: 'rgba(245,241,236,0.18)', fontWeight: '500', paddingBottom: '2px' }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px' }}>
+        {slots.map((day, i) => {
+          if (!day) return <div key={i} />
+          const isToday = day === today
+          const hasBday = bdayDays.has(day)
+          return (
+            <div key={i} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '3px' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '17px', height: '17px', borderRadius: '50%', fontSize: '9px',
+                background: isToday ? '#c5a882' : 'transparent',
+                color: isToday ? '#0F1E14' : hasBday ? '#c5a882' : 'rgba(245,241,236,0.38)',
+                fontWeight: isToday ? '700' : hasBday ? '600' : '400',
+              }}>{day}</span>
+              {hasBday && !isToday && (
+                <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#c5a882', marginTop: '1px' }} />
+              )}
             </div>
-          )}
+          )
+        })}
+      </div>
+
+      {/* Upcoming list */}
+      {birthdays === null ? (
+        <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.2)', marginTop: '0.6rem' }}>Loading…</div>
+      ) : birthdays.length === 0 ? (
+        <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.2)', marginTop: '0.6rem' }}>No upcoming birthdays</div>
+      ) : (
+        <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', borderTop: '0.5px solid rgba(197,168,130,0.08)', paddingTop: '0.5rem' }}>
+          {birthdays.map((b, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {b.name}
+              </span>
+              <span style={{ fontSize: '10px', color: b.daysUntil === 0 ? '#c5a882' : 'rgba(245,241,236,0.3)', flexShrink: 0 }}>
+                {b.daysUntil === 0 ? '🎂' : `${MONTHS_SHORT[b.month - 1]} ${b.day}`}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
