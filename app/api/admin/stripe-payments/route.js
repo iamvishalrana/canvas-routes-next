@@ -103,18 +103,20 @@ export async function GET() {
   // Sync any records missing stripe fields back to the applications table
   const toSync = records.filter(r => r.email && r.stripe_payment_intent_id && !appsByEmail[r.email]?.stripe_payment_status)
   if (toSync.length > 0) {
-    await supabase.from('applications').upsert(
-      toSync.map(r => ({
-        email:                    r.email,
-        name:                     r.name || undefined,
-        stripe_payment_intent_id: r.stripe_payment_intent_id,
-        stripe_payment_status:    r.stripe_payment_status,
-        stripe_amount_paid:       r.stripe_amount_paid,
-        stripe_payment_type:      r.stripe_payment_type,
-        stripe_paid_at:           r.stripe_paid_at,
-      })),
-      { onConflict: 'email' }
-    ).catch(() => {})
+    try {
+      await supabase.from('applications').upsert(
+        toSync.map(r => ({
+          email:                    r.email,
+          name:                     r.name || undefined,
+          stripe_payment_intent_id: r.stripe_payment_intent_id,
+          stripe_payment_status:    r.stripe_payment_status,
+          stripe_amount_paid:       r.stripe_amount_paid,
+          stripe_payment_type:      r.stripe_payment_type,
+          stripe_paid_at:           r.stripe_paid_at,
+        })),
+        { onConflict: 'email' }
+      )
+    } catch {}
   }
 
   return Response.json(records)
