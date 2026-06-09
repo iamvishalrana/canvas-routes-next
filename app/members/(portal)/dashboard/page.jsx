@@ -12,7 +12,7 @@ const PARTNERS = [
   {
     name: 'Koko Bakehouse',
     instagram: 'koko.bakehouse',
-    description: 'Member discount — mention Canvas Routes in store.',
+    description: 'Member discount — mention Canvas Routes in your message.',
   },
 ]
 
