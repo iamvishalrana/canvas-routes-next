@@ -70,9 +70,6 @@ export default function ApplicationsClient() {
   const [deleteAppConfirm, setDeleteAppConfirm] = useState(null)
   const [deleteAppError, setDeleteAppError] = useState(null)
   const [showFilter, setShowFilter] = useState('all') // 'all' | 'unseen' | 'pending'
-  const [approving, setApproving]   = useState(null)
-  const [approveErr, setApproveErr] = useState({})
-  const [approveConfirm, setApproveConfirm] = useState(null)
   const [rejectConfirm, setRejectConfirm] = useState(null)
   const [rejecting, setRejecting]   = useState(null)
   const [rejectErr, setRejectErr]   = useState({})
@@ -203,18 +200,6 @@ export default function ApplicationsClient() {
     } else {
       setInviteStatus(p => ({ ...p, [app.id]: data.error || 'Failed.' }))
     }
-  }
-
-  async function handleApprove(a) {
-    setApproving(a.id)
-    setApproveErr(p => ({ ...p, [a.id]: null }))
-    try {
-      const res = await fetch(`/api/admin/applications/${a.id}/capture`, { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) { setApproveErr(p => ({ ...p, [a.id]: data.error || 'Approval failed.' })); return }
-      setApps(prev => prev.map(x => x.id === a.id ? { ...x, stripe_payment_status: 'paid' } : x))
-    } catch { setApproveErr(p => ({ ...p, [a.id]: 'Network error.' })) }
-    finally { setApproving(null) }
   }
 
   async function handleReject(a) {
@@ -465,27 +450,7 @@ export default function ApplicationsClient() {
                 }
                 const inviteCell = (
                   <div onClick={e => e.stopPropagation()}>
-                    {/* Pending approval — show Approve/Reject */}
-                    {a.stripe_payment_status === 'authorized' && approving !== a.id && rejecting !== a.id && rejectConfirm !== a.id && approveConfirm !== a.id && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                        <div style={{ display: 'flex', gap: '0.3rem' }}>
-                          <button onClick={() => setApproveConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 8px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>✓ Approve</button>
-                          <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(123,32,50,0.07)', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 8px', cursor: 'pointer', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>✗ Reject</button>
-                        </div>
-                        {approveErr[a.id] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{approveErr[a.id]}</div>}
-                        {rejectErr[a.id] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{rejectErr[a.id]}</div>}
-                      </div>
-                    )}
-                    {approveConfirm === a.id && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                        <div style={{ fontSize: '10px', color: '#3B6B2F' }}>Approve &amp; charge card?</div>
-                        <div style={{ display: 'flex', gap: '0.3rem' }}>
-                          <button onClick={() => { setApproveConfirm(null); handleApprove(a) }} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>Confirm</button>
-                          <button onClick={() => setApproveConfirm(null)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '3px 7px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Cancel</button>
-                        </div>
-                      </div>
-                    )}
-                    {(approving === a.id || rejecting === a.id) && (
+                    {rejecting === a.id && (
                       <span style={{ fontSize: '10px', color: '#bbb' }}>…</span>
                     )}
                     {rejectConfirm === a.id && (
@@ -500,8 +465,8 @@ export default function ApplicationsClient() {
                     {a.stripe_payment_status === 'rejected' && (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 9px', background: 'rgba(123,32,50,0.06)' }}>Rejected</span>
                     )}
-                    {/* Normal invite flow — only show for non-authorized/rejected */}
-                    {!['authorized', 'rejected'].includes(a.stripe_payment_status) && (
+                    {/* Normal invite flow */}
+                    {a.stripe_payment_status !== 'rejected' && (
                     a.is_member || inviteStatus[a.id] === 'success' ? (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
                     ) : appTierPick === a.id ? (

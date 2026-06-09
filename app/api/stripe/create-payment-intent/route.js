@@ -54,7 +54,6 @@ export async function POST(request) {
       },
       description: buildDescription(type, eventName),
       automatic_payment_methods: { enabled: true },
-      capture_method: 'manual',  // hold only — admin must approve before charging
     })
 
     return Response.json({ clientSecret: paymentIntent.client_secret })
