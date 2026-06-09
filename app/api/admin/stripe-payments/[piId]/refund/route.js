@@ -9,6 +9,10 @@ export async function POST(request, { params }) {
 
   const { piId } = await params
 
+  if (!piId || !piId.startsWith('pi_')) {
+    return Response.json({ error: 'Invalid payment intent ID.' }, { status: 400 })
+  }
+
   try {
     const refund = await stripe.refunds.create({ payment_intent: piId })
 

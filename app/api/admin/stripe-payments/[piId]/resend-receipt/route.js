@@ -16,6 +16,7 @@ export async function POST(request, { params }) {
     const chargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge.id
 
     await stripe.charges.update(chargeId, { receipt_email: email })
+    await stripe.charges.sendReceipt(chargeId)
 
     return Response.json({ ok: true })
   } catch (err) {

@@ -201,7 +201,7 @@ export async function POST(request) {
     return Response.json({ error: 'Please select your car make.' }, { status: 400 })
   if (!tier || !['Routes Member', 'Inner Circle'].includes(tier))
     return Response.json({ error: 'Please select a membership tier.' }, { status: 400 })
-  if (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other'].includes(source))
+  if (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other','Member referral'].includes(source))
     return Response.json({ error: 'Please select how you heard about us.' }, { status: 400 })
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })

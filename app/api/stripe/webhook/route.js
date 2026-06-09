@@ -132,7 +132,6 @@ export async function POST(request) {
       }
 
       case 'payment_intent.created':
-      case 'payment_intent.canceled':
       case 'charge.succeeded':
       case 'charge.updated':
         // Acknowledged — no action needed

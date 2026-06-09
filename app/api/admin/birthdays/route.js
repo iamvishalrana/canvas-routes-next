@@ -6,8 +6,8 @@ export async function GET() {
   const supabase = createAdminClient()
 
   const [{ data: members }, { data: applications }] = await Promise.all([
-    supabase.from('members').select('name, email, dob_month, dob_day').not('dob_month', 'is', null).not('dob_day', 'is', null),
-    supabase.from('applications').select('name, email, dob_month, dob_day').not('dob_month', 'is', null).not('dob_day', 'is', null),
+    supabase.from('members').select('name, email, dob_month, dob_day').not('dob_month', 'is', null).not('dob_day', 'is', null).not('email', 'is', null),
+    supabase.from('applications').select('name, email, dob_month, dob_day').not('dob_month', 'is', null).not('dob_day', 'is', null).not('email', 'is', null),
   ])
 
   // Deduplicate by email — member record wins
@@ -21,7 +21,7 @@ export async function GET() {
   const upcoming = []
 
   for (const m of all) {
-    if (!m.dob_month || !m.dob_day) continue
+    if (!m.dob_month || !m.dob_day || m.dob_day < 1 || m.dob_day > 31 || m.dob_month < 1 || m.dob_month > 12) continue
     let bday = new Date(today.getFullYear(), m.dob_month - 1, m.dob_day)
     if (bday < today) bday = new Date(today.getFullYear() + 1, m.dob_month - 1, m.dob_day)
     const daysUntil = Math.round((bday - today) / (1000 * 60 * 60 * 24))

@@ -25,7 +25,7 @@ export default async function RevenuePage() {
         const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
         return {
           name:                  pi.metadata.name || '—',
-          email:                 pi.metadata.email?.toLowerCase().trim() || '—',
+          email:                 pi.metadata.email?.toLowerCase().trim() || '',
           stripe_amount_paid:    pi.amount_received,
           stripe_amount_refunded: amountRefunded,
           stripe_paid_at:        new Date(pi.created * 1000).toISOString(),
@@ -46,7 +46,8 @@ export default async function RevenuePage() {
       .not('stripe_amount_paid', 'is', null)
     for (const a of (manualApps || [])) {
       const email = a.email?.toLowerCase().trim()
-      if (!email || stripeEmails.has(email)) continue
+      if (!email) continue
+      if (stripeEmails.has(email)) continue
       rows.push({
         name:                   a.name || '—',
         email,
