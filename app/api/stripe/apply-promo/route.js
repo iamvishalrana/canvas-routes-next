@@ -67,6 +67,11 @@ export async function POST(request) {
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
     const currentAmount = pi.amount
 
+    // Check minimum purchase requirement
+    if (promoCode.restrictions?.minimum_amount && currentAmount < promoCode.restrictions.minimum_amount) {
+      return Response.json({ error: `This code requires a minimum purchase of $${(promoCode.restrictions.minimum_amount / 100).toFixed(2)}.` }, { status: 400 })
+    }
+
     // Calculate discounted amount
     let discountedAmount
     if (coupon.percent_off) {

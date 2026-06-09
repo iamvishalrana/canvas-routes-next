@@ -134,7 +134,7 @@ function confirmHtml(firstName) {
 </html>`
 }
 
-function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel, tier, source, more }) {
+function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel, tier, source, more, referredBy }) {
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const dobStr = dob_month ? `${MONTHS_SHORT[parseInt(dob_month) - 1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : null
   const row = (label, value) => value
@@ -160,6 +160,7 @@ function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, ca
                 ${row('Car', h(carModel))}
                 ${row('Tier', h(tier))}
                 ${row('How they heard', h(source))}
+                ${row('Referred by', referredBy ? h(referredBy) : '')}
                 ${row('Message', more ? h(more) : '')}
               </table>
             </td>
@@ -188,7 +189,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { name, email, phone, dob_month, dob_day, dob_year, year, carMake, carModel, carPaint, tier, source, more, _hp } = body
+  const { name, email, phone, dob_month, dob_day, dob_year, year, carMake, carModel, carPaint, tier, source, more, referredBy, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -203,6 +204,9 @@ export async function POST(request) {
     return Response.json({ error: 'Please select a membership tier.' }, { status: 400 })
   if (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other','Member referral'].includes(source))
     return Response.json({ error: 'Please select how you heard about us.' }, { status: 400 })
+  if (!carModel?.trim()) return Response.json({ error: 'Please enter your car model.' }, { status: 400 })
+  if (!dob_month || !dob_day) return Response.json({ error: 'Date of birth is required.' }, { status: 400 })
+  if (phone && phone.replace(/\D/g, '').length < 6) return Response.json({ error: 'Please enter a valid phone number.' }, { status: 400 })
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })
   if (phone && phone.length > 30) return Response.json({ error: 'Phone too long.' }, { status: 400 })
@@ -237,6 +241,7 @@ export async function POST(request) {
       dob_year: dob_year ? parseInt(dob_year) : null,
       source: source || null,
       more: more || null,
+      referred_by: referredBy?.trim() || null,
       registrations,
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' })
@@ -278,7 +283,7 @@ export async function POST(request) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'info@canvasroutes.com',
         subject: `Membership Registration — ${tier} — ${name.trim()}`,
-        html: notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel: fullCar, tier, source, more }),
+        html: notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel: fullCar, tier, source, more, referredBy }),
         text: `Membership Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nDOB: ${dob_month ? `${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : '—'}\nYear: ${year}\nCar: ${fullCar}\nTier: ${tier}\nHow they heard: ${source}${more ? `\nMessage: ${more}` : ''}`,
       }),
     })
