@@ -450,9 +450,9 @@ export default function TestPage() {
 
   // Fetch all makes once on mount
   useEffect(() => {
-    fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetAllMakes?format=json')
+    fetch('/api/nhtsa/makes')
       .then(r => r.json())
-      .then(data => setAllMakes(data.Results.map(r => r.Make_Name)))
+      .then(data => setAllMakes(data.makes || []))
       .catch(() => {})
   }, [])
 
@@ -461,10 +461,10 @@ export default function TestPage() {
     if (!nMake || !nYear) { setNModels([]); return }
     setNLoadingModels(true)
     setNModel('')
-    fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(nMake)}/modelyear/${nYear}?format=json`)
+    fetch(`/api/nhtsa/models?make=${encodeURIComponent(nMake)}&year=${encodeURIComponent(nYear)}`)
       .then(r => r.json())
       .then(data => {
-        setNModels(data.Results.map(r => r.Model_Name).sort())
+        setNModels(data.models || [])
         setNLoadingModels(false)
       })
       .catch(() => setNLoadingModels(false))
