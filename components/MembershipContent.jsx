@@ -39,6 +39,7 @@ const TIER1 = [
   'Access to the Canvas Routes members community — a private group of drivers who chose their car with intention',
   'Priority access to all Cars & Coffee events',
   'Access to Canvas Routes road trips',
+  'Access to member-only events throughout the season',
   '10% discount on your next road trip when referring a member',
   '25% discount at one Canvas Routes partner',
   'Canvas Routes car perfume — refreshed every 2 months, picked up at any event throughout the season',
@@ -52,6 +53,7 @@ const TIER2_EXTRA = [
   '$70 off one of the next two road trips — your membership starts paying for itself from day one',
   'Exclusive discounts from all Canvas Routes partners — new partners added throughout the season',
   'Canvas Routes merchandise baseball cap',
+  'Invitation to the Inner Circle end-of-season closing event — members only, not open to the public',
 ]
 
 const PERKS = [
