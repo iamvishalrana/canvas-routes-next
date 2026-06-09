@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import {
   STATUS_OPTIONS, CAR_YEARS, MONTHS, DOB_YEARS, EMPTY_CAR,
   CANONICAL_EVENTS, MEMBER_ATTENDANCE_KEYS,
+  parseCarMakeModel,
   inp, sel,
   L, Badge, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
   AdminNotesPanel, Pagination,
@@ -251,6 +252,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
     if (!email?.trim() || !email.includes('@')) { setAppData(null); return }
     const res = await fetch(`/api/admin/applications?email=${encodeURIComponent(email.trim())}`)
     const data = await res.json()
+    if (!res.ok) { setAppData(null); return }
     setAppData(data)
     if (data?.name) setInviteForm(p => ({ ...p, name: p.name || data.name }))
   }
@@ -358,7 +360,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       if (appData.phone) payload.phone = appData.phone
       if (appData.instagram) payload.instagram = appData.instagram
       if (appData.car_year || appData.car_model) {
-        payload.cars = [{ year: appData.car_year || '', make: '', model: appData.car_model || '', license_plate: '' }]
+        const { make: appMake } = parseCarMakeModel(appData.car_model)
+        payload.cars = [{ year: appData.car_year || '', make: appMake || '', model: appData.car_model || '', license_plate: '', paint: appData.car_paint || '' }]
       }
     }
     const res = await fetch('/api/admin/members', {
@@ -452,7 +455,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
         <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr 160px 160px auto', gap: '0.75rem', alignItems: 'end' }}>
           <div>
             <L>Full Name</L>
-            <input style={inp} value={inviteForm.name} onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))} placeholder="Name" />
+            <input style={inp} value={inviteForm.name} onChange={e => { setInviteForm(p => ({ ...p, name: e.target.value })); setInviteConfirm(false) }} placeholder="Name" />
           </div>
           <div>
             <L>Email *</L>
@@ -463,12 +466,12 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
           </div>
           <div>
             <L>Initial Status</L>
-            <SelectWrap value={inviteForm.membership_status} onChange={e => setInviteForm(p => ({ ...p, membership_status: e.target.value }))} options={STATUS_OPTIONS} />
+            <SelectWrap value={inviteForm.membership_status} onChange={e => { setInviteForm(p => ({ ...p, membership_status: e.target.value })); setInviteConfirm(false) }} options={STATUS_OPTIONS} />
           </div>
           <div>
             <L>Tier</L>
             <div style={{ position: 'relative' }}>
-              <select style={sel} value={inviteForm.tier} onChange={e => setInviteForm(p => ({ ...p, tier: e.target.value }))}>
+              <select style={sel} value={inviteForm.tier} onChange={e => { setInviteForm(p => ({ ...p, tier: e.target.value })); setInviteConfirm(false) }}>
                 <option value="routes_member">Routes Member</option>
                 <option value="inner_circle">Inner Circle</option>
               </select>
@@ -768,7 +771,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                           )
                           return (
                             <button
-                              onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') setResendConfirm(m.id) }}
+                              onClick={e => { e.stopPropagation(); if (!rs || (typeof rs === 'string' && rs !== 'sending' && rs !== 'sent')) setResendConfirm(m.id) }}
                               disabled={rs === 'sending' || rs === 'sent'}
                               style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
                               {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}
@@ -830,7 +833,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                             )
                             return (
                               <button
-                                onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') setResendConfirm(m.id) }}
+                                onClick={e => { e.stopPropagation(); if (!rs || (typeof rs === 'string' && rs !== 'sending' && rs !== 'sent')) setResendConfirm(m.id) }}
                                 disabled={rs === 'sending' || rs === 'sent'}
                                 style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
                                 {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}

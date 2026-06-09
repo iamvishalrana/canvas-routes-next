@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
@@ -45,6 +46,7 @@ function AppAdminNotes({ appId, initialNotes, onSaved }) {
 const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
 export default function ApplicationsClient() {
+  const searchParams = useSearchParams()
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -53,7 +55,7 @@ export default function ApplicationsClient() {
   }, [])
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [inviting, setInviting] = useState(null)
   const [inviteStatus, setInviteStatus] = useState({})
   const [expanded, setExpanded] = useState(null)
@@ -83,8 +85,9 @@ export default function ApplicationsClient() {
   const loadApps = useCallback(() => {
     setLoading(true)
     fetch('/api/admin/applications')
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(data => { setApps(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => { setApps([]); setLoading(false) })
   }, [])
 
   useEffect(() => { loadApps() }, [loadApps])

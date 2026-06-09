@@ -139,6 +139,7 @@ export default function ContactsClient() {
     setLoading(true)
     try {
       const res = await fetch('/api/admin/contacts')
+      if (!res.ok) { setContacts([]); setLoading(false); return }
       const data = await res.json().catch(() => [])
       setContacts(Array.isArray(data) ? data : [])
     } catch {
