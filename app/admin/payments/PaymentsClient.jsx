@@ -35,7 +35,8 @@ function StatusChip({ status }) {
 
 const PI_BASE = 'https://dashboard.stripe.com/payments/'
 
-function PiLink({ id }) {
+function PiLink({ id, manual }) {
+  if (manual) return <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 7px' }}>E-transfer</span>
   if (!id) return <span style={{ color: '#ccc' }}>—</span>
   return (
     <a href={PI_BASE + id} target="_blank" rel="noreferrer"
@@ -256,7 +257,7 @@ export default function PaymentsClient() {
                 </div>
               </div>
               <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.4rem' }}>{r.email}</div>
-              <div style={{ marginBottom: '0.5rem' }}><PiLink id={r.stripe_payment_intent_id} /></div>
+              <div style={{ marginBottom: '0.5rem' }}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                 <StatusChip status={r.stripe_payment_status} />
                 {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{r.stripe_payment_type}</span>}
@@ -295,7 +296,7 @@ export default function PaymentsClient() {
                   <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type || '—'}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtDate(r.stripe_paid_at)}</td>
-                  <td style={TD}><PiLink id={r.stripe_payment_intent_id} /></td>
+                  <td style={TD}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
                   <td style={{ ...TD, whiteSpace: 'nowrap' }}><Actions r={r} /></td>
                 </tr>
               ))}

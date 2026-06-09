@@ -72,6 +72,31 @@ export async function GET() {
     }
   })
 
+  // Also pull manual (non-Stripe) payments from DB — e-transfers, cash, etc.
+  const stripeEmails = new Set(records.map(r => r.email).filter(Boolean))
+  const { data: manualApps } = await supabase
+    .from('applications')
+    .select('id, name, email, stripe_payment_status, stripe_amount_paid, stripe_amount_refunded, stripe_payment_type, stripe_paid_at, stripe_payment_intent_id')
+    .not('stripe_payment_status', 'is', null)
+    .not('stripe_amount_paid', 'is', null)
+  for (const a of (manualApps || [])) {
+    const email = a.email?.toLowerCase().trim()
+    // Skip if already covered by Stripe
+    if (!email || stripeEmails.has(email)) continue
+    records.push({
+      id:                     a.id,
+      stripe_payment_intent_id: a.stripe_payment_intent_id || null,
+      name:                   a.name || '',
+      email,
+      stripe_amount_paid:     a.stripe_amount_paid,
+      stripe_amount_refunded: a.stripe_amount_refunded || 0,
+      stripe_payment_status:  a.stripe_payment_status,
+      stripe_payment_type:    a.stripe_payment_type || '',
+      stripe_paid_at:         a.stripe_paid_at,
+      manual:                 true,
+    })
+  }
+
   records.sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
 
   // Sync any records missing stripe fields back to the applications table
