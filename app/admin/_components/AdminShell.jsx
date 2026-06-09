@@ -104,18 +104,16 @@ function BirthdaysWidget() {
   return (
     <div style={{ borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, padding: '0.85rem 1.1rem 1rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.6rem' }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '0.4rem' }}>
           <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
         <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontWeight: '600' }}>
-          {monthName} Birthdays
+          Birthdays
         </span>
-        {birthdays?.length > 0 && (
-          <span style={{ fontSize: '8px', background: 'rgba(197,168,130,0.18)', color: '#c5a882', padding: '1px 5px', borderRadius: '999px', marginLeft: 'auto', flexShrink: 0 }}>
-            {birthdays.length}
-          </span>
-        )}
+        <span style={{ marginLeft: 'auto', fontSize: '9px', color: 'rgba(197,168,130,0.45)', letterSpacing: '0.05em' }}>
+          {monthName} {year}
+        </span>
       </div>
 
       {/* Day-of-week row */}
@@ -308,12 +306,12 @@ export default function AdminShell({ children }) {
         minHeight: '100vh', position: 'sticky', top: 0, height: '100vh',
         overflow: 'hidden',
       }}>
-        {/* Logo sent to back — large, absolute, no layout space */}
-        <Link href="/" style={{ position: 'absolute', top: '0.5rem', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 0, pointerEvents: 'none' }}>
-          <Image src="/white-outline.png" alt="Canvas Routes" width={280} height={186} style={{ width: '170px', height: 'auto', opacity: 0.13 }} />
-        </Link>
-        {/* Nav floats in front */}
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
+          <Link href="/" style={{ display: 'flex' }}>
+            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '80px', height: 'auto', opacity: 0.9 }} />
+          </Link>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           <NavContent pathname={pathname} onNavClick={undefined} />
         </div>
       </aside>

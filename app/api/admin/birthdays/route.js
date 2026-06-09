@@ -5,17 +5,22 @@ export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
 
-  const { data: members } = await supabase
-    .from('members')
-    .select('name, email, dob_month, dob_day')
-    .not('dob_month', 'is', null)
-    .not('dob_day', 'is', null)
+  const [{ data: members }, { data: applications }] = await Promise.all([
+    supabase.from('members').select('name, email, dob_month, dob_day').not('dob_month', 'is', null).not('dob_day', 'is', null),
+    supabase.from('applications').select('name, email, dob_month, dob_day').not('dob_month', 'is', null).not('dob_day', 'is', null),
+  ])
+
+  // Deduplicate by email — member record wins
+  const seen = new Set()
+  const all = []
+  for (const m of (members || [])) { seen.add(m.email?.toLowerCase()); all.push(m) }
+  for (const a of (applications || [])) { if (!seen.has(a.email?.toLowerCase())) all.push(a) }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const upcoming = []
 
-  for (const m of (members || [])) {
+  for (const m of all) {
     if (!m.dob_month || !m.dob_day) continue
     let bday = new Date(today.getFullYear(), m.dob_month - 1, m.dob_day)
     if (bday < today) bday = new Date(today.getFullYear() + 1, m.dob_month - 1, m.dob_day)
