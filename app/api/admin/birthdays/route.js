@@ -18,25 +18,24 @@ export async function GET() {
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const upcoming = []
+  const birthdays = []
 
   for (const m of all) {
     if (!m.dob_month || !m.dob_day || m.dob_day < 1 || m.dob_day > 31 || m.dob_month < 1 || m.dob_month > 12) continue
     let bday = new Date(today.getFullYear(), m.dob_month - 1, m.dob_day)
     if (bday < today) bday = new Date(today.getFullYear() + 1, m.dob_month - 1, m.dob_day)
     const daysUntil = Math.round((bday - today) / (1000 * 60 * 60 * 24))
-    if (daysUntil <= 30) {
-      upcoming.push({
-        name: m.name || m.email,
-        email: m.email,
-        type: m.type,
-        month: m.dob_month,
-        day: m.dob_day,
-        daysUntil,
-      })
-    }
+    birthdays.push({
+      name: m.name || m.email,
+      email: m.email,
+      type: m.type,
+      month: m.dob_month,
+      day: m.dob_day,
+      daysUntil,
+    })
   }
 
-  upcoming.sort((a, b) => a.daysUntil - b.daysUntil)
-  return Response.json(upcoming)
+  // Sort by month/day so any month view is already ordered
+  birthdays.sort((a, b) => a.month !== b.month ? a.month - b.month : a.day - b.day)
+  return Response.json(birthdays)
 }

@@ -74,6 +74,7 @@ function Chevron({ open }) {
 
 function BirthdaysWidget() {
   const [birthdays, setBirthdays] = useState(null)
+  const [offset, setOffset] = useState(0) // months from today
 
   useEffect(() => {
     fetch('/api/admin/birthdays')
@@ -83,9 +84,10 @@ function BirthdaysWidget() {
   }, [])
 
   const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth()
-  const today = now.getDate()
+  const viewDate = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const today = offset === 0 ? now.getDate() : null
   const monthName = MONTHS_SHORT[month]
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const firstDow = new Date(year, month, 1).getDay()
@@ -100,6 +102,7 @@ function BirthdaysWidget() {
   while (slots.length > 35 && slots.slice(-7).every(d => d === null)) slots.splice(-7)
 
   const bdayDays = new Set((birthdays || []).filter(b => b.month - 1 === month).map(b => b.day))
+  const monthBirthdays = (birthdays || []).filter(b => b.month - 1 === month).sort((a, b) => a.day - b.day)
 
   return (
     <div style={{ borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, padding: '0.85rem 1.1rem 1rem' }}>
@@ -111,9 +114,17 @@ function BirthdaysWidget() {
         <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontWeight: '600' }}>
           Birthdays
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: '9px', color: 'rgba(197,168,130,0.45)', letterSpacing: '0.05em' }}>
-          {monthName} {year}
-        </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button onClick={() => setOffset(o => o - 1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(197,168,130,0.45)', padding: '2px 3px', lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span style={{ fontSize: '9px', color: 'rgba(197,168,130,0.45)', letterSpacing: '0.05em', minWidth: '48px', textAlign: 'center' }}>
+            {monthName} {year}
+          </span>
+          <button onClick={() => setOffset(o => o + 1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(197,168,130,0.45)', padding: '2px 3px', lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
       </div>
 
       {/* Day-of-week row */}
@@ -127,7 +138,7 @@ function BirthdaysWidget() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px' }}>
         {slots.map((day, i) => {
           if (!day) return <div key={i} />
-          const isToday = day === today
+          const isToday = today !== null && day === today
           const hasBday = bdayDays.has(day)
           return (
             <div key={i} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '3px' }}>
@@ -146,14 +157,14 @@ function BirthdaysWidget() {
         })}
       </div>
 
-      {/* Upcoming list */}
+      {/* Month birthday list */}
       {birthdays === null ? (
         <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.2)', marginTop: '0.6rem' }}>Loading…</div>
-      ) : birthdays.length === 0 ? (
-        <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.2)', marginTop: '0.6rem' }}>No upcoming birthdays</div>
+      ) : monthBirthdays.length === 0 ? (
+        <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.2)', marginTop: '0.6rem' }}>No birthdays in {monthName}</div>
       ) : (
         <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', borderTop: '0.5px solid rgba(197,168,130,0.08)', paddingTop: '0.5rem' }}>
-          {birthdays.map((b, i) => {
+          {monthBirthdays.map((b, i) => {
             const href = b.email
               ? `${b.type === 'member' ? '/admin/members' : '/admin/applications'}?q=${encodeURIComponent(b.email)}`
               : null
@@ -163,7 +174,7 @@ function BirthdaysWidget() {
                   {b.name}
                 </span>
                 <span style={{ fontSize: '10px', color: b.daysUntil === 0 ? '#c5a882' : 'rgba(245,241,236,0.3)', flexShrink: 0 }}>
-                  {b.daysUntil === 0 ? '🎂' : `${MONTHS_SHORT[b.month - 1]} ${b.day}`}
+                  {b.daysUntil === 0 ? '🎂' : b.day}
                 </span>
               </div>
             )
