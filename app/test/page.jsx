@@ -53,6 +53,18 @@ export default function TestPage() {
   const headlight2Ref     = useRef(null)
   const flashTimer        = useRef(null)
 
+  // NHTSA demo
+  const CURRENT_YEAR = new Date().getFullYear()
+  const [nYear, setNYear] = useState(String(CURRENT_YEAR))
+  const [allMakes, setAllMakes] = useState([])
+  const [nMakeQuery, setNMakeQuery] = useState('')
+  const [nMake, setNMake] = useState('')
+  const [nMakeOpen, setNMakeOpen] = useState(false)
+  const [nModels, setNModels] = useState([])
+  const [nModel, setNModel] = useState('')
+  const [nLoadingModels, setNLoadingModels] = useState(false)
+  const nMakeInputRef = useRef(null)
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
@@ -436,6 +448,41 @@ export default function TestPage() {
     }
   }, [])
 
+  // Fetch all makes once on mount
+  useEffect(() => {
+    fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetAllMakes?format=json')
+      .then(r => r.json())
+      .then(data => setAllMakes(data.Results.map(r => r.Make_Name)))
+      .catch(() => {})
+  }, [])
+
+  // Fetch models when make + year are both set
+  useEffect(() => {
+    if (!nMake || !nYear) { setNModels([]); return }
+    setNLoadingModels(true)
+    setNModel('')
+    fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(nMake)}/modelyear/${nYear}?format=json`)
+      .then(r => r.json())
+      .then(data => {
+        setNModels(data.Results.map(r => r.Model_Name).sort())
+        setNLoadingModels(false)
+      })
+      .catch(() => setNLoadingModels(false))
+  }, [nMake, nYear])
+
+  // Close make dropdown on outside click
+  useEffect(() => {
+    function onDown(e) {
+      if (nMakeInputRef.current && !nMakeInputRef.current.contains(e.target)) setNMakeOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [])
+
+  const nFilteredMakes = nMakeQuery.length > 0
+    ? allMakes.filter(m => m.toLowerCase().startsWith(nMakeQuery.toLowerCase())).slice(0, 10)
+    : []
+
   const phaseLabel = {
     idle: '—', 'driving-in': 'Arriving…', 'person-exit': 'Getting out…',
     painting: 'Painting…', 'person-enter': 'Getting back in…',
@@ -652,7 +699,147 @@ export default function TestPage() {
             <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.45)', lineHeight: 1.9, maxWidth: '320px' }}>We plan every route to avoid highways. Winding two-lane roads, elevation changes and long sweeping corners.</p>
           </div>
         </section>
-        <section style={{ background: '#F5F1EC', padding: '6rem 1.5rem', textAlign: 'center' }}>
+        {/* ── NHTSA vehicle picker demo ──────────────────────────────────────── */}
+        <section style={{ background: '#F5F1EC', padding: '6rem 1.5rem 5rem' }}>
+          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+
+            <div style={{ marginBottom: '2.5rem' }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.34em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.8rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                NHTSA Vehicle API — Demo
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, marginBottom: '0.75rem' }}>
+                Pick your car, <span style={{ fontStyle: 'italic' }}>properly.</span>
+              </h2>
+              <p style={{ fontSize: '13px', color: '#999', lineHeight: 1.75, fontFamily: 'var(--font-inter),sans-serif' }}>
+                Real make &amp; model data from the U.S. NHTSA database. No guessing, no typos.
+              </p>
+            </div>
+
+            <style>{`
+              .nhtsa-label {
+                display: block;
+                font-size: 8px;
+                letter-spacing: 0.28em;
+                text-transform: uppercase;
+                color: #c5a882;
+                font-family: var(--font-inter), sans-serif;
+                margin-bottom: 0.5rem;
+              }
+              .nhtsa-input {
+                width: 100%;
+                background: #fff;
+                border: 0.5px solid rgba(0,0,0,0.12);
+                padding: 0.75rem 1rem;
+                font-size: 14px;
+                color: #1a1a1a;
+                font-family: var(--font-inter), sans-serif;
+                outline: none;
+                appearance: none;
+              }
+              .nhtsa-input:focus { border-color: rgba(197,168,130,0.6); }
+              .nhtsa-input:disabled { color: #bbb; background: #fafafa; }
+              .nhtsa-drop-item {
+                padding: 0.6rem 1rem;
+                font-size: 13px;
+                color: #333;
+                cursor: pointer;
+                font-family: var(--font-inter), sans-serif;
+                letter-spacing: 0.01em;
+              }
+              .nhtsa-drop-item:hover { background: rgba(197,168,130,0.08); color: #1a1a1a; }
+            `}</style>
+
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', padding: '2.25rem' }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 2fr', gap: '1.25rem', marginBottom: '1.75rem' }}>
+
+                {/* Year */}
+                <div>
+                  <label className="nhtsa-label">Year</label>
+                  <select
+                    className="nhtsa-input"
+                    value={nYear}
+                    onChange={e => { setNYear(e.target.value); setNMake(''); setNMakeQuery(''); setNModels([]); setNModel('') }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {Array.from({ length: CURRENT_YEAR - 1969 }, (_, i) => CURRENT_YEAR - i).map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Make — searchable */}
+                <div style={{ position: 'relative' }} ref={nMakeInputRef}>
+                  <label className="nhtsa-label">Make</label>
+                  <input
+                    className="nhtsa-input"
+                    type="text"
+                    placeholder={allMakes.length ? 'Search…' : 'Loading…'}
+                    value={nMakeQuery}
+                    onChange={e => { setNMakeQuery(e.target.value); setNMakeOpen(true); if (!e.target.value) { setNMake(''); setNModels([]); setNModel('') } }}
+                    onFocus={() => { if (nMakeQuery) setNMakeOpen(true) }}
+                    autoComplete="off"
+                  />
+                  {nMakeOpen && nFilteredMakes.length > 0 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderTop: 'none', zIndex: 20, maxHeight: '220px', overflowY: 'auto', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+                      {nFilteredMakes.map(m => (
+                        <div
+                          key={m}
+                          className="nhtsa-drop-item"
+                          onMouseDown={() => { setNMake(m); setNMakeQuery(m); setNMakeOpen(false) }}
+                        >
+                          {m}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Model */}
+                <div>
+                  <label className="nhtsa-label">Model</label>
+                  <select
+                    className="nhtsa-input"
+                    value={nModel}
+                    onChange={e => setNModel(e.target.value)}
+                    disabled={!nMake || nLoadingModels}
+                    style={{ cursor: nMake && !nLoadingModels ? 'pointer' : 'default' }}
+                  >
+                    <option value="">{nLoadingModels ? 'Loading…' : !nMake ? 'Select make first' : 'Select model'}</option>
+                    {nModels.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.2)', marginBottom: '1.75rem' }} />
+
+              {/* Result */}
+              {nMake && nModel ? (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '9px', letterSpacing: '0.26em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>Selected</span>
+                  <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.9rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>
+                    {nYear} {nMake} {nModel}
+                  </span>
+                </div>
+              ) : (
+                <p style={{ fontSize: '12px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>
+                  {!nMake ? 'Search for a make to get started.' : 'Choose a model to complete the selection.'}
+                </p>
+              )}
+
+            </div>
+
+            {nMake && nModels.length > 0 && (
+              <p style={{ marginTop: '1rem', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.01em' }}>
+                {nModels.length} model{nModels.length !== 1 ? 's' : ''} available for {nYear} {nMake}
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section style={{ background: '#F5F1EC', padding: '6rem 1.5rem', textAlign: 'center', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
           <div style={{ maxWidth: '480px', margin: '0 auto' }}>
             <div style={{ fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>You made it</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, marginBottom: '1.25rem' }}>Normal content lives here.</div>
