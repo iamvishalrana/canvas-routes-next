@@ -37,11 +37,16 @@ export async function GET() {
     const email = pi.metadata.email?.toLowerCase().trim() || ''
     const app = appsByEmail[email] || null
 
-    // Determine normalized status
+    // Determine normalized status and refund amount
     let stripe_payment_status
     const charge = pi.latest_charge
-    if (charge && typeof charge === 'object' && charge.refunded) {
+    const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
+    const fullyRefunded  = (charge && typeof charge === 'object') ? charge.refunded : false
+
+    if (fullyRefunded) {
       stripe_payment_status = 'refunded'
+    } else if (amountRefunded > 0) {
+      stripe_payment_status = 'partially_refunded'
     } else if (pi.status === 'succeeded') {
       stripe_payment_status = 'paid'
     } else if (pi.status === 'requires_capture') {
@@ -59,7 +64,8 @@ export async function GET() {
       stripe_payment_intent_id: pi.id,
       name: pi.metadata.name || '',
       email,
-      stripe_amount_paid: pi.status === 'succeeded' ? pi.amount_received : pi.amount,
+      stripe_amount_paid:     pi.status === 'succeeded' ? pi.amount_received : pi.amount,
+      stripe_amount_refunded: amountRefunded,
       stripe_payment_status,
       stripe_payment_type: pi.metadata.type || '',
       stripe_paid_at: new Date(pi.created * 1000).toISOString(),

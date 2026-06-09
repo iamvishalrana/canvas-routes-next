@@ -16,11 +16,12 @@ function fmtDate(iso) {
 }
 
 const STATUS_COLORS = {
-  paid:      { bg: 'rgba(59,107,47,0.1)',    text: '#3B6B2F', border: 'rgba(59,107,47,0.3)' },
-  refunded:  { bg: 'rgba(80,80,180,0.08)',   text: '#4040aa', border: 'rgba(80,80,180,0.3)' },
-  disputed:  { bg: 'rgba(180,60,0,0.1)',     text: '#b33c00', border: 'rgba(180,60,0,0.3)' },
-  failed:    { bg: 'rgba(123,32,50,0.1)',    text: '#7B2032', border: 'rgba(123,32,50,0.3)' },
-  pending:   { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
+  paid:                { bg: 'rgba(59,107,47,0.1)',    text: '#3B6B2F', border: 'rgba(59,107,47,0.3)' },
+  refunded:            { bg: 'rgba(80,80,180,0.08)',   text: '#4040aa', border: 'rgba(80,80,180,0.3)' },
+  partially_refunded:  { bg: 'rgba(197,168,130,0.12)', text: '#8A6535', border: 'rgba(197,168,130,0.4)' },
+  disputed:            { bg: 'rgba(180,60,0,0.1)',     text: '#b33c00', border: 'rgba(180,60,0,0.3)' },
+  failed:              { bg: 'rgba(123,32,50,0.1)',    text: '#7B2032', border: 'rgba(123,32,50,0.3)' },
+  pending:             { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
 }
 
 function StatusChip({ status }) {
@@ -101,9 +102,11 @@ export default function PaymentsClient() {
     finally { setReceiptBusy(null) }
   }
 
-  const totalCollected = records.filter(r => r.stripe_payment_status === 'paid').reduce((s, r) => s + (r.stripe_amount_paid || 0), 0)
-  const paidCount      = records.filter(r => r.stripe_payment_status === 'paid').length
-  const otherCount     = records.filter(r => r.stripe_payment_status && r.stripe_payment_status !== 'paid').length
+  const totalGross     = records.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).reduce((s, r) => s + (r.stripe_amount_paid || 0), 0)
+  const totalRefunded  = records.reduce((s, r) => s + (r.stripe_amount_refunded || 0), 0)
+  const totalCollected = totalGross - totalRefunded
+  const paidCount      = records.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).length
+  const otherCount     = records.filter(r => r.stripe_payment_status && !['paid','partially_refunded'].includes(r.stripe_payment_status)).length
 
   let filtered = records
   if (filter) filtered = filtered.filter(r => r.stripe_payment_status === filter)
@@ -243,8 +246,13 @@ export default function PaymentsClient() {
             <div key={r.stripe_payment_intent_id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
                 <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{r.name || '—'}</div>
-                <div style={{ fontWeight: '500', color: r.stripe_payment_status === 'paid' ? '#3B6B2F' : '#1a1a1a' }}>
-                  {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
+                <div>
+                  <div style={{ fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
+                    {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
+                  </div>
+                  {r.stripe_amount_refunded > 0 && (
+                    <div style={{ fontSize: '11px', color: '#4040aa' }}>−{fmt(r.stripe_amount_refunded)} refunded</div>
+                  )}
                 </div>
               </div>
               <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.4rem' }}>{r.email}</div>
@@ -278,8 +286,11 @@ export default function PaymentsClient() {
                 <tr key={r.stripe_payment_intent_id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={TD}>{r.name || <span style={{ color: '#ccc' }}>—</span>}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email}</td>
-                  <td style={{ ...TD, fontWeight: '500', color: r.stripe_payment_status === 'paid' ? '#3B6B2F' : '#1a1a1a' }}>
+                  <td style={{ ...TD, fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
                     {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
+                    {r.stripe_amount_refunded > 0 && (
+                      <div style={{ fontSize: '10px', color: '#4040aa', fontWeight: '400' }}>−{fmt(r.stripe_amount_refunded)}</div>
+                    )}
                   </td>
                   <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type || '—'}</td>
