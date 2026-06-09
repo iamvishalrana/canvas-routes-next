@@ -376,11 +376,6 @@ export default function ApplicationsClient() {
             {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
           </div>
           {apps.length > 0 && (
-            <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Export CSV
-            </button>
-          )}
-          {apps.length > 0 && (
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>

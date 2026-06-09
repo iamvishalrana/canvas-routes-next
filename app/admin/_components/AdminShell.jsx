@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -51,8 +51,10 @@ const SECTIONS = [
 ]
 
 const COLLAPSIBLE_IDS = SECTIONS.filter(s => s.label).map(s => s.id)
+const ALL_COLLAPSED = Object.fromEntries(COLLAPSIBLE_IDS.map(id => [id, true]))
 
-// Collapse-all icon
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 function CollapseAllIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -62,26 +64,90 @@ function CollapseAllIcon() {
   )
 }
 
-// Chevron for section header
 function Chevron({ open }) {
   return (
-    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', flexShrink: 0 }}>
       <polyline points="6 9 12 15 18 9"/>
     </svg>
   )
 }
 
+function BirthdaysWidget() {
+  const [birthdays, setBirthdays] = useState(null)
+  const [open, setOpen] = useState(false)
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/birthdays')
+      if (res.ok) setBirthdays(await res.json())
+    } catch {}
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const count = birthdays?.length ?? 0
+
+  return (
+    <div style={{ borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0.75rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontWeight: '600' }}>Birthdays</span>
+          {count > 0 && (
+            <span style={{ fontSize: '9px', background: 'rgba(197,168,130,0.2)', color: '#c5a882', padding: '1px 6px', borderRadius: '999px' }}>{count}</span>
+          )}
+        </div>
+        <Chevron open={open} />
+      </button>
+
+      {open && (
+        <div style={{ padding: '0 1.25rem 0.75rem' }}>
+          {birthdays === null ? (
+            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.25)' }}>Loading…</div>
+          ) : count === 0 ? (
+            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.25)' }}>No birthdays in the next 30 days</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {birthdays.map((b, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '130px' }}>
+                    {b.name}
+                  </span>
+                  <span style={{ fontSize: '11px', color: b.daysUntil === 0 ? '#c5a882' : 'rgba(245,241,236,0.35)', flexShrink: 0, marginLeft: '0.5rem' }}>
+                    {b.daysUntil === 0 ? '🎂 Today' : `${MONTHS_SHORT[b.month - 1]} ${b.day}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function NavContent({ pathname, onNavClick }) {
-  const [collapsed, setCollapsed] = useState({})
+  const [collapsed, setCollapsed] = useState(ALL_COLLAPSED)
 
   function toggle(id) { setCollapsed(p => ({ ...p, [id]: !p[id] })) }
-  function collapseAll() {
-    setCollapsed(Object.fromEntries(COLLAPSIBLE_IDS.map(id => [id, true])))
-  }
+  function collapseAll() { setCollapsed(ALL_COLLAPSED) }
+
+  // Auto-expand the section containing the active page
+  useEffect(() => {
+    const activeSection = SECTIONS.find(s => s.label && s.items.some(item => pathname === item.href || pathname.startsWith(item.href + '/')))
+    if (activeSection) setCollapsed(p => ({ ...p, [activeSection.id]: false }))
+  }, [pathname])
 
   return (
     <>
-      {/* Search + collapse-all */}
       <div style={{ padding: '0.75rem 1rem 0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <div style={{ flex: 1 }}><GlobalSearch /></div>
         <button
@@ -109,12 +175,12 @@ function NavContent({ pathname, onNavClick }) {
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '0.85rem 1.25rem 0.3rem',
                     background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase',
-                    color: 'rgba(197,168,130,0.35)',
+                    fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase',
+                    color: 'rgba(197,168,130,0.65)', fontWeight: '600',
                     transition: 'color 0.15s',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(197,168,130,0.6)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(197,168,130,0.35)'}
+                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(197,168,130,0.9)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(197,168,130,0.65)'}
                 >
                   {section.label}
                   <Chevron open={!isCollapsed} />
@@ -141,7 +207,9 @@ function NavContent({ pathname, onNavClick }) {
         })}
       </nav>
 
-      <div style={{ padding: '1rem 1.25rem', borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
+      <BirthdaysWidget />
+
+      <div style={{ padding: '0.75rem 1.25rem', borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
         <Link href="/members/dashboard" onClick={onNavClick} style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', textDecoration: 'none', letterSpacing: '0.06em' }}>
           ← Member portal
         </Link>
@@ -156,24 +224,9 @@ export default function AdminShell({ children }) {
 
   useEffect(() => { setIsOpen(false) }, [pathname])
 
-  const logoBlock = (onClick, size = 90) => (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1.25rem 1rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
-      <Link href="/" onClick={onClick} style={{ display: 'flex', justifyContent: 'center' }}>
-        <Image
-          src="/white-outline.png"
-          alt="Canvas Routes"
-          width={140}
-          height={93}
-          style={{ width: `${size}px`, height: 'auto', opacity: 0.9 }}
-        />
-      </Link>
-    </div>
-  )
-
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3', fontFamily: 'var(--font-inter),sans-serif' }}>
 
-      {/* Hamburger button — shown only on mobile via CSS */}
       <button
         className="admin-hamburger"
         onClick={() => setIsOpen(true)}
@@ -190,49 +243,41 @@ export default function AdminShell({ children }) {
         <span style={{ display: 'block', width: '18px', height: '1.5px', background: '#c5a882' }} />
       </button>
 
-      {/* Mobile drawer backdrop */}
       {isOpen && (
-        <div
-          onClick={() => setIsOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300 }}
-        />
+        <div onClick={() => setIsOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300 }} />
       )}
 
-      {/* Mobile drawer */}
       <aside style={{
         position: 'fixed', top: 0, left: 0, bottom: 0, width: '260px',
         background: '#0F1E14',
         transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
-        zIndex: 400,
-        display: 'flex', flexDirection: 'column',
-        borderRight: '1px solid rgba(197,168,130,0.1)',
-        overflowY: 'auto',
+        zIndex: 400, display: 'flex', flexDirection: 'column',
+        borderRight: '1px solid rgba(197,168,130,0.1)', overflowY: 'auto',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
           <Link href="/" onClick={() => setIsOpen(false)} style={{ display: 'flex' }}>
             <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '80px', height: 'auto', opacity: 0.9 }} />
           </Link>
-          <button
-            onClick={() => setIsOpen(false)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,241,236,0.4)', fontSize: '24px', lineHeight: 1, padding: '4px 6px' }}
-          >×</button>
+          <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,241,236,0.4)', fontSize: '24px', lineHeight: 1, padding: '4px 6px' }}>×</button>
         </div>
         <NavContent pathname={pathname} onNavClick={() => setIsOpen(false)} />
       </aside>
 
-      {/* Desktop sidebar — hidden on mobile via CSS */}
       <aside className="admin-sidebar-desktop" style={{
         width: '220px', flexShrink: 0, background: '#0F1E14',
         display: 'flex', flexDirection: 'column',
         borderRight: '1px solid rgba(197,168,130,0.1)',
         minHeight: '100vh', position: 'sticky', top: 0, height: '100vh',
       }}>
-        {logoBlock(undefined, 90)}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1.25rem 1rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
+          <Link href="/" style={{ display: 'flex', justifyContent: 'center' }}>
+            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '90px', height: 'auto', opacity: 0.9 }} />
+          </Link>
+        </div>
         <NavContent pathname={pathname} onNavClick={undefined} />
       </aside>
 
-      {/* Main content */}
       <main className="admin-main" style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
         {children}
       </main>

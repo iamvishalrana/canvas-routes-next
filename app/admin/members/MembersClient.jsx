@@ -488,7 +488,19 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       {selected.size > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
           <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
-          <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Export CSV</button>
+          <ExportButton
+            filename={`members-selection`}
+            title={`Members (${selected.size} selected)`}
+            headers={['Name', 'Email', 'Phone', 'Status', 'Tier', 'Car Year', 'Car Make', 'Car Model', 'DOB', 'Instagram', 'Joined']}
+            rows={members.filter(m => selected.has(m.id)).map(m => [
+              m.name || '', m.email || '', m.phone || '', m.membership_status || '', m.tier || '',
+              m.car_year || m.cars?.[0]?.year || '', m.car_make || m.cars?.[0]?.make || '',
+              m.car_model || m.cars?.[0]?.model || '',
+              m.dob_month ? `${m.dob_month}/${m.dob_day}${m.dob_year ? `/${m.dob_year}` : ''}` : '',
+              m.instagram || '', m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA') : '',
+            ])}
+            style={{ fontSize: '10px', padding: '4px 10px', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)' }}
+          />
           <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
           <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
         </div>
@@ -500,11 +512,6 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
             {filtered.length} of {members.length} member{members.length !== 1 ? 's' : ''}
           </div>
           {members.length > 0 && selected.size === 0 && (
-            <button onClick={exportCSV} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Export CSV
-            </button>
-          )}
-          {members.length > 0 && selected.size === 0 && (
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {emailsCopied ? 'Copied!' : 'Copy Emails'}
             </button>
@@ -515,17 +522,11 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
               title="Members"
               headers={['Name', 'Email', 'Phone', 'Status', 'Tier', 'Car Year', 'Car Make', 'Car Model', 'DOB', 'Instagram', 'Joined']}
               rows={filtered.map(m => [
-                m.name || '',
-                m.email || '',
-                m.phone || '',
-                m.membership_status || '',
-                m.tier || '',
-                m.car_year || (m.cars?.[0]?.year) || '',
-                m.car_make || (m.cars?.[0]?.make) || '',
-                m.car_model || (m.cars?.[0]?.model) || '',
+                m.name || '', m.email || '', m.phone || '', m.membership_status || '', m.tier || '',
+                m.car_year || m.cars?.[0]?.year || '', m.car_make || m.cars?.[0]?.make || '',
+                m.car_model || m.cars?.[0]?.model || '',
                 m.dob_month ? `${m.dob_month}/${m.dob_day}${m.dob_year ? `/${m.dob_year}` : ''}` : '',
-                m.instagram || '',
-                m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA') : '',
+                m.instagram || '', m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA') : '',
               ])}
             />
           )}
