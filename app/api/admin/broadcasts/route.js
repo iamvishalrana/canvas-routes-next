@@ -115,13 +115,15 @@ export async function POST(request) {
   }
 
   // Save to broadcast history
-  await supabase.from('broadcasts').insert({
-    subject: subject.trim(),
-    audience,
-    specific_emails: audience === 'specific_emails' ? (Array.isArray(specificEmails) ? specificEmails : []) : null,
-    sent_count: sent,
-    failed_count: failed,
-  }).catch(() => {}) // don't fail the response if history write fails
+  try {
+    await supabase.from('broadcasts').insert({
+      subject: subject.trim(),
+      audience,
+      specific_emails: audience === 'specific_emails' ? (Array.isArray(specificEmails) ? specificEmails : []) : null,
+      sent_count: sent,
+      failed_count: failed,
+    })
+  } catch {} // don't fail the response if history write fails
 
   return Response.json({ sent, failed })
 }

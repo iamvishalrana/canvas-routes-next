@@ -78,11 +78,11 @@ export async function DELETE(request, { params }) {
   const photoPaths = photoFilename
     ? [photoFilename]
     : [`${id}.jpg`, `${id}.jpeg`, `${id}.png`, `${id}.webp`]
-  await supabase.storage.from('member-photos').remove(photoPaths).catch(() => {})
+  try { await supabase.storage.from('member-photos').remove(photoPaths) } catch {}
 
   // Delete application row by email — cascades to contacts
   if (member?.email) {
-    await supabase.from('applications').delete().eq('email', member.email.toLowerCase().trim()).catch(() => {})
+    try { await supabase.from('applications').delete().eq('email', member.email.toLowerCase().trim()) } catch {}
   }
 
   return Response.json({ success: true })
