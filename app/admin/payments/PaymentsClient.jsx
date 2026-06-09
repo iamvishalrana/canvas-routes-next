@@ -54,6 +54,7 @@ export default function PaymentsClient() {
   const [refunding, setRefunding]     = useState(null)   // id being confirmed
   const [refundBusy, setRefundBusy]   = useState(null)   // id being processed
   const [refundErr, setRefundErr]     = useState({})     // { [id]: msg }
+  const [receiptConfirm, setReceiptConfirm] = useState(null)
   const [receiptBusy, setReceiptBusy] = useState(null)
   const [receiptDone, setReceiptDone] = useState({})     // { [id]: true }
   const [receiptErr, setReceiptErr]   = useState({})
@@ -141,10 +142,22 @@ export default function PaymentsClient() {
       )
     }
 
+    if (receiptConfirm === r.stripe_payment_intent_id) return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
+        <div style={{ fontSize: '11px', color: '#8A6535' }}>Resend receipt to {r.email}?</div>
+        <div style={{ display: 'flex', gap: '0.35rem' }}>
+          <GhostBtn small onClick={() => { setReceiptConfirm(null); resendReceipt(r) }} disabled={receiptBusy === r.stripe_payment_intent_id}>
+            {receiptBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
+          </GhostBtn>
+          <GhostBtn small onClick={() => setReceiptConfirm(null)}>Cancel</GhostBtn>
+        </div>
+      </div>
+    )
+
     return (
       <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-        <GhostBtn small onClick={() => resendReceipt(r)} disabled={receiptBusy === r.stripe_payment_intent_id}>
-          {receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : receiptBusy === r.stripe_payment_intent_id ? '…' : 'Receipt'}
+        <GhostBtn small onClick={() => setReceiptConfirm(r.stripe_payment_intent_id)}>
+          {receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : 'Receipt'}
         </GhostBtn>
         <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
           Refund

@@ -70,6 +70,7 @@ export default function ContactsClient() {
   const [emailsCopied, setEmailsCopied] = useState(false)
   const [contactInviteStatus, setContactInviteStatus] = useState({}) // keyed by contact_id: 'sending'|'sent'|'error'
   const [contactTierPick, setContactTierPick] = useState(null) // contact_id being tier-picked
+  const [contactInviteConfirm, setContactInviteConfirm] = useState(null) // { contact, tier }
   const [editingContact, setEditingContact] = useState(null) // contact_id
   const [editContactForm, setEditContactForm] = useState({})
   const [savingContact, setSavingContact] = useState(false)
@@ -321,6 +322,21 @@ export default function ContactsClient() {
 
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      {/* Invite confirm overlay */}
+      {contactInviteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2rem', maxWidth: '400px', width: '90%' }}>
+            <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.5rem', fontWeight: '500' }}>Send invite?</div>
+            <div style={{ fontSize: '13px', color: '#555', marginBottom: '1.5rem' }}>
+              This will send a membership invitation email to <strong>{contactInviteConfirm.contact.name || contactInviteConfirm.contact.email}</strong> as a <strong>{contactInviteConfirm.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'}</strong>.
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <PrimaryBtn onClick={() => { const { contact, tier } = contactInviteConfirm; setContactInviteConfirm(null); inviteContact(contact, tier) }}>Confirm &amp; Send</PrimaryBtn>
+              <GhostBtn onClick={() => setContactInviteConfirm(null)}>Cancel</GhostBtn>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
         <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Contacts</h1>
@@ -510,11 +526,11 @@ export default function ContactsClient() {
                         <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
                       ) : contactTierPick === c.contact_id ? (
                         <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                          <button onClick={() => { inviteContact(c, 'routes_member'); setContactTierPick(null) }}
+                          <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'routes_member' }); setContactTierPick(null) }}
                             style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
                             Routes
                           </button>
-                          <button onClick={() => { inviteContact(c, 'inner_circle'); setContactTierPick(null) }}
+                          <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'inner_circle' }); setContactTierPick(null) }}
                             style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
                             Inner Circle
                           </button>
@@ -578,11 +594,11 @@ export default function ContactsClient() {
                     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
                   ) : contactTierPick === c.contact_id ? (
                     <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                      <button onClick={() => { inviteContact(c, 'routes_member'); setContactTierPick(null) }}
+                      <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'routes_member' }); setContactTierPick(null) }}
                         style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
                         Routes
                       </button>
-                      <button onClick={() => { inviteContact(c, 'inner_circle'); setContactTierPick(null) }}
+                      <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'inner_circle' }); setContactTierPick(null) }}
                         style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
                         Inner Circle
                       </button>

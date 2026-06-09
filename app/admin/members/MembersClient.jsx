@@ -231,6 +231,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState(null)
   const [inviteSuccess, setInviteSuccess] = useState(false)
+  const [inviteConfirm, setInviteConfirm] = useState(false)
+  const [resendConfirm, setResendConfirm] = useState(null)
   const [appData, setAppData] = useState(null)
   const [appLookupEmail, setAppLookupEmail] = useState('')
   const [actionError, setActionError] = useState(null)
@@ -345,6 +347,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   async function invite(e) {
     e.preventDefault()
     if (!inviteForm.email.trim()) { setInviteError('Email required.'); return }
+    if (!inviteConfirm) { setInviteConfirm(true); return }
+    setInviteConfirm(false)
     setInviting(true); setInviteError(null); setInviteSuccess(false)
     const payload = { ...inviteForm }
     if (appData) {
@@ -471,7 +475,17 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
               <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
           </div>
-          <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Send Invite'}</PrimaryBtn>
+          {inviteConfirm ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
+              <span style={{ fontSize: '12px', color: '#8A6535' }}>Send invite to <strong>{inviteForm.email}</strong>?</span>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Confirm'}</PrimaryBtn>
+                <GhostBtn type="button" onClick={() => setInviteConfirm(false)}>Cancel</GhostBtn>
+              </div>
+            </div>
+          ) : (
+            <PrimaryBtn type="submit" disabled={inviting}>Send Invite</PrimaryBtn>
+          )}
         </form>
         {appData && (
           <div style={{ marginTop: '0.75rem', fontSize: '12px', color: '#3B6B2F', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.25)', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -745,9 +759,16 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                         </span>
                         {!m.password_set_at && (() => {
                           const rs = resendStatus[m.id]
+                          if (resendConfirm === m.id) return (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <span style={{ fontSize: '10px', color: '#8A6535' }}>Resend?</span>
+                              <button onClick={e => { e.stopPropagation(); setResendConfirm(null); resendInvite(m) }} style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.12)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 6px', cursor: 'pointer', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>Yes</button>
+                              <button onClick={e => { e.stopPropagation(); setResendConfirm(null) }} style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 6px', cursor: 'pointer', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>No</button>
+                            </span>
+                          )
                           return (
                             <button
-                              onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') resendInvite(m) }}
+                              onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') setResendConfirm(m.id) }}
                               disabled={rs === 'sending' || rs === 'sent'}
                               style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
                               {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}
@@ -800,9 +821,16 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                           <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.05em' }}>Awaiting</span>
                           {(() => {
                             const rs = resendStatus[m.id]
+                            if (resendConfirm === m.id) return (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <span style={{ fontSize: '10px', color: '#8A6535' }}>Resend?</span>
+                                <button onClick={e => { e.stopPropagation(); setResendConfirm(null); resendInvite(m) }} style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.12)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 6px', cursor: 'pointer', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>Yes</button>
+                                <button onClick={e => { e.stopPropagation(); setResendConfirm(null) }} style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 6px', cursor: 'pointer', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>No</button>
+                              </span>
+                            )
                             return (
                               <button
-                                onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') resendInvite(m) }}
+                                onClick={e => { e.stopPropagation(); if (!rs || rs === 'error') setResendConfirm(m.id) }}
                                 disabled={rs === 'sending' || rs === 'sent'}
                                 style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
                                 {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}

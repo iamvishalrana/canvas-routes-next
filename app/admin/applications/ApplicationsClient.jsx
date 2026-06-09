@@ -72,6 +72,7 @@ export default function ApplicationsClient() {
   const [showFilter, setShowFilter] = useState('all') // 'all' | 'unseen' | 'pending'
   const [approving, setApproving]   = useState(null)
   const [approveErr, setApproveErr] = useState({})
+  const [approveConfirm, setApproveConfirm] = useState(null)
   const [rejectConfirm, setRejectConfirm] = useState(null)
   const [rejecting, setRejecting]   = useState(null)
   const [rejectErr, setRejectErr]   = useState({})
@@ -465,14 +466,23 @@ export default function ApplicationsClient() {
                 const inviteCell = (
                   <div onClick={e => e.stopPropagation()}>
                     {/* Pending approval — show Approve/Reject */}
-                    {a.stripe_payment_status === 'authorized' && approving !== a.id && rejecting !== a.id && rejectConfirm !== a.id && (
+                    {a.stripe_payment_status === 'authorized' && approving !== a.id && rejecting !== a.id && rejectConfirm !== a.id && approveConfirm !== a.id && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                         <div style={{ display: 'flex', gap: '0.3rem' }}>
-                          <button onClick={() => handleApprove(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 8px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>✓ Approve</button>
+                          <button onClick={() => setApproveConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 8px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>✓ Approve</button>
                           <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(123,32,50,0.07)', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 8px', cursor: 'pointer', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>✗ Reject</button>
                         </div>
                         {approveErr[a.id] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{approveErr[a.id]}</div>}
                         {rejectErr[a.id] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{rejectErr[a.id]}</div>}
+                      </div>
+                    )}
+                    {approveConfirm === a.id && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <div style={{ fontSize: '10px', color: '#3B6B2F' }}>Approve &amp; charge card?</div>
+                        <div style={{ display: 'flex', gap: '0.3rem' }}>
+                          <button onClick={() => { setApproveConfirm(null); handleApprove(a) }} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>Confirm</button>
+                          <button onClick={() => setApproveConfirm(null)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '3px 7px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Cancel</button>
+                        </div>
                       </div>
                     )}
                     {(approving === a.id || rejecting === a.id) && (
