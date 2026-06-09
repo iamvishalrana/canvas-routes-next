@@ -129,7 +129,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
 
   function Actions({ r }) {
     const isPaid = r.stripe_payment_status === 'paid'
-    if (!isPaid) return null
+    if (!isPaid || r.manual) return null
 
     if (refunding === r.stripe_payment_intent_id) {
       return (
