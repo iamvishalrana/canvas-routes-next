@@ -921,9 +921,9 @@ export default function MembershipContent() {
 
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.5rem' }}>
-                  Anything else <span style={{ color: 'rgba(0,0,0,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>optional</span>
+                  Tell us about yourself <span style={{ color: 'rgba(197,168,130,0.35)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>optional</span>
                 </div>
-                <textarea value={form.more} rows={3} placeholder="Questions, thoughts, or anything you'd like us to know."
+                <textarea value={form.more} rows={4} placeholder="Tell us about your car, your driving style, dream routes, hobbies — anything that tells us who you are."
                   onChange={e => set('more', e.target.value)}
                   onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)}
                   style={{ ...inp('more'), resize: 'vertical', minHeight: '80px' }} />
