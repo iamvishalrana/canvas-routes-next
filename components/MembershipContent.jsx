@@ -524,7 +524,7 @@ export default function MembershipContent() {
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '1.1rem' }}>Everything in Routes, plus</div>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '1.1rem' }}><strong>Everything in Routes</strong>, plus</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {TIER2_EXTRA.map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem' }}>
