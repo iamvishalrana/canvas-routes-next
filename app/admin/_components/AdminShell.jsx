@@ -269,13 +269,16 @@ export default function AdminShell({ children }) {
         display: 'flex', flexDirection: 'column',
         borderRight: '1px solid rgba(197,168,130,0.1)',
         minHeight: '100vh', position: 'sticky', top: 0, height: '100vh',
+        overflow: 'hidden',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1.25rem 1rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
-          <Link href="/" style={{ display: 'flex', justifyContent: 'center' }}>
-            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '90px', height: 'auto', opacity: 0.9 }} />
-          </Link>
+        {/* Logo sent to back — large, absolute, no layout space */}
+        <Link href="/" style={{ position: 'absolute', top: '0.5rem', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 0, pointerEvents: 'none' }}>
+          <Image src="/white-outline.png" alt="Canvas Routes" width={280} height={186} style={{ width: '170px', height: 'auto', opacity: 0.13 }} />
+        </Link>
+        {/* Nav floats in front */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          <NavContent pathname={pathname} onNavClick={undefined} />
         </div>
-        <NavContent pathname={pathname} onNavClick={undefined} />
       </aside>
 
       <main className="admin-main" style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
