@@ -168,7 +168,7 @@ function Toolbar({ editor }) {
 
 export default function BroadcastsClient() {
   const [tab, setTab]                   = useState('compose')
-  const [audience, setAudience]         = useState('canvas_routes_member')
+  const [audience, setAudience]         = useState('specific_emails')
   const [specificEmails, setSpecificEmails] = useState('')
   const [subject, setSubject]           = useState('')
   const [confirm, setConfirm]           = useState(false)
@@ -246,7 +246,7 @@ export default function BroadcastsClient() {
       setSubject('')
       editor?.commands.clearContent()
       setSpecificEmails('')
-      setAudience('canvas_routes_member')
+      setAudience('specific_emails')
       loadHistory()
     } catch {
       setError('Network error. Please try again.')
