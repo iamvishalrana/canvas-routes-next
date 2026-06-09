@@ -181,12 +181,13 @@ export default function ApplicationsClient() {
   async function sendInvite(app, tier = 'routes_member') {
     setInviting(app.id)
     setAppTierPick(null)
+    const { make: invMake, model: invModel } = parseCarMakeModel(app.car_model)
     const payload = {
       name: app.name, email: app.email, membership_status: 'pending', tier,
       dob_month: app.dob_month || null, dob_day: app.dob_day || null, dob_year: app.dob_year || null,
       phone: app.phone || null, instagram: app.instagram || null,
       cars: (app.car_year || app.car_model)
-        ? [{ year: app.car_year || '', make: '', model: app.car_model || '', license_plate: '' }]
+        ? [{ year: app.car_year || '', make: invMake || '', model: invModel || '', license_plate: '' }]
         : undefined,
     }
     const res = await fetch('/api/admin/members', {

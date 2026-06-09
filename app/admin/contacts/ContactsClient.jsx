@@ -156,10 +156,24 @@ export default function ContactsClient() {
 
   async function inviteContact(c, tier = 'routes_member') {
     setContactInviteStatus(p => ({ ...p, [c.contact_id]: 'sending' }))
+    const { make: cMake, model: cModel } = parseCarMakeModel(c.car_model)
     const res = await fetch('/api/admin/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: c.name, email: c.email, membership_status: 'pending', tier }),
+      body: JSON.stringify({
+        name: c.name,
+        email: c.email,
+        membership_status: 'pending',
+        tier,
+        phone: c.phone || null,
+        instagram: c.instagram || null,
+        dob_month: c.dob_month || null,
+        dob_day: c.dob_day || null,
+        dob_year: c.dob_year || null,
+        cars: (c.car_year || c.car_model)
+          ? [{ year: c.car_year || '', make: cMake || '', model: cModel || '', license_plate: '' }]
+          : undefined,
+      }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
