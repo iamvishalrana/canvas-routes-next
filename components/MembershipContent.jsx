@@ -290,6 +290,7 @@ export default function MembershipContent() {
     if (!form.carModel.trim()) e.carModel = true
     if (!form.tier) e.tier = true
     if (!form.source) e.source = true
+    if (form.source === 'Member referral' && !form.referredBy.trim()) e.referredBy = true
     if (!termsAccepted) e.termsAccepted = true
     setErrors(e)
     return e
@@ -909,7 +910,7 @@ export default function MembershipContent() {
               {form.source === 'Member referral' && (
                 <div style={{ marginBottom: '1.75rem' }}>
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <User size={10} /><span>Referred by</span><span style={{ color: 'rgba(197,168,130,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '10px', marginLeft: '4px' }}>member name</span>
+                    <User size={10} /><span>Referred by</span><span style={{ color: '#c5a882', textTransform: 'none', letterSpacing: 0, fontSize: '11px', marginLeft: '2px' }}>*</span>
                   </div>
                   <input type="text" value={form.referredBy} placeholder="Member's name"
                     onChange={e => set('referredBy', capitaliseName(e.target.value))}

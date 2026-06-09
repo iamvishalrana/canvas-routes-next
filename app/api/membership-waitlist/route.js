@@ -108,7 +108,7 @@ function confirmHtml(firstName) {
           <!-- Referral note -->
           <tr>
             <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
-              Have a referral from an existing Canvas Routes member? Let us know by replying to this email &mdash; member referrals are prioritized in our review process.
+              If you were referred by an existing Canvas Routes member, this will be taken into account and prioritized during our review.
             </td>
           </tr>
 
