@@ -2,19 +2,12 @@ import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { PARTNERS } from '../../../../lib/partners'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Dashboard | Canvas Routes' } }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
-const PARTNERS = [
-  {
-    name: 'Koko Bakehouse',
-    instagram: 'koko.bakehouse',
-    description: 'Member discount — mention Canvas Routes in your message.',
-  },
-]
 
 const STATUS_CARD_DOT = {
   active:    '#7EC87A',
@@ -430,27 +423,20 @@ export default async function DashboardPage() {
           {/* Partner Discounts */}
           <div className="dash-card">
             <div className="card-head">
-              <span className="section-label">Partner Discounts</span>
-              <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.1rem', fontWeight: '300', color: '#ddd', lineHeight: 1 }}>{PARTNERS.length}</span>
+              <span className="section-label">Partner Perks</span>
+              <Link href="/members/perks" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
+                View all
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </Link>
             </div>
             <div style={{ padding: '0 1.75rem' }}>
               {PARTNERS.map((p, i) => (
                 <div key={i} style={{ padding: '1rem 0', borderBottom: i < PARTNERS.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.3rem' }}>
                     <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</span>
-                    <a
-                      href={`https://instagram.com/${p.instagram}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '10px', color: '#c5a882', textDecoration: 'none', letterSpacing: '0.04em', flexShrink: 0 }}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="#c5a882"/></svg>
-                      @{p.instagram}
-                    </a>
+                    <span style={{ fontSize: '10px', color: '#c5a882', letterSpacing: '0.04em', flexShrink: 0, fontFamily: 'var(--font-inter), sans-serif' }}>{p.discount}</span>
                   </div>
-                  {p.description && (
-                    <div style={{ fontSize: '11px', color: '#999', lineHeight: 1.6, letterSpacing: '0.01em' }}>{p.description}</div>
-                  )}
+                  <div style={{ fontSize: '11px', color: '#999', lineHeight: 1.6, letterSpacing: '0.01em' }}>{p.how}</div>
                 </div>
               ))}
             </div>
