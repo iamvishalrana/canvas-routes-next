@@ -37,7 +37,6 @@ const SIG_HTML = `
 
 function buildHtml(body) {
   return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px;color:#1a1a1a;">
-<img src="https://canvasroutes.com/canvas_routes_refined.png" width="150" style="margin-bottom:28px;display:block;" alt="Canvas Routes"/>
 <p style="font-size:15px;line-height:1.75;white-space:pre-wrap;margin:0 0 24px;">${body.replace(/\n/g, '<br/>')}</p>
 <hr style="border:none;border-top:1px solid #eeeeee;margin:28px 0;"/>
 ${SIG_HTML}
@@ -317,8 +316,6 @@ export default function BroadcastsClient() {
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eee' }} />
                   </div>
                   <div style={{ padding: '2rem 1.5rem', fontFamily: 'Arial, sans-serif', color: '#1a1a1a', minHeight: '320px', overflowY: 'auto', flex: 1 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/canvas_routes_refined.png" width="150" style={{ display: 'block', marginBottom: '24px' }} alt="Canvas Routes" />
                     {body ? (
                       <p style={{ fontSize: '15px', lineHeight: '1.75', whiteSpace: 'pre-wrap', margin: '0 0 24px' }}>{body}</p>
                     ) : (
