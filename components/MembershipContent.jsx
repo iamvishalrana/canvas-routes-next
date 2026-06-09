@@ -143,7 +143,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
   }
 
   return (
-    <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
 
       {/* Tier + price header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -181,7 +181,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
               onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
               placeholder="Promo code"
-              style={{ flex: 1, padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: 'transparent', border: 'none', borderBottom: `1px solid ${promoError ? 'rgba(208,96,112,0.8)' : promoInput ? 'rgba(59,107,47,0.5)' : 'rgba(0,0,0,0.12)'}`, WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0 }}
+              style={{ width: '140px', padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: 'transparent', border: 'none', borderBottom: `1px solid ${promoError ? 'rgba(208,96,112,0.8)' : promoInput ? 'rgba(59,107,47,0.5)' : 'rgba(0,0,0,0.12)'}`, WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0 }}
             />
             <button type="button" onClick={handleApplyPromo}
               disabled={applyingPromo || !promoInput.trim()}
@@ -673,6 +673,7 @@ export default function MembershipContent() {
           ) : paymentStep && clientSecret ? (
             <Elements
               stripe={stripePromise}
+              fonts={[{ cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap' }]}
               options={{
                 clientSecret,
                 appearance: {
@@ -683,7 +684,7 @@ export default function MembershipContent() {
                     colorText: '#1a1a1a',
                     colorTextSecondary: '#666',
                     colorDanger: '#d06070',
-                    fontFamily: 'var(--font-inter),sans-serif',
+                    fontFamily: 'Inter, system-ui, sans-serif',
                     borderRadius: '0px',
                     spacingUnit: '4px',
                   },
