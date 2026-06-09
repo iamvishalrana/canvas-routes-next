@@ -89,9 +89,9 @@ export default function GlobalSearch() {
     if (m.instagram && m.instagram.toLowerCase().includes(q)) parts.push(m.instagram)
     return parts.join(' · ')
   }
-  const memberItems  = (results?.members || []).map(m => ({ name: m.name, email: m.email, badge: m.membership_status, sub: sub(m), color: '#3B6B2F', href: `/admin/members` }))
-  const appItems     = (results?.applications || []).map(a => ({ name: a.name, email: a.email, badge: a.stripe_payment_status, sub: [a.car_model, a.phone?.toLowerCase().includes(q) ? a.phone : null].filter(Boolean).join(' · '), color: '#8A6535', href: `/admin/applications` }))
-  const contactItems = (results?.contacts || []).map(c => ({ name: c.applications?.name, email: c.applications?.email, sub: c.applications?.car_model, color: '#555', href: `/admin/contacts` }))
+  const memberItems  = (results?.members || []).map(m => ({ name: m.name, email: m.email, badge: m.membership_status, sub: sub(m), color: '#3B6B2F', href: `/admin/members?q=${encodeURIComponent(m.email || m.name || '')}` }))
+  const appItems     = (results?.applications || []).map(a => ({ name: a.name, email: a.email, badge: a.stripe_payment_status, sub: [a.car_model, a.phone?.toLowerCase().includes(q) ? a.phone : null].filter(Boolean).join(' · '), color: '#8A6535', href: `/admin/applications?q=${encodeURIComponent(a.email || a.name || '')}` }))
+  const contactItems = (results?.contacts || []).map(c => ({ name: c.applications?.name, email: c.applications?.email, sub: c.applications?.car_model, color: '#555', href: `/admin/contacts?q=${encodeURIComponent(c.applications?.email || c.applications?.name || '')}` }))
 
   if (!open) return (
     <button onClick={() => setOpen(true)}

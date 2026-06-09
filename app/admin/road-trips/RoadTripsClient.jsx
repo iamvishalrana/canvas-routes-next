@@ -66,17 +66,16 @@ export default function RoadTripsClient() {
       .map(r => ({ app: a, reg: r }))
   )
 
-  const filtered = allRows
-    .filter(({ reg }) => activeTrip === 'all' || reg.event === activeTrip)
-    .filter(({ app }) => {
-      if (!search) return true
-      const q = search.toLowerCase()
-      return (app.name || '').toLowerCase().includes(q) || (app.email || '').toLowerCase().includes(q)
-    })
+  const tabFiltered = allRows.filter(({ reg }) => activeTrip === 'all' || reg.event === activeTrip)
+  const filtered = tabFiltered.filter(({ app }) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (app.name || '').toLowerCase().includes(q) || (app.email || '').toLowerCase().includes(q)
+  })
 
-  const attended  = filtered.filter(({ reg }) => reg.attended === true).length
-  const noShows   = filtered.filter(({ reg }) => reg.attended === false).length
-  const pending   = filtered.filter(({ reg }) => reg.attended == null).length
+  const attended  = tabFiltered.filter(({ reg }) => reg.attended === true).length
+  const noShows   = tabFiltered.filter(({ reg }) => reg.attended === false).length
+  const pending   = tabFiltered.filter(({ reg }) => reg.attended == null).length
 
   return (
     <div style={SECTION}>

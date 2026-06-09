@@ -14,8 +14,8 @@ export default async function DashboardPage() {
   today.setHours(0, 0, 0, 0)
   const in90 = new Date(today)
   in90.setDate(in90.getDate() + 90)
-  const todayStr = today.toISOString().slice(0, 10)
-  const in90Str = in90.toISOString().slice(0, 10)
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const in90Str = `${in90.getFullYear()}-${String(in90.getMonth() + 1).padStart(2, '0')}-${String(in90.getDate()).padStart(2, '0')}`
 
   const [
     { count: totalMembers },

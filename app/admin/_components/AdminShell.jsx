@@ -155,7 +155,7 @@ function BirthdaysWidget() {
         <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', borderTop: '0.5px solid rgba(197,168,130,0.08)', paddingTop: '0.5rem' }}>
           {birthdays.map((b, i) => {
             const href = b.email
-              ? `${b.type === 'member' ? '/admin/members' : '/admin/contacts'}?q=${encodeURIComponent(b.email)}`
+              ? `${b.type === 'member' ? '/admin/members' : '/admin/applications'}?q=${encodeURIComponent(b.email)}`
               : null
             const row = (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem' }}>
