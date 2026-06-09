@@ -47,16 +47,17 @@ export async function POST(request) {
   }
 
   try {
-    if (audience === 'all_members') {
-      recipients = await fetchMembers()
-    } else if (audience === 'active_members') {
-      recipients = await fetchMembers({ membership_status: 'active' })
+    if (audience === 'canvas_routes_member') {
+      recipients = await fetchMembers({ membership_status: 'active', tier: 'routes_member' })
     } else if (audience === 'inner_circle') {
-      recipients = await fetchMembers({ tier: 'inner_circle' })
+      recipients = await fetchMembers({ membership_status: 'active', tier: 'inner_circle' })
     } else if (audience === 'all_contacts') {
       recipients = await fetchContacts()
     } else if (audience === 'everyone') {
-      const [members, contacts] = await Promise.all([fetchMembers(), fetchContacts()])
+      const [members, contacts] = await Promise.all([
+        fetchMembers({ membership_status: 'active' }),
+        fetchContacts(),
+      ])
       const seen = new Set()
       for (const r of [...members, ...contacts]) {
         const key = r.email.toLowerCase()

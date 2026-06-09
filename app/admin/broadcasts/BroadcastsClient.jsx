@@ -3,18 +3,19 @@ import { useState, useEffect, useCallback } from 'react'
 import { sel, L, PrimaryBtn, GhostBtn, Err } from '../_components/shared'
 
 const AUDIENCE_LABELS = {
-  all_members: 'All Members', active_members: 'Active Members Only',
-  inner_circle: 'Inner Circle', all_contacts: 'All Contacts',
-  everyone: 'Everyone', specific_emails: 'Specific Emails',
+  canvas_routes_member: 'Canvas Routes Member',
+  inner_circle:         'Inner Circle',
+  all_contacts:         'All Contacts',
+  everyone:             'Everyone',
+  specific_emails:      'Specific Emails',
 }
 
 const AUDIENCE_OPTIONS = [
-  { value: 'all_members',     label: 'All Members'         },
-  { value: 'active_members',  label: 'Active Members Only' },
-  { value: 'inner_circle',    label: 'Inner Circle'        },
-  { value: 'all_contacts',    label: 'All Contacts'        },
-  { value: 'everyone',        label: 'Everyone'            },
-  { value: 'specific_emails', label: 'Specific Emails'     },
+  { value: 'canvas_routes_member', label: 'Canvas Routes Member' },
+  { value: 'inner_circle',         label: 'Inner Circle'         },
+  { value: 'all_contacts',         label: 'All Contacts'         },
+  { value: 'everyone',             label: 'Everyone'             },
+  { value: 'specific_emails',      label: 'Specific Emails'      },
 ]
 
 const SIG_HTML = `
@@ -80,7 +81,7 @@ const inp = {
 
 export default function BroadcastsClient() {
   const [tab, setTab]                   = useState('compose')
-  const [audience, setAudience]         = useState('all_members')
+  const [audience, setAudience]         = useState('canvas_routes_member')
   const [specificEmails, setSpecificEmails] = useState('')
   const [subject, setSubject]           = useState('')
   const [body, setBody]                 = useState('')
