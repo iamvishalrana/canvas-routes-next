@@ -306,9 +306,9 @@ export default function AdminShell({ children }) {
         minHeight: '100vh', position: 'sticky', top: 0, height: '100vh',
         overflow: 'hidden',
       }}>
-        <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ padding: '0.6rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
           <Link href="/" style={{ display: 'flex' }}>
-            <Image src="/white-outline.png" alt="Canvas Routes" width={280} height={186} style={{ width: '140px', height: 'auto', opacity: 0.9 }} />
+            <Image src="/white-outline.png" alt="Canvas Routes" width={200} height={133} style={{ width: '110px', height: 'auto', opacity: 0.9 }} />
           </Link>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
