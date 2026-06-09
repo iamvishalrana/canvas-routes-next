@@ -214,10 +214,10 @@ function SectionLabel({ children }) {
   )
 }
 
-function CheckIcon({ gold }) {
+function CheckIcon({ gold, green }) {
   return (
     <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-      stroke={gold ? '#c5a882' : '#3B6B2F'} strokeWidth="2.5"
+      stroke={gold ? '#c5a882' : green ? 'rgba(140,210,120,0.8)' : '#3B6B2F'} strokeWidth="2.5"
       strokeLinecap="round" strokeLinejoin="round"
       style={{ flexShrink: 0, marginTop: '3px' }}>
       <polyline points="20 6 9 17 4 12" />
@@ -466,32 +466,33 @@ export default function MembershipContent() {
 
           <div className="mem-tiers" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
 
-            {/* TIER 1 */}
+            {/* ROUTES MEMBER */}
             <FadeUp delay={0.05}>
-              <div style={{ background: '#F5F1EC', border: '0.5px solid rgba(0,0,0,0.09)', height: '100%' }}>
+              <div style={{ background: '#1B2F1F', position: 'relative', overflow: 'hidden', height: '100%' }}>
+                <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(100,180,80,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
                 <div className="mem-tier-inner" style={{ padding: '2.25rem 2.25rem 0' }}>
-                  <div style={{ ...LABEL, color: '#999', marginBottom: '0.5rem' }}>Tier 1</div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: '600', color: '#1a1a1a', marginBottom: '2rem', lineHeight: 1.2, fontFamily: 'var(--font-inter),sans-serif' }}>
+                  <div style={{ ...LABEL, color: 'rgba(245,241,236,0.45)', marginBottom: '0.5rem' }}>Full Season</div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: '600', color: '#F5F1EC', marginBottom: '2rem', lineHeight: 1.2, fontFamily: 'var(--font-inter),sans-serif' }}>
                     Routes Member
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>$99</span>
-                    <span style={{ ...SMALL, color: '#999', paddingBottom: '0.4rem' }}>CAD</span>
+                    <span style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '200', color: '#F5F1EC', lineHeight: 1 }}>$99</span>
+                    <span style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', paddingBottom: '0.4rem' }}>CAD</span>
                   </div>
-                  <div style={{ ...SMALL, color: '#999', marginBottom: '2rem' }}>per season</div>
-                  <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.07)', marginBottom: '1.25rem' }} />
+                  <div style={{ ...SMALL, color: 'rgba(245,241,236,0.4)', marginBottom: '2rem' }}>per season</div>
+                  <div style={{ height: '0.5px', background: 'rgba(245,241,236,0.08)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
-                    <div style={{ ...LABEL, color: '#bbb', marginBottom: '0.35rem' }}>Why choose this</div>
-                    <div style={{ ...BODY, color: '#444' }}>Full access to every Canvas Routes event and road trip all season — priority registration included.</div>
+                    <div style={{ ...LABEL, color: 'rgba(245,241,236,0.35)', marginBottom: '0.35rem' }}>What you get</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.7)' }}>Full access to every Canvas Routes event and road trip all season — priority registration included.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
-                  <div style={{ ...LABEL, color: '#999', marginBottom: '1.1rem' }}>Includes</div>
+                  <div style={{ ...LABEL, color: 'rgba(245,241,236,0.4)', marginBottom: '1.1rem' }}>Includes</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {TIER1.map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem' }}>
-                        <CheckIcon />
-                        <span style={{ ...BODY, color: '#333' }}>{item}</span>
+                        <CheckIcon green />
+                        <span style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>{item}</span>
                       </div>
                     ))}
                   </div>
@@ -499,29 +500,28 @@ export default function MembershipContent() {
               </div>
             </FadeUp>
 
-            {/* TIER 2 */}
+            {/* INNER CIRCLE */}
             <FadeUp delay={0.15}>
               <div style={{ background: '#0F1E14', position: 'relative', overflow: 'hidden', height: '100%' }}>
                 <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(197,168,130,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
                 <div className="mem-tier-inner" style={{ padding: '2.25rem 2.25rem 0' }}>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '0.5rem' }}>Tier 2</div>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.7)', marginBottom: '0.5rem' }}>Priority Access</div>
                   <div style={{ fontSize: '1.15rem', fontWeight: '600', color: '#F5F1EC', marginBottom: '2rem', lineHeight: 1.2, fontFamily: 'var(--font-inter),sans-serif' }}>
                     Inner Circle
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$249</span>
+                    <span style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '200', color: '#c5a882', lineHeight: 1 }}>$249</span>
                     <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.4rem' }}>CAD</span>
                   </div>
-                  <div style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', marginBottom: '2rem' }}>per season</div>
+                  <div style={{ ...SMALL, color: 'rgba(245,241,236,0.4)', marginBottom: '2rem' }}>per season</div>
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
-                    <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>Why choose this</div>
+                    <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>What you get</div>
                     <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First access to everything, plus a $70 road trip credit — your membership starts paying for itself from day one.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
-                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '1.1rem' }}>Everything in Tier 1, plus</div>
+                  <div style={{ ...LABEL, color: 'rgba(197,168,130,0.8)', marginBottom: '1.1rem' }}>Everything in Routes, plus</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {TIER2_EXTRA.map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem' }}>
@@ -823,51 +823,53 @@ export default function MembershipContent() {
                 {errors.tier && <div style={{ fontSize: '11px', color: '#d06070', marginBottom: '0.75rem' }}>Please select a membership tier</div>}
                 <div className="mem-tier-btns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
 
+                  {/* Routes Member */}
                   {(() => {
-                    const selected = form.tier === 'Routes Member'
-                    const dimmed   = form.tier === 'Inner Circle'
+                    const sel = form.tier === 'Routes Member'
                     return (
                       <button type="button" onClick={() => set('tier', 'Routes Member')} style={{
                         padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
-                        background: selected ? 'rgba(197,168,130,0.08)' : 'rgba(0,0,0,0.03)',
-                        borderLeft: selected ? '2px solid #c5a882' : dimmed ? '2px solid rgba(0,0,0,0.07)' : '2px solid rgba(0,0,0,0.12)',
-                        opacity: dimmed ? 0.45 : 1,
+                        background: sel ? '#1B2F1F' : '#1e3324',
+                        borderLeft: sel ? '2px solid rgba(140,210,120,0.7)' : '2px solid rgba(140,210,120,0.15)',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
-                            <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
-                            <div style={{ fontSize: '11px', color: selected ? 'rgba(197,168,130,0.8)' : 'rgba(0,0,0,0.45)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Events, road trips, community & perks</div>
+                            <div style={{ fontSize: '14px', color: '#F5F1EC', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter),sans-serif' }}>Events, road trips, community &amp; perks</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                            <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$99</div>
-                            <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.6)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(245,241,236,0.5)', lineHeight: 1 }}>$99</div>
+                            <div style={{ fontSize: '9px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
                           </div>
                         </div>
-                        {selected && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(140,210,120,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                       </button>
                     )
                   })()}
 
-                  <button type="button" onClick={() => set('tier', 'Inner Circle')} style={{
-                    padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
-                    background: form.tier === 'Inner Circle' ? '#0F1E14' : '#1c2e20',
-                    borderLeft: form.tier === 'Inner Circle' ? '2px solid #c5a882' : '2px solid rgba(197,168,130,0.25)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '3px' }}>
-                          <span style={{ fontSize: '14px', color: '#c5a882', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif' }}>Inner Circle</span>
-                          <span style={{ fontSize: '7px', letterSpacing: '0.18em', textTransform: 'uppercase', background: '#c5a882', color: '#0F1E14', padding: '2px 5px', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '700' }}>Premium</span>
+                  {/* Inner Circle */}
+                  {(() => {
+                    const sel = form.tier === 'Inner Circle'
+                    return (
+                      <button type="button" onClick={() => set('tier', 'Inner Circle')} style={{
+                        padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
+                        background: sel ? '#0F1E14' : '#152318',
+                        borderLeft: sel ? '2px solid #c5a882' : '2px solid rgba(197,168,130,0.2)',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ fontSize: '14px', color: sel ? '#c5a882' : 'rgba(197,168,130,0.8)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Inner Circle</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $70 road trip credit</div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
+                            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? '#c5a882' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
+                            <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                          </div>
                         </div>
-                        <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.02em' }}>Everything in Routes, plus exclusive access & $70 road trip credit</div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                        <div style={{ fontFamily: 'var(--font-cormorant),Georgia,serif', fontSize: '2rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>$249</div>
-                        <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.4)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
-                      </div>
-                    </div>
-                    {form.tier === 'Inner Circle' && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                  </button>
+                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                      </button>
+                    )
+                  })()}
 
                 </div>
               </div>
