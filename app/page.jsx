@@ -48,6 +48,14 @@ export default function Home() {
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [igPosts, setIgPosts] = useState([])
+
+  useEffect(() => {
+    fetch('/api/instagram/feed')
+      .then(r => r.json())
+      .then(d => { if (d.posts?.length) setIgPosts(d.posts) })
+      .catch(() => {})
+  }, [])
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
   const [pastModalEvent, setPastModalEvent] = useState(null)
@@ -488,6 +496,95 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* INSTAGRAM */}
+      {igPosts.length > 0 && (
+        <section style={{background:"#0F1E14",padding:"5rem 2rem"}}>
+          <style>{`
+            .ig-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 3px;
+              max-width: 900px;
+              margin: 0 auto 2.5rem;
+            }
+            @media (max-width: 640px) {
+              .ig-grid { grid-template-columns: repeat(3, 1fr); gap: 2px; }
+            }
+            .ig-cell {
+              position: relative;
+              aspect-ratio: 1;
+              overflow: hidden;
+              display: block;
+            }
+            .ig-cell img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+              transition: transform 0.4s ease, opacity 0.3s ease;
+              opacity: 0.88;
+            }
+            .ig-cell:hover img { transform: scale(1.04); opacity: 1; }
+            .ig-cell-overlay {
+              position: absolute;
+              inset: 0;
+              background: rgba(15,30,20,0);
+              transition: background 0.3s ease;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .ig-cell:hover .ig-cell-overlay { background: rgba(15,30,20,0.35); }
+            .ig-play {
+              opacity: 0;
+              transition: opacity 0.25s;
+            }
+            .ig-cell:hover .ig-play { opacity: 1; }
+          `}</style>
+
+          <div style={{textAlign:"center",marginBottom:"2.5rem"}}>
+            <div style={{fontSize:"9px",letterSpacing:"0.38em",textTransform:"uppercase",color:"rgba(197,168,130,0.5)",marginBottom:"1rem",fontFamily:"var(--font-inter),sans-serif"}}>Canvas Routes</div>
+            <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer"
+              style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(2rem,4vw,3rem)",fontWeight:"300",color:"#F5F1EC",textDecoration:"none",lineHeight:1.1,display:"block",marginBottom:"0.5rem"}}>
+              @canvasroutes
+            </a>
+            <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.4)",margin:"1.25rem auto 0"}}/>
+          </div>
+
+          <div className="ig-grid">
+            {igPosts.map(post => (
+              <a key={post.id} href={post.permalink} target="_blank" rel="noopener noreferrer" className="ig-cell">
+                {post.image && <img src={post.image} alt="" loading="lazy" />}
+                <div className="ig-cell-overlay">
+                  {post.type === 'VIDEO' && (
+                    <div className="ig-play">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="rgba(245,241,236,0.9)" style={{filter:"drop-shadow(0 1px 4px rgba(0,0,0,0.5))"}}>
+                        <circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.35)"/>
+                        <polygon points="10,8 18,12 10,16" fill="rgba(245,241,236,0.95)"/>
+                      </svg>
+                    </div>
+                  )}
+                  {post.type === 'CAROUSEL_ALBUM' && (
+                    <div className="ig-play">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,236,0.9)" strokeWidth="2" style={{filter:"drop-shadow(0 1px 3px rgba(0,0,0,0.5))"}}>
+                        <rect x="2" y="7" width="15" height="15" rx="2"/><path d="M22 2H8a2 2 0 0 0-2 2v2"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <div style={{textAlign:"center"}}>
+            <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer"
+              style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",textDecoration:"none",border:"0.5px solid rgba(197,168,130,0.3)",padding:"0.65rem 1.75rem",fontFamily:"var(--font-inter),sans-serif"}}>
+              Follow on Instagram
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* CONTACT */}
       <section id="contact" style={{background:"#EDE8E1",padding:"6rem 3rem",textAlign:"center"}}>
