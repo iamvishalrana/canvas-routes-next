@@ -98,6 +98,20 @@ function confirmHtml(firstName) {
             </td>
           </tr>
 
+          <!-- Refund note -->
+          <tr>
+            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
+              Should your application not be accepted following our review, your payment will be refunded in full. No questions asked.
+            </td>
+          </tr>
+
+          <!-- Referral note -->
+          <tr>
+            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
+              Have a referral from an existing Canvas Routes member? Let us know by replying to this email &mdash; member referrals are prioritized in our review process.
+            </td>
+          </tr>
+
           <!-- Contact note -->
           <tr>
             <td style="padding-bottom:40px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:rgba(245,241,236,0.4);">
