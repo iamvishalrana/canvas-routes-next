@@ -65,39 +65,38 @@ export default function PaymentsClient() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/admin/applications')
+    fetch('/api/admin/stripe-payments')
       .then(r => r.ok ? r.json() : [])
       .then(data => {
-        const withStripe = (Array.isArray(data) ? data : []).filter(a => a.stripe_payment_status || a.stripe_payment_intent_id)
-        setRecords(withStripe)
+        setRecords(Array.isArray(data) ? data : [])
       })
       .catch(() => setRecords([]))
       .finally(() => setLoading(false))
   }, [])
 
   async function doRefund(r) {
-    setRefundBusy(r.id)
-    setRefundErr(p => ({ ...p, [r.id]: null }))
+    setRefundBusy(r.stripe_payment_intent_id)
+    setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
-      const res = await fetch(`/api/admin/applications/${r.id}/refund`, { method: 'POST' })
+      const res = await fetch(`/api/admin/stripe-payments/${r.stripe_payment_intent_id}/refund`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setRefundErr(p => ({ ...p, [r.id]: data.error || 'Refund failed.' })); return }
-      setRecords(prev => prev.map(x => x.id === r.id ? { ...x, stripe_payment_status: 'refunded' } : x))
+      if (!res.ok) { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Refund failed.' })); return }
+      setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'refunded' } : x))
       setRefunding(null)
-    } catch { setRefundErr(p => ({ ...p, [r.id]: 'Network error.' })) }
+    } catch { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })) }
     finally { setRefundBusy(null) }
   }
 
   async function resendReceipt(r) {
-    setReceiptBusy(r.id)
-    setReceiptErr(p => ({ ...p, [r.id]: null }))
+    setReceiptBusy(r.stripe_payment_intent_id)
+    setReceiptErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
-      const res = await fetch(`/api/admin/applications/${r.id}/resend-receipt`, { method: 'POST' })
+      const res = await fetch(`/api/admin/stripe-payments/${r.stripe_payment_intent_id}/resend-receipt`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: r.email }) })
       const data = await res.json()
-      if (!res.ok) { setReceiptErr(p => ({ ...p, [r.id]: data.error || 'Failed.' })); return }
-      setReceiptDone(p => ({ ...p, [r.id]: true }))
-      setTimeout(() => setReceiptDone(p => ({ ...p, [r.id]: false })), 3000)
-    } catch { setReceiptErr(p => ({ ...p, [r.id]: 'Network error.' })) }
+      if (!res.ok) { setReceiptErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Failed.' })); return }
+      setReceiptDone(p => ({ ...p, [r.stripe_payment_intent_id]: true }))
+      setTimeout(() => setReceiptDone(p => ({ ...p, [r.stripe_payment_intent_id]: false })), 3000)
+    } catch { setReceiptErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })) }
     finally { setReceiptBusy(null) }
   }
 
@@ -127,14 +126,14 @@ export default function PaymentsClient() {
     const isPaid = r.stripe_payment_status === 'paid'
     if (!isPaid) return null
 
-    if (refunding === r.id) {
+    if (refunding === r.stripe_payment_intent_id) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
           <div style={{ fontSize: '11px', color: '#7B2032' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
-          {refundErr[r.id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{refundErr[r.id]}</div>}
+          {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
           <div style={{ display: 'flex', gap: '0.35rem' }}>
-            <DangerBtn small onClick={() => doRefund(r)} disabled={refundBusy === r.id}>
-              {refundBusy === r.id ? '…' : 'Confirm'}
+            <DangerBtn small onClick={() => doRefund(r)} disabled={refundBusy === r.stripe_payment_intent_id}>
+              {refundBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
             </DangerBtn>
             <GhostBtn small onClick={() => setRefunding(null)}>Cancel</GhostBtn>
           </div>
@@ -144,13 +143,13 @@ export default function PaymentsClient() {
 
     return (
       <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-        <GhostBtn small onClick={() => resendReceipt(r)} disabled={receiptBusy === r.id}>
-          {receiptDone[r.id] ? 'Sent!' : receiptBusy === r.id ? '…' : 'Receipt'}
+        <GhostBtn small onClick={() => resendReceipt(r)} disabled={receiptBusy === r.stripe_payment_intent_id}>
+          {receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : receiptBusy === r.stripe_payment_intent_id ? '…' : 'Receipt'}
         </GhostBtn>
-        <DangerBtn small onClick={() => { setRefunding(r.id); setRefundErr(p => ({ ...p, [r.id]: null })) }}>
+        <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
           Refund
         </DangerBtn>
-        {receiptErr[r.id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.id]}</div>}
+        {receiptErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.stripe_payment_intent_id]}</div>}
       </div>
     )
   }
@@ -228,7 +227,7 @@ export default function PaymentsClient() {
       ) : isMobile ? (
         <div>
           {filtered.map(r => (
-            <div key={r.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
+            <div key={r.stripe_payment_intent_id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
                 <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{r.name || '—'}</div>
                 <div style={{ fontWeight: '500', color: r.stripe_payment_status === 'paid' ? '#3B6B2F' : '#1a1a1a' }}>
@@ -263,7 +262,7 @@ export default function PaymentsClient() {
             </thead>
             <tbody>
               {filtered.map((r, i) => (
-                <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                <tr key={r.stripe_payment_intent_id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={TD}>{r.name || <span style={{ color: '#ccc' }}>—</span>}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email}</td>
                   <td style={{ ...TD, fontWeight: '500', color: r.stripe_payment_status === 'paid' ? '#3B6B2F' : '#1a1a1a' }}>
