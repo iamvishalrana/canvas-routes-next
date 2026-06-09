@@ -102,12 +102,19 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 
   async function handleRemovePromo() {
     try {
-      await fetch('/api/stripe/apply-promo', {
+      const res = await fetch('/api/stripe/apply-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ remove: true, paymentIntentId, originalAmount: originalAmountCents }),
       })
-    } catch { /* silent — amount resets on next PI creation anyway */ }
+      if (!res.ok) {
+        setPromoError('Could not remove promo code. Please try again.')
+        return
+      }
+    } catch {
+      setPromoError('Could not remove promo code. Please try again.')
+      return
+    }
     setPromoApplied(null)
     setPromoError(null)
   }
@@ -127,11 +134,15 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
     const { error: submitError } = await elements.submit()
     if (submitError) { setError(submitError.message); setPaying(false); return }
 
-    const { error: confirmError } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {},
-      redirect: 'if_required',
-    })
+    let confirmError
+    try {
+      const result = await stripe.confirmPayment({ elements, confirmParams: {}, redirect: 'if_required' })
+      confirmError = result.error
+    } catch (err) {
+      setError('Payment could not be processed. Please try again.')
+      setPaying(false)
+      return
+    }
     if (confirmError) { setError(confirmError.message); setPaying(false); return }
 
     try {
@@ -207,7 +218,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
         style={{ width: '100%', padding: '1rem', background: '#3B6B2F', border: 'none', color: '#fff', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
         {paying ? 'Processing…' : `Submit application — $${displayPrice} CAD`}
       </button>
-      <button type="button" onClick={onBack}
+      <button type="button" onClick={async () => { if (promoApplied) await handleRemovePromo(); onBack() }}
         style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.35)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
         ← Back
       </button>
@@ -254,6 +265,7 @@ export default function MembershipContent() {
   const [clientSecret, setClientSecret]   = useState(null)
   const [countryCode, setCountryCode]     = useState('+1')
   const honeypotRef                       = useRef(null)
+  const submittingRef                     = useRef(false)
 
   function set(field, val) {
     setForm(f => ({ ...f, [field]: val }))
@@ -306,7 +318,9 @@ export default function MembershipContent() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (status === 'loading') return
+    if (submittingRef.current) return
+    submittingRef.current = true
+    if (status === 'loading') { submittingRef.current = false; return }
     const errs = validate()
     if (Object.keys(errs).length) {
       const order = ['name','email','phone','dob_month','dob_day','year','carMake','carModel','tier','source','referredBy','termsAccepted']
@@ -316,6 +330,7 @@ export default function MembershipContent() {
         const el = document.getElementById(`mem-field-${scrollTarget}`)
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
+      submittingRef.current = false
       return
     }
     setStatus('loading'); setSubmitError(null)
@@ -333,6 +348,8 @@ export default function MembershipContent() {
     } catch (err) {
       setSubmitError(err.message || 'Something went wrong. Please try again.')
       setStatus('error')
+    } finally {
+      submittingRef.current = false
     }
   }
 
@@ -676,7 +693,7 @@ export default function MembershipContent() {
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                 <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Application received.</div>
-                <p style={{ ...BODY, color: '#555' }}>Your card has been authorized and a hold placed — you won&apos;t be charged until we review and approve your application. Check your inbox for details.</p>
+                <p style={{ ...BODY, color: '#555' }}>Your payment has been received. We review every application personally — you&apos;ll hear from us soon.</p>
               </div>
             </FadeUp>
           ) : paymentStep && clientSecret ? (
