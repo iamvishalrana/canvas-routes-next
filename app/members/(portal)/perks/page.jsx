@@ -146,6 +146,18 @@ export default async function PerksPage() {
 
               {/* Right — details panel */}
               <div className="perks-card-right">
+
+                {/* Logo */}
+                {p.logo && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.25rem 0' }}>
+                    <img
+                      src={p.logo}
+                      alt={p.name}
+                      style={{ width: '140px', height: '140px', objectFit: 'contain', display: 'block' }}
+                    />
+                  </div>
+                )}
+
                 <div>
                   <div style={{ fontSize: '8px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.8rem' }}>
                     How to redeem
