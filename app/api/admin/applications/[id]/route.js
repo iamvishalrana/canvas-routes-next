@@ -7,7 +7,7 @@ export async function PATCH(request, { params }) {
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
   const supabase = createAdminClient()
-  const ALLOWED = ['name', 'car_year', 'car_model', 'phone', 'instagram',
+  const ALLOWED = ['name', 'car_year', 'car_model', 'car_paint', 'phone', 'instagram',
                    'dob_month', 'dob_day', 'dob_year', 'source', 'more', 'registrations', 'reregistered_at', 'admin_notes', 'notes']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => ALLOWED.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })

@@ -131,6 +131,7 @@ export default function ApplicationsClient() {
       car_year: a.car_year || '',
       car_make: aMake,
       car_model: aModel,
+      car_paint: a.car_paint || '',
       phone: a.phone || '',
       instagram: a.instagram || '',
       dob_month: a.dob_month ? String(a.dob_month) : '',
@@ -187,7 +188,7 @@ export default function ApplicationsClient() {
       dob_month: app.dob_month || null, dob_day: app.dob_day || null, dob_year: app.dob_year || null,
       phone: app.phone || null, instagram: app.instagram || null,
       cars: (app.car_year || app.car_model)
-        ? [{ year: app.car_year || '', make: invMake || '', model: invModel || '', license_plate: '' }]
+        ? [{ year: app.car_year || '', make: invMake || '', model: invModel || '', license_plate: '', paint: app.car_paint || '' }]
         : undefined,
     }
     const res = await fetch('/api/admin/members', {
@@ -587,6 +588,7 @@ export default function ApplicationsClient() {
                         <div><L>Car Year</L><input style={inp} value={editAppForm.car_year} onChange={e => setEditAppForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
                         <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={editAppForm.car_make || ''} onChange={e => setEditAppForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
                         <div><L>Model</L><input style={inp} value={editAppForm.car_model} onChange={e => setEditAppForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>
+                        <div><L>Paint</L><input style={inp} value={editAppForm.car_paint || ''} onChange={e => setEditAppForm(p => ({ ...p, car_paint: e.target.value }))} placeholder="e.g. Nardo Grey" maxLength={60} /></div>
                         <div><L>Phone</L><input style={inp} type="tel" value={editAppForm.phone} onChange={e => setEditAppForm(p => ({ ...p, phone: e.target.value }))} maxLength={30} /></div>
                         <div><L>Instagram</L><input style={inp} value={editAppForm.instagram} onChange={e => setEditAppForm(p => ({ ...p, instagram: e.target.value }))} placeholder="handle" maxLength={50} /></div>
                       </div>

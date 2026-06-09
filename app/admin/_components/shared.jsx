@@ -7,7 +7,7 @@ export const STATUS_OPTIONS = ['pending', 'active', 'suspended', 'expired']
 export const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 export const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 export const DOB_YEARS = Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i)
-export const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '' }
+export const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '', paint: '' }
 export const STATUS_COLORS = {
   active:    { bg: 'rgba(59,107,47,0.1)',   text: '#3B6B2F', border: 'rgba(59,107,47,0.3)'   },
   pending:   { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },

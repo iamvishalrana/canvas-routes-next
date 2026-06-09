@@ -227,7 +227,7 @@ function CheckIcon({ gold, green }) {
   )
 }
 
-const INIT_FORM = { name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', tier:'', source:'', referredBy:'', more:'' }
+const INIT_FORM = { name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', carPaint:'', tier:'', source:'', referredBy:'', more:'' }
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default function MembershipContent() {
@@ -817,6 +817,17 @@ export default function MembershipContent() {
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)}
                     style={inp('carModel')} />
                 </div>
+              </div>
+
+              <div id="mem-field-carPaint" style={{ marginBottom: '1.75rem' }}>
+                <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Car size={10} /><span>Paint</span>
+                  <span style={{ fontSize: '9px', letterSpacing: '0.04em', textTransform: 'none', color: '#bbb', fontWeight: '400' }}>optional</span>
+                </div>
+                <input type="text" value={form.carPaint} placeholder="e.g. Nardo Grey, Guards Red, Midnight Blue"
+                  onChange={e => set('carPaint', e.target.value)}
+                  onFocus={() => setFocusedField('carPaint')} onBlur={() => setFocusedField(null)}
+                  style={inp('carPaint')} maxLength={60} />
               </div>
 
               {/* ── Choose your tier ── */}

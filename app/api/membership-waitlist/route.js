@@ -174,7 +174,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { name, email, phone, dob_month, dob_day, dob_year, year, carMake, carModel, tier, source, more, _hp } = body
+  const { name, email, phone, dob_month, dob_day, dob_year, year, carMake, carModel, carPaint, tier, source, more, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -216,6 +216,7 @@ export async function POST(request) {
       name: name.trim(),
       car_year: year.trim(),
       car_model: fullCar || carMake,
+      car_paint: carPaint?.trim() || null,
       phone: phone || null,
       dob_month: dob_month ? parseInt(dob_month) : null,
       dob_day: dob_day ? parseInt(dob_day) : null,

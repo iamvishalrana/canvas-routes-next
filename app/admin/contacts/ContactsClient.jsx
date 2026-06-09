@@ -171,7 +171,7 @@ export default function ContactsClient() {
         dob_day: c.dob_day || null,
         dob_year: c.dob_year || null,
         cars: (c.car_year || c.car_model)
-          ? [{ year: c.car_year || '', make: cMake || '', model: cModel || '', license_plate: '' }]
+          ? [{ year: c.car_year || '', make: cMake || '', model: cModel || '', license_plate: '', paint: c.car_paint || '' }]
           : undefined,
       }),
     })
@@ -202,6 +202,7 @@ export default function ContactsClient() {
       car_year: c.car_year || '',
       car_make: cMake,
       car_model: cModel,
+      car_paint: c.car_paint || '',
       phone: c.phone || '',
       instagram: c.instagram || '',
       dob_month: c.dob_month ? String(c.dob_month) : '',
@@ -612,6 +613,7 @@ export default function ContactsClient() {
                         <div><L>Car Year</L><input style={inp} value={editContactForm.car_year} onChange={e => setEditContactForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
                         <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={editContactForm.car_make || ''} onChange={e => setEditContactForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
                         <div><L>Model</L><input style={inp} value={editContactForm.car_model} onChange={e => setEditContactForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>
+                        <div><L>Paint</L><input style={inp} value={editContactForm.car_paint || ''} onChange={e => setEditContactForm(p => ({ ...p, car_paint: e.target.value }))} placeholder="e.g. Nardo Grey" maxLength={60} /></div>
                         <div><L>Phone</L><input style={inp} type="tel" value={editContactForm.phone} onChange={e => setEditContactForm(p => ({ ...p, phone: e.target.value }))} maxLength={30} /></div>
                         <div><L>Instagram</L><input style={inp} value={editContactForm.instagram} onChange={e => setEditContactForm(p => ({ ...p, instagram: e.target.value }))} placeholder="handle" maxLength={50} /></div>
                       </div>

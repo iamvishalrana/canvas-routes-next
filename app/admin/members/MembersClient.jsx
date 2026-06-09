@@ -269,7 +269,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
     if (m.cars?.length > 0) {
       setEditCars(m.cars)
     } else if (m.car_year || m.car_make || m.car_model) {
-      setEditCars([{ year: m.car_year || '', make: m.car_make || '', model: m.car_model || '', license_plate: '' }])
+      setEditCars([{ year: m.car_year || '', make: m.car_make || '', model: m.car_model || '', license_plate: '', paint: '' }])
     } else {
       setEditCars([{ ...EMPTY_CAR }])
     }
@@ -678,6 +678,10 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                       <div>
                         {cidx === 0 && <L>Model</L>}
                         <input style={inp} value={car.model} onChange={e => updateEditCar(cidx, 'model', e.target.value)} placeholder="Model" />
+                      </div>
+                      <div>
+                        {cidx === 0 && <L>Paint</L>}
+                        <input style={inp} value={car.paint || ''} onChange={e => updateEditCar(cidx, 'paint', e.target.value)} placeholder="e.g. Nardo Grey" maxLength={60} />
                       </div>
                       <div>
                         {cidx === 0 && <L>Plate</L>}

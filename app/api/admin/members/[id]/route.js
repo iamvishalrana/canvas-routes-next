@@ -38,6 +38,7 @@ export async function PATCH(request, { params }) {
       if (primary.year || body.car_year) appSync.car_year = primary.year || body.car_year || null
       const combined = [primary.make || body.car_make, primary.model || body.car_model].filter(Boolean).join(' ')
       if (combined) appSync.car_model = combined
+      if ('paint' in primary) appSync.car_paint = primary.paint || null
     }
     if (Object.keys(appSync).length > 0) {
       await supabase.from('applications').update(appSync).eq('email', memberEmail)

@@ -10,7 +10,7 @@ export async function PATCH(request, { params }) {
   const supabase = createAdminClient()
 
   const CONTACT_FIELDS = ['notes', 'admin_notes']
-  const APP_FIELDS = ['name', 'phone', 'instagram', 'car_year', 'car_make', 'car_model']
+  const APP_FIELDS = ['name', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'car_paint']
   const contactUpdate = {}
   const appUpdate = {}
   CONTACT_FIELDS.forEach(k => { if (body[k] !== undefined) contactUpdate[k] = body[k] })
