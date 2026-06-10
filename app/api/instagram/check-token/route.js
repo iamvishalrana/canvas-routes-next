@@ -31,7 +31,12 @@ async function checkToken() {
   const data = await res.json()
 
   if (data.error) {
-    captureMessage('Instagram token check failed', { error: data.error.message })
+    captureMessage('Instagram token check failed', {
+      error: data.error.message,
+      code: data.error.code,
+      type: data.error.type,
+      accountId,
+    })
     await sendAlert(
       '🚨 Canvas Routes — Instagram gallery is broken',
       `The Instagram access token is no longer valid.\n\nError: ${data.error.message}\n\nTo fix it:\n1. Go to https://developers.facebook.com/tools/explorer/\n2. Select the Canvas Routes app\n3. Generate a new token (instagram_basic + pages_read_engagement)\n4. Go to canvasroutes.com/admin → Tools → Instagram Token → paste the token and click Save New Token\n\nThe gallery will reappear within a minute.`
