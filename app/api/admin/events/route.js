@@ -7,7 +7,7 @@ export async function GET(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const supabase = createAdminClient()
-  const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+  const { data, error } = await supabase.from('events').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('date', { ascending: true })
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json(data)
 }

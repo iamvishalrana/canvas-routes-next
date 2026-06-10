@@ -68,6 +68,27 @@ export default function EventsClient({ isMobile }) {
     load()
   }
 
+  async function moveEvent(id, direction) {
+    const idx = items.findIndex(ev => ev.id === id)
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (targetIdx < 0 || targetIdx >= items.length) return
+
+    const newItems = [...items]
+    const a = { ...newItems[idx] }
+    const b = { ...newItems[targetIdx] }
+    const aOrder = a.sort_order ?? (idx + 1) * 10
+    const bOrder = b.sort_order ?? (targetIdx + 1) * 10
+    a.sort_order = bOrder
+    b.sort_order = aOrder
+    newItems[idx] = b
+    newItems[targetIdx] = a
+    setItems(newItems)
+    await Promise.all([
+      fetch(`/api/admin/events/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: a.sort_order }) }),
+      fetch(`/api/admin/events/${b.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: b.sort_order }) }),
+    ])
+  }
+
   async function uploadPhoto(eventId, file) {
     setUploadingPhoto(eventId); setPhotoError(null)
     const fd = new FormData(); fd.append('photo', file)
@@ -277,6 +298,24 @@ export default function EventsClient({ isMobile }) {
                       {item.description && <div style={{ fontSize: '12px', color: '#777', marginTop: '0.3rem', lineHeight: '1.55' }}>{item.description}</div>}
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '0.2rem' }}>
+                        <button
+                          onClick={() => moveEvent(item.id, 'up')}
+                          disabled={idx === 0}
+                          title="Move up"
+                          style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                        </button>
+                        <button
+                          onClick={() => moveEvent(item.id, 'down')}
+                          disabled={idx === items.length - 1}
+                          title="Move down"
+                          style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === items.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === items.length - 1 ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                      </div>
                       <GhostBtn onClick={() => toggleRegistrants(item.id, item.name)} small>{showRegistrants === item.id ? 'Hide' : 'Registrants'}</GhostBtn>
                       <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '' }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
