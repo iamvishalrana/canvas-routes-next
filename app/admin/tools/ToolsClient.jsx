@@ -7,8 +7,6 @@ export default function ToolsClient() {
   const [hcRuns, setHcRuns]     = useState([])   // last 4 workflow run objects
   const hcTimer = useRef(null)
   const refreshTimer = useRef(null)
-  const [importRunning, setImportRunning] = useState(false)
-  const [importResult, setImportResult] = useState(null)
   const [igRefreshing, setIgRefreshing] = useState(false)
   const [igResult, setIgResult] = useState(null)
 
@@ -49,15 +47,6 @@ export default function ToolsClient() {
       setIgResult({ error: 'Request failed' })
     }
     setIgRefreshing(false)
-  }
-
-  async function runImport() {
-    setImportRunning(true)
-    setImportResult(null)
-    const res = await fetch('/api/admin/import-cc', { method: 'POST' })
-    const d = await res.json().catch(() => ({ error: 'Invalid response' }))
-    setImportResult(d)
-    setImportRunning(false)
   }
 
   function dotColor(run) {
@@ -107,16 +96,6 @@ export default function ToolsClient() {
             }
           </div>
         )}
-      </div>
-
-      {/* Legacy Import */}
-      <div style={{ marginTop: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Legacy Import</div>
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '1rem', lineHeight: '1.6' }}>
-          Import legacy Canvas Routes attendees into the applications table. This endpoint is gated by the <code>IMPORT_CC_ENABLED</code> environment variable.
-        </div>
-        <GhostBtn small onClick={runImport} disabled={importRunning}>{importRunning ? 'Importing…' : 'Run Import'}</GhostBtn>
-        {importResult && <div style={{ marginTop: '0.75rem', fontSize: '12px', color: importResult.error ? '#7B2032' : '#3B6B2F' }}>{importResult.error || importResult.message || JSON.stringify(importResult)}</div>}
       </div>
 
       {/* Site Health Check */}
