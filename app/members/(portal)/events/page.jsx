@@ -90,29 +90,34 @@ function EventCard({ ev, regMap, tier, now }) {
           <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, margin: '0 0 0.75rem' }}>{ev.description}</p>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-          {ev.registration_enabled !== false && (ev.registration_opens_at ? (
-            <>
-              {ev.member_price > 0 && !isRegistered && (
-                <span style={{ fontSize: '11px', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>
-                  Member price: <strong style={{ color: '#1a1a1a' }}>${(ev.member_price / 100).toFixed(2)} CAD</strong>
-                </span>
-              )}
-              {ev.capacity && !isRegistered && (
-                <span style={{ fontSize: '11px', color: '#999' }}>{ev.capacity} spots</span>
-              )}
-              {inPriorityWindow && tier === 'inner_circle' && (
-                <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px', fontFamily: 'var(--font-inter)' }}>
-                  IC Priority Open
-                </span>
-              )}
-              <EventRegisterButton event={ev} isRegistered={isRegistered} memberTier={tier} compact={false} />
-            </>
-          ) : ev.registration_url ? (
-            <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ fontSize: '8.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.6rem 1.4rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              Register
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </a>
-          ) : null)}
+          {ev.registration_enabled === false ? null
+            : ev.registration_enabled && !ev.registration_opens_at && !ev.registration_url ? (
+              <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '0.4rem 0.9rem', fontFamily: 'var(--font-inter), sans-serif', background: 'rgba(197,168,130,0.04)' }}>
+                Registration Opening Soon
+              </span>
+            ) : ev.registration_opens_at ? (
+              <>
+                {ev.member_price > 0 && !isRegistered && (
+                  <span style={{ fontSize: '11px', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>
+                    Member price: <strong style={{ color: '#1a1a1a' }}>${(ev.member_price / 100).toFixed(2)} CAD</strong>
+                  </span>
+                )}
+                {ev.capacity && !isRegistered && (
+                  <span style={{ fontSize: '11px', color: '#999' }}>{ev.capacity} spots</span>
+                )}
+                {inPriorityWindow && tier === 'inner_circle' && (
+                  <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px', fontFamily: 'var(--font-inter)' }}>
+                    IC Priority Open
+                  </span>
+                )}
+                <EventRegisterButton event={ev} isRegistered={isRegistered} memberTier={tier} compact={false} />
+              </>
+            ) : ev.registration_url ? (
+              <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ fontSize: '8.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.6rem 1.4rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                Register
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </a>
+            ) : null}
         </div>
       </div>
       </div>

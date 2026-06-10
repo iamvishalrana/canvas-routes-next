@@ -48,7 +48,7 @@ export default async function DashboardPage() {
   const [{ data: member }, { data: announcements }, { data: events }, { data: application }, { data: eventRegs }] = await Promise.all([
     admin.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
-    admin.from('events').select('*').order('date', { ascending: true }).limit(20),
+    admin.from('events').select('*').order('date', { ascending: true }),
     user.email
       ? admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -90,9 +90,25 @@ export default async function DashboardPage() {
   const membershipNumber = member?.membership_number ? String(member.membership_number).padStart(3, '0') : null
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
+
+  function parseEventDate(str) {
+    if (!str) return null
+    const s = str.trim()
+    if (/^[A-Za-z]+ \d{4}$/.test(s)) {
+      const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2'))
+      if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+    }
+    if (/^\d{4}-\d{2}$/.test(s)) {
+      const [y, m] = s.split('-').map(Number)
+      return new Date(y, m, 0)
+    }
+    const d = new Date(s)
+    return isNaN(d) ? null : d
+  }
+
   const upcomingEvents = (events || []).filter(ev => {
-    const d = new Date(ev.date)
-    return !isNaN(d) && d >= today
+    const d = parseEventDate(ev.date_display || ev.date)
+    return !d || d >= today
   })
 
   return (
@@ -270,9 +286,18 @@ export default async function DashboardPage() {
               {!upcomingEvents.length ? (
                 <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>Nothing scheduled yet — check back soon.</p>
               ) : upcomingEvents.map((ev, i) => {
-                const evDate = new Date(ev.date)
-                const day = !isNaN(evDate) ? evDate.getDate() : null
-                const month = !isNaN(evDate) ? MONTHS_SHORT[evDate.getMonth()] : null
+                const rawDate = ev.date_display || ev.date || ''
+                const ds = rawDate.trim()
+                const isMonthYear = /^[A-Za-z]+ \d{4}$/.test(ds)
+                const isIsoMonthYear = /^\d{4}-\d{2}$/.test(ds)
+                const isPartial = isMonthYear || isIsoMonthYear
+                let evDate = null
+                if (isMonthYear) { const d = new Date(ds.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2')); evDate = isNaN(d) ? null : d }
+                else if (isIsoMonthYear) { const [y, m] = ds.split('-').map(Number); evDate = new Date(y, m - 1, 1) }
+                else { const d = new Date(ds); evDate = isNaN(d) ? null : d }
+                const day = !isPartial && evDate ? evDate.getDate() : null
+                const month = evDate ? MONTHS_SHORT[evDate.getMonth()] : null
+                const year = isPartial && evDate ? evDate.getFullYear() : null
                 return (
                   <div key={ev.id} className="event-row" style={{ borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                     {/* Date */}
@@ -282,8 +307,13 @@ export default async function DashboardPage() {
                           <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.4rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{day}</div>
                           <div style={{ fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginTop: '3px' }}>{month}</div>
                         </>
+                      ) : month ? (
+                        <>
+                          <div style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500' }}>{month}</div>
+                          <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'var(--font-inter), sans-serif', marginTop: '2px' }}>{year}</div>
+                        </>
                       ) : (
-                        <div style={{ fontSize: '10px', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.date}</div>
+                        <div style={{ fontSize: '10px', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>{rawDate}</div>
                       )}
                     </div>
                     {/* Divider */}
@@ -306,7 +336,8 @@ export default async function DashboardPage() {
                         <div style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, marginTop: '0.5rem' }}>{ev.description}</div>
                       )}
                       <div style={{ marginTop: '0.85rem' }}>
-                        {ev.registration_opens_at ? (
+                        {ev.registration_enabled === false ? null
+                          : ev.registration_opens_at ? (
                           <EventRegisterButton
                             event={ev}
                             isRegistered={['free', 'paid'].includes(eventRegMap[ev.id])}
@@ -318,11 +349,10 @@ export default async function DashboardPage() {
                             Register
                             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                           </a>
-                        ) : (ev.type === 'Road Trip' || ev.type === 'Route') ? (
-                          <Link href="/routes" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                            Register
-                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                          </Link>
+                        ) : ev.registration_enabled ? (
+                          <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '0.4rem 0.9rem', fontFamily: 'var(--font-inter), sans-serif', background: 'rgba(197,168,130,0.04)' }}>
+                            Registration Opening Soon
+                          </span>
                         ) : null}
                       </div>
                     </div>
