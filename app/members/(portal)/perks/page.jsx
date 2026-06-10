@@ -190,7 +190,31 @@ export default async function PerksPage() {
         </div>
       )}
 
-      <p style={{ marginTop: '3rem', fontSize: '11px', color: '#c0b9b0', lineHeight: 1.7, letterSpacing: '0.01em', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '1.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+      {/* Inner Circle teaser for Routes Members */}
+      {!isInnerCircle && (
+        <div style={{ marginTop: '1.5px' }}>
+          <div style={{ background: 'rgba(197,168,130,0.04)', border: '0.5px solid rgba(197,168,130,0.18)', borderLeft: '2px solid rgba(197,168,130,0.4)', padding: '1.75rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ fontSize: '8px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.5rem' }}>
+                Inner Circle
+              </div>
+              <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.25rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.2 }}>
+                Additional perks available at this tier.
+              </div>
+              <div style={{ fontSize: '12px', color: '#aaa', marginTop: '0.4rem', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6 }}>
+                Inner Circle members have access to exclusive partner discounts not available on this tier.
+              </div>
+            </div>
+            <div style={{ flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <p style={{ marginTop: '2.5rem', fontSize: '11px', color: '#c0b9b0', lineHeight: 1.7, letterSpacing: '0.01em', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '1.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>
         Partner perks are exclusive to Canvas Routes members. New partners are added throughout the season.
       </p>
     </div>
