@@ -2,6 +2,14 @@ import { stripe } from '../../../../lib/stripe.js'
 import { checkRateLimit } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 
+const PRICES = {
+  road_trip_standard:      20000,
+  road_trip_member:        16000,
+  road_trip_inner_circle:  14000,
+  membership_routes:        9900,
+  membership_inner_circle: 24900,
+}
+
 export async function POST(request) {
   if (!stripe) {
     return Response.json({ error: 'Payments not configured.' }, { status: 503 })
@@ -18,20 +26,25 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { code, paymentIntentId, remove, originalAmount } = body
+  const { code, paymentIntentId, remove } = body
 
   if (!paymentIntentId || typeof paymentIntentId !== 'string') {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  // Remove promo: reset the payment intent to original amount
+  // Remove promo: reset to the server-side canonical price from PI metadata — never trust client amount
   if (remove) {
-    if (!originalAmount || typeof originalAmount !== 'number') {
-      return Response.json({ error: 'Invalid request.' }, { status: 400 })
-    }
     try {
-      await stripe.paymentIntents.update(paymentIntentId, { amount: originalAmount })
-      return Response.json({ success: true })
+      const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+      const canonicalAmount = PRICES[pi.metadata?.type]
+      if (!canonicalAmount) {
+        return Response.json({ error: 'Invalid request.' }, { status: 400 })
+      }
+      await stripe.paymentIntents.update(paymentIntentId, {
+        amount: canonicalAmount,
+        metadata: { ...pi.metadata, promo_code_id: '' },
+      })
+      return Response.json({ success: true, originalAmount: canonicalAmount })
     } catch (err) {
       captureException(err, { context: 'stripe-remove-promo', paymentIntentId })
       return Response.json({ error: 'Failed to remove promo code.' }, { status: 500 })
@@ -63,8 +76,11 @@ export async function POST(request) {
       return Response.json({ error: 'This promo code is no longer valid.' }, { status: 400 })
     }
 
-    // Get current payment intent amount
+    // Get current payment intent amount and guard against stacking
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+    if (pi.metadata?.promo_code_id) {
+      return Response.json({ error: 'A promo code has already been applied.' }, { status: 400 })
+    }
     const currentAmount = pi.amount
 
     // Check minimum purchase requirement
@@ -82,8 +98,11 @@ export async function POST(request) {
       return Response.json({ error: 'Unsupported coupon type.' }, { status: 400 })
     }
 
-    // Update the payment intent in-place
-    await stripe.paymentIntents.update(paymentIntentId, { amount: discountedAmount })
+    // Update the payment intent in-place and record the applied promo to prevent stacking
+    await stripe.paymentIntents.update(paymentIntentId, {
+      amount: discountedAmount,
+      metadata: { ...pi.metadata, promo_code_id: promoCode.id },
+    })
 
     return Response.json({
       discountedAmount,
