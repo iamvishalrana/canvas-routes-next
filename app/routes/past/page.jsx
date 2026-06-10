@@ -19,7 +19,8 @@ const PAST_ROUTES = [
 
 export default function PastRoutesPage() {
   return (
-    <div style={{ minHeight: '100svh', background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <div style={{ minHeight: '100svh', background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif', backgroundImage: 'url(/membership-form.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+      <div style={{ minHeight: '100svh', background: 'rgba(15,30,20,0.82)', backdropFilter: 'blur(1px)' }}>
 
       {/* Nav */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', height: '68px', borderBottom: '0.5px solid rgba(197,168,130,0.12)', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(15,30,20,0.95)', backdropFilter: 'blur(12px)' }}>
@@ -48,12 +49,13 @@ export default function PastRoutesPage() {
       </div>
 
       <SiteFooter
-        background="#0F1E14"
+        background="transparent"
         borderColor="rgba(197,168,130,0.12)"
         textColor="rgba(245,241,236,0.3)"
         linkColor="rgba(245,241,236,0.25)"
         iconColor="rgba(245,241,236,0.35)"
       />
+      </div>
     </div>
   )
 }
