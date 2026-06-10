@@ -24,10 +24,15 @@ export async function POST(request) {
     if (!exchData.error) {
       const longLivedToken = exchData.access_token
 
-      // Try to get a Page Access Token — these never expire and survive user logouts
-      const pagesRes = await fetch(`https://graph.facebook.com/me/accounts?access_token=${longLivedToken}`)
-      const pagesData = await pagesRes.json()
+      // Gather diagnostics in parallel
+      const [pagesRes, meRes, permsRes] = await Promise.all([
+        fetch(`https://graph.facebook.com/me/accounts?access_token=${longLivedToken}`),
+        fetch(`https://graph.facebook.com/me?fields=id,name&access_token=${longLivedToken}`),
+        fetch(`https://graph.facebook.com/me/permissions?access_token=${longLivedToken}`),
+      ])
+      const [pagesData, meData, permsData] = await Promise.all([pagesRes.json(), meRes.json(), permsRes.json()])
       const pages = pagesData.data || []
+      const grantedPerms = (permsData.data || []).filter(p => p.status === 'granted').map(p => p.permission)
 
       // Pick the Canvas Routes page (or the first one if only one page)
       const page = pages.length === 1 ? pages[0] : pages.find(p => /canvas.?routes/i.test(p.name)) || pages[0]
@@ -56,7 +61,7 @@ export async function POST(request) {
             supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: expiresAt, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
           ])
           const daysLeft = Math.round((exchData.expires_in || 5184000) / 86400)
-          return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as a user token. Your Instagram is connected to Facebook Page "${igPageData.page.name}" (ID: ${igPageData.page.id}) — but the Facebook account you used to generate this token is not an admin of that Page. Log into Graph Explorer as the admin of "${igPageData.page.name}" and regenerate the token to get a permanent page token.` })
+          return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as a user token. Token belongs to "${meData.name}" (${meData.id}). Instagram is connected to Facebook Page "${igPageData.page.name}" (ID: ${igPageData.page.id}) — but this Facebook account is not an admin of that Page. Log into Graph Explorer as the admin of "${igPageData.page.name}" to get a permanent page token.` })
         }
       }
 
@@ -75,7 +80,7 @@ export async function POST(request) {
         supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: expiresAt, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
       ])
       const daysLeft = Math.round((exchData.expires_in || 5184000) / 86400)
-      return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as a user token — no Facebook Page could be found. This WILL break if you log out of Facebook. Make sure your Instagram is connected to a Facebook Page and try again.` })
+      return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as user token for "${meData.name}" (${meData.id}). No Facebook Page found. Permissions on this token: ${grantedPerms.join(', ') || 'none listed'}. pages_show_list present: ${grantedPerms.includes('pages_show_list') ? 'YES' : 'NO — this is the missing permission'}. Connect the Instagram to a Facebook Page and try again.` })
     }
     // Exchange failed — likely a System User token; fall through to direct verification
   }
