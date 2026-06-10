@@ -103,7 +103,7 @@ export default function ToolsClient() {
           <div style={{ marginTop: '0.75rem', fontSize: '12px', color: igResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
             {igResult.error
               ? `Error: ${igResult.error}`
-              : `Token refreshed — valid for ${igResult.expires_in_days} days (until ${new Date(igResult.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}). Stored in Supabase automatically.`
+              : `Token refreshed — valid for ${igResult.daysLeft} days (until ${new Date(igResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}). Stored in Supabase automatically.`
             }
           </div>
         )}
