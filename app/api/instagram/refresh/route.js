@@ -7,7 +7,17 @@ async function refreshToken() {
   if (!appId || !appSecret) throw new Error('Missing INSTAGRAM_APP_ID or INSTAGRAM_APP_SECRET')
 
   const supabase = createAdminClient()
-  const { data: row } = await supabase.from('settings').select('value').eq('key', 'instagram_access_token').maybeSingle()
+  const [{ data: row }, { data: expiryRow }] = await Promise.all([
+    supabase.from('settings').select('value').eq('key', 'instagram_access_token').maybeSingle(),
+    supabase.from('settings').select('value').eq('key', 'instagram_token_expires_at').maybeSingle(),
+  ])
+
+  // System User tokens never expire — skip the refresh cron entirely
+  if (expiryRow?.value === 'never') {
+    console.log('Instagram token is a System User token — no refresh needed')
+    return { skipped: true, reason: 'system_user_token_never_expires' }
+  }
+
   const currentToken = row?.value || process.env.INSTAGRAM_ACCESS_TOKEN
   if (!currentToken) throw new Error('No token found. Set INSTAGRAM_ACCESS_TOKEN in Vercel env vars for the first run.')
 

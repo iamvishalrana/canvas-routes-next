@@ -41,7 +41,7 @@ async function checkToken() {
 
   // Check days remaining
   const { data: expiryRow } = await supabase.from('settings').select('value').eq('key', 'instagram_token_expires_at').maybeSingle()
-  if (expiryRow?.value) {
+  if (expiryRow?.value && expiryRow.value !== 'never') {
     const daysLeft = Math.round((new Date(expiryRow.value) - Date.now()) / 86400000)
     if (daysLeft < 14) {
       await sendAlert(
@@ -53,6 +53,8 @@ async function checkToken() {
     return { status: 'ok', daysLeft }
   }
 
+  // System User token — never expires
+  if (expiryRow?.value === 'never') return { status: 'ok', daysLeft: null, tokenType: 'system_user' }
   return { status: 'ok' }
 }
 
