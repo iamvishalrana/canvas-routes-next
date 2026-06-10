@@ -28,87 +28,70 @@ export async function POST(request, { params }) {
 
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
   if (ev.registration_enabled === false) return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
+
   const now = new Date()
   const regOpen = ev.registration_opens_at && now >= new Date(ev.registration_opens_at) && (!ev.registration_closes_at || now <= new Date(ev.registration_closes_at))
   if (!regOpen) return Response.json({ error: 'Registration is not open.' }, { status: 400 })
   if (!member) return Response.json({ error: 'Member record not found.' }, { status: 404 })
 
-  const isInnerCircle = member.tier === 'inner_circle'
-
-  if (ev.priority_window_end) {
-    const windowEnd = new Date(ev.priority_window_end)
-    if (new Date() < windowEnd && !isInnerCircle) {
-      return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
-    }
+  if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
+    return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
   }
 
+  // Early-exit if already registered (before any PI work)
   const { data: existing } = await admin.from('event_registrations')
-    .select('id, stripe_payment_status')
-    .eq('event_id', eventId)
-    .eq('member_id', user.id)
-    .maybeSingle()
+    .select('stripe_payment_status').eq('event_id', eventId).eq('member_id', user.id).maybeSingle()
   if (existing && ['free', 'paid'].includes(existing.stripe_payment_status)) {
     return Response.json({ error: 'You are already registered for this event.' }, { status: 400 })
   }
 
+  // Early-exit capacity pre-check (non-atomic, UX only — the RPC enforces it atomically)
   if (ev.capacity) {
     const { count } = await admin.from('event_registrations')
       .select('id', { count: 'exact', head: true })
-      .eq('event_id', eventId)
-      .in('stripe_payment_status', ['free', 'paid'])
+      .eq('event_id', eventId).in('stripe_payment_status', ['free', 'paid'])
     if (count >= ev.capacity) return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
   }
 
   const isFree = !ev.member_price || ev.member_price === 0
+  let amountPaid = 0
+  let piId = null
 
-  if (isFree) {
-    const { error } = await admin.from('event_registrations').upsert({
-      event_id: eventId,
-      member_id: user.id,
-      email: user.email || '',
-      name: member.name || '',
-      stripe_payment_status: 'free',
-      amount_paid: 0,
-    }, { onConflict: 'uq_event_reg_event_member' })
-    if (error) {
-      captureException(error, { context: 'event-register-free', eventId })
-      return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
+  if (!isFree) {
+    if (!paymentIntentId) return Response.json({ error: 'Payment intent ID required.' }, { status: 400 })
+    if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
+    let pi
+    try { pi = await stripe.paymentIntents.retrieve(paymentIntentId) } catch (err) {
+      captureException(err, { context: 'event-register-retrieve-pi', eventId })
+      return Response.json({ error: 'Could not verify payment.' }, { status: 500 })
     }
-    return Response.json({ success: true })
+    if (pi.metadata?.event_id !== eventId || pi.metadata?.member_id !== user.id) {
+      return Response.json({ error: 'Payment mismatch.' }, { status: 400 })
+    }
+    if (pi.status !== 'succeeded') {
+      return Response.json({ error: 'Payment has not been completed.' }, { status: 400 })
+    }
+    amountPaid = pi.amount_received
+    piId = paymentIntentId
   }
 
-  if (!paymentIntentId) return Response.json({ error: 'Payment intent ID required.' }, { status: 400 })
-  if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
+  // Atomic capacity check + insert via Postgres function
+  const { data: result, error: rpcError } = await admin.rpc('register_for_event', {
+    p_event_id: eventId,
+    p_member_id: user.id,
+    p_email: user.email || '',
+    p_name: member.name || '',
+    p_payment_intent_id: piId,
+    p_payment_status: isFree ? 'free' : 'paid',
+    p_amount_paid: amountPaid,
+  })
 
-  let pi
-  try {
-    pi = await stripe.paymentIntents.retrieve(paymentIntentId)
-  } catch (err) {
-    captureException(err, { context: 'event-register-retrieve-pi', eventId })
-    return Response.json({ error: 'Could not verify payment.' }, { status: 500 })
-  }
-
-  if (pi.metadata?.event_id !== eventId || pi.metadata?.member_id !== user.id) {
-    return Response.json({ error: 'Payment mismatch.' }, { status: 400 })
-  }
-
-  if (pi.status !== 'succeeded') {
-    return Response.json({ error: 'Payment has not been completed.' }, { status: 400 })
-  }
-
-  const { error } = await admin.from('event_registrations').upsert({
-    event_id: eventId,
-    member_id: user.id,
-    email: user.email || '',
-    name: member.name || '',
-    stripe_payment_intent_id: paymentIntentId,
-    stripe_payment_status: 'paid',
-    amount_paid: pi.amount_received,
-  }, { onConflict: 'uq_event_reg_event_member' })
-
-  if (error) {
-    captureException(error, { context: 'event-register-paid', eventId })
+  if (rpcError) {
+    captureException(rpcError, { context: 'event-register-rpc', eventId })
     return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
+  }
+  if (result === 'at_capacity') {
+    return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
   }
 
   return Response.json({ success: true })

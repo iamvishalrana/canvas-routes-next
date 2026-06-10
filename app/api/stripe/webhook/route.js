@@ -140,10 +140,18 @@ export async function POST(request) {
           try {
             const charge = await stripe.charges.retrieve(chargeId)
             if (charge.payment_intent) {
+              const pi = await stripe.paymentIntents.retrieve(charge.payment_intent)
               const supabase = createAdminClient()
-              await supabase.from('applications')
-                .update({ stripe_payment_status: 'disputed' })
-                .eq('stripe_payment_intent_id', charge.payment_intent)
+              if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
+                await supabase.from('event_registrations')
+                  .update({ stripe_payment_status: 'disputed' })
+                  .eq('event_id', pi.metadata.event_id)
+                  .eq('member_id', pi.metadata.member_id)
+              } else {
+                await supabase.from('applications')
+                  .update({ stripe_payment_status: 'disputed' })
+                  .eq('stripe_payment_intent_id', charge.payment_intent)
+              }
             }
           } catch (err) {
             captureException(err, { context: 'dispute-webhook', chargeId })
