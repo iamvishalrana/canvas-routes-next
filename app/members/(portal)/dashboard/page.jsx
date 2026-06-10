@@ -306,7 +306,7 @@ export default async function DashboardPage() {
                         <div style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, marginTop: '0.5rem' }}>{ev.description}</div>
                       )}
                       <div style={{ marginTop: '0.85rem' }}>
-                        {ev.registration_enabled ? (
+                        {ev.registration_opens_at ? (
                           <EventRegisterButton
                             event={ev}
                             isRegistered={['free', 'paid'].includes(eventRegMap[ev.id])}

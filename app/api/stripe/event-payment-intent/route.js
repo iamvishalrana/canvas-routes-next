@@ -27,12 +27,14 @@ export async function POST(request) {
   const admin = createAdminClient()
 
   const [{ data: ev }, { data: member }] = await Promise.all([
-    admin.from('events').select('id, name, date, registration_enabled, capacity, member_price, priority_window_end').eq('id', eventId).single(),
+    admin.from('events').select('id, name, date, registration_opens_at, registration_closes_at, capacity, member_price, priority_window_end').eq('id', eventId).single(),
     admin.from('members').select('tier, name').eq('id', user.id).maybeSingle(),
   ])
 
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
-  if (!ev.registration_enabled) return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
+  const now = new Date()
+  const regOpen = ev.registration_opens_at && now >= new Date(ev.registration_opens_at) && (!ev.registration_closes_at || now <= new Date(ev.registration_closes_at))
+  if (!regOpen) return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
   if (!member) return Response.json({ error: 'Member record not found.' }, { status: 404 })
 
   const isInnerCircle = member.tier === 'inner_circle'

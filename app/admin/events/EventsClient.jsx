@@ -16,7 +16,7 @@ import {
 export default function EventsClient({ isMobile }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_enabled: false, capacity: '', member_price: '', priority_window_end: '' })
+  const [form, setForm] = useState({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -50,7 +50,7 @@ export default function EventsClient({ isMobile }) {
     const data = await res.json()
     setPosting(false)
     if (!res.ok) { setPostError(data.error || 'Failed.'); return }
-    setForm({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_enabled: false, capacity: '', member_price: '', priority_window_end: '' })
+    setForm({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
     load()
   }
 
@@ -150,8 +150,18 @@ export default function EventsClient({ isMobile }) {
             <input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" />
           </div>
           <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Portal Registration</div>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Member Registration</div>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div>
+                <L>Registration Opens</L>
+                <input style={inp} type="datetime-local" value={form.registration_opens_at} onChange={e => setForm(p => ({ ...p, registration_opens_at: e.target.value }))} />
+              </div>
+              <div>
+                <L>Registration Closes (optional)</L>
+                <input style={inp} type="datetime-local" value={form.registration_closes_at} onChange={e => setForm(p => ({ ...p, registration_closes_at: e.target.value }))} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.75rem' }}>
               <div>
                 <L>Member Price (CAD) — leave blank for free</L>
                 <input style={inp} type="number" min="0" step="0.01" value={form.member_price ? (form.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : '' })) }} placeholder="0.00" />
@@ -165,10 +175,6 @@ export default function EventsClient({ isMobile }) {
                 <input style={inp} type="datetime-local" value={form.priority_window_end} onChange={e => setForm(p => ({ ...p, priority_window_end: e.target.value }))} />
               </div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>
-              <input type="checkbox" checked={form.registration_enabled} onChange={e => setForm(p => ({ ...p, registration_enabled: e.target.checked }))} />
-              Enable portal registration for members
-            </label>
           </div>
           <PrimaryBtn type="submit" disabled={posting}>{posting ? 'Adding…' : 'Add Event'}</PrimaryBtn>
           <Err msg={postError} />
@@ -194,16 +200,16 @@ export default function EventsClient({ isMobile }) {
                   <div style={{ marginBottom: '0.6rem' }}><L>Description</L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
                   <div style={{ marginBottom: '0.6rem' }}><L>Registration URL (external, optional)</L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
                   <div style={{ paddingTop: '0.5rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.6rem' }}>
-                    <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Portal Registration</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Member Registration</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                      <div><L>Registration Opens</L><input style={inp} type="datetime-local" value={editForm.registration_opens_at ? editForm.registration_opens_at.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, registration_opens_at: e.target.value || null }))} /></div>
+                      <div><L>Registration Closes (optional)</L><input style={inp} type="datetime-local" value={editForm.registration_closes_at ? editForm.registration_closes_at.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, registration_closes_at: e.target.value || null }))} /></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.6rem' }}>
                       <div><L>Member Price (CAD)</L><input style={inp} type="number" min="0" step="0.01" value={editForm.member_price ? (editForm.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setEditForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : null })) }} placeholder="0.00" /></div>
                       <div><L>Capacity</L><input style={inp} type="number" min="1" value={editForm.capacity || ''} onChange={e => setEditForm(p => ({ ...p, capacity: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Unlimited" /></div>
                       <div><L>IC Priority Window Ends</L><input style={inp} type="datetime-local" value={editForm.priority_window_end ? editForm.priority_window_end.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, priority_window_end: e.target.value || null }))} /></div>
                     </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>
-                      <input type="checkbox" checked={!!editForm.registration_enabled} onChange={e => setEditForm(p => ({ ...p, registration_enabled: e.target.checked }))} />
-                      Enable portal registration
-                    </label>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
@@ -218,11 +224,18 @@ export default function EventsClient({ isMobile }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.name}</div>
                         <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.45)', padding: '2px 7px' }}>{item.type}</span>
-                        {item.registration_enabled && (
-                          <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 7px', background: 'rgba(59,107,47,0.04)' }}>
-                            {item.member_price ? `$${(item.member_price / 100).toFixed(2)}` : 'Free'}{item.capacity ? ` · ${item.capacity} spots` : ''}
-                          </span>
-                        )}
+                        {item.registration_opens_at && (() => {
+                          const now = new Date()
+                          const opens = new Date(item.registration_opens_at)
+                          const closes = item.registration_closes_at ? new Date(item.registration_closes_at) : null
+                          const isOpen = now >= opens && (!closes || now <= closes)
+                          const label = isOpen ? 'Registration Open' : now < opens ? `Opens ${opens.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Registration Closed'
+                          return (
+                            <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: isOpen ? '#3B6B2F' : '#888', border: `0.5px solid ${isOpen ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '2px 7px', background: isOpen ? 'rgba(59,107,47,0.04)' : 'transparent' }}>
+                              {label}{item.member_price ? ` · $${(item.member_price / 100).toFixed(2)}` : ''}{item.capacity ? ` · ${item.capacity} spots` : ''}
+                            </span>
+                          )
+                        })()}
                       </div>
                       <div style={{ fontSize: '11px', color: '#c5a882', fontWeight: '500', marginBottom: '0.25rem' }}>{item.date}</div>
                       {item.location && <div style={{ fontSize: '12px', color: '#888' }}>{item.location}</div>}
@@ -230,7 +243,7 @@ export default function EventsClient({ isMobile }) {
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
                       <GhostBtn onClick={() => toggleRegistrants(item.id, item.name)} small>{showRegistrants === item.id ? 'Hide' : 'Registrants'}</GhostBtn>
-                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_enabled: !!item.registration_enabled, capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '' }); setSaveError(null) }} small>Edit</GhostBtn>
+                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '' }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
                     </div>
                   </div>

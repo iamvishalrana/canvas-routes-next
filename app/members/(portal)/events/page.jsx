@@ -48,7 +48,7 @@ function EventCard({ ev, regMap, tier, now }) {
           <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, margin: '0 0 0.75rem' }}>{ev.description}</p>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-          {ev.registration_enabled ? (
+          {ev.registration_opens_at ? (
             <>
               {ev.member_price > 0 && !isRegistered && (
                 <span style={{ fontSize: '11px', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>

@@ -91,11 +91,26 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   const [done, setDone] = useState(isRegistered)
   useEffect(() => { setDone(isRegistered) }, [isRegistered])
 
-  if (!event.registration_enabled) return null
+  const now = new Date()
+  const opensAt = event.registration_opens_at ? new Date(event.registration_opens_at) : null
+  const closesAt = event.registration_closes_at ? new Date(event.registration_closes_at) : null
+  const regOpen = opensAt && now >= opensAt && (!closesAt || now <= closesAt)
+  const regClosed = closesAt && now > closesAt
+  const regNotYetOpen = opensAt && now < opensAt
+
+  if (!opensAt) return null
 
   const isFree = !event.member_price || event.member_price === 0
   const isInnerCircle = memberTier === 'inner_circle'
-  const inPriorityWindow = event.priority_window_end && new Date() < new Date(event.priority_window_end)
+  const inPriorityWindow = event.priority_window_end && now < new Date(event.priority_window_end)
+
+  if (regClosed) {
+    return (
+      <span style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(0,0,0,0.12)', padding: compact ? '2px 8px' : '0.45rem 1rem' }}>
+        Registration Closed
+      </span>
+    )
+  }
 
   if (done) {
     return (
@@ -112,21 +127,28 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
     )
   }
 
+  if (regNotYetOpen && !regOpen) {
+    const dateStr = opensAt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+    const timeStr = opensAt.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
+    return (
+      <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.3)', padding: compact ? '2px 8px' : '0.45rem 1rem', background: 'rgba(197,168,130,0.04)' }}>
+        Opens {dateStr} at {timeStr}
+      </span>
+    )
+  }
+
   if (inPriorityWindow && !isInnerCircle) {
     const windowEnd = new Date(event.priority_window_end)
     const dateStr = windowEnd.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
     const timeStr = windowEnd.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
     return (
-      <span style={{
-        fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase',
-        color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif',
-        border: '0.5px solid rgba(197,168,130,0.3)', padding: compact ? '2px 8px' : '0.45rem 1rem',
-        background: 'rgba(197,168,130,0.04)',
-      }}>
+      <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.3)', padding: compact ? '2px 8px' : '0.45rem 1rem', background: 'rgba(197,168,130,0.04)' }}>
         Opens {dateStr} at {timeStr}
       </span>
     )
   }
+
+  if (!regOpen) return null
 
   async function handleClick() {
     setPiError(null)
