@@ -11,21 +11,38 @@ const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 
 function parseEventDate(str) {
   if (!str) return null
-  if (/^[A-Za-z]+ \d{4}$/.test(str.trim())) {
-    const d = new Date(str.trim() + ' 1')
-    if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0) // last day of month
+  const s = str.trim()
+  if (/^[A-Za-z]+ \d{4}$/.test(s)) {
+    const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2'))
+    if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0)
   }
-  const d = new Date(str)
+  if (/^\d{4}-\d{2}$/.test(s)) {
+    const [y, m] = s.split('-').map(Number)
+    return new Date(y, m, 0) // last day of that month
+  }
+  const d = new Date(s)
   return isNaN(d) ? null : d
 }
 
 function EventCard({ ev, regMap, tier, now }) {
-  const isPartialDate = /^[A-Za-z]+ \d{4}$/.test((ev.date || '').trim())
-  const evDate = isPartialDate
-    ? (() => { const d = new Date(ev.date.trim() + ' 1'); return isNaN(d) ? null : d })()
-    : new Date(ev.date)
-  const day = !isPartialDate && evDate && !isNaN(evDate) ? evDate.getDate() : null
-  const month = evDate && !isNaN(evDate) ? MONTHS_SHORT[evDate.getMonth()] : null
+  const rawDate = ev.date_display || ev.date || ''
+  const s = rawDate.trim()
+  const isMonthYear = /^[A-Za-z]+ \d{4}$/.test(s)
+  const isIsoMonthYear = /^\d{4}-\d{2}$/.test(s)
+  const isPartialDate = isMonthYear || isIsoMonthYear
+  let evDate = null
+  if (isMonthYear) {
+    const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2'))
+    evDate = isNaN(d) ? null : d
+  } else if (isIsoMonthYear) {
+    const [y, m] = s.split('-').map(Number)
+    evDate = new Date(y, m - 1, 1)
+  } else {
+    const d = new Date(s)
+    evDate = isNaN(d) ? null : d
+  }
+  const day = !isPartialDate && evDate ? evDate.getDate() : null
+  const month = evDate ? MONTHS_SHORT[evDate.getMonth()] : null
   const year = isPartialDate && evDate ? evDate.getFullYear() : null
   const isRegistered = ['free', 'paid'].includes(regMap[ev.id])
   const inPriorityWindow = ev.priority_window_end && now < new Date(ev.priority_window_end)
@@ -123,11 +140,11 @@ export default async function EventsPage() {
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
   const upcoming = (events || []).filter(ev => {
-    const d = parseEventDate(ev.date)
+    const d = parseEventDate(ev.date_display || ev.date)
     return !d || d >= today
   })
   const past = (events || []).filter(ev => {
-    const d = parseEventDate(ev.date)
+    const d = parseEventDate(ev.date_display || ev.date)
     return d && d < today
   }).reverse()
 

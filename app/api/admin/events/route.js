@@ -16,7 +16,7 @@ export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
-  const { name, date, location, description, type, registration_url, registration_opens_at, registration_closes_at, capacity, member_price, priority_window_end } = await request.json()
+  const { name, date, date_display, location, description, type, registration_url, registration_opens_at, registration_closes_at, capacity, member_price, priority_window_end } = await request.json()
   if (!name?.trim()) return Response.json({ error: 'Name required.' }, { status: 400 })
   if (!date?.trim()) return Response.json({ error: 'Date required.' }, { status: 400 })
   if (!type?.trim()) return Response.json({ error: 'Type required.' }, { status: 400 })
@@ -24,6 +24,7 @@ export async function POST(request) {
   const { data, error } = await supabase.from('events').insert({
     name: name.trim(),
     date: date.trim(),
+    date_display: date_display?.trim() || null,
     location: location?.trim() || null,
     description: description?.trim() || null,
     type: type.trim(),

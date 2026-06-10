@@ -17,7 +17,8 @@ export default function EventsClient() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
-  const [form, setForm] = useState({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
+  const [form, setForm] = useState({ name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
+  const [regToggleError, setRegToggleError] = useState(null)
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -60,7 +61,7 @@ export default function EventsClient() {
     const data = await res.json()
     setPosting(false)
     if (!res.ok) { setPostError(data.error || 'Failed.'); return }
-    setForm({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
+    setForm({ name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
     load()
   }
 
@@ -115,11 +116,17 @@ export default function EventsClient() {
   }
 
   async function setRegEnabled(id, value) {
+    setRegToggleError(null)
     const res = await fetch(`/api/admin/events/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ registration_enabled: value }),
     })
-    if (res.ok) setItems(prev => prev.map(ev => ev.id === id ? { ...ev, registration_enabled: value } : ev))
+    if (res.ok) {
+      setItems(prev => prev.map(ev => ev.id === id ? { ...ev, registration_enabled: value } : ev))
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setRegToggleError(d.error || 'Could not update registration — run the SQL migrations in Supabase first.')
+    }
   }
 
   async function del(id) {
@@ -185,13 +192,17 @@ export default function EventsClient() {
               <input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Into the Laurentians" maxLength={200} />
             </div>
             <div>
-              <L>Date *</L>
-              <input style={inp} value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} placeholder="May 31, 2026" />
+              <L>Date * (YYYY-MM-DD)</L>
+              <input style={inp} type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} />
             </div>
             <div>
               <L>Type *</L>
               <SelectWrap value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} />
             </div>
+          </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <L>Date Display (optional — overrides date shown to members, e.g. "June 2026")</L>
+            <input style={inp} value={form.date_display} onChange={e => setForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" />
           </div>
           <div style={{ marginBottom: '0.75rem' }}>
             <L>Location</L>
@@ -249,9 +260,10 @@ export default function EventsClient() {
                 <div>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
                     <div><L>Name</L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
-                    <div><L>Date</L><input style={inp} value={editForm.date} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} /></div>
+                    <div><L>Date (YYYY-MM-DD)</L><input style={inp} type="date" value={editForm.date || ''} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} /></div>
                     <div><L>Type</L><SelectWrap value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
                   </div>
+                  <div style={{ marginBottom: '0.6rem' }}><L>Date Display (optional — e.g. "June 2026")</L><input style={inp} value={editForm.date_display || ''} onChange={e => setEditForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
                   <div style={{ marginBottom: '0.6rem' }}><L>Location</L><input style={inp} value={editForm.location || ''} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} /></div>
                   <div style={{ marginBottom: '0.6rem' }}><L>Description</L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
                   <div style={{ marginBottom: '0.6rem' }}><L>Registration URL (external, optional)</L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
@@ -335,11 +347,12 @@ export default function EventsClient() {
                       <GhostBtn onClick={() => toggleRegistrants(item.id, item.name)} small>{showRegistrants === item.id ? 'Hide' : 'Registrants'}</GhostBtn>
                       <button
                         onClick={() => setRegEnabled(item.id, !item.registration_enabled)}
+                        title={regToggleError || undefined}
                         style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-inter)', border: `0.5px solid ${item.registration_enabled ? 'rgba(59,107,47,0.35)' : 'rgba(0,0,0,0.15)'}`, color: item.registration_enabled ? '#3B6B2F' : '#888', background: item.registration_enabled ? 'rgba(59,107,47,0.05)' : 'transparent' }}
                       >
                         {item.registration_enabled ? 'Reg On' : 'Reg Off'}
                       </button>
-                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '', registration_enabled: item.registration_enabled }); setSaveError(null) }} small>Edit</GhostBtn>
+                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, date_display: item.date_display || '', location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '', registration_enabled: item.registration_enabled }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
                     </div>
                   </div>

@@ -222,8 +222,8 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
               <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.2, marginBottom: '0.3rem' }}>
                 {event.name}
               </div>
-              {event.date && (
-                <div style={{ fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter)' }}>{event.date}</div>
+              {(event.date_display || event.date) && (
+                <div style={{ fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter)' }}>{event.date_display || event.date}</div>
               )}
               <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#777', fontFamily: 'var(--font-inter)' }}>Member price</span>
