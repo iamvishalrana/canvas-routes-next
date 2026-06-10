@@ -51,12 +51,13 @@ export async function GET(request) {
 
 // Called manually from admin panel (POST, admin-only)
 export async function POST() {
-  const user = await requireAdmin()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   try {
+    const user = await requireAdmin()
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     const result = await refreshToken()
     return Response.json({ ok: true, ...result })
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 })
+    console.error('Instagram refresh error:', err.message)
+    return Response.json({ error: err.message || 'Internal error' }, { status: 500 })
   }
 }
