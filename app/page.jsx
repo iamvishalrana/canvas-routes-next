@@ -540,14 +540,11 @@ export default function Home() {
 
           {/* Title */}
           <div style={{padding:"0 2rem",marginBottom:"2rem",display:"flex",alignItems:"flex-end",justifyContent:"space-between",maxWidth:"1200px",margin:"0 auto 2rem"}}>
-            <div>
-              <div style={{fontSize:"9px",letterSpacing:"0.38em",textTransform:"uppercase",color:"rgba(197,168,130,0.45)",marginBottom:"0.6rem",fontFamily:"var(--font-inter),sans-serif"}}>Canvas Routes</div>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(2rem,4vw,3rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:1,letterSpacing:"-0.01em",fontStyle:"italic"}}>Gallery</div>
-            </div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(2rem,4vw,3rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:1,letterSpacing:"-0.01em"}}>Gallery</div>
             <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer"
               style={{display:"inline-flex",alignItems:"center",gap:"0.45rem",fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"rgba(197,168,130,0.55)",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",flexShrink:0}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
               @canvasroutes
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
           </div>
 
