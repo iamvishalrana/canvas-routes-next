@@ -41,14 +41,21 @@ export async function POST(request) {
         return Response.json({ ok: true, daysLeft: null, expiresAt: 'never', tokenType: 'page', pageName: page.name })
       }
 
-      // No page found — fall back to storing the long-lived user token (60 days)
+      // No page found — this means pages_show_list permission was missing or no Facebook Page is connected
+      const noPageReason = pagesData.error
+        ? `pages_show_list permission missing (${pagesData.error.message})`
+        : pages.length === 0
+          ? 'no Facebook Pages found — make sure the token includes pages_show_list permission'
+          : 'no matching page found'
+
+      // Fall back to storing the long-lived user token (60 days) — warn that it will break on logout
       const expiresAt = new Date(Date.now() + (exchData.expires_in || 5184000) * 1000).toISOString()
       await Promise.all([
         supabase.from('settings').upsert({ key: 'instagram_access_token', value: longLivedToken, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
         supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: expiresAt, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
       ])
       const daysLeft = Math.round((exchData.expires_in || 5184000) / 86400)
-      return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user' })
+      return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as a user token (${noPageReason}). This WILL break if you log out of Facebook. Re-generate the token with pages_show_list permission checked to get a permanent page token.` })
     }
     // Exchange failed — likely a System User token; fall through to direct verification
   }

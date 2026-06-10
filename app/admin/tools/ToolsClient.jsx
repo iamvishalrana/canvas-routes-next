@@ -141,9 +141,11 @@ export default function ToolsClient() {
               {setTokenResult.error
                 ? `Error: ${setTokenResult.error}`
                 : setTokenResult.tokenType === 'page'
-                  ? `Page token saved for "${setTokenResult.pageName}" — never expires and won't break if you log out of Facebook. Gallery should reappear within a minute.`
+                  ? `✓ Page token saved for "${setTokenResult.pageName}" — never expires and won't break if you log out of Facebook. Gallery should reappear within a minute.`
                   : setTokenResult.tokenType === 'system_user'
-                  ? `System User token saved — never expires. Gallery should reappear within a minute.`
+                  ? `✓ System User token saved — never expires. Gallery should reappear within a minute.`
+                  : setTokenResult.warning
+                  ? `⚠ Gallery restored — but: ${setTokenResult.warning}`
                   : `Token saved — valid for ${setTokenResult.daysLeft} days until ${new Date(setTokenResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Gallery should reappear within a minute.`
               }
             </div>
