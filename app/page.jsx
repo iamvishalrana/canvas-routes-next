@@ -500,8 +500,8 @@ export default function Home() {
       </section>
 
       {/* INSTAGRAM FILM STRIP */}
-      {igPosts.length > 0 && (
-        <section id="gallery" style={{background:"#0F1E14",padding:"4.5rem 0"}}>
+      <section id="gallery" style={{background:"#0F1E14",padding:igPosts.length > 0 ? "4.5rem 0" : "0",overflow:"hidden"}}>
+      {igPosts.length > 0 && (<>
           <style>{`
             @keyframes film-scroll {
               0%   { transform: translateX(0); }
@@ -558,8 +558,8 @@ export default function Home() {
               ))}
             </div>
           </a>
-        </section>
-      )}
+        </>)}
+      </section>
 
       {/* CONTACT */}
       <section id="contact" style={{background:"#EDE8E1",padding:"6rem 3rem",textAlign:"center"}}>
