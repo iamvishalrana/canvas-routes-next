@@ -132,6 +132,10 @@ export default async function DashboardPage() {
           animation: dash-fade-up 0.38s ease both;
           animation-delay: 0.26s;
         }
+        .dash-anim-card-5 {
+          animation: dash-fade-up 0.38s ease both;
+          animation-delay: 0.32s;
+        }
         .dash-anim-membership {
           animation: dash-scale-in 0.42s cubic-bezier(0.34,1.3,0.64,1) both;
           animation-delay: 0.06s;
@@ -452,7 +456,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Partner Discounts */}
-          <div className="dash-card dash-anim-card-4">
+          <div className="dash-card dash-anim-card-5">
             <div className="card-head">
               <span className="section-label">Partner Perks</span>
               <Link href="/members/perks" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>

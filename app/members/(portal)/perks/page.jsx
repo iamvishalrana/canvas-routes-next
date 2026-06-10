@@ -81,7 +81,7 @@ export default async function PerksPage() {
         @media (max-width: 640px) {
           .perks-card { grid-template-columns: 1fr; }
           .perks-card-left { min-height: 180px; padding: 1.75rem 1.5rem; }
-          .perks-card-right { border-left: 0.5px solid rgba(0,0,0,0.07); border-top: none; padding: 1.75rem 1.5rem; }
+          .perks-card-right { border-left: 0.5px solid rgba(0,0,0,0.07); border-top: 0.5px solid rgba(197,168,130,0.2); padding: 1.75rem 1.5rem; }
           .perks-header { margin-bottom: 2.25rem !important; padding-bottom: 2rem !important; }
         }
       `}</style>

@@ -137,6 +137,7 @@ export default function ProfilePage() {
     fetch('/api/member/me')
       .then(r => r.json())
       .then(({ user, member }) => {
+
         if (user) setUser(user)
         if (member) {
           const f = {
@@ -160,6 +161,7 @@ export default function ProfilePage() {
           if (member?.tier) setTier(member.tier)
         }
       })
+      .catch(() => {})
   }, [])
 
   function formatPhone(v) {
@@ -261,7 +263,7 @@ export default function ProfilePage() {
     setPhotoUploading(true); setPhotoError(null)
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('photo', file)
       const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
       const data = await res.json()
       if (res.ok) setCarPhotoUrl(data.url)

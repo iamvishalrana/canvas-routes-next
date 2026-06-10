@@ -36,8 +36,12 @@ async function refreshToken() {
 // Called by Vercel cron (GET with Authorization: Bearer {CRON_SECRET})
 export async function GET(request) {
   const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    console.error('Instagram cron: CRON_SECRET is not set — endpoint is disabled for safety')
+    return Response.json({ error: 'CRON_SECRET not configured' }, { status: 503 })
+  }
   const auth = request.headers.get('authorization')
-  if (cronSecret && auth !== `Bearer ${cronSecret}`) {
+  if (auth !== `Bearer ${cronSecret}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {

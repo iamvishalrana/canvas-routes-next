@@ -42,7 +42,11 @@ export async function POST(request) {
   const { data: { publicUrl } } = admin.storage.from('member-photos').getPublicUrl(path)
 
   // Save URL to member record
-  await admin.from('members').upsert({ id: user.id, email: user.email, car_photo_url: publicUrl }, { onConflict: 'id' })
+  const { error: upsertErr } = await admin.from('members').upsert({ id: user.id, email: user.email, car_photo_url: publicUrl }, { onConflict: 'id' })
+  if (upsertErr) {
+    console.error('Failed to persist car photo URL:', upsertErr.message)
+    return Response.json({ error: 'Photo uploaded but could not be saved to your profile. Please try again.' }, { status: 500 })
+  }
 
   return Response.json({ url: publicUrl })
 }
