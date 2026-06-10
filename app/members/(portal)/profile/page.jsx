@@ -293,24 +293,65 @@ export default function ProfilePage() {
         .car-view-card:hover { border-color: rgba(197,168,130,0.35) !important; }
         .photo-empty:hover { border-color: rgba(197,168,130,0.45) !important; background: rgba(197,168,130,0.04) !important; }
         .pw-toggle:hover { background: rgba(0,0,0,0.01) !important; }
+
+        @keyframes cr-fade-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes cr-scale-in {
+          from { opacity: 0; transform: scale(0.88); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes cr-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes cr-save-pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(59,107,47,0.35); }
+          70%  { box-shadow: 0 0 0 8px rgba(59,107,47,0); }
+          100% { box-shadow: 0 0 0 0 rgba(59,107,47,0); }
+        }
+
+        .cr-anim-avatar {
+          animation: cr-scale-in 0.38s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        .cr-anim-header {
+          animation: cr-fade-up 0.38s ease both;
+          animation-delay: 0.06s;
+        }
+        .cr-anim-section {
+          animation: cr-fade-up 0.35s ease both;
+          animation-delay: 0.12s;
+        }
+        .cr-anim-right {
+          animation: cr-fade-up 0.4s ease both;
+          animation-delay: 0.18s;
+        }
+        .cr-save-success {
+          animation: cr-save-pulse 0.6s ease-out;
+        }
+        .cr-anim-avatar:hover {
+          filter: brightness(1.08);
+          transition: filter 0.2s;
+        }
       `}</style>
 
       {/* ── Header ── */}
       <div style={{ marginBottom: '3rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
-          <div style={{
+          <div className="cr-anim-avatar" style={{
             width: '54px', height: '54px', borderRadius: '50%', flexShrink: 0,
             background: isInnerCircle
               ? 'linear-gradient(135deg, #c5a882, #a8885f)'
               : 'linear-gradient(135deg, #243328, #0F1E14)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: isInnerCircle ? '0 3px 14px rgba(197,168,130,0.28)' : '0 3px 14px rgba(15,30,20,0.22)',
-            marginTop: '3px',
+            marginTop: '3px', cursor: 'default',
           }}>
             <span style={{ fontSize: '16px', color: '#fff', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '400', letterSpacing: '0.05em' }}>{initials}</span>
           </div>
 
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="cr-anim-header" style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.34em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
               Canvas Routes &mdash; Season 2026
             </div>
@@ -359,8 +400,10 @@ export default function ProfilePage() {
                 { label: 'Phone', value: form.phone || null },
                 { label: 'Instagram', value: form.instagram ? `@${form.instagram.replace(/^@/, '')}` : null },
                 { label: 'Birthday', value: dobDisplay },
-              ].map(row => row.value ? (
+              ].map((row, ri) => row.value ? (
                 <div key={row.label} className="info-row" style={{
+                  animationName: 'cr-fade-up', animationDuration: '0.32s', animationFillMode: 'both', animationTimingFunction: 'ease',
+                  animationDelay: `${0.14 + ri * 0.055}s`,
                   display: 'flex', gap: '1rem', alignItems: 'baseline',
                   padding: '0.88rem 0.5rem',
                   borderBottom: '0.5px solid rgba(0,0,0,0.06)',
@@ -377,6 +420,8 @@ export default function ProfilePage() {
                   <SectionDivider>Your Cars</SectionDivider>
                   {cars.filter(c => c.year || c.make || c.model || c.license_plate).map((car, i) => (
                     <div key={i} className="car-view-card" style={{
+                      animationName: 'cr-fade-up', animationDuration: '0.32s', animationFillMode: 'both', animationTimingFunction: 'ease',
+                      animationDelay: `${0.42 + i * 0.07}s`,
                       display: 'flex', alignItems: 'center', gap: '0.9rem',
                       padding: '0.9rem 1rem', marginBottom: '0.5rem',
                       border: '0.5px solid rgba(0,0,0,0.08)',
@@ -536,7 +581,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Right: Password ── */}
-        <div>
+        <div className="cr-anim-right">
           <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff' }}>
             <button
               type="button"

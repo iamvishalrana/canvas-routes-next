@@ -105,6 +105,37 @@ export default async function DashboardPage() {
           .membership-inner { padding: 1.5rem !important; }
           .membership-name { font-size: 1.65rem !important; }
         }
+        @keyframes dash-fade-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes dash-scale-in {
+          from { opacity: 0; transform: scale(0.96); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        .dash-anim-header {
+          animation: dash-fade-up 0.4s ease both;
+        }
+        .dash-anim-card-1 {
+          animation: dash-fade-up 0.38s ease both;
+          animation-delay: 0.08s;
+        }
+        .dash-anim-card-2 {
+          animation: dash-fade-up 0.38s ease both;
+          animation-delay: 0.14s;
+        }
+        .dash-anim-card-3 {
+          animation: dash-fade-up 0.38s ease both;
+          animation-delay: 0.2s;
+        }
+        .dash-anim-card-4 {
+          animation: dash-fade-up 0.38s ease both;
+          animation-delay: 0.26s;
+        }
+        .dash-anim-membership {
+          animation: dash-scale-in 0.42s cubic-bezier(0.34,1.3,0.64,1) both;
+          animation-delay: 0.06s;
+        }
         .dash-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.08); overflow: hidden; }
         .card-head {
           padding: 1.25rem 1.75rem;
@@ -160,7 +191,7 @@ export default async function DashboardPage() {
       `}</style>
 
       {/* ── Header ── */}
-      <header className="dash-header" style={{ marginBottom: '3.5rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+      <header className="dash-header dash-anim-header" style={{ marginBottom: '3.5rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
           Canvas Routes &mdash; Season 2026
         </div>
@@ -191,7 +222,7 @@ export default async function DashboardPage() {
 
           {/* Announcements */}
           {announcements?.length > 0 && (
-            <div className="dash-card">
+            <div className="dash-card dash-anim-card-1">
               <div className="card-head">
                 <span className="section-label">Announcements</span>
                 <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.1rem', fontWeight: '300', color: '#ddd', lineHeight: 1 }}>{announcements.length}</span>
@@ -216,7 +247,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Upcoming Events */}
-          <div className="dash-card">
+          <div className="dash-card dash-anim-card-2">
             <div className="card-head">
               <span className="section-label">Upcoming Events</span>
               {upcomingEvents.length > 0 && (
@@ -283,7 +314,7 @@ export default async function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           {/* Membership card */}
-          <div className="membership-card" style={isInnerCircle ? { background: 'linear-gradient(148deg, #0F1E14 55%, #172419 100%)' } : {}}>
+          <div className="membership-card dash-anim-membership" style={isInnerCircle ? { background: 'linear-gradient(148deg, #0F1E14 55%, #172419 100%)' } : {}}>
             {/* Ambient glows */}
             <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '180px', height: '180px', background: isInnerCircle ? 'radial-gradient(circle, rgba(197,168,130,0.22) 0%, transparent 65%)' : 'radial-gradient(circle, rgba(197,168,130,0.1) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 1 }} />
             {isInnerCircle && (
@@ -381,7 +412,7 @@ export default async function DashboardPage() {
 
           {/* Events attended */}
           {attendedEvents.length > 0 && (
-            <div className="dash-card">
+            <div className="dash-card dash-anim-card-3">
               <div className="card-head">
                 <span className="section-label">Events Attended</span>
                 <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>{attendedEvents.length}</span>
@@ -399,7 +430,7 @@ export default async function DashboardPage() {
 
           {/* Personal details */}
           {(dob || member?.phone || member?.instagram) && (
-            <div className="dash-card">
+            <div className="dash-card dash-anim-card-4">
               <div className="card-head"><span className="section-label">Your Details</span></div>
               <div style={{ padding: '0.25rem 1.75rem 0.5rem' }}>
                 {[
@@ -421,7 +452,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Partner Discounts */}
-          <div className="dash-card">
+          <div className="dash-card dash-anim-card-4">
             <div className="card-head">
               <span className="section-label">Partner Perks</span>
               <Link href="/members/perks" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
