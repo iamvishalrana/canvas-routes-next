@@ -304,7 +304,7 @@ export default function Home() {
         <div className="nav-links">
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
           <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
-          <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
+          <Link href="/gallery">Gallery</Link>
           <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
           <Link href="/faq">FAQ</Link>
         </div>
@@ -323,7 +323,7 @@ export default function Home() {
         <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }}>Car Meets</a>
         <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }}>Routes</a>
         <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
-        <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
+        <Link href="/gallery" onClick={() => setMenuOpen(false)}>Gallery</Link>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <Link href="/faq">FAQ</Link>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</a>
@@ -549,7 +549,7 @@ export default function Home() {
           </div>
 
           {/* Scrolling strip */}
-          <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" className="ig-strip-wrap" style={{textDecoration:"none"}}>
+          <Link href="/gallery" className="ig-strip-wrap" style={{textDecoration:"none"}}>
             <div className="ig-strip">
               {[...igPosts, ...igPosts].map((post, i) => (
                 <div key={i} className="ig-strip-photo">
@@ -557,7 +557,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </a>
+          </Link>
         </>)}
       </section>
 
