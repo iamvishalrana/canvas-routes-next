@@ -20,6 +20,9 @@ export async function POST(request) {
   if (!name?.trim()) return Response.json({ error: 'Name required.' }, { status: 400 })
   if (!date?.trim()) return Response.json({ error: 'Date required.' }, { status: 400 })
   if (!type?.trim()) return Response.json({ error: 'Type required.' }, { status: 400 })
+  if (member_price && parseInt(member_price) < 0) return Response.json({ error: 'Price cannot be negative.' }, { status: 400 })
+  if (registration_opens_at && registration_closes_at && new Date(registration_closes_at) <= new Date(registration_opens_at))
+    return Response.json({ error: 'Registration close time must be after open time.' }, { status: 400 })
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('events').insert({
     name: name.trim(),

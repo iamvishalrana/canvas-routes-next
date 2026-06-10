@@ -60,8 +60,8 @@ export async function POST(request) {
             amount_paid: amountPaid,
           }, { onConflict: 'uq_event_reg_event_member' })
           console.log(`Event registration confirmed: ${event_id} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
-        } else {
-          // Membership / road trip payment
+        } else if (type?.startsWith('membership_')) {
+          // Membership payment — update application row with Stripe confirmation
           await supabase.from('applications').upsert({
             email:                     normalEmail,
             name:                      name || '',
@@ -71,7 +71,10 @@ export async function POST(request) {
             stripe_payment_type:       type,
             stripe_paid_at:            new Date().toISOString(),
           }, { onConflict: 'email' })
-          console.log(`Payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
+          console.log(`Membership payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
+        } else {
+          // Road trip or other — log only, do not touch applications table
+          console.log(`Payment confirmed (non-membership): ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         }
         break
       }

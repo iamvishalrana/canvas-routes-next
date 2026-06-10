@@ -107,32 +107,33 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ remove: true, paymentIntentId, originalAmount: originalAmountCents }),
       })
-      if (!res.ok) {
-        setPromoError('Could not remove promo code. Please try again.')
-        return
+      if (res.ok) {
+        setPromoApplied(null)
+        setPromoError(null)
       }
+      // Always resolve — caller proceeds regardless
     } catch {
-      setPromoError('Could not remove promo code. Please try again.')
-      return
+      // Always resolve — caller proceeds regardless
     }
-    setPromoApplied(null)
-    setPromoError(null)
   }
 
+  const payingRef = useRef(false)
   async function handlePay(e) {
     e.preventDefault()
-    if (!stripe || !elements) return
+    if (!stripe || !elements || payingRef.current) return
+    payingRef.current = true
 
     // Block payment if there's a promo code typed but not applied
     if (promoInput.trim()) {
       setError('You have a promo code entered but not applied. Click "Apply" first.')
+      payingRef.current = false
       return
     }
 
     setPaying(true); setError(null)
 
     const { error: submitError } = await elements.submit()
-    if (submitError) { setError(submitError.message); setPaying(false); return }
+    if (submitError) { setError(submitError.message); setPaying(false); payingRef.current = false; return }
 
     let confirmError
     try {
@@ -140,10 +141,10 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       confirmError = result.error
     } catch (err) {
       setError('Payment could not be processed. Please try again.')
-      setPaying(false)
+      setPaying(false); payingRef.current = false
       return
     }
-    if (confirmError) { setError(confirmError.message); setPaying(false); return }
+    if (confirmError) { setError(confirmError.message); setPaying(false); payingRef.current = false; return }
 
     try {
       const waitlistRes = await fetch('/api/membership-waitlist', {
@@ -153,9 +154,15 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       })
       if (!waitlistRes.ok) {
         captureException(new Error(`membership-waitlist POST failed: ${waitlistRes.status}`))
+        setError('Payment confirmed — but please email info@canvasroutes.com with your details so we can save your application.')
+        setPaying(false)
+        return
       }
     } catch (waitlistErr) {
       captureException(waitlistErr)
+      setError('Payment confirmed — but please email info@canvasroutes.com with your details so we can save your application.')
+      setPaying(false)
+      return
     }
 
     onSuccess()
@@ -786,7 +793,7 @@ export default function MembershipContent() {
                   {[
                     { field: 'dob_month', placeholder: 'Month', options: MONTHS.map((m, i) => ({ v: String(i+1), l: m })) },
                     { field: 'dob_day',   placeholder: 'Day',   options: Array.from({length:31},(_,i)=>({v:String(i+1),l:String(i+1)})) },
-                    { field: 'dob_year',  placeholder: 'Year',  options: Array.from({length:2015-1945+1},(_,i)=>({v:String(2015-i),l:String(2015-i)})) },
+                    { field: 'dob_year',  placeholder: 'Year',  options: Array.from({length:2006-1945+1},(_,i)=>({v:String(2006-i),l:String(2006-i)})) },
                   ].map(({ field, placeholder, options }) => (
                     <div key={field} style={{ position: 'relative' }}>
                       <select value={form[field]} onChange={e => set(field, e.target.value)}

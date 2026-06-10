@@ -200,6 +200,8 @@ export async function POST(request) {
     return Response.json({ error: 'Please enter your car year.' }, { status: 400 })
   if (!carMake?.trim())
     return Response.json({ error: 'Please select your car make.' }, { status: 400 })
+  if (!carModel?.trim())
+    return Response.json({ error: 'Please enter your car model.' }, { status: 400 })
   if (!tier || !['Routes Member', 'Inner Circle'].includes(tier))
     return Response.json({ error: 'Please select a membership tier.' }, { status: 400 })
   if (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other','Member referral'].includes(source))

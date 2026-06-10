@@ -3,7 +3,6 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
-import EventRegisterButton from '../../../../components/EventRegisterButton'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Dashboard | Canvas Routes' } }
@@ -338,21 +337,22 @@ export default async function DashboardPage() {
                       )}
                       <div style={{ marginTop: '0.85rem' }}>
                         {ev.registration_enabled === false ? null
-                          : ev.registration_opens_at ? (
-                          <EventRegisterButton
-                            event={ev}
-                            isRegistered={['free', 'paid'].includes(eventRegMap[ev.id])}
-                            memberTier={tier}
-                            compact
-                          />
+                          : ['free', 'paid'].includes(eventRegMap[ev.id]) ? (
+                          <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Registered
+                          </span>
+                        ) : ev.registration_opens_at ? (
+                          <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#555', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 8px', fontFamily: 'var(--font-inter), sans-serif' }}>
+                            Registration Open →
+                          </span>
                         ) : ev.registration_url ? (
-                          <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                            Register
-                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                          </a>
+                          <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#555', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 8px', fontFamily: 'var(--font-inter), sans-serif' }}>
+                            Register →
+                          </span>
                         ) : ev.registration_enabled ? (
-                          <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '0.4rem 0.9rem', fontFamily: 'var(--font-inter), sans-serif', background: 'rgba(197,168,130,0.04)' }}>
-                            Registration Opening Soon
+                          <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px', fontFamily: 'var(--font-inter), sans-serif', background: 'rgba(197,168,130,0.04)' }}>
+                            Opening Soon
                           </span>
                         ) : null}
                       </div>

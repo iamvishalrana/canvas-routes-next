@@ -79,6 +79,10 @@ export async function POST(request) {
 
     // Get current payment intent amount and guard against stacking
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+    // Only allow promo codes on membership payments
+    if (!['membership_routes', 'membership_inner_circle'].includes(pi.metadata?.type)) {
+      return Response.json({ error: 'Invalid request.' }, { status: 400 })
+    }
     if (pi.metadata?.promo_code_id) {
       return Response.json({ error: 'A promo code has already been applied.' }, { status: 400 })
     }

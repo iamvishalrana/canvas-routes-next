@@ -156,8 +156,8 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
             <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.85, letterSpacing: '0.01em', marginBottom: '1.75rem' }}>{ev.description}</p>
           )}
 
-          {/* Registration */}
-          {ev.registration_enabled !== false && (
+          {/* Registration — only render the section when there is content to show */}
+          {ev.registration_enabled !== false && (ev.registration_enabled || ev.registration_opens_at || ev.registration_url) && (
             <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)', paddingTop: '1.5rem' }}>
               {ev.registration_enabled && !ev.registration_opens_at && !ev.registration_url ? (
                 <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '0.5rem 1.1rem', fontFamily: 'var(--font-inter)', background: 'rgba(197,168,130,0.04)', display: 'inline-block' }}>
@@ -166,20 +166,21 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
               ) : ev.registration_opens_at ? (
                 <div>
                   <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                    {ev.member_price > 0 && (
-                      <div>
-                        <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.25rem' }}>Member Price</div>
-                        <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>${(ev.member_price / 100).toFixed(2)} <span style={{ fontSize: '9px', color: '#aaa', fontFamily: 'var(--font-inter)', fontWeight: '400' }}>CAD</span></div>
+                    <div>
+                      <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.25rem' }}>Member Price</div>
+                      <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>
+                        {ev.member_price > 0 ? <>{`$${(ev.member_price / 100).toFixed(2)}`} <span style={{ fontSize: '9px', color: '#aaa', fontFamily: 'var(--font-inter)', fontWeight: '400' }}>CAD</span></> : 'Free'}
                       </div>
-                    )}
-                    {ev.capacity && !isRegistered && (
+                    </div>
+                    {ev.capacity && (
                       <div>
                         <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.25rem' }}>Capacity</div>
                         <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{ev.capacity}</div>
                       </div>
                     )}
                   </div>
-                  <EventRegisterButton event={ev} isRegistered={isRegistered} memberTier={tier} compact={false} />
+                  <EventRegisterButton event={ev} isRegistered={isRegistered} memberTier={tier} compact={false}
+                    onRegistrationComplete={() => onRegistered?.(ev.id, ev.member_price > 0 ? 'paid' : 'free')} />
                 </div>
               ) : ev.registration_url ? (
                 <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)' }}>
@@ -197,8 +198,13 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
 
 export default function EventsGrid({ upcoming, past, regMap, tier }) {
   const [selected, setSelected] = useState(null)
+  const [localRegMap, setLocalRegMap] = useState(regMap)
 
-  const selectedIsRegistered = selected ? ['free', 'paid'].includes(regMap[selected.id]) : false
+  function handleRegistered(eventId, status = 'free') {
+    setLocalRegMap(prev => ({ ...prev, [eventId]: status }))
+  }
+
+  const selectedIsRegistered = selected ? ['free', 'paid'].includes(localRegMap[selected.id]) : false
 
   return (
     <>
@@ -211,7 +217,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
           <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>Upcoming</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {upcoming.map(ev => (
-              <EventCard key={ev.id} ev={ev} isRegistered={['free', 'paid'].includes(regMap[ev.id])} isPast={false} onClick={() => setSelected(ev)} />
+              <EventCard key={ev.id} ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={false} onClick={() => setSelected(ev)} />
             ))}
           </div>
         </section>
@@ -222,7 +228,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
           <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>Past</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', opacity: 0.6 }}>
             {past.map(ev => (
-              <EventCard key={ev.id} ev={ev} isRegistered={['free', 'paid'].includes(regMap[ev.id])} isPast={true} onClick={() => setSelected(ev)} />
+              <EventCard key={ev.id} ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={true} onClick={() => setSelected(ev)} />
             ))}
           </div>
         </section>
@@ -234,6 +240,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
           isRegistered={selectedIsRegistered}
           tier={tier}
           onClose={() => setSelected(null)}
+          onRegistered={handleRegistered}
         />
       )}
     </>

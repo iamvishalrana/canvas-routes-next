@@ -140,6 +140,12 @@ export default async function EventDetailPage({ params }) {
         </div>
       )}
 
+      {ev.registration_enabled && !ev.registration_opens_at && !ev.registration_url && (
+        <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', padding: '1.25rem 1.75rem', background: 'rgba(197,168,130,0.04)', marginBottom: '2rem' }}>
+          <span style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter)' }}>Registration Opening Soon</span>
+        </div>
+      )}
+
       {ev.registration_enabled !== false && !ev.registration_opens_at && ev.registration_url && (
         <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)' }}>
           Register
