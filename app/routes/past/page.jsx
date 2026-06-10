@@ -20,12 +20,14 @@ const PAST_ROUTES = [
 export default function PastRoutesPage() {
   return (
     <div style={{ minHeight: '100svh', background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif', backgroundImage: 'url(/membership-form.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
-      <div style={{ minHeight: '100svh', background: 'rgba(15,30,20,0.82)', backdropFilter: 'blur(1px)' }}>
+      <div style={{ minHeight: '100svh', background: 'rgba(15,30,20,0.93)' }}>
 
       {/* Nav */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', height: '68px', borderBottom: '0.5px solid rgba(197,168,130,0.12)', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(15,30,20,0.95)', backdropFilter: 'blur(12px)' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', height: '68px', borderBottom: '0.5px solid rgba(197,168,130,0.12)', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(15,30,20,0.97)', backdropFilter: 'blur(12px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '110px', height: 'auto', marginTop: '-40px', display: 'block', opacity: 0.9 }} />
+          <div style={{ width: '142px', height: '64px', overflow: 'hidden', flexShrink: 0 }}>
+            <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
+          </div>
         </Link>
         <Link href="/routes" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Routes</Link>
       </nav>
@@ -35,7 +37,7 @@ export default function PastRoutesPage() {
         <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,6vw,4.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, margin: '0 0 1rem', letterSpacing: '-0.01em' }}>
           Past Routes
         </h1>
-        <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.4)', lineHeight: 1.75, margin: 0, maxWidth: '480px' }}>
+        <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.65)', lineHeight: 1.75, margin: 0, maxWidth: '480px' }}>
           Every route is password-protected — participants received the password at the time of the event.
         </p>
         <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.18)', marginTop: '2.5rem' }} />
