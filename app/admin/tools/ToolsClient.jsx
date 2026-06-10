@@ -140,7 +140,9 @@ export default function ToolsClient() {
             <div style={{ marginTop: '0.6rem', fontSize: '12px', color: setTokenResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
               {setTokenResult.error
                 ? `Error: ${setTokenResult.error}`
-                : setTokenResult.tokenType === 'system_user'
+                : setTokenResult.tokenType === 'page'
+                  ? `Page token saved for "${setTokenResult.pageName}" — never expires and won't break if you log out of Facebook. Gallery should reappear within a minute.`
+                  : setTokenResult.tokenType === 'system_user'
                   ? `System User token saved — never expires. Gallery should reappear within a minute.`
                   : `Token saved — valid for ${setTokenResult.daysLeft} days until ${new Date(setTokenResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Gallery should reappear within a minute.`
               }

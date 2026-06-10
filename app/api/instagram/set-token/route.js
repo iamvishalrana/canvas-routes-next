@@ -22,10 +22,29 @@ export async function POST(request) {
     const exchData = await exchRes.json()
 
     if (!exchData.error) {
-      // Personal token — successfully exchanged for 60-day long-lived token
+      const longLivedToken = exchData.access_token
+
+      // Try to get a Page Access Token — these never expire and survive user logouts
+      const pagesRes = await fetch(`https://graph.facebook.com/me/accounts?access_token=${longLivedToken}`)
+      const pagesData = await pagesRes.json()
+      const pages = pagesData.data || []
+
+      // Pick the Canvas Routes page (or the first one if only one page)
+      const page = pages.length === 1 ? pages[0] : pages.find(p => /canvas.?routes/i.test(p.name)) || pages[0]
+
+      if (page?.access_token) {
+        // Page token — never expires, not tied to personal login
+        await Promise.all([
+          supabase.from('settings').upsert({ key: 'instagram_access_token', value: page.access_token, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+          supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: 'never', updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+        ])
+        return Response.json({ ok: true, daysLeft: null, expiresAt: 'never', tokenType: 'page', pageName: page.name })
+      }
+
+      // No page found — fall back to storing the long-lived user token (60 days)
       const expiresAt = new Date(Date.now() + (exchData.expires_in || 5184000) * 1000).toISOString()
       await Promise.all([
-        supabase.from('settings').upsert({ key: 'instagram_access_token', value: exchData.access_token, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+        supabase.from('settings').upsert({ key: 'instagram_access_token', value: longLivedToken, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
         supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: expiresAt, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
       ])
       const daysLeft = Math.round((exchData.expires_in || 5184000) / 86400)
