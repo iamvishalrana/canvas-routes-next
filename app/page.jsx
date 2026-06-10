@@ -442,7 +442,10 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
+                <div style={{display:"flex",alignItems:"center",gap:"1rem",flexWrap:"wrap"}}>
+                  <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
+                  <Link href="/routes/past" style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#555",textDecoration:"none",borderBottom:"0.5px solid rgba(0,0,0,0.25)",paddingBottom:"1px"}}>Past Routes →</Link>
+                </div>
               </div>
               <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden",position:"relative"}}>
                 <div style={{position:"absolute",inset:0,backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
