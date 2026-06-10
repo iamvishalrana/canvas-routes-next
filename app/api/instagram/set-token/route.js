@@ -41,21 +41,41 @@ export async function POST(request) {
         return Response.json({ ok: true, daysLeft: null, expiresAt: 'never', tokenType: 'page', pageName: page.name })
       }
 
-      // No page found — this means pages_show_list permission was missing or no Facebook Page is connected
-      const noPageReason = pagesData.error
-        ? `pages_show_list permission missing (${pagesData.error.message})`
-        : pages.length === 0
-          ? 'no Facebook Pages found — make sure the token includes pages_show_list permission'
-          : 'no matching page found'
+      // No pages from /me/accounts — try to find the connected page directly from the Instagram account ID
+      let connectedPage = null
+      if (accountId) {
+        const igPageRes = await fetch(`https://graph.facebook.com/${accountId}?fields=page{id,name,access_token}&access_token=${longLivedToken}`)
+        const igPageData = await igPageRes.json()
+        if (igPageData.page?.access_token) {
+          connectedPage = igPageData.page
+        } else if (igPageData.page?.id) {
+          // Found the page but no access_token — token user isn't admin of it
+          const expiresAt = new Date(Date.now() + (exchData.expires_in || 5184000) * 1000).toISOString()
+          await Promise.all([
+            supabase.from('settings').upsert({ key: 'instagram_access_token', value: longLivedToken, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+            supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: expiresAt, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+          ])
+          const daysLeft = Math.round((exchData.expires_in || 5184000) / 86400)
+          return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as a user token. Your Instagram is connected to Facebook Page "${igPageData.page.name}" (ID: ${igPageData.page.id}) — but the Facebook account you used to generate this token is not an admin of that Page. Log into Graph Explorer as the admin of "${igPageData.page.name}" and regenerate the token to get a permanent page token.` })
+        }
+      }
 
-      // Fall back to storing the long-lived user token (60 days) — warn that it will break on logout
+      if (connectedPage?.access_token) {
+        await Promise.all([
+          supabase.from('settings').upsert({ key: 'instagram_access_token', value: connectedPage.access_token, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+          supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: 'never', updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+        ])
+        return Response.json({ ok: true, daysLeft: null, expiresAt: 'never', tokenType: 'page', pageName: connectedPage.name })
+      }
+
+      // True fallback — no page found anywhere
       const expiresAt = new Date(Date.now() + (exchData.expires_in || 5184000) * 1000).toISOString()
       await Promise.all([
         supabase.from('settings').upsert({ key: 'instagram_access_token', value: longLivedToken, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
         supabase.from('settings').upsert({ key: 'instagram_token_expires_at', value: expiresAt, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
       ])
       const daysLeft = Math.round((exchData.expires_in || 5184000) / 86400)
-      return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as a user token (${noPageReason}). This WILL break if you log out of Facebook. Re-generate the token with pages_show_list permission checked to get a permanent page token.` })
+      return Response.json({ ok: true, daysLeft, expiresAt, tokenType: 'user', warning: `Saved as a user token — no Facebook Page could be found. This WILL break if you log out of Facebook. Make sure your Instagram is connected to a Facebook Page and try again.` })
     }
     // Exchange failed — likely a System User token; fall through to direct verification
   }
