@@ -270,6 +270,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       dob_month: m.dob_month ? String(m.dob_month) : '',
       dob_day: m.dob_day ? String(m.dob_day) : '',
       dob_year: m.dob_year ? String(m.dob_year) : '',
+      membership_number: m.membership_number || '',
     })
     if (m.cars?.length > 0) {
       setEditCars(m.cars)
@@ -612,8 +613,12 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
               {editing === m.id ? (
                 <div style={{ padding: '1.5rem 1.25rem', background: 'rgba(197,168,130,0.05)', borderLeft: '2px solid #c5a882' }}>
 
-                  {/* Email + Status + Tier row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 160px 160px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  {/* Member number + Email + Status + Tier row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '90px 1fr 160px 160px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div>
+                      <L>No.</L>
+                      <input style={{ ...inp, fontFamily: 'monospace', letterSpacing: '0.08em' }} value={editForm.membership_number} onChange={e => setEditForm(p => ({ ...p, membership_number: e.target.value.replace(/\D/g, '').slice(0, 6) }))} placeholder="001" maxLength={6} />
+                    </div>
                     <div>
                       <L>Email (changes login email)</L>
                       <input style={inp} type="email" value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} />

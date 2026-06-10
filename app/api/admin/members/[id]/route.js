@@ -14,7 +14,7 @@ export async function PATCH(request, { params }) {
     if (authErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? authErr.message : 'Database error' }, { status: 500 })
   }
 
-  const allowed = ['membership_status', 'tier', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'car_paint', 'dob_day', 'dob_month', 'dob_year', 'cars', 'event_attendance', 'admin_notes', 'notes']
+  const allowed = ['membership_status', 'tier', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'car_paint', 'dob_day', 'dob_month', 'dob_year', 'cars', 'event_attendance', 'admin_notes', 'notes', 'membership_number']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if (update.email) update.email = update.email.trim().toLowerCase()

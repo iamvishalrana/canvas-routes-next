@@ -80,6 +80,7 @@ export default async function DashboardPage() {
   const tier = member?.tier || 'routes_member'
   const isInnerCircle = tier === 'inner_circle'
   const carPhotoUrl = member?.car_photo_url || null
+  const membershipNumber = member?.membership_number ? String(member.membership_number).padStart(3, '0') : null
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const upcomingEvents = (events || []).filter(ev => {
@@ -333,6 +334,9 @@ export default async function DashboardPage() {
                   <div style={{ fontSize: '6.5px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.42)', marginTop: '3px', fontFamily: 'var(--font-inter), sans-serif' }}>Montreal, QC</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
+                  {membershipNumber && (
+                    <div style={{ fontSize: '6.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '6px' }}>No. <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1rem', fontWeight: '300', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.12em', fontStyle: 'normal' }}>{membershipNumber}</span></div>
+                  )}
                   <div style={{ fontSize: '6.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter), sans-serif' }}>Season</div>
                   <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.15rem', fontWeight: '300', fontStyle: 'italic', color: 'rgba(197,168,130,0.72)', lineHeight: 1.1, marginTop: '2px' }}>2026</div>
                 </div>
