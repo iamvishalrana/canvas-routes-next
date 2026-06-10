@@ -90,7 +90,7 @@ export default async function EventDetailPage({ params }) {
       )}
 
       {/* Registration section */}
-      {ev.registration_opens_at && (
+      {ev.registration_enabled !== false && ev.registration_opens_at && (
         <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', padding: '1.75rem 2rem', background: '#fff', marginBottom: '2rem' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>
             Registration
@@ -118,11 +118,11 @@ export default async function EventDetailPage({ params }) {
             <div style={{ marginBottom: '1.25rem', padding: '0.75rem 1rem', background: isInnerCircle ? 'rgba(197,168,130,0.06)' : 'rgba(0,0,0,0.03)', border: `0.5px solid ${isInnerCircle ? 'rgba(197,168,130,0.3)' : 'rgba(0,0,0,0.1)'}` }}>
               {isInnerCircle ? (
                 <p style={{ fontSize: '12px', color: '#8A6535', lineHeight: 1.6, margin: 0, fontFamily: 'var(--font-inter)' }}>
-                  You have priority access as an Inner Circle member. Registration opens to all members on {new Date(ev.priority_window_end).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
+                  You have priority access as an Inner Circle member. Registration opens to all members on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
                 </p>
               ) : (
                 <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.6, margin: 0, fontFamily: 'var(--font-inter)' }}>
-                  Registration opens on {new Date(ev.priority_window_end).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
+                  Registration opens on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
                 </p>
               )}
             </div>
@@ -137,7 +137,7 @@ export default async function EventDetailPage({ params }) {
         </div>
       )}
 
-      {!ev.registration_opens_at && ev.registration_url && (
+      {ev.registration_enabled !== false && !ev.registration_opens_at && ev.registration_url && (
         <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)' }}>
           Register
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
