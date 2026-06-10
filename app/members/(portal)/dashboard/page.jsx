@@ -331,11 +331,11 @@ export default async function DashboardPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.75rem' }}>
                 <div>
                   <div style={{ fontSize: '7.5px', letterSpacing: '0.44em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>Canvas Routes</div>
+                  {membershipNumber && (
+                    <div style={{ fontSize: '7px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '5px' }}>No. <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '0.95rem', fontWeight: '300', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.1em', fontStyle: 'normal' }}>{membershipNumber}</span></div>
+                  )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  {membershipNumber && (
-                    <div style={{ fontSize: '6.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '6px' }}>No. <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1rem', fontWeight: '300', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.12em', fontStyle: 'normal' }}>{membershipNumber}</span></div>
-                  )}
                   <div style={{ fontSize: '6.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter), sans-serif' }}>Season</div>
                   <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.15rem', fontWeight: '300', fontStyle: 'italic', color: 'rgba(197,168,130,0.72)', lineHeight: 1.1, marginTop: '2px' }}>2026</div>
                 </div>
