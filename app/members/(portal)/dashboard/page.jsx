@@ -331,7 +331,6 @@ export default async function DashboardPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.75rem' }}>
                 <div>
                   <div style={{ fontSize: '7.5px', letterSpacing: '0.44em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>Canvas Routes</div>
-                  <div style={{ fontSize: '6.5px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.42)', marginTop: '3px', fontFamily: 'var(--font-inter), sans-serif' }}>Montreal, QC</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   {membershipNumber && (
