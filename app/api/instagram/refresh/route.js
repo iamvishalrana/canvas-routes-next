@@ -1,4 +1,5 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
+import { requireAdmin } from '../../../../lib/supabase/authCheck'
 
 async function refreshToken() {
   const appId = process.env.INSTAGRAM_APP_ID
@@ -49,10 +50,9 @@ export async function GET(request) {
 }
 
 // Called manually from admin panel (POST, admin-only)
-export async function POST(request) {
-  const { requireAdmin } = await import('../../../../lib/supabase/authCheck')
-  const authError = await requireAdmin(request)
-  if (authError) return authError
+export async function POST() {
+  const user = await requireAdmin()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const result = await refreshToken()
     return Response.json({ ok: true, ...result })
