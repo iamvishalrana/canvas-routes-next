@@ -23,6 +23,8 @@ export default function EventsClient({ isMobile }) {
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(null) // event id currently uploading
+  const [photoError, setPhotoError] = useState(null)
   const [showRegistrants, setShowRegistrants] = useState(null)
   const [registrantsData, setRegistrantsData] = useState({})
   const [loadingRegistrants, setLoadingRegistrants] = useState(false)
@@ -64,6 +66,23 @@ export default function EventsClient({ isMobile }) {
     setRegistrantsData(prev => { const next = { ...prev }; delete next[editing]; return next })
     setEditing(null)
     load()
+  }
+
+  async function uploadPhoto(eventId, file) {
+    setUploadingPhoto(eventId); setPhotoError(null)
+    const fd = new FormData(); fd.append('photo', file)
+    const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'POST', body: fd })
+    const data = await res.json().catch(() => ({}))
+    setUploadingPhoto(null)
+    if (!res.ok) { setPhotoError(data.error || 'Upload failed.'); return }
+    setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: data.url } : ev))
+  }
+
+  async function removePhoto(eventId) {
+    setUploadingPhoto(eventId)
+    await fetch(`/api/admin/events/${eventId}/photo`, { method: 'DELETE' })
+    setUploadingPhoto(null)
+    setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: null } : ev))
   }
 
   async function del(id) {
@@ -210,6 +229,22 @@ export default function EventsClient({ isMobile }) {
                       <div><L>Capacity</L><input style={inp} type="number" min="1" value={editForm.capacity || ''} onChange={e => setEditForm(p => ({ ...p, capacity: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Unlimited" /></div>
                       <div><L>IC Priority Window Ends</L><input style={inp} type="datetime-local" value={editForm.priority_window_end ? editForm.priority_window_end.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, priority_window_end: e.target.value || null }))} /></div>
                     </div>
+                  </div>
+                  {/* Event Photo */}
+                  <div style={{ paddingTop: '0.5rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.75rem' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Event Photo (hero image)</div>
+                    {item.photo_url && (
+                      <div style={{ marginBottom: '0.6rem', position: 'relative', display: 'inline-block' }}>
+                        <img src={item.photo_url} alt="" style={{ width: '160px', height: '90px', objectFit: 'cover', display: 'block', border: '0.5px solid rgba(0,0,0,0.1)' }} />
+                        <button onClick={() => removePhoto(item.id)} disabled={uploadingPhoto === item.id} style={{ position: 'absolute', top: '3px', right: '3px', background: 'rgba(123,32,50,0.85)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '11px', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>×</button>
+                      </div>
+                    )}
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: '#555', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(0,0,0,0.15)', padding: '0.45rem 0.9rem', background: '#fafaf9' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                      {uploadingPhoto === item.id ? 'Uploading…' : item.photo_url ? 'Replace Photo' : 'Upload Photo'}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} disabled={uploadingPhoto === item.id} onChange={e => { if (e.target.files[0]) uploadPhoto(item.id, e.target.files[0]) }} />
+                    </label>
+                    {photoError && <Err msg={photoError} />}
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>

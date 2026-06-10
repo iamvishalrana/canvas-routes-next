@@ -17,7 +17,13 @@ function EventCard({ ev, regMap, tier, now }) {
   const inPriorityWindow = ev.priority_window_end && now < new Date(ev.priority_window_end)
 
   return (
-    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', padding: '1.75rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+      {ev.photo_url && (
+        <Link href={`/members/events/${ev.id}`} style={{ display: 'block' }}>
+          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '180px', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        </Link>
+      )}
+      <div style={{ padding: '1.75rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
       <div style={{ textAlign: 'center', flexShrink: 0, width: '48px' }}>
         {day ? (
           <>
@@ -72,6 +78,7 @@ function EventCard({ ev, regMap, tier, now }) {
             </a>
           ) : null}
         </div>
+      </div>
       </div>
     </div>
   )

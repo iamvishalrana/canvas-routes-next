@@ -36,6 +36,15 @@ export default async function EventDetailPage({ params }) {
 
   return (
     <div style={{ maxWidth: '680px' }}>
+      {ev.photo_url && (
+        <div style={{ marginBottom: '2rem', marginLeft: '-2rem', marginRight: '-2rem', marginTop: '-1rem' }}>
+          <img
+            src={ev.photo_url}
+            alt={ev.name}
+            style={{ width: '100%', height: '280px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+          />
+        </div>
+      )}
       <div style={{ marginBottom: '1.5rem' }}>
         <Link href="/members/events" style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', textDecoration: 'none', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>

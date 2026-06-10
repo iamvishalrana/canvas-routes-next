@@ -486,16 +486,17 @@ export default function Home() {
             ...dbEvents.map(ev => ({
               date: ev.date, name: ev.name, loc: ev.location || '', type: ev.type,
               teaser: ev.description || '', _id: ev.id,
+              photo_url: ev.photo_url || null,
               registration_opens_at: ev.registration_opens_at, registration_closes_at: ev.registration_closes_at,
               member_price: ev.member_price,
             })),
           ].map((e,i) => (
             <div key={i} className="event-card" style={e.past
               ? {background:"#0F1E14",border:"1px solid rgba(197,168,130,0.55)",padding:"2rem",position:"relative",overflow:"hidden",cursor:"pointer"}
-              : e.inviteOnly
+              : (e.photo_url || e.inviteOnly)
                 ? {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem",cursor:"pointer"}
                 : {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem"}
-            } onClick={e.past ? () => setPastModalEvent(e) : undefined}>
+            } onClick={(e.past || e.photo_url) ? () => setPastModalEvent(e) : undefined}>
               {e.past && <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.8),transparent)"}} />}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
                 <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.65)":"#7B2032"}}>{e.date}</div>
@@ -916,7 +917,7 @@ export default function Home() {
 
       {/* PAST EVENT MODAL */}
       {pastModalEvent && (() => {
-          const d = PAST_EVENTS[pastModalEvent.name] || { meta: pastModalEvent.date, title: pastModalEvent.name, sub: null, tags: [], img: null }
+          const d = PAST_EVENTS[pastModalEvent.name] || { meta: pastModalEvent.date, title: pastModalEvent.name, sub: pastModalEvent.loc || null, tags: pastModalEvent.type ? [pastModalEvent.type] : [], img: pastModalEvent.photo_url || null }
           return (
             <div
               key="past-modal"
@@ -940,12 +941,16 @@ export default function Home() {
                     ))}
                   </div>
                   <div style={{width:"30px",height:"0.5px",background:"rgba(197,168,130,0.35)",marginBottom:"1.4rem"}} />
-                  <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>
-                    To see photos &amp; videos from this event, follow us on{' '}
-                    <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Instagram</a>
-                    {' '}and{' '}
-                    <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
-                  </div>
+                  {pastModalEvent.teaser && !PAST_EVENTS[pastModalEvent.name] ? (
+                    <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>{pastModalEvent.teaser}</div>
+                  ) : (
+                    <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>
+                      To see photos &amp; videos from this event, follow us on{' '}
+                      <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Instagram</a>
+                      {' '}and{' '}
+                      <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
+                    </div>
+                  )}
                   {d.routeHref && (
                     <div style={{marginTop:"1.5rem"}}>
                       <Link href={d.routeHref} style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#0F1E14",background:"#c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
