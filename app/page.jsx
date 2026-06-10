@@ -36,7 +36,7 @@ const PAST_EVENTS = {
     meta: 'Mont-Tremblant · June 7, 2026', title: 'Into the Laurentians',
     sub: 'First Route — Canvas Routes.',
     tags: ['June 7, 2026', 'Road Trip', 'Members Only'],
-    routeHref: '/drive',
+    routeHref: '/itinerary-into-the-laurentians-june-7',
   },
 }
 

@@ -11,7 +11,7 @@ const PAST_ROUTES = [
     location: 'Montreal → Mont-Tremblant',
     description: 'Backroads through the Laurentians. Rain, sweeping corners, and a group of people who showed up for all of it.',
     cover: '/june7-poster.jpg',
-    href: '/drive',
+    href: '/itinerary-into-the-laurentians-june-7',
     cars: 10,
     km: '~280 km',
   },
