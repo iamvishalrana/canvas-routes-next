@@ -9,10 +9,24 @@ export const metadata = { title: { absolute: 'Events | Canvas Routes' } }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
+function parseEventDate(str) {
+  if (!str) return null
+  if (/^[A-Za-z]+ \d{4}$/.test(str.trim())) {
+    const d = new Date(str.trim() + ' 1')
+    if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0) // last day of month
+  }
+  const d = new Date(str)
+  return isNaN(d) ? null : d
+}
+
 function EventCard({ ev, regMap, tier, now }) {
-  const evDate = new Date(ev.date)
-  const day = !isNaN(evDate) ? evDate.getDate() : null
-  const month = !isNaN(evDate) ? MONTHS_SHORT[evDate.getMonth()] : null
+  const isPartialDate = /^[A-Za-z]+ \d{4}$/.test((ev.date || '').trim())
+  const evDate = isPartialDate
+    ? (() => { const d = new Date(ev.date.trim() + ' 1'); return isNaN(d) ? null : d })()
+    : new Date(ev.date)
+  const day = !isPartialDate && evDate && !isNaN(evDate) ? evDate.getDate() : null
+  const month = evDate && !isNaN(evDate) ? MONTHS_SHORT[evDate.getMonth()] : null
+  const year = isPartialDate && evDate ? evDate.getFullYear() : null
   const isRegistered = ['free', 'paid'].includes(regMap[ev.id])
   const inPriorityWindow = ev.priority_window_end && now < new Date(ev.priority_window_end)
 
@@ -29,6 +43,11 @@ function EventCard({ ev, regMap, tier, now }) {
           <>
             <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{day}</div>
             <div style={{ fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginTop: '3px' }}>{month}</div>
+          </>
+        ) : month ? (
+          <>
+            <div style={{ fontSize: '12px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500' }}>{month}</div>
+            <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'var(--font-inter), sans-serif', marginTop: '2px' }}>{year}</div>
           </>
         ) : (
           <div style={{ fontSize: '10px', color: '#ccc' }}>{ev.date}</div>
@@ -54,7 +73,7 @@ function EventCard({ ev, regMap, tier, now }) {
           <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, margin: '0 0 0.75rem' }}>{ev.description}</p>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-          {ev.registration_opens_at ? (
+          {ev.registration_enabled !== false && (ev.registration_opens_at ? (
             <>
               {ev.member_price > 0 && !isRegistered && (
                 <span style={{ fontSize: '11px', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>
@@ -76,7 +95,7 @@ function EventCard({ ev, regMap, tier, now }) {
               Register
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
-          ) : null}
+          ) : null)}
         </div>
       </div>
       </div>
@@ -104,12 +123,12 @@ export default async function EventsPage() {
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
   const upcoming = (events || []).filter(ev => {
-    const d = new Date(ev.date)
-    return !isNaN(d) && d >= today
+    const d = parseEventDate(ev.date)
+    return !d || d >= today
   })
   const past = (events || []).filter(ev => {
-    const d = new Date(ev.date)
-    return !isNaN(d) && d < today
+    const d = parseEventDate(ev.date)
+    return d && d < today
   }).reverse()
 
   return (

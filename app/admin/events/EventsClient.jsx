@@ -13,9 +13,10 @@ import {
   Err,
 } from '../_components/shared'
 
-export default function EventsClient({ isMobile }) {
+export default function EventsClient() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
   const [form, setForm] = useState({ name: '', date: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
@@ -41,6 +42,13 @@ export default function EventsClient({ isMobile }) {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   async function post(e) {
     e.preventDefault()
@@ -104,6 +112,14 @@ export default function EventsClient({ isMobile }) {
     await fetch(`/api/admin/events/${eventId}/photo`, { method: 'DELETE' })
     setUploadingPhoto(null)
     setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: null } : ev))
+  }
+
+  async function setRegEnabled(id, value) {
+    const res = await fetch(`/api/admin/events/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registration_enabled: value }),
+    })
+    if (res.ok) setItems(prev => prev.map(ev => ev.id === id ? { ...ev, registration_enabled: value } : ev))
   }
 
   async function del(id) {
@@ -317,7 +333,13 @@ export default function EventsClient({ isMobile }) {
                         </button>
                       </div>
                       <GhostBtn onClick={() => toggleRegistrants(item.id, item.name)} small>{showRegistrants === item.id ? 'Hide' : 'Registrants'}</GhostBtn>
-                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '' }); setSaveError(null) }} small>Edit</GhostBtn>
+                      <button
+                        onClick={() => setRegEnabled(item.id, !item.registration_enabled)}
+                        style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-inter)', border: `0.5px solid ${item.registration_enabled ? 'rgba(59,107,47,0.35)' : 'rgba(0,0,0,0.15)'}`, color: item.registration_enabled ? '#3B6B2F' : '#888', background: item.registration_enabled ? 'rgba(59,107,47,0.05)' : 'transparent' }}
+                      >
+                        {item.registration_enabled ? 'Reg On' : 'Reg Off'}
+                      </button>
+                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '', registration_enabled: item.registration_enabled }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
                     </div>
                   </div>

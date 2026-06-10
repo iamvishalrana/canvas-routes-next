@@ -6,7 +6,7 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
-  const allowed = ['name', 'date', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order']
+  const allowed = ['name', 'date', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if ('member_price' in update) update.member_price = update.member_price != null ? parseInt(update.member_price) || null : null
@@ -14,6 +14,7 @@ export async function PATCH(request, { params }) {
   if ('registration_opens_at' in update) update.registration_opens_at = update.registration_opens_at || null
   if ('registration_closes_at' in update) update.registration_closes_at = update.registration_closes_at || null
   if ('priority_window_end' in update) update.priority_window_end = update.priority_window_end || null
+  if ('registration_enabled' in update) update.registration_enabled = update.registration_enabled == null ? null : Boolean(update.registration_enabled)
   const supabase = createAdminClient()
   const { error } = await supabase.from('events').update(update).eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
