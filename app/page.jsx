@@ -36,6 +36,7 @@ const PAST_EVENTS = {
     meta: 'Mont-Tremblant · June 7, 2026', title: 'Into the Laurentians',
     sub: 'First Route — Canvas Routes.',
     tags: ['June 7, 2026', 'Road Trip', 'Members Only'],
+    routeHref: '/drive',
   },
 }
 
@@ -918,6 +919,14 @@ export default function Home() {
                     {' '}and{' '}
                     <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
                   </div>
+                  {d.routeHref && (
+                    <div style={{marginTop:"1.5rem"}}>
+                      <Link href={d.routeHref} style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#0F1E14",background:"#c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
+                        View Route
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
