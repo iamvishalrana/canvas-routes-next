@@ -304,6 +304,7 @@ export default function Home() {
         <div className="nav-links">
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
           <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
+          <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
           <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
           <Link href="/faq">FAQ</Link>
         </div>
@@ -322,6 +323,7 @@ export default function Home() {
         <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }}>Car Meets</a>
         <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }}>Routes</a>
         <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
+        <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <Link href="/faq">FAQ</Link>
         <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</a>
@@ -497,47 +499,68 @@ export default function Home() {
         </div>
       </section>
 
-      {/* INSTAGRAM TEASER */}
+      {/* INSTAGRAM FILM STRIP */}
       {igPosts.length > 0 && (
-        <section style={{background:"#0F1E14",padding:"4rem 2rem"}}>
+        <section id="gallery" style={{background:"#0F1E14",padding:"4.5rem 0"}}>
           <style>{`
-            .ig-teaser {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 3px;
-              max-width: 640px;
-              margin: 0 auto 2rem;
+            @keyframes film-scroll {
+              0%   { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
             }
-            .ig-cell {
-              position: relative;
-              aspect-ratio: 1;
+            .ig-strip-wrap {
+              overflow: hidden;
+              width: 100%;
+              cursor: pointer;
+            }
+            .ig-strip-wrap:hover .ig-strip { animation-play-state: paused; }
+            .ig-strip {
+              display: flex;
+              gap: 4px;
+              width: max-content;
+              animation: film-scroll 28s linear infinite;
+            }
+            .ig-strip-photo {
+              width: 220px;
+              height: 220px;
+              flex-shrink: 0;
               overflow: hidden;
               display: block;
             }
-            .ig-cell img {
+            .ig-strip-photo img {
               width: 100%; height: 100%;
               object-fit: cover; display: block;
-              opacity: 0.82;
-              transition: opacity 0.3s ease, transform 0.4s ease;
+              opacity: 0.78;
+              transition: opacity 0.3s;
             }
-            .ig-cell:hover img { opacity: 1; transform: scale(1.04); }
+            .ig-strip-wrap:hover .ig-strip-photo img { opacity: 0.92; }
+            @media (max-width: 640px) {
+              .ig-strip-photo { width: 160px; height: 160px; }
+            }
           `}</style>
 
-          <div className="ig-teaser">
-            {igPosts.slice(0, 3).map(post => (
-              <a key={post.id} href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" className="ig-cell">
-                {post.image && <img src={post.image} alt="" loading="lazy" />}
-              </a>
-            ))}
-          </div>
-
-          <div style={{textAlign:"center"}}>
+          {/* Title */}
+          <div style={{padding:"0 2rem",marginBottom:"2rem",display:"flex",alignItems:"flex-end",justifyContent:"space-between",maxWidth:"1200px",margin:"0 auto 2rem"}}>
+            <div>
+              <div style={{fontSize:"9px",letterSpacing:"0.38em",textTransform:"uppercase",color:"rgba(197,168,130,0.45)",marginBottom:"0.6rem",fontFamily:"var(--font-inter),sans-serif"}}>Canvas Routes</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(2rem,4vw,3rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:1,letterSpacing:"-0.01em",fontStyle:"italic"}}>Gallery</div>
+            </div>
             <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer"
-              style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.65)",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
+              style={{display:"inline-flex",alignItems:"center",gap:"0.45rem",fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"rgba(197,168,130,0.55)",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",flexShrink:0}}>
               @canvasroutes
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
           </div>
+
+          {/* Scrolling strip */}
+          <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" className="ig-strip-wrap" style={{textDecoration:"none"}}>
+            <div className="ig-strip">
+              {[...igPosts, ...igPosts].map((post, i) => (
+                <div key={i} className="ig-strip-photo">
+                  {post.image && <img src={post.image} alt="" loading="lazy" />}
+                </div>
+              ))}
+            </div>
+          </a>
         </section>
       )}
 

@@ -15,7 +15,7 @@ export async function GET() {
 
   try {
     const res = await fetch(
-      `https://graph.facebook.com/${accountId}/media?fields=id,media_type,media_url,thumbnail_url,permalink,timestamp&limit=9&access_token=${token}`,
+      `https://graph.facebook.com/${accountId}/media?fields=id,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${token}`,
       { next: { revalidate: 3600 } }
     )
     if (!res.ok) {
