@@ -93,6 +93,21 @@ export default function Home() {
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
   const [showMembershipPopup, setShowMembershipPopup] = useState(false)
+  const [queryForm, setQueryForm] = useState({ name: '', email: '', message: '' })
+  const [queryStatus, setQueryStatus] = useState(null)
+  const [queryError, setQueryError] = useState(null)
+
+  async function handleQuerySubmit(e) {
+    e.preventDefault()
+    if (!queryForm.name.trim() || !queryForm.email.trim()) { setQueryError('Please enter your name and email.'); return }
+    setQueryStatus('loading'); setQueryError(null)
+    try {
+      const res = await fetch('/api/inquiry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(queryForm) })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setQueryError(data.error || 'Could not send. Please try again.'); setQueryStatus(null) }
+      else setQueryStatus('success')
+    } catch { setQueryError('Network error. Please try again.'); setQueryStatus(null) }
+  }
 
   useEffect(() => {
     const LAUNCH = new Date('2026-06-10T23:00:00Z') // 7 PM EDT June 10
@@ -359,7 +374,7 @@ export default function Home() {
           {membershipLive && (
             <Link href="/membership" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.45)', padding: '0.45rem 1rem' }}>Membership</Link>
           )}
-          <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="nav-join">Join</a>
+          <Link href="/membership" className="nav-join">Join</Link>
           <Link href="/members/login" className="nav-members">Members Login</Link>
         </div>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
@@ -376,7 +391,7 @@ export default function Home() {
         <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <Link href="/faq">FAQ</Link>
-        <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} style={{color:"#1a1a1a",fontWeight:"500"}}>Join</a>
+        <Link href="/membership" style={{color:"#1a1a1a",fontWeight:"500"}}>Join</Link>
         {membershipLive && <Link href="/membership" style={{color:"#c5a882",fontWeight:"500"}}>Membership</Link>}
         <Link href="/members/login" style={{color:"#3B6B2F",fontWeight:"500"}}>Members Login</Link>
       </div>
@@ -389,7 +404,7 @@ export default function Home() {
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem"}}></div>
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em"}}>The Community. The Routes. The Canvas.</div>
         <div className="hero-buttons">
-          <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
+          <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>About Us</a>
         </div>
         <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}
@@ -455,7 +470,7 @@ export default function Home() {
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, a tighter group, and a different kind of evening. Members are notified directly when one is announced — these don't get advertised.</p>
                   </div>
                 </div>
-                <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
+                <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:"4px",minHeight:"300px",overflow:"hidden"}}>
                 <div style={{flex:1,minHeight:"180px",backgroundImage:"url('/events/cc-may9-overview.jpeg')",backgroundSize:"cover",backgroundPosition:"center top"}} onContextMenu={e=>e.preventDefault()} />
@@ -494,7 +509,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:"1rem",flexWrap:"wrap"}}>
-                  <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</a>
+                  <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
                   <Link href="/routes/past" style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#555",textDecoration:"none",borderBottom:"0.5px solid rgba(0,0,0,0.25)",paddingBottom:"1px"}}>Past Routes →</Link>
                 </div>
               </div>
@@ -683,268 +698,35 @@ export default function Home() {
       <section id="join" style={{textAlign:"center",padding:"8rem 2rem",background:"#F5F1EC"}}>
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
         <div className="join-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
-        <div style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Membership is by application. Tell us about yourself.</div>
-        {routesLaunched && !laurentiansIsPast && (
-          <div style={{maxWidth:"560px",margin:"-1rem auto 3rem",padding:"1.2rem 1.6rem",border:"0.5px solid rgba(197,168,130,0.45)",background:"rgba(197,168,130,0.05)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
-            <div>
-              <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginBottom:"0.3rem"}}>Road Trip · 7 Jun 2026</div>
-              <div style={{fontSize:"0.9rem",color:"#1a1a1a",lineHeight:"1.4"}}>Into the Laurentians — First Route</div>
-            </div>
-            <Link href="/routes/into-the-laurentians" style={{fontSize:"11px",letterSpacing:"0.14em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.5rem 1.1rem",textDecoration:"none",whiteSpace:"nowrap",flexShrink:0}}>Register →</Link>
-          </div>
-        )}
-        {status === 'success' ? (
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
-            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F"}}>Application received. We'll review it and get back to you — usually within 48 hours.</div>
-            <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.75",maxWidth:"420px",textAlign:"center"}}>A confirmation email is on its way from <strong style={{color:"#555",fontWeight:"500"}}>info@canvasroutes.com</strong> or <strong style={{color:"#555",fontWeight:"500"}}>jerry@canvasroutes.com</strong> — add both to your contacts and check your spam/junk folder so you don't miss it. Once we've reviewed your application, you'll hear from our team directly. If you don't hear from us, reach out via <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Instagram</a> or <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#555",textDecoration:"underline"}}>Facebook</a> DM.</p>
-            <button onClick={() => { setStatus(null); setServerError(null); setForm({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' }); setErrors({}); setPhoneOptOut(false); setCountryCode('+1') }} className="btn-push" style={{background:"none",border:"none",padding:0,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#aaa",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"underline"}}>Submit another application</button>
+
+        {membershipLive ? (
+          <div style={{marginBottom:"3rem"}}>
+            <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"420px",margin:"1rem auto 2rem",lineHeight:"1.7"}}>Season 2026 memberships are now open. Apply online — limited spots available.</p>
+            <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"1.1rem 3rem",fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",textDecoration:"none"}}>Apply for Membership</Link>
           </div>
         ) : (
-          <form className="join-form" onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
-            <div id="field-registerFor" role="group" aria-required="true" className="join-form-field" style={{marginBottom:"1.5rem"}}>
-              <div className="join-label" style={{marginBottom:"0.75rem"}}>Registering for<ClipboardList size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
-              <div className="join-form-row" style={{gridTemplateColumns:'1fr'}}>
-                {[
-                  {value:"Canvas Routes Membership", label:"Canvas Routes Membership", sub:"Curated community, by application"},
-                  ...(!gpccClosed ? [{value:"Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026", label:"Grand Prix Weekend - Cars, Coffee & Cruise", sub:"Spots are full · Downtown Cruise registrations open until 2:00 PM", full:true}] : []),
-                ].map(opt => {
-                  const selected = form.registerFor === opt.value
-                  const borderColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : 'rgba(0,0,0,0.2)'
-                  const bgColor = selected ? 'rgba(59,107,47,0.06)' : errors.registerFor ? 'rgba(123,32,50,0.04)' : 'transparent'
-                  const labelColor = selected ? '#3B6B2F' : errors.registerFor ? '#7B2032' : opt.full ? '#888' : '#1a1a1a'
-                  return (
-                    <button key={opt.value} type="button" onClick={() => updateForm('registerFor', opt.value)} style={{padding:"1rem 1.2rem",border:`1px solid ${opt.full && !selected ? 'rgba(0,0,0,0.12)' : borderColor}`,background:opt.full && !selected ? 'rgba(0,0,0,0.02)' : bgColor,textAlign:"left",cursor:"pointer",transition:"border-color 0.2s,background 0.2s",fontFamily:"var(--font-inter),sans-serif",position:"relative"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:"0.5rem",marginBottom:"0.3rem"}}>
-                        <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:labelColor,fontWeight:selected?"500":"400"}}>{opt.label}</div>
-                        {opt.full && <span style={{fontSize:"9px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#fff",background:"#7B2032",padding:"0.15rem 0.5rem"}}>Full</span>}
-                      </div>
-                      <div style={{fontSize:"11px",color: opt.full ? '#c5a882' : "#888"}}>{opt.sub}</div>
-                    </button>
-                  )
-                })}
-              </div>
-              {form.registerFor === GPCC && (
-                <div style={{marginTop:"0.75rem",padding:"0.8rem 1rem",background:"rgba(197,168,130,0.08)",border:"0.5px solid rgba(197,168,130,0.4)",fontSize:"11px",color:"#7B2032",lineHeight:"1.6"}}>
-                  Cars, Coffee &amp; Cruise is at capacity. Registrations for the Downtown Cruise only — closes at 2:00 PM today.
-                </div>
-              )}
-              {errors.registerFor && <span style={{fontSize:"11px",color:"#7B2032"}}>Please select an option</span>}
-            </div>
+          <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Season 2026 memberships open tonight at 7 PM. Leave your details and we'll be in touch.</p>
+        )}
 
-            {form.registerFor === GPCC && (
-              <div id="field-downtown_cruise" className="join-form-field" style={{marginBottom:"1.5rem"}}>
-                <div className="join-label" style={{marginBottom:"0.75rem"}}>
-                  Interested in joining the downtown cruise after the event?
-                  <span style={{color:"#7B2032",marginLeft:"3px"}}>*</span>
-                </div>
-                <div style={{display:"flex",gap:"1rem"}}>
-                  {['Yes','No'].map(v => {
-                    const val = v.toLowerCase()
-                    const selected = form.downtown_cruise === val
-                    const isNo = val === 'no'
-                    const activeColor = isNo ? '#7B2032' : '#3B6B2F'
-                    const activeBg = isNo ? 'rgba(123,32,50,0.06)' : 'rgba(59,107,47,0.06)'
-                    return (
-                      <button key={v} type="button" onClick={() => updateForm('downtown_cruise', val)}
-                        style={{flex:1,padding:"0.9rem",border:`1px solid ${selected?activeColor:errors.downtown_cruise?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?activeBg:errors.downtown_cruise?'rgba(123,32,50,0.03)':'transparent',cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",fontSize:"13px",color:selected?activeColor:'#1a1a1a',transition:"all 0.2s",letterSpacing:"0.04em"}}>
-                        {v}
-                      </button>
-                    )
-                  })}
-                </div>
-                {errors.downtown_cruise && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
-              </div>
-            )}
+        <div style={{width:"40px",height:"1px",background:"rgba(197,168,130,0.35)",margin:"0 auto 2.5rem"}}></div>
+        <div style={{fontSize:"10px",letterSpacing:"0.26em",textTransform:"uppercase",color:"#bbb",marginBottom:"2rem",fontFamily:"var(--font-inter),sans-serif"}}>Have a question?</div>
 
-            <div className="join-form-row">
-              <div className="join-form-field">
-                <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></label>
-                <div style={{position:"relative"}}>
-                  <input id="field-name" type="text" placeholder="Your full name" value={form.name}
-                    onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')} maxLength={100}
-                    aria-required="true"
-                    onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
-                  {!form.name && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
-                </div>
-                {errors.name && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
-              </div>
-              <div className="join-form-field">
-                <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></label>
-                <div style={{position:"relative"}}>
-                  <input id="field-email" type="email" placeholder="Your email address" value={form.email}
-                    onChange={e => updateForm('email', e.target.value)} style={inputStyle('email')}
-                    aria-required="true"
-                    onFocus={() => setFocusedField('email')} onBlur={() => { setFocusedField(null); validateField('email') }} />
-                  {!form.email && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
-                </div>
-                {errors.email === 'required' && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
-                {errors.email === 'invalid' && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter a valid email address</span>}
-                {errors.email === 'typo' && <span style={{fontSize:"11px",color:"#7B2032"}}>Please check your email address</span>}
-              </div>
+        {queryStatus === 'success' ? (
+          <div>
+            <p style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"0.75rem"}}>Message received.</p>
+            <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.7"}}>We'll get back to you at {queryForm.email}.</p>
+          </div>
+        ) : (
+          <form style={{maxWidth:"480px",margin:"0 auto",display:"flex",flexDirection:"column",gap:"1rem"}} onSubmit={handleQuerySubmit} noValidate>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1rem"}}>
+              <input type="text" placeholder="Your name" value={queryForm.name} onChange={e => setQueryForm(p=>({...p,name:e.target.value}))} required style={{padding:"0.9rem 1rem",border:`1px solid ${queryError&&!queryForm.name.trim()?"#7B2032":"rgba(0,0,0,0.15)"}`,background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
+              <input type="email" placeholder="Your email" value={queryForm.email} onChange={e => setQueryForm(p=>({...p,email:e.target.value}))} required style={{padding:"0.9rem 1rem",border:`1px solid ${queryError&&!queryForm.email.trim()?"#7B2032":"rgba(0,0,0,0.15)"}`,background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
             </div>
-            <div className="join-form-row" style={{marginTop:"1rem"}}>
-              <div className="join-form-field">
-                <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                <div style={{position:"relative"}}>
-                  <select id="field-year" value={form.year} onChange={e => updateForm('year', e.target.value)}
-                    style={{...inputStyle('year'), cursor:"pointer", paddingRight:"2rem"}}
-                    aria-required="true">
-                    <option value="">Select year</option>
-                    {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y=>(
-                      <option key={y} value={String(y)}>{y}</option>
-                    ))}
-                  </select>
-                  {!form.year && <span style={{position:"absolute",right:"28px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
-                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                {errors.year && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
-              </div>
-              <div className="join-form-field">
-                <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                <div style={{position:"relative"}}>
-                  <select id="field-carMake" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)}
-                    style={{...inputStyle('carMake'), cursor:"pointer", paddingRight:"2rem"}}
-                    aria-required="true">
-                    <option value="">Select make</option>
-                    {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                  {!form.carMake && <span style={{position:"absolute",right:"28px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
-                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                {errors.carMake && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
-              </div>
-            </div>
-            <div className="join-form-field" style={{marginTop:"1rem"}}>
-              <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-              <div style={{position:"relative"}}>
-                <input id="field-carModel" type="text" placeholder="e.g. 911 Carrera S" value={form.carModel}
-                  onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
-                  aria-required="true" maxLength={100}
-                  onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
-                {!form.carModel && <span style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
-              </div>
-              {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
-            </div>
-            <div id="field-dob_month" className="join-form-field" style={{marginTop:"1rem"}}>
-              <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth <span style={{color:"#7B2032",marginLeft:"2px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
-              <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1.2fr",gap:"0.75rem"}}>
-                <div style={{position:"relative"}}>
-                  <select value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
-                    style={{...inputStyle('dob_month'), cursor:"pointer", paddingRight:"2rem"}}
-                    aria-required="true">
-                    <option value="">Month</option>
-                    {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i) => (
-                      <option key={i+1} value={String(i+1)}>{m}</option>
-                    ))}
-                  </select>
-                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div style={{position:"relative"}}>
-                  <select value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)}
-                    style={{...inputStyle('dob_day'), cursor:"pointer", paddingRight:"2rem"}}
-                    aria-required="true">
-                    <option value="">Day</option>
-                    {Array.from({length:31},(_,i)=>i+1).map(d => (
-                      <option key={d} value={String(d)}>{d}</option>
-                    ))}
-                  </select>
-                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div style={{position:"relative"}}>
-                  <select value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)}
-                    style={{...inputStyle('dob_year'), cursor:"pointer", paddingRight:"2rem"}}>
-                    <option value="">Year</option>
-                    {Array.from({length:2015-1945+1},(_,i)=>2015-i).map(y => (
-                      <option key={y} value={String(y)}>{y}</option>
-                    ))}
-                  </select>
-                  <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-              </div>
-              {(errors.dob_month || errors.dob_day) && <span style={{fontSize:"11px",color:"#7B2032"}}>Month and day are required</span>}
-            </div>
-
-            <div className="join-form-row" style={{marginTop:"1rem"}}>
-              <div className="join-form-field">
-                <label htmlFor="field-phone" className="join-label">Phone<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                {phoneOptOut ? (
-                  <div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.65rem 0.9rem",background:"rgba(0,0,0,0.03)",border:"0.5px solid rgba(0,0,0,0.1)"}}>
-                    <span style={{fontSize:"13px",color:"#aaa",flex:1}}>Phone not provided</span>
-                    <button type="button" onClick={() => { setPhoneOptOut(false); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:0,fontSize:"11px",color:"#888",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",whiteSpace:"nowrap"}}>Add number</button>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{display:"flex",alignItems:"stretch",...(() => { const s = inputStyle('phone'); return { border: s.border, background: s.background, boxShadow: s.boxShadow, transition: s.transition } })()}}>
-                      <select
-                        value={countryCode}
-                        onChange={e => { setCountryCode(e.target.value); updateForm('phone', '') }}
-                        onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
-                        style={{border:"none",background:"transparent",outline:"none",padding:"0.9rem 0.5rem 0.9rem 0.9rem",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",cursor:"pointer",flexShrink:0,WebkitAppearance:"none",MozAppearance:"none",appearance:"none",minWidth:"unset"}}>
-                        {COUNTRY_CODES.map(c => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                      <div style={{width:"1px",background:"rgba(0,0,0,0.12)",margin:"0.6rem 0",flexShrink:0}} />
-                      <input id="field-phone" type="tel" placeholder="Your phone number" value={form.phone}
-                        onChange={e => updateForm('phone', formatPhone(e.target.value))}
-                        style={{border:"none",background:"transparent",outline:"none",padding:"0.9rem 1.2rem",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",flex:1,minWidth:0,WebkitAppearance:"none",MozAppearance:"none",appearance:"none"}}
-                        onFocus={() => setFocusedField('phone')} onBlur={() => { setFocusedField(null); validateField('phone') }} />
-                    </div>
-                    {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>{countryCode === '+1' ? 'Please enter a valid 10-digit number' : 'Please enter a valid phone number'}</span>}
-                    <button type="button" onClick={() => { setPhoneOptOut(true); updateForm('phone',''); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:"0.3rem 0",fontSize:"11px",color:"#aaa",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Prefer not to share my number</button>
-                  </>
-                )}
-              </div>
-              <div className="join-form-field">
-                <label htmlFor="field-instagram" className="join-label">Instagram<Instagram size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/> <span style={{color:"#888",fontWeight:"300"}}>(optional)</span></label>
-                <input id="field-instagram" type="text" placeholder="@yourhandle" value={form.instagram} maxLength={50}
-                  onChange={e => updateForm('instagram', e.target.value)} style={inputStyle('instagram')}
-                  onFocus={() => setFocusedField('instagram')} onBlur={() => { setFocusedField(null); validateField('instagram') }} />
-                {errors.instagram && <span style={{fontSize:"11px",color:"#7B2032"}}>No spaces allowed in username</span>}
-              </div>
-            </div>
-            <div className="join-form-field" style={{marginTop:"1rem"}}>
-              <label htmlFor="field-more" className="join-label">Tell us more<NotebookPen size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/> <span style={{color:"#888",fontWeight:"300"}}>(optional)</span></label>
-              <textarea id="field-more" placeholder="Tell us about your interests, dream routes, or anything else..." value={form.more}
-                onChange={e => updateForm('more', e.target.value)} rows={4} maxLength={500}
-                style={{...inputStyle('more'), resize:"vertical"}}
-                onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)} />
-              <div style={{textAlign:"right",fontSize:"10px",color:"#aaa",marginTop:"0.3rem"}}>{form.more.length}/500</div>
-            </div>
-            <div className="join-form-field" style={{marginTop:"1rem"}}>
-              <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/></label>
-              <div style={{position:"relative"}}>
-                <select id="field-source" value={form.source} onChange={e => updateForm('source', e.target.value)}
-                  style={{...inputStyle('source'), cursor:"pointer", paddingRight:"2rem"}}
-                  aria-required="true">
-                  <option value="">Select an option</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="Facebook">Facebook</option>
-                  <option value="Friend / Word of mouth">Friend / Word of mouth</option>
-                  <option value="Google">Google</option>
-                  <option value="Other">Other</option>
-                </select>
-                {!form.source && <span style={{position:"absolute",right:"28px",top:"50%",transform:"translateY(-50%)",color:"#7B2032",fontSize:"14px",pointerEvents:"none"}}>*</span>}
-                <svg style={{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-              {errors.source && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
-            </div>
-            <div style={{marginTop:"1.5rem",fontSize:"10px",color:"#ccc",lineHeight:"1.7",textAlign:"left"}}>
-              By applying, you agree to our{' '}
-              <Link href="/privacy" style={{fontSize:"10px",color:"#ccc",textDecoration:"underline"}}>privacy policy</Link>
-              {' '}and{' '}
-              <Link href="/terms" style={{fontSize:"10px",color:"#ccc",textDecoration:"underline"}}>terms & conditions</Link>
-              {' '}and consent to receive updates from Canvas Routes about events and membership. You may withdraw your consent at any time by contacting{' '}
-              <a href="mailto:info@canvasroutes.com" style={{fontSize:"10px",color:"#ccc",textDecoration:"underline"}}>info@canvasroutes.com</a>.
-            </div>
-            <button type="submit" disabled={status==='loading'} className="join-submit-btn"
-              style={{marginTop:"1.5rem",padding:"0.9rem 3rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:status==='loading'?'not-allowed':'pointer',fontFamily:"var(--font-inter),sans-serif",opacity:status==='loading'?0.5:1}}>
-              {status === 'loading' ? 'Sending...' : 'Register'}
+            <textarea placeholder="Your message or question (optional)" value={queryForm.message} onChange={e => setQueryForm(p=>({...p,message:e.target.value}))} rows={3} style={{padding:"0.9rem 1rem",border:"1px solid rgba(0,0,0,0.15)",background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",outline:"none",resize:"vertical"}} />
+            {queryError && <p style={{fontSize:"12px",color:"#7B2032",margin:0}}>{queryError}</p>}
+            <button type="submit" disabled={queryStatus==='loading'} className="btn-push btn-waitlist" style={{padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:queryStatus==='loading'?"not-allowed":"pointer",opacity:queryStatus==='loading'?0.6:1}}>
+              {queryStatus === 'loading' ? 'Sending…' : 'Send Message'}
             </button>
-            {status === 'error' && <div style={{marginTop:"1rem",fontSize:"12px",color:"#7B2032"}}>{serverError}</div>}
-            <div style={{display:'none'}} aria-hidden="true">
-              <input ref={honeypotRef} type="text" name="cr_field" tabIndex={-1} autoComplete="off" />
-            </div>
           </form>
         )}
       </section>
@@ -1004,9 +786,9 @@ export default function Home() {
 
       {/* STICKY MOBILE CTA */}
       <div className={`sticky-cta${showStickyCta ? ' sticky-cta--visible' : ''}`} style={cookieBannerVisible ? {bottom:'var(--cookie-banner-height, 80px)'} : {}}>
-        <a href="#join" onClick={e => { e.preventDefault(); smoothScroll('join') }} className="btn-push btn-waitlist" style={{display:"block",width:"100%",padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",textAlign:"center"}}>
+        <Link href="/membership" className="btn-push btn-waitlist" style={{display:"block",width:"100%",padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",textAlign:"center"}}>
           Join
-        </a>
+        </Link>
       </div>
 
       {/* MEMBERSHIP LAUNCH POPUP */}
