@@ -209,65 +209,8 @@ export async function POST(request) {
 
   const firstName = h(name.trim().split(' ')[0])
   const rawFirstName = name.trim().split(' ')[0]
-  // EMAIL 1 — Customer confirmation
-  let customerEmail
-  try {
-    customerEmail = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Canvas Routes <info@canvasroutes.com>',
-        to: email,
-        reply_to: 'info@canvasroutes.com',
-        subject: 'Application received — Canvas Routes',
-        html: customerHtml(firstName),
-        text: customerText(rawFirstName),
-      }),
-    })
-  } catch (err) {
-    console.error('Customer email network error:', err)
-    return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
-  }
 
-  if (!customerEmail.ok) {
-    const err = await customerEmail.text().catch(() => 'unknown')
-    console.error('Customer email error:', err)
-    return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
-  }
-
-  // EMAIL 2 — Internal notification (with one retry)
-  const notifyBody = JSON.stringify({
-    from: 'Canvas Routes <info@canvasroutes.com>',
-    to: 'info@canvasroutes.com',
-    subject: `New Application — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
-    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, ref }),
-    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${['January','February','March','April','May','June','July','August','September','October','November','December'][Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}${ref ? `\nReferred by: ${ref}` : ''}`,
-  })
-
-  let notifyOk = false
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const notifyEmail = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: notifyBody,
-      })
-      if (notifyEmail.ok) { notifyOk = true; break }
-      const err = await notifyEmail.text().catch(() => 'unknown')
-      console.error(`Notify email attempt ${attempt + 1} failed:`, err)
-    } catch (err) {
-      console.error(`Notify email attempt ${attempt + 1} network error:`, err)
-    }
-  }
-  if (!notifyOk) {
-    console.error(`ALERT: Notify email failed after retry — application from: ${email}`)
-    captureMessage(`Waitlist notify email failed — ${email}`, { name, email, year, carModel })
-  }
-
-  // Store application data so admin can auto-populate member records
+  // STEP 1 — Write to DB first so data is never lost even if email fails
   try {
     const supabase = createAdminClient()
     const normalEmail = email.toLowerCase().trim()
@@ -319,6 +262,64 @@ export async function POST(request) {
   } catch (e) {
     console.error('Failed to store application:', e.message)
     captureException(e, { context: 'waitlist-db-save', email: email.toLowerCase().trim() })
+  }
+
+  // STEP 2 — Customer confirmation email
+  let customerEmail
+  try {
+    customerEmail = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: email,
+        reply_to: 'info@canvasroutes.com',
+        subject: 'Application received — Canvas Routes',
+        html: customerHtml(firstName),
+        text: customerText(rawFirstName),
+      }),
+    })
+  } catch (err) {
+    console.error('Customer email network error:', err)
+    return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
+  }
+
+  if (!customerEmail.ok) {
+    const err = await customerEmail.text().catch(() => 'unknown')
+    console.error('Customer email error:', err)
+    return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
+  }
+
+  // STEP 3 — Internal notification (with one retry)
+  const notifyBody = JSON.stringify({
+    from: 'Canvas Routes <info@canvasroutes.com>',
+    to: 'info@canvasroutes.com',
+    subject: `New Application — ${year.trim()} ${carModel.trim()} — ${name.trim()}`,
+    html: notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, ref }),
+    text: `New application\n\nRegistering for: ${registerFor}\nName: ${name}\nEmail: ${email}\nYear: ${year}\nMake & Model: ${carModel}${dob_month ? `\nDate of Birth: ${['January','February','March','April','May','June','July','August','September','October','November','December'][Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''}${phone ? `\nPhone: ${phone}` : ''}${instagram ? `\nInstagram: ${instagram}` : ''}${more ? `\nMore: ${more}` : ''}\nSource: ${source}${downtown_cruise ? `\nDowntown cruise: ${downtown_cruise === 'yes' ? 'Yes' : 'No'}` : ''}${ref ? `\nReferred by: ${ref}` : ''}`,
+  })
+
+  let notifyOk = false
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const notifyEmail = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: notifyBody,
+      })
+      if (notifyEmail.ok) { notifyOk = true; break }
+      const err = await notifyEmail.text().catch(() => 'unknown')
+      console.error(`Notify email attempt ${attempt + 1} failed:`, err)
+    } catch (err) {
+      console.error(`Notify email attempt ${attempt + 1} network error:`, err)
+    }
+  }
+  if (!notifyOk) {
+    console.error(`ALERT: Notify email failed after retry — application from: ${email}`)
+    captureMessage(`Waitlist notify email failed — ${email}`, { name, email, year, carModel })
   }
 
   return Response.json({ success: true })

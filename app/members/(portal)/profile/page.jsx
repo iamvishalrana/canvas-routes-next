@@ -135,9 +135,14 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetch('/api/member/me')
-      .then(r => r.json())
-      .then(({ user, member }) => {
-
+      .then(r => {
+        if (r.status === 401) { window.location.href = '/members/login'; return null }
+        if (!r.ok) throw new Error('Failed to load profile')
+        return r.json()
+      })
+      .then(data => {
+        if (!data) return
+        const { user, member } = data
         if (user) setUser(user)
         if (member) {
           const f = {
@@ -161,7 +166,7 @@ export default function ProfilePage() {
           if (member?.tier) setTier(member.tier)
         }
       })
-      .catch(() => {})
+      .catch(() => setError('Could not load your profile. Please refresh.'))
   }, [])
 
   function formatPhone(v) {
@@ -276,7 +281,7 @@ export default function ProfilePage() {
   }
 
   const hasCar = cars.some(c => c.year || c.make || c.model || c.license_plate)
-  const dobDisplay = form.dob_month
+  const dobDisplay = (form.dob_month && form.dob_day)
     ? `${MONTHS_SHORT[parseInt(form.dob_month) - 1]} ${form.dob_day}${form.dob_year ? `, ${form.dob_year}` : ''}`
     : null
 
@@ -538,7 +543,7 @@ export default function ProfilePage() {
                       <div key={field}>
                         <FieldLabel>{label}</FieldLabel>
                         {isSelect ? (
-                          <SelectWrap value={car.year} onChange={e => updateCar(idx, 'year', e.target.value)}>
+                          <SelectWrap value={car[field]} onChange={e => updateCar(idx, field, e.target.value)}>
                             <option value="">Select</option>
                             {CAR_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
                           </SelectWrap>

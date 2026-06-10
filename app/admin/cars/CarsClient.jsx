@@ -38,12 +38,17 @@ export default function CarsClient() {
     const m = members.find(x => x.id === editing.memberId)
     const cars = [...(m.cars || [])]
     cars[editing.carIndex] = { ...cars[editing.carIndex], ...editForm }
-    await fetch(`/api/admin/members/${m.id}`, {
+    const res = await fetch(`/api/admin/members/${m.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cars }),
     })
-    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars } : x))
     setSaving(false)
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error || 'Failed to save car. Please try again.')
+      return
+    }
+    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars } : x))
     cancelEdit()
   }
 

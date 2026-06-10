@@ -25,7 +25,7 @@ export async function POST(request) {
     event = stripe.webhooks.constructEvent(rawBody, sig, secret)
   } catch (err) {
     console.error('Stripe webhook signature failed:', err.message)
-    return new Response(`Webhook signature error: ${err.message}`, { status: 400 })
+    return new Response('Webhook signature verification failed.', { status: 400 })
   }
 
   try {
@@ -102,12 +102,10 @@ export async function POST(request) {
         const errMsg   = pi.last_payment_error?.message || 'unknown'
         console.error(`Payment failed: ${email} — ${errMsg}`)
         captureMessage(`Stripe payment failed — ${email}`, { error: errMsg, piId: pi.id })
-        if (email) {
-          const supabase = createAdminClient()
-          await supabase.from('applications')
-            .update({ stripe_payment_intent_id: pi.id, stripe_payment_status: 'failed' })
-            .eq('email', email)
-        }
+        const supabase = createAdminClient()
+        await supabase.from('applications')
+          .update({ stripe_payment_status: 'failed' })
+          .eq('stripe_payment_intent_id', pi.id)
         break
       }
 

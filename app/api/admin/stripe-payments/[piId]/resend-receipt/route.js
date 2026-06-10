@@ -9,6 +9,10 @@ export async function POST(request, { params }) {
   const { piId } = await params
   const { email } = await request.json()
 
+  if (!email || !email.includes('@')) {
+    return Response.json({ error: 'Valid email required.' }, { status: 400 })
+  }
+
   try {
     const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge'] })
 

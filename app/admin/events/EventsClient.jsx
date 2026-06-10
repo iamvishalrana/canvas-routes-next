@@ -81,10 +81,9 @@ export default function EventsClient({ isMobile }) {
     const [mRes, cRes] = await Promise.all([fetch('/api/admin/members'), fetch('/api/admin/contacts')])
     const members = mRes.ok ? await mRes.json() : []
     const contacts = cRes.ok ? await cRes.json() : []
-    const key = MEMBER_ATTENDANCE_KEYS[eventName]
+    const key = MEMBER_ATTENDANCE_KEYS[eventName] || eventName
     const memberRegs = (Array.isArray(members) ? members : [])
       .filter(m => {
-        if (!key) return false
         const att = m.event_attendance?.[key]
         return att === true || att === 'attended'
       })

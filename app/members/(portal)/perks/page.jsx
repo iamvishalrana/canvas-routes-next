@@ -19,7 +19,7 @@ export default async function PerksPage() {
   const tierLabel = isInnerCircle ? 'Inner Circle' : 'Routes Member'
 
   const eligiblePartners = PARTNERS.filter(p =>
-    p.tiers.includes(isInnerCircle ? 'Inner Circle' : 'Routes Member')
+    isInnerCircle ? p.tiers.length > 0 : p.tiers.includes('Routes Member')
   )
 
   return (
@@ -139,7 +139,7 @@ export default async function PerksPage() {
                     {p.discount}
                   </div>
                   <div style={{ fontSize: '7px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.36)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '0.45rem' }}>
-                    All Members
+                    {p.tiers.includes('Routes Member') ? 'All Members' : 'Inner Circle'}
                   </div>
                 </div>
               </div>

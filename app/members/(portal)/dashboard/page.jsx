@@ -40,15 +40,17 @@ function CarDots({ car }) {
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/members/login')
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
   const [{ data: member }, { data: announcements }, { data: events }, { data: application }] = await Promise.all([
     admin.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
     supabase.from('events').select('*').order('date', { ascending: true }).limit(20),
-    admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle(),
+    user.email
+      ? admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
 
   const status = member?.membership_status || 'pending'
@@ -85,7 +87,7 @@ export default async function DashboardPage() {
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const upcomingEvents = (events || []).filter(ev => {
     const d = new Date(ev.date)
-    return !isNaN(d) ? d >= today : true
+    return !isNaN(d) && d >= today
   })
 
   return (
@@ -300,10 +302,17 @@ export default async function DashboardPage() {
                       )}
                       {(ev.registration_url || ev.type === 'Road Trip' || ev.type === 'Route') && (
                         <div style={{ marginTop: '1rem' }}>
-                          <Link href={ev.registration_url || '/routes'} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                            Register
-                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                          </Link>
+                          {ev.registration_url ? (
+                            <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
+                              Register
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </a>
+                          ) : (
+                            <Link href="/routes" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
+                              Register
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </Link>
+                          )}
                         </div>
                       )}
                     </div>

@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { checkRateLimit } from '../../../../lib/rateLimit'
 
 const MAX_RECIPIENTS = 200
 const BATCH_SIZE = 10
@@ -17,6 +18,8 @@ export async function GET() {
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
+  if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
   const { subject, html, audience, specificEmails } = await request.json()
 

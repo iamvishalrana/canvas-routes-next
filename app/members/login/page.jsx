@@ -15,9 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState(null)
   const [resetSent, setResetSent] = useState(false)
   const [setupMsg, setSetupMsg] = useState(false)
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768
-  )
+  const [isMobile, setIsMobile] = useState(false)
   const [focused, setFocused] = useState(null)
 
   useEffect(() => { document.title = 'Sign In — Canvas Routes' }, [])

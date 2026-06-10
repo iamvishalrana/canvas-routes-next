@@ -226,7 +226,7 @@ export default function ContactsClient() {
       dob_day: editContactForm.dob_day ? parseInt(editContactForm.dob_day) : null,
       dob_year: editContactForm.dob_year ? parseInt(editContactForm.dob_year) : null,
     }
-    const res = await fetch(`/api/admin/applications/${c.id}`, {
+    const res = await fetch(`/api/admin/contacts/${c.contact_id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
     })
     setSavingContact(false)

@@ -9,8 +9,8 @@ export async function PATCH(request, { params }) {
   const { email } = body
   const supabase = createAdminClient()
 
-  const CONTACT_FIELDS = ['notes', 'admin_notes']
-  const APP_FIELDS = ['name', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'car_paint']
+  const CONTACT_FIELDS = ['notes']
+  const APP_FIELDS = ['name', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'car_paint', 'admin_notes']
   const contactUpdate = {}
   const appUpdate = {}
   CONTACT_FIELDS.forEach(k => { if (body[k] !== undefined) contactUpdate[k] = body[k] })
