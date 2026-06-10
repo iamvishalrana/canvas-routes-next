@@ -278,9 +278,10 @@ export default async function DashboardPage() {
           <div className="dash-card dash-anim-card-2">
             <div className="card-head">
               <span className="section-label">Upcoming Events</span>
-              {upcomingEvents.length > 0 && (
-                <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.1rem', fontWeight: '300', color: '#ddd', lineHeight: 1 }}>{upcomingEvents.length}</span>
-              )}
+              <Link href="/members/events" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
+                View all
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </Link>
             </div>
             <div className="card-pad">
               {!upcomingEvents.length ? (
@@ -299,7 +300,7 @@ export default async function DashboardPage() {
                 const month = evDate ? MONTHS_SHORT[evDate.getMonth()] : null
                 const year = isPartial && evDate ? evDate.getFullYear() : null
                 return (
-                  <div key={ev.id} className="event-row" style={{ borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                  <Link key={ev.id} href="/members/events" className="event-row" style={{ borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', textDecoration: 'none', display: 'grid', gridTemplateColumns: '52px 1px 1fr', gap: '1.5rem', padding: '1.5rem 0', alignItems: 'start', cursor: 'pointer' }}>
                     {/* Date */}
                     <div style={{ textAlign: 'center', paddingTop: '1px' }}>
                       {day ? (
@@ -325,12 +326,12 @@ export default async function DashboardPage() {
                         <span style={{ fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '2px 8px', flexShrink: 0, background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '2px' }}>{ev.type}</span>
                       </div>
                       {ev.location && (
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#999', letterSpacing: '0.02em', marginBottom: '0.2rem', textDecoration: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#999', letterSpacing: '0.02em', marginBottom: '0.2rem' }}>
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
                           </svg>
                           {ev.location}
-                        </a>
+                        </div>
                       )}
                       {ev.description && (
                         <div style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, marginTop: '0.5rem' }}>{ev.description}</div>
@@ -356,7 +357,7 @@ export default async function DashboardPage() {
                         ) : null}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
