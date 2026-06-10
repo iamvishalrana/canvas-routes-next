@@ -51,7 +51,7 @@ export async function POST(request) {
     const { count } = await admin.from('event_registrations')
       .select('id', { count: 'exact', head: true })
       .eq('event_id', eventId)
-      .in('stripe_payment_status', ['free', 'paid', 'pending'])
+      .in('stripe_payment_status', ['free', 'paid'])
     if (count >= ev.capacity) return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
   }
 

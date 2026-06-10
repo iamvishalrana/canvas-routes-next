@@ -61,6 +61,7 @@ export default function EventsClient({ isMobile }) {
     })
     setSaving(false)
     if (!res.ok) { const d = await res.json(); setSaveError(d.error || 'Failed to save.'); return }
+    setRegistrantsData(prev => { const next = { ...prev }; delete next[editing]; return next })
     setEditing(null)
     load()
   }
@@ -78,38 +79,39 @@ export default function EventsClient({ isMobile }) {
     setShowRegistrants(eventId)
     if (registrantsData[eventId]) return
     setLoadingRegistrants(true)
-    const [regRes, cRes] = await Promise.all([
-      fetch(`/api/admin/events/${eventId}/registrants`),
-      fetch('/api/admin/contacts'),
-    ])
-    const regData = regRes.ok ? await regRes.json() : []
-    const contacts = cRes.ok ? await cRes.json() : []
+    try {
+      const [regRes, cRes] = await Promise.all([
+        fetch(`/api/admin/events/${eventId}/registrants`),
+        fetch('/api/admin/contacts'),
+      ])
+      const regData = regRes.ok ? await regRes.json() : []
+      const contacts = cRes.ok ? await cRes.json() : []
 
-    const newRegs = (Array.isArray(regData) ? regData : []).map(r => ({
-      name: r.members?.name || r.name || '—',
-      email: r.members?.email || r.email || '—',
-      phone: '—',
-      type: 'Member',
-      status: r.stripe_payment_status,
-      amount: r.amount_paid,
-    }))
+      const newRegs = (Array.isArray(regData) ? regData : []).map(r => ({
+        name: r.members?.name || r.name || '—',
+        email: r.members?.email || r.email || '—',
+        phone: '—',
+        type: 'Member',
+        status: r.stripe_payment_status,
+        amount: r.amount_paid,
+      }))
 
-    const key = MEMBER_ATTENDANCE_KEYS[eventName] || eventName
-    const legacyKey = MEMBER_ATTENDANCE_KEYS[eventName]
-    const legacyRegs = legacyKey ? [] : [] // legacy attendance shown via newRegs above
+      const contactRegs = (Array.isArray(contacts) ? contacts : [])
+        .filter(c => (c.registrations || []).some(r => normalizeEventName(r.event) === eventName))
+        .map(c => ({ name: c.name, email: c.email, phone: c.phone || '—', type: 'Contact', status: 'legacy' }))
 
-    const contactRegs = (Array.isArray(contacts) ? contacts : [])
-      .filter(c => (c.registrations || []).some(r => normalizeEventName(r.event) === eventName))
-      .map(c => ({ name: c.name, email: c.email, phone: c.phone || '—', type: 'Contact', status: 'legacy' }))
-
-    const seen = new Set()
-    const combined = [...newRegs, ...contactRegs].filter(r => {
-      const k = (r.email || r.name || '').toLowerCase()
-      if (seen.has(k)) return false
-      seen.add(k); return true
-    })
-    setRegistrantsData(prev => ({ ...prev, [eventId]: combined }))
-    setLoadingRegistrants(false)
+      const seen = new Set()
+      const combined = [...newRegs, ...contactRegs].filter(r => {
+        const k = (r.email || r.name || '').toLowerCase()
+        if (seen.has(k)) return false
+        seen.add(k); return true
+      })
+      setRegistrantsData(prev => ({ ...prev, [eventId]: combined }))
+    } catch {
+      setRegistrantsData(prev => ({ ...prev, [eventId]: [] }))
+    } finally {
+      setLoadingRegistrants(false)
+    }
   }
 
   return (
@@ -152,7 +154,7 @@ export default function EventsClient({ isMobile }) {
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
               <div>
                 <L>Member Price (CAD) — leave blank for free</L>
-                <input style={inp} type="number" min="0" step="0.01" value={form.member_price ? (form.member_price / 100).toFixed(2) : ''} onChange={e => setForm(p => ({ ...p, member_price: e.target.value ? Math.round(parseFloat(e.target.value) * 100) : '' }))} placeholder="0.00" />
+                <input style={inp} type="number" min="0" step="0.01" value={form.member_price ? (form.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : '' })) }} placeholder="0.00" />
               </div>
               <div>
                 <L>Capacity (optional)</L>
@@ -194,9 +196,9 @@ export default function EventsClient({ isMobile }) {
                   <div style={{ paddingTop: '0.5rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.6rem' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Portal Registration</div>
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                      <div><L>Member Price (CAD)</L><input style={inp} type="number" min="0" step="0.01" value={editForm.member_price ? (editForm.member_price / 100).toFixed(2) : ''} onChange={e => setEditForm(p => ({ ...p, member_price: e.target.value ? Math.round(parseFloat(e.target.value) * 100) : null }))} placeholder="0.00" /></div>
+                      <div><L>Member Price (CAD)</L><input style={inp} type="number" min="0" step="0.01" value={editForm.member_price ? (editForm.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setEditForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : null })) }} placeholder="0.00" /></div>
                       <div><L>Capacity</L><input style={inp} type="number" min="1" value={editForm.capacity || ''} onChange={e => setEditForm(p => ({ ...p, capacity: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Unlimited" /></div>
-                      <div><L>IC Priority Window Ends</L><input style={inp} type="datetime-local" value={editForm.priority_window_end ? editForm.priority_window_end.slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, priority_window_end: e.target.value || null }))} /></div>
+                      <div><L>IC Priority Window Ends</L><input style={inp} type="datetime-local" value={editForm.priority_window_end ? editForm.priority_window_end.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, priority_window_end: e.target.value || null }))} /></div>
                     </div>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter), sans-serif' }}>
                       <input type="checkbox" checked={!!editForm.registration_enabled} onChange={e => setEditForm(p => ({ ...p, registration_enabled: e.target.checked }))} />

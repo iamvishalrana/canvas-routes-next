@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.event_registrations (
   stripe_payment_status   TEXT CHECK (stripe_payment_status IN ('free', 'pending', 'paid', 'failed', 'refunded')),
   amount_paid             INTEGER,
   registered_at           TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(event_id, member_id)
+  CONSTRAINT uq_event_reg_event_member UNIQUE(event_id, member_id)
 );
 
 ALTER TABLE public.event_registrations ENABLE ROW LEVEL SECURITY;

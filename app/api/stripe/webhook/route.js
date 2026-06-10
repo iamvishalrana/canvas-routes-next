@@ -45,6 +45,11 @@ export async function POST(request) {
         const supabase = createAdminClient()
 
         if (type === 'event_registration' && event_id && member_id) {
+          const { data: memberExists } = await supabase.from('members').select('id').eq('id', member_id).maybeSingle()
+          if (!memberExists) {
+            captureMessage('Event registration webhook: member row not found', { piId: pi.id, member_id })
+            break
+          }
           await supabase.from('event_registrations').upsert({
             event_id,
             member_id,
@@ -53,7 +58,7 @@ export async function POST(request) {
             stripe_payment_intent_id: pi.id,
             stripe_payment_status: 'paid',
             amount_paid: amountPaid,
-          }, { onConflict: 'event_id,member_id' })
+          }, { onConflict: 'uq_event_reg_event_member' })
           console.log(`Event registration confirmed: ${event_id} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         } else {
           // Membership / road trip payment
@@ -114,9 +119,16 @@ export async function POST(request) {
         console.error(`Payment failed: ${email} — ${errMsg}`)
         captureMessage(`Stripe payment failed — ${email}`, { error: errMsg, piId: pi.id })
         const supabase = createAdminClient()
-        await supabase.from('applications')
-          .update({ stripe_payment_status: 'failed' })
-          .eq('stripe_payment_intent_id', pi.id)
+        if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
+          await supabase.from('event_registrations')
+            .update({ stripe_payment_status: 'failed' })
+            .eq('event_id', pi.metadata.event_id)
+            .eq('member_id', pi.metadata.member_id)
+        } else {
+          await supabase.from('applications')
+            .update({ stripe_payment_status: 'failed' })
+            .eq('stripe_payment_intent_id', pi.id)
+        }
         break
       }
 

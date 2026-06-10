@@ -29,7 +29,7 @@ export default async function EventDetailPage({ params }) {
   if (!ev) notFound()
 
   const tier = member?.tier || 'routes_member'
-  const isRegistered = registration && ['free', 'paid'].includes(registration.stripe_payment_status)
+  const isRegistered = !!(registration && ['free', 'paid'].includes(registration.stripe_payment_status))
   const now = new Date()
   const inPriorityWindow = ev.priority_window_end && now < new Date(ev.priority_window_end)
   const isInnerCircle = tier === 'inner_circle'

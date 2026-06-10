@@ -48,7 +48,7 @@ export default async function DashboardPage() {
   const [{ data: member }, { data: announcements }, { data: events }, { data: application }, { data: eventRegs }] = await Promise.all([
     admin.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
-    supabase.from('events').select('*').order('date', { ascending: true }).limit(20),
+    admin.from('events').select('*').order('date', { ascending: true }).limit(20),
     user.email
       ? admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle()
       : Promise.resolve({ data: null }),

@@ -52,7 +52,7 @@ export async function POST(request, { params }) {
     const { count } = await admin.from('event_registrations')
       .select('id', { count: 'exact', head: true })
       .eq('event_id', eventId)
-      .in('stripe_payment_status', ['free', 'paid', 'pending'])
+      .in('stripe_payment_status', ['free', 'paid'])
     if (count >= ev.capacity) return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
   }
 
@@ -66,7 +66,7 @@ export async function POST(request, { params }) {
       name: member.name || '',
       stripe_payment_status: 'free',
       amount_paid: 0,
-    }, { onConflict: 'event_id,member_id' })
+    }, { onConflict: 'uq_event_reg_event_member' })
     if (error) {
       captureException(error, { context: 'event-register-free', eventId })
       return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
@@ -89,7 +89,9 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Payment mismatch.' }, { status: 400 })
   }
 
-  const payStatus = pi.status === 'succeeded' ? 'paid' : 'pending'
+  if (pi.status !== 'succeeded') {
+    return Response.json({ error: 'Payment has not been completed.' }, { status: 400 })
+  }
 
   const { error } = await admin.from('event_registrations').upsert({
     event_id: eventId,
@@ -97,9 +99,9 @@ export async function POST(request, { params }) {
     email: user.email || '',
     name: member.name || '',
     stripe_payment_intent_id: paymentIntentId,
-    stripe_payment_status: payStatus,
-    amount_paid: pi.amount_received || pi.amount,
-  }, { onConflict: 'event_id,member_id' })
+    stripe_payment_status: 'paid',
+    amount_paid: pi.amount_received,
+  }, { onConflict: 'uq_event_reg_event_member' })
 
   if (error) {
     captureException(error, { context: 'event-register-paid', eventId })

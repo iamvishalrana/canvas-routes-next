@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
@@ -18,14 +18,16 @@ function PayForm({ event, onSuccess, onClose }) {
     if (!stripe || !elements) return
     setPaying(true); setError(null)
 
-    const piId = (await elements.submit().catch(() => null))
-    if (piId?.error) { setError(piId.error.message); setPaying(false); return }
+    const submitResult = await elements.submit()
+    if (submitResult?.error) { setError(submitResult.error.message); setPaying(false); return }
 
     const { error: stripeErr, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required',
+      confirmParams: { return_url: window.location.href },
     })
     if (stripeErr) { setError(stripeErr.message); setPaying(false); return }
+    if (!paymentIntent) { setError('Payment did not complete. Please try again.'); setPaying(false); return }
 
     const res = await fetch(`/api/member/events/${event.id}/register`, {
       method: 'POST',
@@ -87,6 +89,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   const [registering, setRegistering] = useState(false)
   const [regError, setRegError] = useState(null)
   const [done, setDone] = useState(isRegistered)
+  useEffect(() => { setDone(isRegistered) }, [isRegistered])
 
   if (!event.registration_enabled) return null
 
