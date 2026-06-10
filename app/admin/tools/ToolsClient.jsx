@@ -9,6 +9,9 @@ export default function ToolsClient() {
   const refreshTimer = useRef(null)
   const [igRefreshing, setIgRefreshing] = useState(false)
   const [igResult, setIgResult] = useState(null)
+  const [newToken, setNewToken] = useState('')
+  const [settingToken, setSettingToken] = useState(false)
+  const [setTokenResult, setSetTokenResult] = useState(null)
 
   useEffect(() => {
     fetchRuns()
@@ -34,6 +37,23 @@ export default function ToolsClient() {
       setHcStatus('error')
     }
     hcTimer.current = setTimeout(() => setHcStatus(null), 4000)
+  }
+
+  async function setInstagramToken() {
+    if (!newToken.trim()) return
+    setSettingToken(true); setSetTokenResult(null)
+    try {
+      const res = await fetch('/api/instagram/set-token', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: newToken.trim() }),
+      })
+      const d = await res.json().catch(() => ({ error: 'Invalid response' }))
+      setSetTokenResult(d)
+      if (!d.error) setNewToken('')
+    } catch {
+      setSetTokenResult({ error: 'Request failed' })
+    }
+    setSettingToken(false)
   }
 
   async function refreshInstagramToken() {
@@ -82,11 +102,42 @@ export default function ToolsClient() {
       {/* Instagram Token */}
       <div style={{ padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', marginBottom: '1rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Instagram Token</div>
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '1rem', lineHeight: '1.6' }}>
-          Exchanges the current Instagram access token for a new one valid for 60 days, and stores it automatically. Run this once now to get started — after that, a cron job handles it on the 1st of every other month.
+
+        {/* Set new token (use when current token is dead/expired) */}
+        <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+          <div style={{ fontSize: '12px', color: '#555', marginBottom: '0.6rem', lineHeight: 1.6 }}>
+            <strong>Token expired or gallery missing?</strong> Get a fresh short-lived token from{' '}
+            <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noreferrer" style={{ color: '#c5a882' }}>Facebook Graph Explorer</a>
+            {' '}→ select the Canvas Routes app → Generate Token (check <code>instagram_basic</code> + <code>pages_read_engagement</code>), then paste it below. This will exchange it for a 60-day token and store it automatically.
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              value={newToken}
+              onChange={e => setNewToken(e.target.value)}
+              placeholder="Paste short-lived token here…"
+              style={{ flex: 1, minWidth: '240px', padding: '0.55rem 0.75rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.18)', fontFamily: 'var(--font-inter), sans-serif', outline: 'none', background: '#fafaf9' }}
+            />
+            <GhostBtn small onClick={setInstagramToken} disabled={settingToken || !newToken.trim()}>
+              {settingToken ? 'Saving…' : 'Save New Token'}
+            </GhostBtn>
+          </div>
+          {setTokenResult && (
+            <div style={{ marginTop: '0.6rem', fontSize: '12px', color: setTokenResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
+              {setTokenResult.error
+                ? `Error: ${setTokenResult.error}`
+                : `Token saved — valid for ${setTokenResult.daysLeft} days until ${new Date(setTokenResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Gallery should reappear within a minute.`
+              }
+            </div>
+          )}
+        </div>
+
+        {/* Extend existing token */}
+        <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.75rem', lineHeight: '1.6' }}>
+          <strong>Token still valid?</strong> Extend it for another 60 days without leaving the page.
         </div>
         <GhostBtn small onClick={refreshInstagramToken} disabled={igRefreshing}>
-          {igRefreshing ? 'Refreshing…' : 'Refresh Token'}
+          {igRefreshing ? 'Refreshing…' : 'Extend Current Token'}
         </GhostBtn>
         {igResult && (
           <div style={{ marginTop: '0.75rem', fontSize: '12px', color: igResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
