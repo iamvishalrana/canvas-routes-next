@@ -512,32 +512,6 @@ export default function DrivePage() {
           </div>
         </div>
 
-        {/* Ziptrek discount */}
-        <div style={{ padding: '1.75rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Exclusive Perk</div>
-          <div style={{ background: '#0F1E14', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '16px' }}>Ziptrek Ecotours</div>
-              <div style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>20% Off</div>
-            </div>
-            <div style={{ color: 'rgba(245,241,236,0.6)', fontSize: '12px', lineHeight: '1.6' }}>
-              Falcon Adventure at Mont-Tremblant. Book online or over the phone with code below — let Jerry know if you book.
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, serif', fontSize: '20px', letterSpacing: '0.08em' }}>CANVASR20</div>
-              <CopyButton text="CANVASR20" label="Copy code" dark />
-            </div>
-            <a
-              href="https://tremblant.ziptrek.com/en_US/"
-              target="_blank"
-              rel="noreferrer"
-              style={{ marginTop: '0.25rem', display: 'inline-block', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(245,241,236,0.3)' }}
-            >
-              Book Online →
-            </a>
-          </div>
-        </div>
-
         {/* Who's coming */}
         <div style={{ padding: '2rem 0' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
