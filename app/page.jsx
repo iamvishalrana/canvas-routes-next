@@ -64,13 +64,27 @@ export default function Home() {
   const [dbEvents, setDbEvents] = useState([])
 
   useEffect(() => {
+    function parseEventDate(str) {
+      if (!str) return null
+      const s = str.trim()
+      if (/^[A-Za-z]+ \d{4}$/.test(s)) {
+        const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2'))
+        if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+      }
+      if (/^\d{4}-\d{2}$/.test(s)) {
+        const [y, m] = s.split('-').map(Number)
+        return new Date(y, m, 0)
+      }
+      const d = new Date(s)
+      return isNaN(d) ? null : d
+    }
     fetch('/api/public/events')
       .then(r => r.json())
       .then(events => {
         const now = new Date(); now.setHours(0, 0, 0, 0)
         setDbEvents(events.filter(ev => {
-          const d = new Date(ev.date)
-          return !isNaN(d) && d >= now
+          const d = parseEventDate(ev.date_display || ev.date)
+          return !d || d >= now
         }))
       })
       .catch(() => {})
