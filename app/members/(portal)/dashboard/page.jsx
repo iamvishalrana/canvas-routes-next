@@ -9,38 +9,6 @@ export const metadata = { title: { absolute: 'Dashboard | Canvas Routes' } }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-function getCarType(make = '', model = '') {
-  const mk = make.toLowerCase().trim()
-  const mo = model.toLowerCase().trim()
-  const sports = (
-    ['ferrari','lamborghini','mclaren','pagani','koenigsegg','bugatti','lotus'].includes(mk) ||
-    (mk === 'porsche' && !['cayenne','macan','panamera','taycan'].some(s => mo.includes(s)))
-  )
-  if (sports) return 'sports'
-  const suvKeys = ['x1','x2','x3','x4','x5','x6','x7','gx','lx','rx','nx','ux','q2','q3','q5','q7','q8','gla','glb','glc','gle','gls','rav4','cr-v','pilot','cayenne','macan','touareg','tiguan','atlas','f-pace','e-pace','defender','discovery','range rover','navigator','explorer','expedition','escalade','tahoe','suburban','grand cherokee','wrangler','bronco','4runner','highlander','allroad','cx-5','cx-9','tucson','santa fe','telluride','sorento','sportage','qashqai','x-trail','outlander']
-  if (suvKeys.some(s => mo.includes(s))) return 'suv'
-  return 'sedan'
-}
-
-function CarSilhouette({ type }) {
-  const style = { pointerEvents: 'none', display: 'block' }
-  if (type === 'sports') return (
-    <svg viewBox="0 0 200 65" fill="currentColor" width="170" style={style}>
-      <path d="M20,58 L20,52 Q22,48 26,46 L30,42 Q34,36 40,34 L55,32 Q65,22 78,18 Q92,16 108,16 Q126,16 142,22 Q158,28 165,34 Q170,42 173,50 L175,58 Q165,58 158,58 Q152,48 144,48 Q138,48 132,58 L68,58 Q62,48 54,48 Q46,48 40,58 Z"/>
-    </svg>
-  )
-  if (type === 'suv') return (
-    <svg viewBox="0 0 200 80" fill="currentColor" width="170" style={style}>
-      <path d="M15,72 L15,60 Q17,55 22,52 L28,48 Q32,42 40,38 L56,32 Q64,24 72,22 Q84,20 100,20 L126,20 Q140,20 150,26 L158,32 Q164,40 168,52 L172,72 Q162,72 154,72 Q148,58 140,58 Q132,58 124,72 L76,72 Q68,58 60,58 Q52,58 44,72 Z"/>
-    </svg>
-  )
-  return (
-    <svg viewBox="0 0 200 72" fill="currentColor" width="170" style={style}>
-      <path d="M15,64 L15,55 Q18,50 24,47 L34,42 Q42,32 58,28 L70,24 Q84,22 100,22 L130,22 Q145,22 155,28 L163,36 Q168,44 170,52 L172,60 L174,64 Q162,64 158,64 Q152,52 144,52 Q136,52 130,64 L70,64 Q65,52 58,52 Q50,52 46,64 Z"/>
-    </svg>
-  )
-}
-
 const STATUS_CARD_DOT = {
   active:    '#7EC87A',
   pending:   '#c5a882',
@@ -355,13 +323,6 @@ export default async function DashboardPage() {
             <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '180px', height: '180px', background: isInnerCircle ? 'radial-gradient(circle, rgba(197,168,130,0.22) 0%, transparent 65%)' : 'radial-gradient(circle, rgba(197,168,130,0.1) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 1 }} />
             {isInnerCircle && (
               <div style={{ position: 'absolute', bottom: '-20px', left: '-10px', width: '110px', height: '110px', background: 'radial-gradient(circle, rgba(197,168,130,0.07) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 1 }} />
-            )}
-
-            {/* Car silhouette watermark */}
-            {primaryCar && (primaryCar.make || primaryCar.model) && (
-              <div style={{ position: 'absolute', bottom: '-4px', right: '-8px', zIndex: 1, color: '#c5a882', opacity: isInnerCircle ? 0.14 : 0.1, pointerEvents: 'none' }}>
-                <CarSilhouette type={getCarType(primaryCar.make, primaryCar.model)} />
-              </div>
             )}
 
             <div className="membership-inner">
