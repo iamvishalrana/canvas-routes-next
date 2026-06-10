@@ -33,7 +33,7 @@ export async function POST(request) {
 
       case 'payment_intent.succeeded': {
         const pi       = event.data.object
-        const { type, email, name, eventName } = pi.metadata
+        const { type, email, name, eventName, event_id, member_id } = pi.metadata
         const amountPaid = pi.amount_received  // cents
         const normalEmail = email?.toLowerCase().trim()
 
@@ -44,19 +44,30 @@ export async function POST(request) {
 
         const supabase = createAdminClient()
 
-        // Upsert directly — UPDATE on conflict so stripe fields are always written,
-        // whether the application row exists yet or not.
-        await supabase.from('applications').upsert({
-          email:                     normalEmail,
-          name:                      name || '',
-          stripe_payment_intent_id:  pi.id,
-          stripe_payment_status:     'paid',
-          stripe_amount_paid:        amountPaid,
-          stripe_payment_type:       type,
-          stripe_paid_at:            new Date().toISOString(),
-        }, { onConflict: 'email' })
-
-        console.log(`Payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
+        if (type === 'event_registration' && event_id && member_id) {
+          await supabase.from('event_registrations').upsert({
+            event_id,
+            member_id,
+            email: normalEmail,
+            name: name || '',
+            stripe_payment_intent_id: pi.id,
+            stripe_payment_status: 'paid',
+            amount_paid: amountPaid,
+          }, { onConflict: 'event_id,member_id' })
+          console.log(`Event registration confirmed: ${event_id} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
+        } else {
+          // Membership / road trip payment
+          await supabase.from('applications').upsert({
+            email:                     normalEmail,
+            name:                      name || '',
+            stripe_payment_intent_id:  pi.id,
+            stripe_payment_status:     'paid',
+            stripe_amount_paid:        amountPaid,
+            stripe_payment_type:       type,
+            stripe_paid_at:            new Date().toISOString(),
+          }, { onConflict: 'email' })
+          console.log(`Payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
+        }
         break
       }
 

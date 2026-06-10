@@ -48,6 +48,7 @@ export default function MembersNav({ email, isAdmin }) {
         {/* Desktop links */}
         <div className="members-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           {navLink('/members/dashboard', 'Dashboard')}
+          {navLink('/members/events', 'Events')}
           {navLink('/members/perks', 'Perks')}
           {navLink('/members/profile', 'Profile')}
           {isAdmin && (
@@ -106,6 +107,7 @@ export default function MembersNav({ email, isAdmin }) {
           boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
         }}>
           <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/dashboard' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Dashboard</Link>
+          <Link href="/members/events" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname.startsWith('/members/events') ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Events</Link>
           <Link href="/members/perks" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/perks' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Perks</Link>
           <Link href="/members/profile" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/profile' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Profile</Link>
           {isAdmin && <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', textDecoration: 'none' }}>Admin</Link>}

@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
+import EventRegisterButton from '../../../../components/EventRegisterButton'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Dashboard | Canvas Routes' } }
@@ -44,14 +45,18 @@ export default async function DashboardPage() {
   if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
-  const [{ data: member }, { data: announcements }, { data: events }, { data: application }] = await Promise.all([
+  const [{ data: member }, { data: announcements }, { data: events }, { data: application }, { data: eventRegs }] = await Promise.all([
     admin.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
     supabase.from('events').select('*').order('date', { ascending: true }).limit(20),
     user.email
       ? admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle()
       : Promise.resolve({ data: null }),
+    admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
   ])
+
+  const eventRegMap = {}
+  for (const r of (eventRegs || [])) eventRegMap[r.event_id] = r.stripe_payment_status
 
   const status = member?.membership_status || 'pending'
   const statusStyle = STATUS_COLORS[status] || STATUS_COLORS.pending
@@ -300,21 +305,26 @@ export default async function DashboardPage() {
                       {ev.description && (
                         <div style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, marginTop: '0.5rem' }}>{ev.description}</div>
                       )}
-                      {(ev.registration_url || ev.type === 'Road Trip' || ev.type === 'Route') && (
-                        <div style={{ marginTop: '1rem' }}>
-                          {ev.registration_url ? (
-                            <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                              Register
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                            </a>
-                          ) : (
-                            <Link href="/routes" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                              Register
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                            </Link>
-                          )}
-                        </div>
-                      )}
+                      <div style={{ marginTop: '0.85rem' }}>
+                        {ev.registration_enabled ? (
+                          <EventRegisterButton
+                            event={ev}
+                            isRegistered={['free', 'paid'].includes(eventRegMap[ev.id])}
+                            memberTier={tier}
+                            compact
+                          />
+                        ) : ev.registration_url ? (
+                          <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
+                            Register
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                          </a>
+                        ) : (ev.type === 'Road Trip' || ev.type === 'Route') ? (
+                          <Link href="/routes" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '8.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.65rem 1.5rem', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
+                            Register
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                          </Link>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 )
