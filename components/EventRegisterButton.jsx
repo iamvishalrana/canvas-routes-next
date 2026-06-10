@@ -81,7 +81,7 @@ function PayForm({ event, onSuccess, onClose }) {
   )
 }
 
-export default function EventRegisterButton({ event, isRegistered, memberTier, compact = false }) {
+export default function EventRegisterButton({ event, isRegistered, memberTier, compact = false, onRegistrationComplete }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [clientSecret, setClientSecret] = useState(null)
   const [loadingPI, setLoadingPI] = useState(false)
@@ -159,6 +159,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
       setRegistering(false)
       if (!res.ok) { setRegError(data.error || 'Registration failed.'); return }
       setDone(true)
+      onRegistrationComplete?.()
       return
     }
     setLoadingPI(true)
@@ -206,7 +207,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         <div
           onClick={e => { if (e.target === e.currentTarget) setModalOpen(false) }}
           style={{
-            position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)',
+            position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
           }}
         >
@@ -235,7 +236,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
             <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
               <PayForm
                 event={event}
-                onSuccess={() => { setModalOpen(false); setClientSecret(null); setDone(true) }}
+                onSuccess={() => { setModalOpen(false); setClientSecret(null); setDone(true); onRegistrationComplete?.() }}
                 onClose={() => { setModalOpen(false); setClientSecret(null) }}
               />
             </Elements>

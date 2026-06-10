@@ -53,12 +53,15 @@ export async function POST(request, { params }) {
 export async function DELETE(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
+  if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const admin = createAdminClient()
 
-  // Clear the URL first so the event stops showing the photo immediately
-  await admin.from('events').update({ photo_url: null }).eq('id', id)
+  const { error: updateErr } = await admin.from('events').update({ photo_url: null }).eq('id', id)
+  if (updateErr) {
+    captureException(updateErr, { context: 'admin-event-photo-delete-db', eventId: id })
+    return Response.json({ error: 'Could not remove photo. Please try again.' }, { status: 500 })
+  }
 
-  // Best-effort delete from storage (try both common extensions)
   for (const ext of ['jpg', 'png', 'webp']) {
     await admin.storage.from('event-photos').remove([`${id}.${ext}`]).catch(() => {})
   }

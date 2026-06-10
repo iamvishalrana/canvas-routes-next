@@ -85,7 +85,7 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
   )
 }
 
-function EventModal({ ev, isRegistered, tier, onClose }) {
+function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
   const rawDate = ev.date_display || ev.date || ''
 
   useEffect(() => {
@@ -101,18 +101,20 @@ function EventModal({ ev, isRegistered, tier, onClose }) {
       style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
     >
       <div style={{ background: '#F5F1EC', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }}>
-        {/* Close */}
-        <button
-          onClick={onClose}
-          style={{ position: 'sticky', top: 0, zIndex: 10, float: 'right', margin: '0.85rem 0.85rem 0 0', background: 'rgba(15,30,20,0.85)', border: 'none', cursor: 'pointer', color: '#F5F1EC', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-          aria-label="Close"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        {/* Close — sticky header row so button never scrolls away */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', padding: '0.6rem 0.75rem', background: '#F5F1EC' }}>
+          <button
+            onClick={onClose}
+            style={{ background: 'rgba(15,30,20,0.85)', border: 'none', cursor: 'pointer', color: '#F5F1EC', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            aria-label="Close"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
 
         {/* Photo */}
         {ev.photo_url && (
-          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '240px', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '240px', objectFit: 'cover', objectPosition: 'center', display: 'block', marginTop: '-0.6rem' }} />
         )}
 
         <div style={{ padding: '1.75rem 2rem 2rem' }}>

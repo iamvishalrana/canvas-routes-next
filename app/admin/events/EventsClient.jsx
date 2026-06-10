@@ -55,26 +55,30 @@ export default function EventsClient() {
     e.preventDefault()
     if (!form.name.trim() || !form.date.trim()) { setPostError('Name and date required.'); return }
     setPosting(true); setPostError(null)
-    const res = await fetch('/api/admin/events', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
-    })
-    const data = await res.json()
-    setPosting(false)
-    if (!res.ok) { setPostError(data.error || 'Failed.'); return }
-    setForm({ name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
-    load()
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setPostError(data.error || 'Failed.'); return }
+      setForm({ name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
+      load()
+    } catch { setPostError('Network error. Please try again.') }
+    finally { setPosting(false) }
   }
 
   async function saveEdit() {
     setSaving(true); setSaveError(null)
-    const res = await fetch(`/api/admin/events/${editing}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm),
-    })
-    setSaving(false)
-    if (!res.ok) { const d = await res.json(); setSaveError(d.error || 'Failed to save.'); return }
-    setRegistrantsData(prev => { const next = { ...prev }; delete next[editing]; return next })
-    setEditing(null)
-    load()
+    try {
+      const res = await fetch(`/api/admin/events/${editing}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm),
+      })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setSaveError(d.error || 'Failed to save.'); return }
+      setRegistrantsData(prev => { const next = { ...prev }; delete next[editing]; return next })
+      setEditing(null)
+      load()
+    } catch { setSaveError('Network error. Please try again.') }
+    finally { setSaving(false) }
   }
 
   async function moveEvent(id, direction) {
@@ -347,11 +351,11 @@ export default function EventsClient() {
                       <GhostBtn onClick={() => toggleRegistrants(item.id, item.name)} small>{showRegistrants === item.id ? 'Hide' : 'Registrants'}</GhostBtn>
                       <button
                         onClick={() => setRegEnabled(item.id, !item.registration_enabled)}
-                        title={regToggleError || undefined}
                         style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-inter)', border: `0.5px solid ${item.registration_enabled ? 'rgba(59,107,47,0.35)' : 'rgba(0,0,0,0.15)'}`, color: item.registration_enabled ? '#3B6B2F' : '#888', background: item.registration_enabled ? 'rgba(59,107,47,0.05)' : 'transparent' }}
                       >
                         {item.registration_enabled ? 'Reg On' : 'Reg Off'}
                       </button>
+                      {regToggleError && <Err msg={regToggleError} />}
                       <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, date_display: item.date_display || '', location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '', registration_enabled: item.registration_enabled }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
                     </div>
