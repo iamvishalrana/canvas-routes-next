@@ -81,10 +81,10 @@ function EventCard({ ev, regMap, tier, now }) {
           </span>
         </div>
         {ev.location && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#999', marginBottom: '0.4rem' }}>
+          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#999', marginBottom: '0.4rem', textDecoration: 'none' }}>
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             {ev.location}
-          </div>
+          </a>
         )}
         {ev.description && (
           <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, margin: '0 0 0.75rem' }}>{ev.description}</p>

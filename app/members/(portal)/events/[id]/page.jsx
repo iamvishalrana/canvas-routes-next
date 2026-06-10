@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import EventRegisterButton from '../../../../../components/EventRegisterButton'
+import LocationMap from '../../../../../components/LocationMap'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,6 +83,8 @@ export default async function EventDetailPage({ params }) {
           )}
         </div>
       </header>
+
+      {ev.location && <LocationMap location={ev.location} />}
 
       {ev.description && (
         <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.85, letterSpacing: '0.01em', marginBottom: '2.5rem' }}>
