@@ -31,9 +31,6 @@ export default function PastRoutesPage() {
 
       {/* Header */}
       <div style={{ padding: '4rem 2rem 3rem', maxWidth: '960px', margin: '0 auto' }}>
-        <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-          Canvas Routes · Season 2026
-        </div>
         <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.8rem,6vw,4.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, margin: '0 0 1rem', letterSpacing: '-0.01em' }}>
           Past Routes
         </h1>
