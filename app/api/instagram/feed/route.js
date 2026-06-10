@@ -1,6 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const accountId = process.env.INSTAGRAM_ACCOUNT_ID
@@ -21,7 +21,7 @@ export async function GET() {
   try {
     const res = await fetch(
       `https://graph.facebook.com/${accountId}/media?fields=id,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${token}`,
-      { next: { revalidate: 3600 } }
+      { cache: 'no-store' }
     )
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
