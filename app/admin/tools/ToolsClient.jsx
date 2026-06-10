@@ -9,6 +9,8 @@ export default function ToolsClient() {
   const refreshTimer = useRef(null)
   const [importRunning, setImportRunning] = useState(false)
   const [importResult, setImportResult] = useState(null)
+  const [igRefreshing, setIgRefreshing] = useState(false)
+  const [igResult, setIgResult] = useState(null)
 
   useEffect(() => {
     fetchRuns()
@@ -34,6 +36,19 @@ export default function ToolsClient() {
       setHcStatus('error')
     }
     hcTimer.current = setTimeout(() => setHcStatus(null), 4000)
+  }
+
+  async function refreshInstagramToken() {
+    setIgRefreshing(true)
+    setIgResult(null)
+    try {
+      const res = await fetch('/api/instagram/refresh', { method: 'POST' })
+      const d = await res.json().catch(() => ({ error: 'Invalid response' }))
+      setIgResult(d)
+    } catch {
+      setIgResult({ error: 'Request failed' })
+    }
+    setIgRefreshing(false)
   }
 
   async function runImport() {
@@ -73,6 +88,25 @@ export default function ToolsClient() {
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
         <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Tools</h1>
+      </div>
+
+      {/* Instagram Token */}
+      <div style={{ padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', marginBottom: '1rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Instagram Token</div>
+        <div style={{ fontSize: '12px', color: '#666', marginBottom: '1rem', lineHeight: '1.6' }}>
+          Exchanges the current Instagram access token for a new one valid for 60 days, and stores it automatically. Run this once now to get started — after that, a cron job handles it on the 1st of every other month.
+        </div>
+        <GhostBtn small onClick={refreshInstagramToken} disabled={igRefreshing}>
+          {igRefreshing ? 'Refreshing…' : 'Refresh Token'}
+        </GhostBtn>
+        {igResult && (
+          <div style={{ marginTop: '0.75rem', fontSize: '12px', color: igResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
+            {igResult.error
+              ? `Error: ${igResult.error}`
+              : `Token refreshed — valid for ${igResult.expires_in_days} days (until ${new Date(igResult.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}). Stored in Supabase automatically.`
+            }
+          </div>
+        )}
       </div>
 
       {/* Legacy Import */}
