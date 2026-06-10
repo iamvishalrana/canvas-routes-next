@@ -7,9 +7,14 @@ export async function GET() {
   if (!accountId) return Response.json({ error: 'Instagram not configured' }, { status: 503 })
 
   // Read token from Supabase first, fall back to env var
-  const supabase = createAdminClient()
-  const { data: row } = await supabase.from('settings').select('value').eq('key', 'instagram_access_token').maybeSingle()
-  const token = row?.value || process.env.INSTAGRAM_ACCESS_TOKEN
+  let token = process.env.INSTAGRAM_ACCESS_TOKEN
+  try {
+    const supabase = createAdminClient()
+    const { data: row } = await supabase.from('settings').select('value').eq('key', 'instagram_access_token').maybeSingle()
+    if (row?.value) token = row.value
+  } catch {
+    // settings table may not exist yet — use env var fallback
+  }
 
   if (!token) return Response.json({ error: 'No Instagram token' }, { status: 503 })
 
