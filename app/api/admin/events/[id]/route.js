@@ -13,7 +13,7 @@ export async function PATCH(request, { params }) {
     return Response.json({ error: 'Price cannot be negative.' }, { status: 400 })
   if ('registration_opens_at' in update && 'registration_closes_at' in update && update.registration_opens_at && update.registration_closes_at && new Date(update.registration_closes_at) <= new Date(update.registration_opens_at))
     return Response.json({ error: 'Registration close time must be after open time.' }, { status: 400 })
-  if ('member_price' in update) update.member_price = update.member_price != null ? parseInt(update.member_price) || null : null
+  if ('member_price' in update) update.member_price = update.member_price != null ? Math.round(parseFloat(update.member_price)) || null : null
   if ('capacity' in update) update.capacity = update.capacity != null ? parseInt(update.capacity) || null : null
   if ('registration_opens_at' in update) update.registration_opens_at = update.registration_opens_at || null
   if ('registration_closes_at' in update) update.registration_closes_at = update.registration_closes_at || null

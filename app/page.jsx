@@ -371,10 +371,11 @@ export default function Home() {
           <Link href="/faq">FAQ</Link>
         </div>
         <div className="nav-cta">
-          {membershipLive && (
+          {membershipLive ? (
             <Link href="/membership" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.45)', padding: '0.45rem 1rem' }}>Membership</Link>
+          ) : (
+            <Link href="/membership" className="nav-join">Join</Link>
           )}
-          <Link href="/membership" className="nav-join">Join</Link>
           <Link href="/members/login" className="nav-members">Members Login</Link>
         </div>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
@@ -391,8 +392,11 @@ export default function Home() {
         <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <Link href="/faq">FAQ</Link>
-        <Link href="/membership" style={{color:"#1a1a1a",fontWeight:"500"}}>Join</Link>
-        {membershipLive && <Link href="/membership" style={{color:"#c5a882",fontWeight:"500"}}>Membership</Link>}
+        {membershipLive ? (
+          <Link href="/membership" style={{color:"#c5a882",fontWeight:"500"}}>Membership</Link>
+        ) : (
+          <Link href="/membership" style={{color:"#1a1a1a",fontWeight:"500"}}>Join</Link>
+        )}
         <Link href="/members/login" style={{color:"#3B6B2F",fontWeight:"500"}}>Members Login</Link>
       </div>
 
@@ -793,7 +797,7 @@ export default function Home() {
 
       {/* MEMBERSHIP LAUNCH POPUP */}
       {showMembershipPopup && (
-        <div onClick={e => { if (e.target === e.currentTarget) { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') } }} style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(15,30,20,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+        <div onClick={e => { if (e.target === e.currentTarget) { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') } }} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,30,20,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: '#F5F1EC', maxWidth: '440px', width: '100%', padding: '2.75rem 2.25rem 2.25rem', position: 'relative', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.3)' }}>
             <button onClick={() => { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') }} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', lineHeight: 1, padding: '4px' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

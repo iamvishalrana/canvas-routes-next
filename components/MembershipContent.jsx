@@ -155,13 +155,13 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (!waitlistRes.ok) {
         captureException(new Error(`membership-waitlist POST failed: ${waitlistRes.status}`))
         setError('Payment confirmed — but please email info@canvasroutes.com with your details so we can save your application.')
-        setPaying(false)
+        setPaying(false); payingRef.current = false
         return
       }
     } catch (waitlistErr) {
       captureException(waitlistErr)
       setError('Payment confirmed — but please email info@canvasroutes.com with your details so we can save your application.')
-      setPaying(false)
+      setPaying(false); payingRef.current = false
       return
     }
 

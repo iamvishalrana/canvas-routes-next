@@ -112,9 +112,9 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
           </button>
         </div>
 
-        {/* Photo */}
+        {/* Photo — negative margin pulls it behind the sticky bar so nothing is hidden */}
         {ev.photo_url && (
-          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '240px', objectFit: 'cover', objectPosition: 'center', display: 'block', marginTop: '-0.6rem' }} />
+          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '240px', objectFit: 'cover', objectPosition: 'center', display: 'block', marginTop: '-44px', paddingTop: '44px', boxSizing: 'border-box' }} />
         )}
 
         <div style={{ padding: '1.75rem 2rem 2rem' }}>

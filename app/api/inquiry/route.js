@@ -14,7 +14,7 @@ export async function POST(request) {
   if (name.length > 100 || email.length > 254 || (message && message.length > 1000)) return Response.json({ error: 'Input too long.' }, { status: 400 })
 
   try {
-    await fetch('https://api.resend.com/emails', {
+    const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -25,6 +25,7 @@ export async function POST(request) {
         text: `Name: ${name.trim()}\nEmail: ${email.trim()}\n\nMessage:\n${message?.trim() || '(no message provided)'}`,
       }),
     })
+    if (!r.ok) throw new Error(`Resend ${r.status}`)
   } catch (err) {
     captureException(err, { context: 'inquiry-email' })
     return Response.json({ error: 'Could not send message. Please email info@canvasroutes.com directly.' }, { status: 500 })
