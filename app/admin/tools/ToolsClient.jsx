@@ -9,6 +9,8 @@ export default function ToolsClient() {
   const refreshTimer = useRef(null)
   const [igRefreshing, setIgRefreshing] = useState(false)
   const [igResult, setIgResult] = useState(null)
+  const [igChecking, setIgChecking] = useState(false)
+  const [igCheckResult, setIgCheckResult] = useState(null)
   const [newToken, setNewToken] = useState('')
   const [settingToken, setSettingToken] = useState(false)
   const [setTokenResult, setSetTokenResult] = useState(null)
@@ -54,6 +56,18 @@ export default function ToolsClient() {
       setSetTokenResult({ error: 'Request failed' })
     }
     setSettingToken(false)
+  }
+
+  async function checkInstagramToken() {
+    setIgChecking(true); setIgCheckResult(null)
+    try {
+      const res = await fetch('/api/instagram/check-token', { method: 'POST' })
+      const d = await res.json().catch(() => ({ error: 'Invalid response' }))
+      setIgCheckResult(d)
+    } catch {
+      setIgCheckResult({ error: 'Request failed' })
+    }
+    setIgChecking(false)
   }
 
   async function refreshInstagramToken() {
@@ -147,6 +161,24 @@ export default function ToolsClient() {
             }
           </div>
         )}
+
+        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
+          <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.6rem', lineHeight: 1.6 }}>
+            Verify the token is working right now. A daily automated check already runs at 8 AM and emails you if anything is wrong.
+          </div>
+          <GhostBtn small onClick={checkInstagramToken} disabled={igChecking}>
+            {igChecking ? 'Checking…' : 'Check Token Now'}
+          </GhostBtn>
+          {igCheckResult && (
+            <div style={{ marginTop: '0.6rem', fontSize: '12px', lineHeight: 1.6, color: igCheckResult.status === 'ok' ? '#3B6B2F' : igCheckResult.status === 'expiring_soon' ? '#8A6535' : '#7B2032' }}>
+              {igCheckResult.status === 'ok' && `✓ Token is valid${igCheckResult.daysLeft ? ` — ${igCheckResult.daysLeft} days remaining` : ''}`}
+              {igCheckResult.status === 'expiring_soon' && `⚠ Token expires in ${igCheckResult.daysLeft} days — click "Extend Current Token" now`}
+              {igCheckResult.status === 'dead' && `✕ Token is dead: ${igCheckResult.error} — paste a new token above`}
+              {igCheckResult.status === 'missing' && `✕ No token configured — paste one above`}
+              {igCheckResult.error && !igCheckResult.status && `Error: ${igCheckResult.error}`}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Site Health Check */}
