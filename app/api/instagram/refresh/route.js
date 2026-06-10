@@ -1,39 +1,62 @@
-// Call this endpoint every ~50 days to extend the token for another 60 days.
-// Requires INSTAGRAM_APP_SECRET in env vars.
-// Returns the new token — paste it into Vercel as INSTAGRAM_ACCESS_TOKEN.
-import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { createAdminClient } from '../../../../lib/supabase/admin'
 
-export async function POST(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
-
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN
+async function refreshToken() {
   const appId = process.env.INSTAGRAM_APP_ID
   const appSecret = process.env.INSTAGRAM_APP_SECRET
+  if (!appId || !appSecret) throw new Error('Missing INSTAGRAM_APP_ID or INSTAGRAM_APP_SECRET')
 
-  if (!token || !appId || !appSecret) {
-    return Response.json({ error: 'Missing env vars: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET' }, { status: 503 })
+  const supabase = createAdminClient()
+  const { data: row } = await supabase.from('settings').select('value').eq('key', 'instagram_access_token').maybeSingle()
+  const currentToken = row?.value || process.env.INSTAGRAM_ACCESS_TOKEN
+  if (!currentToken) throw new Error('No token found. Set INSTAGRAM_ACCESS_TOKEN in Vercel env vars for the first run.')
+
+  const res = await fetch(
+    `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${currentToken}`
+  )
+  const data = await res.json()
+  if (data.error) throw new Error(data.error.message)
+
+  const expiresAt = new Date(Date.now() + (data.expires_in || 5184000) * 1000).toISOString()
+
+  await supabase.from('settings').upsert(
+    { key: 'instagram_access_token', value: data.access_token, updated_at: new Date().toISOString() },
+    { onConflict: 'key' }
+  )
+  await supabase.from('settings').upsert(
+    { key: 'instagram_token_expires_at', value: expiresAt, updated_at: new Date().toISOString() },
+    { onConflict: 'key' }
+  )
+
+  const daysLeft = Math.round((data.expires_in || 5184000) / 86400)
+  console.log(`Instagram token refreshed — valid ${daysLeft} days until ${expiresAt}`)
+  return { daysLeft, expiresAt }
+}
+
+// Called by Vercel cron (GET with Authorization: Bearer {CRON_SECRET})
+export async function GET(request) {
+  const cronSecret = process.env.CRON_SECRET
+  const auth = request.headers.get('authorization')
+  if (cronSecret && auth !== `Bearer ${cronSecret}`) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${token}`
-    )
-    const data = await res.json()
-
-    if (data.error) {
-      return Response.json({ error: data.error.message }, { status: 400 })
-    }
-
-    const expiresAt = new Date(Date.now() + (data.expires_in || 5184000) * 1000).toISOString()
-
-    return Response.json({
-      message: 'Token refreshed. Update INSTAGRAM_ACCESS_TOKEN in Vercel with the new token below.',
-      new_token: data.access_token,
-      expires_in_days: Math.round((data.expires_in || 5184000) / 86400),
-      expires_at: expiresAt,
-    })
+    const result = await refreshToken()
+    return Response.json({ ok: true, ...result })
   } catch (err) {
-    return Response.json({ error: 'Failed to refresh token' }, { status: 502 })
+    console.error('Instagram cron refresh failed:', err.message)
+    return Response.json({ error: err.message }, { status: 500 })
+  }
+}
+
+// Called manually from admin panel (POST, admin-only)
+export async function POST(request) {
+  const { requireAdmin } = await import('../../../../lib/supabase/authCheck')
+  const authError = await requireAdmin(request)
+  if (authError) return authError
+  try {
+    const result = await refreshToken()
+    return Response.json({ ok: true, ...result })
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 })
   }
 }
