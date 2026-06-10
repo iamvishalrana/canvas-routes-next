@@ -517,7 +517,7 @@ export default function Home() {
               display: flex;
               gap: 4px;
               width: max-content;
-              animation: film-scroll 28s linear infinite;
+              animation: film-scroll 55s linear infinite;
             }
             .ig-strip-photo {
               width: 220px;
