@@ -55,8 +55,19 @@ export async function POST(request) {
       recipients = await fetchMembers({ membership_status: 'active', tier: 'routes_member' })
     } else if (audience === 'inner_circle') {
       recipients = await fetchMembers({ membership_status: 'active', tier: 'inner_circle' })
+    } else if (audience === 'all_active_members') {
+      recipients = await fetchMembers({ membership_status: 'active' })
+    } else if (audience === 'pending_members') {
+      recipients = await fetchMembers({ membership_status: 'pending' })
     } else if (audience === 'all_contacts') {
       recipients = await fetchContacts()
+    } else if (audience === 'contacts_non_members') {
+      const [allContacts, activeMembers] = await Promise.all([
+        fetchContacts(),
+        fetchMembers({ membership_status: 'active' }),
+      ])
+      const memberEmails = new Set(activeMembers.map(m => m.email.toLowerCase()))
+      recipients = allContacts.filter(c => !memberEmails.has(c.email.toLowerCase()))
     } else if (audience === 'everyone') {
       const [members, contacts] = await Promise.all([
         fetchMembers({ membership_status: 'active' }),
@@ -109,8 +120,8 @@ export async function POST(request) {
           body: JSON.stringify({
             from: 'Canvas Routes <info@canvasroutes.com>',
             to: recipient.email,
-            subject: subject.trim(),
-            html,
+            subject: subject.trim().replace(/\{\{name\}\}/gi, recipient.name || 'there'),
+            html: html.replace(/\{\{name\}\}/gi, recipient.name || 'there'),
           }),
         })
         return res.ok ? 'sent' : 'failed'

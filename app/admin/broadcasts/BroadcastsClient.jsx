@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
+import Link from '@tiptap/extension-link'
 import { sel, L, PrimaryBtn, GhostBtn, Err } from '../_components/shared'
 
 const MAX_RECIPIENTS = 200
@@ -12,17 +13,23 @@ const MAX_RECIPIENTS = 200
 const AUDIENCE_LABELS = {
   canvas_routes_member: 'Canvas Routes Member',
   inner_circle:         'Inner Circle',
+  all_active_members:   'All Active Members',
+  pending_members:      'Pending Applications',
   all_contacts:         'All Contacts',
+  contacts_non_members: 'Contacts (Non-Members)',
   everyone:             'Everyone',
   specific_emails:      'Specific Emails',
 }
 
 const AUDIENCE_OPTIONS = [
-  { value: 'canvas_routes_member', label: 'Canvas Routes Member' },
-  { value: 'inner_circle',         label: 'Inner Circle'         },
-  { value: 'all_contacts',         label: 'All Contacts'         },
-  { value: 'everyone',             label: 'Everyone'             },
-  { value: 'specific_emails',      label: 'Specific Emails'      },
+  { value: 'canvas_routes_member', label: 'Canvas Routes Member'   },
+  { value: 'inner_circle',         label: 'Inner Circle'           },
+  { value: 'all_active_members',   label: 'All Active Members'     },
+  { value: 'pending_members',      label: 'Pending Applications'   },
+  { value: 'all_contacts',         label: 'All Contacts'           },
+  { value: 'contacts_non_members', label: 'Contacts (Non-Members)' },
+  { value: 'everyone',             label: 'Everyone'               },
+  { value: 'specific_emails',      label: 'Specific Emails'        },
 ]
 
 const FONTS = [
@@ -164,6 +171,29 @@ function Toolbar({ editor }) {
       <button style={BTN(editor.isActive({ textAlign: 'right' }))} onClick={() => editor.chain().focus().setTextAlign('right').run()} title="Align right">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
       </button>
+
+      <div style={{ width: '0.5px', height: '18px', background: 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
+
+      {/* Link */}
+      <button style={BTN(editor.isActive('link'))} title="Insert link"
+        onClick={() => {
+          if (editor.isActive('link')) { editor.chain().focus().unsetLink().run(); return }
+          const url = window.prompt('URL')
+          if (url) editor.chain().focus().setLink({ href: url }).run()
+        }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </button>
+
+      <div style={{ width: '0.5px', height: '18px', background: 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
+
+      {/* Undo */}
+      <button style={BTN(false)} title="Undo" onClick={() => editor.chain().focus().undo().run()}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+      </button>
+      {/* Redo */}
+      <button style={BTN(false)} title="Redo" onClick={() => editor.chain().focus().redo().run()}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+      </button>
     </div>
   )
 }
@@ -180,6 +210,11 @@ export default function BroadcastsClient() {
   const [history, setHistory]           = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState(null)
+  const [recipientCount, setRecipientCount] = useState(null)
+  const [countLoading, setCountLoading] = useState(false)
+  const [testEmail, setTestEmail]       = useState('')
+  const [testSending, setTestSending]   = useState(false)
+  const [testResult, setTestResult]     = useState(null)
   const sendingRef = useRef(false)
 
   const editor = useEditor({
@@ -190,6 +225,7 @@ export default function BroadcastsClient() {
       FontFamily,
       FontSize,
       TextAlign.configure({ types: ['paragraph', 'heading'] }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { style: 'color:#8A6535;text-decoration:underline;' } }),
     ],
     content: '',
     editorProps: {
@@ -216,6 +252,42 @@ export default function BroadcastsClient() {
   }, [])
 
   useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
+
+  useEffect(() => {
+    if (audience === 'specific_emails') { setRecipientCount(null); return }
+    setCountLoading(true)
+    setRecipientCount(null)
+    fetch(`/api/admin/broadcasts/count?audience=${audience}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setRecipientCount(d.count) })
+      .catch(() => {})
+      .finally(() => setCountLoading(false))
+  }, [audience])
+
+  async function sendTest() {
+    const email = testEmail.trim()
+    if (!email.includes('@')) return
+    if (!subject.trim() && bodyEmpty) return
+    setTestSending(true)
+    setTestResult(null)
+    try {
+      const res = await fetch('/api/admin/broadcasts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: subject.trim() || '(Test)',
+          html: buildHtml(bodyHtml),
+          audience: 'specific_emails',
+          specificEmails: [email],
+        }),
+      })
+      const data = await res.json()
+      setTestResult(res.ok ? 'sent' : (data.error || 'Failed to send.'))
+    } catch {
+      setTestResult('Network error.')
+    }
+    setTestSending(false)
+  }
 
   const parsedEmails = audience === 'specific_emails' ? parseEmails(specificEmails) : []
   const audienceLabel = audience === 'specific_emails'
@@ -374,6 +446,11 @@ export default function BroadcastsClient() {
                     </select>
                     <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
+                  {audience !== 'specific_emails' && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '11px', color: countLoading ? '#ccc' : '#3B6B2F' }}>
+                      {countLoading ? 'Counting…' : recipientCount !== null ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}${recipientCount > MAX_RECIPIENTS ? ` — capped at ${MAX_RECIPIENTS}` : ''}` : ''}
+                    </div>
+                  )}
                   {audience === 'specific_emails' && (
                     <div style={{ marginTop: '0.85rem' }}>
                       <textarea style={{ ...inp, height: '90px', resize: 'vertical', marginTop: '0.35rem' }}
@@ -404,7 +481,24 @@ export default function BroadcastsClient() {
                       <Toolbar editor={editor} />
                       <EditorContent editor={editor} />
                     </div>
+                    <div style={{ marginTop: '0.4rem', fontSize: '10px', color: '#bbb', letterSpacing: '0.02em' }}>
+                      Use <code style={{ background: 'rgba(0,0,0,0.05)', padding: '1px 4px', borderRadius: '2px' }}>{'{{name}}'}</code> anywhere to personalise — e.g. <em>Hey {'{{name}}'},</em>
+                    </div>
                   </div>
+                </div>
+
+                {/* Test send */}
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem 1.25rem' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.75rem' }}>Send a test</div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input style={{ ...inp, flex: 1 }} value={testEmail} onChange={e => { setTestEmail(e.target.value); setTestResult(null) }} placeholder="your@email.com" type="email" />
+                    <GhostBtn onClick={sendTest} disabled={testSending || !testEmail.includes('@')} small>{testSending ? 'Sending…' : 'Send test'}</GhostBtn>
+                  </div>
+                  {testResult && (
+                    <div style={{ marginTop: '0.4rem', fontSize: '11px', color: testResult === 'sent' ? '#3B6B2F' : '#7B2032' }}>
+                      {testResult === 'sent' ? 'Test email sent.' : testResult}
+                    </div>
+                  )}
                 </div>
 
                 <Err msg={error} />
