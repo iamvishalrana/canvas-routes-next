@@ -1,32 +1,143 @@
 'use client'
 import Link from 'next/link'
 
-export default function SiteFooter({ background = '#F5F1EC', borderColor = 'rgba(0,0,0,0.12)', textColor = '#888', linkColor = '#aaa', iconColor = '#555' }) {
+const COLS = [
+  {
+    heading: 'Explore',
+    links: [
+      { label: 'Membership',  href: '/membership' },
+      { label: 'Road Trips',  href: '/routes' },
+      { label: 'Partners',    href: '/partners' },
+      { label: 'FAQ',         href: '/faq' },
+    ],
+  },
+  {
+    heading: 'Members',
+    links: [
+      { label: 'Sign In',    href: '/members/login' },
+      { label: 'Dashboard',  href: '/members/dashboard' },
+      { label: 'Profile',    href: '/members/profile' },
+      { label: 'Perks',      href: '/members/perks' },
+    ],
+  },
+  {
+    heading: 'Company',
+    links: [
+      { label: 'Privacy Policy',    href: '/privacy' },
+      { label: 'Terms & Conditions', href: '/terms' },
+    ],
+  },
+]
+
+export default function SiteFooter() {
   return (
-    <footer style={{ borderTop: `0.5px solid ${borderColor}`, padding: '2rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background, fontFamily: 'var(--font-inter),sans-serif' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-        <div style={{ fontSize: '11px', color: textColor, letterSpacing: '0.05em' }}>© 2026 Canvas Routes. Montreal, QC.</div>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <Link href="/privacy" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>Privacy Policy</Link>
-          <Link href="/terms" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>Terms</Link>
-          <Link href="/faq" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>FAQ</Link>
-          <Link href="/partners" style={{ fontSize: '10px', color: linkColor, textDecoration: 'none', letterSpacing: '0.03em' }}>Partner with us</Link>
-          <button onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))} style={{ background: 'none', border: 'none', padding: 0, fontSize: '10px', color: linkColor, cursor: 'pointer', letterSpacing: '0.03em', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>Manage cookies</button>
+    <footer style={{
+      background: '#0F1E14',
+      fontFamily: 'var(--font-inter),sans-serif',
+    }}>
+      {/* ── Columns ── */}
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: 'clamp(3rem,6vw,5rem) clamp(1.5rem,4vw,3rem) clamp(2rem,4vw,3rem)',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+        gap: 'clamp(2rem,4vw,3rem)',
+      }}>
+
+        {/* Brand column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <img
+            src="/canvas_routes_refined.png"
+            alt="Canvas Routes"
+            style={{ height: '100px', width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.9 }}
+          />
+          <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)' }}>
+            Montreal · Est. 2025
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem' }}>
+            <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: 'rgba(245,241,236,0.4)', transition: 'color 0.2s', display: 'flex' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#c5a882'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.4)'}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+              </svg>
+            </a>
+            <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{ color: 'rgba(245,241,236,0.4)', transition: 'color 0.2s', display: 'flex' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#c5a882'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.4)'}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        {/* Link columns */}
+        {COLS.map(col => (
+          <div key={col.heading} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.25rem', fontWeight: '500' }}>
+              {col.heading}
+            </div>
+            {col.links.map(link => (
+              <Link key={link.label} href={link.href} style={{ fontSize: '12px', color: 'rgba(245,241,236,0.5)', textDecoration: 'none', letterSpacing: '0.02em', transition: 'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.9)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.5)'}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        ))}
+
+        {/* Connect column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.25rem', fontWeight: '500' }}>
+            Connect
+          </div>
+          <a href="mailto:info@canvasroutes.com" style={{ fontSize: '12px', color: 'rgba(245,241,236,0.5)', textDecoration: 'none', letterSpacing: '0.02em', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.9)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.5)'}>
+            info@canvasroutes.com
+          </a>
+          <button
+            onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))}
+            style={{ background: 'none', border: 'none', padding: 0, fontSize: '12px', color: 'rgba(245,241,236,0.5)', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.9)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.5)'}>
+            Manage cookies
+          </button>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
-        <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Canvas Routes on Instagram" style={{ color: iconColor, display: 'flex' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-            <circle cx="12" cy="12" r="4"/>
-            <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-          </svg>
-        </a>
-        <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Canvas Routes on Facebook" style={{ color: iconColor, display: 'flex' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-          </svg>
-        </a>
+
+      {/* ── Bottom bar ── */}
+      <div style={{
+        borderTop: '0.5px solid rgba(197,168,130,0.1)',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '1.5rem clamp(1.5rem,4vw,3rem)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '0.75rem',
+      }}>
+        <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.25)', letterSpacing: '0.06em' }}>
+          © 2026 Événements Canvas Routes Inc. — Montreal, QC.
+        </div>
+        <div style={{ display: 'flex', gap: '1.5rem' }}>
+          {[
+            { label: 'Privacy', href: '/privacy' },
+            { label: 'Terms', href: '/terms' },
+          ].map(l => (
+            <Link key={l.label} href={l.href} style={{ fontSize: '10px', color: 'rgba(245,241,236,0.25)', textDecoration: 'none', letterSpacing: '0.06em', transition: 'color 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.55)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.25)'}>
+              {l.label}
+            </Link>
+          ))}
+        </div>
       </div>
     </footer>
   )

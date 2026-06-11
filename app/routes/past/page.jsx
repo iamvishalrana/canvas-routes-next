@@ -50,13 +50,7 @@ export default function PastRoutesPage() {
         ))}
       </div>
 
-      <SiteFooter
-        background="transparent"
-        borderColor="rgba(197,168,130,0.12)"
-        textColor="rgba(245,241,236,0.3)"
-        linkColor="rgba(245,241,236,0.25)"
-        iconColor="rgba(245,241,236,0.35)"
-      />
+      <SiteFooter />
       </div>
     </div>
   )
