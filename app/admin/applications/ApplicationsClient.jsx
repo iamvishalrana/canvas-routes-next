@@ -640,6 +640,9 @@ export default function ApplicationsClient() {
                         <InfoCell label="DOB" value={a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : null} />
                         <InfoCell label="How they heard" value={a.source} />
                         <InfoCell label="Applied" value={new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })} />
+                        <InfoCell label="Payment" value={a.stripe_payment_status || null} />
+                        <InfoCell label="Amount Paid" value={a.stripe_amount_paid ? `$${(a.stripe_amount_paid / 100).toFixed(2)} CAD` : null} />
+                        {a.promo_code_used && <InfoCell label="Promo Code" value={a.promo_code_used} />}
                       </div>
                       {a.more && (
                         <div style={{ marginBottom: '1rem' }}>

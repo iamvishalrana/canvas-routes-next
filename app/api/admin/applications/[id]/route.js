@@ -28,6 +28,7 @@ export async function PATCH(request, { params }) {
     if ('car_year' in body) memberSync.car_year = body.car_year || null
     if ('car_make' in body) memberSync.car_make = body.car_make || null
     if ('car_model' in body) memberSync.car_model = body.car_model || null
+    if ('car_paint' in body) memberSync.car_paint = body.car_paint || null
     if (Object.keys(memberSync).length > 0) {
       const { data: mem } = await supabase.from('members').select('id').eq('email', app.email.toLowerCase()).maybeSingle()
       if (mem) await supabase.from('members').update(memberSync).eq('id', mem.id)
@@ -42,7 +43,23 @@ export async function DELETE(request, { params }) {
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const supabase = createAdminClient()
+
+  // Fetch email before deletion so we can clean up the linked member
+  const { data: app } = await supabase.from('applications').select('email').eq('id', id).maybeSingle()
+
   const { error } = await supabase.from('applications').delete().eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+
+  // Clean up linked member (no FK between applications and members — must be explicit)
+  if (app?.email) {
+    const { data: mem } = await supabase.from('members').select('id, car_photo_url').eq('email', app.email.toLowerCase().trim()).maybeSingle()
+    if (mem) {
+      const photoFilename = mem.car_photo_url?.split('/').pop()?.split('?')[0]
+      const photoPaths = photoFilename ? [photoFilename] : [`${mem.id}.jpg`, `${mem.id}.jpeg`, `${mem.id}.png`, `${mem.id}.webp`]
+      try { await supabase.storage.from('member-photos').remove(photoPaths) } catch {}
+      try { await supabase.auth.admin.deleteUser(mem.id) } catch {}
+    }
+  }
+
   return Response.json({ success: true })
 }

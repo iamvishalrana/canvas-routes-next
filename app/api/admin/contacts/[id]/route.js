@@ -26,18 +26,31 @@ export async function PATCH(request, { params }) {
     if (contactErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? contactErr.message : 'Database error' }, { status: 500 })
   }
 
-  // Update applications table via application_id
+  // Update applications table via application_id; also resolve email for member sync
+  let appEmail = email?.toLowerCase().trim()
   if (Object.keys(appUpdate).length > 0) {
     const { data: contact, error: lookupErr } = await supabase.from('contacts').select('application_id').eq('id', id).single()
     if (lookupErr || !contact?.application_id) return Response.json({ error: 'Contact not found' }, { status: 404 })
     const { error: appErr } = await supabase.from('applications').update(appUpdate).eq('id', contact.application_id)
     if (appErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? appErr.message : 'Database error' }, { status: 500 })
+
+    // Resolve email for member sync if the client didn't supply it
+    if (!appEmail) {
+      const { data: appRow } = await supabase.from('applications').select('email').eq('id', contact.application_id).maybeSingle()
+      appEmail = appRow?.email?.toLowerCase().trim()
+    }
   }
 
-  // Sync notes to members directly by email — no application lookup needed
-  if (email && 'notes' in contactUpdate) {
-    const { data: mem } = await supabase.from('members').select('id').eq('email', email.toLowerCase().trim()).maybeSingle()
-    if (mem) await supabase.from('members').update({ notes: contactUpdate.notes ?? null }).eq('id', mem.id)
+  // Sync to members table: notes (when explicitly provided), plus name/phone/instagram on profile edits
+  const memberSync = {}
+  if (appEmail && 'notes' in contactUpdate) memberSync.notes = contactUpdate.notes ?? null
+  if ('name' in appUpdate) memberSync.name = appUpdate.name
+  if ('phone' in appUpdate) memberSync.phone = appUpdate.phone
+  if ('instagram' in appUpdate) memberSync.instagram = appUpdate.instagram
+
+  if (Object.keys(memberSync).length > 0 && appEmail) {
+    const { data: mem } = await supabase.from('members').select('id').eq('email', appEmail).maybeSingle()
+    if (mem) await supabase.from('members').update(memberSync).eq('id', mem.id)
   }
 
   return Response.json({ success: true })

@@ -8,6 +8,10 @@ export async function PATCH(request, { params }) {
   const body = await request.json()
   const supabase = createAdminClient()
 
+  // Capture old email BEFORE any update so we can find the applications row later
+  const { data: memberBefore } = await supabase.from('members').select('email').eq('id', id).single()
+  const oldEmail = memberBefore?.email?.toLowerCase().trim()
+
   if (body.email) {
     const newEmail = body.email.trim().toLowerCase()
     const { error: authErr } = await supabase.auth.admin.updateUserById(id, { email: newEmail })
@@ -23,8 +27,8 @@ export async function PATCH(request, { params }) {
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
 
   // Sync shared fields to applications table
-  const { data: member } = await supabase.from('members').select('email').eq('id', id).single()
-  const memberEmail = (update.email || member?.email)?.toLowerCase().trim()
+  const newEmail = update.email || null
+  const memberEmail = newEmail || oldEmail
   if (memberEmail) {
     const appSync = {}
     if ('name' in body) appSync.name = body.name?.trim() || null
@@ -38,13 +42,16 @@ export async function PATCH(request, { params }) {
       if (primary.year || body.car_year) appSync.car_year = primary.year || body.car_year || null
       const combined = [primary.make || body.car_make, primary.model || body.car_model].filter(Boolean).join(' ')
       if (combined) appSync.car_model = combined
-      if ('paint' in primary) appSync.car_paint = primary.paint || null
+      appSync.car_make = primary.make || body.car_make || null
+      if ('paint' in primary || 'car_paint' in body) appSync.car_paint = primary.paint || body.car_paint || null
     }
+    // If email changed, update applications.email and use the old email to find the row
+    if (newEmail && oldEmail && newEmail !== oldEmail) appSync.email = newEmail
     if (Object.keys(appSync).length > 0) {
-      await supabase.from('applications').update(appSync).eq('email', memberEmail)
+      await supabase.from('applications').update(appSync).eq('email', oldEmail || memberEmail)
     }
 
-    // Sync notes to contacts.notes
+    // Sync notes to contacts.notes — use memberEmail (new email if changed, applications is now updated)
     if ('notes' in body) {
       const noteVal = body.notes ?? null
       const { data: app } = await supabase.from('applications').select('id').eq('email', memberEmail).maybeSingle()

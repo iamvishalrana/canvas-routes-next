@@ -327,7 +327,10 @@ export default function PaymentsClient({ initialRecords = [] }) {
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type || '—'}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtDate(r.stripe_paid_at)}</td>
                   <td style={TD}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
-                  <td style={{ ...TD, whiteSpace: 'nowrap' }}><Actions r={r} /></td>
+                  <td style={{ ...TD, whiteSpace: 'nowrap' }}>
+                    <Actions r={r} />
+                    {r.id && <a href={`/admin/applications`} style={{ marginLeft: '0.5rem', fontSize: '11px', color: '#8A6535', textDecoration: 'underline', textUnderlineOffset: '2px' }}>Application →</a>}
+                  </td>
                 </tr>
               ))}
             </tbody>
