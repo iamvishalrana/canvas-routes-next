@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -193,8 +193,20 @@ function BirthdaysWidget() {
 
 function NavContent({ pathname, onNavClick }) {
   const [collapsed, setCollapsed] = useState(ALL_COLLAPSED)
+  const sectionRefs = useRef({})
 
-  function toggle(id) { setCollapsed(p => ({ ...p, [id]: !p[id] })) }
+  function toggle(id) {
+    setCollapsed(p => {
+      const next = { ...p, [id]: !p[id] }
+      if (!next[id]) {
+        // expanding — scroll the header into view after paint
+        requestAnimationFrame(() => {
+          sectionRefs.current[id]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+        })
+      }
+      return next
+    })
+  }
   function collapseAll() { setCollapsed(ALL_COLLAPSED) }
 
   // Auto-expand the section containing the active page
@@ -218,7 +230,7 @@ function NavContent({ pathname, onNavClick }) {
         </button>
       </div>
 
-      <nav style={{ flex: 1, padding: '0.25rem 0', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, minHeight: 0, padding: '0.25rem 0', overflowY: 'auto' }}>
         {SECTIONS.map(section => {
           const isCollapsible = !!section.label
           const isCollapsed = isCollapsible && collapsed[section.id]
@@ -227,6 +239,7 @@ function NavContent({ pathname, onNavClick }) {
             <div key={section.id}>
               {isCollapsible && (
                 <button
+                  ref={el => { sectionRefs.current[section.id] = el }}
                   onClick={() => toggle(section.id)}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
