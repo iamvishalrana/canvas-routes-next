@@ -29,11 +29,11 @@ export default function TermsContent() {
         {[
           {
             title: "Acceptance of terms",
-            body: "By submitting a membership application, road trip registration, or any other form on Canvas Routes, you agree to be bound by these Terms & Conditions as issued by Événements Canvas Routes Inc. / Canvas Routes Events Inc., a corporation incorporated in Quebec, Canada. If you do not agree, please do not submit an application or registration."
+            body: "By submitting a membership application, route registration, or any other form on Canvas Routes, you agree to be bound by these Terms & Conditions as issued by Événements Canvas Routes Inc. / Canvas Routes Events Inc., a corporation incorporated in Quebec, Canada. If you do not agree, please do not submit an application or registration."
           },
           {
             title: "Membership tiers",
-            body: "Canvas Routes offers two membership tiers per season. Routes Member is $99 CAD per season and includes access to Canvas Routes events, road trips, and Cars & Coffee gatherings as described on the site. Inner Circle is $249 CAD per season and includes everything in Routes Member, with extended access through December and additional benefits as described on the site. The standard season runs June through November. Inner Circle membership extends through December. Pricing is subject to change for future seasons."
+            body: "Canvas Routes offers two membership tiers per season. Routes Member is $99 CAD per season and includes access to Canvas Routes events, routes, and Cars & Coffee gatherings as described on the site. Inner Circle is $249 CAD per season and includes everything in Routes Member, with extended access through December and additional benefits as described on the site. The standard season runs June through November. Inner Circle membership extends through December. Pricing is subject to change for future seasons."
           },
           {
             title: "Application & approval",
@@ -48,8 +48,8 @@ export default function TermsContent() {
             body: "Membership fees are non-refundable once your application has been approved and the season has begun. If your application is declined, a full refund is issued automatically. If you are approved but choose not to proceed before the season begins, contact us as soon as possible at info@canvasroutes.com. If Canvas Routes cancels a membership without cause on its part, a prorated refund may be issued at our discretion based on the remaining portion of the season."
           },
           {
-            title: "Road trip fees",
-            body: "Road trip participation fees vary by event and are stated on the individual event page. Payment is collected at the time of registration. Road trip fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any road trip due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
+            title: "Route fees",
+            body: "Route participation fees vary by event and are stated on the individual event page. Payment is collected at the time of registration. Road trip fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any route due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
           },
           {
             title: "Member conduct",
@@ -57,7 +57,7 @@ export default function TermsContent() {
           },
           {
             title: "Events & waivers",
-            body: "Event schedules, locations, and formats are subject to change without notice. A waiver of liability may be required at all Canvas Routes events, including road trips, Cars & Coffee gatherings, and any other organized activity. By registering for or attending any Canvas Routes event, you agree to sign any waiver presented at the event. Members who participate in road trips, drives, and other events do so entirely at their own risk. Canvas Routes does not organize racing or any illegal driving activity, and members are expected to obey all applicable traffic laws at all times."
+            body: "Event schedules, locations, and formats are subject to change without notice. A waiver of liability may be required at all Canvas Routes events, including routes, Cars & Coffee gatherings, and any other organized activity. By registering for or attending any Canvas Routes event, you agree to sign any waiver presented at the event. Members who participate in routes, drives, and other events do so entirely at their own risk. Canvas Routes does not organize racing or any illegal driving activity, and members are expected to obey all applicable traffic laws at all times."
           },
           {
             title: "Third party activities",
@@ -81,7 +81,7 @@ export default function TermsContent() {
           },
           {
             title: "Limitation of liability",
-            body: "Événements Canvas Routes Inc., its directors, officers, organizers, and representatives are not liable for any personal injury, property damage, vehicle damage, or loss of any kind arising from participation in Canvas Routes events or activities, including road trips, Cars & Coffee gatherings, or any other organized event. This limitation extends to injuries, losses, or damages arising from participation in third-party activities suggested or arranged in connection with Canvas Routes events, and to any adverse experience at third-party food and beverage establishments. Members are solely responsible for maintaining appropriate vehicle insurance and ensuring their vehicle is roadworthy. Participation in all Canvas Routes activities is voluntary and at each member's own risk."
+            body: "Événements Canvas Routes Inc., its directors, officers, organizers, and representatives are not liable for any personal injury, property damage, vehicle damage, or loss of any kind arising from participation in Canvas Routes events or activities, including routes, Cars & Coffee gatherings, or any other organized event. This limitation extends to injuries, losses, or damages arising from participation in third-party activities suggested or arranged in connection with Canvas Routes events, and to any adverse experience at third-party food and beverage establishments. Members are solely responsible for maintaining appropriate vehicle insurance and ensuring their vehicle is roadworthy. Participation in all Canvas Routes activities is voluntary and at each member's own risk."
           },
           {
             title: "Governing law",

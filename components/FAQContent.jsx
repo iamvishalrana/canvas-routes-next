@@ -9,7 +9,7 @@ const SECTIONS = [
     items: [
       {
         q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a Montreal-based automotive community built around curated car meets, scenic road trips and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
+        a: 'Canvas Routes is a Montreal-based automotive community built around curated car meets, scenic routes and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
       },
       {
         q: 'Who is Canvas Routes for?',
@@ -67,10 +67,10 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Road Trips',
+    title: 'Routes',
     items: [
       {
-        q: 'What is a Canvas Routes road trip?',
+        q: 'What is a Canvas Routes route?',
         a: 'A fully planned curated convoy through some of the most scenic backroads in North America. Every detail is handled — breakfast before departure, stops along the route, group lunch, farewell drinks and personal photography of your car on the road. All you bring is your car and your energy.',
       },
       {
@@ -82,7 +82,7 @@ const SECTIONS = [
         a: 'The full itinerary is shared privately with confirmed participants ahead of the trip. We generally keep the specific stops and roads a surprise — part of the Canvas Routes experience is the discovery along the way.',
       },
       {
-        q: 'What is included in the road trip fee?',
+        q: 'What is included in the route fee?',
         a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are not included.',
       },
       {
@@ -91,19 +91,19 @@ const SECTIONS = [
       },
       {
         q: 'Do I need to sign a waiver?',
-        a: 'Yes. All road trip participants are required to sign a Canvas Routes participant waiver before the event. This is sent to you upon confirmation of your spot.',
+        a: 'Yes. All route participants are required to sign a Canvas Routes participant waiver before the event. This is sent to you upon confirmation of your spot.',
       },
       {
         q: 'What is your cancellation and refund policy?',
         a: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel, reach out directly — we will always do our best to work with you.',
       },
       {
-        q: 'Are road trips members only?',
-        a: 'From June 2026, Canvas Routes members get first access to every road trip — spots open to members before anyone else, at preferred member pricing. The Into the Laurentians road trip on June 7 is the last trip with open registration before membership launches.',
+        q: 'Are routes open to non-members?',
+        a: 'Yes — Canvas Routes routes are not exclusive to members. Anyone can register for an upcoming route. Members simply get priority access during a dedicated registration window before spots open to the public, and benefit from preferred member pricing on every route.',
       },
       {
         q: 'How do I register and pay?',
-        a: 'Registration is handled through canvasroutes.com. Once confirmed, payment details are sent by email. Spots are strictly limited and confirmed on a first paid basis. Registration deadlines apply for each trip.',
+        a: 'Registration is handled through canvasroutes.com. Spots are strictly limited and confirmed on a first paid basis. Registration deadlines apply for each event.',
       },
     ],
   },
@@ -115,11 +115,11 @@ const SECTIONS = [
         a: 'Yes — overnight and multi-day convoy adventures are a core part of Canvas Routes. We have overnight trips planned for this season and longer expeditions in the works beyond that.',
       },
       {
-        q: 'What is the Canvas Routes flagship road trip?',
-        a: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, one of the greatest driving roads in North America. This is a trip we are actively planning. Reach out at info@canvasroutes.com to be kept in the loop.',
+        q: 'What is the Canvas Routes flagship route?',
+        a: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, one of the greatest driving roads in North America. This is a route we are actively planning. Reach out at info@canvasroutes.com to be kept in the loop.',
       },
       {
-        q: 'How far do your road trips go?',
+        q: 'How far do your routes go?',
         a: 'Our routes span North America — scenic backroads through the northeast, longer expeditions further afield, and overnight adventures for those who want to go further. The road has no limits and neither do we.',
       },
     ],
@@ -128,12 +128,12 @@ const SECTIONS = [
     title: 'Membership',
     items: [
       {
-        q: 'When do memberships launch?',
-        a: 'Canvas Routes memberships have launched for the 2026 season. Register your interest at canvasroutes.com/membership.',
+        q: 'Is membership open now?',
+        a: 'Yes — Canvas Routes membership is open for the 2026 season. Apply at canvasroutes.com/membership. Every application is reviewed personally and spots are limited.',
       },
       {
         q: 'What does membership include?',
-        a: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes welcome kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.',
+        a: 'Priority registration for all events and routes, preferred member pricing on every route, access to members-only events, partner discounts, a Canvas Routes welcome kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.',
       },
       {
         q: 'How much does membership cost?',
@@ -141,7 +141,23 @@ const SECTIONS = [
       },
       {
         q: 'What is the difference between Routes Member and Inner Circle?',
-        a: 'Routes Member gives you full access to every Canvas Routes event and road trip with priority registration all season. Inner Circle includes everything in Routes Member plus 48hr exclusive early access to all events, a $70 road trip credit, a professional car photoshoot on a road trip, exclusive partner discounts, and a Canvas Routes cap.',
+        a: 'Routes Member gives you full access to every Canvas Routes event and route with priority registration and preferred pricing all season. Inner Circle includes everything in Routes Member plus 48hr exclusive early access to all events, a $70 route credit, a professional car photoshoot on a route, exclusive partner discounts, and a Canvas Routes cap.',
+      },
+      {
+        q: 'Are there events exclusive to members?',
+        a: 'Yes. Alongside our open events, Canvas Routes runs a calendar of members-only experiences throughout the season — exclusive cruises, private gatherings, and routes that are not open to the public. These are part of what makes membership worthwhile.',
+      },
+      {
+        q: 'How is my application reviewed?',
+        a: 'Every application is read personally. We look at the car, the person, and what they bring to the community. There is no algorithm — just a genuine review. You will hear back by email.',
+      },
+      {
+        q: 'What happens if my application is declined?',
+        a: 'If your application is not approved, your payment is refunded in full — no charge is made. You are welcome to reapply in a future season.',
+      },
+      {
+        q: 'Can I cancel my membership?',
+        a: 'Membership fees are non-refundable once the season has begun. If you are approved but choose not to proceed before the season starts, contact us at info@canvasroutes.com as soon as possible.',
       },
     ],
   },

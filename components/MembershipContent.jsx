@@ -39,9 +39,9 @@ function StaggerGrid({ children, style, className }) {
 const TIER1 = [
   'Access to the Canvas Routes members community — a private group of drivers who chose their car with intention',
   'Priority access to all Cars & Coffee events',
-  'Access to Canvas Routes road trips',
+  'Access to Canvas Routes routes',
   'Access to member-only events throughout the season',
-  '10% discount on your next road trip when referring a member',
+  '10% discount on your next route when referring a member',
   '25% discount at one Canvas Routes partner',
   'Canvas Routes car perfume — refreshed every 2 months, picked up at any event throughout the season',
   'Canvas Routes full grain leather keychain',
@@ -50,8 +50,8 @@ const TIER1 = [
 const TIER2_EXTRA = [
   'Exclusive 48hr priority access to all Canvas Routes events before public registration opens',
   '25% referral discount when referring a Tier 2 member',
-  'Professional car photoshoot on a Canvas Routes road trip',
-  '$70 off one of the next two road trips — your membership starts paying for itself from day one',
+  'Professional car photoshoot on a Canvas Routes route',
+  '$70 off one of the next two routes — your membership starts paying for itself from day one',
   'Exclusive discounts from all Canvas Routes partners — new partners added throughout the season',
   'Canvas Routes merchandise baseball cap',
   'Invitation to the Inner Circle end-of-season closing event — members only, not open to the public',
@@ -61,7 +61,7 @@ const PERKS = [
   { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merchandise. Handed to you at the first Canvas Routes event you attend after your membership is confirmed.', tier: 1 },
   { label: 'Car Perfume', sub: 'Refreshed every 2 months throughout the season, picked up at any Canvas Routes event.', tier: 1 },
   { label: 'Cap', sub: 'Canvas Routes merchandise cap — handed to you at your first event of the season.', tier: 2 },
-  { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes road trip.', tier: 2 },
+  { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes route.', tier: 2 },
 ]
 
 function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCode, onSuccess, onBack }) {
@@ -466,7 +466,7 @@ export default function MembershipContent() {
               Canvas Routes membership is built around the drive. Not the parking lot. Not the Instagram photo. The act of getting behind the wheel and going somewhere worth going — with people who feel the same way.
             </p>
             <p style={{ ...BODY, color: '#444' }}>
-              From June to November, members get priority access to every Cars &amp; Coffee, every road trip, and every experience on the Canvas Routes calendar. Two tiers, both built to give you more of what brought you here.
+              From June to November, members get priority access to every Cars &amp; Coffee, every route, and every experience on the Canvas Routes calendar. Two tiers, both built to give you more of what brought you here.
             </p>
           </FadeUp>
 
@@ -475,7 +475,7 @@ export default function MembershipContent() {
               <img src="/events/may9-lineup.jpeg" alt="Canvas Routes" style={{ width: '100%', height: '128%', objectFit: 'cover', objectPosition: 'center top', display: 'block', marginTop: '-12.8%' }} />
             </div>
             <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderTop: 'none' }}>
-              {[['Season', 'June — November'], ['Membership', 'Limited spots per season'], ['Events', 'Cars & Coffee · Cruises · Road Trips']].map(([k, v], i, arr) => (
+              {[['Season', 'June — November'], ['Membership', 'Limited spots per season'], ['Events', 'Cars & Coffee · Cruises · Routes']].map(([k, v], i, arr) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', padding: '0.9rem 1.25rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                   <span style={{ ...LABEL, color: '#c5a882', flexShrink: 0 }}>{k}</span>
                   <span style={{ ...SMALL, color: '#1a1a1a', textAlign: 'right' }}>{v}</span>
@@ -520,7 +520,7 @@ export default function MembershipContent() {
                   <div style={{ height: '0.5px', background: 'rgba(245,241,236,0.08)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
                     <div style={{ ...LABEL, color: 'rgba(245,241,236,0.35)', marginBottom: '0.35rem' }}>What you get</div>
-                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.7)' }}>Full access to every Canvas Routes event and road trip all season — priority registration included.</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.7)' }}>Full access to every Canvas Routes event and route all season — priority registration included.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
@@ -554,7 +554,7 @@ export default function MembershipContent() {
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
                     <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>What you get</div>
-                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First access to everything, plus a $70 road trip credit — your membership starts paying for itself from day one.</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First access to everything, plus a $70 route credit — your membership starts paying for itself from day one.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
@@ -587,24 +587,24 @@ export default function MembershipContent() {
         <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
           <div className="rt-savings">
             <FadeUp>
-              <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Road trips</div>
+              <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Routes</div>
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.5rem' }}>
                 Your seat is held<br />before the doors open.
               </div>
               <p style={{ ...BODY, color: '#555' }}>
-                Every Canvas Routes road trip begins with a dedicated window exclusive to members — at a rate that reflects the commitment you've made to this community. Once that window closes, remaining spots are made available to the public. The drive is open to everyone. Members simply never have to wonder if there's room for them.
+                Every Canvas Routes route begins with a dedicated window exclusive to members — at a rate that reflects the commitment you've made to this community. Once that window closes, remaining spots are made available to the public. The drive is open to everyone. Members simply never have to wonder if there's room for them.
               </p>
             </FadeUp>
             <FadeUp delay={0.1}>
               <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: 'rgba(197,168,130,0.04)', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
                 <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Member rate</div>
                 <div style={{ fontSize: '1.05rem', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.4', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                  Every road trip, at a rate built for members.
+                  Every route, at a rate built for members.
                 </div>
                 <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.25)', marginBottom: '1.25rem' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                   {[
-                    'Early access window on every road trip',
+                    'Early access window on every route',
                     'Preferred member pricing across both tiers',
                     'Inner Circle members receive an additional $70 credit',
                     'Public registration opens once the member window closes',
@@ -884,7 +884,7 @@ export default function MembershipContent() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
                             <div style={{ fontSize: '14px', color: '#F5F1EC', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Routes Member</div>
-                            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter),sans-serif' }}>Events, road trips, community &amp; perks</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter),sans-serif' }}>Events, routes, community &amp; perks</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
                             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(245,241,236,0.5)', lineHeight: 1 }}>$99</div>
@@ -908,7 +908,7 @@ export default function MembershipContent() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
                             <div style={{ fontSize: '14px', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.8)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Inner Circle</div>
-                            <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $70 road trip credit</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $70 route credit</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
                             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>

@@ -32,10 +32,10 @@ const PAST_EVENTS = {
     tags: ['May 23, 2026', 'Exotics & Classics', 'Open to all'],
   },
   'Into the Laurentians': {
-    img: '/june7-poster.jpg', imgAlt: 'Into the Laurentians road trip', imgPos: 'top',
+    img: '/june7-poster.jpg', imgAlt: 'Into the Laurentians route', imgPos: 'top',
     meta: 'Mont-Tremblant · June 7, 2026', title: 'Into the Laurentians',
     sub: 'First Route — Canvas Routes.',
-    tags: ['June 7, 2026', 'Road Trip', 'Members Only'],
+    tags: ['June 7, 2026', 'Route', 'Members Only'],
     routeHref: '/itinerary-into-the-laurentians-june-7',
   },
 }
@@ -807,7 +807,7 @@ export default function Home() {
             </div>
             <div style={{ width: '28px', height: '1px', background: '#c5a882', margin: '1.25rem auto' }} />
             <p style={{ fontSize: '13px', color: '#666', lineHeight: 1.85, marginBottom: '2rem', fontFamily: 'var(--font-inter), sans-serif', maxWidth: '320px', margin: '0 auto 2rem' }}>
-              Join the Canvas Routes community. Exclusive road trips, invite-only events, and partner perks — curated for drivers who love the road.
+              Join the Canvas Routes community. Curated routes, invite-only events, and partner perks — built for drivers who love the road.
             </p>
             <Link href="/membership" onClick={() => { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') }} style={{ display: 'inline-block', background: '#0F1E14', color: '#F5F1EC', padding: '1rem 2.75rem', fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
               Apply Now
