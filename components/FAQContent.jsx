@@ -287,12 +287,110 @@ export default function FAQContent() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
+  // ── Cinematic fade-in refs ───────────────────────────────────────────────────
+  // Hero header elements (fade on mount)
+  const fadeHeroLabelRef    = useRef(null)
+  const fadeHeroH1Ref       = useRef(null)
+  const fadeHeroDividerRef  = useRef(null)
+  const fadeHeroSubtitleRef = useRef(null)
+  // Section heading refs (mobile only, scroll-triggered)
+  const fadeSectionHeadRefs = useRef([])
+  // Accordion item group refs (scroll-triggered stagger)
+  const fadeAccordionRefs   = useRef([])
+  // ────────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // ── Hero header mount fade-in ────────────────────────────────────────────────
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReduced) return
+    const heroEls = [
+      { el: fadeHeroLabelRef.current,    delay:   0 },
+      { el: fadeHeroH1Ref.current,       delay:  80 },
+      { el: fadeHeroDividerRef.current,  delay: 150 },
+      { el: fadeHeroSubtitleRef.current, delay: 210 },
+    ]
+    heroEls.forEach(({ el, delay }) => {
+      if (!el) return
+      el.classList.add('cr-fade')
+      const t = setTimeout(() => el.classList.add('cr-visible'), delay)
+      // store timeout id on element for cleanup
+      el._crFadeTimer = t
+    })
+    return () => {
+      heroEls.forEach(({ el }) => {
+        if (el && el._crFadeTimer != null) clearTimeout(el._crFadeTimer)
+      })
+    }
+  }, [])
+
+  // ── Scroll-triggered section headings + accordion stagger ───────────────────
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReduced) return
+
+    // Collect all elements that need scroll-triggered fade
+    // Section heading divs (mobile)
+    const headEls = fadeSectionHeadRefs.current.filter(Boolean)
+    // Accordion item children — each child in the group gets a staggered class
+    const groupEls = fadeAccordionRefs.current.filter(Boolean)
+
+    // Apply initial hidden state
+    headEls.forEach(el => el.classList.add('cr-fade'))
+    groupEls.forEach(group => {
+      Array.from(group.children).forEach(child => child.classList.add('cr-fade'))
+    })
+
+    // IntersectionObserver for section headings
+    let headObs = null
+    if (headEls.length > 0) {
+      headObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('cr-visible')
+            headObs.unobserve(entry.target)
+          }
+        })
+      }, { threshold: 0.2 })
+      headEls.forEach(el => headObs.observe(el))
+    }
+
+    // IntersectionObserver for accordion groups (stagger children)
+    let acObs = null
+    if (groupEls.length > 0) {
+      acObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const children = Array.from(entry.target.children)
+            children.forEach((child, i) => {
+              const t = setTimeout(() => child.classList.add('cr-visible'), i * 60)
+              child._crStaggerTimer = t
+            })
+            acObs.unobserve(entry.target)
+          }
+        })
+      }, { threshold: 0.08 })
+      groupEls.forEach(el => acObs.observe(el))
+    }
+
+    return () => {
+      if (headObs) headObs.disconnect()
+      if (acObs) acObs.disconnect()
+      // Clear any pending stagger timers
+      groupEls.forEach(group => {
+        Array.from(group.children).forEach(child => {
+          if (child._crStaggerTimer != null) clearTimeout(child._crStaggerTimer)
+        })
+      })
+    }
+  }, [isMobile])
+  // ────────────────────────────────────────────────────────────────────────────
 
   // ── Scroll-car refs ─────────────────────────────────────────────────────────
   const pointsRef      = useRef([])
@@ -790,6 +888,18 @@ export default function FAQContent() {
           65%  { opacity: 1; transform: scale(1.07) translateY(-1px); }
           100% { opacity: 1; transform: scale(1) translateY(0);      }
         }
+        .cr-fade {
+          opacity: 0;
+          transform: translateY(22px);
+          transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+        }
+        .cr-fade.cr-visible {
+          opacity: 1;
+          transform: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cr-fade { opacity: 1; transform: none; transition: none; }
+        }
       `}</style>
 
       {/* Road — in page flow, scrolls with content */}
@@ -970,17 +1080,17 @@ export default function FAQContent() {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(8,15,10,0.85) 0%, rgba(8,15,10,0.72) 50%, rgba(8,15,10,0.9) 100%)' }} />
         </div>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
-        <div style={{ position: 'relative', zIndex: 1, fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '2rem', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+        <div ref={fadeHeroLabelRef} style={{ position: 'relative', zIndex: 1, fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '2rem', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
           <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.5)' }} />
           Canvas Routes
           <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.5)' }} />
         </div>
-        <h1 style={{ position: 'relative', zIndex: 1, fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6.5vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em', textShadow: '0 2px 16px rgba(0,0,0,0.7)' }}>
+        <h1 ref={fadeHeroH1Ref} style={{ position: 'relative', zIndex: 1, fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6.5vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em', textShadow: '0 2px 16px rgba(0,0,0,0.7)' }}>
           Frequently Asked<br />
           <em style={{ fontStyle: 'italic', color: '#F5F1EC' }}>Questions</em>
         </h1>
-        <div style={{ position: 'relative', zIndex: 1, width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.75rem' }} />
-        <p style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: 'rgba(245,241,236,0.65)', maxWidth: '360px', margin: '0 auto', lineHeight: '1.9', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.01em', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+        <div ref={fadeHeroDividerRef} style={{ position: 'relative', zIndex: 1, width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.75rem' }} />
+        <p ref={fadeHeroSubtitleRef} style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: 'rgba(245,241,236,0.65)', maxWidth: '360px', margin: '0 auto', lineHeight: '1.9', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.01em', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
           From your first meet to the open road — answered.
         </p>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.25),transparent)' }} />
@@ -992,13 +1102,15 @@ export default function FAQContent() {
           /* Mobile: stacked, section label above items */
           SECTIONS.map((section, si) => (
             <div key={si} ref={el => sectionRefsArr.current[si] = el} style={{ marginBottom: '4rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div ref={el => fadeSectionHeadRefs.current[si] = el} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div style={{ fontFamily: 'var(--font-playfair),serif', fontSize: 'clamp(1.25rem,4vw,1.5rem)', fontWeight: '400', fontStyle: 'italic', color: '#1a1a1a', lineHeight: 1 }}>{section.title}</div>
                 <div style={{ flex: 1, height: '0.5px', background: 'rgba(197,168,130,0.3)' }} />
               </div>
-              {section.items.map((item, ii) => (
-                <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
-              ))}
+              <div ref={el => fadeAccordionRefs.current[si] = el}>
+                {section.items.map((item, ii) => (
+                  <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
+                ))}
+              </div>
             </div>
           ))
         ) : (
@@ -1010,7 +1122,7 @@ export default function FAQContent() {
                 <div key={`label-${si}`} />
 
                 {/* Accordion items */}
-                <div key={`items-${si}`} ref={el => sectionRefsArr.current[si] = el}>
+                <div key={`items-${si}`} ref={el => { sectionRefsArr.current[si] = el; fadeAccordionRefs.current[si] = el }}>
                   {section.items.map((item, ii) => (
                     <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
                   ))}
