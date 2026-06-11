@@ -134,9 +134,14 @@ function confirmHtml(firstName) {
 </html>`
 }
 
-function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel, tier, source, more, referredBy }) {
+function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel, tier, source, more, referredBy, paymentIntentId }) {
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const dobStr = dob_month ? `${MONTHS_SHORT[parseInt(dob_month) - 1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : null
+  const TIER_PRICES = { routes_member: '$99 CAD', inner_circle: '$249 CAD' }
+  const amountStr = TIER_PRICES[tier] || ''
+  const paymentCell = paymentIntentId
+    ? `Authorized — ${amountStr} &nbsp;<a href="https://dashboard.stripe.com/payments/${paymentIntentId}" style="color:#8A6535;font-size:11px;">View in Stripe ↗</a>`
+    : (amountStr ? `Pending — ${amountStr}` : '')
   const row = (label, value) => value
     ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -159,6 +164,7 @@ function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, ca
                 ${row('Year', h(year))}
                 ${row('Car', h(carModel))}
                 ${row('Tier', h(tier))}
+                ${row('Payment', paymentCell)}
                 ${row('How they heard', h(source))}
                 ${row('Referred by', referredBy ? h(referredBy) : '')}
                 ${row('Message', more ? h(more) : '')}
@@ -285,7 +291,7 @@ export async function POST(request) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'info@canvasroutes.com',
         subject: `Membership Registration — ${tier} — ${name.trim()}`,
-        html: notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel: fullCar, tier, source, more, referredBy }),
+        html: notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel: fullCar, tier, source, more, referredBy, paymentIntentId }),
         text: `Membership Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nDOB: ${dob_month ? `${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : '—'}\nYear: ${year}\nCar: ${fullCar}\nTier: ${tier}\nHow they heard: ${source}${more ? `\nMessage: ${more}` : ''}`,
       }),
     })
