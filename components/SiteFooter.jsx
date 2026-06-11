@@ -14,16 +14,13 @@ const COLS = [
   {
     heading: 'Members',
     links: [
-      { label: 'Sign In',    href: '/members/login' },
-      { label: 'Dashboard',  href: '/members/dashboard' },
-      { label: 'Profile',    href: '/members/profile' },
-      { label: 'Perks',      href: '/members/perks' },
+      { label: 'Members Login', href: '/members/login' },
     ],
   },
   {
-    heading: 'Company',
+    heading: 'Legal',
     links: [
-      { label: 'Privacy Policy',    href: '/privacy' },
+      { label: 'Privacy Policy',     href: '/privacy' },
       { label: 'Terms & Conditions', href: '/terms' },
     ],
   },
@@ -48,9 +45,9 @@ export default function SiteFooter() {
         {/* Brand column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <img
-            src="/canvas_routes_refined.png"
+            src="/white-outline.png"
             alt="Canvas Routes"
-            style={{ height: '100px', width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.9 }}
+            style={{ height: '100px', width: 'auto', opacity: 0.9 }}
           />
           <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)' }}>
             Montreal · Est. 2025
@@ -91,23 +88,16 @@ export default function SiteFooter() {
           </div>
         ))}
 
-        {/* Connect column */}
+        {/* Contact column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.25rem', fontWeight: '500' }}>
-            Connect
+            Contact
           </div>
           <a href="mailto:info@canvasroutes.com" style={{ fontSize: '12px', color: 'rgba(245,241,236,0.5)', textDecoration: 'none', letterSpacing: '0.02em', transition: 'color 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.9)'}
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.5)'}>
             info@canvasroutes.com
           </a>
-          <button
-            onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))}
-            style={{ background: 'none', border: 'none', padding: 0, fontSize: '12px', color: 'rgba(245,241,236,0.5)', cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'color 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.9)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.5)'}>
-            Manage cookies
-          </button>
         </div>
       </div>
 
@@ -126,10 +116,10 @@ export default function SiteFooter() {
         <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.25)', letterSpacing: '0.06em' }}>
           © 2026 Événements Canvas Routes Inc. — Montreal, QC.
         </div>
-        <div style={{ display: 'flex', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           {[
             { label: 'Privacy', href: '/privacy' },
-            { label: 'Terms', href: '/terms' },
+            { label: 'Terms',   href: '/terms' },
           ].map(l => (
             <Link key={l.label} href={l.href} style={{ fontSize: '10px', color: 'rgba(245,241,236,0.25)', textDecoration: 'none', letterSpacing: '0.06em', transition: 'color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.55)'}
@@ -137,6 +127,13 @@ export default function SiteFooter() {
               {l.label}
             </Link>
           ))}
+          <button
+            onClick={() => window.dispatchEvent(new Event('cookieConsentReset'))}
+            style={{ background: 'none', border: 'none', padding: 0, fontSize: '10px', color: 'rgba(245,241,236,0.25)', cursor: 'pointer', letterSpacing: '0.06em', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.55)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.25)'}>
+            Manage cookies
+          </button>
         </div>
       </div>
     </footer>
