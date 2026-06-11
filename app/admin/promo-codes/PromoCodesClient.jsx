@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { inp, L, PrimaryBtn, DangerBtn, Err, Success } from '../_components/shared'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
@@ -47,6 +47,9 @@ export default function PromoCodesClient() {
   const [editForm, setEditForm]         = useState({ maxRedemptions: '', expiresAt: '' })
   const [editSaving, setEditSaving]     = useState(false)
   const [editErr, setEditErr]           = useState(null)
+  const [usageOpen, setUsageOpen]       = useState(null)   // code id whose usage is expanded
+  const [usageData, setUsageData]       = useState({})     // { [codeId]: array of usage rows }
+  const [usageLoading, setUsageLoading] = useState(null)   // code id being fetched
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -153,6 +156,26 @@ export default function PromoCodesClient() {
       setEditing(null)
     } catch { setEditErr('Network error.') }
     finally { setEditSaving(false) }
+  }
+
+  async function loadUsage(codeId) {
+    if (usageData[codeId]) { setUsageOpen(p => p === codeId ? null : codeId); return }
+    setUsageLoading(codeId)
+    try {
+      const res = await fetch(`/api/admin/promo-codes/${codeId}/usage`)
+      const data = await res.json()
+      setUsageData(p => ({ ...p, [codeId]: Array.isArray(data) ? data : [] }))
+      setUsageOpen(codeId)
+    } catch {
+      setUsageData(p => ({ ...p, [codeId]: [] }))
+      setUsageOpen(codeId)
+    } finally {
+      setUsageLoading(null)
+    }
+  }
+
+  function fmtCents(cents) {
+    return `$${(cents / 100).toFixed(2)}`
   }
 
   return (
@@ -304,12 +327,50 @@ export default function PromoCodesClient() {
                 </div>
               ) : c.active ? (
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => loadUsage(c.id)}
+                    disabled={usageLoading === c.id}
+                    style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                  >
+                    {usageLoading === c.id ? '…' : 'Usage'}
+                  </button>
                   <button onClick={() => startEdit(c)} style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Edit</button>
                   <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
                     {deactivating === c.id ? 'Deactivating…' : 'Deactivate'}
                   </DangerBtn>
                 </div>
-              ) : null}
+              ) : (
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => loadUsage(c.id)}
+                    disabled={usageLoading === c.id}
+                    style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                  >
+                    {usageLoading === c.id ? '…' : 'Usage'}
+                  </button>
+                </div>
+              )}
+              {usageOpen === c.id && (
+                <div style={{ marginTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '0.75rem' }}>
+                  {!usageData[c.id] || usageData[c.id].length === 0 ? (
+                    <div style={{ fontSize: '12px', color: '#ccc' }}>No redemptions recorded.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {usageData[c.id].map((u, i) => (
+                        <div key={i} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: i < usageData[c.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                          <div style={{ fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a' }}>{u.name}</div>
+                          <div style={{ fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</div>
+                          <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            <span style={{ color: '#3B6B2F' }}>Paid {fmtCents(u.amount)}</span>
+                            <span style={{ color: '#8A6535' }}>−{fmtCents(u.discount)}</span>
+                          </div>
+                          <div style={{ color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' }) : '—'}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -329,7 +390,8 @@ export default function PromoCodesClient() {
             </thead>
             <tbody>
               {codes.map((c, i) => (
-                <tr key={c.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                <React.Fragment key={c.id}>
+                <tr style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}>{c.code}</td>
                   <td style={TD}>{fmtDiscount(c.coupon)}</td>
                   <td style={{ ...TD, color: '#555' }}>
@@ -353,14 +415,60 @@ export default function PromoCodesClient() {
                       </div>
                     ) : c.active ? (
                       <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        <button
+                          onClick={() => loadUsage(c.id)}
+                          disabled={usageLoading === c.id}
+                          style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                        >
+                          {usageLoading === c.id ? '…' : 'Usage'}
+                        </button>
                         <button onClick={() => startEdit(c)} style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Edit</button>
                         <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
                           {deactivating === c.id ? '…' : 'Deactivate'}
                         </DangerBtn>
                       </div>
-                    ) : null}
+                    ) : (
+                      <button
+                        onClick={() => loadUsage(c.id)}
+                        disabled={usageLoading === c.id}
+                        style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                      >
+                        {usageLoading === c.id ? '…' : 'Usage'}
+                      </button>
+                    )}
                   </td>
                 </tr>
+                {usageOpen === c.id && (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '0 1rem 1rem', background: '#fafaf8', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
+                      {!usageData[c.id] || usageData[c.id].length === 0 ? (
+                        <div style={{ fontSize: '12px', color: '#ccc', padding: '0.5rem 0' }}>No redemptions recorded.</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
+                          <thead>
+                            <tr>
+                              {['Name', 'Email', 'Paid', 'Discount', 'Date'].map(h => (
+                                <th key={h} style={{ padding: '0.4rem 0.75rem', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {usageData[c.id].map((u, i) => (
+                              <tr key={i}>
+                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{u.name}</td>
+                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</td>
+                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>{fmtCents(u.amount)}</td>
+                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>−{fmtCents(u.discount)}</td>
+                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' }) : '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
