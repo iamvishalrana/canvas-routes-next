@@ -3,6 +3,26 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
+function renderAnswer(text) {
+  if (!text) return text
+  const pattern = /(info@canvasroutes\.com|canvasroutes\.com(?:\/[^\s.,;)]*)?)/g
+  const parts = []
+  let last = 0, m
+  while ((m = pattern.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index))
+    const raw = m[0]
+    if (raw.includes('@')) {
+      parts.push(<a key={m.index} href={`mailto:${raw}`} style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>{raw}</a>)
+    } else {
+      const path = raw === 'canvasroutes.com' ? '/' : `/${raw.replace('canvasroutes.com/', '')}`
+      parts.push(<a key={m.index} href={path} style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>{raw}</a>)
+    }
+    last = pattern.lastIndex
+  }
+  if (last < text.length) parts.push(text.slice(last))
+  return parts.length === 1 && typeof parts[0] === 'string' ? text : parts
+}
+
 const SECTIONS = [
   {
     title: 'About',
@@ -212,7 +232,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 'clamp(1rem,3vw,2rem)',
-          padding: '1.4rem 0',
+          padding: '1.4rem 0.75rem 1.4rem 0',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
@@ -231,8 +251,8 @@ function AccordionItem({ item, isOpen, onToggle }) {
           {item.q}
         </span>
         <svg
-          width="13"
-          height="13"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke={isOpen ? '#c5a882' : 'rgba(0,0,0,0.28)'}
@@ -1058,7 +1078,7 @@ export default function FAQContent() {
           <Link href="/#contact" style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
           <Link href="/faq" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: '500' }}>FAQ</Link>
         </div>
-        <Link href="/#join" className="nav-join">Join</Link>
+        <div className="nav-cta"><Link href="/membership" className="nav-join">Membership</Link><Link href="/members/login" className="nav-members">Members Login</Link></div>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
           <span /><span /><span />
         </button>
@@ -1068,8 +1088,8 @@ export default function FAQContent() {
         <Link href="/#events" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Events</Link>
         <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
         <Link href="/faq" onClick={() => setMenuOpen(false)} style={{ color: '#1a1a1a', fontWeight: '500' }}>FAQ</Link>
-        <Link href="/#join" onClick={() => setMenuOpen(false)} style={{ color: '#1a1a1a', fontWeight: '500' }}>Join</Link>
-        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#3B6B2F', fontWeight: '500' }}>Members Login</Link>
+        <Link href="/membership" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Membership</Link>
+        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
       </div>
 
       {/* Hero */}
