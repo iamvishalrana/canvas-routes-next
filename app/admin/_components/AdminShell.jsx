@@ -7,7 +7,7 @@ import GlobalSearch from './GlobalSearch'
 
 const SECTIONS = [
   {
-    id: 'dashboard',
+    id: 'dashboard', label: 'Overview',
     items: [{ href: '/admin/dashboard', label: 'Dashboard' }],
   },
   {
