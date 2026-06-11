@@ -29,7 +29,7 @@ export default function TermsContent() {
         {[
           {
             title: "Acceptance of terms",
-            body: "By submitting a membership application to Canvas Routes, you agree to be bound by these Terms & Conditions as issued by Événements Canvas Routes Inc. / Canvas Routes Events Inc., a corporation incorporated in Quebec, Canada. If you do not agree, please do not submit an application."
+            body: "By submitting a membership application, road trip registration, or any other form on Canvas Routes, you agree to be bound by these Terms & Conditions as issued by Événements Canvas Routes Inc. / Canvas Routes Events Inc., a corporation incorporated in Quebec, Canada. If you do not agree, please do not submit an application or registration."
           },
           {
             title: "Membership tiers",
@@ -41,15 +41,15 @@ export default function TermsContent() {
           },
           {
             title: "Payment",
-            body: "Membership fees are processed through Stripe. When you submit a membership application, your payment card is authorized but not charged — the amount is held on your card pending review. Your card is charged only if and when your application is approved. If your application is declined, the authorization is released and no charge is made. All prices are in Canadian dollars (CAD). Membership is not active until payment is captured and confirmed. By submitting your card details, you authorize Événements Canvas Routes Inc. to capture the applicable membership fee upon approval."
+            body: "Membership fees are processed through Stripe. When you complete checkout as part of your membership application, your card is charged immediately for the applicable membership fee. All prices are in Canadian dollars (CAD). If your application is reviewed and declined, a full refund will be issued to your original payment method within 5–10 business days. Membership is not active until your application has been reviewed and approved by Canvas Routes, regardless of when payment was made. By submitting your card details, you authorize Événements Canvas Routes Inc. to process the applicable membership fee."
           },
           {
             title: "Cancellations & refunds",
-            body: "Membership fees are non-refundable once the season has begun. If you are approved but choose not to proceed before the season begins, please contact us as soon as possible at info@canvasroutes.com. If Canvas Routes cancels a membership without cause on its part, a prorated refund may be issued at our discretion based on the remaining portion of the season."
+            body: "Membership fees are non-refundable once your application has been approved and the season has begun. If your application is declined, a full refund is issued automatically. If you are approved but choose not to proceed before the season begins, contact us as soon as possible at info@canvasroutes.com. If Canvas Routes cancels a membership without cause on its part, a prorated refund may be issued at our discretion based on the remaining portion of the season."
           },
           {
             title: "Road trip fees",
-            body: "Road trip participation fees are $200 CAD per car unless otherwise stated on the event page. Payment is collected at the time of registration. Road trip fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any road trip due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
+            body: "Road trip participation fees vary by event and are stated on the individual event page. Payment is collected at the time of registration. Road trip fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any road trip due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
           },
           {
             title: "Member conduct",
