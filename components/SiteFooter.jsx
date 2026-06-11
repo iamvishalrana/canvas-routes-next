@@ -6,7 +6,7 @@ const COLS = [
     heading: 'Explore',
     links: [
       { label: 'Membership',  href: '/membership' },
-      { label: 'Road Trips',  href: '/routes' },
+      { label: 'Routes',      href: '/#routes' },
       { label: 'Partners',    href: '/partners' },
       { label: 'FAQ',         href: '/faq' },
     ],
@@ -47,7 +47,7 @@ export default function SiteFooter() {
           <img
             src="/white-outline.png"
             alt="Canvas Routes"
-            style={{ height: '100px', width: 'auto', opacity: 0.9 }}
+            style={{ width: '140px', height: 'auto', opacity: 0.9 }}
           />
           <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)' }}>
             Montreal · Est. 2025
