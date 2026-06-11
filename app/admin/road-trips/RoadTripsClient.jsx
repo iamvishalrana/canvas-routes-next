@@ -19,22 +19,27 @@ function AttendedChip({ value }) {
   return <span style={{ fontSize: '10px', color: '#ccc' }}>—</span>
 }
 
-function isRoadTrip(eventName) {
+// Uses events table type data + exclusion safety net.
+// Only counts registrations with a real registered_at (not injected placeholders).
+function isRoadTripReg(eventName, roadTripFragments) {
   if (!eventName) return false
   const lower = eventName.toLowerCase()
-  return (
-    lower !== 'canvas routes membership' &&
-    !lower.includes('cars & coffee') &&
-    !lower.includes('cars and coffee')
-  )
+  if (lower === 'canvas routes membership') return false
+  // Exclude all Cars & Coffee variants (ampersand, comma, or "and")
+  if (lower.includes('cars & coffee') || lower.includes('cars and coffee') || lower.includes('cars, coffee')) return false
+  // If events data is loaded, match against known Road Trip event names
+  if (roadTripFragments.length > 0) return roadTripFragments.some(f => lower.includes(f))
+  // Fallback when events haven't loaded yet: anything not excluded is a road trip
+  return true
 }
 
 export default function RoadTripsClient() {
-  const [apps, setApps]               = useState([])
-  const [loading, setLoading]         = useState(true)
-  const [search, setSearch]           = useState('')
-  const [activeTrip, setActiveTrip]   = useState('all')
-  const [isMobile, setIsMobile]       = useState(false)
+  const [apps, setApps]             = useState([])
+  const [events, setEvents]         = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
+  const [activeTrip, setActiveTrip] = useState('all')
+  const [isMobile, setIsMobile]     = useState(false)
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -43,28 +48,31 @@ export default function RoadTripsClient() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/admin/applications')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => setApps(Array.isArray(data) ? data : []))
-      .catch(() => setApps([]))
+    Promise.all([
+      fetch('/api/admin/applications').then(r => r.ok ? r.json() : []),
+      fetch('/api/admin/events').then(r => r.ok ? r.json() : []),
+    ])
+      .then(([appsData, eventsData]) => {
+        setApps(Array.isArray(appsData) ? appsData : [])
+        setEvents(Array.isArray(eventsData) ? eventsData : [])
+      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  // Only actual road trip events
-  const trips = Array.from(
-    new Set(
-      apps.flatMap(a =>
-        (a.registrations || []).filter(r => isRoadTrip(r.event)).map(r => r.event)
-      )
-    )
-  ).sort()
+  // Names of events typed as Road Trip in the events table (lowercase for matching)
+  const roadTripFragments = events
+    .filter(e => e.type === 'Road Trip')
+    .map(e => e.name.toLowerCase())
 
-  // All road trip rows
+  // Only real registrations (registered_at !== null excludes injected placeholder rows)
   const allRows = apps.flatMap(a =>
     (a.registrations || [])
-      .filter(r => isRoadTrip(r.event))
+      .filter(r => r.registered_at && isRoadTripReg(r.event, roadTripFragments))
       .map(r => ({ app: a, reg: r }))
   )
+
+  const trips = Array.from(new Set(allRows.map(({ reg }) => reg.event))).sort()
 
   const tabFiltered = allRows.filter(({ reg }) => activeTrip === 'all' || reg.event === activeTrip)
   const filtered = tabFiltered.filter(({ app }) => {
@@ -73,9 +81,10 @@ export default function RoadTripsClient() {
     return (app.name || '').toLowerCase().includes(q) || (app.email || '').toLowerCase().includes(q)
   })
 
-  const attended  = tabFiltered.filter(({ reg }) => reg.attended === true).length
-  const noShows   = tabFiltered.filter(({ reg }) => reg.attended === false).length
-  const pending   = tabFiltered.filter(({ reg }) => reg.attended == null).length
+  // All four stats use tabFiltered so they always add up
+  const attended = tabFiltered.filter(({ reg }) => reg.attended === true).length
+  const noShows  = tabFiltered.filter(({ reg }) => reg.attended === false).length
+  const pending  = tabFiltered.filter(({ reg }) => reg.attended == null).length
 
   return (
     <div style={SECTION}>
@@ -115,13 +124,13 @@ export default function RoadTripsClient() {
             </div>
           )}
 
-          {/* Stats */}
+          {/* Stats — all four derived from tabFiltered so they always add up */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.75rem' }}>
             {[
-              { label: 'Total',     value: filtered.length, color: '#1a1a1a' },
-              { label: 'Attended',  value: attended,        color: '#3B6B2F' },
-              { label: 'No-show',   value: noShows,         color: '#7B2032' },
-              { label: 'Unset',     value: pending,         color: '#aaa'    },
+              { label: 'Total',    value: tabFiltered.length, color: '#1a1a1a' },
+              { label: 'Attended', value: attended,           color: '#3B6B2F' },
+              { label: 'No-show',  value: noShows,            color: '#7B2032' },
+              { label: 'Unset',    value: pending,            color: '#aaa'    },
             ].map(s => (
               <div key={s.label} style={{ ...CARD, padding: '1.1rem 1.25rem' }}>
                 <div style={{ fontSize: '1.75rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{s.value}</div>
@@ -150,13 +159,14 @@ export default function RoadTripsClient() {
               <ExportButton
                 filename="road-trips"
                 title="Road Trips"
-                headers={['Name', 'Email', 'Car', 'Trip', 'Passengers', 'Registered', 'Attended']}
+                headers={['Name', 'Email', 'Car', 'Trip', 'Passengers', 'Kids', 'Registered', 'Attended']}
                 rows={filtered.map(({ app, reg }) => [
                   app.name || '',
                   app.email || '',
                   [app.car_year, app.car_model].filter(Boolean).join(' '),
                   reg.event || '',
                   app.passengers || '',
+                  app.has_children === 'yes' ? 'Yes' : 'No',
                   reg.registered_at ? new Date(reg.registered_at).toLocaleDateString('en-CA') : '',
                   reg.attended === true ? 'Attended' : reg.attended === false ? 'No-show' : '',
                 ])}
@@ -180,8 +190,9 @@ export default function RoadTripsClient() {
                     {[app.car_year, app.car_model].filter(Boolean).join(' ') || '—'}
                   </div>
                   <div style={{ fontSize: '11px', color: '#bbb' }}>
-                    Registered {fmtDate(reg.registered_at)}
-                    {app.passengers ? ` · ${app.passengers} passenger${app.passengers > 1 ? 's' : ''}` : ''}
+                    {reg.registered_at ? `Registered ${fmtDate(reg.registered_at)}` : ''}
+                    {app.passengers ? ` · ${app.passengers} passenger${app.passengers !== '1' ? 's' : ''}` : ''}
+                    {app.has_children === 'yes' ? ' w/ kids' : ''}
                   </div>
                 </div>
               ))}
@@ -224,7 +235,7 @@ export default function RoadTripsClient() {
                         )}
                         <td style={{ ...td, fontSize: '12px', color: '#888' }}>
                           {app.passengers
-                            ? `${app.passengers}${app.has_children ? ' w/ kids' : ''}`
+                            ? `${app.passengers}${app.has_children === 'yes' ? ' w/ kids' : ''}`
                             : '—'}
                         </td>
                         <td style={{ ...td, fontSize: '11px', color: '#bbb' }}>{fmtDate(reg.registered_at)}</td>
