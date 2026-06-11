@@ -230,23 +230,23 @@ function AccordionItem({ item, isOpen, onToggle }) {
         }}>
           {item.q}
         </span>
-        <div style={{
-          flexShrink: 0,
-          width: '20px',
-          height: '20px',
-          border: `0.5px solid ${isOpen ? 'rgba(197,168,130,0.7)' : 'rgba(0,0,0,0.14)'}`,
-          background: isOpen ? 'rgba(197,168,130,0.08)' : 'transparent',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: isOpen ? '#c5a882' : '#aaa',
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.22s ease, border-color 0.15s, color 0.15s, background 0.15s',
-        }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </div>
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={isOpen ? '#c5a882' : 'rgba(0,0,0,0.28)'}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            flexShrink: 0,
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), stroke 0.3s ease',
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
       </button>
 
       <div style={{
