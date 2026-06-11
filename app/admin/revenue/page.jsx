@@ -17,21 +17,21 @@ export default async function RevenuePage() {
   let rows = []
 
   if (stripe) {
-    const piList = await stripe.paymentIntents.list({ limit: 100, expand: ['data.latest_charge'] })
-    rows = piList.data
+    const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
+    rows = allPIs
       .filter(pi => pi.metadata?.type && pi.status === 'succeeded')
       .map(pi => {
         const charge = pi.latest_charge
         const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
         return {
-          name:                  pi.metadata.name || '—',
-          email:                 pi.metadata.email?.toLowerCase().trim() || '',
-          stripe_amount_paid:    pi.amount_received,
+          name:                   pi.metadata.name || '—',
+          email:                  pi.metadata.email?.toLowerCase().trim() || '',
+          stripe_amount_paid:     pi.amount_received,
           stripe_amount_refunded: amountRefunded,
-          stripe_paid_at:        (charge && typeof charge === 'object' && charge.created)
+          stripe_paid_at:         (charge && typeof charge === 'object' && charge.created)
             ? new Date(charge.created * 1000).toISOString()
             : new Date(pi.created * 1000).toISOString(),
-          stripe_payment_type:   pi.metadata.type || '',
+          stripe_payment_type:    pi.metadata.type || '',
         }
       })
       .sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
@@ -113,6 +113,13 @@ export default async function RevenuePage() {
       byType={byType}
       byMonth={byMonth}
       recentPayments={recentPayments}
+      payments={rows.map(r => ({
+        name:   r.name,
+        email:  r.email,
+        type:   TYPE_LABELS[r.stripe_payment_type] || r.stripe_payment_type || '—',
+        amount: ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100,
+        date:   r.stripe_paid_at,
+      }))}
     />
   )
 }
