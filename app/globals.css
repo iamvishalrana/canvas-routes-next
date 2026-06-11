@@ -392,6 +392,7 @@ section[id] {
   .nav { padding: 0.75rem 1.2rem; }
   .nav-logo { height: 85px; }
   .nav-links { display: none; }
+  .nav-cta { display: none; }
   .nav-join { display: none; }
   .nav-members { display: none; }
   .hamburger { display: flex; }
