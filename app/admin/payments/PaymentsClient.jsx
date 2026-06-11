@@ -57,6 +57,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const [refunding, setRefunding]     = useState(null)   // id being confirmed
   const [refundBusy, setRefundBusy]   = useState(null)   // id being processed
   const [refundErr, setRefundErr]     = useState({})     // { [id]: msg }
+  const [refundReason, setRefundReason] = useState('requested_by_customer')
   const [receiptConfirm, setReceiptConfirm] = useState(null)
   const [receiptBusy, setReceiptBusy] = useState(null)
   const [receiptDone, setReceiptDone] = useState({})     // { [id]: true }
@@ -73,12 +74,17 @@ export default function PaymentsClient({ initialRecords = [] }) {
     setRefundBusy(r.stripe_payment_intent_id)
     setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
-      const res = await fetch(`/api/admin/stripe-payments/${r.stripe_payment_intent_id}/refund`, { method: 'POST' })
+      const res = await fetch(`/api/admin/stripe-payments/${r.stripe_payment_intent_id}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: refundReason }),
+      })
       const data = await res.json()
-      if (!res.ok) { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Refund failed.' })); setRefunding(null); return }
+      if (!res.ok) { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Refund failed.' })); setRefunding(null); setRefundReason('requested_by_customer'); return }
       setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'refunded' } : x))
       setRefunding(null)
-    } catch { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })); setRefunding(null) }
+      setRefundReason('requested_by_customer')
+    } catch { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })); setRefunding(null); setRefundReason('requested_by_customer') }
     finally { setRefundBusy(null) }
   }
 
@@ -137,11 +143,20 @@ export default function PaymentsClient({ initialRecords = [] }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
           <div style={{ fontSize: '11px', color: '#7B2032' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
           {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
+          <select
+            value={refundReason}
+            onChange={e => setRefundReason(e.target.value)}
+            style={{ fontSize: '11px', padding: '0.3rem 0.5rem', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff', fontFamily: 'var(--font-inter),sans-serif', color: '#555', cursor: 'pointer' }}
+          >
+            <option value="requested_by_customer">Requested by customer</option>
+            <option value="duplicate">Duplicate</option>
+            <option value="fraudulent">Fraudulent</option>
+          </select>
           <div style={{ display: 'flex', gap: '0.35rem' }}>
             <DangerBtn small onClick={() => doRefund(r)} disabled={refundBusy === r.stripe_payment_intent_id}>
               {refundBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
             </DangerBtn>
-            <GhostBtn small onClick={() => setRefunding(null)}>Cancel</GhostBtn>
+            <GhostBtn small onClick={() => { setRefunding(null); setRefundReason('requested_by_customer') }}>Cancel</GhostBtn>
           </div>
         </div>
       )
@@ -168,6 +183,16 @@ export default function PaymentsClient({ initialRecords = [] }) {
           <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
             Refund
           </DangerBtn>
+        )}
+        {r.stripe_payment_status === 'disputed' && (
+          <a
+            href={`https://dashboard.stripe.com/payments/${r.stripe_payment_intent_id}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ padding: '0.3rem 0.7rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', color: '#b33c00', border: '0.5px solid rgba(180,60,0,0.3)', textDecoration: 'none', display: 'inline-block' }}
+          >
+            View Dispute ↗
+          </a>
         )}
         {receiptErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.stripe_payment_intent_id]}</div>}
       </div>

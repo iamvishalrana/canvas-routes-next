@@ -13,9 +13,14 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Invalid payment intent ID.' }, { status: 400 })
   }
 
+  let body = {}
+  try { body = await request.json() } catch {}
+  const VALID_REASONS = ['requested_by_customer', 'duplicate', 'fraudulent']
+  const reason = VALID_REASONS.includes(body.reason) ? body.reason : 'requested_by_customer'
+
   try {
     const refund = await stripe.refunds.create(
-      { payment_intent: piId },
+      { payment_intent: piId, reason },
       { idempotencyKey: `refund-${piId}` }
     )
 
