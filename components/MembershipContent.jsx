@@ -300,8 +300,8 @@ export default function MembershipContent() {
   function inp(field) {
     const base = { width:'100%', padding:'0.6rem 0', fontSize:'14px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
     if (errors[field]) return { ...base, borderBottom:'1px solid rgba(208,96,112,0.8)' }
-    if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.9)' }
-    if (form[field]) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.6)' }
+    if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(15,30,20,0.6)' }
+    if (form[field]) return { ...base, borderBottom:'1px solid rgba(15,30,20,0.35)' }
     return base
   }
 
@@ -903,19 +903,19 @@ export default function MembershipContent() {
                       <button type="button" onClick={() => set('tier', 'Inner Circle')} style={{
                         padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
                         background: sel ? '#0F1E14' : '#152318',
-                        borderLeft: sel ? '2px solid #c5a882' : '2px solid rgba(197,168,130,0.2)',
+                        borderLeft: sel ? '2px solid rgba(140,210,120,0.7)' : '2px solid rgba(197,168,130,0.2)',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
-                            <div style={{ fontSize: '14px', color: sel ? '#c5a882' : 'rgba(197,168,130,0.8)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Inner Circle</div>
+                            <div style={{ fontSize: '14px', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.8)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Inner Circle</div>
                             <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $70 road trip credit</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? '#c5a882' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
+                            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
                             <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
                           </div>
                         </div>
-                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(140,210,120,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                       </button>
                     )
                   })()}
