@@ -8,10 +8,10 @@ export async function GET() {
 
   const supabase = createAdminClient()
 
-  const piList = await stripe.paymentIntents.list({ limit: 100, expand: ['data.latest_charge'] })
+  const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
 
   // Filter to Canvas Routes payments only
-  const canvasPIs = piList.data.filter(pi => pi.metadata?.type)
+  const canvasPIs = allPIs.filter(pi => pi.metadata?.type)
 
   // Collect unique emails for bulk Supabase lookup
   const emails = [...new Set(
