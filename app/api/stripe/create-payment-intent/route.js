@@ -42,6 +42,8 @@ export async function POST(request) {
     return Response.json({ error: 'Name required.' }, { status: 400 })
   }
 
+  const isMembership = type.startsWith('membership_')
+
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       amount:   PRICES[type],
@@ -55,6 +57,9 @@ export async function POST(request) {
       },
       description: buildDescription(type, eventName),
       automatic_payment_methods: { enabled: true },
+      // Membership payments are authorize-only — admin reviews and captures manually.
+      // capture_method: 'manual' is fully compatible with Apple Pay.
+      ...(isMembership ? { capture_method: 'manual' } : {}),
     })
 
     return Response.json({ clientSecret: paymentIntent.client_secret })

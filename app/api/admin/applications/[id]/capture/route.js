@@ -22,12 +22,20 @@ export async function POST(request, { params }) {
   if (app.stripe_payment_status !== 'authorized') return Response.json({ error: 'Payment is not in an authorized state.' }, { status: 400 })
 
   try {
-    await stripe.paymentIntents.capture(app.stripe_payment_intent_id)
+    await stripe.paymentIntents.capture(app.stripe_payment_intent_id, {}, {
+      idempotencyKey: `capture-${id}`,
+    })
 
-    await supabase.from('applications').update({
+    const { error: dbErr } = await supabase.from('applications').update({
       stripe_payment_status: 'paid',
       stripe_paid_at: new Date().toISOString(),
     }).eq('id', id)
+
+    if (dbErr) {
+      // Stripe captured successfully — DB will be rescued by payment_intent.succeeded webhook.
+      // Log but return success so the admin isn't shown a false failure.
+      captureException(dbErr, { context: 'admin-capture-db-write', appId: id })
+    }
 
     return Response.json({ ok: true })
   } catch (err) {

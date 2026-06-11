@@ -76,6 +76,8 @@ export default function ApplicationsClient() {
   const [rejectConfirm, setRejectConfirm] = useState(null)
   const [rejecting, setRejecting]   = useState(null)
   const [rejectErr, setRejectErr]   = useState({})
+  const [capturing, setCapturing]   = useState(null)
+  const [captureErr, setCaptureErr] = useState({})
   const [emailComposerId, setEmailComposerId] = useState(null)
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
@@ -204,6 +206,18 @@ export default function ApplicationsClient() {
     } else {
       setInviteStatus(p => ({ ...p, [app.id]: data.error || 'Failed.' }))
     }
+  }
+
+  async function handleCapture(a) {
+    setCapturing(a.id)
+    setCaptureErr(p => ({ ...p, [a.id]: null }))
+    try {
+      const res = await fetch(`/api/admin/applications/${a.id}/capture`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setCaptureErr(p => ({ ...p, [a.id]: data.error || 'Capture failed.' })); return }
+      setApps(prev => prev.map(x => x.id === a.id ? { ...x, stripe_payment_status: 'paid' } : x))
+    } catch { setCaptureErr(p => ({ ...p, [a.id]: 'Network error.' })) }
+    finally { setCapturing(null) }
   }
 
   async function handleReject(a) {
@@ -471,8 +485,22 @@ export default function ApplicationsClient() {
                     {a.stripe_payment_status === 'rejected' && (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 9px', background: 'rgba(123,32,50,0.06)' }}>Rejected</span>
                     )}
-                    {/* Normal invite flow */}
-                    {a.stripe_payment_status !== 'rejected' && (
+                    {/* Capture / Reject for authorized holds */}
+                    {a.stripe_payment_status === 'authorized' && rejectConfirm !== a.id && rejecting !== a.id && (
+                      capturing === a.id ? (
+                        <span style={{ fontSize: '10px', color: '#bbb' }}>Capturing…</span>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          <div style={{ display: 'flex', gap: '0.3rem' }}>
+                            <button onClick={() => handleCapture(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>Capture</button>
+                            <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 7px', cursor: 'pointer', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif' }}>Reject</button>
+                          </div>
+                          {captureErr[a.id] && <span style={{ fontSize: '10px', color: '#7B2032' }}>{captureErr[a.id]}</span>}
+                        </div>
+                      )
+                    )}
+                    {/* Normal invite flow — only after payment is captured */}
+                    {a.stripe_payment_status !== 'rejected' && a.stripe_payment_status !== 'authorized' && (
                     a.is_member || inviteStatus[a.id] === 'success' ? (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
                     ) : appTierPick === a.id ? (

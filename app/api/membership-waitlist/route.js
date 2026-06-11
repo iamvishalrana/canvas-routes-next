@@ -189,7 +189,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { name, email, phone, dob_month, dob_day, dob_year, year, carMake, carModel, carPaint, tier, source, more, referredBy, _hp } = body
+  const { name, email, phone, dob_month, dob_day, dob_year, year, carMake, carModel, carPaint, tier, source, more, referredBy, paymentIntentId, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -243,6 +243,8 @@ export async function POST(request) {
       more: more || null,
       referred_by: referredBy?.trim() || null,
       registrations,
+      // Store PI ID immediately so admin can act even if the webhook is delayed
+      ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' })
   } catch (e) {

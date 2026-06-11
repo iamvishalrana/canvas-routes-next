@@ -17,6 +17,7 @@ function fmtDate(iso) {
 
 const STATUS_COLORS = {
   paid:                { bg: 'rgba(59,107,47,0.1)',    text: '#3B6B2F', border: 'rgba(59,107,47,0.3)' },
+  authorized:          { bg: 'rgba(59,107,47,0.06)',   text: '#5a8a4a', border: 'rgba(59,107,47,0.2)' },
   refunded:            { bg: 'rgba(80,80,180,0.08)',   text: '#4040aa', border: 'rgba(80,80,180,0.3)' },
   partially_refunded:  { bg: 'rgba(197,168,130,0.12)', text: '#8A6535', border: 'rgba(197,168,130,0.4)' },
   disputed:            { bg: 'rgba(180,60,0,0.1)',     text: '#b33c00', border: 'rgba(180,60,0,0.3)' },
@@ -54,9 +55,12 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const [search, setSearch]           = useState('')
   const [isMobile, setIsMobile]       = useState(false)
   const [showFailed, setShowFailed]   = useState(false)
-  const [refunding, setRefunding]     = useState(null)   // id being confirmed
-  const [refundBusy, setRefundBusy]   = useState(null)   // id being processed
-  const [refundErr, setRefundErr]     = useState({})     // { [id]: msg }
+  const [refunding, setRefunding]     = useState(null)
+  const [refundBusy, setRefundBusy]   = useState(null)
+  const [refundErr, setRefundErr]     = useState({})
+  const [authorizedAction, setAuthorizedAction] = useState(null) // piId showing capture/cancel UI
+  const [authorizedBusy, setAuthorizedBusy]     = useState(null)
+  const [authorizedErr, setAuthorizedErr]       = useState({})
   const [refundReason, setRefundReason] = useState('requested_by_customer')
   const [receiptConfirm, setReceiptConfirm] = useState(null)
   const [receiptBusy, setReceiptBusy] = useState(null)
@@ -69,6 +73,32 @@ export default function PaymentsClient({ initialRecords = [] }) {
     return () => window.removeEventListener('resize', check)
   }, [])
 
+
+  async function doCapture(r) {
+    setAuthorizedBusy(r.stripe_payment_intent_id)
+    setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
+    try {
+      const res = await fetch(`/api/admin/applications/${r.id}/capture`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Capture failed.' })); return }
+      setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'paid' } : x))
+      setAuthorizedAction(null)
+    } catch { setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })) }
+    finally { setAuthorizedBusy(null) }
+  }
+
+  async function doCancel(r) {
+    setAuthorizedBusy(r.stripe_payment_intent_id)
+    setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
+    try {
+      const res = await fetch(`/api/admin/applications/${r.id}/reject`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Cancel failed.' })); return }
+      setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'rejected' } : x))
+      setAuthorizedAction(null)
+    } catch { setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })) }
+    finally { setAuthorizedBusy(null) }
+  }
 
   async function doRefund(r) {
     setRefundBusy(r.stripe_payment_intent_id)
@@ -134,9 +164,32 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const TD = { padding: '0.75rem 1rem', fontSize: '13px', color: '#1a1a1a', borderBottom: '0.5px solid rgba(0,0,0,0.05)', fontFamily: 'var(--font-inter),sans-serif', verticalAlign: 'middle' }
 
   function Actions({ r }) {
-    const isPaid = r.stripe_payment_status === 'paid'
+    const isPaid = ['paid', 'partially_refunded'].includes(r.stripe_payment_status)
+    const isAuthorized = r.stripe_payment_status === 'authorized'
     const canReceipt = !r.manual && r.stripe_payment_intent_id
-    if (!canReceipt) return null
+    if (!canReceipt && !isAuthorized) return null
+
+    // Authorized hold — show Capture / Cancel UI
+    if (isAuthorized) {
+      if (authorizedAction === r.stripe_payment_intent_id) {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
+            <div style={{ fontSize: '11px', color: '#1a1a1a' }}>Capture ${((r.stripe_amount_paid || 0) / 100).toFixed(2)} or cancel hold?</div>
+            {authorizedErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{authorizedErr[r.stripe_payment_intent_id]}</div>}
+            <div style={{ display: 'flex', gap: '0.35rem' }}>
+              <GhostBtn small onClick={() => doCapture(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>
+                {authorizedBusy === r.stripe_payment_intent_id ? '…' : 'Capture'}
+              </GhostBtn>
+              <DangerBtn small onClick={() => doCancel(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>Cancel hold</DangerBtn>
+              <GhostBtn small onClick={() => setAuthorizedAction(null)} disabled={!!authorizedBusy}>Back</GhostBtn>
+            </div>
+          </div>
+        )
+      }
+      return (
+        <GhostBtn small onClick={() => setAuthorizedAction(r.stripe_payment_intent_id)}>Review hold</GhostBtn>
+      )
+    }
 
     if (refunding === r.stripe_payment_intent_id) {
       return (

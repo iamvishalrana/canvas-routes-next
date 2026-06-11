@@ -150,19 +150,15 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       const waitlistRes = await fetch('/api/membership-waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, phone: formData.phone ? `${countryCode} ${formData.phone}`.trim() : '', termsAccepted: true, _hp: honeypot }),
+        body: JSON.stringify({ ...formData, phone: formData.phone ? `${countryCode} ${formData.phone}`.trim() : '', termsAccepted: true, paymentIntentId, _hp: honeypot }),
       })
       if (!waitlistRes.ok) {
+        // Payment hold is placed — proceed to success even if the DB save failed.
+        // The webhook will rescue the Stripe fields; Sentry captures the save failure.
         captureException(new Error(`membership-waitlist POST failed: ${waitlistRes.status}`))
-        setError('Payment confirmed — but please email info@canvasroutes.com with your details so we can save your application.')
-        setPaying(false); payingRef.current = false
-        return
       }
     } catch (waitlistErr) {
       captureException(waitlistErr)
-      setError('Payment confirmed — but please email info@canvasroutes.com with your details so we can save your application.')
-      setPaying(false); payingRef.current = false
-      return
     }
 
     onSuccess()

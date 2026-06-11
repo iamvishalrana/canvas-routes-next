@@ -24,8 +24,8 @@ export async function POST(request, { params }) {
     })
     if (!pi.latest_charge) return Response.json({ error: 'No charge found.' }, { status: 400 })
     const chargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge.id
-    // Updating receipt_email triggers Stripe to resend the receipt
     await stripe.charges.update(chargeId, { receipt_email: app.email })
+    await stripe.charges.sendReceipt(chargeId)
     return Response.json({ ok: true })
   } catch (err) {
     captureException(err, { context: 'admin-resend-receipt', appId: id })

@@ -75,23 +75,28 @@ export async function POST(request, { params }) {
     piId = paymentIntentId
   }
 
-  // Atomic capacity check + insert via Postgres function
-  const { data: result, error: rpcError } = await admin.rpc('register_for_event', {
-    p_event_id: eventId,
-    p_member_id: user.id,
-    p_email: user.email || '',
-    p_name: member.name || '',
-    p_payment_intent_id: piId,
-    p_payment_status: isFree ? 'free' : 'paid',
-    p_amount_paid: amountPaid,
-  })
-
-  if (rpcError) {
-    captureException(rpcError, { context: 'event-register-rpc', eventId })
-    return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
+  // Final capacity check before writing (non-atomic — best-effort guard)
+  if (ev.capacity) {
+    const { count } = await admin.from('event_registrations')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .in('stripe_payment_status', ['free', 'paid'])
+    if (count >= ev.capacity) return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
   }
-  if (result === 'at_capacity') {
-    return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
+
+  const { error: regError } = await admin.from('event_registrations').upsert({
+    event_id: eventId,
+    member_id: user.id,
+    email: user.email || '',
+    name: member.name || '',
+    stripe_payment_intent_id: piId,
+    stripe_payment_status: isFree ? 'free' : 'paid',
+    amount_paid: amountPaid,
+  }, { onConflict: 'uq_event_reg_event_member' })
+
+  if (regError) {
+    captureException(regError, { context: 'event-register-upsert', eventId })
+    return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
   }
 
   return Response.json({ success: true })

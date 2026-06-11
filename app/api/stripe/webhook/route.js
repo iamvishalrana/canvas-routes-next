@@ -61,7 +61,7 @@ export async function POST(request) {
           }, { onConflict: 'uq_event_reg_event_member' })
           console.log(`Event registration confirmed: ${event_id} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         } else if (type?.startsWith('membership_')) {
-          // Membership payment — update application row with Stripe confirmation
+          // Membership payment captured — update application row
           await supabase.from('applications').upsert({
             email:                     normalEmail,
             name:                      name || '',
@@ -71,6 +71,11 @@ export async function POST(request) {
             stripe_payment_type:       type,
             stripe_paid_at:            new Date().toISOString(),
           }, { onConflict: 'email' })
+          // Also patch stripe_paid_at in case the capture-route DB write previously failed
+          await supabase.from('applications')
+            .update({ stripe_paid_at: new Date().toISOString() })
+            .eq('stripe_payment_intent_id', pi.id)
+            .is('stripe_paid_at', null)
           console.log(`Membership payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         } else {
           // Road trip or other — log only, do not touch applications table
@@ -83,6 +88,8 @@ export async function POST(request) {
         // Customer authorized the hold — admin approval needed before capture
         const pi       = event.data.object
         const { type, email, name } = pi.metadata
+        // Only membership payments use manual capture — guard against accidental matches
+        if (!type?.startsWith('membership_')) break
         const amountHeld = pi.amount
         const normalEmail = email?.toLowerCase().trim()
 
@@ -146,10 +153,8 @@ export async function POST(request) {
               const pi = await stripe.paymentIntents.retrieve(charge.payment_intent)
               const supabase = createAdminClient()
               if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
-                await supabase.from('event_registrations')
-                  .update({ stripe_payment_status: 'disputed' })
-                  .eq('event_id', pi.metadata.event_id)
-                  .eq('member_id', pi.metadata.member_id)
+                // event_registrations CHECK constraint does not include 'disputed' — skip DB update,
+                // Sentry alert above is sufficient for operational awareness
               } else {
                 await supabase.from('applications')
                   .update({ stripe_payment_status: 'disputed' })
