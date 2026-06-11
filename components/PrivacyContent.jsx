@@ -25,35 +25,35 @@ export default function PrivacyContent() {
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Legal</div>
         <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem",lineHeight:"1.2"}}>Privacy Policy</div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem 0"}}></div>
-        <div style={{fontSize:"12px",color:"#888",marginBottom:"3rem"}}>Last updated: May 2026</div>
+        <div style={{fontSize:"12px",color:"#888",marginBottom:"3rem"}}>Last updated: June 2026</div>
         {[
           {
             title: "Who we are",
-            body: "Canvas Routes is a Montreal-based automotive community operating in Quebec, Canada. We can be reached at info@canvasroutes.com. This Privacy Policy applies to the website canvasroutes.com and any services offered through it."
+            body: "Canvas Routes is operated by Événements Canvas Routes Inc. / Canvas Routes Events Inc., a corporation incorporated in Quebec, Canada. We can be reached at info@canvasroutes.com. This Privacy Policy applies to the website canvasroutes.com and any services offered through it."
           },
           {
             title: "Privacy officer",
-            body: "The person responsible for the protection of personal information at Canvas Routes is the owner. For any privacy-related questions, requests, or concerns, please contact: info@canvasroutes.com. We will respond within 30 days."
+            body: "The person responsible for the protection of personal information at Événements Canvas Routes Inc. is the owner. For any privacy-related questions, requests, or concerns, please contact: info@canvasroutes.com. We will respond within 30 days."
           },
           {
             title: "What information we collect",
-            body: "When you submit our membership application form, we collect the following personal information: your full name, email address, phone number (optional), Instagram handle (optional), the vehicle you drive, and any additional information you choose to share in the 'Tell us more' field. We do not collect payment information."
+            body: "When you submit a membership application or event registration, we collect the following personal information: your full name, email address, date of birth (month and day, year optional), phone number (optional), Instagram handle (optional), the vehicle you drive, and any additional information you choose to share. For approved members, we may also collect and store photos and media you submit for your member profile or gallery. We collect payment card information through Stripe — we do not store raw card data ourselves."
           },
           {
             title: "How we use your information",
-            body: "The information you provide is used solely to assess your membership application, communicate with you about Canvas Routes events and membership status, and send you relevant updates about our community. By submitting the form, you consent to receive these communications. You may withdraw your consent at any time by contacting info@canvasroutes.com. We do not sell, rent, or share your personal information with any third parties for marketing purposes."
+            body: "The information you provide is used solely to assess your membership application, process payments, communicate with you about Canvas Routes events and membership status, and send you relevant updates about our community. By submitting the form, you consent to receive these communications. You may withdraw your consent at any time by contacting info@canvasroutes.com. We do not sell, rent, or share your personal information with any third parties for marketing purposes."
           },
           {
             title: "Who processes your data",
-            body: "We use the following third-party services to operate Canvas Routes: Supabase (supabase.com) stores your personal information in a secure database, including membership applications, member profiles, and event registrations. Resend (resend.com) delivers confirmation and notification emails. Upstash (upstash.com) provides rate limiting by temporarily storing your IP address to prevent abuse — this data is not linked to your identity and expires automatically. Vercel (vercel.com) hosts the website and may process basic technical data for infrastructure and security purposes. All services are used solely to operate Canvas Routes and are not permitted to use your data for their own purposes."
+            body: "We use the following third-party services to operate Canvas Routes: Supabase (supabase.com) stores your personal information in a secure database, including membership applications, member profiles, and event registrations. Stripe (stripe.com) processes payment card information for membership fees and event registrations. Stripe handles, stores, and secures all payment card data on our behalf — we do not store raw card numbers. Resend (resend.com) delivers confirmation and notification emails. Meta Pixel (meta.com) collects anonymised behavioural data on our website to support advertising and analytics through Facebook and Instagram — no personally identifiable information is shared with Meta beyond what you have consented to through the cookie banner. Cloudinary and Backblaze may be used in future to store member-submitted photos and media. Upstash (upstash.com) provides rate limiting by temporarily storing your IP address to prevent abuse — this data is not linked to your identity and expires automatically. Vercel (vercel.com) hosts the website and may process basic technical data for infrastructure and security purposes. All services are used solely to operate Canvas Routes and are not permitted to use your data for their own purposes."
           },
           {
             title: "Data transfers outside Quebec",
-            body: "Your personal information is processed by third-party services based in the United States: Supabase, Inc. (database storage), Resend, Inc. (email delivery), and Upstash, Inc. (rate limiting). As a result, your personal information may be stored and processed outside of Quebec and Canada. Before using these services, we assessed that each provides a level of protection comparable to Quebec's privacy law requirements. By submitting our forms, you acknowledge that your information will be transferred to the United States for the purposes described in this policy."
+            body: "Your personal information is processed by third-party services based in the United States: Supabase, Inc. (database storage), Stripe, Inc. (payment processing), Resend, Inc. (email delivery), Meta Platforms, Inc. (advertising analytics), and Upstash, Inc. (rate limiting). As a result, your personal information may be stored and processed outside of Quebec and Canada. Before using these services, we assessed that each provides a level of protection comparable to Quebec's privacy law requirements. By submitting our forms, you acknowledge that your information will be transferred to the United States for the purposes described in this policy."
           },
           {
             title: "Cookies & Analytics",
-            body: "This website uses Google Analytics 4 to collect anonymous usage data, including pages visited, time spent on site, and general location (country/city level). Google Analytics sets the following cookies: _ga (distinguishes users, expires after 2 years) and _ga_* (maintains session state for the specific property, expires after 2 years). No personally identifiable information is shared with Google. Analytics cookies are only set after you give consent using the banner on our site. You can change your cookie preference at any time using the 'Manage cookies' link at the bottom of any page, or by visiting myaccount.google.com/data-and-privacy. Basic technical cookies may also be set by our hosting provider (Vercel) for infrastructure and security purposes."
+            body: "This website uses Google Analytics 4 and the Meta Pixel to collect anonymised usage data, including pages visited, time spent on site, and general location (country/city level). Google Analytics sets the following cookies: _ga (distinguishes users, expires after 2 years) and _ga_* (maintains session state, expires after 2 years). The Meta Pixel sets the _fbp cookie (identifies browsers, expires after 90 days) and may set _fbc if you arrive via a Facebook advertisement. No personally identifiable information is shared with Google or Meta. Analytics and advertising cookies are only set after you give consent using the banner on our site. You can change your cookie preference at any time using the 'Manage cookies' link at the bottom of any page. Basic technical cookies may also be set by our hosting provider (Vercel) for infrastructure and security purposes."
           },
           {
             title: "Your rights under Quebec Law 25",
@@ -65,7 +65,7 @@ export default function PrivacyContent() {
           },
           {
             title: "Security",
-            body: "We take reasonable measures to protect your personal information. Our website is served over HTTPS, and data transmitted through our forms is encrypted in transit. However, no method of transmission over the internet is 100% secure."
+            body: "We take reasonable measures to protect your personal information. Our website is served over HTTPS, and data transmitted through our forms is encrypted in transit. Payment card data is handled exclusively by Stripe and subject to PCI-DSS compliance. However, no method of transmission over the internet is 100% secure."
           },
           {
             title: "Changes to this policy",
