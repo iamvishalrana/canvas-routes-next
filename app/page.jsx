@@ -371,11 +371,9 @@ export default function Home() {
           <Link href="/faq">FAQ</Link>
         </div>
         <div className="nav-cta">
-          {membershipLive ? (
-            <Link href="/membership" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.45)', padding: '0.45rem 1rem' }}>Membership</Link>
-          ) : (
-            <Link href="/membership" className="nav-join">Join</Link>
-          )}
+          <Link href="/membership" className="nav-join">
+            {membershipLive ? 'Membership' : 'Join'}
+          </Link>
           <Link href="/members/login" className="nav-members">Members Login</Link>
         </div>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
