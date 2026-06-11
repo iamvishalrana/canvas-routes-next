@@ -153,15 +153,21 @@ export default function ContactsClient() {
 
   async function removeContact(contactId) {
     setRemoveContactError(null)
-    const res = await fetch(`/api/admin/contacts/${contactId}`, { method: 'DELETE' })
-    if (res.ok) { setRemoveContactConfirm(null); setSelected(prev => { const n = new Set(prev); n.delete(contactId); return n }); loadContacts() }
-    else setRemoveContactError('Failed to remove contact.')
+    try {
+      const res = await fetch(`/api/admin/contacts/${contactId}`, { method: 'DELETE' })
+      if (res.ok) { setRemoveContactConfirm(null); setSelected(prev => { const n = new Set(prev); n.delete(contactId); return n }); loadContacts() }
+      else setRemoveContactError('Failed to remove contact.')
+    } catch {
+      setRemoveContactError('Network error — please try again.')
+    }
   }
 
   async function inviteContact(c, tier = 'routes_member') {
     setContactInviteStatus(p => ({ ...p, [c.contact_id]: 'sending' }))
     const { make: cMake, model: cModel } = parseCarMakeModel(c.car_model)
-    const res = await fetch('/api/admin/members', {
+    let res, data
+    try {
+      res = await fetch('/api/admin/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -179,7 +185,12 @@ export default function ContactsClient() {
           : undefined,
       }),
     })
-    const data = await res.json().catch(() => ({}))
+      data = await res.json().catch(() => ({}))
+    } catch {
+      setContactInviteStatus(p => ({ ...p, [c.contact_id]: 'Network error' }))
+      setTimeout(() => setContactInviteStatus(p => { const n = {...p}; delete n[c.contact_id]; return n }), 4000)
+      return
+    }
     if (res.ok) {
       setContactInviteStatus(p => ({ ...p, [c.contact_id]: 'sent' }))
       setContacts(prev => prev.map(x => x.contact_id === c.contact_id ? { ...x, is_invited: true } : x))
@@ -277,10 +288,15 @@ export default function ContactsClient() {
 
   async function saveNote(contactId, value, email) {
     const trimmed = value.trim()
-    await fetch(`/api/admin/contacts/${contactId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: trimmed || null, email: email || undefined }),
-    })
+    try {
+      const res = await fetch(`/api/admin/contacts/${contactId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: trimmed || null, email: email || undefined }),
+      })
+      if (!res.ok) return
+    } catch {
+      return
+    }
     setContacts(prev => prev.map(x => x.contact_id === contactId ? { ...x, notes: trimmed || null } : x))
     setEditingNote(null)
   }

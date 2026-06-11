@@ -30,10 +30,11 @@ function AppAdminNotes({ appId, initialNotes, onSaved }) {
       <AdminNotesPanel
         initialNotes={initialNotes}
         onSave={async (json) => {
-          await fetch(`/api/admin/applications/${appId}`, {
+          const res = await fetch(`/api/admin/applications/${appId}`, {
             method: 'PATCH', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ admin_notes: json }),
           })
+          if (!res.ok) throw new Error('Failed to save notes')
           onSaved?.(json)
         }}
       />
@@ -70,7 +71,7 @@ export default function ApplicationsClient() {
   const [emailsCopied, setEmailsCopied] = useState(false)
   const [appTierPick, setAppTierPick] = useState(null)
   const [deleteAppConfirm, setDeleteAppConfirm] = useState(null)
-  const [deleteAppError, setDeleteAppError] = useState(null)
+  const [deleteAppError, setDeleteAppError] = useState({})
   const [showFilter, setShowFilter] = useState('all') // 'all' | 'unseen' | 'pending'
   const [rejectConfirm, setRejectConfirm] = useState(null)
   const [rejecting, setRejecting]   = useState(null)
@@ -117,10 +118,10 @@ export default function ApplicationsClient() {
   }
 
   async function deleteApp(app) {
-    setDeleteAppError(null)
+    setDeleteAppError(p => ({ ...p, [app.id]: null }))
     const res = await fetch(`/api/admin/applications/${app.id}`, { method: 'DELETE' })
     if (res.ok) { setDeleteAppConfirm(null); setExpanded(null); setEditingApp(null); loadApps() }
-    else setDeleteAppError('Failed to delete.')
+    else setDeleteAppError(p => ({ ...p, [app.id]: 'Failed to delete.' }))
   }
 
   function startEditApp(a) {
@@ -449,6 +450,8 @@ export default function ApplicationsClient() {
                   if (a.reregistered_at) {
                     setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: null } : x))
                     fetch(`/api/admin/applications/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reregistered_at: null }) })
+                      .then(r => { if (!r.ok) setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: a.reregistered_at } : x)) })
+                      .catch(() => setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: a.reregistered_at } : x)))
                   }
                 }
                 const inviteCell = (
@@ -727,8 +730,8 @@ export default function ApplicationsClient() {
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete application from {a.name || a.email}?</span>
                           <GhostBtn small onClick={() => deleteApp(a)}>Confirm</GhostBtn>
-                          <GhostBtn small onClick={() => { setDeleteAppConfirm(null); setDeleteAppError(null) }}>Cancel</GhostBtn>
-                          {deleteAppError && <Err msg={deleteAppError} />}
+                          <GhostBtn small onClick={() => { setDeleteAppConfirm(null); setDeleteAppError(p => ({ ...p, [a.id]: null })) }}>Cancel</GhostBtn>
+                          {deleteAppError[a.id] && <Err msg={deleteAppError[a.id]} />}
                         </div>
                       )}
 
