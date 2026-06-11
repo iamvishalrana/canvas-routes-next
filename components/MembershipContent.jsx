@@ -349,10 +349,12 @@ export default function MembershipContent() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')
+      if (!data.clientSecret) throw new Error('Payment could not be initialised. Please try again.')
       setClientSecret(data.clientSecret)
       setPaymentStep(true)
       setStatus(null)
     } catch (err) {
+      captureException(err, { context: 'membership-handleSubmit', email: form.email })
       setSubmitError(err.message || 'Something went wrong. Please try again.')
       setStatus('error')
     } finally {
