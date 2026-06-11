@@ -1,11 +1,13 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import { sel, L, PrimaryBtn, GhostBtn, Err } from '../_components/shared'
+
+const MAX_RECIPIENTS = 200
 
 const AUDIENCE_LABELS = {
   canvas_routes_member: 'Canvas Routes Member',
@@ -177,6 +179,8 @@ export default function BroadcastsClient() {
   const [result, setResult]             = useState(null)
   const [history, setHistory]           = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState(null)
+  const sendingRef = useRef(false)
 
   const editor = useEditor({
     extensions: [
@@ -200,10 +204,14 @@ export default function BroadcastsClient() {
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
+    setHistoryError(null)
     try {
       const res = await fetch('/api/admin/broadcasts')
       if (res.ok) setHistory(await res.json())
-    } catch {}
+      else setHistoryError('Failed to load broadcast history.')
+    } catch {
+      setHistoryError('Network error — could not load history.')
+    }
     setHistoryLoading(false)
   }, [])
 
@@ -225,6 +233,8 @@ export default function BroadcastsClient() {
   }
 
   async function confirmSend() {
+    if (sendingRef.current) return
+    sendingRef.current = true
     setConfirm(false)
     setSending(true)
     setError(null)
@@ -252,6 +262,7 @@ export default function BroadcastsClient() {
       setError('Network error. Please try again.')
     } finally {
       setSending(false)
+      sendingRef.current = false
     }
   }
 
@@ -286,6 +297,8 @@ export default function BroadcastsClient() {
         <div style={{ maxWidth: '720px' }}>
           {historyLoading ? (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+          ) : historyError ? (
+            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#7B2032' }}>{historyError}</div>
           ) : history.length === 0 ? (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No broadcasts sent yet.</div>
           ) : (
@@ -335,10 +348,11 @@ export default function BroadcastsClient() {
 
           {result && (
             <div style={{ maxWidth: '720px', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.3)', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '13px', color: '#3B6B2F', fontWeight: '500', marginBottom: result.failed > 0 ? '0.35rem' : 0 }}>
+              <div style={{ fontSize: '13px', color: '#3B6B2F', fontWeight: '500', marginBottom: (result.failed > 0 || result.truncated) ? '0.35rem' : 0 }}>
                 Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.
               </div>
               {result.failed > 0 && <div style={{ fontSize: '12px', color: '#7B2032' }}>{result.failed} failed to send.</div>}
+              {result.truncated && <div style={{ fontSize: '12px', color: '#8A6535', marginTop: '0.25rem' }}>⚠ List was capped at {MAX_RECIPIENTS} — {result.totalRecipients - MAX_RECIPIENTS} recipient{result.totalRecipients - MAX_RECIPIENTS !== 1 ? 's' : ''} were not reached.</div>}
               <button onClick={() => setResult(null)} style={{ marginTop: '0.65rem', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '11px', color: '#999', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Send another
               </button>
@@ -378,7 +392,10 @@ export default function BroadcastsClient() {
                 <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                   <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Message</div>
                   <div>
-                    <L>Subject</L>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
+                      <L style={{ margin: 0 }}>Subject</L>
+                      <span style={{ fontSize: '10px', color: subject.length > 60 ? '#8A6535' : '#ccc' }}>{subject.length}/200{subject.length > 60 && subject.length <= 200 ? ' · may truncate in inbox' : ''}</span>
+                    </div>
                     <input style={inp} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Email subject line…" maxLength={200} />
                   </div>
                   <div>

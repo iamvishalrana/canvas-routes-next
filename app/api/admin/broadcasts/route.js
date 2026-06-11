@@ -29,6 +29,7 @@ export async function POST(request) {
 
   const supabase = createAdminClient()
   let recipients = []
+  let normalizedSpecificEmails = null // hoisted so history save can use the sanitized version
 
   async function fetchMembers(filters = {}) {
     let q = supabase.from('members').select('email, name, membership_status, tier')
@@ -68,18 +69,18 @@ export async function POST(request) {
       }
     } else if (audience === 'specific_emails') {
       const rawEmails = Array.isArray(specificEmails) ? specificEmails : []
-      const uniqueEmails = [...new Set(
+      normalizedSpecificEmails = [...new Set(
         rawEmails.map(e => e.toLowerCase().trim()).filter(e => e.includes('@') && e.includes('.'))
       )]
-      if (uniqueEmails.length === 0) return Response.json({ error: 'No valid email addresses provided.' }, { status: 400 })
+      if (normalizedSpecificEmails.length === 0) return Response.json({ error: 'No valid email addresses provided.' }, { status: 400 })
       const [membersData, appsData] = await Promise.all([
-        supabase.from('members').select('email, name').in('email', uniqueEmails),
-        supabase.from('applications').select('email, name').in('email', uniqueEmails),
+        supabase.from('members').select('email, name').in('email', normalizedSpecificEmails),
+        supabase.from('applications').select('email, name').in('email', normalizedSpecificEmails),
       ])
       const nameMap = {}
       for (const m of (membersData.data || [])) nameMap[m.email.toLowerCase()] = m.name
       for (const a of (appsData.data || [])) if (!nameMap[a.email.toLowerCase()]) nameMap[a.email.toLowerCase()] = a.name
-      recipients = uniqueEmails.map(email => ({ email, name: nameMap[email] || '' }))
+      recipients = normalizedSpecificEmails.map(email => ({ email, name: nameMap[email] || '' }))
     } else {
       return Response.json({ error: 'Invalid audience.' }, { status: 400 })
     }
@@ -87,8 +88,10 @@ export async function POST(request) {
     return Response.json({ error: err.message }, { status: 500 })
   }
 
+  const totalRecipients = recipients.length
+  const truncated = totalRecipients > MAX_RECIPIENTS
   recipients = recipients.slice(0, MAX_RECIPIENTS)
-  if (recipients.length === 0) return Response.json({ sent: 0, failed: 0 })
+  if (recipients.length === 0) return Response.json({ sent: 0, failed: 0, truncated: false, totalRecipients: 0 })
 
   let sent = 0
   let failed = 0
@@ -117,16 +120,16 @@ export async function POST(request) {
     failed += results.filter(r => r === 'failed').length
   }
 
-  // Save to broadcast history
+  // Save to broadcast history using normalized emails, not the raw client input
   try {
     await supabase.from('broadcasts').insert({
       subject: subject.trim(),
       audience,
-      specific_emails: audience === 'specific_emails' ? (Array.isArray(specificEmails) ? specificEmails : []) : null,
+      specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
       sent_count: sent,
       failed_count: failed,
     })
   } catch {} // don't fail the response if history write fails
 
-  return Response.json({ sent, failed })
+  return Response.json({ sent, failed, truncated, totalRecipients })
 }
