@@ -438,7 +438,7 @@ section[id] {
 }
 
 /* Admin panel — mobile */
-.admin-hamburger { display: none; }
+.admin-hamburger { display: none !important; }
 @media (max-width: 767px) {
   .admin-sidebar-desktop { display: none !important; }
   .admin-hamburger { display: flex !important; }
