@@ -54,8 +54,12 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Cars & Coffee',
+    title: 'Meets',
     items: [
+      {
+        q: 'What kind of meets does Canvas Routes host?',
+        a: 'Our main format is Cars and Coffee — a curated invite-only morning meet at a premium venue in Montreal. Great cars, great coffee, great people. We also host themed and seasonal meets throughout the year, but Cars and Coffee is the heartbeat of what we do.',
+      },
       {
         q: 'What is a Canvas Routes Cars and Coffee?',
         a: 'A curated invite-only morning meet at a premium venue in Montreal. Great cars, great coffee, great people. No entry fee, no judging — just a morning worth waking up for.',
