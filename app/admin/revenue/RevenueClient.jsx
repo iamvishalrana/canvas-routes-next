@@ -1,5 +1,7 @@
 'use client'
 
+import { ExportButton } from '../_components/ExportModal'
+
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }
 const SECTION_LABEL = { fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }
@@ -15,7 +17,7 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })
 }
 
-export default function RevenueClient({ totalRevenue, totalPaid, byType, byMonth, recentPayments }) {
+export default function RevenueClient({ totalRevenue, totalPaid, byType, byMonth, recentPayments, payments = [] }) {
   const routesRevenue = byType.find(t => t.key === 'membership_routes')?.revenue ?? 0
   const innerCircleRevenue = byType.find(t => t.key === 'membership_inner_circle')?.revenue ?? 0
   const roadTripRevenue = byType.filter(t => t.key?.startsWith('road_trip')).reduce((sum, t) => sum + t.revenue, 0)
@@ -32,8 +34,24 @@ export default function RevenueClient({ totalRevenue, totalPaid, byType, byMonth
     <div style={PAGE_STYLE}>
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Canvas Routes</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Revenue</h1>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Canvas Routes</div>
+            <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Revenue</h1>
+          </div>
+          <ExportButton
+            filename="revenue"
+            title="Revenue"
+            headers={['Name', 'Email', 'Type', 'Amount (CAD)', 'Date']}
+            rows={payments.map(p => [
+              p.name || '',
+              p.email || '',
+              p.type || '',
+              p.amount.toFixed(2),
+              p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) : '',
+            ])}
+          />
+        </div>
       </div>
 
       {/* Stat cards */}
