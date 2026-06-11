@@ -283,16 +283,16 @@ function AccordionItem({ item, isOpen, onToggle }) {
               margin: 0,
               fontFamily: 'var(--font-inter),sans-serif',
             }}>
-              {item.a}
+              {renderAnswer(item.a)}
             </p>
             {item.a2 && (
               <p style={{ fontSize: '13.5px', color: '#666', lineHeight: '1.95', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
-                {item.a2}
+                {renderAnswer(item.a2)}
               </p>
             )}
             {item.note && (
               <p style={{ fontSize: '13.5px', color: '#444', fontWeight: '500', lineHeight: '1.95', margin: '0.75rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
-                {item.note}
+                {renderAnswer(item.note)}
               </p>
             )}
           </div>
