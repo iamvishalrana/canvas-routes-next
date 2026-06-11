@@ -74,7 +74,7 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'What is included in the road trip fee?',
-      acceptedAnswer: { '@type': 'Answer', text: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are at your own cost and are not included in the road trip fee.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes members kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are at your own cost and are not included in the road trip fee.' },
     },
     {
       '@type': 'Question',
@@ -114,7 +114,7 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'What does a Canvas Routes membership include?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes welcome kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.' },
     },
   ],
 }

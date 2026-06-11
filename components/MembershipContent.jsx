@@ -401,7 +401,7 @@ export default function MembershipContent() {
             </Link>
           ))}
         </div>
-        <Link href="/#join" className="nav-join">Join</Link>
+        <div className="nav-cta"><Link href="/membership" className="nav-join">Membership</Link><Link href="/members/login" className="nav-members">Members Login</Link></div>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
           <span /><span /><span />
         </button>
@@ -410,8 +410,8 @@ export default function MembershipContent() {
         {[['/', 'Home'], ['/#events', 'Events'], ['/#contact', 'Contact'], ['/faq', 'FAQ']].map(([href, label]) => (
           <Link key={href} href={href} onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>{label}</Link>
         ))}
-        <Link href="/#join" onClick={() => setMenuOpen(false)} style={{ color: '#1a1a1a', fontWeight: '500' }}>Join</Link>
-        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#3B6B2F', fontWeight: '500' }}>Members Login</Link>
+        <Link href="/membership" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Membership</Link>
+        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
       </div>
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
@@ -666,7 +666,7 @@ export default function MembershipContent() {
             {[
               { n: '01', title: 'Register your interest', body: 'Fill in the form below. Tell us about yourself, your car, and the tier you\'re interested in.' },
               { n: '02', title: 'We reach out', body: 'Every application is reviewed personally. We contact you directly to confirm your spot and tier.' },
-              { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and collect your welcome kit at your first event of the season.' },
+              { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and collect your members kit at your first event of the season.' },
             ].map((s, i) => (
               <div key={i} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.65)', lineHeight: 1, marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.n}</div>

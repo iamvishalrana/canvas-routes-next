@@ -135,7 +135,7 @@ const jsonLd = {
         name: 'Canvas Routes Events & Membership',
         itemListElement: [
           { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Cars and Coffee — Invite-Only Car Meet', description: 'Curated invite-only morning car meet at a premium Montreal venue. Complimentary coffee, no entry fee.' } },
-          { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Curated Road Trip', description: 'Fully planned convoy drive through scenic Quebec backroads. Includes breakfast, lunch stops, media coverage and welcome kit. $200 CAD per car.' } },
+          { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Curated Road Trip', description: 'Fully planned convoy drive through scenic Quebec backroads. Includes breakfast, lunch stops, media coverage and members kit. $200 CAD per car.' } },
           { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Routes Member — Season Membership', description: 'Canvas Routes season membership. Priority event access, members-only experiences, partner discounts. $99 CAD per season.' } },
           { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Inner Circle — Season Membership', description: 'Premium Canvas Routes membership tier. Extended season, exclusive perks, inner circle access. $249 CAD per season.' } },
         ],

@@ -103,7 +103,7 @@ const SECTIONS = [
       },
       {
         q: 'What is included in the route fee?',
-        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes welcome kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are not included.',
+        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes members kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are not included.',
       },
       {
         q: 'Can I bring a passenger?',
@@ -153,7 +153,7 @@ const SECTIONS = [
       },
       {
         q: 'What does membership include?',
-        a: 'Priority registration for all events and routes, preferred member pricing on every route, access to members-only events, partner discounts, a Canvas Routes welcome kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.',
+        a: 'Priority registration for all events and routes, preferred member pricing on every route, access to members-only events, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.',
       },
       {
         q: 'How much does membership cost?',
