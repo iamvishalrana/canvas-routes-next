@@ -390,12 +390,10 @@ export default function Home() {
         <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <Link href="/faq">FAQ</Link>
-        {membershipLive ? (
-          <Link href="/membership" style={{color:"#c5a882",fontWeight:"500"}}>Membership</Link>
-        ) : (
-          <Link href="/membership" style={{color:"#1a1a1a",fontWeight:"500"}}>Join</Link>
-        )}
-        <Link href="/members/login" style={{color:"#3B6B2F",fontWeight:"500"}}>Members Login</Link>
+        <Link href="/membership" style={{color:"#0F1E14",fontWeight:"500"}}>
+          {membershipLive ? 'Membership' : 'Join'}
+        </Link>
+        <Link href="/members/login" style={{color:"#7B2032",fontWeight:"500"}}>Members Login</Link>
       </div>
 
       {/* HERO */}
