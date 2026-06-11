@@ -7,12 +7,12 @@ const TH = { fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase
 const TD = { fontSize: '13px', color: '#1a1a1a', padding: '0.75rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', fontFamily: 'var(--font-inter),sans-serif', verticalAlign: 'middle' }
 
 function fmt(amount) {
-  return '$' + amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CAD'
+  return '$' + (amount ?? 0).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CAD'
 }
 
 function fmtDate(iso) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })
 }
 
 export default function RevenueClient({ totalRevenue, totalPaid, byType, byMonth, recentPayments }) {
@@ -131,7 +131,7 @@ export default function RevenueClient({ totalRevenue, totalPaid, byType, byMonth
               </thead>
               <tbody>
                 {recentPayments.map((p, i) => (
-                  <tr key={i}>
+                  <tr key={`${p.email}-${p.date}-${i}`}>
                     <td style={{ ...TD, fontWeight: '400' }}>{p.name}</td>
                     <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.email}</td>
                     <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.type}</td>

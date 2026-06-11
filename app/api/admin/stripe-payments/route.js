@@ -53,7 +53,7 @@ export async function GET() {
       stripe_payment_status = 'authorized'
     } else if (pi.status === 'canceled') {
       stripe_payment_status = 'rejected'
-    } else if (pi.status === 'requires_payment_method' || pi.status === 'payment_failed') {
+    } else if (pi.status === 'requires_payment_method') {
       stripe_payment_status = 'failed'
     } else {
       stripe_payment_status = pi.status
@@ -64,11 +64,15 @@ export async function GET() {
       stripe_payment_intent_id: pi.id,
       name: pi.metadata.name || '',
       email,
-      stripe_amount_paid:     pi.status === 'succeeded' ? pi.amount_received : pi.amount,
+      // amount_received is 0 for non-succeeded PIs — correct for failed/pending display
+      stripe_amount_paid:     pi.amount_received,
       stripe_amount_refunded: amountRefunded,
       stripe_payment_status,
       stripe_payment_type: pi.metadata.type || '',
-      stripe_paid_at: new Date(pi.created * 1000).toISOString(),
+      // Use actual charge timestamp when available; fall back to PI creation time
+      stripe_paid_at: (charge && typeof charge === 'object' && charge.created)
+        ? new Date(charge.created * 1000).toISOString()
+        : new Date(pi.created * 1000).toISOString(),
     }
   })
 
@@ -116,7 +120,9 @@ export async function GET() {
         })),
         { onConflict: 'email' }
       )
-    } catch {}
+    } catch (syncErr) {
+      console.error('stripe-payments: DB sync failed:', syncErr?.message)
+    }
   }
 
   return Response.json(records)

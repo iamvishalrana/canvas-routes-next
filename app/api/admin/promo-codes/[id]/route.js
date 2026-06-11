@@ -15,13 +15,16 @@ export async function PATCH(request, { params }) {
   if (body.action === 'edit') {
     try {
       const existing = await stripe.promotionCodes.retrieve(id, { expand: ['coupon'] })
-      await stripe.promotionCodes.update(id, { active: false })
+      // Create the new code FIRST — if this fails the old code is still active (no data loss)
       const newCode = await stripe.promotionCodes.create({
         coupon: existing.coupon.id,
         code: existing.code,
         ...(body.maxRedemptions ? { max_redemptions: parseInt(body.maxRedemptions, 10) } : {}),
-        ...(body.expiresAt ? { expires_at: Math.floor(new Date(body.expiresAt).getTime() / 1000) } : {}),
-      })
+        // Use end-of-day UTC so codes don't expire at midnight start-of-day
+        ...(body.expiresAt ? { expires_at: Math.floor(new Date(body.expiresAt).getTime() / 1000) + 86399 } : {}),
+      }, { expand: ['coupon'] })
+      // Only deactivate the old code after the new one is confirmed created
+      await stripe.promotionCodes.update(id, { active: false })
       return Response.json({ oldId: id, newCode })
     } catch (err) {
       captureException(err, { context: 'promo-code-edit', id })

@@ -75,10 +75,10 @@ export default function PaymentsClient({ initialRecords = [] }) {
     try {
       const res = await fetch(`/api/admin/stripe-payments/${r.stripe_payment_intent_id}/refund`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Refund failed.' })); return }
+      if (!res.ok) { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Refund failed.' })); setRefunding(null); return }
       setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'refunded' } : x))
       setRefunding(null)
-    } catch { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })) }
+    } catch { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })); setRefunding(null) }
     finally { setRefundBusy(null) }
   }
 
@@ -90,7 +90,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
       const data = await res.json()
       if (!res.ok) { setReceiptErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Failed.' })); return }
       setReceiptDone(p => ({ ...p, [r.stripe_payment_intent_id]: true }))
-      setTimeout(() => setReceiptDone(p => ({ ...p, [r.stripe_payment_intent_id]: false })), 3000)
+      setTimeout(() => setReceiptDone(p => { const { [r.stripe_payment_intent_id]: _, ...rest } = p; return rest }), 3000)
     } catch { setReceiptErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })) }
     finally { setReceiptBusy(null) }
   }
@@ -99,7 +99,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
     .filter(r => ['paid', 'partially_refunded'].includes(r.stripe_payment_status))
     .reduce((s, r) => s + (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0), 0)
   const paidCount      = records.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).length
-  const otherCount     = records.filter(r => r.stripe_payment_status && !['paid','partially_refunded'].includes(r.stripe_payment_status)).length
+  const otherCount     = records.filter(r => r.stripe_payment_status && !['paid','partially_refunded','failed','rejected'].includes(r.stripe_payment_status)).length
 
   const FAILED_STATUSES = ['failed', 'rejected']
   let filtered = records.filter(r => !FAILED_STATUSES.includes(r.stripe_payment_status))
@@ -129,7 +129,8 @@ export default function PaymentsClient({ initialRecords = [] }) {
 
   function Actions({ r }) {
     const isPaid = r.stripe_payment_status === 'paid'
-    if (!isPaid || r.manual) return null
+    const canReceipt = !r.manual && r.stripe_payment_intent_id
+    if (!canReceipt) return null
 
     if (refunding === r.stripe_payment_intent_id) {
       return (
@@ -163,9 +164,11 @@ export default function PaymentsClient({ initialRecords = [] }) {
         <GhostBtn small onClick={() => setReceiptConfirm(r.stripe_payment_intent_id)}>
           {receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : 'Receipt'}
         </GhostBtn>
-        <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
-          Refund
-        </DangerBtn>
+        {isPaid && (
+          <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
+            Refund
+          </DangerBtn>
+        )}
         {receiptErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.stripe_payment_intent_id]}</div>}
       </div>
     )
@@ -202,8 +205,10 @@ export default function PaymentsClient({ initialRecords = [] }) {
             style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: '155px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
             <option value="">All statuses</option>
             <option value="paid">Paid</option>
+            <option value="partially_refunded">Partially Refunded</option>
             <option value="refunded">Refunded</option>
             <option value="disputed">Disputed</option>
+            <option value="authorized">Authorized</option>
           </select>
           <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -243,8 +248,8 @@ export default function PaymentsClient({ initialRecords = [] }) {
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No payment records found.</div>
       ) : isMobile ? (
         <div>
-          {filtered.map(r => (
-            <div key={r.stripe_payment_intent_id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
+          {filtered.map((r, i) => (
+            <div key={r.stripe_payment_intent_id || r.email || i} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
                 <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{r.name || '—'}</div>
                 <div>
@@ -284,9 +289,9 @@ export default function PaymentsClient({ initialRecords = [] }) {
             </thead>
             <tbody>
               {filtered.map((r, i) => (
-                <tr key={r.stripe_payment_intent_id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                <tr key={r.stripe_payment_intent_id || r.email || i} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={TD}>{r.name || <span style={{ color: '#ccc' }}>—</span>}</td>
-                  <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email}</td>
+                  <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email || <span style={{ color: '#ccc' }}>—</span>}</td>
                   <td style={{ ...TD, fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
                     {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
                     {r.stripe_amount_refunded > 0 && (

@@ -41,8 +41,9 @@ export async function POST(request) {
       coupon: coupon.id,
       code: code.trim().toUpperCase(),
       max_redemptions: maxRedemptions || undefined,
-      expires_at: expiresAt ? Math.floor(new Date(expiresAt).getTime() / 1000) : undefined,
-    })
+      // Use end-of-day UTC so codes don't expire at midnight start-of-day
+      expires_at: expiresAt ? Math.floor(new Date(expiresAt).getTime() / 1000) + 86399 : undefined,
+    }, { expand: ['coupon'] })
 
     return Response.json(promoCode)
   } catch (err) {

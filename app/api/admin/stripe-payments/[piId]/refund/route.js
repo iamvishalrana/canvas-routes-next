@@ -14,7 +14,10 @@ export async function POST(request, { params }) {
   }
 
   try {
-    const refund = await stripe.refunds.create({ payment_intent: piId })
+    const refund = await stripe.refunds.create(
+      { payment_intent: piId },
+      { idempotencyKey: `refund-${piId}` }
+    )
 
     // Best-effort DB sync — ignore errors
     const supabase = createAdminClient()

@@ -28,7 +28,9 @@ export default async function RevenuePage() {
           email:                 pi.metadata.email?.toLowerCase().trim() || '',
           stripe_amount_paid:    pi.amount_received,
           stripe_amount_refunded: amountRefunded,
-          stripe_paid_at:        new Date(pi.created * 1000).toISOString(),
+          stripe_paid_at:        (charge && typeof charge === 'object' && charge.created)
+            ? new Date(charge.created * 1000).toISOString()
+            : new Date(pi.created * 1000).toISOString(),
           stripe_payment_type:   pi.metadata.type || '',
         }
       })

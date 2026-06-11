@@ -41,7 +41,8 @@ export default function PromoCodesClient() {
   const [formErr, setFormErr]     = useState(null)
   const [formOk, setFormOk]       = useState(null)
   const [deactivating, setDeactivating] = useState(null)
-  const [isMobile, setIsMobile]         = useState(false)
+  const [deactivateErr, setDeactivateErr] = useState(null)
+  const [isMobile, setIsMobile]           = useState(false)
   const [editing, setEditing]           = useState(null)  // code id being edited
   const [editForm, setEditForm]         = useState({ maxRedemptions: '', expiresAt: '' })
   const [editSaving, setEditSaving]     = useState(false)
@@ -63,6 +64,13 @@ export default function PromoCodesClient() {
 
   const activeCodes    = codes.filter(c => c.active).length
   const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)
+
+  // Auto-dismiss success banner after 5 seconds
+  useEffect(() => {
+    if (!formOk) return
+    const t = setTimeout(() => setFormOk(null), 5000)
+    return () => clearTimeout(t)
+  }, [formOk])
 
   function setField(key, val) {
     setForm(f => ({ ...f, [key]: val }))
@@ -107,12 +115,16 @@ export default function PromoCodesClient() {
   async function handleDeactivate(id, code) {
     if (!confirm(`Deactivate promo code "${code}"?`)) return
     setDeactivating(id)
+    setDeactivateErr(null)
     try {
-      const res = await fetch(`/api/admin/promo-codes/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      const res = await fetch(`/api/admin/promo-codes/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'deactivate' }) })
       if (res.ok) {
         setCodes(prev => prev.map(c => c.id === id ? { ...c, active: false } : c))
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setDeactivateErr(data.error || 'Failed to deactivate.')
       }
-    } catch {}
+    } catch { setDeactivateErr('Network error.') }
     setDeactivating(null)
   }
 
@@ -195,8 +207,8 @@ export default function PromoCodesClient() {
                 <input
                   style={inp}
                   type="number"
-                  min="0.01"
-                  step="0.01"
+                  min={form.discountType === 'percent' ? '1' : '0.01'}
+                  step={form.discountType === 'percent' ? '1' : '0.01'}
                   value={form.discountValue}
                   onChange={e => setField('discountValue', e.target.value)}
                   placeholder={form.discountType === 'percent' ? '25' : '20.00'}
@@ -236,6 +248,9 @@ export default function PromoCodesClient() {
 
       {formOk && !showForm && (
         <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{formOk}</div>
+      )}
+      {deactivateErr && (
+        <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{deactivateErr}</div>
       )}
 
       {/* Stats */}
