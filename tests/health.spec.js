@@ -114,7 +114,7 @@ test('membership API validation logic works', async ({ request }) => {
 
 test('membership API rejects invalid tier', async ({ request }) => {
   const res = await request.post('/api/membership-waitlist', {
-    data: { name: 'Health Check', email: 'healthcheck@example.com', year: '2020', carMake: 'BMW', tier: 'INVALID_TIER', source: 'Other' },
+    data: { name: 'Health Check', email: 'healthcheck@example.com', year: '2020', carMake: 'BMW', carModel: '330i', tier: 'INVALID_TIER', source: 'Other' },
   })
   expect([400, 429]).toContain(res.status())
   if (res.status() === 400) {
