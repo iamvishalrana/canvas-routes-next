@@ -19,6 +19,18 @@ function AttendedChip({ value }) {
   return <span style={{ fontSize: '10px', color: '#ccc' }}>—</span>
 }
 
+// Mirrors the NAME_ALIASES in the backend APIs so old event name strings
+// (written before a rename) are normalized to the current canonical name.
+const EVENT_NAME_ALIASES = {
+  'into the laurentians — may 31, 2026': 'Into the Laurentians — June 7, 2026',
+  'grand prix weekend cars & coffee — may 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+}
+
+function normalizeEventName(name) {
+  if (!name) return name
+  return EVENT_NAME_ALIASES[name.toLowerCase()] ?? name
+}
+
 // Uses events table type data + exclusion safety net.
 // Only counts registrations with a real registered_at (not injected placeholders).
 function isRoadTripReg(eventName, roadTripFragments) {
@@ -65,12 +77,20 @@ export default function RoadTripsClient() {
     .filter(e => e.type === 'Road Trip')
     .map(e => e.name.toLowerCase())
 
-  // Only real registrations (registered_at !== null excludes injected placeholder rows)
-  const allRows = apps.flatMap(a =>
+  // Build rows: real registrations only (registered_at !== null excludes placeholders),
+  // normalized to current event names, then deduped by (email, event) so a person
+  // who has both an old-name and new-name entry for the same trip only appears once.
+  const rawRows = apps.flatMap(a =>
     (a.registrations || [])
       .filter(r => r.registered_at && isRoadTripReg(r.event, roadTripFragments))
-      .map(r => ({ app: a, reg: r }))
+      .map(r => ({ app: a, reg: { ...r, event: normalizeEventName(r.event) } }))
   )
+  const seen = new Map()
+  for (const row of rawRows) {
+    const key = `${row.app.email}||${row.reg.event}`
+    if (!seen.has(key)) seen.set(key, row)
+  }
+  const allRows = Array.from(seen.values())
 
   const trips = Array.from(new Set(allRows.map(({ reg }) => reg.event))).sort()
 
