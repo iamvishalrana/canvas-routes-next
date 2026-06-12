@@ -767,7 +767,9 @@ export default function MembershipContent() {
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                 <div style={{ width: '28px', height: '0.5px', background: '#c5a882', margin: '0 auto 1.25rem' }} />
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Application received.</div>
-                <p style={{ ...BODY, color: '#555' }}>Your payment has been received. We review every application personally — you&apos;ll hear from us soon.</p>
+                <p style={{ ...BODY, color: '#555', marginBottom: '0.85rem' }}>Your payment has been authorised and held — nothing is charged until your application is reviewed and approved. We go through every application personally.</p>
+                <p style={{ ...BODY, color: '#555', marginBottom: '0.85rem' }}>Keep an eye out for an email from <strong style={{ fontWeight: '500', color: '#1a1a1a' }}>jerry@canvasroutes.com</strong> — that&apos;s where you&apos;ll hear back from us.</p>
+                <p style={{ ...BODY, color: '#888' }}>It can sometimes land in your junk or spam folder — please check there too.</p>
               </div>
             </FadeUp>
           ) : paymentStep && clientSecret ? (
