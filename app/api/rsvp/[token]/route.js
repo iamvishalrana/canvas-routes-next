@@ -1,6 +1,15 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
 
+async function getEventType(supabase, eventName) {
+  const { data } = await supabase
+    .from('events')
+    .select('type')
+    .ilike('name', eventName.trim())
+    .maybeSingle()
+  return data?.type || null
+}
+
 export async function GET(request, { params }) {
   const { token } = await params
   if (!token) return Response.json({ error: 'Invalid link.' }, { status: 400 })
@@ -16,11 +25,14 @@ export async function GET(request, { params }) {
 
   const now = new Date()
   if (new Date(data.expires_at) <= now && !data.confirmed_at) {
-    return Response.json({ error: 'This invitation has expired. Please reply to your invite email and we\'ll sort it out.', expired: true }, { status: 410 })
+    return Response.json({ error: "This invitation has expired. Please reply to your invite email and we'll sort it out.", expired: true }, { status: 410 })
   }
+
+  const eventType = await getEventType(supabase, data.event_name)
 
   return Response.json({
     eventName: data.event_name,
+    eventType,
     applicantName: data.applications?.name || '',
     alreadyConfirmed: !!data.confirmed_at,
     confirmedAt: data.confirmed_at,
@@ -48,10 +60,18 @@ export async function POST(request, { params }) {
   }
   if (tokenRow.confirmed_at) return Response.json({ alreadyConfirmed: true, eventName: tokenRow.event_name })
 
-  const answers = {
-    dietary: (body.dietary || '').trim() || null,
-    passengers: body.passengers ?? null,
-  }
+  const eventType = await getEventType(supabase, tokenRow.event_name)
+  const isRoadTrip = eventType === 'Road Trip'
+
+  // Build answers based on event type
+  const answers = isRoadTrip
+    ? {
+        dietary:    (body.dietary || '').trim() || null,
+        passengers: body.passengers ?? null,
+      }
+    : {
+        bringing_guest: body.bringing_guest ?? null,
+      }
 
   const { error: updateErr } = await supabase
     .from('rsvp_tokens')
@@ -75,10 +95,20 @@ export async function POST(request, { params }) {
   }
 
   // Notify admin
-  const appName = tokenRow.applications?.name || 'Someone'
+  const appName  = tokenRow.applications?.name  || 'Someone'
   const appEmail = tokenRow.applications?.email || ''
   if (process.env.RESEND_API_KEY) {
     try {
+      const answerLines = isRoadTrip
+        ? [
+            answers.dietary    ? `Dietary: ${answers.dietary}` : 'Dietary: None',
+            answers.passengers !== null ? `Passengers: ${answers.passengers === 0 ? 'Solo' : `+${answers.passengers}`}` : null,
+          ]
+        : [
+            answers.bringing_guest !== null
+              ? `Bringing a guest: ${answers.bringing_guest ? 'Yes' : 'No'}`
+              : null,
+          ]
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -88,9 +118,8 @@ export async function POST(request, { params }) {
           subject: `RSVP Confirmed — ${appName} — ${tokenRow.event_name}`,
           text: [
             `${appName} (${appEmail}) confirmed their spot for ${tokenRow.event_name}.`,
-            answers.dietary ? `Dietary: ${answers.dietary}` : null,
-            answers.passengers !== null ? `Passengers: ${answers.passengers}` : null,
-          ].filter(Boolean).join('\n'),
+            ...answerLines.filter(Boolean),
+          ].join('\n'),
         }),
       })
     } catch (err) {

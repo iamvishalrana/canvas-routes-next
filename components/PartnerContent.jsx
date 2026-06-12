@@ -199,7 +199,7 @@ export default function PartnerContent() {
           <Link href="/#contact" style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
           <Link href="/faq" style={{ color: '#555', textDecoration: 'none' }}>FAQ</Link>
         </div>
-        <Link href="/#join" className="nav-join">Join</Link>
+        <div className="nav-cta"><Link href="/membership" className="nav-join">Membership</Link><Link href="/members/login" className="nav-members">Members Login</Link></div>
         <button className="hamburger btn-push" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu"><span /><span /><span /></button>
       </nav>
       <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
@@ -207,8 +207,8 @@ export default function PartnerContent() {
         <Link href="/#events" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Events</Link>
         <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
         <Link href="/faq" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>FAQ</Link>
-        <Link href="/#join" onClick={() => setMenuOpen(false)} style={{ color: '#1a1a1a', fontWeight: '500' }}>Join</Link>
-        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#3B6B2F', fontWeight: '500' }}>Members Login</Link>
+        <Link href="/membership" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Membership</Link>
+        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
       </div>
 
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
