@@ -475,7 +475,8 @@ section[id] {
   animation: adminFadeIn 0.38s ease-out forwards;
 }
 .admin-nav-item {
-  animation: adminFadeIn 0.25s ease-out forwards;
+  opacity: 0;
+  animation: adminFadeIn 0.25s ease-out both;
 }
 .admin-panel-enter {
   animation: adminSlideDown 0.22s ease-out forwards;
@@ -512,10 +513,20 @@ section[id] {
   opacity: 0;
   animation: adminFadeIn 0.28s ease-out forwards;
 }
-.admin-nav-link-active {
-  animation: adminActivePulse 0.4s ease-out forwards;
+.admin-nav-item.admin-nav-link-active {
+  animation: adminFadeIn 0.25s ease-out both, adminActivePulse 0.4s ease-out both;
 }
 .admin-sidebar-footer {
   opacity: 0;
   animation: adminFadeIn 0.3s ease-out 0.55s forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-page-enter, .admin-nav-item, .admin-panel-enter,
+  .admin-row-enter, .admin-sidebar-desktop, .admin-sidebar-logo,
+  .admin-section-header, .admin-nav-item.admin-nav-link-active,
+  .admin-sidebar-footer {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
