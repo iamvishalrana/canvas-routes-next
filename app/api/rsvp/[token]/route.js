@@ -72,6 +72,9 @@ export async function POST(request, { params }) {
       }
     : {
         bringing_guest: body.bringing_guest ?? null,
+        car_paint:      (body.car_paint || '').trim() || null,
+        car_mods:       (body.car_mods  || '').trim() || null,
+        arrival:        body.arrival || null,
       }
 
   const { error: updateErr } = await supabase
@@ -107,9 +110,10 @@ export async function POST(request, { params }) {
             answers.whatsapp !== null ? `WhatsApp group: ${answers.whatsapp ? 'Yes' : 'No'}` : null,
           ]
         : [
-            answers.bringing_guest !== null
-              ? `Bringing a guest: ${answers.bringing_guest ? 'Yes' : 'No'}`
-              : null,
+            answers.bringing_guest !== null ? `Bringing a guest: ${answers.bringing_guest ? 'Yes' : 'No'}` : null,
+            answers.car_paint  ? `Colour: ${answers.car_paint}` : null,
+            answers.car_mods   ? `Mods: ${answers.car_mods}`    : null,
+            answers.arrival    ? `Arrival: ${{ opening: 'Right at opening', first_hour: 'Within first hour', later: 'Later on' }[answers.arrival] || answers.arrival}` : null,
           ]
       await fetch('https://api.resend.com/emails', {
         method: 'POST',

@@ -27,6 +27,9 @@ export default function RsvpPage() {
   const [whatsapp, setWhatsapp] = useState(null) // null | true | false
   // Meet fields
   const [bringingGuest, setBringingGuest] = useState(null) // null | true | false
+  const [carMods, setCarMods]             = useState('')
+  const [carPaint, setCarPaint]           = useState('')
+  const [arrival, setArrival]             = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState(null)
 
@@ -53,7 +56,7 @@ export default function RsvpPage() {
     setSubmitting(true); setErr(null)
     const body = isRoadTrip
       ? { dietary, passengers: parseInt(passengers) || 1, whatsapp }
-      : { bringing_guest: bringingGuest }
+      : { bringing_guest: bringingGuest, car_mods: carMods.trim() || null, car_paint: carPaint.trim() || null, arrival: arrival || null }
     try {
       const res = await fetch(`/api/rsvp/${token}`, {
         method: 'POST',
@@ -147,7 +150,7 @@ export default function RsvpPage() {
               You&apos;ve been invited to <strong style={{ color: '#F5F1EC', fontWeight: '400' }}>{eventName}</strong>.{' '}
               {isRoadTrip
                 ? 'Answer two quick questions and your spot is locked in.'
-                : 'One quick question and you\'re in.'}
+                : 'A few quick questions and you\'re in.'}
             </p>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -228,6 +231,68 @@ export default function RsvpPage() {
                           background: bringingGuest === opt.val ? 'rgba(197,168,130,0.15)' : 'rgba(245,241,236,0.04)',
                           border: `0.5px solid ${bringingGuest === opt.val ? 'rgba(197,168,130,0.6)' : 'rgba(197,168,130,0.2)'}`,
                           color: bringingGuest === opt.val ? '#F5F1EC' : 'rgba(245,241,236,0.5)',
+                          fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif',
+                          cursor: 'pointer', transition: 'all 0.15s',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Meet: car paint */}
+                <div>
+                  <label htmlFor="rsvp-paint" style={LABEL}>
+                    What colour is your car?
+                    <span style={{ color: 'rgba(245,241,236,0.3)', marginLeft: '0.4rem', textTransform: 'none', letterSpacing: 0, fontSize: '10px' }}>optional</span>
+                  </label>
+                  <input
+                    id="rsvp-paint"
+                    type="text"
+                    value={carPaint}
+                    onChange={e => setCarPaint(e.target.value)}
+                    placeholder="Midnight blue, Porsche GT Silver, wrapped matte black…"
+                    maxLength={100}
+                    style={INP}
+                  />
+                </div>
+
+                {/* Meet: mods */}
+                <div>
+                  <label htmlFor="rsvp-mods" style={LABEL}>
+                    Any recent mods you&apos;d like to highlight?
+                    <span style={{ color: 'rgba(245,241,236,0.3)', marginLeft: '0.4rem', textTransform: 'none', letterSpacing: 0, fontSize: '10px' }}>optional</span>
+                  </label>
+                  <input
+                    id="rsvp-mods"
+                    type="text"
+                    value={carMods}
+                    onChange={e => setCarMods(e.target.value)}
+                    placeholder="Exhaust, lowered, new wheels, body kit…"
+                    maxLength={200}
+                    style={INP}
+                  />
+                </div>
+
+                {/* Meet: arrival */}
+                <div>
+                  <div style={LABEL}>When are you planning to arrive?</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {[
+                      { val: 'opening',  label: 'Right at opening' },
+                      { val: 'first_hour', label: 'Within the first hour' },
+                      { val: 'later',    label: 'Later on' },
+                    ].map(opt => (
+                      <button
+                        key={opt.val}
+                        type="button"
+                        onClick={() => setArrival(opt.val)}
+                        style={{
+                          padding: '0.75rem 1rem', textAlign: 'left',
+                          background: arrival === opt.val ? 'rgba(197,168,130,0.15)' : 'rgba(245,241,236,0.04)',
+                          border: `0.5px solid ${arrival === opt.val ? 'rgba(197,168,130,0.6)' : 'rgba(197,168,130,0.2)'}`,
+                          color: arrival === opt.val ? '#F5F1EC' : 'rgba(245,241,236,0.5)',
                           fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif',
                           cursor: 'pointer', transition: 'all 0.15s',
                         }}
