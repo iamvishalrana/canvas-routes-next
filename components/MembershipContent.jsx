@@ -121,7 +121,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
   const paymentIntentId = clientSecret?.split('_secret_')[0]
   const originalAmountCents = Math.round(parseFloat(price) * 100) || 0
   const displayPrice = promoApplied
-    ? (promoApplied.discountedAmount / 100).toFixed(2)
+    ? ((promoApplied.discountedAmount ?? 0) / 100).toFixed(2)
     : price
 
   async function handleApplyPromo() {
@@ -155,9 +155,11 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (res.ok) {
         setPromoApplied(null)
         setPromoError(null)
+      } else {
+        setPromoError('Could not remove code. Please try again.')
       }
     } catch {
-      // Always resolve — caller proceeds regardless
+      setPromoError('Could not remove code. Please try again.')
     } finally {
       setRemovingPromo(false)
     }
@@ -266,7 +268,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             <span style={{ fontSize: '11px', letterSpacing: '0.08em', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>{promoApplied.code}</span>
             <span style={{ fontSize: '11px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>
-              {promoApplied.percentOff ? `— ${promoApplied.percentOff}% off` : `— $${(promoApplied.amountOff / 100).toFixed(2)} off`}
+              {promoApplied.percentOff ? `— ${promoApplied.percentOff}% off` : `— $${((promoApplied.amountOff ?? 0) / 100).toFixed(2)} off`}
             </span>
           </div>
           <button type="button" onClick={handleRemovePromo} disabled={removingPromo}

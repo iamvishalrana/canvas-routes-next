@@ -263,7 +263,7 @@ export async function POST(request) {
     }, { onConflict: 'email' })
   } catch (e) {
     console.error('Failed to store membership application:', e.message)
-    captureException(e, { context: 'membership-waitlist-db-save', email: normalEmail })
+    captureException(e, { context: 'membership-waitlist-db-save', email: normalEmail, name: name?.trim(), tier, paymentIntentId })
   }
 
   // Confirmation email to applicant

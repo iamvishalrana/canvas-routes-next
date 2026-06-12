@@ -73,6 +73,9 @@ export async function POST(request) {
     const promoCode = promoCodes.data[0]
     const coupon = promoCode.coupon
 
+    if (!coupon || typeof coupon !== 'object') {
+      return Response.json({ error: 'Could not validate promo code. Please try again.' }, { status: 500 })
+    }
     if (!coupon.valid) {
       return Response.json({ error: 'This promo code is no longer valid.' }, { status: 400 })
     }
@@ -103,6 +106,7 @@ export async function POST(request) {
 
     // Check minimum purchase requirement
     if (promoCode.restrictions?.minimum_amount && currentAmount < promoCode.restrictions.minimum_amount) {
+      await releaseLock(lockKey)
       return Response.json({ error: `This code requires a minimum purchase of $${(promoCode.restrictions.minimum_amount / 100).toFixed(2)}.` }, { status: 400 })
     }
 
@@ -121,7 +125,7 @@ export async function POST(request) {
       amount: discountedAmount,
       metadata: { ...pi.metadata, promo_code_id: promoCode.id },
     })
-    await releaseLock(lockKey)
+    try { await releaseLock(lockKey) } catch {}
 
     return Response.json({
       discountedAmount,
