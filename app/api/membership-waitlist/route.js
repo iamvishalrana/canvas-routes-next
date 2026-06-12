@@ -8,13 +8,31 @@ function h(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-function confirmHtml(firstName) {
+function confirmHtml(firstName, tier) {
+  const tierLabel = tier === 'Inner Circle' ? 'Inner Circle' : 'Routes Member'
+  const step = (num, title, body) => `
+    <tr>
+      <td style="padding-bottom:20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td width="28" style="width:28px;vertical-align:top;padding-top:2px;">
+              <div style="width:20px;height:20px;background-color:rgba(197,168,130,0.15);border:0.5px solid rgba(197,168,130,0.3);font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#c5a882;text-align:center;line-height:20px;">${num}</div>
+            </td>
+            <td style="vertical-align:top;padding-left:12px;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#F5F1EC;margin-bottom:4px;">${title}</div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:rgba(245,241,236,0.6);line-height:1.65;">${body}</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`
+
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Membership interest received — Canvas Routes</title>
+  <title>Application received — Canvas Routes</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0F1E14;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
@@ -24,7 +42,7 @@ function confirmHtml(firstName) {
 
           <!-- Logo -->
           <tr>
-            <td style="padding-bottom:32px;">
+            <td style="padding-bottom:36px;">
               <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
             </td>
           </tr>
@@ -39,7 +57,7 @@ function confirmHtml(firstName) {
           <!-- Eyebrow -->
           <tr>
             <td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">
-              Canvas Routes &middot; 2026 Season
+              Canvas Routes &middot; ${tierLabel} &middot; 2026 Season
             </td>
           </tr>
 
@@ -50,34 +68,30 @@ function confirmHtml(firstName) {
             </td>
           </tr>
 
-          <!-- Subtext -->
+          <!-- Intro -->
           <tr>
-            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
-              Your membership interest has been received. We review every application personally &mdash; you&apos;ll hear from us before memberships open to the public.
+            <td style="padding-bottom:10px;font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.8;color:rgba(245,241,236,0.8);">
+              Your application for the 2026 Canvas Routes season is in. Your payment has been <strong style="color:#F5F1EC;font-weight:400;">authorised and held</strong> &mdash; your card has not been charged yet.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:36px;font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.8;color:rgba(245,241,236,0.8);">
+              We go through every application personally. Here&apos;s exactly what happens from here.
             </td>
           </tr>
 
-          <!-- Dark card -->
+          <!-- What happens next -->
           <tr>
             <td style="padding-bottom:32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:rgba(197,168,130,0.08);border:0.5px solid rgba(197,168,130,0.2);">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:rgba(197,168,130,0.06);border:0.5px solid rgba(197,168,130,0.18);">
                 <tr>
-                  <td style="padding:24px;">
+                  <td style="padding:28px 24px 8px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:20px;">What happens next</div>
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                      <!-- Season row -->
-                      <tr>
-                        <td style="padding-bottom:16px;">
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Season</div>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">June &mdash; November 2026</div>
-                        </td>
-                      </tr>
-                      <!-- Spots row -->
-                      <tr>
-                        <td>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Spots</div>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">Limited. Every application reviewed personally.</div>
-                        </td>
-                      </tr>
+                      ${step('1', 'We review your application', 'Every application is looked at personally. We keep the community intentional — this typically takes a few days.')}
+                      ${step('2', 'You hear from Jerry directly', 'Expect an email from <a href="mailto:jerry@canvasroutes.com" style="color:#c5a882;text-decoration:none;">jerry@canvasroutes.com</a>. Add that address to your contacts now so it doesn&apos;t get missed.')}
+                      ${step('3', 'If approved — welcome to the community', 'Your payment is captured and you&apos;ll receive everything you need to get started. Your members kit will be ready to collect at your first event.')}
+                      ${step('4', 'If not approved — nothing is charged', 'Your authorisation hold is released in full. No charge, no questions asked.')}
                     </table>
                   </td>
                 </tr>
@@ -85,44 +99,38 @@ function confirmHtml(firstName) {
             </td>
           </tr>
 
-          <!-- Instagram button -->
+          <!-- Spam note -->
           <tr>
-            <td style="padding-bottom:28px;">
+            <td style="padding-bottom:28px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:rgba(245,241,236,0.5);">
+              Our reply will come from <a href="mailto:jerry@canvasroutes.com" style="color:rgba(197,168,130,0.7);text-decoration:none;">jerry@canvasroutes.com</a>. If you don&apos;t hear from us within a few days, please check your <strong style="font-weight:500;color:rgba(245,241,236,0.6);">junk or spam folder</strong> &mdash; it can sometimes end up there.
+            </td>
+          </tr>
+
+          <!-- Referral note (always shown — harmless if no referral) -->
+          <tr>
+            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.55);">
+              If you were referred by an existing Canvas Routes member, that&apos;s noted and taken into account during review.
+            </td>
+          </tr>
+
+          <!-- Instagram -->
+          <tr>
+            <td style="padding-bottom:36px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="border:1px solid rgba(197,168,130,0.4);">
-                    <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;text-decoration:none;">&#64;canvasroutes &rarr;</a>
+                  <td style="border:1px solid rgba(197,168,130,0.35);">
+                    <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;text-decoration:none;">Follow &#64;canvasroutes &rarr;</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Refund note -->
-          <tr>
-            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
-              Should your application not be accepted following our review, your payment will be refunded in full. No questions asked.
-            </td>
-          </tr>
-
-          <!-- Referral note -->
-          <tr>
-            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
-              If you were referred by an existing Canvas Routes member, this will be taken into account and prioritized during our review.
-            </td>
-          </tr>
-
-          <!-- Contact note -->
-          <tr>
-            <td style="padding-bottom:40px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:rgba(245,241,236,0.4);">
-              To make sure our reply reaches you, add <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.4);">info@canvasroutes.com</a> to your contacts.
-            </td>
-          </tr>
-
           <!-- Footer -->
           <tr>
-            <td style="padding-top:20px;border-top:1px solid rgba(197,168,130,0.15);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.35);">
-              &copy; 2026 Canvas Routes. Montreal, QC.
+            <td style="padding-top:20px;border-top:1px solid rgba(197,168,130,0.12);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);line-height:1.8;">
+              &copy; 2026 Canvas Routes. Montreal, QC.<br/>
+              <a href="https://canvasroutes.com" style="color:rgba(197,168,130,0.4);text-decoration:none;">canvasroutes.com</a>
             </td>
           </tr>
 
@@ -267,8 +275,8 @@ export async function POST(request) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: email,
         reply_to: 'info@canvasroutes.com',
-        subject: 'Membership interest received — Canvas Routes',
-        html: confirmHtml(firstName),
+        subject: `Your Canvas Routes application is in, ${firstName}`,
+        html: confirmHtml(firstName, tier),
         text: `We've got you, ${name.trim().split(' ')[0]}.\n\nYour membership interest has been received. We'll be in touch once memberships open for the 2026 season.\n\nSpots are limited — we'll reach out before we open to the public.\n\n© 2026 Canvas Routes. Montreal, QC.`,
       }),
     })
