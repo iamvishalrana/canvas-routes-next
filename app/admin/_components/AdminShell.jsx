@@ -258,16 +258,17 @@ function NavContent({ pathname, onNavClick }) {
                 </button>
               )}
 
-              {!isCollapsed && section.items.map(item => {
+              {!isCollapsed && section.items.map((item, idx) => {
                 const active = pathname === item.href || pathname.startsWith(item.href + '/')
                 return (
-                  <Link key={item.href} href={item.href} onClick={onNavClick} style={{
+                  <Link key={item.href} href={item.href} onClick={onNavClick} className="admin-nav-item" style={{
                     display: 'block', padding: '0.55rem 1.25rem',
                     fontSize: '13px', textDecoration: 'none', transition: 'all 0.15s',
                     color: active ? '#c5a882' : 'rgba(245,241,236,0.55)',
                     background: active ? 'rgba(197,168,130,0.08)' : 'transparent',
                     borderLeft: active ? '2px solid #c5a882' : '2px solid transparent',
                     letterSpacing: '0.01em',
+                    animationDelay: `${idx * 0.04}s`,
                   }}>
                     {item.label}
                   </Link>
@@ -314,9 +315,14 @@ export default function AdminShell({ children }) {
         <span style={{ display: 'block', width: '18px', height: '1.5px', background: '#c5a882' }} />
       </button>
 
-      {isOpen && (
-        <div onClick={() => setIsOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300 }} />
-      )}
+      <div
+        onClick={() => setIsOpen(false)}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300,
+          opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
+          transition: 'opacity 0.25s',
+        }}
+      />
 
       <aside style={{
         position: 'fixed', top: 0, left: 0, bottom: 0, width: '260px',
@@ -353,7 +359,9 @@ export default function AdminShell({ children }) {
       </aside>
 
       <main className="admin-main" style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
-        {children}
+        <div key={pathname} className="admin-page-enter">
+          {children}
+        </div>
       </main>
     </div>
   )

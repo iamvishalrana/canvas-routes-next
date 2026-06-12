@@ -444,3 +444,15 @@ section[id] {
   .admin-hamburger { display: flex !important; }
   .admin-main { padding-top: 3.75rem; }
 }
+
+/* Admin animations */
+@keyframes adminFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.admin-page-enter {
+  animation: adminFadeIn 0.2s ease forwards;
+}
+.admin-nav-item {
+  animation: adminFadeIn 0.15s ease forwards;
+}

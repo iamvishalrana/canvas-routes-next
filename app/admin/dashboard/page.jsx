@@ -59,8 +59,8 @@ export default async function DashboardPage() {
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        {stats.map(s => (
-          <Link key={s.label} href={s.href} style={{ ...CARD, padding: '1.25rem 1.5rem', textDecoration: 'none', display: 'block' }}>
+        {stats.map((s, i) => (
+          <Link key={s.label} href={s.href} style={{ ...CARD, padding: '1.25rem 1.5rem', textDecoration: 'none', display: 'block', opacity: 0, animation: 'adminFadeIn 0.25s ease forwards', animationDelay: `${i * 0.07}s` }}>
             <div style={{ fontSize: '2.2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.label}</div>
           </Link>
