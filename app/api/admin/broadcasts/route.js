@@ -4,6 +4,19 @@ import { checkRateLimit } from '../../../../lib/rateLimit'
 
 const MAX_RECIPIENTS = 200
 const BATCH_SIZE = 10
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
+
+function buildUnsubscribeFooter(email) {
+  const url = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(email)}`
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:32px;">
+  <tr><td style="padding-top:16px;border-top:1px solid rgba(0,0,0,0.08);text-align:center;">
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaa;margin:0;">
+      <a href="${url}" style="color:#bbb;text-decoration:underline;">Unsubscribe</a>
+    </p>
+  </td></tr>
+</table>`
+}
 
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -99,6 +112,17 @@ export async function POST(request) {
     return Response.json({ error: err.message }, { status: 500 })
   }
 
+  // Filter out anyone who has unsubscribed
+  try {
+    const { data: unsubs } = await supabase
+      .from('unsubscribed_emails')
+      .select('email')
+    if (unsubs?.length) {
+      const unsubSet = new Set(unsubs.map(u => u.email.toLowerCase()))
+      recipients = recipients.filter(r => !unsubSet.has(r.email.toLowerCase()))
+    }
+  } catch {}
+
   const totalRecipients = recipients.length
   const truncated = totalRecipients > MAX_RECIPIENTS
   recipients = recipients.slice(0, MAX_RECIPIENTS)
@@ -121,7 +145,7 @@ export async function POST(request) {
             from: 'Canvas Routes <info@canvasroutes.com>',
             to: recipient.email,
             subject: subject.trim().replace(/\{\{name\}\}/gi, recipient.name || 'there'),
-            html: html.replace(/\{\{name\}\}/gi, recipient.name || 'there'),
+            html: html.replace(/\{\{name\}\}/gi, recipient.name || 'there') + buildUnsubscribeFooter(recipient.email),
           }),
         })
         return res.ok ? 'sent' : 'failed'
