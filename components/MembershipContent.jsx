@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import SiteFooter from './SiteFooter'
@@ -29,11 +29,54 @@ const BODY  = { fontSize: '14px', lineHeight: '1.85', fontFamily: 'var(--font-in
 const SMALL = { fontSize: '13px', letterSpacing: '0.02em', fontFamily: 'var(--font-inter),sans-serif' }
 
 function FadeUp({ children, delay = 0, style, className }) {
-  return <div style={style} className={className}>{children}</div>
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); obs.disconnect() }
+    }, { threshold: 0.1 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return (
+    <div ref={ref} className={className} style={{
+      ...style,
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(28px)',
+      transition: `opacity 0.75s ease ${delay}s, transform 0.75s ease ${delay}s`,
+    }}>
+      {children}
+    </div>
+  )
 }
 
 function StaggerGrid({ children, style, className }) {
-  return <div style={style} className={className}>{children}</div>
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); obs.disconnect() }
+    }, { threshold: 0.08 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return (
+    <div ref={ref} style={style} className={className}>
+      {Array.isArray(children)
+        ? children.map((child, i) => (
+            <div key={i} style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(22px)',
+              transition: `opacity 0.7s ease ${i * 0.12}s, transform 0.7s ease ${i * 0.12}s`,
+            }}>{child}</div>
+          ))
+        : children}
+    </div>
+  )
 }
 
 const TIER1 = [
@@ -73,9 +116,10 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
   const [promoApplied, setPromoApplied] = useState(null)
   const [promoError, setPromoError] = useState(null)
   const [applyingPromo, setApplyingPromo] = useState(false)
+  const [removingPromo, setRemovingPromo] = useState(false)
 
   const paymentIntentId = clientSecret?.split('_secret_')[0]
-  const originalAmountCents = parseInt(price) * 100
+  const originalAmountCents = Math.round(parseFloat(price) * 100) || 0
   const displayPrice = promoApplied
     ? (promoApplied.discountedAmount / 100).toFixed(2)
     : price
@@ -101,6 +145,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
   }
 
   async function handleRemovePromo() {
+    setRemovingPromo(true)
     try {
       const res = await fetch('/api/stripe/apply-promo', {
         method: 'POST',
@@ -111,9 +156,10 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
         setPromoApplied(null)
         setPromoError(null)
       }
-      // Always resolve — caller proceeds regardless
     } catch {
       // Always resolve — caller proceeds regardless
+    } finally {
+      setRemovingPromo(false)
     }
   }
 
@@ -166,6 +212,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       captureException(waitlistErr)
     }
 
+    payingRef.current = false
     onSuccess()
   }
 
@@ -222,11 +269,11 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
               {promoApplied.percentOff ? `— ${promoApplied.percentOff}% off` : `— $${(promoApplied.amountOff / 100).toFixed(2)} off`}
             </span>
           </div>
-          <button type="button" onClick={handleRemovePromo}
-            style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.2rem', transition: 'color 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#555'}
+          <button type="button" onClick={handleRemovePromo} disabled={removingPromo}
+            style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '11px', cursor: removingPromo ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.2rem', transition: 'color 0.15s', opacity: removingPromo ? 0.5 : 1 }}
+            onMouseEnter={e => { if (!removingPromo) e.currentTarget.style.color = '#555' }}
             onMouseLeave={e => e.currentTarget.style.color = '#aaa'}>
-            Remove
+            {removingPromo ? 'Removing…' : 'Remove'}
           </button>
         </div>
       ) : (
@@ -286,9 +333,11 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
         </span>
       </div>
 
-      <button type="button" onClick={async () => { if (promoApplied) await handleRemovePromo(); onBack() }}
-        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.3)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem', transition: 'color 0.15s' }}
-        onMouseEnter={e => e.currentTarget.style.color = 'rgba(0,0,0,0.6)'}
+      <button type="button"
+        disabled={paying || removingPromo}
+        onClick={async () => { if (promoApplied) await handleRemovePromo(); onBack() }}
+        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.3)', fontSize: '11px', letterSpacing: '0.1em', cursor: paying || removingPromo ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem', transition: 'color 0.15s', opacity: paying || removingPromo ? 0.4 : 1 }}
+        onMouseEnter={e => { if (!paying && !removingPromo) e.currentTarget.style.color = 'rgba(0,0,0,0.6)' }}
         onMouseLeave={e => e.currentTarget.style.color = 'rgba(0,0,0,0.3)'}>
         ← Back to application
       </button>
@@ -413,9 +462,10 @@ export default function MembershipContent() {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')
       if (!data.clientSecret) throw new Error('Payment could not be initialised. Please try again.')
-      setClientSecret(data.clientSecret)
+      setClientSecret(data.clientSecret)  // set before paymentStep so Elements renders with a valid secret
       setPaymentStep(true)
       setStatus(null)
+      submittingRef.current = false  // allow re-entry if user goes back
       // Scroll to top of payment form on step change
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50)
     } catch (err) {
@@ -489,21 +539,21 @@ export default function MembershipContent() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
 
         <div style={{ position: 'relative', zIndex: 1, padding: 'clamp(140px,18vw,200px) 2rem 5rem', maxWidth: '800px' }}>
-          <div style={{ fontSize: '13px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', color: '#c5a882', marginBottom: '1.75rem', textShadow: '0 1px 10px rgba(0,0,0,0.8)' }}>
+          <div style={{ fontSize: '13px', letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', color: '#c5a882', marginBottom: '1.75rem', textShadow: '0 1px 10px rgba(0,0,0,0.8)', opacity: 0, animation: 'memHeroIn 0.9s ease-out 0.2s forwards' }}>
             Canvas Routes · Membership · Season 2026
           </div>
-          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.01em', textShadow: '0 2px 20px rgba(0,0,0,0.85)' }}>
+          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.01em', textShadow: '0 2px 20px rgba(0,0,0,0.85)', opacity: 0, animation: 'memHeroIn 1s ease-out 0.45s forwards' }}>
             For those who chose<br />their car on purpose.
           </h1>
-          <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem' }} />
-          <div style={{ ...LABEL, color: '#c5a882', letterSpacing: '0.28em', textShadow: '0 1px 12px rgba(0,0,0,1), 0 0 24px rgba(0,0,0,0.9)' }}>
+          <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.5rem', opacity: 0, animation: 'memHeroIn 0.8s ease-out 0.8s forwards' }} />
+          <div style={{ ...LABEL, color: '#c5a882', letterSpacing: '0.28em', textShadow: '0 1px 12px rgba(0,0,0,1), 0 0 24px rgba(0,0,0,0.9)', opacity: 0, animation: 'memHeroIn 0.8s ease-out 1s forwards' }}>
             Season 2026 &nbsp;·&nbsp; Limited spots &nbsp;·&nbsp; Two tiers
           </div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
+        <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1, opacity: 0, animation: 'memHeroIn 0.8s ease-out 1.3s forwards' }}>
           <span style={{ ...LABEL, color: 'rgba(197,168,130,0.55)' }}>Scroll</span>
-          <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.55)" strokeWidth="1.2" strokeLinecap="round">
+          <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="rgba(197,168,130,0.55)" strokeWidth="1.2" strokeLinecap="round" style={{ animation: 'bounce-arrow 1.8s ease-in-out 2.5s infinite' }}>
             <line x1="6" y1="0" x2="6" y2="12"/><polyline points="2 8 6 12 10 8"/>
           </svg>
         </div>
