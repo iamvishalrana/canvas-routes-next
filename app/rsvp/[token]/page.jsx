@@ -22,7 +22,9 @@ export default function RsvpPage() {
   const [applicantName, setApplicantName]   = useState('')
   // Road trip fields
   const [dietary, setDietary]       = useState('')
-  const [passengers, setPassengers] = useState('0')
+  const [passengers, setPassengers] = useState('1')
+  // Road trip extra
+  const [whatsapp, setWhatsapp] = useState(null) // null | true | false
   // Meet fields
   const [bringingGuest, setBringingGuest] = useState(null) // null | true | false
   const [submitting, setSubmitting] = useState(false)
@@ -50,7 +52,7 @@ export default function RsvpPage() {
     e.preventDefault()
     setSubmitting(true); setErr(null)
     const body = isRoadTrip
-      ? { dietary, passengers: parseInt(passengers) || 0 }
+      ? { dietary, passengers: parseInt(passengers) || 1, whatsapp }
       : { bringing_guest: bringingGuest }
     try {
       const res = await fetch(`/api/rsvp/${token}`, {
@@ -154,7 +156,7 @@ export default function RsvpPage() {
                 {/* Road trip: dietary + passengers */}
                 <div>
                   <label htmlFor="rsvp-dietary" style={LABEL}>
-                    Any dietary restrictions or allergies for the lunch stop?
+                    Any dietary restrictions or allergies?
                     <span style={{ color: 'rgba(245,241,236,0.3)', marginLeft: '0.4rem', textTransform: 'none', letterSpacing: 0, fontSize: '10px' }}>optional</span>
                   </label>
                   <input
@@ -169,7 +171,7 @@ export default function RsvpPage() {
                 </div>
                 <div>
                   <label htmlFor="rsvp-passengers" style={LABEL}>
-                    How many passengers will you be bringing?
+                    How many people in your car? (including yourself)
                   </label>
                   <div style={{ position: 'relative' }}>
                     <select
@@ -178,13 +180,38 @@ export default function RsvpPage() {
                       onChange={e => setPassengers(e.target.value)}
                       style={{ ...INP, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', paddingRight: '2rem' }}
                     >
-                      <option value="0" style={{ background: '#0F1E14' }}>Just me</option>
-                      <option value="1" style={{ background: '#0F1E14' }}>1 passenger</option>
-                      <option value="2" style={{ background: '#0F1E14' }}>2 passengers</option>
-                      <option value="3" style={{ background: '#0F1E14' }}>3+ passengers</option>
+                      <option value="1" style={{ background: '#0F1E14' }}>1 — just me</option>
+                      <option value="2" style={{ background: '#0F1E14' }}>2 people</option>
+                      <option value="3" style={{ background: '#0F1E14' }}>3 people</option>
+                      <option value="4" style={{ background: '#0F1E14' }}>4+ people</option>
                     </select>
                     <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.6)" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
+                </div>
+                <div>
+                  <div style={LABEL}>Can we add you to a WhatsApp group with all participants?</div>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    {[{ val: true, label: 'Yes, add me' }, { val: false, label: 'No thanks' }].map(opt => (
+                      <button
+                        key={String(opt.val)}
+                        type="button"
+                        onClick={() => setWhatsapp(opt.val)}
+                        style={{
+                          flex: 1, padding: '0.75rem 1rem',
+                          background: whatsapp === opt.val ? 'rgba(197,168,130,0.15)' : 'rgba(245,241,236,0.04)',
+                          border: `0.5px solid ${whatsapp === opt.val ? 'rgba(197,168,130,0.6)' : 'rgba(197,168,130,0.2)'}`,
+                          color: whatsapp === opt.val ? '#F5F1EC' : 'rgba(245,241,236,0.5)',
+                          fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif',
+                          cursor: 'pointer', transition: 'all 0.15s',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', margin: '0.5rem 0 0' }}>
+                    We&apos;ll use the phone number from your application.
+                  </p>
                 </div>
               </> : <>
                 {/* Meet: bringing a guest? */}
@@ -216,12 +243,12 @@ export default function RsvpPage() {
 
               <button
                 type="submit"
-                disabled={submitting || (!isRoadTrip && bringingGuest === null)}
+                disabled={submitting || (!isRoadTrip && bringingGuest === null) || (isRoadTrip && whatsapp === null)}
                 style={{
                   padding: '1rem', border: 'none',
-                  background: (submitting || (!isRoadTrip && bringingGuest === null)) ? 'rgba(197,168,130,0.5)' : '#c5a882',
+                  background: (submitting || (!isRoadTrip && bringingGuest === null) || (isRoadTrip && whatsapp === null)) ? 'rgba(197,168,130,0.5)' : '#c5a882',
                   color: '#0F1E14', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
-                  fontWeight: '600', cursor: (submitting || (!isRoadTrip && bringingGuest === null)) ? 'not-allowed' : 'pointer',
+                  fontWeight: '600', cursor: (submitting || (!isRoadTrip && bringingGuest === null) || (isRoadTrip && whatsapp === null)) ? 'not-allowed' : 'pointer',
                   fontFamily: 'var(--font-inter),sans-serif', marginTop: '0.5rem', transition: 'background 0.2s',
                 }}
               >

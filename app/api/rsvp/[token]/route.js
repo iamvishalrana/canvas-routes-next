@@ -68,6 +68,7 @@ export async function POST(request, { params }) {
     ? {
         dietary:    (body.dietary || '').trim() || null,
         passengers: body.passengers ?? null,
+        whatsapp:   body.whatsapp ?? null,
       }
     : {
         bringing_guest: body.bringing_guest ?? null,
@@ -102,7 +103,8 @@ export async function POST(request, { params }) {
       const answerLines = isRoadTrip
         ? [
             answers.dietary    ? `Dietary: ${answers.dietary}` : 'Dietary: None',
-            answers.passengers !== null ? `Passengers: ${answers.passengers === 0 ? 'Solo' : `+${answers.passengers}`}` : null,
+            answers.passengers !== null ? `People in car: ${answers.passengers}` : null,
+            answers.whatsapp !== null ? `WhatsApp group: ${answers.whatsapp ? 'Yes' : 'No'}` : null,
           ]
         : [
             answers.bringing_guest !== null
