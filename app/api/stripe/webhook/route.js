@@ -5,6 +5,45 @@ import { captureException, captureMessage } from '../../../../lib/sentry.js'
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
 
+function buildRoadTripConfirmHtml(firstName, eventLabel, amount) {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background-color:#0F1E14;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
+  <tr><td align="center" style="padding:48px 16px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
+      <tr><td style="padding-bottom:32px;"><img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;" /></td></tr>
+      <tr><td style="padding-bottom:28px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr></table></td></tr>
+      <tr><td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">Canvas Routes &middot; Road Trip</td></tr>
+      <tr><td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">You&apos;re confirmed, ${firstName}.</td></tr>
+      <tr><td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.8;color:rgba(245,241,236,0.8);">Your payment for <strong style="font-weight:400;color:#F5F1EC;">${eventLabel}</strong> has been received. You&apos;re on the list.</td></tr>
+      <tr><td style="padding-bottom:32px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:rgba(197,168,130,0.06);border:0.5px solid rgba(197,168,130,0.18);">
+          <tr><td style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr><td style="padding-bottom:16px;border-bottom:1px solid rgba(197,168,130,0.1);">
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Event</div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">${eventLabel}</div>
+              </td></tr>
+              <tr><td style="padding-top:16px;">
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Payment</div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">${amount} &mdash; Confirmed</div>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding-bottom:28px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:rgba(245,241,236,0.55);">You&apos;ll receive a full itinerary, meeting point, and everything you need closer to the date. In the meantime, keep an eye on <a href="https://www.instagram.com/canvasroutes" style="color:rgba(197,168,130,0.7);text-decoration:none;">@canvasroutes</a> for updates.</td></tr>
+      <tr><td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.55);">Any questions &mdash; reply directly to this email or reach out at <a href="mailto:jerry@canvasroutes.com" style="color:rgba(197,168,130,0.7);text-decoration:none;">jerry@canvasroutes.com</a>.</td></tr>
+      <tr><td style="padding-bottom:28px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border:1px solid rgba(197,168,130,0.35);"><a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;text-decoration:none;">Follow &#64;canvasroutes &rarr;</a></td></tr></table></td></tr>
+      <tr><td style="padding-top:20px;border-top:1px solid rgba(197,168,130,0.12);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);line-height:1.8;">&copy; 2026 Canvas Routes. Montreal, QC.<br/><a href="https://canvasroutes.com" style="color:rgba(197,168,130,0.4);text-decoration:none;">canvasroutes.com</a></td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
+}
+
 export async function POST(request) {
   if (!stripe) {
     return new Response('Payments not configured.', { status: 503 })
@@ -77,9 +116,30 @@ export async function POST(request) {
             .eq('stripe_payment_intent_id', pi.id)
             .is('stripe_paid_at', null)
           console.log(`Membership payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
-        } else {
-          // Road trip or other — log only, do not touch applications table
-          console.log(`Payment confirmed (non-membership): ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
+        } else if (type?.startsWith('road_trip_')) {
+          // Road trip payment confirmed — send confirmation email
+          const amountFormatted = `$${(amountPaid / 100).toFixed(2)} CAD`
+          const firstName = (name || '').trim().split(' ')[0] || 'there'
+          const eventLabel = eventName || 'Canvas Routes Road Trip'
+          console.log(`Road trip payment confirmed: ${type} — ${normalEmail} — ${amountFormatted}`)
+          if (process.env.RESEND_API_KEY && normalEmail) {
+            try {
+              await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                body: JSON.stringify({
+                  from: 'Canvas Routes <info@canvasroutes.com>',
+                  to: normalEmail,
+                  reply_to: 'jerry@canvasroutes.com',
+                  subject: `Payment confirmed — ${eventLabel}`,
+                  html: buildRoadTripConfirmHtml(firstName, eventLabel, amountFormatted),
+                  text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. In the meantime, follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+                }),
+              })
+            } catch (emailErr) {
+              captureException(emailErr, { context: 'road-trip-payment-confirm-email', email: normalEmail })
+            }
+          }
         }
         break
       }
