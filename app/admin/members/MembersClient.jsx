@@ -221,7 +221,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
 
   // Sync when server re-renders with fresh paginated data after router.refresh()
   useEffect(() => { setMembers(initialMembers) }, [initialMembers])
-  useRealtimeSync('members', router.refresh)
+  useRealtimeSync('members', () => router.refresh())
   const [loading, setLoading] = useState(false)
   const [forbidden, setForbidden] = useState(false)
   const [editing, setEditing] = useState(null)
