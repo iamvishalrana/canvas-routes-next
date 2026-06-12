@@ -462,6 +462,14 @@ section[id] {
   0%   { background-position: -400px 0; }
   100% { background-position:  400px 0; }
 }
+@keyframes adminSidebarIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes adminActivePulse {
+  0%   { background: rgba(197,168,130,0.18); }
+  100% { background: rgba(197,168,130,0.08); }
+}
 
 .admin-page-enter {
   animation: adminFadeIn 0.38s ease-out forwards;
@@ -492,4 +500,22 @@ section[id] {
   background-size: 400px 100%;
   animation: adminShimmer 1.4s ease-in-out infinite;
   border-radius: 2px;
+}
+.admin-sidebar-desktop {
+  animation: adminSidebarIn 0.4s ease-out forwards;
+}
+.admin-sidebar-logo {
+  opacity: 0;
+  animation: adminFadeIn 0.35s ease-out 0.15s forwards;
+}
+.admin-section-header {
+  opacity: 0;
+  animation: adminFadeIn 0.28s ease-out forwards;
+}
+.admin-nav-link-active {
+  animation: adminActivePulse 0.4s ease-out forwards;
+}
+.admin-sidebar-footer {
+  opacity: 0;
+  animation: adminFadeIn 0.3s ease-out 0.55s forwards;
 }
