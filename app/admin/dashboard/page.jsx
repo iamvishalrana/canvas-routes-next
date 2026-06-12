@@ -60,7 +60,7 @@ export default async function DashboardPage() {
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {stats.map((s, i) => (
-          <Link key={s.label} href={s.href} style={{ ...CARD, padding: '1.25rem 1.5rem', textDecoration: 'none', display: 'block', opacity: 0, animation: 'adminFadeIn 0.25s ease forwards', animationDelay: `${i * 0.07}s` }}>
+          <Link key={s.label} href={s.href} style={{ ...CARD, padding: '1.25rem 1.5rem', textDecoration: 'none', display: 'block', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: `${i * 0.09}s` }}>
             <div style={{ fontSize: '2.2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.label}</div>
           </Link>
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {/* Recent sign-ups */}
-        <div style={{ ...CARD, padding: '1.5rem' }}>
+        <div style={{ ...CARD, padding: '1.5rem', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: '0.38s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Recent Sign-Ups</div>
             <Link href="/admin/members" style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>View all →</Link>
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Upcoming events */}
-        <div style={{ ...CARD, padding: '1.5rem' }}>
+        <div style={{ ...CARD, padding: '1.5rem', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: '0.47s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Upcoming Events</div>
             <Link href="/admin/events" style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>Manage →</Link>

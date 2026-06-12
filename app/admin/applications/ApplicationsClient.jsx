@@ -485,7 +485,7 @@ export default function ApplicationsClient() {
           )}
 
           {filtered.map((a, idx) => (
-            <div key={a.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+            <div key={a.id} className="admin-row-enter" style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               {(() => {
                 const isGreyed = a.is_contact && !a.reregistered_at
@@ -619,7 +619,7 @@ export default function ApplicationsClient() {
 
               {/* Expanded panel */}
               {expanded === a.id && (
-                <div style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
+                <div className="admin-panel-enter" style={{ padding: '1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '2px solid #c5a882' }}>
 
                   {editingApp === a.id ? (
                     /* ── Edit mode ── */

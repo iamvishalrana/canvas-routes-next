@@ -624,7 +624,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
           )}
 
           {filtered.map((m, idx) => (
-            <div key={m.id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+            <div key={m.id} className="admin-row-enter" style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {editing === m.id ? (
                 <div style={{ padding: '1.5rem 1.25rem', background: 'rgba(197,168,130,0.05)', borderLeft: '2px solid #c5a882' }}>
 
@@ -874,8 +874,10 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                   )}
 
                   {expanded === m.id && (
-                    <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile}
-                      editingNote={editingNote} noteValue={noteValue} setEditingNote={setEditingNote} setNoteValue={setNoteValue} onSaveNote={saveMemberNote} />
+                    <div className="admin-panel-enter">
+                      <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile}
+                        editingNote={editingNote} noteValue={noteValue} setEditingNote={setEditingNote} setNoteValue={setNoteValue} onSaveNote={saveMemberNote} />
+                    </div>
                   )}
                   {deleteMemberConfirm === m.id && (
                     <div style={{ padding: '0.75rem 1.25rem', background: 'rgba(123,32,50,0.04)', borderTop: '0.5px solid rgba(123,32,50,0.1)' }}>
