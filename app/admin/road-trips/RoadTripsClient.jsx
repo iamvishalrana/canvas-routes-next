@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, CopyBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
@@ -59,7 +60,7 @@ export default function RoadTripsClient() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  useEffect(() => {
+  const load = useCallback(() => {
     Promise.all([
       fetch('/api/admin/applications').then(r => r.ok ? r.json() : []),
       fetch('/api/admin/events').then(r => r.ok ? r.json() : []),
@@ -71,10 +72,13 @@ export default function RoadTripsClient() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+  useEffect(() => { load() }, [load])
+  useRealtimeSync(['applications', 'events'], load)
 
   // Names of events typed as Road Trip in the events table (lowercase for matching)
   const roadTripFragments = events
     .filter(e => e.type === 'Road Trip')
+    .filter(e => e.name)
     .map(e => e.name.toLowerCase())
 
   // Build rows: real registrations only (registered_at !== null excludes placeholders),

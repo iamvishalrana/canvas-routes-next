@@ -1,5 +1,6 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, L, PrimaryBtn, DangerBtn, Err, Success } from '../_components/shared'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
@@ -57,13 +58,15 @@ export default function PromoCodesClient() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  useEffect(() => {
+  const load = useCallback(() => {
     fetch('/api/admin/promo-codes')
       .then(r => r.ok ? r.json() : [])
       .then(data => setCodes(Array.isArray(data) ? data : []))
       .catch(() => setCodes([]))
       .finally(() => setLoading(false))
   }, [])
+  useEffect(() => { load() }, [load])
+  useRealtimeSync('promo_codes', load)
 
   const activeCodes    = codes.filter(c => c.active).length
   const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)

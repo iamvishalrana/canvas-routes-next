@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   STATUS_OPTIONS, CAR_YEARS, MONTHS, DOB_YEARS, EMPTY_CAR,
   CANONICAL_EVENTS, MEMBER_ATTENDANCE_KEYS,
@@ -220,6 +221,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
 
   // Sync when server re-renders with fresh paginated data after router.refresh()
   useEffect(() => { setMembers(initialMembers) }, [initialMembers])
+  useRealtimeSync('members', router.refresh)
   const [loading, setLoading] = useState(false)
   const [forbidden, setForbidden] = useState(false)
   const [editing, setEditing] = useState(null)

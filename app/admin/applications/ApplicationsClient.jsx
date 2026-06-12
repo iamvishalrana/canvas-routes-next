@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
@@ -95,6 +96,7 @@ export default function ApplicationsClient() {
   }, [])
 
   useEffect(() => { loadApps() }, [loadApps])
+  useRealtimeSync('applications', loadApps)
 
   useEffect(() => {
     if (loading || seenInitRef.current) return

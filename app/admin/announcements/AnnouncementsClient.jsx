@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 
 export default function AnnouncementsClient() {
   const [items, setItems] = useState([])
@@ -28,48 +29,57 @@ export default function AnnouncementsClient() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useRealtimeSync('announcements', load)
 
   async function post(e) {
     e.preventDefault()
     if (!form.title.trim() || !form.content.trim()) { setPostError('Title and content required.'); return }
     setPosting(true); setPostError(null)
-    const res = await fetch('/api/admin/announcements', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
-    })
-    const data = await res.json()
-    setPosting(false)
-    if (!res.ok) { setPostError(data.error || 'Failed.'); return }
-    setForm({ title: '', content: '', published: false, audience: 'all' })
-    load()
+    try {
+      const res = await fetch('/api/admin/announcements', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setPostError(data.error || 'Failed.'); return }
+      setForm({ title: '', content: '', published: false, audience: 'all' })
+      load()
+    } catch { setPostError('Network error.') }
+    finally { setPosting(false) }
   }
 
   async function togglePublish(item) {
     if (publishing === item.id) return
     setPublishing(item.id)
-    await fetch(`/api/admin/announcements/${item.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: !item.published }),
-    })
-    setPublishing(null)
-    load()
+    try {
+      const res = await fetch(`/api/admin/announcements/${item.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: !item.published }),
+      })
+      if (res.ok) load()
+    } catch {}
+    finally { setPublishing(null) }
   }
 
   async function saveEdit() {
     setSaving(true); setSaveError(null)
-    const res = await fetch(`/api/admin/announcements/${editing}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm),
-    })
-    setSaving(false)
-    if (!res.ok) { const d = await res.json(); setSaveError(d.error || 'Failed to save.'); return }
-    setEditing(null)
-    load()
+    try {
+      const res = await fetch(`/api/admin/announcements/${editing}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm),
+      })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setSaveError(d.error || 'Failed to save.'); return }
+      setEditing(null)
+      load()
+    } catch { setSaveError('Network error.') }
+    finally { setSaving(false) }
   }
 
   async function del(id) {
     setDeleteError(null)
-    const res = await fetch(`/api/admin/announcements/${id}`, { method: 'DELETE' })
-    if (!res.ok) { setDeleteError('Failed to delete announcement.'); return }
-    setDeleteConfirm(null)
-    load()
+    try {
+      const res = await fetch(`/api/admin/announcements/${id}`, { method: 'DELETE' })
+      if (!res.ok) { setDeleteError('Failed to delete announcement.'); return }
+      setDeleteConfirm(null)
+      load()
+    } catch { setDeleteError('Network error.') }
   }
 
   const filteredAnnouncements = items.filter(a => {

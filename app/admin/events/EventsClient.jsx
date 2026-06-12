@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   EVENT_TYPES,
   MEMBER_ATTENDANCE_KEYS,
@@ -43,6 +44,7 @@ export default function EventsClient() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useRealtimeSync('events', load)
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }

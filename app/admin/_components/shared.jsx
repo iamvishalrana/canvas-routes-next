@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -95,10 +95,10 @@ export function GhostBtn({ onClick, small, disabled, children }) {
   )
 }
 
-export function DangerBtn({ onClick, small, children }) {
+export function DangerBtn({ onClick, small, disabled, children }) {
   return (
-    <button type="button" onClick={onClick}
-      style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.35)', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <button type="button" onClick={onClick} disabled={disabled}
+      style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.35)', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
       {children}
     </button>
   )
@@ -151,9 +151,13 @@ export function AdminNotesPanel({ initialNotes, onSave }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
 
+  // Re-sync when parent refreshes data
+  useEffect(() => { setNotes(parseAdminNotes(initialNotes)) }, [initialNotes])
+
   async function addNote() {
     if (!draft.trim()) return
-    const updated = [...notes, { id: Date.now(), text: draft.trim(), createdAt: new Date().toISOString() }]
+    const savedDraft = draft.trim()
+    const updated = [...notes, { id: Date.now(), text: savedDraft, createdAt: new Date().toISOString() }]
     setNotes(updated)
     setDraft('')
     setSaving(true)
@@ -162,11 +166,15 @@ export function AdminNotesPanel({ initialNotes, onSave }) {
       setSaveError(null)
     } catch {
       setSaveError('Failed to save note.')
+      setNotes(notes)
+      setDraft(savedDraft)
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   async function deleteNote(id) {
+    const previous = notes
     const updated = notes.filter(n => n.id !== id)
     setNotes(updated)
     try {
@@ -174,6 +182,7 @@ export function AdminNotesPanel({ initialNotes, onSave }) {
       setSaveError(null)
     } catch {
       setSaveError('Failed to save note.')
+      setNotes(previous)
     }
   }
 

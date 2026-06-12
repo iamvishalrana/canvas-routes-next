@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, GhostBtn } from '../_components/shared'
 
 export default function CarsClient() {
@@ -18,12 +19,14 @@ export default function CarsClient() {
   const [modDraft, setModDraft] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/admin/members').then(r => r.json()).then(data => {
-      setMembers(Array.isArray(data) ? data : [])
-      setLoading(false)
-    })
+  const load = useCallback(() => {
+    fetch('/api/admin/members')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => { setMembers(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
+  useEffect(() => { load() }, [load])
+  useRealtimeSync('members', load)
 
   function startEdit(m, carIndex, car) {
     setEditing({ memberId: m.id, carIndex })
@@ -34,6 +37,7 @@ export default function CarsClient() {
   function cancelEdit() { setEditing(null); setEditForm({}); setModDraft('') }
 
   async function saveCar() {
+    if (!editing) return
     setSaving(true)
     const m = members.find(x => x.id === editing.memberId)
     const cars = [...(m.cars || [])]

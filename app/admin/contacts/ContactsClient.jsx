@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, MONTHS, DOB_YEARS, CANONICAL_EVENTS,
   normalizeEventName, parseCarMakeModel,
@@ -150,6 +151,7 @@ export default function ContactsClient() {
   }, [])
 
   useEffect(() => { loadContacts() }, [loadContacts])
+  useRealtimeSync('contacts', loadContacts)
 
   async function removeContact(contactId) {
     setRemoveContactError(null)

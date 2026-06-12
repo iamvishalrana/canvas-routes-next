@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
@@ -252,16 +253,19 @@ export default function BroadcastsClient() {
   }, [])
 
   useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
+  useRealtimeSync('broadcasts', loadHistory)
 
   useEffect(() => {
     if (audience === 'specific_emails') { setRecipientCount(null); return }
     setCountLoading(true)
     setRecipientCount(null)
-    fetch(`/api/admin/broadcasts/count?audience=${audience}`)
+    const controller = new AbortController()
+    fetch(`/api/admin/broadcasts/count?audience=${audience}`, { signal: controller.signal })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setRecipientCount(d.count) })
-      .catch(() => {})
+      .catch(e => { if (e.name !== 'AbortError') console.error(e) })
       .finally(() => setCountLoading(false))
+    return () => controller.abort()
   }, [audience])
 
   async function sendTest() {
@@ -281,12 +285,13 @@ export default function BroadcastsClient() {
           specificEmails: [email],
         }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       setTestResult(res.ok ? 'sent' : (data.error || 'Failed to send.'))
     } catch {
       setTestResult('Network error.')
+    } finally {
+      setTestSending(false)
     }
-    setTestSending(false)
   }
 
   const parsedEmails = audience === 'specific_emails' ? parseEmails(specificEmails) : []

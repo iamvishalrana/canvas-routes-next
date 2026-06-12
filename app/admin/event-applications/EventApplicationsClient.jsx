@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { parseCarMakeModel, GhostBtn, DangerBtn, PrimaryBtn, Err } from '../_components/shared'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 
 function StatusChip({ rsvp }) {
   if (!rsvp) return <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em' }}>—</span>
@@ -40,6 +41,7 @@ export default function EventApplicationsClient() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useRealtimeSync(['rsvp_tokens', 'applications'], load)
 
   async function sendInvite(app, ev) {
     const key = `${app.id}-${ev.name}`

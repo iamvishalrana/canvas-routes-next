@@ -20,7 +20,7 @@ function fmtDate(iso) {
 export default function RevenueClient({ totalRevenue, totalPaid, byType, byMonth, recentPayments, payments = [] }) {
   const routesRevenue = byType.find(t => t.key === 'membership_routes')?.revenue ?? 0
   const innerCircleRevenue = byType.find(t => t.key === 'membership_inner_circle')?.revenue ?? 0
-  const roadTripRevenue = byType.filter(t => t.key?.startsWith('road_trip')).reduce((sum, t) => sum + t.revenue, 0)
+  const roadTripRevenue = byType.filter(t => t.key?.startsWith('road_trip')).reduce((sum, t) => sum + (t.revenue ?? 0), 0)
 
   const stats = [
     { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true },
@@ -47,7 +47,7 @@ export default function RevenueClient({ totalRevenue, totalPaid, byType, byMonth
               p.name || '',
               p.email || '',
               p.type || '',
-              p.amount.toFixed(2),
+              (p.amount ?? 0).toFixed(2),
               p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) : '',
             ])}
           />
