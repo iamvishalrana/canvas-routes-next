@@ -83,7 +83,7 @@ export default function AnnouncementsClient() {
   }
 
   const filteredAnnouncements = items.filter(a => {
-    const matchesSearch = !announcementSearch || a.title.toLowerCase().includes(announcementSearch.toLowerCase()) || a.content.toLowerCase().includes(announcementSearch.toLowerCase())
+    const matchesSearch = !announcementSearch || (a.title || '').toLowerCase().includes(announcementSearch.toLowerCase()) || (a.content || '').toLowerCase().includes(announcementSearch.toLowerCase())
     const matchesFilter = announcementFilter === 'all' || (announcementFilter === 'published' ? a.published : !a.published)
     return matchesSearch && matchesFilter
   })

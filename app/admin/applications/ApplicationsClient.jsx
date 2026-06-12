@@ -581,7 +581,7 @@ export default function ApplicationsClient() {
                       <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>{(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
-                        <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                        <span style={{ fontSize: '11px', color: '#bbb' }}>{a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</span>
                       </div>
                     </div>
                   )
@@ -610,7 +610,7 @@ export default function ApplicationsClient() {
                     {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
                   </div>
                   <div style={{ fontSize: '11px', color: '#bbb' }}>
-                    {new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                   </div>
                   {inviteCell}
                 </div>
@@ -699,7 +699,7 @@ export default function ApplicationsClient() {
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
                         <InfoCell label="DOB" value={a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : null} />
                         <InfoCell label="How they heard" value={a.source} />
-                        <InfoCell label="Applied" value={new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })} />
+                        <InfoCell label="Applied" value={a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'} />
                         <InfoCell label="Payment" value={a.stripe_payment_status || null} />
                         <InfoCell label="Amount Paid" value={a.stripe_amount_paid ? `$${(a.stripe_amount_paid / 100).toFixed(2)} CAD` : null} />
                         {a.promo_code_used && <InfoCell label="Promo Code" value={a.promo_code_used} />}

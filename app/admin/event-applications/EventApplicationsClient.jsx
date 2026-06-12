@@ -142,7 +142,7 @@ export default function EventApplicationsClient() {
                 {/* Applications list */}
                 {isOpen && (
                   <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>
-                    {ev.applications.length === 0 ? (
+                    {(ev.applications ?? []).length === 0 ? (
                       <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
                         No applications registered for this event yet.
                       </div>
@@ -157,7 +157,7 @@ export default function EventApplicationsClient() {
                           </div>
                         )}
 
-                        {ev.applications.map((app, idx) => {
+                        {(ev.applications ?? []).map((app, idx) => {
                           const key = `${app.id}-${ev.name}`
                           const { make, model } = parseCarMakeModel(app.car_model)
                           const car = [app.car_year, make, model].filter(Boolean).join(' ')
@@ -165,7 +165,7 @@ export default function EventApplicationsClient() {
                           const isConfirmed = !!app.rsvp?.confirmed_at
 
                           return (
-                            <div key={app.id} style={{ borderBottom: idx < ev.applications.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                            <div key={app.id} style={{ borderBottom: idx < (ev.applications ?? []).length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
                               {isMobile ? (
                                 <div style={{ padding: '0.85rem 1.5rem' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
