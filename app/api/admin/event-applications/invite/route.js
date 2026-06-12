@@ -2,11 +2,31 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../lib/sentry'
 
-function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt) {
+async function getEventType(supabase, eventName) {
+  const { data } = await supabase
+    .from('events')
+    .select('type')
+    .ilike('name', eventName.trim())
+    .maybeSingle()
+  return data?.type || null
+}
+
+function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt, isRoadTrip) {
   const expiry = new Date(expiresAt).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
   const dateLabel = eventDate
     ? new Date(eventDate).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
     : eventDate
+
+  const label    = isRoadTrip ? 'Canvas Routes &middot; Road Trip &middot; You&rsquo;re Invited'
+                               : 'Canvas Routes &middot; Car Meet &middot; You&rsquo;re Invited'
+  const headline = isRoadTrip ? `The road is calling, ${firstName}.`
+                               : `Your spot&rsquo;s ready, ${firstName}.`
+  const body     = isRoadTrip
+    ? `We&rsquo;ve reviewed your application and we&rsquo;d love to have you on the road with us for <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong>. Confirm your spot below &mdash; we&rsquo;ll follow up with full route details as the date gets closer.`
+    : `We&rsquo;ve reviewed your application and we&rsquo;d love to see you at <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong>. One click to confirm and you&rsquo;re in.`
+  const signoff  = isRoadTrip
+    ? `Questions about the route? Reply directly to this email &mdash; it comes straight to me.`
+    : `Questions? Reply directly to this email &mdash; it comes straight to me.`
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -18,14 +38,14 @@ function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl
 
       <tr><td style="padding-bottom:32px;"><img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;" /></td></tr>
       <tr><td style="padding-bottom:28px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr></table></td></tr>
-      <tr><td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">Canvas Routes &middot; You&rsquo;re Invited</td></tr>
+      <tr><td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">${label}</td></tr>
 
       <tr><td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">
-        Your spot is waiting, ${firstName}.
+        ${headline}
       </td></tr>
 
       <tr><td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.8;color:rgba(245,241,236,0.8);">
-        We&rsquo;ve reviewed your application and we&rsquo;d love to have you join us for <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong>. Confirm your spot below.
+        ${body}
       </td></tr>
 
       <tr><td style="padding-bottom:32px;">
@@ -33,7 +53,7 @@ function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl
           <tr><td style="padding:24px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr><td style="padding-bottom:16px;border-bottom:1px solid rgba(197,168,130,0.1);">
-                <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Event</div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">${isRoadTrip ? 'Route' : 'Event'}</div>
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">${eventName}</div>
               </td></tr>
               ${dateLabel ? `<tr><td style="padding-top:16px;padding-bottom:16px;border-bottom:1px solid rgba(197,168,130,0.1);">
@@ -41,7 +61,7 @@ function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">${dateLabel}</div>
               </td></tr>` : ''}
               ${eventLocation ? `<tr><td style="padding-top:16px;">
-                <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Location</div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">${isRoadTrip ? 'Departure Point' : 'Location'}</div>
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">${eventLocation}</div>
               </td></tr>` : ''}
             </table>
@@ -58,11 +78,11 @@ function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl
       </td></tr>
 
       <tr><td style="padding-bottom:28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:rgba(245,241,236,0.45);">
-        This invitation link expires on <strong style="color:rgba(245,241,236,0.6);">${expiry}</strong>. If it expires, reply directly to this email and we&rsquo;ll sort it out.
+        This invitation link expires on <strong style="color:rgba(245,241,236,0.6);">${expiry}</strong>. If it expires before you can confirm, reply to this email and we&rsquo;ll sort it out.
       </td></tr>
 
       <tr><td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.6);">
-        Questions? Reply directly to this email &mdash; it comes straight to me.
+        ${signoff}
       </td></tr>
 
       <tr><td style="padding-bottom:28px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border:1px solid rgba(197,168,130,0.35);"><a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;text-decoration:none;">Follow &#64;canvasroutes &rarr;</a></td></tr></table></td></tr>
@@ -87,8 +107,13 @@ export async function POST(request) {
 
   const supabase = createAdminClient()
 
-  const { data: app } = await supabase.from('applications').select('id, name, email').eq('id', applicationId).single()
+  const [{ data: app }, eventType] = await Promise.all([
+    supabase.from('applications').select('id, name, email').eq('id', applicationId).single(),
+    getEventType(supabase, eventName),
+  ])
   if (!app) return Response.json({ error: 'Application not found.' }, { status: 404 })
+
+  const isRoadTrip = eventType === 'Road Trip'
 
   // Expire 7 days from now (or 48h before event if date is within 7 days)
   const now = new Date()
@@ -120,6 +145,7 @@ export async function POST(request) {
 
   const firstName = (app.name || '').trim().split(' ')[0] || 'there'
   const rsvpUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'}/rsvp/${tokenRow.token}`
+  const textSignoff = isRoadTrip ? 'See you on the road' : 'See you there'
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -130,8 +156,8 @@ export async function POST(request) {
         to: app.email,
         reply_to: 'jerry@canvasroutes.com',
         subject: `You're invited — ${eventName}`,
-        html: buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt.toISOString()),
-        text: `Hey ${firstName},\n\nYou're invited to ${eventName}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+        html: buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt.toISOString(), isRoadTrip),
+        text: `Hey ${firstName},\n\nYou're invited to ${eventName}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry\nCanvas Routes`,
       }),
     })
     if (!res.ok) {
