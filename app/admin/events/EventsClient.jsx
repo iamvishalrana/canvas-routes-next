@@ -115,6 +115,9 @@ export default function EventsClient() {
   // Registration toggle
   const [regToggleError, setRegToggleError] = useState({})
 
+  // Reorder
+  const [moving, setMoving] = useState(false)
+
   // Delete
   const [deleteEventConfirm, setDeleteEventConfirm] = useState(null)
   const [deleteEventError, setDeleteEventError] = useState({})
@@ -217,6 +220,7 @@ export default function EventsClient() {
   }
 
   async function moveEvent(id, direction) {
+    if (moving) return
     const idx = items.findIndex(ev => ev.id === id)
     const targetIdx = direction === 'up' ? idx - 1 : idx + 1
     if (targetIdx < 0 || targetIdx >= items.length) return
@@ -228,6 +232,7 @@ export default function EventsClient() {
     a.sort_order = bOrder; b.sort_order = aOrder
     newItems[idx] = b; newItems[targetIdx] = a
     setItems(newItems)
+    setMoving(true)
     try {
       await Promise.all([
         fetch(`/api/admin/events/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: a.sort_order }) }),
@@ -242,6 +247,8 @@ export default function EventsClient() {
         if (rj >= 0) reverted[rj] = { ...b, sort_order: bOrder }
         return reverted
       })
+    } finally {
+      setMoving(false)
     }
   }
 
@@ -435,10 +442,10 @@ export default function EventsClient() {
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', gap: '0.2rem' }}>
-                      <button onClick={() => moveEvent(item.id, 'up')} disabled={idx === 0} title="Move up" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
+                      <button onClick={() => moveEvent(item.id, 'up')} disabled={idx === 0 || moving} title="Move up" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === 0 || moving ? 'not-allowed' : 'pointer', opacity: idx === 0 || moving ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
                       </button>
-                      <button onClick={() => moveEvent(item.id, 'down')} disabled={idx === items.length - 1} title="Move down" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === items.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === items.length - 1 ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
+                      <button onClick={() => moveEvent(item.id, 'down')} disabled={idx === items.length - 1 || moving} title="Move down" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === items.length - 1 || moving ? 'not-allowed' : 'pointer', opacity: idx === items.length - 1 || moving ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
                     </div>

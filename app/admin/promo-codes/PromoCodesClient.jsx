@@ -162,11 +162,14 @@ export default function PromoCodesClient() {
   }
 
   async function loadUsage(codeId) {
-    if (usageData[codeId]) { setUsageOpen(p => p === codeId ? null : codeId); return }
+    // Toggle closed if already open
+    if (usageOpen === codeId) { setUsageOpen(null); return }
+    // Always re-fetch for fresh data
     setUsageLoading(codeId)
     try {
       const res = await fetch(`/api/admin/promo-codes/${codeId}/usage`)
-      const data = await res.json()
+      if (!res.ok) throw new Error()
+      const data = await res.json().catch(() => [])
       setUsageData(p => ({ ...p, [codeId]: Array.isArray(data) ? data : [] }))
       setUsageOpen(codeId)
     } catch {

@@ -36,6 +36,92 @@ function StatusChip({ status }) {
 
 const PI_BASE = 'https://dashboard.stripe.com/payments/'
 
+function Actions({ r, ctx }) {
+  const {
+    authorizedAction, authorizedErr, authorizedBusy,
+    refunding, refundReason, refundErr, refundBusy,
+    receiptConfirm, receiptBusy, receiptDone, receiptErr,
+    doCapture, doCancel, doRefund, resendReceipt,
+    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm,
+  } = ctx
+  const isPaid = ['paid', 'partially_refunded'].includes(r.stripe_payment_status)
+  const isAuthorized = r.stripe_payment_status === 'authorized'
+  const canReceipt = !r.manual && r.stripe_payment_intent_id
+  if (!canReceipt && !isAuthorized) return null
+
+  if (isAuthorized) {
+    if (authorizedAction === r.stripe_payment_intent_id) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
+          <div style={{ fontSize: '11px', color: '#1a1a1a' }}>Capture ${((r.stripe_amount_paid || 0) / 100).toFixed(2)} or cancel hold?</div>
+          {authorizedErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{authorizedErr[r.stripe_payment_intent_id]}</div>}
+          <div style={{ display: 'flex', gap: '0.35rem' }}>
+            <GhostBtn small onClick={() => doCapture(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>
+              {authorizedBusy === r.stripe_payment_intent_id ? '…' : 'Capture'}
+            </GhostBtn>
+            <DangerBtn small onClick={() => doCancel(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>Cancel hold</DangerBtn>
+            <GhostBtn small onClick={() => setAuthorizedAction(null)} disabled={!!authorizedBusy}>Back</GhostBtn>
+          </div>
+        </div>
+      )
+    }
+    return <GhostBtn small onClick={() => setAuthorizedAction(r.stripe_payment_intent_id)}>Review hold</GhostBtn>
+  }
+
+  if (refunding === r.stripe_payment_intent_id) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
+        <div style={{ fontSize: '11px', color: '#7B2032' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
+        {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
+        <select value={refundReason} onChange={e => setRefundReason(e.target.value)}
+          style={{ fontSize: '11px', padding: '0.3rem 0.5rem', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff', fontFamily: 'var(--font-inter),sans-serif', color: '#555', cursor: 'pointer' }}>
+          <option value="requested_by_customer">Requested by customer</option>
+          <option value="duplicate">Duplicate</option>
+          <option value="fraudulent">Fraudulent</option>
+        </select>
+        <div style={{ display: 'flex', gap: '0.35rem' }}>
+          <DangerBtn small onClick={() => doRefund(r)} disabled={refundBusy === r.stripe_payment_intent_id}>
+            {refundBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
+          </DangerBtn>
+          <GhostBtn small onClick={() => { setRefunding(null); setRefundReason('requested_by_customer') }}>Cancel</GhostBtn>
+        </div>
+      </div>
+    )
+  }
+
+  if (receiptConfirm === r.stripe_payment_intent_id) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
+      <div style={{ fontSize: '11px', color: '#8A6535' }}>Resend receipt to {r.email}?</div>
+      <div style={{ display: 'flex', gap: '0.35rem' }}>
+        <GhostBtn small onClick={() => { setReceiptConfirm(null); resendReceipt(r) }} disabled={!!receiptBusy}>
+          {receiptBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
+        </GhostBtn>
+        <GhostBtn small onClick={() => setReceiptConfirm(null)}>Cancel</GhostBtn>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+      <GhostBtn small onClick={() => setReceiptConfirm(r.stripe_payment_intent_id)}>
+        {receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : 'Receipt'}
+      </GhostBtn>
+      {isPaid && (
+        <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
+          Refund
+        </DangerBtn>
+      )}
+      {r.stripe_payment_status === 'disputed' && (
+        <a href={`${PI_BASE}${r.stripe_payment_intent_id}`} target="_blank" rel="noreferrer"
+          style={{ padding: '0.3rem 0.7rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', color: '#b33c00', border: '0.5px solid rgba(180,60,0,0.3)', textDecoration: 'none', display: 'inline-block' }}>
+          View Dispute ↗
+        </a>
+      )}
+      {receiptErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.stripe_payment_intent_id]}</div>}
+    </div>
+  )
+}
+
 function PiLink({ id, manual }) {
   if (manual) return <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 7px' }}>E-transfer</span>
   if (!id) return <span style={{ color: '#ccc' }}>—</span>
@@ -163,93 +249,12 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const TH = { padding: '0.65rem 1rem', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', fontWeight: '400', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf8', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }
   const TD = { padding: '0.75rem 1rem', fontSize: '13px', color: '#1a1a1a', borderBottom: '0.5px solid rgba(0,0,0,0.05)', fontFamily: 'var(--font-inter),sans-serif', verticalAlign: 'middle' }
 
-  function Actions({ r }) {
-    const isPaid = ['paid', 'partially_refunded'].includes(r.stripe_payment_status)
-    const isAuthorized = r.stripe_payment_status === 'authorized'
-    const canReceipt = !r.manual && r.stripe_payment_intent_id
-    if (!canReceipt && !isAuthorized) return null
-
-    // Authorized hold — show Capture / Cancel UI
-    if (isAuthorized) {
-      if (authorizedAction === r.stripe_payment_intent_id) {
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
-            <div style={{ fontSize: '11px', color: '#1a1a1a' }}>Capture ${((r.stripe_amount_paid || 0) / 100).toFixed(2)} or cancel hold?</div>
-            {authorizedErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{authorizedErr[r.stripe_payment_intent_id]}</div>}
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
-              <GhostBtn small onClick={() => doCapture(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>
-                {authorizedBusy === r.stripe_payment_intent_id ? '…' : 'Capture'}
-              </GhostBtn>
-              <DangerBtn small onClick={() => doCancel(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>Cancel hold</DangerBtn>
-              <GhostBtn small onClick={() => setAuthorizedAction(null)} disabled={!!authorizedBusy}>Back</GhostBtn>
-            </div>
-          </div>
-        )
-      }
-      return (
-        <GhostBtn small onClick={() => setAuthorizedAction(r.stripe_payment_intent_id)}>Review hold</GhostBtn>
-      )
-    }
-
-    if (refunding === r.stripe_payment_intent_id) {
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
-          <div style={{ fontSize: '11px', color: '#7B2032' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
-          {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
-          <select
-            value={refundReason}
-            onChange={e => setRefundReason(e.target.value)}
-            style={{ fontSize: '11px', padding: '0.3rem 0.5rem', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff', fontFamily: 'var(--font-inter),sans-serif', color: '#555', cursor: 'pointer' }}
-          >
-            <option value="requested_by_customer">Requested by customer</option>
-            <option value="duplicate">Duplicate</option>
-            <option value="fraudulent">Fraudulent</option>
-          </select>
-          <div style={{ display: 'flex', gap: '0.35rem' }}>
-            <DangerBtn small onClick={() => doRefund(r)} disabled={refundBusy === r.stripe_payment_intent_id}>
-              {refundBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
-            </DangerBtn>
-            <GhostBtn small onClick={() => { setRefunding(null); setRefundReason('requested_by_customer') }}>Cancel</GhostBtn>
-          </div>
-        </div>
-      )
-    }
-
-    if (receiptConfirm === r.stripe_payment_intent_id) return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
-        <div style={{ fontSize: '11px', color: '#8A6535' }}>Resend receipt to {r.email}?</div>
-        <div style={{ display: 'flex', gap: '0.35rem' }}>
-          <GhostBtn small onClick={() => { setReceiptConfirm(null); resendReceipt(r) }} disabled={receiptBusy === r.stripe_payment_intent_id}>
-            {receiptBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
-          </GhostBtn>
-          <GhostBtn small onClick={() => setReceiptConfirm(null)}>Cancel</GhostBtn>
-        </div>
-      </div>
-    )
-
-    return (
-      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-        <GhostBtn small onClick={() => setReceiptConfirm(r.stripe_payment_intent_id)}>
-          {receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : 'Receipt'}
-        </GhostBtn>
-        {isPaid && (
-          <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
-            Refund
-          </DangerBtn>
-        )}
-        {r.stripe_payment_status === 'disputed' && (
-          <a
-            href={`https://dashboard.stripe.com/payments/${r.stripe_payment_intent_id}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ padding: '0.3rem 0.7rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', color: '#b33c00', border: '0.5px solid rgba(180,60,0,0.3)', textDecoration: 'none', display: 'inline-block' }}
-          >
-            View Dispute ↗
-          </a>
-        )}
-        {receiptErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.stripe_payment_intent_id]}</div>}
-      </div>
-    )
+  const actionsCtx = {
+    authorizedAction, authorizedErr, authorizedBusy,
+    refunding, refundReason, refundErr, refundBusy,
+    receiptConfirm, receiptBusy, receiptDone, receiptErr,
+    doCapture, doCancel, doRefund, resendReceipt,
+    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm,
   }
 
   return (
@@ -346,7 +351,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                 {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{r.stripe_payment_type}</span>}
                 <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto' }}>{fmtDate(r.stripe_paid_at)}</span>
               </div>
-              <Actions r={r} />
+              <Actions r={r} ctx={actionsCtx} />
             </div>
           ))}
         </div>
@@ -381,7 +386,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtDate(r.stripe_paid_at)}</td>
                   <td style={TD}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
                   <td style={{ ...TD, whiteSpace: 'nowrap' }}>
-                    <Actions r={r} />
+                    <Actions r={r} ctx={actionsCtx} />
                     {r.id && <a href={`/admin/applications`} style={{ marginLeft: '0.5rem', fontSize: '11px', color: '#8A6535', textDecoration: 'underline', textUnderlineOffset: '2px' }}>Application →</a>}
                   </td>
                 </tr>

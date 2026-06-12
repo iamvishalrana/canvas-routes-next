@@ -248,8 +248,8 @@ export default function ContactsClient() {
     setEditingContact(null)
   }
 
-  async function toggleAttended(appId, eventName, value) {
-    const contact = contacts.find(c => c.id === appId)
+  async function toggleAttended(contactId, eventName, value) {
+    const contact = contacts.find(c => c.contact_id === contactId)
     if (!contact) return
     const existing = contact.registrations || []
     const idx = existing.findIndex(r => r.event === eventName)
@@ -259,10 +259,10 @@ export default function ContactsClient() {
     } else {
       newRegs = [...existing, { event: eventName, registered_at: null, attended: value }]
     }
-    const res = await fetch(`/api/admin/applications/${appId}`, {
+    const res = await fetch(`/api/admin/applications/${contact.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
     })
-    if (res.ok) setContacts(prev => prev.map(c => c.id === appId ? { ...c, registrations: newRegs } : c))
+    if (res.ok) setContacts(prev => prev.map(c => c.contact_id === contactId ? { ...c, registrations: newRegs } : c))
   }
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -308,16 +308,21 @@ export default function ContactsClient() {
     setNewErr(null)
     if (!newForm.name.trim() || !newForm.email.trim()) { setNewErr('Name and email are required.'); return }
     setSavingNew(true)
-    const res = await fetch('/api/admin/contacts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newForm, car_model: [newForm.car_make, newForm.car_model].filter(Boolean).join(' ') }),
-    })
-    const data = await res.json().catch(() => ({}))
-    setSavingNew(false)
-    if (!res.ok) { setNewErr(data.error || 'Failed to add contact.'); return }
-    setAddingNew(false)
-    setNewForm({ name: '', email: '', phone: '', car_year: '', car_make: '', car_model: '' })
-    loadContacts()
+    try {
+      const res = await fetch('/api/admin/contacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...newForm, car_model: [newForm.car_make, newForm.car_model].filter(Boolean).join(' ') }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setNewErr(data.error || 'Failed to add contact.'); return }
+      setAddingNew(false)
+      setNewForm({ name: '', email: '', phone: '', car_year: '', car_make: '', car_model: '' })
+      loadContacts()
+    } catch {
+      setNewErr('Network error — please try again.')
+    } finally {
+      setSavingNew(false)
+    }
   }
 
   const filtered = contacts
@@ -817,11 +822,11 @@ export default function ContactsClient() {
                               <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>N/A</span>
                             ) : isPast ? (
                               <>
-                                <button onClick={() => toggleAttended(c.id, eventName, true)}
+                                <button onClick={() => toggleAttended(c.contact_id, eventName, true)}
                                   style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg?.attended === true ? '#3B6B2F' : '#888' }}>
                                   ✓ Attended
                                 </button>
-                                <button onClick={() => toggleAttended(c.id, eventName, false)}
+                                <button onClick={() => toggleAttended(c.contact_id, eventName, false)}
                                   style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: reg?.attended === false ? '#7B2032' : '#888' }}>
                                   ✗ No-show
                                 </button>

@@ -81,12 +81,16 @@ export default function CarsClient() {
     } else {
       newCars = [{ year: '', make: make.trim(), model: '', mods: [] }]
     }
-    await fetch(`/api/admin/members/${m.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cars: newCars }),
-    })
-    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars: newCars } : x))
-    setAssignInputs(p => ({ ...p, [m.id]: '' }))
+    try {
+      const res = await fetch(`/api/admin/members/${m.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cars: newCars }),
+      })
+      if (res.ok) {
+        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars: newCars } : x))
+        setAssignInputs(p => ({ ...p, [m.id]: '' }))
+      }
+    } catch {}
     setAssigning(p => ({ ...p, [m.id]: false }))
   }
 

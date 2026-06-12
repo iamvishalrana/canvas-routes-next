@@ -305,6 +305,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       })
       if (!res.ok) { const d = await res.json().catch(() => ({})); setSaveError(d.error || 'Failed to save.'); return }
+      setMembers(prev => prev.map(m => m.id === editing ? { ...m, ...payload } : m))
       setEditing(null)
       router.refresh()
     } catch {
