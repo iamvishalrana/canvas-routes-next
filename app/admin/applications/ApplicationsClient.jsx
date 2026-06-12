@@ -67,6 +67,7 @@ export default function ApplicationsClient() {
   const [seenAppIds, setSeenAppIds] = useState(new Set())
   const seenInitRef = useRef(false)
   const [addingContact, setAddingContact] = useState(new Set())
+  const [addContactError, setAddContactError] = useState({})
   const [sortApps, setSortApps] = useState('newest')
   const [emailsCopied, setEmailsCopied] = useState(false)
   const [appTierPick, setAppTierPick] = useState(null)
@@ -121,9 +122,13 @@ export default function ApplicationsClient() {
 
   async function deleteApp(app) {
     setDeleteAppError(p => ({ ...p, [app.id]: null }))
-    const res = await fetch(`/api/admin/applications/${app.id}`, { method: 'DELETE' })
-    if (res.ok) { setDeleteAppConfirm(null); setExpanded(null); setEditingApp(null); loadApps() }
-    else setDeleteAppError(p => ({ ...p, [app.id]: 'Failed to delete.' }))
+    try {
+      const res = await fetch(`/api/admin/applications/${app.id}`, { method: 'DELETE' })
+      if (res.ok) { setDeleteAppConfirm(null); setExpanded(null); setEditingApp(null); loadApps() }
+      else setDeleteAppError(p => ({ ...p, [app.id]: 'Failed to delete.' }))
+    } catch {
+      setDeleteAppError(p => ({ ...p, [app.id]: 'Network error.' }))
+    }
   }
 
   function startEditApp(a) {
@@ -155,13 +160,18 @@ export default function ApplicationsClient() {
       dob_day: editAppForm.dob_day ? parseInt(editAppForm.dob_day) : null,
       dob_year: editAppForm.dob_year ? parseInt(editAppForm.dob_year) : null,
     }
-    const res = await fetch(`/api/admin/applications/${appId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-    })
-    setSavingApp(false)
-    if (!res.ok) { const d = await res.json(); setSaveAppErr(d.error || 'Failed to save.'); return }
-    setApps(prev => prev.map(a => a.id === appId ? { ...a, ...payload } : a))
-    setEditingApp(null)
+    try {
+      const res = await fetch(`/api/admin/applications/${appId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setSaveAppErr(d.error || 'Failed to save.'); return }
+      setApps(prev => prev.map(a => a.id === appId ? { ...a, ...payload } : a))
+      setEditingApp(null)
+    } catch {
+      setSaveAppErr('Network error — please try again.')
+    } finally {
+      setSavingApp(false)
+    }
   }
 
   async function toggleAttended(appId, eventName, value) {
@@ -177,15 +187,18 @@ export default function ApplicationsClient() {
     } else {
       newRegs = [...existing, { event: eventName, registered_at: null, attended: value }]
     }
-    const res = await fetch(`/api/admin/applications/${appId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
-    })
-    if (res.ok) setApps(prev => prev.map(a => a.id === appId ? { ...a, registrations: newRegs } : a))
+    try {
+      const res = await fetch(`/api/admin/applications/${appId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
+      })
+      if (res.ok) setApps(prev => prev.map(a => a.id === appId ? { ...a, registrations: newRegs } : a))
+    } catch {}
   }
 
   async function sendInvite(app, tier = 'routes_member') {
     setInviting(app.id)
     setAppTierPick(null)
+    setInviteStatus(p => ({ ...p, [app.id]: null }))  // clear previous error before new attempt
     const { make: invMake, model: invModel } = parseCarMakeModel(app.car_model)
     const payload = {
       name: app.name, email: app.email, membership_status: 'pending', tier,
@@ -195,16 +208,21 @@ export default function ApplicationsClient() {
         ? [{ year: app.car_year || '', make: invMake || '', model: invModel || '', license_plate: '', paint: app.car_paint || '' }]
         : undefined,
     }
-    const res = await fetch('/api/admin/members', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-    })
-    const data = await res.json()
-    setInviting(null)
-    if (res.ok) {
-      setApps(prev => prev.map(a => a.id === app.id ? { ...a, is_member: true } : a))
-      setInviteStatus(p => ({ ...p, [app.id]: 'success' }))
-    } else {
-      setInviteStatus(p => ({ ...p, [app.id]: data.error || 'Failed.' }))
+    try {
+      const res = await fetch('/api/admin/members', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setApps(prev => prev.map(a => a.id === app.id ? { ...a, is_member: true } : a))
+        setInviteStatus(p => ({ ...p, [app.id]: 'success' }))
+      } else {
+        setInviteStatus(p => ({ ...p, [app.id]: data.error || 'Failed.' }))
+      }
+    } catch {
+      setInviteStatus(p => ({ ...p, [app.id]: 'Network error.' }))
+    } finally {
+      setInviting(null)
     }
   }
 
@@ -235,11 +253,18 @@ export default function ApplicationsClient() {
 
   async function addToContact(appId) {
     setAddingContact(prev => new Set([...prev, appId]))
-    const res = await fetch('/api/admin/contacts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ application_id: appId })
-    })
-    setAddingContact(prev => { const n = new Set(prev); n.delete(appId); return n })
-    if (res.ok) loadApps()
+    setAddContactError(p => ({ ...p, [appId]: null }))
+    try {
+      const res = await fetch('/api/admin/contacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ application_id: appId })
+      })
+      if (res.ok) loadApps()
+      else { const d = await res.json().catch(() => ({})); setAddContactError(p => ({ ...p, [appId]: d.error || 'Failed to add.' })) }
+    } catch {
+      setAddContactError(p => ({ ...p, [appId]: 'Network error.' }))
+    } finally {
+      setAddingContact(prev => { const n = new Set(prev); n.delete(appId); return n })
+    }
   }
 
   function openEmailComposer(a) {
@@ -288,18 +313,23 @@ export default function ApplicationsClient() {
   async function sendEmail(appId) {
     setEmailSending(true)
     setEmailResult(null)
-    const res = await fetch(`/api/admin/applications/${appId}/send-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject: emailSubject, body: emailBody }),
-    })
-    const d = await res.json().catch(() => ({}))
-    setEmailSending(false)
-    if (res.ok && !d.error) {
-      setEmailResult({ id: appId, success: true })
-      setTimeout(() => { setEmailComposerId(null); setEmailResult(null) }, 2500)
-    } else {
-      setEmailResult({ id: appId, error: d.error || 'Failed to send.' })
+    try {
+      const res = await fetch(`/api/admin/applications/${appId}/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: emailSubject, body: emailBody }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok && !d.error) {
+        setEmailResult({ id: appId, success: true })
+        setTimeout(() => { setEmailComposerId(null); setEmailResult(null) }, 2500)
+      } else {
+        setEmailResult({ id: appId, error: d.error || 'Failed to send.' })
+      }
+    } catch {
+      setEmailResult({ id: appId, error: 'Network error — please try again.' })
+    } finally {
+      setEmailSending(false)
     }
   }
 
@@ -739,9 +769,12 @@ export default function ApplicationsClient() {
                     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         {!a.is_contact ? (
-                          <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
-                            {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
-                          </GhostBtn>
+                          <div>
+                            <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
+                              {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
+                            </GhostBtn>
+                            {addContactError[a.id] && <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.25rem' }}>{addContactError[a.id]}</div>}
+                          </div>
                         ) : (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
                         )}
