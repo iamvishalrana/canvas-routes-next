@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -1141,17 +1141,17 @@ export default function FAQContent() {
           /* Desktop: 2-col grid, label sticky in its own row */
           <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', columnGap: 'clamp(3rem,5vw,5rem)', rowGap: '4rem', alignItems: 'start' }}>
             {SECTIONS.map((section, si) => (
-              <>
+              <React.Fragment key={si}>
                 {/* Label column — intentionally empty, car carries the heading */}
-                <div key={`label-${si}`} />
+                <div />
 
                 {/* Accordion items */}
-                <div key={`items-${si}`} ref={el => { sectionRefsArr.current[si] = el; fadeAccordionRefs.current[si] = el }}>
+                <div ref={el => { sectionRefsArr.current[si] = el; fadeAccordionRefs.current[si] = el }}>
                   {section.items.map((item, ii) => (
                     <AccordionItem key={`${si}-${ii}`} item={item} isOpen={!!open[`${si}-${ii}`]} onToggle={() => toggle(`${si}-${ii}`)} />
                   ))}
                 </div>
-              </>
+              </React.Fragment>
             ))}
           </div>
         )}

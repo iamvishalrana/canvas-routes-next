@@ -372,7 +372,7 @@ export default function MembershipContent() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6)) e.phone = true
+    if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 7)) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true
     if (!form.year.trim()) e.year = true
@@ -865,10 +865,11 @@ export default function MembershipContent() {
               <SectionLabel>About you</SectionLabel>
 
               <div id="mem-field-name" style={{ marginBottom: '1.75rem' }}>
-                <div style={{ ...LABEL, color: errors.name ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <label htmlFor="inp-name" style={{ ...LABEL, color: errors.name ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'text' }}>
                   <User size={10} /><span>Full name</span><span style={{ color: '#d06070' }}>*</span>
-                </div>
-                <input type="text" value={form.name} placeholder="First and Last name" autoComplete="name"
+                </label>
+                <input id="inp-name" type="text" value={form.name} placeholder="First and Last name" autoComplete="name"
+                  aria-invalid={errors.name ? 'true' : 'false'} aria-required="true"
                   onChange={e => set('name', capitaliseName(e.target.value))}
                   onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
                   style={inp('name')} />
@@ -876,28 +877,30 @@ export default function MembershipContent() {
 
               <div className="mem-car-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 2rem', marginBottom: '1.75rem' }}>
                 <div id="mem-field-email">
-                  <div style={{ ...LABEL, color: errors.email ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <label htmlFor="inp-email" style={{ ...LABEL, color: errors.email ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'text' }}>
                     <Mail size={10} /><span>Email</span><span style={{ color: '#d06070' }}>*</span>
-                  </div>
-                  <input type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
+                  </label>
+                  <input id="inp-email" type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
+                    aria-invalid={errors.email ? 'true' : 'false'} aria-required="true"
                     onChange={e => set('email', e.target.value)}
                     onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
                     style={inp('email')} />
                 </div>
                 <div id="mem-field-phone">
-                  <div style={{ ...LABEL, color: errors.phone ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <label htmlFor="inp-phone" style={{ ...LABEL, color: errors.phone ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'text' }}>
                     <Phone size={10} /><span>Phone</span><span style={{ color: '#d06070' }}>*</span>
-                  </div>
+                  </label>
                   <div style={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${errors.phone ? 'rgba(208,96,112,0.8)' : focusedField === 'phone' || focusedField === 'countryCode' ? 'rgba(197,168,130,0.9)' : form.phone ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.12)'}`, transition: 'border-color 0.2s' }}>
-                    <select value={countryCode} onChange={e => { setCountryCode(e.target.value); set('phone', '') }}
+                    <select aria-label="Country code" value={countryCode} onChange={e => { setCountryCode(e.target.value); set('phone', '') }}
                       onFocus={() => setFocusedField('countryCode')} onBlur={() => setFocusedField(null)}
                       style={{ padding: '0.6rem 0.2rem 0.6rem 0', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', flexShrink: 0 }}>
                       {COUNTRY_CODES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <span style={{ color: 'rgba(0,0,0,0.18)', margin: '0 0.5rem', fontSize: '13px', userSelect: 'none' }}>|</span>
-                    <input type="tel" value={form.phone}
+                    <input id="inp-phone" type="tel" value={form.phone}
                       placeholder={countryCode === '+1' ? '(514) 000-0000' : 'Phone number'}
                       autoComplete="tel-national"
+                      aria-invalid={errors.phone ? 'true' : 'false'} aria-required="true"
                       onChange={e => set('phone', formatPhone(e.target.value, countryCode))}
                       onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
                       style={{ flex: 1, padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', boxSizing: 'border-box' }} />
@@ -917,7 +920,7 @@ export default function MembershipContent() {
                     { field: 'dob_year',  placeholder: 'Year',  options: Array.from({length:2006-1945+1},(_,i)=>({v:String(2006-i),l:String(2006-i)})) },
                   ].map(({ field, placeholder, options }) => (
                     <div key={field} style={{ position: 'relative' }}>
-                      <select value={form[field]} onChange={e => set(field, e.target.value)}
+                      <select id={`inp-${field}`} aria-label={placeholder} value={form[field]} onChange={e => set(field, e.target.value)}
                         onFocus={() => setFocusedField(field)} onBlur={() => setFocusedField(null)}
                         style={{ ...inp(field), paddingRight: '1.5rem', cursor: 'pointer', width: '100%' }}>
                         <option value="">{placeholder}</option>
@@ -935,11 +938,11 @@ export default function MembershipContent() {
 
               <div className="mem-car3-grid" style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.5fr 2fr', gap: '0 2rem', marginBottom: '1.75rem' }}>
                 <div id="mem-field-year">
-                  <div style={{ ...LABEL, color: errors.year ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <label htmlFor="inp-year" style={{ ...LABEL, color: errors.year ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
                     <Car size={10} /><span>Year</span><span style={{ color: '#d06070' }}>*</span>
-                  </div>
+                  </label>
                   <div style={{ position: 'relative' }}>
-                    <select value={form.year} onChange={e => set('year', e.target.value)}
+                    <select id="inp-year" aria-required="true" aria-invalid={errors.year ? 'true' : 'false'} value={form.year} onChange={e => set('year', e.target.value)}
                       onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
                       style={{ ...inp('year'), paddingRight: '1.5rem', cursor: 'pointer' }}>
                       <option value="">Year</option>
@@ -949,11 +952,11 @@ export default function MembershipContent() {
                   </div>
                 </div>
                 <div id="mem-field-carMake">
-                  <div style={{ ...LABEL, color: errors.carMake ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <label htmlFor="inp-carMake" style={{ ...LABEL, color: errors.carMake ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
                     <Car size={10} /><span>Make</span><span style={{ color: '#d06070' }}>*</span>
-                  </div>
+                  </label>
                   <div style={{ position: 'relative' }}>
-                    <select value={form.carMake} onChange={e => set('carMake', e.target.value)}
+                    <select id="inp-carMake" aria-required="true" aria-invalid={errors.carMake ? 'true' : 'false'} value={form.carMake} onChange={e => set('carMake', e.target.value)}
                       onFocus={() => setFocusedField('carMake')} onBlur={() => setFocusedField(null)}
                       style={{ ...inp('carMake'), paddingRight: '1.5rem', cursor: 'pointer' }}>
                       <option value="">Select make</option>
@@ -963,10 +966,11 @@ export default function MembershipContent() {
                   </div>
                 </div>
                 <div id="mem-field-carModel">
-                  <div style={{ ...LABEL, color: errors.carModel ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <label htmlFor="inp-carModel" style={{ ...LABEL, color: errors.carModel ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'text' }}>
                     <Car size={10} /><span>Model</span><span style={{ color: '#d06070' }}>*</span>
-                  </div>
-                  <input type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
+                  </label>
+                  <input id="inp-carModel" type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
+                    aria-required="true" aria-invalid={errors.carModel ? 'true' : 'false'}
                     onChange={e => set('carModel', e.target.value)}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)}
                     style={inp('carModel')} />
@@ -1050,7 +1054,7 @@ export default function MembershipContent() {
                   <Share2 size={10} /><span>How did you hear about us</span><span style={{ color: '#d06070' }}>*</span>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <select value={form.source} onChange={e => { set('source', e.target.value); if (e.target.value !== 'Member referral') setErrors(p => ({ ...p, referredBy: false })) }}
+                  <select id="inp-source" aria-required="true" aria-invalid={errors.source ? 'true' : 'false'} value={form.source} onChange={e => { set('source', e.target.value); if (e.target.value !== 'Member referral') setErrors(p => ({ ...p, referredBy: false })) }}
                     onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
                     style={{ ...inp('source'), paddingRight: '1.5rem', cursor: 'pointer' }}>
                     <option value="">Select</option>

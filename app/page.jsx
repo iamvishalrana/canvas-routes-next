@@ -522,6 +522,18 @@ export default function Home() {
         )}
       </section>
 
+      {/* MID-PAGE MEMBERSHIP CTA */}
+      {membershipLive && (
+        <section style={{background:"#0F1E14",padding:"4rem 3rem",textAlign:"center",borderTop:"0.5px solid rgba(197,168,130,0.15)"}}>
+          <div style={{maxWidth:"520px",margin:"0 auto"}}>
+            <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"#c5a882",marginBottom:"1rem"}}>2026 Season · Now open</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.5rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:1.2,marginBottom:"1.25rem"}}>Ready to be part of it?</div>
+            <p style={{fontSize:"14px",color:"rgba(245,241,236,0.6)",lineHeight:"1.75",marginBottom:"2rem",fontFamily:"var(--font-inter),sans-serif"}}>Spots are limited and every application is reviewed personally. Apply now before the season fills up.</p>
+            <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"1rem 3rem",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",textDecoration:"none"}}>Apply for Membership</Link>
+          </div>
+        </section>
+      )}
+
       {/* EVENTS */}
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
         <div style={{textAlign:"center",marginBottom:"4rem"}}>

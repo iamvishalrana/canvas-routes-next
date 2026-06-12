@@ -194,7 +194,7 @@ export async function POST(request) {
   if (email.length > 254) return Response.json({ error: 'Email too long' }, { status: 400 })
   if (year && year.length > 10) return Response.json({ error: 'Year too long' }, { status: 400 })
   if (carModel && carModel.length > 100) return Response.json({ error: 'Car model too long' }, { status: 400 })
-  if (phone && (phone.length > 30 || phone.replace(/\D/g, '').length < 10)) return Response.json({ error: 'Invalid phone number' }, { status: 400 })
+  if (phone && (phone.length > 30 || phone.replace(/\D/g, '').length < (phone.trim().startsWith('+1') ? 10 : 7))) return Response.json({ error: 'Invalid phone number' }, { status: 400 })
   if (instagram && instagram.length > 50) return Response.json({ error: 'Instagram handle too long' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long' }, { status: 400 })
 
@@ -284,13 +284,16 @@ export async function POST(request) {
     })
   } catch (err) {
     console.error('Customer email network error:', err)
-    return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
+    captureException(err, { context: 'waitlist-confirm-email-network', email })
+    // DB save succeeded — return success so the user isn't prompted to resubmit
+    return Response.json({ success: true })
   }
 
   if (!customerEmail.ok) {
     const err = await customerEmail.text().catch(() => 'unknown')
     console.error('Customer email error:', err)
-    return Response.json({ error: 'Failed to send confirmation email' }, { status: 500 })
+    captureMessage(`Waitlist confirm email failed — ${email}`, { response: err })
+    return Response.json({ success: true })
   }
 
   // STEP 3 — Internal notification (with one retry)

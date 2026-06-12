@@ -154,12 +154,17 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
     setPiError(null)
     if (isFree) {
       setRegistering(true)
-      const res = await fetch(`/api/member/events/${event.id}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
-      const data = await res.json().catch(() => ({}))
-      setRegistering(false)
-      if (!res.ok) { setRegError(data.error || 'Registration failed.'); return }
-      setDone(true)
-      onRegistrationComplete?.()
+      try {
+        const res = await fetch(`/api/member/events/${event.id}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) { setRegError(data.error || 'Registration failed.'); return }
+        setDone(true)
+        onRegistrationComplete?.()
+      } catch {
+        setRegError('Network error — please try again.')
+      } finally {
+        setRegistering(false)
+      }
       return
     }
     setLoadingPI(true)

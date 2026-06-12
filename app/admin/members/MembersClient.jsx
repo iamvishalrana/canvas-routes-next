@@ -298,13 +298,18 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       car_make: cleanCars[0]?.make || '',
       car_model: cleanCars[0]?.model || '',
     }
-    const res = await fetch(`/api/admin/members/${editing}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-    })
-    setSaving(false)
-    if (!res.ok) { const d = await res.json(); setSaveError(d.error || 'Failed to save.'); return }
-    setEditing(null)
-    router.refresh()
+    try {
+      const res = await fetch(`/api/admin/members/${editing}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setSaveError(d.error || 'Failed to save.'); return }
+      setEditing(null)
+      router.refresh()
+    } catch {
+      setSaveError('Network error — please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function deleteMember(m) {
@@ -329,10 +334,13 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
 
   async function saveMemberNote(memberId, value) {
     const trimmed = value.trim()
-    await fetch(`/api/admin/members/${memberId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: trimmed || null }),
-    })
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: trimmed || null }),
+      })
+      if (!res.ok) return
+    } catch { return }
     setMembers(prev => prev.map(x => x.id === memberId ? { ...x, notes: trimmed || null } : x))
     setEditingNote(null)
   }
@@ -342,9 +350,14 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
     const current = m.event_attendance || {}
     const newAttendance = { ...current, [key]: current[key] === value ? null : value }
     setMembers(prev => prev.map(x => x.id === m.id ? { ...x, event_attendance: newAttendance } : x))
-    await fetch(`/api/admin/members/${m.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_attendance: newAttendance }),
-    })
+    try {
+      const res = await fetch(`/api/admin/members/${m.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_attendance: newAttendance }),
+      })
+      if (!res.ok) setMembers(prev => prev.map(x => x.id === m.id ? { ...x, event_attendance: current } : x))
+    } catch {
+      setMembers(prev => prev.map(x => x.id === m.id ? { ...x, event_attendance: current } : x))
+    }
   }
 
   async function invite(e) {

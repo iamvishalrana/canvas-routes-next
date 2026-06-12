@@ -286,7 +286,7 @@ export default function ProfilePage() {
     : null
 
   const displayName = form.name || (user?.email ? user.email.split('@')[0] : '')
-  const initials = displayName.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
+  const initials = displayName.trim().split(/\s+/).map(w => w[0] || '').filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
   const isInnerCircle = tier === 'inner_circle'
 
   return (

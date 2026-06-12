@@ -8,8 +8,8 @@ export const metadata = { title: { absolute: 'Member Perks | Canvas Routes' } }
 
 export default async function PerksPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/members/login')
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
   const { data: member } = await admin.from('members').select('tier, membership_status').eq('id', user.id).maybeSingle()

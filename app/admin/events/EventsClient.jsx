@@ -18,7 +18,7 @@ export default function EventsClient() {
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [form, setForm] = useState({ name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' })
-  const [regToggleError, setRegToggleError] = useState(null)
+  const [regToggleError, setRegToggleError] = useState({})  // keyed by event id
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -31,7 +31,7 @@ export default function EventsClient() {
   const [registrantsData, setRegistrantsData] = useState({})
   const [loadingRegistrants, setLoadingRegistrants] = useState(false)
   const [deleteEventConfirm, setDeleteEventConfirm] = useState(null)
-  const [deleteEventError, setDeleteEventError] = useState(null)
+  const [deleteEventError, setDeleteEventError] = useState({})
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -96,31 +96,52 @@ export default function EventsClient() {
     newItems[idx] = b
     newItems[targetIdx] = a
     setItems(newItems)
-    await Promise.all([
-      fetch(`/api/admin/events/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: a.sort_order }) }),
-      fetch(`/api/admin/events/${b.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: b.sort_order }) }),
-    ])
+    try {
+      await Promise.all([
+        fetch(`/api/admin/events/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: a.sort_order }) }),
+        fetch(`/api/admin/events/${b.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sort_order: b.sort_order }) }),
+      ])
+    } catch {
+      // Revert on failure
+      setItems(prev => {
+        const reverted = [...prev]
+        reverted[idx] = { ...a, sort_order: aOrder }
+        reverted[targetIdx] = { ...b, sort_order: bOrder }
+        return reverted
+      })
+    }
   }
 
   async function uploadPhoto(eventId, file) {
     setUploadingPhoto(eventId); setPhotoError(null)
-    const fd = new FormData(); fd.append('photo', file)
-    const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'POST', body: fd })
-    const data = await res.json().catch(() => ({}))
-    setUploadingPhoto(null)
-    if (!res.ok) { setPhotoError(data.error || 'Upload failed.'); return }
-    setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: data.url } : ev))
+    try {
+      const fd = new FormData(); fd.append('photo', file)
+      const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setPhotoError(data.error || 'Upload failed.'); return }
+      setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: data.url } : ev))
+    } catch {
+      setPhotoError('Network error — upload failed.')
+    } finally {
+      setUploadingPhoto(null)
+    }
   }
 
   async function removePhoto(eventId) {
     setUploadingPhoto(eventId)
-    await fetch(`/api/admin/events/${eventId}/photo`, { method: 'DELETE' })
-    setUploadingPhoto(null)
-    setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: null } : ev))
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'DELETE' })
+      if (res.ok) setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: null } : ev))
+      else setPhotoError('Could not remove photo.')
+    } catch {
+      setPhotoError('Network error — could not remove photo.')
+    } finally {
+      setUploadingPhoto(null)
+    }
   }
 
   async function setRegEnabled(id, value) {
-    setRegToggleError(null)
+    setRegToggleError(p => ({ ...p, [id]: null }))
     const res = await fetch(`/api/admin/events/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ registration_enabled: value }),
@@ -129,14 +150,14 @@ export default function EventsClient() {
       setItems(prev => prev.map(ev => ev.id === id ? { ...ev, registration_enabled: value } : ev))
     } else {
       const d = await res.json().catch(() => ({}))
-      setRegToggleError(d.error || 'Could not update registration — run the SQL migrations in Supabase first.')
+      setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update registration.' }))
     }
   }
 
   async function del(id) {
-    setDeleteEventError(null)
+    setDeleteEventError(p => ({ ...p, [id]: null }))
     const res = await fetch(`/api/admin/events/${id}`, { method: 'DELETE' })
-    if (!res.ok) { setDeleteEventError('Failed to delete event.'); return }
+    if (!res.ok) { setDeleteEventError(p => ({ ...p, [id]: 'Failed to delete event.' })); return }
     setDeleteEventConfirm(null)
     load()
   }
@@ -355,7 +376,7 @@ export default function EventsClient() {
                       >
                         {item.registration_enabled ? 'Reg On' : 'Reg Off'}
                       </button>
-                      {regToggleError && <Err msg={regToggleError} />}
+                      {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
                       <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ name: item.name, date: item.date, date_display: item.date_display || '', location: item.location || '', description: item.description || '', type: item.type, registration_url: item.registration_url || '', registration_opens_at: item.registration_opens_at || '', registration_closes_at: item.registration_closes_at || '', capacity: item.capacity || '', member_price: item.member_price || null, priority_window_end: item.priority_window_end || '', registration_enabled: item.registration_enabled }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
                     </div>
@@ -364,8 +385,8 @@ export default function EventsClient() {
                     <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this event?</span>
                       <GhostBtn small onClick={() => del(item.id)}>Confirm</GhostBtn>
-                      <GhostBtn small onClick={() => { setDeleteEventConfirm(null); setDeleteEventError(null) }}>Cancel</GhostBtn>
-                      {deleteEventError && <Err msg={deleteEventError} />}
+                      <GhostBtn small onClick={() => { setDeleteEventConfirm(null); setDeleteEventError(p => ({ ...p, [item.id]: null })) }}>Cancel</GhostBtn>
+                      {deleteEventError[item.id] && <Err msg={deleteEventError[item.id]} />}
                     </div>
                   )}
                   {showRegistrants === item.id && (
