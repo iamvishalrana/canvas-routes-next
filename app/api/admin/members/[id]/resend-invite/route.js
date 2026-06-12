@@ -111,7 +111,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
           <tr>
             <td style="padding-top:28px;padding-bottom:8px;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.7;color:rgba(245,241,236,0.55);">
               See you on the road.<br/>
-              <span style="color:rgba(245,241,236,0.35);font-size:12px;">The Canvas Routes team</span>
+              <span style="color:rgba(245,241,236,0.35);font-size:12px;">Jerry</span>
             </td>
           </tr>
 

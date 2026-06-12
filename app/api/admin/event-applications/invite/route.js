@@ -11,20 +11,28 @@ async function getEventType(supabase, eventName) {
   return data?.type || null
 }
 
-function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt, isRoadTrip) {
+function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt, isRoadTrip, isResend) {
   const expiry = new Date(expiresAt).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
   const dateLabel = eventDate
     ? new Date(eventDate).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
     : eventDate
 
-  const label    = isRoadTrip ? 'Canvas Routes &middot; Road Trip &middot; You&rsquo;re Invited'
-                               : 'Canvas Routes &middot; Car Meet &middot; You&rsquo;re Invited'
-  const headline = isRoadTrip ? `The road is calling, ${firstName}.`
-                               : `Your spot&rsquo;s ready, ${firstName}.`
-  const body     = isRoadTrip
-    ? `We&rsquo;ve reviewed your application and we&rsquo;d love to have you on the road with us for <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong>. Confirm your spot below &mdash; we&rsquo;ll follow up with full route details as the date gets closer.`
-    : `We&rsquo;ve reviewed your application and we&rsquo;d love to see you at <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong>. One click to confirm and you&rsquo;re in.`
-  const signoff  = isRoadTrip
+  const label = isRoadTrip ? 'Canvas Routes &middot; Road Trip &middot; You&rsquo;re Invited'
+                            : 'Canvas Routes &middot; Car Meet &middot; You&rsquo;re Invited'
+
+  const headline = isResend
+    ? (isRoadTrip ? `Still here for you, ${firstName}.` : `Your spot&rsquo;s still open, ${firstName}.`)
+    : (isRoadTrip ? `The road is calling, ${firstName}.` : `Your spot&rsquo;s ready, ${firstName}.`)
+
+  const body = isResend
+    ? (isRoadTrip
+        ? `Just a quick reminder &mdash; your invitation to join us for <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong> is still open. Confirm your spot below before the link expires.`
+        : `Just a quick reminder &mdash; your spot at <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong> is still available. One click and you&rsquo;re confirmed.`)
+    : (isRoadTrip
+        ? `We&rsquo;ve reviewed your application and we&rsquo;d love to have you on the road with us for <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong>. Confirm your spot below &mdash; we&rsquo;ll follow up with full route details as the date gets closer.`
+        : `We&rsquo;ve reviewed your application and we&rsquo;d love to see you at <strong style="color:#F5F1EC;font-weight:400;">${eventName}</strong>. One click to confirm and you&rsquo;re in.`)
+
+  const signoff = isRoadTrip
     ? `Questions about the route? Reply directly to this email &mdash; it comes straight to me.`
     : `Questions? Reply directly to this email &mdash; it comes straight to me.`
 
@@ -82,7 +90,8 @@ function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl
       </td></tr>
 
       <tr><td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.6);">
-        ${signoff}
+        ${signoff}<br/><br/>
+        <span style="color:rgba(245,241,236,0.45);">&mdash; Jerry</span>
       </td></tr>
 
       <tr><td style="padding-bottom:28px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border:1px solid rgba(197,168,130,0.35);"><a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;text-decoration:none;">Follow &#64;canvasroutes &rarr;</a></td></tr></table></td></tr>
@@ -102,7 +111,7 @@ export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   if (!process.env.RESEND_API_KEY) return Response.json({ error: 'Email not configured.' }, { status: 503 })
 
-  const { applicationId, eventName, eventDate, eventLocation } = await request.json().catch(() => ({}))
+  const { applicationId, eventName, eventDate, eventLocation, isResend = false } = await request.json().catch(() => ({}))
   if (!applicationId || !eventName) return Response.json({ error: 'applicationId and eventName required.' }, { status: 400 })
 
   const supabase = createAdminClient()
@@ -155,9 +164,11 @@ export async function POST(request) {
         from: 'Canvas Routes <jerry@canvasroutes.com>',
         to: app.email,
         reply_to: 'jerry@canvasroutes.com',
-        subject: `You're invited — ${eventName}`,
-        html: buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt.toISOString(), isRoadTrip),
-        text: `Hey ${firstName},\n\nYou're invited to ${eventName}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry\nCanvas Routes`,
+        subject: isResend ? `Reminder — your spot at ${eventName}` : `You're invited — ${eventName}`,
+        html: buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt.toISOString(), isRoadTrip, isResend),
+        text: isResend
+          ? `Hey ${firstName},\n\nJust a reminder — your invitation to ${eventName} is still open. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`
+          : `Hey ${firstName},\n\nYou're invited to ${eventName}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
       }),
     })
     if (!res.ok) {

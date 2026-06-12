@@ -329,7 +329,7 @@ export default function EventsClient() {
     try {
       const res = await fetch('/api/admin/event-applications/invite', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ applicationId: app.id, eventName: ev.name, eventDate: ev.date, eventLocation: ev.location }),
+        body: JSON.stringify({ applicationId: app.id, eventName: ev.name, eventDate: ev.date, eventLocation: ev.location, isResend: !!app.rsvp }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setInviteErr(p => ({ ...p, [key]: d.error || 'Failed to send.' })); return }
