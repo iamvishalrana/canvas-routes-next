@@ -1,5 +1,5 @@
 import { stripe } from '../../../../lib/stripe.js'
-import { checkRateLimit } from '../../../../lib/rateLimit.js'
+import { checkRateLimit, acquireLock, releaseLock } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 
 const PRICES = {
@@ -77,13 +77,26 @@ export async function POST(request) {
       return Response.json({ error: 'This promo code is no longer valid.' }, { status: 400 })
     }
 
+    // Acquire a per-PI lock to prevent concurrent apply calls stacking two discounts
+    const lockKey = `promo:${paymentIntentId}`
+    const locked = await acquireLock(lockKey, 10)
+    if (!locked) return Response.json({ error: 'Another request is in progress. Please try again.' }, { status: 409 })
+
     // Get current payment intent amount and guard against stacking
-    const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+    let pi
+    try {
+      pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+    } catch (err) {
+      await releaseLock(lockKey)
+      throw err
+    }
     // Only allow promo codes on membership payments
     if (!['membership_routes', 'membership_inner_circle'].includes(pi.metadata?.type)) {
+      await releaseLock(lockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
     if (pi.metadata?.promo_code_id) {
+      await releaseLock(lockKey)
       return Response.json({ error: 'A promo code has already been applied.' }, { status: 400 })
     }
     const currentAmount = pi.amount
@@ -108,6 +121,7 @@ export async function POST(request) {
       amount: discountedAmount,
       metadata: { ...pi.metadata, promo_code_id: promoCode.id },
     })
+    await releaseLock(lockKey)
 
     return Response.json({
       discountedAmount,
@@ -117,6 +131,7 @@ export async function POST(request) {
       promoCodeId: promoCode.id,
     })
   } catch (err) {
+    try { await releaseLock(`promo:${paymentIntentId}`) } catch {}
     captureException(err, { context: 'stripe-apply-promo', code, paymentIntentId })
     return Response.json({ error: 'Failed to apply promo code.' }, { status: 500 })
   }

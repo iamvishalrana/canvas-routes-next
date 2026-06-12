@@ -144,7 +144,12 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       setPaying(false); payingRef.current = false
       return
     }
-    if (confirmError) { setError(confirmError.message); setPaying(false); payingRef.current = false; return }
+    if (confirmError) {
+      const expired = confirmError.code === 'payment_intent_unexpected_state' || confirmError.payment_intent?.status === 'canceled'
+      setError(expired ? 'Your payment session expired. Please go back and try again.' : confirmError.message)
+      setPaying(false); payingRef.current = false
+      return
+    }
 
     try {
       const waitlistRes = await fetch('/api/membership-waitlist', {
@@ -164,50 +169,80 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
     onSuccess()
   }
 
-  return (
-    <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+  const TIER_PERKS = {
+    'Inner Circle': ['48hr early access to all events', '$70 route credit included', 'Professional car photoshoot', 'Canvas Routes cap + members kit'],
+    'Routes Member': ['Priority registration for all events', 'Preferred member pricing on routes', 'Members-only events + community', 'Canvas Routes members kit'],
+  }
+  const perks = TIER_PERKS[tier] || TIER_PERKS['Routes Member']
 
-      {/* Tier + price header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter),sans-serif' }}>{tier}</div>
-        <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', fontWeight: '300', display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-          {promoApplied && (
-            <span style={{ fontSize: '1rem', color: 'rgba(0,0,0,0.25)', textDecoration: 'line-through' }}>${price}</span>
-          )}
-          ${displayPrice}
-          <span style={{ fontSize: '11px', color: '#999' }}>CAD / season</span>
+  return (
+    <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: 0, fontFamily: 'var(--font-inter), sans-serif' }}>
+
+      {/* Security header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>Secure checkout</span>
+        </div>
+        <span style={{ fontSize: '10px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em' }}>Powered by Stripe</span>
+      </div>
+
+      {/* Order summary */}
+      <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)', borderBottom: '0.5px solid rgba(0,0,0,0.08)', padding: '1.25rem 0', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+          <div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem', fontFamily: 'var(--font-inter),sans-serif' }}>Canvas Routes · 2026</div>
+            <div style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif' }}>{tier} Membership</div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            {promoApplied && (
+              <div style={{ fontSize: '12px', color: 'rgba(0,0,0,0.25)', textDecoration: 'line-through', fontFamily: 'var(--font-inter),sans-serif' }}>${price} CAD</div>
+            )}
+            <div style={{ fontSize: '1.35rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>${displayPrice}</div>
+            <div style={{ fontSize: '10px', color: '#aaa', marginTop: '0.2rem', fontFamily: 'var(--font-inter),sans-serif' }}>CAD / season</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          {perks.map((p, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span style={{ fontSize: '11px', color: '#666', fontFamily: 'var(--font-inter),sans-serif' }}>{p}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Promo code */}
       {promoApplied ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.75rem', background: 'rgba(59,107,47,0.07)', borderLeft: '2px solid rgba(59,107,47,0.5)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', background: 'rgba(59,107,47,0.06)', border: '0.5px solid rgba(59,107,47,0.25)', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span style={{ fontSize: '11px', letterSpacing: '0.1em', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>{promoApplied.code}</span>
+            <span style={{ fontSize: '11px', letterSpacing: '0.08em', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>{promoApplied.code}</span>
             <span style={{ fontSize: '11px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>
               {promoApplied.percentOff ? `— ${promoApplied.percentOff}% off` : `— $${(promoApplied.amountOff / 100).toFixed(2)} off`}
             </span>
           </div>
           <button type="button" onClick={handleRemovePromo}
-            style={{ background: 'none', border: 'none', color: '#999', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.25rem' }}>
+            style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.2rem', transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#555'}
+            onMouseLeave={e => e.currentTarget.style.color = '#aaa'}>
             Remove
           </button>
         </div>
       ) : (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.75rem' }}>
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: '0' }}>
             <input
               type="text"
               value={promoInput}
               onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
               placeholder="Promo code"
-              style={{ width: '140px', padding: '0.6rem 0', fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: 'transparent', border: 'none', borderBottom: `1px solid ${promoError ? 'rgba(208,96,112,0.8)' : promoInput ? 'rgba(59,107,47,0.5)' : 'rgba(0,0,0,0.12)'}`, WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0 }}
+              style={{ flex: 1, padding: '0.65rem 0.85rem', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: '#fff', border: `0.5px solid ${promoError ? 'rgba(208,96,112,0.6)' : 'rgba(0,0,0,0.15)'}`, borderRight: 'none', WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0, letterSpacing: '0.1em' }}
             />
             <button type="button" onClick={handleApplyPromo}
               disabled={applyingPromo || !promoInput.trim()}
-              style={{ padding: '0.4rem 1rem', background: promoInput.trim() ? 'rgba(59,107,47,0.08)' : 'transparent', border: `0.5px solid ${promoInput.trim() ? 'rgba(59,107,47,0.5)' : 'rgba(0,0,0,0.15)'}`, color: promoInput.trim() ? '#3B6B2F' : '#aaa', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo ? 0.5 : 1, flexShrink: 0, fontWeight: promoInput.trim() ? '500' : '400', transition: 'all 0.15s' }}>
+              style={{ padding: '0.65rem 1.1rem', background: promoInput.trim() ? '#0F1E14' : '#f5f5f3', border: `0.5px solid ${promoInput.trim() ? '#0F1E14' : 'rgba(0,0,0,0.15)'}`, color: promoInput.trim() ? '#fff' : '#aaa', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo ? 0.5 : 1, flexShrink: 0, fontWeight: '500', transition: 'all 0.15s', borderRadius: 0 }}>
               {applyingPromo ? '…' : 'Apply'}
             </button>
           </div>
@@ -215,15 +250,47 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
         </div>
       )}
 
-      <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
-      {error && <div style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
+      {/* Stripe payment element */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
+      </div>
+
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', padding: '0.65rem 0.85rem', background: 'rgba(208,96,112,0.06)', border: '0.5px solid rgba(208,96,112,0.25)', marginBottom: '1rem' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d06070" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style={{ fontSize: '12px', color: '#d06070', fontFamily: 'var(--font-inter),sans-serif', lineHeight: '1.5' }}>{error}</span>
+        </div>
+      )}
+
+      {/* Pay button */}
       <button type="submit" disabled={!stripe || paying}
-        style={{ width: '100%', padding: '1rem', background: '#3B6B2F', border: 'none', color: '#fff', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', opacity: paying ? 0.7 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
-        {paying ? 'Processing…' : `Submit application — $${displayPrice} CAD`}
+        style={{ width: '100%', padding: '1.05rem', background: paying ? '#2a4f20' : '#0F1E14', border: 'none', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'background 0.2s', marginBottom: '0.85rem' }}>
+        {paying ? (
+          <>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Processing…
+          </>
+        ) : (
+          <>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Authorize ${displayPrice} CAD
+          </>
+        )}
       </button>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+
+      {/* Trust line */}
+      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+        <span style={{ fontSize: '10px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
+          Your card is held — not charged until we approve your application
+        </span>
+      </div>
+
       <button type="button" onClick={async () => { if (promoApplied) await handleRemovePromo(); onBack() }}
-        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.35)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem' }}>
-        ← Back
+        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.3)', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem', transition: 'color 0.15s' }}
+        onMouseEnter={e => e.currentTarget.style.color = 'rgba(0,0,0,0.6)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'rgba(0,0,0,0.3)'}>
+        ← Back to application
       </button>
     </form>
   )
@@ -232,7 +299,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 function SectionLabel({ children }) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap:'1rem', margin:'2.5rem 0 1.75rem' }}>
-      <div style={{ fontSize:'8px', letterSpacing:'0.26em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter),sans-serif', whiteSpace:'nowrap' }}>{children}</div>
+      <div style={{ fontSize:'10px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter),sans-serif', whiteSpace:'nowrap' }}>{children}</div>
       <div style={{ flex:1, height:'0.5px', background:'rgba(0,0,0,0.09)' }} />
     </div>
   )
@@ -349,6 +416,8 @@ export default function MembershipContent() {
       setClientSecret(data.clientSecret)
       setPaymentStep(true)
       setStatus(null)
+      // Scroll to top of payment form on step change
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50)
     } catch (err) {
       captureException(err, { context: 'membership-handleSubmit', email: form.email })
       setSubmitError(err.message || 'Something went wrong. Please try again.')
@@ -708,16 +777,68 @@ export default function MembershipContent() {
               options={{
                 clientSecret,
                 appearance: {
-                  theme: 'stripe',
+                  theme: 'flat',
                   variables: {
-                    colorPrimary: '#c5a882',
+                    colorPrimary: '#0F1E14',
                     colorBackground: '#ffffff',
                     colorText: '#1a1a1a',
-                    colorTextSecondary: '#666',
+                    colorTextSecondary: '#888',
+                    colorTextPlaceholder: '#bbb',
                     colorDanger: '#d06070',
+                    colorIconTab: '#888',
+                    colorIconTabSelected: '#0F1E14',
                     fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSizeBase: '13px',
                     borderRadius: '0px',
-                    spacingUnit: '4px',
+                    spacingUnit: '5px',
+                    spacingGridRow: '14px',
+                  },
+                  rules: {
+                    '.Input': {
+                      border: '0.5px solid rgba(0,0,0,0.15)',
+                      padding: '10px 12px',
+                      fontSize: '13px',
+                      transition: 'border-color 0.15s',
+                    },
+                    '.Input:focus': {
+                      border: '0.5px solid rgba(15,30,20,0.5)',
+                      outline: '0',
+                      boxShadow: 'none',
+                    },
+                    '.Input--invalid': {
+                      border: '0.5px solid rgba(208,96,112,0.6)',
+                    },
+                    '.Label': {
+                      fontSize: '9px',
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      color: '#999',
+                      marginBottom: '6px',
+                    },
+                    '.Tab': {
+                      border: '0.5px solid rgba(0,0,0,0.12)',
+                      boxShadow: 'none',
+                      padding: '8px 12px',
+                    },
+                    '.Tab:hover': {
+                      border: '0.5px solid rgba(0,0,0,0.25)',
+                      boxShadow: 'none',
+                    },
+                    '.Tab--selected': {
+                      border: '0.5px solid #0F1E14',
+                      boxShadow: 'none',
+                      color: '#0F1E14',
+                    },
+                    '.TabIcon--selected': {
+                      fill: '#0F1E14',
+                    },
+                    '.TabLabel--selected': {
+                      color: '#0F1E14',
+                    },
+                    '.Block': {
+                      border: '0.5px solid rgba(0,0,0,0.1)',
+                      boxShadow: 'none',
+                    },
                   },
                 },
               }}
@@ -927,7 +1048,7 @@ export default function MembershipContent() {
                   <Share2 size={10} /><span>How did you hear about us</span><span style={{ color: '#d06070' }}>*</span>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <select value={form.source} onChange={e => set('source', e.target.value)}
+                  <select value={form.source} onChange={e => { set('source', e.target.value); if (e.target.value !== 'Member referral') setErrors(p => ({ ...p, referredBy: false })) }}
                     onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
                     style={{ ...inp('source'), paddingRight: '1.5rem', cursor: 'pointer' }}>
                     <option value="">Select</option>
