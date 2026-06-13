@@ -48,7 +48,7 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
       style={{ background: isPast ? 'rgba(255,255,255,0.7)' : '#fff', border: '0.5px solid rgba(0,0,0,0.08)', overflow: 'hidden', cursor: 'pointer' }}
     >
       {ev.photo_url && (
-        <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '180px', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: 'auto', display: 'block' }} />
       )}
       <div style={{ padding: '1.75rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
         <div style={{ flexShrink: 0, width: '48px' }}>
@@ -116,7 +116,7 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
 
         {/* Photo — negative margin pulls it behind the sticky bar so nothing is hidden */}
         {ev.photo_url && (
-          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '240px', objectFit: 'cover', objectPosition: 'center', display: 'block', marginTop: '-44px', paddingTop: '44px', boxSizing: 'border-box' }} />
+          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: 'auto', display: 'block', marginTop: '-44px', paddingTop: '44px', boxSizing: 'border-box' }} />
         )}
 
         <div style={{ padding: '1.75rem 2rem 2rem' }}>
