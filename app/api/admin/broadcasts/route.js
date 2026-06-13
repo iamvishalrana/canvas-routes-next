@@ -23,7 +23,7 @@ export async function GET() {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('broadcasts')
-    .select('id, subject, audience, specific_emails, sent_count, failed_count, sent_at')
+    .select('id, subject, body_html, audience, specific_emails, sent_count, failed_count, sent_at')
     .order('sent_at', { ascending: false })
     .limit(100)
   return Response.json(data || [])
@@ -34,7 +34,7 @@ export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
-  const { subject, html, audience, specificEmails } = await request.json()
+  const { subject, html, body_html, audience, specificEmails } = await request.json()
 
   if (!subject?.trim()) return Response.json({ error: 'Subject is required.' }, { status: 400 })
   if (!html?.trim()) return Response.json({ error: 'Email body is required.' }, { status: 400 })
@@ -161,6 +161,7 @@ export async function POST(request) {
   try {
     await supabase.from('broadcasts').insert({
       subject: subject.trim(),
+      body_html: body_html || null,
       audience,
       specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
       sent_count: sent,
