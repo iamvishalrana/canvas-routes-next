@@ -65,6 +65,7 @@ export default function ContactsClient() {
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
+  const [expandedRsvp, setExpandedRsvp] = useState(null)
   const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [sortContacts, setSortContacts] = useState('name_az')
   const [selected, setSelected] = useState(new Set())
@@ -851,8 +852,17 @@ export default function ContactsClient() {
                   {/* RSVP History */}
                   {editingContact !== c.contact_id && (
                     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>RSVP History</div>
-                      {!c.rsvp_history?.length ? (
+                      <button
+                        onClick={() => setExpandedRsvp(expandedRsvp === c.contact_id ? null : c.contact_id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: expandedRsvp === c.contact_id ? '0.6rem' : 0 }}
+                      >
+                        <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>RSVP History</div>
+                        {c.rsvp_history?.length > 0 && (
+                          <span style={{ fontSize: '9px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif' }}>{c.rsvp_history.length}</span>
+                        )}
+                        <svg style={{ transform: expandedRsvp === c.contact_id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }} width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </button>
+                      {expandedRsvp === c.contact_id && (!c.rsvp_history?.length ? (
                         <div style={{ fontSize: '12px', color: '#ccc' }}>No RSVPs on record.</div>
                       ) : (
                         [...c.rsvp_history].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((rsvp, ri) => {
@@ -890,7 +900,7 @@ export default function ContactsClient() {
                             </div>
                           )
                         })
-                      )}
+                      ))}
                     </div>
                   )}
 
