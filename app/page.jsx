@@ -366,7 +366,6 @@ export default function Home() {
         <div className="nav-links">
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
           <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
-          <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
           <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
           <Link href="/faq">FAQ</Link>
         </div>
@@ -387,7 +386,6 @@ export default function Home() {
         <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }}>Car Meets</a>
         <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }}>Routes</a>
         <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
-        <a href="#gallery" onClick={e => { e.preventDefault(); smoothScroll('gallery') }}>Gallery</a>
         <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
         <Link href="/faq">FAQ</Link>
         <Link href="/membership" style={{color:"#0F1E14",fontWeight:"500"}}>
