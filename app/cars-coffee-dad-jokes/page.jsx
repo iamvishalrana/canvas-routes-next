@@ -194,11 +194,16 @@ export default function CCDPage() {
               <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'1.5rem', fontWeight:'300', color:'#1a1a1a', lineHeight:1.2, marginBottom:'0.75rem' }}>
                 Canvas Routes Membership
               </div>
-              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.75, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1.5rem' }}>
+              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.75, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1rem' }}>
                 Road trips, invite-only meets, and partner perks — built for drivers who love the road.
               </p>
+              <p style={{ fontSize:'12px', color:'#666', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1.25rem' }}>
+                As a thank-you for coming out, use code{' '}
+                <span style={{ fontFamily:'var(--font-inter), sans-serif', letterSpacing:'0.12em', color:'#0F1E14', fontWeight:'500', background:'rgba(197,168,130,0.15)', padding:'2px 8px', border:'0.5px solid rgba(197,168,130,0.4)' }}>FOUNDING</span>
+                {' '}for a special discount when you apply for membership.
+              </p>
               <Link href="/membership" style={{ display:'inline-block', background:'#0F1E14', color:'#F5F1EC', padding:'0.85rem 2.5rem', fontSize:'10px', letterSpacing:'0.22em', textTransform:'uppercase', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif', marginBottom:'1.5rem' }}>
-                See Membership
+                Apply for Membership
               </Link>
               <div>
                 <Link href="/" style={{ fontSize:'10px', letterSpacing:'0.14em', textTransform:'uppercase', color:'#aaa', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif' }}>

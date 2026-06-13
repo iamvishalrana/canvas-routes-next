@@ -44,6 +44,15 @@ function confirmHtml(firstName, { year, carMake, carModel, dob_month, dob_day, d
         <p style="margin:0 0 1.4em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
           Add <a href="mailto:info@canvasroutes.com" style="color:#8A6535;text-decoration:none;">info@canvasroutes.com</a> to your contacts so our follow-up doesn't end up in spam.
         </p>
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 1.4em;background:#fafaf8;border:0.5px solid rgba(197,168,130,0.35);padding:20px 24px;">
+          <tr>
+            <td>
+              <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">Founding Member Offer</p>
+              <p style="margin:0 0 12px 0;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.7;color:#333;">As a thank-you for coming out, use code <strong style="font-family:Arial,Helvetica,sans-serif;letter-spacing:2px;color:#1a1a1a;">FOUNDING</strong> when you apply for a Canvas Routes membership for a special discount.</p>
+              <a href="https://canvasroutes.com/membership" style="display:inline-block;background:#0F1E14;color:#F5F1EC;padding:10px 24px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;">Apply for Membership &rarr;</a>
+            </td>
+          </tr>
+        </table>
         <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
           See you on June 20,<br/>Jerry<br/>Canvas Routes
         </p>
