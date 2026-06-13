@@ -103,6 +103,7 @@ export default function CardInteractive({ children }) {
       {/* Bounce wrapper — CSS keyframe animation, zero stutter */}
       <div style={{
         width: '100%',
+        willChange: 'transform',
         animation: bounce ? 'card-press-spring 0.58s cubic-bezier(0.34, 1.52, 0.64, 1) forwards' : 'none',
       }}>
         {/* Tilt wrapper */}

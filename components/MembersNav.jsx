@@ -2,11 +2,17 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function MembersNav({ email, isAdmin }) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    function onResize() { if (window.innerWidth > 640) setMenuOpen(false) }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   async function signOut() {
     await fetch('/api/auth/signout', { method: 'POST' })
@@ -106,7 +112,7 @@ export default function MembersNav({ email, isAdmin }) {
       />
 
       {/* Mobile dropdown — slides in */}
-      <div style={{
+      <div aria-hidden={!menuOpen} style={{
         background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.15)',
         padding: '1.25rem 1.5rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.1rem',
         position: 'fixed', top: '72px', left: 0, right: 0, zIndex: 49,

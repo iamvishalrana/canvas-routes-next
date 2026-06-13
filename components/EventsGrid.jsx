@@ -90,10 +90,11 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
   const rawDate = ev.date_display || ev.date || ''
 
   useEffect(() => {
+    const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     function onKey(e) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey) }
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey) }
   }, [onClose])
 
   return (
