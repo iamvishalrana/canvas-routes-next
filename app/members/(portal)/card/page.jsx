@@ -87,21 +87,21 @@ export default async function CardPage() {
         <div style={{ position: 'absolute', bottom: '35%', right: '-20px', width: '240px', height: '240px', background: 'radial-gradient(circle, rgba(197,168,130,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         {/* Logo + season — season is absolute so it never competes with logo width */}
-        <div style={{ padding: 'clamp(1.25rem, 4vw, 1.5rem) clamp(1.25rem, 4vw, 1.75rem) 1.25rem', position: 'relative', zIndex: 1 }}>
+        <div style={{ padding: 'clamp(1rem, 3.5vw, 1.25rem) clamp(1.25rem, 4vw, 1.75rem) 0.6rem', position: 'relative', zIndex: 1 }}>
           {/* Season — floats top-right, out of flow */}
-          <div style={{ position: 'absolute', top: 'clamp(1.25rem, 4vw, 1.5rem)', right: 'clamp(1.25rem, 4vw, 1.75rem)', textAlign: 'right' }}>
+          <div style={{ position: 'absolute', top: 'clamp(1rem, 3.5vw, 1.25rem)', right: 'clamp(1.25rem, 4vw, 1.75rem)', textAlign: 'right' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.15rem' }}>Season</div>
             <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>2026</div>
           </div>
           {/* Logo — full row, no competitor */}
-          <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '148px', height: 'auto', opacity: 0.92, display: 'block' }} />
+          <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
         </div>
 
         {/* Divider */}
         <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.25), transparent)', margin: '0 clamp(1.25rem, 4vw, 1.75rem)', position: 'relative', zIndex: 1 }} />
 
         {/* Member info */}
-        <div style={{ padding: 'clamp(1rem, 3vw, 1.25rem) clamp(1.25rem, 4vw, 1.75rem)', position: 'relative', zIndex: 1 }}>
+        <div style={{ padding: '0.9rem clamp(1.25rem, 4vw, 1.75rem) 1rem', position: 'relative', zIndex: 1 }}>
 
           {/* Name + badges */}
           <div style={{ marginBottom: '1rem' }}>
