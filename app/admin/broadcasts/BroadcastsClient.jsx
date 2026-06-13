@@ -80,9 +80,8 @@ function processBodyHtml(html) {
     .replace(/<\/h3>/gi, '</p>')
 }
 
-// Branded Canvas Routes email template — Outlook-safe table layout, correct
-// width containment for Gmail, <!-- UNSUBSCRIBE_FOOTER --> placeholder injected
-// server-side per recipient.
+// Email template — full-width, no header bar, no predefined box.
+// <!-- UNSUBSCRIBE_FOOTER --> placeholder is injected server-side per recipient.
 function buildHtml(bodyHtml) {
   const processed = processBodyHtml(bodyHtml)
   return `<!DOCTYPE html>
@@ -93,56 +92,33 @@ function buildHtml(bodyHtml) {
   <meta name="color-scheme" content="light">
   <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 </head>
-<body style="margin:0;padding:0;background:#EDE8E1;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#EDE8E1;">
+<body style="margin:0;padding:0;background:#ffffff;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+
+    <!-- Body -->
     <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;">
-
-          <!-- Header -->
-          <tr>
-            <td style="background:#0F1E14;padding:24px 36px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-transform:uppercase;color:#c5a882;">Canvas Routes</p></td>
-                  <td align="right"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:10px;text-transform:uppercase;color:#8a7055;">Season 2026</p></td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Gold accent line — solid fallback for Outlook -->
-          <tr>
-            <td height="2" style="height:2px;max-height:2px;font-size:0;line-height:2px;mso-line-height-rule:exactly;background-color:#c5a882;background:linear-gradient(90deg,#0F1E14 0%,#c5a882 50%,#0F1E14 100%);"> </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="background:#F5F1EC;padding:36px 36px 28px;">
-              <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.75;color:#444;">${processed}</div>
-            </td>
-          </tr>
-
-          <!-- Signature -->
-          <tr>
-            <td style="background:#F5F1EC;padding:0 36px 20px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#ebebeb;"> </td></tr>
-              </table>
-              ${SIG_HTML}
-            </td>
-          </tr>
-
-          <!-- Unsubscribe — replaced per-recipient by broadcasts route.js -->
-          <tr>
-            <td style="background:#F5F1EC;padding:0 36px 28px;">
-              <!-- UNSUBSCRIBE_FOOTER -->
-            </td>
-          </tr>
-
-        </table>
+      <td style="padding:40px 40px 24px;">
+        <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.75;color:#444;">${processed}</div>
       </td>
     </tr>
+
+    <!-- Signature -->
+    <tr>
+      <td style="padding:0 40px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#ebebeb;"> </td></tr>
+        </table>
+        ${SIG_HTML}
+      </td>
+    </tr>
+
+    <!-- Unsubscribe — replaced per-recipient by broadcasts route.js -->
+    <tr>
+      <td style="padding:0 40px 28px;">
+        <!-- UNSUBSCRIBE_FOOTER -->
+      </td>
+    </tr>
+
   </table>
 </body>
 </html>`
@@ -169,6 +145,32 @@ function Signature() {
           <a href="https://canvasroutes.com" style={{ color: '#8A6535', textDecoration: 'none' }}>canvasroutes.com</a>
           <span style={{ color: '#ddd', margin: '0 5px' }}>|</span>
           <a href="https://instagram.com/canvasroutes" style={{ color: '#8A6535', textDecoration: 'none' }}>@canvasroutes</a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PreviewPanel({ bodyHtml, bodyEmpty, maxHeight }) {
+  return (
+    <div style={{ border: '0.5px solid rgba(0,0,0,0.12)', background: '#fff', overflow: 'hidden' }}>
+      <div style={{ padding: '0.55rem 0.85rem', background: '#f5f5f5', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        {['#ee6b5f','#f5bf4f','#61c554'].map(c => <div key={c} style={{ width: '8px', height: '8px', borderRadius: '50%', background: c }} />)}
+      </div>
+      <div style={{ padding: '2rem 2.5rem 1.5rem', maxHeight, overflowY: maxHeight === 'none' ? 'visible' : 'auto' }}>
+        {bodyEmpty ? (
+          <p style={{ fontSize: '14px', color: '#ccc', fontStyle: 'italic', margin: '0 0 20px', fontFamily: 'Arial,sans-serif' }}>
+            Your message will appear here…
+          </p>
+        ) : (
+          <div
+            style={{ fontSize: '15px', lineHeight: '1.75', color: '#444', fontFamily: 'Arial,sans-serif', marginBottom: '20px' }}
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
+          />
+        )}
+        <Signature />
+        <div style={{ marginTop: '16px', fontSize: '11px', color: '#bbb', fontFamily: 'Arial,sans-serif' }}>
+          <a href="#" onClick={e => e.preventDefault()} style={{ color: '#bbb', textDecoration: 'underline' }}>Unsubscribe</a>
         </div>
       </div>
     </div>
@@ -264,6 +266,7 @@ export default function BroadcastsClient() {
   const [testEmail, setTestEmail]           = useState('')
   const [testSending, setTestSending]       = useState(false)
   const [testResult, setTestResult]         = useState(null)
+  const [previewExpanded, setPreviewExpanded] = useState(false)
   const sendingRef = useRef(false)
   const tabRef     = useRef(tab)
   useEffect(() => { tabRef.current = tab }, [tab])
@@ -393,13 +396,24 @@ export default function BroadcastsClient() {
         .tiptap-editor:focus-within { border-color: rgba(0,0,0,0.3); }
         .bc-grid {
           display: grid;
-          grid-template-columns: minmax(0,1.1fr) minmax(0,0.9fr);
+          grid-template-columns: minmax(0,1fr) minmax(0,1fr);
           gap: 1.5rem;
           align-items: start;
         }
         @media (max-width: 900px) {
           .bc-grid { grid-template-columns: 1fr; }
           .bc-preview-sticky { position: static !important; }
+        }
+        .bc-preview-overlay {
+          position: fixed; inset: 0; z-index: 999;
+          background: rgba(0,0,0,0.55);
+          display: flex; align-items: center; justify-content: center;
+          padding: 2rem;
+        }
+        .bc-preview-modal {
+          background: #fff; width: 100%; max-width: 760px;
+          max-height: 90vh; display: flex; flex-direction: column;
+          border: 0.5px solid rgba(0,0,0,0.15);
         }
       `}</style>
 
@@ -471,14 +485,14 @@ export default function BroadcastsClient() {
       {tab === 'compose' && (
         <>
           {/* Warning */}
-          <div style={{ maxWidth: '900px', background: 'rgba(197,168,130,0.07)', border: '0.5px solid rgba(197,168,130,0.3)', borderLeft: '2px solid #c5a882', padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+          <div style={{ background: 'rgba(197,168,130,0.07)', border: '0.5px solid rgba(197,168,130,0.3)', borderLeft: '2px solid #c5a882', padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span style={{ fontSize: '12px', color: '#8A6535', lineHeight: '1.6' }}>Broadcast emails cannot be unsent. Send a test first and review carefully.</span>
           </div>
 
           {/* Success banner */}
           {result && (
-            <div style={{ maxWidth: '900px', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.3)', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.3)', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#3B6B2F', marginBottom: (result.failed > 0 || result.truncated) ? '0.35rem' : 0 }}>
                 ✓ Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.
               </div>
@@ -491,7 +505,7 @@ export default function BroadcastsClient() {
           )}
 
           {!result && (
-            <div className="bc-grid" style={{ maxWidth: '900px' }}>
+            <div className="bc-grid">
 
               {/* ── Left column ── */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -600,41 +614,39 @@ export default function BroadcastsClient() {
 
               {/* ── Right column — live preview ── */}
               <div className="bc-preview-sticky" style={{ position: 'sticky', top: '1.5rem' }}>
-                <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.75rem' }}>
-                  Preview
-                  {subject && <span style={{ marginLeft: '0.75rem', color: '#bbb', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>· {subject}</span>}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>
+                    Preview
+                    {subject && <span style={{ marginLeft: '0.75rem', color: '#bbb', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>· {subject}</span>}
+                  </div>
+                  <button
+                    onClick={() => setPreviewExpanded(true)}
+                    style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '3px 10px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}
+                  >
+                    Expand
+                  </button>
                 </div>
 
-                {/* Email chrome */}
-                <div style={{ border: '0.5px solid rgba(0,0,0,0.12)', background: '#fff', overflow: 'hidden' }}>
-                  {/* Browser bar */}
-                  <div style={{ padding: '0.55rem 0.85rem', background: '#f5f5f5', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    {['#ee6b5f','#f5bf4f','#61c554'].map(c => <div key={c} style={{ width: '8px', height: '8px', borderRadius: '50%', background: c }} />)}
-                  </div>
-                  {/* Email header strip preview */}
-                  <div style={{ background: '#0F1E14', padding: '12px 20px' }}>
-                    <span style={{ fontFamily: 'Arial,sans-serif', fontSize: '10px', textTransform: 'uppercase', color: '#c5a882', letterSpacing: '0.18em' }}>Canvas Routes</span>
-                  </div>
-                  <div style={{ height: '2px', background: 'linear-gradient(90deg,#0F1E14,#c5a882,#0F1E14)' }} />
-                  {/* Body */}
-                  <div style={{ padding: '1.5rem 1.25rem', background: '#F5F1EC', maxHeight: 'calc(100vh - 20rem)', overflowY: 'auto' }}>
-                    {bodyEmpty ? (
-                      <p style={{ fontSize: '14px', color: '#ccc', fontStyle: 'italic', margin: '0 0 20px', fontFamily: 'Arial,sans-serif' }}>
-                        Your message will appear here…
-                      </p>
-                    ) : (
-                      <div
-                        style={{ fontSize: '15px', lineHeight: '1.75', color: '#444', fontFamily: 'Arial,sans-serif', marginBottom: '20px' }}
-                        dangerouslySetInnerHTML={{ __html: bodyHtml }}
-                      />
-                    )}
-                    <Signature />
-                    <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '11px', color: '#bbb', fontFamily: 'Arial,sans-serif' }}>
-                      <a href="#" onClick={e => e.preventDefault()} style={{ color: '#bbb', textDecoration: 'underline' }}>Unsubscribe</a>
+                {/* Inline preview */}
+                <PreviewPanel bodyHtml={bodyHtml} bodyEmpty={bodyEmpty} maxHeight="calc(100vh - 18rem)" />
+              </div>
+
+              {/* Expanded preview modal */}
+              {previewExpanded && (
+                <div className="bc-preview-overlay" onClick={() => setPreviewExpanded(false)}>
+                  <div className="bc-preview-modal" onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', flexShrink: 0 }}>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>
+                        Preview{subject ? ` · ${subject}` : ''}
+                      </div>
+                      <button onClick={() => setPreviewExpanded(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#aaa', lineHeight: 1, padding: '0 4px' }}>×</button>
+                    </div>
+                    <div style={{ overflowY: 'auto', flex: 1 }}>
+                      <PreviewPanel bodyHtml={bodyHtml} bodyEmpty={bodyEmpty} maxHeight="none" />
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
             </div>
           )}
