@@ -145,7 +145,9 @@ export async function POST(request) {
             from: 'Canvas Routes <info@canvasroutes.com>',
             to: recipient.email,
             subject: subject.trim().replace(/\{\{name\}\}/gi, recipient.name || 'there'),
-            html: html.replace(/\{\{name\}\}/gi, recipient.name || 'there') + buildUnsubscribeFooter(recipient.email),
+            html: html
+              .replace(/\{\{name\}\}/gi, recipient.name || 'there')
+              .replace('<!-- UNSUBSCRIBE_FOOTER -->', buildUnsubscribeFooter(recipient.email)),
           }),
         })
         return res.ok ? 'sent' : 'failed'

@@ -3,6 +3,108 @@ import { useState, useEffect, useCallback } from 'react'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 
+function buildAnnouncementEmail(title, content) {
+  // Escape HTML entities to prevent injection
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+  }
+  const escapedTitle = esc(title)
+
+  // Convert newlines to <br> tags — pre-wrap is ignored by Outlook
+  const htmlContent = esc(content)
+    .replace(/\n\n+/g, '</p><p style="margin:1em 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#444;line-height:1.85;">')
+    .replace(/\n/g, '<br>')
+
+  return `<!DOCTYPE html>
+<html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+  <title>${escapedTitle}</title>
+</head>
+<body style="margin:0;padding:0;background:#EDE8E1;">
+  <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background:#EDE8E1;"><tr><td align="center"><![endif]-->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#EDE8E1;">
+    <tr>
+      <td align="center" style="padding:40px 16px;background:#EDE8E1;">
+
+        <!-- Constrained inner table: width attr for Outlook, max-width for standards clients -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="width:560px;max-width:560px;">
+
+          <!-- ── Header ── -->
+          <tr>
+            <td style="background:#0F1E14;padding:26px 36px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-transform:uppercase;color:#c5a882;">Canvas Routes</p></td>
+                  <td align="right"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:10px;text-transform:uppercase;color:#8a7055;">Season 2026</p></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Gold accent line — background-color fallback for Outlook; gradient for modern clients -->
+          <tr>
+            <td height="2" style="height:2px;max-height:2px;font-size:0;line-height:2px;mso-line-height-rule:exactly;background-color:#c5a882;background:linear-gradient(90deg,#0F1E14 0%,#c5a882 50%,#0F1E14 100%);"> </td>
+          </tr>
+
+          <!-- ── Body ── -->
+          <tr>
+            <td style="background:#F5F1EC;padding:36px 36px 28px;">
+              <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;text-transform:uppercase;color:#c5a882;">Member Update</p>
+              <!-- Using <p> not <h1> — Outlook adds its own margins/weight to heading elements -->
+              <p style="margin:0 0 20px;font-family:Georgia,'Times New Roman',Times,serif;font-size:26px;font-weight:400;color:#1a1a1a;line-height:1.25;mso-line-height-rule:exactly;">${escapedTitle}</p>
+              <!-- Divider: hex color instead of rgba() for Outlook 2007-2016 compat -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px;">
+                <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#d4c4aa;"> </td></tr>
+              </table>
+              <!-- Content: \n converted to <br> above — pre-wrap is ignored in Outlook -->
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#444;line-height:1.85;mso-line-height-rule:exactly;">${htmlContent}</p>
+            </td>
+          </tr>
+
+          <!-- ── Footer ── -->
+          <tr>
+            <td style="background:#F5F1EC;padding:0 36px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <!-- Divider: hex for Outlook compat -->
+                <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#ebebeb;"> </td></tr>
+                <tr>
+                  <td style="padding-top:20px;">
+                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#767676;line-height:1.6;">
+                      You&rsquo;re receiving this as a Canvas Routes member.<br>
+                      <a href="https://canvasroutes.com/members/dashboard" style="color:#c5a882;text-decoration:none;">Visit the members portal</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Unsubscribe injected here by server (inside </html>) -->
+          <!-- UNSUBSCRIBE_FOOTER -->
+
+        </table>
+      </td>
+    </tr>
+  </table>
+  <!--[if mso | IE]></td></tr></table><![endif]-->
+</body>
+</html>`
+}
+
+const AUDIENCE_OPTIONS = [
+  { value: 'all_active_members', label: 'All active members' },
+  { value: 'inner_circle',       label: 'Inner Circle only' },
+  { value: 'canvas_routes_member', label: 'Routes Members only' },
+]
+
 export default function AnnouncementsClient() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -18,6 +120,12 @@ export default function AnnouncementsClient() {
   const [deleteError, setDeleteError] = useState(null)
   const [announcementSearch, setAnnouncementSearch] = useState('')
   const [announcementFilter, setAnnouncementFilter] = useState('all')
+
+  // Email send state
+  const [emailingId, setEmailingId] = useState(null)      // announcement being emailed
+  const [emailAudience, setEmailAudience] = useState('all_active_members')
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailResult, setEmailResult] = useState({})      // { [id]: { sent, failed } | 'error' }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -80,6 +188,32 @@ export default function AnnouncementsClient() {
       setDeleteConfirm(null)
       load()
     } catch { setDeleteError('Network error.') }
+  }
+
+  async function sendEmail(item) {
+    setEmailSending(true)
+    try {
+      const res = await fetch('/api/admin/broadcasts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: item.title,
+          html: buildAnnouncementEmail(item.title, item.content),
+          audience: emailAudience,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setEmailResult(prev => ({ ...prev, [item.id]: { error: data.error || 'Failed to send.' } }))
+      } else {
+        setEmailResult(prev => ({ ...prev, [item.id]: { sent: data.sent, failed: data.failed } }))
+      }
+    } catch {
+      setEmailResult(prev => ({ ...prev, [item.id]: { error: 'Network error.' } }))
+    } finally {
+      setEmailSending(false)
+      setEmailingId(null)
+    }
   }
 
   const filteredAnnouncements = items.filter(a => {
@@ -179,29 +313,76 @@ export default function AnnouncementsClient() {
                   <Err msg={saveError} />
                 </div>
               ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                      <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.title}</div>
-                      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: item.published ? '0.5px solid rgba(59,107,47,0.3)' : '0.5px solid rgba(0,0,0,0.12)', background: item.published ? 'rgba(59,107,47,0.08)' : 'transparent', color: item.published ? '#3B6B2F' : '#bbb' }}>
-                        {item.published ? 'Published' : 'Draft'}
-                      </span>
-                      {item.audience && item.audience !== 'all' && (
-                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(197,168,130,0.45)', background: 'rgba(197,168,130,0.1)', color: '#8A6535' }}>
-                          {item.audience === 'members' ? 'Members only' : 'Contacts only'}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.title}</div>
+                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: item.published ? '0.5px solid rgba(59,107,47,0.3)' : '0.5px solid rgba(0,0,0,0.12)', background: item.published ? 'rgba(59,107,47,0.08)' : 'transparent', color: item.published ? '#3B6B2F' : '#bbb' }}>
+                          {item.published ? 'Published' : 'Draft'}
                         </span>
+                        {item.audience && item.audience !== 'all' && (
+                          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(197,168,130,0.45)', background: 'rgba(197,168,130,0.1)', color: '#8A6535' }}>
+                            {item.audience === 'members' ? 'Members only' : 'Contacts only'}
+                          </span>
+                        )}
+                        {/* Show prior send result */}
+                        {emailResult[item.id] && !emailResult[item.id].error && (
+                          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(59,107,47,0.35)', background: 'rgba(59,107,47,0.07)', color: '#3B6B2F' }}>
+                            ✓ Sent to {emailResult[item.id].sent}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65', whiteSpace: 'pre-wrap' }}>{item.content}</div>
+                      <div style={{ fontSize: '11px', color: '#ccc', marginTop: '0.5rem' }}>
+                        {new Date(item.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {/* Email button */}
+                      <button
+                        onClick={() => { setEmailingId(emailingId === item.id ? null : item.id); setEmailResult(p => ({ ...p, [item.id]: undefined })) }}
+                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', border: '0.5px solid rgba(197,168,130,0.5)', background: emailingId === item.id ? 'rgba(197,168,130,0.1)' : 'transparent', color: '#8A6535', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                      >
+                        Email
+                      </button>
+                      <GhostBtn onClick={() => togglePublish(item)} small disabled={publishing === item.id}>{publishing === item.id ? '…' : item.published ? 'Unpublish' : 'Publish'}</GhostBtn>
+                      <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content, audience: item.audience || 'all' }); setSaveError(null) }} small>Edit</GhostBtn>
+                      <DangerBtn small onClick={() => setDeleteConfirm(item.id)}>Delete</DangerBtn>
+                    </div>
+                  </div>
+
+                  {/* Email send panel */}
+                  {emailingId === item.id && (
+                    <div style={{ marginTop: '1rem', padding: '1rem 1.25rem', background: 'rgba(197,168,130,0.05)', border: '0.5px solid rgba(197,168,130,0.2)', borderLeft: '2px solid #c5a882' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '500', color: '#555', marginBottom: '0.75rem', letterSpacing: '0.04em' }}>
+                        Send <strong>"{item.title}"</strong> as email
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative' }}>
+                          <select
+                            style={{ ...sel, width: 'auto', paddingRight: '2rem', fontSize: '12px' }}
+                            value={emailAudience}
+                            onChange={e => setEmailAudience(e.target.value)}
+                          >
+                            {AUDIENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                          <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <button
+                          onClick={() => sendEmail(item)}
+                          disabled={emailSending}
+                          style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 16px', background: emailSending ? '#ccc' : '#0F1E14', color: '#F5F1EC', border: 'none', cursor: emailSending ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                        >
+                          {emailSending ? 'Sending…' : 'Send'}
+                        </button>
+                        <GhostBtn small onClick={() => setEmailingId(null)}>Cancel</GhostBtn>
+                      </div>
+                      {emailResult[item.id]?.error && (
+                        <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.5rem' }}>{emailResult[item.id].error}</div>
                       )}
                     </div>
-                    <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65', whiteSpace: 'pre-wrap' }}>{item.content}</div>
-                    <div style={{ fontSize: '11px', color: '#ccc', marginTop: '0.5rem' }}>
-                      {new Date(item.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                    <GhostBtn onClick={() => togglePublish(item)} small disabled={publishing === item.id}>{publishing === item.id ? '…' : item.published ? 'Unpublish' : 'Publish'}</GhostBtn>
-                    <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content, audience: item.audience || 'all' }); setSaveError(null) }} small>Edit</GhostBtn>
-                    <DangerBtn small onClick={() => setDeleteConfirm(item.id)}>Delete</DangerBtn>
-                  </div>
+                  )}
                 </div>
               )}
               {deleteConfirm === item.id && (
