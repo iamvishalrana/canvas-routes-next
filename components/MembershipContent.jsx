@@ -786,7 +786,7 @@ export default function MembershipContent() {
               { n: '02', title: 'We reach out', body: 'Every application is reviewed personally. We contact you directly to confirm your spot and tier.' },
               { n: '03', title: 'You\'re in', body: 'Complete payment, join the members community, and collect your members kit at your first event of the season.' },
             ].map((s, i) => (
-              <div key={i} style={{ background: '#F5F1EC', padding: '2rem 1.75rem' }}>
+              <div key={i} style={{ background: '#F5F1EC', padding: '2rem 1.75rem', height: '100%', boxSizing: 'border-box' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.65)', lineHeight: 1, marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.n}</div>
                 <div style={{ fontSize: '0.95rem', fontWeight: '600', color: '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3, fontFamily: 'var(--font-inter),sans-serif' }}>{s.title}</div>
                 <div style={{ ...BODY, color: '#666' }}>{s.body}</div>
