@@ -802,9 +802,9 @@ export default function Home() {
       {showCCDPopup && (
         <div
           onClick={e => { if (e.target === e.currentTarget) { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') } }}
-          style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,30,20,0.78)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,30,20,0.78)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1.25rem', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
         >
-          <div style={{ position: 'relative', maxWidth: '460px', width: '100%', boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }}>
+          <div style={{ position: 'relative', maxWidth: '460px', width: '100%', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', margin: 'auto' }}>
             {/* Close */}
             <button
               onClick={() => { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') }}

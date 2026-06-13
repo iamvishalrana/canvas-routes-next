@@ -306,7 +306,7 @@ export default async function DashboardPage() {
                 const month = evDate ? MONTHS_SHORT[evDate.getMonth()] : null
                 const year = isPartial && evDate ? evDate.getFullYear() : null
                 return (
-                  <Link key={ev.id} href="/members/events" className="event-row" style={{ borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', textDecoration: 'none', display: 'grid', gridTemplateColumns: '52px 1px 1fr', gap: '1.5rem', padding: '1.5rem 0', alignItems: 'start', cursor: 'pointer' }}>
+                  <Link key={ev.id} href={`/members/events/${ev.id}`} className="event-row" style={{ borderBottom: i < upcomingEvents.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', textDecoration: 'none', display: 'grid', gridTemplateColumns: '52px 1px 1fr', gap: '1.5rem', padding: '1.5rem 0', alignItems: 'start', cursor: 'pointer' }}>
                     {/* Date */}
                     <div style={{ textAlign: 'center', paddingTop: '1px' }}>
                       {day ? (
