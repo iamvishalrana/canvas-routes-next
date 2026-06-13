@@ -54,7 +54,9 @@ function confirmHtml(firstName) {
 </html>`
 }
 
-function notifyHtml({ name, email, year, carModel, phone, instagram, source }) {
+function notifyHtml({ name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source }) {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const dobStr = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''
   const row = (label, value) => value
     ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -66,8 +68,10 @@ function notifyHtml({ name, email, year, carModel, phone, instagram, source }) {
     ${row('Name', `<strong>${h(name)}</strong>`)}
     ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
     ${row('Car', h(`${year} ${carModel}`.trim()))}
+    ${row('Date of Birth', dobStr ? h(dobStr) : '')}
     ${row('Phone', phone ? h(phone) : '')}
     ${row('Instagram', instagram ? h(instagram) : '')}
+    ${row('About', more ? h(more) : '')}
     ${row('Source', source ? h(source) : '')}
   </table>
 </body></html>`
@@ -85,7 +89,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { name, email, year, carMake, carModel, phone, instagram, source, _hp } = body
+  const { name, email, year, carMake, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -96,6 +100,8 @@ export async function POST(request) {
     return Response.json({ error: 'Car year is required.' }, { status: 400 })
   if (!carModel?.trim())
     return Response.json({ error: 'Car make and model are required.' }, { status: 400 })
+  if (!dob_month || !dob_day)
+    return Response.json({ error: 'Date of birth month and day are required.' }, { status: 400 })
   if (!source?.trim())
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
 
@@ -125,8 +131,12 @@ export async function POST(request) {
       name: name.trim(),
       car_year: year.trim(),
       car_model: fullCarModel,
+      dob_month: dob_month ? parseInt(dob_month) : null,
+      dob_day: dob_day ? parseInt(dob_day) : null,
+      dob_year: dob_year ? parseInt(dob_year) : null,
       phone: phone || null,
       instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
+      more: more || null,
       source: source || null,
       registrations,
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
@@ -166,7 +176,7 @@ export async function POST(request) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'info@canvasroutes.com',
         subject: `CCD Registration — ${year?.trim()} ${fullCarModel} — ${name.trim()}`,
-        html: notifyHtml({ name, email, year, carModel: fullCarModel, phone, instagram, source }),
+        html: notifyHtml({ name, email, year, carModel: fullCarModel, dob_month, dob_day, dob_year, phone, instagram, more, source }),
       }),
     })
   } catch (e) {
