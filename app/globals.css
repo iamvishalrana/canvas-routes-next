@@ -1,5 +1,33 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Portal page-to-page transition */
+@keyframes portal-page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tier badge periodic gold shimmer — sweeps every 5s */
+@keyframes tier-badge-shimmer {
+  0%, 100% { left: -110%; opacity: 0; }
+  8%        { opacity: 1; }
+  22%       { left: 130%; opacity: 0; }
+  23%, 99%  { left: -110%; opacity: 0; }
+}
+.tier-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.tier-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -20%; left: -110%;
+  width: 55%; height: 140%;
+  background: linear-gradient(105deg, transparent 15%, rgba(255,220,140,0.18) 50%, transparent 85%);
+  transform: skewX(-12deg);
+  animation: tier-badge-shimmer 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
 @keyframes shimmer-card {
   0%   { left: -75%; opacity: 0; }
   12%  { opacity: 1; }

@@ -2,6 +2,7 @@ import { createClient } from '../../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import MembersNav from '../../../components/MembersNav'
 import MembersCar from '../../../components/MembersCar'
+import PortalTransition from '../../../components/PortalTransition'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Members Portal | Canvas Routes' } }
@@ -18,7 +19,7 @@ export default async function PortalLayout({ children }) {
       <MembersNav email={user?.email} isAdmin={isAdmin} />
       <MembersCar />
       <main style={{ maxWidth: '1040px', margin: '0 auto', padding: '3rem 2rem 6rem' }} className="portal-main">
-        {children}
+        <PortalTransition>{children}</PortalTransition>
       </main>
       <style>{`
         @media (max-width: 640px) {

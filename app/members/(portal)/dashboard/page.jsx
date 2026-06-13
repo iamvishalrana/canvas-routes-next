@@ -238,7 +238,7 @@ export default async function DashboardPage() {
             <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: statusStyle.text, flexShrink: 0 }} />
             {status}
           </span>
-          <span style={{ fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.38rem 1rem', border: isInnerCircle ? '0.5px solid rgba(197,168,130,0.55)' : '0.5px solid rgba(197,168,130,0.28)', background: isInnerCircle ? 'rgba(197,168,130,0.09)' : 'transparent', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>
+          <span className="tier-shimmer" style={{ fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.38rem 1rem', border: isInnerCircle ? '0.5px solid rgba(197,168,130,0.55)' : '0.5px solid rgba(197,168,130,0.28)', background: isInnerCircle ? 'rgba(197,168,130,0.09)' : 'transparent', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>
             {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
           </span>
           {primaryCar && (
@@ -434,7 +434,7 @@ export default async function DashboardPage() {
                   <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusDot, boxShadow: `0 0 7px ${statusDot}55` }} />
                   <span style={{ fontSize: '7.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.38)', fontFamily: 'var(--font-inter), sans-serif' }}>{status}</span>
                 </div>
-                <span style={{ fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: isInnerCircle ? 'rgba(197,168,130,0.58)' : 'rgba(197,168,130,0.32)', fontFamily: 'var(--font-inter), sans-serif' }}>
+                <span className="tier-shimmer" style={{ fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: isInnerCircle ? 'rgba(197,168,130,0.58)' : 'rgba(197,168,130,0.32)', fontFamily: 'var(--font-inter), sans-serif' }}>
                   {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
                 </span>
               </div>

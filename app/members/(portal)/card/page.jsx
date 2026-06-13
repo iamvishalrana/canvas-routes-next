@@ -102,7 +102,7 @@ export default async function CardPage() {
               {member.name?.trim() || 'Canvas Routes Member'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <span style={{
+              <span className="tier-shimmer" style={{
                 fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase',
                 padding: '3px 10px',
                 background: member.tier === 'inner_circle' ? 'rgba(197,168,130,0.12)' : 'rgba(245,241,236,0.06)',
