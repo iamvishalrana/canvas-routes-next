@@ -43,6 +43,7 @@ export default function RoutesPage() {
   }, [])
 
   function updateForm(field, value) {
+    if (field === 'carModel') value = value.replace(/(^|\s)\S/g, c => c.toUpperCase())
     setForm(prev => {
       const next = { ...prev, [field]: value }
       if (field === 'hasChildren' && value === 'no') next.childrenAges = ''

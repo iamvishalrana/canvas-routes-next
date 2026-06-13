@@ -48,6 +48,7 @@ export default function CCDPage() {
   const honeypotRef = useRef(null)
 
   function update(field, value) {
+    if (field === 'carModel') value = value.replace(/(^|\s)\S/g, c => c.toUpperCase())
     setForm(p => ({ ...p, [field]: value }))
     if (errors[field]) setErrors(p => ({ ...p, [field]: false }))
     if (serverError) setServerError(null)

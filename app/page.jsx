@@ -208,6 +208,7 @@ export default function Home() {
   const laurentiansIsPast = true
 
   function updateForm(field, value) {
+    if (field === 'carModel') value = value.replace(/(^|\s)\S/g, c => c.toUpperCase())
     setForm(prev => {
       const next = { ...prev, [field]: value }
       if (field === 'registerFor' && value !== GPCC) next.downtown_cruise = ''

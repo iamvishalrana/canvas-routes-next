@@ -201,6 +201,7 @@ export default function ProfilePage() {
   }
 
   function updateCar(idx, field, value) {
+    if (field === 'model' || field === 'make') value = value.replace(/(^|\s)\S/g, c => c.toUpperCase())
     setCars(prev => prev.map((c, i) => i === idx ? { ...c, [field]: value } : c))
   }
 
