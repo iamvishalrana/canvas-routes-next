@@ -156,7 +156,6 @@ export async function POST(request) {
       email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),
-      car_make: carMake.trim(),
       car_model: fullCarModel,
       dob_month: dob_month ? parseInt(dob_month) : null,
       dob_day: dob_day ? parseInt(dob_day) : null,
