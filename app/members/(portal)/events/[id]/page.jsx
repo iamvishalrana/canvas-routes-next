@@ -42,7 +42,7 @@ export default async function EventDetailPage({ params }) {
           <img
             src={ev.photo_url}
             alt={ev.name}
-            style={{ width: '100%', height: '280px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
           />
         </div>
       )}
