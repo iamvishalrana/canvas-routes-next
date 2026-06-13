@@ -416,6 +416,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       Phone: m.phone || '',
       Instagram: m.instagram ? `@${m.instagram}` : '',
       Car: [m.cars?.[0]?.year || m.car_year, m.cars?.[0]?.make || m.car_make, m.cars?.[0]?.model || m.car_model].filter(Boolean).join(' '),
+      'Car Paint': m.cars?.[0]?.paint || '',
       'Password Set': m.password_set_at ? new Date(m.password_set_at).toLocaleDateString('en-CA') : '',
     }))
     const headers = Object.keys(rows[0] || {})
@@ -778,6 +779,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                             : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || '—'}
                           {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.3rem' }}>+{m.cars.length - 1}</span>}
                         </span>
+                        {(m.cars?.[0]?.paint) && <span style={{ fontSize: '11px', color: '#c5a882' }}>{m.cars[0].paint}</span>}
                         <span style={{ fontSize: '11px', color: m.password_set_at ? '#3B6B2F' : '#bbb' }}>
                           {m.password_set_at ? `✓ ${new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Awaiting'}
                         </span>
@@ -825,11 +827,14 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                     <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
                     <div><Badge status={m.membership_status} /></div>
                     <div style={{ fontSize: '12px', color: '#888' }}>
-                      {m.cars?.length > 0
-                        ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
-                        : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
-                      }
-                      {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
+                      <div>
+                        {m.cars?.length > 0
+                          ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
+                          : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
+                        }
+                        {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
+                      </div>
+                      {m.cars?.[0]?.paint && <div style={{ fontSize: '11px', color: '#c5a882', marginTop: '1px' }}>{m.cars[0].paint}</div>}
                     </div>
                     <div style={{ fontSize: '11px', color: '#bbb' }}>
                       {(m.join_date || m.created_at) ? new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}

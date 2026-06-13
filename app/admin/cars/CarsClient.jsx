@@ -30,7 +30,7 @@ export default function CarsClient() {
 
   function startEdit(m, carIndex, car) {
     setEditing({ memberId: m.id, carIndex })
-    setEditForm({ year: car.year || '', make: car.make || '', model: car.model || '', mods: car.mods || [] })
+    setEditForm({ year: car.year || '', make: car.make || '', model: car.model || '', paint: car.paint || '', mods: car.mods || [] })
     setModDraft('')
   }
 
@@ -147,14 +147,17 @@ export default function CarsClient() {
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr auto' : '1.5fr 1.5fr 1fr auto', padding: '0.75rem 1.25rem', borderBottom: isEditing(m, carIndex) ? 'none' : i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
                     <div>
                       <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
-                      {isMobile && <div style={{ fontSize: '11px', color: '#888', marginTop: '1px' }}>{[car.year, car.model].filter(Boolean).join(' ') || '—'}{car.mods?.length > 0 && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}</div>}
+                      {isMobile && <div style={{ fontSize: '11px', color: '#888', marginTop: '1px' }}>{[car.year, car.model].filter(Boolean).join(' ') || '—'}{car.mods?.length > 0 && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}{car.paint && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.paint}</span>}</div>}
                       {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{m.email}</div>}
                     </div>
                     {!isMobile && <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>}
                     {!isMobile && (
                       <div style={{ fontSize: '12px', color: '#888' }}>
-                        {[car.year, car.model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
-                        {car.mods?.length > 0 && <span style={{ marginLeft: '0.4rem', fontSize: '10px', color: '#c5a882', letterSpacing: '0.06em' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}
+                        <div>
+                          {[car.year, car.model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                          {car.mods?.length > 0 && <span style={{ marginLeft: '0.4rem', fontSize: '10px', color: '#c5a882', letterSpacing: '0.06em' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}
+                        </div>
+                        {car.paint && <div style={{ fontSize: '11px', color: '#c5a882', marginTop: '1px' }}>{car.paint}</div>}
                       </div>
                     )}
                     {carIndex >= 0 && (
@@ -167,11 +170,11 @@ export default function CarsClient() {
                   {isEditing(m, carIndex) && (
                     <div style={{ padding: '1rem 1.25rem 1.25rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', background: 'rgba(197,168,130,0.03)', borderBottom: i < brandGroups[brand].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
                       {/* Car fields */}
-                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 2fr', gap: '0.5rem', marginBottom: '1rem' }}>
-                        {[['Year', 'year'], ['Make', 'make'], ['Model', 'model']].map(([label, field]) => (
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 2fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                        {[['Year', 'year'], ['Make', 'make'], ['Model', 'model'], ['Paint', 'paint']].map(([label, field]) => (
                           <div key={field}>
                             <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.3rem' }}>{label}</div>
-                            <input style={{ ...inp, padding: '0.5rem 0.7rem', fontSize: '12px' }} value={editForm[field]} onChange={e => setEditForm(f => ({ ...f, [field]: e.target.value }))} />
+                            <input style={{ ...inp, padding: '0.5rem 0.7rem', fontSize: '12px' }} value={editForm[field] || ''} onChange={e => setEditForm(f => ({ ...f, [field]: e.target.value }))} placeholder={field === 'paint' ? 'e.g. Nardo Grey' : ''} maxLength={field === 'paint' ? 60 : undefined} />
                           </div>
                         ))}
                       </div>

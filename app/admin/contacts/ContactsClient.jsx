@@ -275,6 +275,7 @@ export default function ContactsClient() {
       Phone: c.phone || '',
       Instagram: c.instagram ? `@${c.instagram}` : '',
       Car: [c.car_year, c.car_model].filter(Boolean).join(' '),
+      'Car Paint': c.car_paint || '',
       DOB: c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? ` ${c.dob_year}` : ''}` : '',
       Source: c.source || '',
       Applied: c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA') : '',
@@ -581,6 +582,7 @@ export default function ContactsClient() {
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', color: '#888' }}>{(() => { const {make,model} = parseCarMakeModel(c.car_model); return [c.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
+                    {c.car_paint && <span style={{ fontSize: '11px', color: '#c5a882' }}>{c.car_paint}</span>}
                     {c.created_at && <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
                   </div>
                 </div>
@@ -605,7 +607,8 @@ export default function ContactsClient() {
                 </div>
                 <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
-                  {[c.car_year, c.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}
+                  <div>{[c.car_year, c.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}</div>
+                  {c.car_paint && <div style={{ fontSize: '11px', color: '#c5a882', marginTop: '1px' }}>{c.car_paint}</div>}
                 </div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
                   {c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? `, ${c.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
@@ -726,6 +729,10 @@ export default function ContactsClient() {
                         <div>
                           <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Car Make & Model</div>
                           <div style={{ fontSize: '13px', color: c.car_model ? '#444' : '#ddd' }}>{c.car_model || '—'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Paint</div>
+                          <div style={{ fontSize: '13px', color: c.car_paint ? '#444' : '#ddd' }}>{c.car_paint || '—'}</div>
                         </div>
                         <div>
                           <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Phone</div>

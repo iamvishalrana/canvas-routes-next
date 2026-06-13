@@ -80,6 +80,8 @@ export default function ApplicationsClient() {
   const [rejectErr, setRejectErr]   = useState({})
   const [capturing, setCapturing]   = useState(null)
   const [captureErr, setCaptureErr] = useState({})
+  const [editingNote, setEditingNote] = useState(null)
+  const [noteValue, setNoteValue] = useState('')
   const [emailComposerId, setEmailComposerId] = useState(null)
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
@@ -337,6 +339,17 @@ export default function ApplicationsClient() {
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
+  async function saveNote(appId, value) {
+    const trimmed = value.trim()
+    const res = await fetch(`/api/admin/applications/${appId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: trimmed || null }),
+    })
+    if (!res.ok) return
+    setApps(prev => prev.map(x => x.id === appId ? { ...x, notes: trimmed || null } : x))
+    setEditingNote(null)
+  }
+
   const filtered = apps
     .filter(a => {
       if (showFilter === 'unseen' && seenAppIds.has(a.id)) return false
@@ -359,6 +372,7 @@ export default function ApplicationsClient() {
       Phone: a.phone || '',
       'Car Year': a.car_year || '',
       'Car Model': a.car_model || '',
+      'Car Paint': a.car_paint || '',
       Source: a.source || '',
       Applied: a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA') : '',
       Status: a.is_member ? 'Invited / Member' : 'Pending',
@@ -421,13 +435,14 @@ export default function ApplicationsClient() {
             <ExportButton
               filename="applications"
               title="Applications"
-              headers={['Name', 'Email', 'Phone', 'Car Year', 'Car Model', 'Tier', 'Source', 'Payment Status', 'Amount Paid', 'Registered']}
+              headers={['Name', 'Email', 'Phone', 'Car Year', 'Car Model', 'Car Paint', 'Tier', 'Source', 'Payment Status', 'Amount Paid', 'Registered']}
               rows={filtered.map(a => [
                 a.name || '',
                 a.email || '',
                 a.phone || '',
                 a.car_year || '',
                 a.car_model || '',
+                a.car_paint || '',
                 a.registrations?.find(r => r.event === 'Canvas Routes Membership')?.tier || '',
                 a.source || '',
                 a.stripe_payment_status || '',
@@ -581,6 +596,7 @@ export default function ApplicationsClient() {
                       <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>{(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
+                        {a.car_paint && <span style={{ fontSize: '11px', color: isGreyed ? '#ccc' : '#c5a882' }}>{a.car_paint}</span>}
                         <span style={{ fontSize: '11px', color: '#bbb' }}>{a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</span>
                       </div>
                     </div>
@@ -604,7 +620,8 @@ export default function ApplicationsClient() {
                   </div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
-                    {(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span> })()}
+                    <div>{(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span> })()}</div>
+                    {a.car_paint && <div style={{ fontSize: '11px', color: isGreyed ? '#ccc' : '#c5a882', marginTop: '1px' }}>{a.car_paint}</div>}
                   </div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
                     {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
@@ -693,6 +710,7 @@ export default function ApplicationsClient() {
                         <InfoCell label="Car Year" value={a.car_year} />
                         <InfoCell label="Make" value={parseCarMakeModel(a.car_model).make} />
                         <InfoCell label="Model" value={parseCarMakeModel(a.car_model).model} />
+                        <InfoCell label="Paint" value={a.car_paint} />
                         <InfoCell label="Phone" value={a.phone} copyable />
                         <InfoCell label="Instagram" value={a.instagram ? `@${a.instagram}` : null} />
                       </div>
@@ -760,6 +778,31 @@ export default function ApplicationsClient() {
                       })
                     })()}
                   </div>
+
+                  {/* Quick Note */}
+                  {editingApp !== a.id && (
+                    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Quick Note</div>
+                      {editingNote === a.id ? (
+                        <div>
+                          <input autoFocus value={noteValue} maxLength={200}
+                            onChange={e => setNoteValue(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveNote(a.id, noteValue); if (e.key === 'Escape') setEditingNote(null) }}
+                            style={{ ...inp, fontSize: '13px', marginBottom: '0.5rem' }}
+                            placeholder="e.g. Referred by Jerry" />
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <GhostBtn small onClick={() => saveNote(a.id, noteValue)}>Save</GhostBtn>
+                            <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
+                          </div>
+                        </div>
+                      ) : (
+                        <div onClick={() => { setEditingNote(a.id); setNoteValue(a.notes || '') }}
+                          style={{ fontSize: '13px', color: a.notes ? '#444' : '#ccc', cursor: 'text', padding: '0.5rem 0.75rem', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', minHeight: '36px' }}>
+                          {a.notes || 'Click to add a note…'}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Admin Notes */}
                   {editingApp !== a.id && (
