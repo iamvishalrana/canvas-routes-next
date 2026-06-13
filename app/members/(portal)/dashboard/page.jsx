@@ -3,6 +3,8 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
+import FadeUp from '../../../../components/FadeUp'
+import CountUp from '../../../../components/CountUp'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Dashboard | Canvas Routes' } }
@@ -187,6 +189,11 @@ export default async function DashboardPage() {
           background: #0F1E14;
           position: relative;
           overflow: hidden;
+          transition: transform 0.38s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.38s ease;
+        }
+        .membership-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.45);
         }
         .membership-card::after {
           content: '';
@@ -249,7 +256,7 @@ export default async function DashboardPage() {
 
           {/* Announcements */}
           {announcements?.length > 0 && (
-            <div className="dash-card dash-anim-card-1">
+            <FadeUp delay={60}><div className="dash-card">
               <div className="card-head">
                 <span className="section-label">Announcements</span>
                 <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.1rem', fontWeight: '300', color: '#ddd', lineHeight: 1 }}>{announcements.length}</span>
@@ -270,11 +277,11 @@ export default async function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div></FadeUp>
           )}
 
           {/* Upcoming Events */}
-          <div className="dash-card dash-anim-card-2">
+          <FadeUp delay={120}><div className="dash-card">
             <div className="card-head">
               <span className="section-label">Upcoming Events</span>
               <Link href="/members/events" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
@@ -361,12 +368,12 @@ export default async function DashboardPage() {
                 )
               })}
             </div>
-          </div>
+          </div></FadeUp>
 
         </div>
 
         {/* ── Right column ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <FadeUp delay={0} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           {/* Membership card — clickable, links to full card page */}
           <Link href="/members/card" style={{ textDecoration: 'none', display: 'block' }}>
@@ -382,8 +389,8 @@ export default async function DashboardPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.75rem' }}>
                 <div>
                   <div style={{ fontSize: '7.5px', letterSpacing: '0.44em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>Canvas Routes</div>
-                  {membershipNumber && (
-                    <div style={{ fontSize: '7px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '5px' }}>No. <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '0.95rem', fontWeight: '300', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.1em', fontStyle: 'normal' }}>{membershipNumber}</span></div>
+                  {member?.membership_number && (
+                    <div style={{ fontSize: '7px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '5px' }}>No. <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '0.95rem', fontWeight: '300', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.1em', fontStyle: 'normal' }}><CountUp to={member.membership_number} pad={3} prefix="#" duration={800} /></span></div>
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -471,7 +478,7 @@ export default async function DashboardPage() {
 
           {/* Events attended */}
           {attendedEvents.length > 0 && (
-            <div className="dash-card dash-anim-card-3">
+            <FadeUp delay={80}><div className="dash-card">
               <div className="card-head">
                 <span className="section-label">Events Attended</span>
                 <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>{attendedEvents.length}</span>
@@ -484,12 +491,12 @@ export default async function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div></FadeUp>
           )}
 
           {/* Personal details */}
           {(dob || member?.phone || member?.instagram) && (
-            <div className="dash-card dash-anim-card-4">
+            <FadeUp delay={120}><div className="dash-card">
               <div className="card-head"><span className="section-label">Your Details</span></div>
               <div style={{ padding: '0.25rem 1.75rem 0.5rem' }}>
                 {[
@@ -507,11 +514,11 @@ export default async function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div></FadeUp>
           )}
 
           {/* Partner Discounts */}
-          <div className="dash-card dash-anim-card-5">
+          <FadeUp delay={160}><div className="dash-card">
             <div className="card-head">
               <span className="section-label">Partner Perks</span>
               <Link href="/members/perks" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
@@ -530,9 +537,9 @@ export default async function DashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </div></FadeUp>
 
-        </div>
+        </FadeUp>
       </div>
     </div>
   )

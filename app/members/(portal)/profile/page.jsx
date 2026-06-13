@@ -52,8 +52,15 @@ function PhotoSection({ carPhotoUrl, photoUploading, photoError, fileInputRef, o
     <div style={{ marginTop: '1.75rem' }}>
       <SectionDivider>Car Photo</SectionDivider>
       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onUpload} />
+      <style>{`
+        @keyframes ring-pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(197,168,130,0.55); }
+          70%  { box-shadow: 0 0 0 7px rgba(197,168,130,0); }
+          100% { box-shadow: 0 0 0 0 rgba(197,168,130,0); }
+        }
+      `}</style>
       {carPhotoUrl ? (
-        <div style={{ position: 'relative', lineHeight: 0, marginBottom: '0.85rem' }}>
+        <div style={{ position: 'relative', lineHeight: 0, marginBottom: '0.85rem', animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}>
           <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '230px', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,30,20,0.45) 0%, transparent 55%)', pointerEvents: 'none' }} />
         </div>
@@ -67,6 +74,7 @@ function PhotoSection({ carPhotoUrl, photoUploading, photoError, fileInputRef, o
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             background: 'rgba(197,168,130,0.02)', cursor: 'pointer',
             transition: 'border-color 0.15s, background 0.15s', gap: '0.65rem',
+            animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none',
           }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>

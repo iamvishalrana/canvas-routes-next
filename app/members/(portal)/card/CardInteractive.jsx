@@ -3,21 +3,20 @@ import { useRef, useState, useEffect } from 'react'
 
 export default function CardInteractive({ children }) {
   const tiltRef  = useRef(null)
-  const [tilt, setTilt]         = useState({ x: 0, y: 0 })
-  const [gloss, setGloss]       = useState({ x: 50, y: 50 })
-  const [glossOn, setGlossOn]   = useState(false)
-  // 'idle' | 'down' | 'spring'
-  const [press, setPress]       = useState('idle')
-  const [shimmer, setShimmer]   = useState(false)
+  const [tilt, setTilt]       = useState({ x: 0, y: 0 })
+  const [gloss, setGloss]     = useState({ x: 50, y: 50 })
+  const [glossOn, setGlossOn] = useState(false)
+  const [bounce, setBounce]   = useState(false)
+  const [shimmer, setShimmer] = useState(false)
   const touchStartRef = useRef(null)
-  const springTimer  = useRef(null)
-  const shimmerTimer = useRef(null)
+  const bounceTimer   = useRef(null)
+  const shimmerTimer  = useRef(null)
 
-  // ── Fire shimmer once on mount ─────────────────────────
+  // ── Shimmer once on mount ─────────────────────────────
   useEffect(() => {
     const t = setTimeout(() => {
       setShimmer(true)
-      shimmerTimer.current = setTimeout(() => setShimmer(false), 800)
+      shimmerTimer.current = setTimeout(() => setShimmer(false), 900)
     }, 550)
     return () => { clearTimeout(t); clearTimeout(shimmerTimer.current) }
   }, [])
@@ -33,10 +32,14 @@ export default function CardInteractive({ children }) {
     return { px, py, tx, ty }
   }
 
-  function springBack() {
-    clearTimeout(springTimer.current)
-    setPress('spring')
-    springTimer.current = setTimeout(() => setPress('idle'), 480)
+  // Single keyframe animation — no transition switching, no stutter
+  function triggerBounce() {
+    clearTimeout(bounceTimer.current)
+    setBounce(false)
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      setBounce(true)
+      bounceTimer.current = setTimeout(() => setBounce(false), 600)
+    }))
   }
 
   // ── Mouse ──────────────────────────────────────────────
@@ -46,12 +49,9 @@ export default function CardInteractive({ children }) {
     setGloss({ x: px, y: py })
   }
   function onMouseEnter() { setGlossOn(true) }
-  function onMouseLeave() {
-    setGlossOn(false)
-    setTilt({ x: 0, y: 0 })
-  }
-  function onMouseDown()  { setPress('down') }
-  function onMouseUp()    { springBack() }
+  function onMouseLeave() { setGlossOn(false); setTilt({ x: 0, y: 0 }) }
+  function onMouseDown()  { /* handled by animation */ }
+  function onMouseUp()    { triggerBounce() }
 
   // ── Touch ──────────────────────────────────────────────
   function onTouchStart(e) {
@@ -60,39 +60,25 @@ export default function CardInteractive({ children }) {
     const { px, py, tx, ty } = getCoords(t.clientX, t.clientY)
     setGlossOn(true)
     setGloss({ x: px, y: py })
-    setTilt({ x: tx * 0.45, y: ty * 0.45 })
-    setPress('down')
+    setTilt({ x: tx * 0.4, y: ty * 0.4 })
   }
   function onTouchMove(e) {
     const t = e.touches[0]
     const { px, py, tx, ty } = getCoords(t.clientX, t.clientY)
-    setTilt({ x: tx * 0.45, y: ty * 0.45 })
+    setTilt({ x: tx * 0.4, y: ty * 0.4 })
     setGloss({ x: px, y: py })
   }
   function onTouchEnd(e) {
+    const start = touchStartRef.current
+    const dx = start ? Math.abs(e.changedTouches[0].clientX - start.x) : 99
+    const dy = start ? Math.abs(e.changedTouches[0].clientY - start.y) : 99
     setGlossOn(false)
     setTilt({ x: 0, y: 0 })
-    springBack()
+    if (dx < 12 && dy < 12) triggerBounce()
     touchStartRef.current = null
   }
 
-  // ── Scale value per phase ──────────────────────────────
-  const scaleValue = press === 'down' ? 0.965 : 1
-
-  // Scale transition:
-  //   down  → snappy press
-  //   spring → overshoot cubic-bezier then settle
-  //   idle  → instant reset
-  const scaleTrans = press === 'down'
-    ? 'transform 0.1s ease-in'
-    : press === 'spring'
-      ? 'transform 0.55s cubic-bezier(0.34, 1.52, 0.64, 1)'
-      : 'transform 0.3s ease-out'
-
-  // Tilt transition:
-  //   while tracking → fast, responsive
-  //   returning flat → smooth settle
-  const tiltTrans = (glossOn || press === 'down')
+  const tiltTrans = glossOn
     ? 'transform 0.12s ease-out'
     : 'transform 0.55s cubic-bezier(0.23, 1, 0.32, 1)'
 
@@ -101,20 +87,25 @@ export default function CardInteractive({ children }) {
       <style>{`
         @keyframes shimmer-card {
           0%   { left: -75%; opacity: 0; }
-          15%  { opacity: 1; }
-          85%  { opacity: 1; }
-          100% { left: 140%; opacity: 0; }
+          12%  { opacity: 1; }
+          88%  { opacity: 1; }
+          100% { left: 145%; opacity: 0; }
+        }
+        @keyframes card-press-spring {
+          0%   { transform: scale(1); }
+          18%  { transform: scale(0.963); }
+          55%  { transform: scale(1.024); }
+          78%  { transform: scale(0.996); }
+          100% { transform: scale(1); }
         }
       `}</style>
 
-      {/* Scale wrapper — spring bounce lives here */}
+      {/* Bounce wrapper — CSS keyframe animation, zero stutter */}
       <div style={{
         width: '100%',
-        transform: `scale(${scaleValue})`,
-        transition: scaleTrans,
-        willChange: 'transform',
+        animation: bounce ? 'card-press-spring 0.58s cubic-bezier(0.34, 1.52, 0.64, 1) forwards' : 'none',
       }}>
-        {/* Tilt wrapper — 3-D rotation lives here */}
+        {/* Tilt wrapper */}
         <div
           ref={tiltRef}
           onMouseMove={onMouseMove}
@@ -139,7 +130,7 @@ export default function CardInteractive({ children }) {
         >
           {children}
 
-          {/* Gloss — follows pointer / touch */}
+          {/* Gloss */}
           <div style={{
             position: 'absolute', inset: 0, borderRadius: '16px',
             background: glossOn
@@ -161,7 +152,7 @@ export default function CardInteractive({ children }) {
                 width: '50%', height: '120%',
                 background: 'linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.11) 50%, transparent 90%)',
                 transform: 'skewX(-10deg)',
-                animation: 'shimmer-card 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                animation: 'shimmer-card 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards',
               }} />
             </div>
           )}

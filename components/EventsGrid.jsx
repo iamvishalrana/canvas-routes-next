@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import EventRegisterButton from './EventRegisterButton'
 import LocationMap from './LocationMap'
+import FadeUp from './FadeUp'
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -216,8 +217,10 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
         <section style={{ marginBottom: '3.5rem' }}>
           <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>Upcoming</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {upcoming.map(ev => (
-              <EventCard key={ev.id} ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={false} onClick={() => setSelected(ev)} />
+            {upcoming.map((ev, i) => (
+              <FadeUp key={ev.id} delay={i * 70}>
+                <EventCard ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={false} onClick={() => setSelected(ev)} />
+              </FadeUp>
             ))}
           </div>
         </section>
@@ -227,8 +230,10 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
         <section>
           <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>Past</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', opacity: 0.6 }}>
-            {past.map(ev => (
-              <EventCard key={ev.id} ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={true} onClick={() => setSelected(ev)} />
+            {past.map((ev, i) => (
+              <FadeUp key={ev.id} delay={i * 60}>
+                <EventCard ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={true} onClick={() => setSelected(ev)} />
+              </FadeUp>
             ))}
           </div>
         </section>

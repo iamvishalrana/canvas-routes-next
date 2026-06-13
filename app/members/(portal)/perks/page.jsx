@@ -2,6 +2,7 @@ import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { PARTNERS } from '../../../../lib/partners'
+import FadeUp from '../../../../components/FadeUp'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Member Perks | Canvas Routes' } }
@@ -51,6 +52,31 @@ export default async function PerksPage() {
             rgba(197,168,130,0.028) 26px, rgba(197,168,130,0.028) 27px
           );
           pointer-events: none;
+          z-index: 1;
+        }
+        @keyframes perks-shimmer {
+          from { left: -75%; opacity: 0.8; }
+          to   { left: 140%; opacity: 0; }
+        }
+        .perks-card-left::before {
+          content: '';
+          position: absolute;
+          top: -10%; left: -75%;
+          width: 48%; height: 120%;
+          background: linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.06) 50%, transparent 90%);
+          transform: skewX(-10deg);
+          pointer-events: none;
+          z-index: 2;
+          opacity: 0;
+        }
+        .perks-card:hover .perks-card-left::before {
+          animation: perks-shimmer 0.75s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .perks-card-left {
+          transition: filter 0.3s ease;
+        }
+        .perks-card:hover .perks-card-left {
+          filter: brightness(1.06);
         }
         .perks-card-right {
           background: #fff;
@@ -118,7 +144,7 @@ export default async function PerksPage() {
       ) : (
         <div>
           {eligiblePartners.map((p, i) => (
-            <div key={i} className="perks-card">
+            <FadeUp key={i} delay={i * 80}><div className="perks-card">
 
               {/* Left — dark identity panel */}
               <div className="perks-card-left">
@@ -185,7 +211,7 @@ export default async function PerksPage() {
                 )}
               </div>
 
-            </div>
+            </div></FadeUp>
           ))}
         </div>
       )}
