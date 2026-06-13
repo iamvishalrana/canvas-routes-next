@@ -51,6 +51,7 @@ export default function MembersNav({ email, isAdmin }) {
           {navLink('/members/events', 'Events')}
           {navLink('/members/perks', 'Perks')}
           {navLink('/members/profile', 'Profile')}
+          {navLink('/members/card', 'My Card')}
           {isAdmin && (
             <Link href="/admin" style={{
               fontSize: '11px', letterSpacing: '0.13em', textTransform: 'uppercase',
@@ -110,6 +111,7 @@ export default function MembersNav({ email, isAdmin }) {
           <Link href="/members/events" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname.startsWith('/members/events') ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Events</Link>
           <Link href="/members/perks" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/perks' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Perks</Link>
           <Link href="/members/profile" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/profile' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Profile</Link>
+          <Link href="/members/card" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: pathname === '/members/card' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>My Card</Link>
           {isAdmin && <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', textDecoration: 'none' }}>Admin</Link>}
           <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)' }} />
           {email && <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.02em' }}>{email}</span>}
