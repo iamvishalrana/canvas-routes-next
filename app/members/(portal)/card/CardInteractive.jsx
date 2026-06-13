@@ -2,15 +2,15 @@
 import { useRef, useState, useEffect } from 'react'
 
 export default function CardInteractive({ children }) {
-  const tiltRef  = useRef(null)
+  const tiltRef   = useRef(null)
+  const bounceRef = useRef(null)          // direct DOM control — no React state
+  const bounceTimer = useRef(null)
+  const shimmerTimer = useRef(null)
   const [tilt, setTilt]       = useState({ x: 0, y: 0 })
   const [gloss, setGloss]     = useState({ x: 50, y: 50 })
   const [glossOn, setGlossOn] = useState(false)
-  const [bounce, setBounce]   = useState(false)
   const [shimmer, setShimmer] = useState(false)
   const touchStartRef = useRef(null)
-  const bounceTimer   = useRef(null)
-  const shimmerTimer  = useRef(null)
 
   // ── Shimmer once on mount ─────────────────────────────
   useEffect(() => {
@@ -32,14 +32,17 @@ export default function CardInteractive({ children }) {
     return { px, py, tx, ty }
   }
 
-  // Single keyframe animation — no transition switching, no stutter
+  // Restart CSS animation via direct DOM manipulation — guaranteed, no batching issues
   function triggerBounce() {
+    const el = bounceRef.current
+    if (!el) return
     clearTimeout(bounceTimer.current)
-    setBounce(false)
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      setBounce(true)
-      bounceTimer.current = setTimeout(() => setBounce(false), 600)
-    }))
+    el.style.animation = 'none'
+    void el.offsetHeight                  // force reflow so browser clears the animation
+    el.style.animation = 'card-press-spring 0.58s cubic-bezier(0.34, 1.52, 0.64, 1) forwards'
+    bounceTimer.current = setTimeout(() => {
+      if (bounceRef.current) bounceRef.current.style.animation = 'none'
+    }, 600)
   }
 
   // ── Mouse ──────────────────────────────────────────────
@@ -50,7 +53,6 @@ export default function CardInteractive({ children }) {
   }
   function onMouseEnter() { setGlossOn(true) }
   function onMouseLeave() { setGlossOn(false); setTilt({ x: 0, y: 0 }) }
-  function onMouseDown()  { /* handled by animation */ }
   function onMouseUp()    { triggerBounce() }
 
   // ── Touch ──────────────────────────────────────────────
@@ -100,12 +102,8 @@ export default function CardInteractive({ children }) {
         }
       `}</style>
 
-      {/* Bounce wrapper — CSS keyframe animation, zero stutter */}
-      <div style={{
-        width: '100%',
-        willChange: 'transform',
-        animation: bounce ? 'card-press-spring 0.58s cubic-bezier(0.34, 1.52, 0.64, 1) forwards' : 'none',
-      }}>
+      {/* Bounce wrapper — driven by direct DOM ref, never stutters */}
+      <div ref={bounceRef} style={{ width: '100%', willChange: 'transform' }}>
         {/* Tilt wrapper */}
         <div
           ref={tiltRef}
