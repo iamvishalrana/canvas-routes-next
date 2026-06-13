@@ -3,7 +3,14 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import EventRegisterButton from '../../../../../components/EventRegisterButton'
+import EventFreeRegister from '../../../../../components/EventFreeRegister'
 import LocationMap from '../../../../../components/LocationMap'
+
+const OUR_DOMAIN = 'canvasroutes.com'
+function isInternalUrl(url) {
+  if (!url) return false
+  try { return new URL(url).hostname.endsWith(OUR_DOMAIN) } catch { return url.startsWith('/') }
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -92,12 +99,20 @@ export default async function EventDetailPage({ params }) {
         </p>
       )}
 
-      {/* External registration URL — takes priority over Stripe flow */}
+      {/* External registration URL — use inline flow for our own domain, redirect for third-party */}
       {ev.registration_url && ev.registration_enabled !== false && (
-        <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', marginBottom: '2rem' }}>
-          Register
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
+        isInternalUrl(ev.registration_url) ? (
+          <EventFreeRegister
+            eventId={ev.id}
+            eventName={ev.name}
+            initiallyRegistered={isRegistered}
+          />
+        ) : (
+          <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', marginBottom: '2rem' }}>
+            Register
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        )
       )}
 
       {/* Stripe-based internal registration — only when no external URL */}
