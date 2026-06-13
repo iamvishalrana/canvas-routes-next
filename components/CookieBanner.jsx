@@ -44,6 +44,7 @@ function denyConsent() {
 export default function CookieBanner() {
   const pathname = usePathname()
   const [consent, setConsentState] = useState('loading')
+  if (pathname?.startsWith('/verify')) return null
   const bannerRef = useRef(null)
 
   useEffect(() => {
