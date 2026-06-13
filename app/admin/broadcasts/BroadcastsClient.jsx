@@ -34,45 +34,118 @@ const AUDIENCE_OPTIONS = [
 ]
 
 const FONTS = [
-  { label: 'Arial',           value: 'Arial, sans-serif'            },
-  { label: 'Georgia',         value: 'Georgia, serif'               },
-  { label: 'Helvetica',       value: 'Helvetica Neue, sans-serif'   },
-  { label: 'Times New Roman', value: 'Times New Roman, serif'       },
-  { label: 'Courier',         value: 'Courier New, monospace'       },
-  { label: 'Trebuchet',       value: 'Trebuchet MS, sans-serif'     },
+  { label: 'Arial',           value: 'Arial, sans-serif'          },
+  { label: 'Georgia',         value: 'Georgia, serif'             },
+  { label: 'Helvetica',       value: 'Helvetica Neue, sans-serif' },
+  { label: 'Times New Roman', value: 'Times New Roman, serif'     },
+  { label: 'Courier',         value: 'Courier New, monospace'     },
 ]
 
-const SIZES = ['12px','13px','14px','15px','16px','18px','20px','24px','28px','32px']
+const SIZES = ['12px','13px','14px','15px','16px','18px','20px','24px','28px']
 
-const UNSUBSCRIBE = `<div style="margin-top:28px;text-align:center;font-family:Arial,sans-serif;font-size:11px;color:#bbb;">
-  <a href="mailto:info@canvasroutes.com?subject=Unsubscribe" style="color:#bbb;text-decoration:underline;">Unsubscribe</a>
-</div>`
-
+// ── Signature HTML (inside actual emails) ───────────────────────────────────
 const SIG_HTML = `
-<table cellpadding="0" cellspacing="0" style="margin-top:28px;">
+<table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
   <tr>
-    <td style="vertical-align:middle;padding-right:16px;">
-      <img src="https://canvasroutes.com/canvas_routes_refined.png" width="70" style="display:block;" alt="Canvas Routes"/>
+    <td style="vertical-align:middle;padding-right:14px;">
+      <img src="https://canvasroutes.com/canvas_routes_refined.png" width="60" height="40" border="0" style="display:block;" alt="Canvas Routes"/>
     </td>
-    <td style="vertical-align:middle;padding-left:16px;border-left:1px solid #e8e8e8;">
-      <div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Jerry</div>
-      <div style="font-size:11px;color:#888;margin-bottom:4px;">Founder, Canvas Routes</div>
-      <div style="font-size:11px;color:#aaa;">
+    <td style="vertical-align:middle;padding-left:14px;border-left:1px solid #e8e8e8;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Jerry</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#888;margin-bottom:4px;">Founder, Canvas Routes</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaa;">
         <a href="https://canvasroutes.com" style="color:#8A6535;text-decoration:none;">canvasroutes.com</a>
-        <span style="color:#ccc;margin:0 5px;">|</span>
-        <a href="https://instagram.com/canvasroutes" style="color:#8A6535;text-decoration:none;">instagram.com/canvasroutes</a>
+        <span style="color:#ddd;margin:0 5px;">|</span>
+        <a href="https://instagram.com/canvasroutes" style="color:#8A6535;text-decoration:none;">@canvasroutes</a>
       </div>
     </td>
   </tr>
 </table>`
 
+// Post-process TipTap HTML for email: add inline styles to elements that email
+// clients normalise (lists, headings, blockquotes). Headings become <p> tags
+// to avoid Outlook's heading stylesheet overrides.
+function processBodyHtml(html) {
+  return html
+    .replace(/<ul(\s[^>]*)?>/gi, (_, a = '') => `<ul${a} style="margin:0 0 1em;padding-left:1.5em;list-style-type:disc;">`)
+    .replace(/<ol(\s[^>]*)?>/gi, (_, a = '') => `<ol${a} style="margin:0 0 1em;padding-left:1.5em;list-style-type:decimal;">`)
+    .replace(/<li(\s[^>]*)?>/gi, (_, a = '') => `<li${a} style="margin:0 0 0.35em;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#444;">`)
+    .replace(/<blockquote(\s[^>]*)?>/gi, (_, a = '') => `<blockquote${a} style="margin:0 0 1em;padding:0.5em 1em;border-left:3px solid #c5a882;color:#666;">`)
+    // Replace heading elements with styled <p> to avoid Outlook UA stylesheet
+    .replace(/<h1(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.75em;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:#1a1a1a;line-height:1.3;">`)
+    .replace(/<\/h1>/gi, '</p>')
+    .replace(/<h2(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.65em;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:400;color:#1a1a1a;line-height:1.3;">`)
+    .replace(/<\/h2>/gi, '</p>')
+    .replace(/<h3(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.5em;font-family:Arial,sans-serif;font-size:15px;font-weight:600;color:#1a1a1a;">`)
+    .replace(/<\/h3>/gi, '</p>')
+}
+
+// Branded Canvas Routes email template — Outlook-safe table layout, correct
+// width containment for Gmail, <!-- UNSUBSCRIBE_FOOTER --> placeholder injected
+// server-side per recipient.
 function buildHtml(bodyHtml) {
-  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px;color:#1a1a1a;">
-<div style="font-size:15px;line-height:1.75;">${bodyHtml}</div>
-<hr style="border:none;border-top:1px solid #eeeeee;margin:28px 0;"/>
-${SIG_HTML}
-${UNSUBSCRIBE}
-</body></html>`
+  const processed = processBodyHtml(bodyHtml)
+  return `<!DOCTYPE html>
+<html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+</head>
+<body style="margin:0;padding:0;background:#EDE8E1;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#EDE8E1;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#0F1E14;padding:24px 36px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-transform:uppercase;color:#c5a882;">Canvas Routes</p></td>
+                  <td align="right"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:10px;text-transform:uppercase;color:#8a7055;">Season 2026</p></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Gold accent line — solid fallback for Outlook -->
+          <tr>
+            <td height="2" style="height:2px;max-height:2px;font-size:0;line-height:2px;mso-line-height-rule:exactly;background-color:#c5a882;background:linear-gradient(90deg,#0F1E14 0%,#c5a882 50%,#0F1E14 100%);"> </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background:#F5F1EC;padding:36px 36px 28px;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.75;color:#444;">${processed}</div>
+            </td>
+          </tr>
+
+          <!-- Signature -->
+          <tr>
+            <td style="background:#F5F1EC;padding:0 36px 20px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#ebebeb;"> </td></tr>
+              </table>
+              ${SIG_HTML}
+            </td>
+          </tr>
+
+          <!-- Unsubscribe — replaced per-recipient by broadcasts route.js -->
+          <tr>
+            <td style="background:#F5F1EC;padding:0 36px 28px;">
+              <!-- UNSUBSCRIBE_FOOTER -->
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
 }
 
 function parseEmails(raw) {
@@ -83,25 +156,26 @@ function parseEmails(raw) {
   )]
 }
 
+// React preview signature component
 function Signature() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', marginTop: '24px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/canvas_routes_refined.png" width="70" style={{ display: 'block', marginRight: '16px' }} alt="Canvas Routes" />
-      <div style={{ paddingLeft: '16px', borderLeft: '1px solid #e8e8e8' }}>
+      <img src="/canvas_routes_refined.png" width="60" style={{ display: 'block', marginRight: '14px', flexShrink: 0 }} alt="Canvas Routes" />
+      <div style={{ paddingLeft: '14px', borderLeft: '1px solid #e8e8e8' }}>
         <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '2px' }}>Jerry</div>
         <div style={{ fontSize: '11px', color: '#888', marginBottom: '4px' }}>Founder, Canvas Routes</div>
         <div style={{ fontSize: '11px', color: '#aaa' }}>
           <a href="https://canvasroutes.com" style={{ color: '#8A6535', textDecoration: 'none' }}>canvasroutes.com</a>
-          <span style={{ color: '#ccc', margin: '0 5px' }}>|</span>
-          <a href="https://instagram.com/canvasroutes" style={{ color: '#8A6535', textDecoration: 'none' }}>instagram.com/canvasroutes</a>
+          <span style={{ color: '#ddd', margin: '0 5px' }}>|</span>
+          <a href="https://instagram.com/canvasroutes" style={{ color: '#8A6535', textDecoration: 'none' }}>@canvasroutes</a>
         </div>
       </div>
     </div>
   )
 }
 
-const BTN = (active) => ({
+const TBTN = (active) => ({
   background: active ? 'rgba(0,0,0,0.08)' : 'none',
   border: '0.5px solid ' + (active ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.1)'),
   cursor: 'pointer', padding: '3px 7px', fontSize: '12px',
@@ -110,14 +184,14 @@ const BTN = (active) => ({
   minWidth: '26px', height: '24px',
 })
 
-const SEL = {
+const TSEL = {
   background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)',
   fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif',
   padding: '2px 4px', cursor: 'pointer', color: '#555',
   outline: 'none', height: '24px', appearance: 'none', WebkitAppearance: 'none',
 }
 
-const inp = {
+const INP = {
   width: '100%', boxSizing: 'border-box', padding: '0.6rem 0.75rem',
   border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '13px',
   fontFamily: 'var(--font-inter),sans-serif', outline: 'none',
@@ -130,53 +204,31 @@ function Toolbar({ editor }) {
   const currentSize = editor.getAttributes('textStyle').fontSize || '15px'
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', padding: '0.5rem 0.75rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)', background: '#fafaf8', alignItems: 'center' }}>
-      {/* Font family */}
-      <select style={{ ...SEL, width: '108px' }} value={currentFont}
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', padding: '0.5rem 0.75rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf8', alignItems: 'center' }}>
+      <select style={{ ...TSEL, width: '100px' }} value={currentFont}
         onChange={e => editor.chain().focus().setFontFamily(e.target.value).run()}>
         {FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
       </select>
-
-      {/* Font size */}
-      <select style={{ ...SEL, width: '58px' }} value={currentSize}
+      <select style={{ ...TSEL, width: '54px' }} value={currentSize}
         onChange={e => editor.chain().focus().setFontSize(e.target.value).run()}>
-        {SIZES.map(s => <option key={s} value={s}>{s.replace('px','')}</option>)}
+        {SIZES.map(s => <option key={s} value={s}>{s.replace('px', '')}</option>)}
       </select>
-
       <div style={{ width: '0.5px', height: '18px', background: 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
-
-      {/* Bold */}
-      <button style={BTN(editor.isActive('bold'))} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold">
-        <strong>B</strong>
-      </button>
-      {/* Italic */}
-      <button style={BTN(editor.isActive('italic'))} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic">
-        <em>I</em>
-      </button>
-      {/* Underline */}
-      <button style={{ ...BTN(editor.isActive('underline')), textDecoration: 'underline' }} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline">
-        U
-      </button>
-
+      <button style={TBTN(editor.isActive('bold'))} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold"><strong>B</strong></button>
+      <button style={TBTN(editor.isActive('italic'))} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic"><em>I</em></button>
+      <button style={{ ...TBTN(editor.isActive('underline')), textDecoration: 'underline' }} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline">U</button>
       <div style={{ width: '0.5px', height: '18px', background: 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
-
-      {/* Align left */}
-      <button style={BTN(editor.isActive({ textAlign: 'left' }))} onClick={() => editor.chain().focus().setTextAlign('left').run()} title="Align left">
+      <button style={TBTN(editor.isActive({ textAlign: 'left' }))} onClick={() => editor.chain().focus().setTextAlign('left').run()} title="Align left">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
       </button>
-      {/* Align center */}
-      <button style={BTN(editor.isActive({ textAlign: 'center' }))} onClick={() => editor.chain().focus().setTextAlign('center').run()} title="Align center">
+      <button style={TBTN(editor.isActive({ textAlign: 'center' }))} onClick={() => editor.chain().focus().setTextAlign('center').run()} title="Align center">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
       </button>
-      {/* Align right */}
-      <button style={BTN(editor.isActive({ textAlign: 'right' }))} onClick={() => editor.chain().focus().setTextAlign('right').run()} title="Align right">
+      <button style={TBTN(editor.isActive({ textAlign: 'right' }))} onClick={() => editor.chain().focus().setTextAlign('right').run()} title="Align right">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
       </button>
-
       <div style={{ width: '0.5px', height: '18px', background: 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
-
-      {/* Link */}
-      <button style={BTN(editor.isActive('link'))} title="Insert link"
+      <button style={TBTN(editor.isActive('link'))} title="Insert link"
         onClick={() => {
           if (editor.isActive('link')) { editor.chain().focus().unsetLink().run(); return }
           const url = window.prompt('URL')
@@ -184,15 +236,11 @@ function Toolbar({ editor }) {
         }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       </button>
-
       <div style={{ width: '0.5px', height: '18px', background: 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
-
-      {/* Undo */}
-      <button style={BTN(false)} title="Undo" onClick={() => editor.chain().focus().undo().run()}>
+      <button style={TBTN(false)} title="Undo" onClick={() => editor.chain().focus().undo().run()}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
       </button>
-      {/* Redo */}
-      <button style={BTN(false)} title="Redo" onClick={() => editor.chain().focus().redo().run()}>
+      <button style={TBTN(false)} title="Redo" onClick={() => editor.chain().focus().redo().run()}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
       </button>
     </div>
@@ -200,23 +248,25 @@ function Toolbar({ editor }) {
 }
 
 export default function BroadcastsClient() {
-  const [tab, setTab]                   = useState('compose')
-  const [audience, setAudience]         = useState('specific_emails')
+  const [tab, setTab]                       = useState('compose')
+  const [audience, setAudience]             = useState('specific_emails')
   const [specificEmails, setSpecificEmails] = useState('')
-  const [subject, setSubject]           = useState('')
-  const [confirm, setConfirm]           = useState(false)
-  const [sending, setSending]           = useState(false)
-  const [error, setError]               = useState(null)
-  const [result, setResult]             = useState(null)
-  const [history, setHistory]           = useState([])
+  const [subject, setSubject]               = useState('')
+  const [showConfirm, setShowConfirm]       = useState(false) // renamed from 'confirm'
+  const [sending, setSending]               = useState(false)
+  const [error, setError]                   = useState(null)
+  const [result, setResult]                 = useState(null)
+  const [history, setHistory]               = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
-  const [historyError, setHistoryError] = useState(null)
+  const [historyError, setHistoryError]     = useState(null)
   const [recipientCount, setRecipientCount] = useState(null)
-  const [countLoading, setCountLoading] = useState(false)
-  const [testEmail, setTestEmail]       = useState('')
-  const [testSending, setTestSending]   = useState(false)
-  const [testResult, setTestResult]     = useState(null)
+  const [countLoading, setCountLoading]     = useState(false)
+  const [testEmail, setTestEmail]           = useState('')
+  const [testSending, setTestSending]       = useState(false)
+  const [testResult, setTestResult]         = useState(null)
   const sendingRef = useRef(false)
+  const tabRef     = useRef(tab)
+  useEffect(() => { tabRef.current = tab }, [tab])
 
   const editor = useEditor({
     extensions: [
@@ -231,7 +281,7 @@ export default function BroadcastsClient() {
     content: '',
     editorProps: {
       attributes: {
-        style: 'min-height:220px;padding:0.75rem;outline:none;font-family:Arial,sans-serif;font-size:15px;line-height:1.75;color:#1a1a1a;',
+        style: 'min-height:200px;padding:0.75rem;outline:none;font-family:Arial,sans-serif;font-size:15px;line-height:1.75;color:#1a1a1a;',
       },
     },
   })
@@ -247,51 +297,47 @@ export default function BroadcastsClient() {
       if (res.ok) setHistory(await res.json())
       else setHistoryError('Failed to load broadcast history.')
     } catch {
-      setHistoryError('Network error — could not load history.')
+      setHistoryError('Network error.')
     }
     setHistoryLoading(false)
   }, [])
 
   useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
-  useRealtimeSync('broadcasts', loadHistory)
+
+  // Only reload history via realtime when the history tab is active
+  const onBroadcastChange = useCallback(() => {
+    if (tabRef.current === 'history') loadHistory()
+  }, [loadHistory])
+  useRealtimeSync('broadcasts', onBroadcastChange)
 
   useEffect(() => {
     if (audience === 'specific_emails') { setRecipientCount(null); return }
     setCountLoading(true)
     setRecipientCount(null)
-    const controller = new AbortController()
-    fetch(`/api/admin/broadcasts/count?audience=${audience}`, { signal: controller.signal })
+    const ctrl = new AbortController()
+    fetch(`/api/admin/broadcasts/count?audience=${audience}`, { signal: ctrl.signal })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setRecipientCount(d.count) })
       .catch(e => { if (e.name !== 'AbortError') console.error(e) })
-      .finally(() => setCountLoading(false))
-    return () => controller.abort()
+      .finally(() => { if (!ctrl.signal.aborted) setCountLoading(false) }) // fix: don't clear loading on abort
+    return () => ctrl.abort()
   }, [audience])
 
   async function sendTest() {
     const email = testEmail.trim()
-    if (!email.includes('@')) return
+    if (!email.includes('@') || !email.includes('.')) return // fix: require both @ and .
     if (!subject.trim() && bodyEmpty) return
-    setTestSending(true)
-    setTestResult(null)
+    setTestSending(true); setTestResult(null)
     try {
       const res = await fetch('/api/admin/broadcasts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: subject.trim() || '(Test)',
-          html: buildHtml(bodyHtml),
-          audience: 'specific_emails',
-          specificEmails: [email],
-        }),
+        body: JSON.stringify({ subject: subject.trim() || '(Test)', html: buildHtml(bodyHtml), audience: 'specific_emails', specificEmails: [email] }),
       })
       const data = await res.json().catch(() => ({}))
-      setTestResult(res.ok ? 'sent' : (data.error || 'Failed to send.'))
-    } catch {
-      setTestResult('Network error.')
-    } finally {
-      setTestSending(false)
-    }
+      setTestResult(res.ok ? 'sent' : (data.error || 'Failed.'))
+    } catch { setTestResult('Network error.') }
+    finally { setTestSending(false) }
   }
 
   const parsedEmails = audience === 'specific_emails' ? parseEmails(specificEmails) : []
@@ -303,19 +349,14 @@ export default function BroadcastsClient() {
     setError(null)
     if (!subject.trim()) { setError('Subject is required.'); return }
     if (bodyEmpty) { setError('Message body is required.'); return }
-    if (audience === 'specific_emails' && parsedEmails.length === 0) {
-      setError('Enter at least one valid email address.'); return
-    }
-    setConfirm(true)
+    if (audience === 'specific_emails' && parsedEmails.length === 0) { setError('Enter at least one valid email.'); return }
+    setShowConfirm(true)
   }
 
   async function confirmSend() {
     if (sendingRef.current) return
     sendingRef.current = true
-    setConfirm(false)
-    setSending(true)
-    setError(null)
-    setResult(null)
+    setShowConfirm(false); setSending(true); setError(null); setResult(null)
     try {
       const res = await fetch('/api/admin/broadcasts', {
         method: 'POST',
@@ -328,13 +369,14 @@ export default function BroadcastsClient() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error || 'Failed to send broadcast.'); return }
+      if (!res.ok) { setError(data.error || 'Failed to send.'); return }
       setResult(data)
       setSubject('')
-      editor?.commands.clearContent()
+      // fix: unset stored marks after clearing so the next session starts clean
+      editor?.chain().clearContent().unsetAllMarks().run()
       setSpecificEmails('')
       setAudience('specific_emails')
-      loadHistory()
+      // history refresh handled by realtime subscription
     } catch {
       setError('Network error. Please try again.')
     } finally {
@@ -349,9 +391,20 @@ export default function BroadcastsClient() {
         .tiptap-editor { border: 0.5px solid rgba(0,0,0,0.15); background: #fff; }
         .tiptap-editor p { margin: 0 0 0.5em; }
         .tiptap-editor:focus-within { border-color: rgba(0,0,0,0.3); }
+        .bc-grid {
+          display: grid;
+          grid-template-columns: minmax(0,1.1fr) minmax(0,0.9fr);
+          gap: 1.5rem;
+          align-items: start;
+        }
+        @media (max-width: 900px) {
+          .bc-grid { grid-template-columns: 1fr; }
+          .bc-preview-sticky { position: static !important; }
+        }
       `}</style>
 
-      <div style={{ marginBottom: '1.75rem' }}>
+      {/* Page header */}
+      <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
         <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Broadcasts</h1>
       </div>
@@ -364,48 +417,47 @@ export default function BroadcastsClient() {
             fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase',
             color: tab === t.id ? '#1a1a1a' : '#aaa',
             borderBottom: tab === t.id ? '1.5px solid #1a1a1a' : '1.5px solid transparent',
-            marginBottom: '-0.5px', transition: 'all 0.15s',
+            marginBottom: '-0.5px', transition: 'color 0.15s',
+            fontFamily: 'var(--font-inter),sans-serif',
           }}>{t.label}</button>
         ))}
       </div>
 
-      {/* History */}
+      {/* ── History ── */}
       {tab === 'history' && (
-        <div style={{ maxWidth: '720px' }}>
+        <div style={{ maxWidth: '680px' }}>
           {historyLoading ? (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
           ) : historyError ? (
-            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#7B2032' }}>{historyError}</div>
+            <div style={{ padding: '1rem', fontSize: '13px', color: '#7B2032', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{historyError}</div>
           ) : history.length === 0 ? (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No broadcasts sent yet.</div>
           ) : (
             <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
               {history.map((h, idx) => (
-                <div key={h.id} style={{ padding: '1rem 1.5rem', borderBottom: idx < history.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.25rem' }}>{h.subject}</div>
-                      <div style={{ fontSize: '11px', color: '#888' }}>
+                <div key={h.id} style={{ padding: '1.1rem 1.5rem', borderBottom: idx < history.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.25rem' }}>{h.subject}</div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '1px 7px', border: '0.5px solid rgba(197,168,130,0.4)', background: 'rgba(197,168,130,0.07)', color: '#8A6535' }}>
                         {h.audience === 'specific_emails'
-                          ? `${h.specific_emails?.length ?? 0} specific emails`
+                          ? `${h.specific_emails?.length ?? 0} emails`
                           : AUDIENCE_LABELS[h.audience] || h.audience}
-                      </div>
+                      </span>
                       {h.audience === 'specific_emails' && h.specific_emails?.length > 0 && (
-                        <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {h.specific_emails.slice(0, 3).join(', ')}{h.specific_emails.length > 3 ? ` +${h.specific_emails.length - 3} more` : ''}
-                        </div>
+                        <span style={{ fontSize: '11px', color: '#bbb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '260px' }}>
+                          {h.specific_emails.slice(0, 2).join(', ')}{h.specific_emails.length > 2 ? ` +${h.specific_emails.length - 2} more` : ''}
+                        </span>
                       )}
                     </div>
-                    <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                      <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.2rem' }}>
-                        {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {' · '}
-                        {new Date(h.sent_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                      </div>
-                      <div style={{ fontSize: '11px' }}>
-                        <span style={{ color: '#3B6B2F' }}>{h.sent_count} sent</span>
-                        {h.failed_count > 0 && <span style={{ color: '#7B2032', marginLeft: '0.5rem' }}>{h.failed_count} failed</span>}
-                      </div>
+                  </div>
+                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                    <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.2rem' }}>
+                      {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: '500' }}>
+                      <span style={{ color: '#3B6B2F' }}>{h.sent_count} sent</span>
+                      {h.failed_count > 0 && <span style={{ color: '#7B2032', marginLeft: '0.5rem' }}>{h.failed_count} failed</span>}
                     </div>
                   </div>
                 </div>
@@ -415,135 +467,170 @@ export default function BroadcastsClient() {
         </div>
       )}
 
-      {/* Compose */}
+      {/* ── Compose ── */}
       {tab === 'compose' && (
         <>
-          <div style={{ maxWidth: '720px', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span style={{ fontSize: '12px', color: '#8A6535', lineHeight: '1.6' }}>Broadcast emails cannot be unsent. Review carefully before sending.</span>
+          {/* Warning */}
+          <div style={{ maxWidth: '900px', background: 'rgba(197,168,130,0.07)', border: '0.5px solid rgba(197,168,130,0.3)', borderLeft: '2px solid #c5a882', padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span style={{ fontSize: '12px', color: '#8A6535', lineHeight: '1.6' }}>Broadcast emails cannot be unsent. Send a test first and review carefully.</span>
           </div>
 
+          {/* Success banner */}
           {result && (
-            <div style={{ maxWidth: '720px', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.3)', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '13px', color: '#3B6B2F', fontWeight: '500', marginBottom: (result.failed > 0 || result.truncated) ? '0.35rem' : 0 }}>
-                Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.
+            <div style={{ maxWidth: '900px', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.3)', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#3B6B2F', marginBottom: (result.failed > 0 || result.truncated) ? '0.35rem' : 0 }}>
+                ✓ Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.
               </div>
-              {result.failed > 0 && <div style={{ fontSize: '12px', color: '#7B2032' }}>{result.failed} failed to send.</div>}
-              {result.truncated && <div style={{ fontSize: '12px', color: '#8A6535', marginTop: '0.25rem' }}>⚠ List was capped at {MAX_RECIPIENTS} — {result.totalRecipients - MAX_RECIPIENTS} recipient{result.totalRecipients - MAX_RECIPIENTS !== 1 ? 's' : ''} were not reached.</div>}
-              <button onClick={() => setResult(null)} style={{ marginTop: '0.65rem', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '11px', color: '#999', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Send another
+              {result.failed > 0 && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.25rem' }}>{result.failed} failed to deliver.</div>}
+              {result.truncated && <div style={{ fontSize: '12px', color: '#8A6535', marginTop: '0.25rem' }}>⚠ List capped at {MAX_RECIPIENTS} — {result.totalRecipients - MAX_RECIPIENTS} recipients not reached.</div>}
+              <button onClick={() => setResult(null)} style={{ marginTop: '0.75rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '0.35rem 0.85rem', cursor: 'pointer', fontSize: '10px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Compose another
               </button>
             </div>
           )}
 
           {!result && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '1.5rem', alignItems: 'start' }}>
+            <div className="bc-grid" style={{ maxWidth: '900px' }}>
 
-              {/* Left */}
+              {/* ── Left column ── */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                 {/* Audience */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem' }}>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '1rem' }}>Audience</div>
-                  <div style={{ position: 'relative' }}>
-                    <select style={{ ...sel, width: '100%' }} value={audience} onChange={e => { setAudience(e.target.value); setError(null) }}>
-                      {AUDIENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                    <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Audience</div>
                   </div>
-                  {audience !== 'specific_emails' && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '11px', color: countLoading ? '#ccc' : '#3B6B2F' }}>
-                      {countLoading ? 'Counting…' : recipientCount !== null ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}${recipientCount > MAX_RECIPIENTS ? ` — capped at ${MAX_RECIPIENTS}` : ''}` : ''}
+                  <div style={{ padding: '1rem 1.25rem' }}>
+                    <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+                      <select style={{ ...sel, width: '100%' }} value={audience} onChange={e => { setAudience(e.target.value); setError(null) }}>
+                        {AUDIENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
-                  )}
-                  {audience === 'specific_emails' && (
-                    <div style={{ marginTop: '0.85rem' }}>
-                      <textarea style={{ ...inp, height: '90px', resize: 'vertical', marginTop: '0.35rem' }}
-                        value={specificEmails} onChange={e => setSpecificEmails(e.target.value)}
-                        placeholder="Paste emails — one per line or comma-separated" />
-                      {parsedEmails.length > 0 && (
-                        <div style={{ fontSize: '11px', color: '#3B6B2F', marginTop: '0.3rem' }}>
-                          {parsedEmails.length} valid email{parsedEmails.length !== 1 ? 's' : ''} detected
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    {audience !== 'specific_emails' && (
+                      <div style={{ fontSize: '11px', color: countLoading ? '#ccc' : '#3B6B2F', minHeight: '16px' }}>
+                        {countLoading ? 'Counting…' : recipientCount !== null ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}${recipientCount > MAX_RECIPIENTS ? ` (capped at ${MAX_RECIPIENTS})` : ''}` : ''}
+                      </div>
+                    )}
+                    {audience === 'specific_emails' && (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <textarea style={{ ...INP, height: '80px', resize: 'vertical' }}
+                          value={specificEmails} onChange={e => setSpecificEmails(e.target.value)}
+                          placeholder="One email per line, or comma-separated" />
+                        {parsedEmails.length > 0 && (
+                          <div style={{ fontSize: '11px', color: '#3B6B2F', marginTop: '0.3rem' }}>
+                            {parsedEmails.length} valid email{parsedEmails.length !== 1 ? 's' : ''} detected
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Subject + Body */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Message</div>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
-                      <L style={{ margin: 0 }}>Subject</L>
-                      <span style={{ fontSize: '10px', color: subject.length > 60 ? '#8A6535' : '#ccc' }}>{subject.length}/200{subject.length > 60 && subject.length <= 200 ? ' · may truncate in inbox' : ''}</span>
-                    </div>
-                    <input style={inp} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Email subject line…" maxLength={200} />
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Message</div>
                   </div>
-                  <div>
-                    <L>Body</L>
-                    <div className="tiptap-editor">
-                      <Toolbar editor={editor} />
-                      <EditorContent editor={editor} />
+                  <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
+                        <L style={{ margin: 0 }}>Subject</L>
+                        <span style={{ fontSize: '10px', color: subject.length > 60 ? '#8A6535' : '#ccc' }}>
+                          {subject.length}/200{subject.length > 60 && subject.length <= 200 ? ' · may truncate' : ''}
+                        </span>
+                      </div>
+                      <input style={INP} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Email subject line…" maxLength={200} />
                     </div>
-                    <div style={{ marginTop: '0.4rem', fontSize: '10px', color: '#bbb', letterSpacing: '0.02em' }}>
-                      Use <code style={{ background: 'rgba(0,0,0,0.05)', padding: '1px 4px', borderRadius: '2px' }}>{'{{name}}'}</code> anywhere to personalise — e.g. <em>Hey {'{{name}}'},</em>
+                    <div>
+                      <L>Body</L>
+                      <div className="tiptap-editor">
+                        <Toolbar editor={editor} />
+                        <EditorContent editor={editor} />
+                      </div>
+                      <div style={{ marginTop: '0.4rem', fontSize: '10px', color: '#bbb' }}>
+                        Use <code style={{ background: 'rgba(0,0,0,0.05)', padding: '1px 4px' }}>{'{{name}}'}</code> to personalise — e.g. <em>Hey {'{{name}}'},</em>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Test send */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem 1.25rem' }}>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.75rem' }}>Send a test</div>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <input style={{ ...inp, flex: 1 }} value={testEmail} onChange={e => { setTestEmail(e.target.value); setTestResult(null) }} placeholder="your@email.com" type="email" />
-                    <GhostBtn onClick={sendTest} disabled={testSending || !testEmail.includes('@')} small>{testSending ? 'Sending…' : 'Send test'}</GhostBtn>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Send a test</div>
                   </div>
-                  {testResult && (
-                    <div style={{ marginTop: '0.4rem', fontSize: '11px', color: testResult === 'sent' ? '#3B6B2F' : '#7B2032' }}>
-                      {testResult === 'sent' ? 'Test email sent.' : testResult}
+                  <div style={{ padding: '1rem 1.25rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input style={{ ...INP, flex: 1 }} value={testEmail} onChange={e => { setTestEmail(e.target.value); setTestResult(null) }}
+                        placeholder="your@email.com" type="email" />
+                      <GhostBtn onClick={sendTest} disabled={testSending || !testEmail.includes('@') || !testEmail.includes('.')} small>
+                        {testSending ? 'Sending…' : 'Send test'}
+                      </GhostBtn>
                     </div>
-                  )}
+                    {testResult && (
+                      <div style={{ marginTop: '0.4rem', fontSize: '11px', color: testResult === 'sent' ? '#3B6B2F' : '#7B2032' }}>
+                        {testResult === 'sent' ? '✓ Test email sent.' : testResult}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <Err msg={error} />
 
-                {confirm ? (
-                  <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: '#1a1a1a' }}>Send to <strong>{audienceLabel}</strong>? This cannot be undone.</span>
+                {/* Send / Confirm */}
+                {showConfirm ? (
+                  <div style={{ padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderLeft: '2px solid #7B2032' }}>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.85rem', lineHeight: '1.5' }}>
+                      Send to <strong>{audienceLabel}</strong>?<br />
+                      <span style={{ fontSize: '11px', color: '#888' }}>This cannot be undone.</span>
+                    </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <PrimaryBtn onClick={confirmSend} disabled={sending}>{sending ? 'Sending…' : 'Confirm Send'}</PrimaryBtn>
-                      <GhostBtn onClick={() => setConfirm(false)} disabled={sending}>Cancel</GhostBtn>
+                      <GhostBtn onClick={() => setShowConfirm(false)} disabled={sending}>Cancel</GhostBtn>
                     </div>
                   </div>
                 ) : (
-                  <PrimaryBtn onClick={handleSendClick} disabled={sending}>{sending ? 'Sending…' : 'Send Broadcast'}</PrimaryBtn>
+                  <PrimaryBtn onClick={handleSendClick} disabled={sending}>
+                    {sending ? 'Sending…' : 'Send Broadcast'}
+                  </PrimaryBtn>
                 )}
               </div>
 
-              {/* Right — live preview */}
-              <div style={{ position: 'sticky', top: '1.5rem' }}>
+              {/* ── Right column — live preview ── */}
+              <div className="bc-preview-sticky" style={{ position: 'sticky', top: '1.5rem' }}>
                 <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.75rem' }}>
-                  Live Preview
-                  {subject && <span style={{ marginLeft: '0.75rem', color: '#bbb', textTransform: 'none', letterSpacing: 0, fontSize: '11px', fontWeight: '400' }}>· {subject}</span>}
+                  Preview
+                  {subject && <span style={{ marginLeft: '0.75rem', color: '#bbb', textTransform: 'none', letterSpacing: 0, fontSize: '11px' }}>· {subject}</span>}
                 </div>
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', maxHeight: 'calc(100vh - 14rem)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <div style={{ padding: '0.5rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf8', display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eee' }} />
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eee' }} />
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eee' }} />
+
+                {/* Email chrome */}
+                <div style={{ border: '0.5px solid rgba(0,0,0,0.12)', background: '#fff', overflow: 'hidden' }}>
+                  {/* Browser bar */}
+                  <div style={{ padding: '0.55rem 0.85rem', background: '#f5f5f5', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {['#ee6b5f','#f5bf4f','#61c554'].map(c => <div key={c} style={{ width: '8px', height: '8px', borderRadius: '50%', background: c }} />)}
                   </div>
-                  <div style={{ padding: '2rem 1.5rem', fontFamily: 'Arial, sans-serif', color: '#1a1a1a', minHeight: '320px', overflowY: 'auto', flex: 1 }}>
+                  {/* Email header strip preview */}
+                  <div style={{ background: '#0F1E14', padding: '12px 20px' }}>
+                    <span style={{ fontFamily: 'Arial,sans-serif', fontSize: '10px', textTransform: 'uppercase', color: '#c5a882', letterSpacing: '0.18em' }}>Canvas Routes</span>
+                  </div>
+                  <div style={{ height: '2px', background: 'linear-gradient(90deg,#0F1E14,#c5a882,#0F1E14)' }} />
+                  {/* Body */}
+                  <div style={{ padding: '1.5rem 1.25rem', background: '#F5F1EC', maxHeight: 'calc(100vh - 20rem)', overflowY: 'auto' }}>
                     {bodyEmpty ? (
-                      <p style={{ fontSize: '14px', color: '#ccc', fontStyle: 'italic', margin: '0 0 24px' }}>Your message will appear here…</p>
+                      <p style={{ fontSize: '14px', color: '#ccc', fontStyle: 'italic', margin: '0 0 20px', fontFamily: 'Arial,sans-serif' }}>
+                        Your message will appear here…
+                      </p>
                     ) : (
-                      <div style={{ fontSize: '15px', lineHeight: '1.75', marginBottom: '24px' }}
-                        dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+                      <div
+                        style={{ fontSize: '15px', lineHeight: '1.75', color: '#444', fontFamily: 'Arial,sans-serif', marginBottom: '20px' }}
+                        dangerouslySetInnerHTML={{ __html: bodyHtml }}
+                      />
                     )}
-                    <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: '24px 0' }} />
                     <Signature />
-                    <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '11px', color: '#bbb' }}>
-                      <span style={{ textDecoration: 'underline', color: '#bbb' }}>Unsubscribe</span>
+                    <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '11px', color: '#bbb', fontFamily: 'Arial,sans-serif' }}>
+                      <a href="#" onClick={e => e.preventDefault()} style={{ color: '#bbb', textDecoration: 'underline' }}>Unsubscribe</a>
                     </div>
                   </div>
                 </div>
