@@ -110,7 +110,6 @@ export default function CardInteractive({ children }) {
           onMouseMove={onMouseMove}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
-          onMouseDown={onMouseDown}
           onMouseUp={onMouseUp}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
