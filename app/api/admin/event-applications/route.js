@@ -23,8 +23,12 @@ export async function GET() {
   // For each event, find applications that registered for it (match by event name)
   const result = (events || []).map(ev => {
     const evName = ev.name?.trim().toLowerCase()
+    const evBase = evName.split(/\s[—–]\s/)[0].trim()
     const evApps = (apps || []).filter(a =>
-      (a.registrations || []).some(r => r.event?.trim().toLowerCase() === evName)
+      (a.registrations || []).some(r => {
+        const rName = r.event?.trim().toLowerCase() || ''
+        return rName === evName || rName.split(/\s[—–]\s/)[0].trim() === evBase
+      })
     )
 
     // Attach RSVP status per application

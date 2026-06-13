@@ -2,12 +2,13 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
 
 async function getEventType(supabase, eventName) {
-  const { data } = await supabase
-    .from('events')
-    .select('type')
-    .ilike('name', eventName.trim())
-    .maybeSingle()
-  return data?.type || null
+  const trimmed = eventName.trim()
+  // Try exact match first, then base name (strips trailing " — Date" suffix)
+  const { data: exact } = await supabase.from('events').select('type').ilike('name', trimmed).maybeSingle()
+  if (exact) return exact.type || null
+  const base = trimmed.split(/\s[—–]\s/)[0].trim()
+  const { data: partial } = await supabase.from('events').select('type').ilike('name', `${base}%`).maybeSingle()
+  return partial?.type || null
 }
 
 export async function GET(request, { params }) {
