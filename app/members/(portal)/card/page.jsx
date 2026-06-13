@@ -47,32 +47,35 @@ export default async function CardPage() {
       {/* The card */}
       <div style={{
         width: '100%', maxWidth: '360px',
-        background: 'linear-gradient(145deg, #0F1E14 0%, #162618 50%, #0F1E14 100%)',
+        background: 'linear-gradient(160deg, #162618 0%, #0F1E14 60%)',
         border: '0.5px solid rgba(197,168,130,0.25)',
         borderRadius: '16px',
         overflow: 'hidden',
         boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(197,168,130,0.1) inset',
         position: 'relative',
       }}>
-        {/* Subtle gold glow top right */}
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(197,168,130,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Subtle gold glow — sits behind name, not in empty space */}
+        <div style={{ position: 'absolute', bottom: '30%', right: '-20px', width: '240px', height: '240px', background: 'radial-gradient(circle, rgba(197,168,130,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        {/* Card top */}
-        <div style={{ padding: '1.75rem 1.75rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '80px', height: 'auto', opacity: 0.9 }} />
+        {/* Card top: logo + season on same row, compact */}
+        <div style={{ padding: '1.5rem 1.75rem 1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '72px', height: 'auto', opacity: 0.85 }} />
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', marginBottom: '0.2rem' }}>Season</div>
-              <div style={{ fontSize: '12px', color: 'rgba(245,241,236,0.7)', letterSpacing: '0.04em' }}>2026</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.15rem' }}>Season</div>
+              <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>2026</div>
             </div>
           </div>
         </div>
 
+        {/* Gold divider */}
+        <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.25), transparent)', margin: '0 1.75rem' }} />
+
         {/* Member info */}
-        <div style={{ padding: '1.5rem 1.75rem 1.25rem' }}>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>Member</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.75rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '0.5rem' }}>
+        <div style={{ padding: '1.25rem 1.75rem 1.25rem' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.3rem' }}>Member</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '0.55rem' }}>
               {member.name || 'Canvas Routes Member'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
@@ -97,31 +100,31 @@ export default async function CardPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '2rem' }}>
             {memberNumber && (
               <div>
                 <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>No.</div>
-                <div style={{ fontSize: '13px', color: 'rgba(245,241,236,0.6)', letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums' }}>#{memberNumber}</div>
+                <div style={{ fontSize: '14px', color: 'rgba(245,241,236,0.65)', letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums' }}>#{memberNumber}</div>
               </div>
             )}
             <div>
               <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>Member since</div>
-              <div style={{ fontSize: '13px', color: 'rgba(245,241,236,0.6)', letterSpacing: '0.04em' }}>{joinYear}</div>
+              <div style={{ fontSize: '14px', color: 'rgba(245,241,236,0.65)', letterSpacing: '0.04em' }}>{joinYear}</div>
             </div>
           </div>
         </div>
 
         {/* Gold divider */}
-        <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.3), transparent)', margin: '0 1.75rem' }} />
+        <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.25), transparent)', margin: '0 1.75rem' }} />
 
         {/* QR section */}
-        <div style={{ padding: '1.25rem 1.75rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ flexShrink: 0, background: '#0F1E14', border: '0.5px solid rgba(197,168,130,0.15)', borderRadius: '6px', padding: '6px', lineHeight: 0 }}>
+        <div style={{ padding: '1.25rem 1.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ flexShrink: 0, background: '#F5F1EC', borderRadius: '6px', padding: '7px', lineHeight: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrUrl} alt="Verification QR" width={88} height={88} style={{ display: 'block', imageRendering: 'pixelated' }} />
+            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0F1E14&bgcolor=F5F1EC&qzone=2&data=${encodeURIComponent(verifyUrl)}`} alt="Verification QR" width={96} height={96} style={{ display: 'block', imageRendering: 'pixelated' }} />
           </div>
           <div>
-            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.6', marginBottom: '0.35rem' }}>
+            <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.65', marginBottom: '0.35rem' }}>
               Partners scan this code to verify your membership.
             </div>
             <div style={{ fontSize: '10px', color: 'rgba(197,168,130,0.45)', letterSpacing: '0.04em' }}>
