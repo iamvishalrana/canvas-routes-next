@@ -47,7 +47,7 @@ export default async function CardPage() {
   return (
     <div style={{
       minHeight: '100dvh',
-      background: '#0F1E14',
+      background: '#F5F1EC',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -59,7 +59,7 @@ export default async function CardPage() {
 
       {/* Back link */}
       <div style={{ width: '100%', maxWidth: '380px', marginBottom: '1.25rem' }}>
-        <Link href="/members/dashboard" style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+        <Link href="/members/dashboard" style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(139,109,71,0.65)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           Dashboard
         </Link>
@@ -76,11 +76,16 @@ export default async function CardPage() {
         boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(197,168,130,0.1) inset',
         position: 'relative',
       }}>
+        {/* Subtle diagonal gold line pattern — matches dashboard membership card */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+          backgroundImage: 'repeating-linear-gradient(-55deg, transparent 0, transparent 26px, rgba(197,168,130,0.028) 26px, rgba(197,168,130,0.028) 27px)',
+        }} />
         {/* Gold glow behind member name area */}
         <div style={{ position: 'absolute', bottom: '35%', right: '-20px', width: '240px', height: '240px', background: 'radial-gradient(circle, rgba(197,168,130,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         {/* Logo + season */}
-        <div style={{ padding: 'clamp(1.25rem, 4vw, 1.5rem) clamp(1.25rem, 4vw, 1.75rem) 1.25rem' }}>
+        <div style={{ padding: 'clamp(1.25rem, 4vw, 1.5rem) clamp(1.25rem, 4vw, 1.75rem) 1.25rem', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '72px', height: 'auto', opacity: 0.85 }} />
             <div style={{ textAlign: 'right' }}>
@@ -91,10 +96,10 @@ export default async function CardPage() {
         </div>
 
         {/* Divider */}
-        <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.25), transparent)', margin: '0 clamp(1.25rem, 4vw, 1.75rem)' }} />
+        <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.25), transparent)', margin: '0 clamp(1.25rem, 4vw, 1.75rem)', position: 'relative', zIndex: 1 }} />
 
         {/* Member info */}
-        <div style={{ padding: 'clamp(1rem, 3vw, 1.25rem) clamp(1.25rem, 4vw, 1.75rem)' }}>
+        <div style={{ padding: 'clamp(1rem, 3vw, 1.25rem) clamp(1.25rem, 4vw, 1.75rem)', position: 'relative', zIndex: 1 }}>
 
           {/* Name + badges */}
           <div style={{ marginBottom: '1rem' }}>
@@ -152,10 +157,10 @@ export default async function CardPage() {
         </div>
 
         {/* Divider */}
-        <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.25), transparent)', margin: '0 clamp(1.25rem, 4vw, 1.75rem)' }} />
+        <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.25), transparent)', margin: '0 clamp(1.25rem, 4vw, 1.75rem)', position: 'relative', zIndex: 1 }} />
 
         {/* QR section */}
-        <div style={{ padding: 'clamp(1rem, 3vw, 1.25rem) clamp(1.25rem, 4vw, 1.75rem) clamp(1.25rem, 4vw, 1.5rem)', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: 'clamp(1rem, 3vw, 1.25rem) clamp(1.25rem, 4vw, 1.75rem) clamp(1.25rem, 4vw, 1.5rem)', display: 'flex', alignItems: 'center', gap: '1.25rem', position: 'relative', zIndex: 1 }}>
           <div style={{ flexShrink: 0, background: '#F5F1EC', borderRadius: '6px', padding: '7px', lineHeight: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -178,7 +183,7 @@ export default async function CardPage() {
       </div>
 
       {/* Home screen hint */}
-      <p style={{ marginTop: '1.25rem', fontSize: '11px', color: 'rgba(245,241,236,0.22)', textAlign: 'center', maxWidth: '260px', lineHeight: '1.6', margin: '1.25rem auto 0' }}>
+      <p style={{ marginTop: '1.25rem', fontSize: '11px', color: 'rgba(0,0,0,0.3)', textAlign: 'center', maxWidth: '260px', lineHeight: '1.6', margin: '1.25rem auto 0' }}>
         Add this page to your home screen for quick access. On iPhone, tap Share → Add to Home Screen.
       </p>
     </div>

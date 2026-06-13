@@ -118,7 +118,7 @@ export default async function VerifyPage({ params }) {
 
           {!member && (
             <p style={{ textAlign: 'center', fontSize: '13px', color: 'rgba(245,241,236,0.4)', lineHeight: '1.7' }}>
-              This QR code doesn&apos;t match any Canvas Routes membership. If you believe this is an error, contact us at jerry@canvasroutes.com.
+              This QR code doesn&apos;t match any Canvas Routes membership. If you believe this is an error, contact us at info@canvasroutes.com.
             </p>
           )}
         </div>
@@ -127,7 +127,7 @@ export default async function VerifyPage({ params }) {
       {/* Footer */}
       <div style={{ padding: '1rem 1.75rem', borderTop: '0.5px solid rgba(197,168,130,0.08)', textAlign: 'center' }}>
         <p style={{ fontSize: '11px', color: 'rgba(245,241,236,0.2)', margin: 0 }}>
-          © 2026 Canvas Routes. Questions? jerry@canvasroutes.com
+          © 2026 Canvas Routes. Questions? info@canvasroutes.com
         </p>
       </div>
     </div>

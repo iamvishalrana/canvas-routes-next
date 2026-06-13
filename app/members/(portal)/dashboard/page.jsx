@@ -368,8 +368,9 @@ export default async function DashboardPage() {
         {/* ── Right column ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-          {/* Membership card */}
-          <div className="membership-card dash-anim-membership" style={isInnerCircle ? { background: 'linear-gradient(148deg, #0F1E14 55%, #172419 100%)' } : {}}>
+          {/* Membership card — clickable, links to full card page */}
+          <Link href="/members/card" style={{ textDecoration: 'none', display: 'block' }}>
+          <div className="membership-card dash-anim-membership" style={{ cursor: 'pointer', ...(isInnerCircle ? { background: 'linear-gradient(148deg, #0F1E14 55%, #172419 100%)' } : {}) }}>
             {/* Ambient glows */}
             <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '180px', height: '180px', background: isInnerCircle ? 'radial-gradient(circle, rgba(197,168,130,0.22) 0%, transparent 65%)' : 'radial-gradient(circle, rgba(197,168,130,0.1) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 1 }} />
             {isInnerCircle && (
@@ -432,6 +433,7 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+          </Link>
 
           {/* Car photo */}
           {carPhotoUrl && (
