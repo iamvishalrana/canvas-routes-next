@@ -313,7 +313,14 @@ export default function EventsClient() {
         type: 'Member', status: r.stripe_payment_status, amount: r.amount_paid,
       }))
       const contactRegs = (Array.isArray(contacts) ? contacts : [])
-        .filter(c => (c.registrations || []).some(r => normalizeEventName(r.event) === eventName))
+        .filter(c => (c.registrations || []).some(r => {
+          const norm = normalizeEventName(r.event)
+          if (norm === eventName) return true
+          // Strip trailing date (everything after " — " or " – ") so stored names like
+          // "Cars, Coffee & Dad Jokes — June 20, 2026" match event table name "Cars, Coffee & Dad Jokes"
+          const base = s => s.split(/\s[—–]\s/)[0].trim()
+          return base(norm) === base(eventName)
+        }))
         .map(c => ({ name: c.name, email: c.email, type: 'Contact', status: 'legacy' }))
       const seen = new Set()
       const combined = [...newRegs, ...contactRegs].filter(r => {

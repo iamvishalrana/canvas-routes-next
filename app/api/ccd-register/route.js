@@ -126,7 +126,7 @@ export async function POST(request) {
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME)
     const registrations = [...prevRegs, newReg]
 
-    await supabase.from('applications').upsert({
+    const { data: appData } = await supabase.from('applications').upsert({
       email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),
@@ -140,7 +140,15 @@ export async function POST(request) {
       source: source || null,
       registrations,
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
-    }, { onConflict: 'email' })
+    }, { onConflict: 'email' }).select('id').single()
+
+    // Ensure a contacts record exists so this registrant appears in the admin event registrants panel
+    if (appData?.id) {
+      await supabase.from('contacts').upsert(
+        { application_id: appData.id },
+        { onConflict: 'application_id', ignoreDuplicates: true }
+      )
+    }
   } catch (e) {
     captureException(e, { context: 'ccd-register-db', email: normalEmail })
     // Don't block the user — emails may still go out
