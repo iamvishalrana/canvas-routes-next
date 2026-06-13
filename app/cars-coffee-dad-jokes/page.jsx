@@ -181,12 +181,30 @@ export default function CCDPage() {
               <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'2.2rem', fontWeight:'300', color:'#1a1a1a', marginBottom:'0.75rem' }}>
                 You&apos;re registered.
               </div>
-              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', marginBottom:'2rem' }}>
+              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', marginBottom:'1rem', maxWidth:'360px', margin:'0 auto 1rem' }}>
                 We&apos;ve got your details. Check your inbox for a confirmation — we&apos;ll follow up with everything you need before June 20.
               </p>
-              <Link href="/" style={{ fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#0F1E14', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif', borderBottom:'0.5px solid rgba(15,30,20,0.35)', paddingBottom:'2px' }}>
-                Back to Canvas Routes
+              <p style={{ fontSize:'12px', color:'#aaa', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', marginBottom:'2.5rem', maxWidth:'320px', margin:'0 auto 2.5rem' }}>
+                If you don&apos;t see it, check your junk or spam folder and mark it as not spam so our follow-up reaches you.
+              </p>
+              <div style={{ width:'40px', height:'0.5px', background:'rgba(197,168,130,0.4)', margin:'0 auto 2rem' }} />
+              <div style={{ fontSize:'9px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.75rem' }}>
+                While you wait
+              </div>
+              <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'1.5rem', fontWeight:'300', color:'#1a1a1a', lineHeight:1.2, marginBottom:'0.75rem' }}>
+                Canvas Routes Membership
+              </div>
+              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.75, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1.5rem' }}>
+                Road trips, invite-only meets, and partner perks — built for drivers who love the road.
+              </p>
+              <Link href="/membership" style={{ display:'inline-block', background:'#0F1E14', color:'#F5F1EC', padding:'0.85rem 2.5rem', fontSize:'10px', letterSpacing:'0.22em', textTransform:'uppercase', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif', marginBottom:'1.5rem' }}>
+                See Membership
               </Link>
+              <div>
+                <Link href="/" style={{ fontSize:'10px', letterSpacing:'0.14em', textTransform:'uppercase', color:'#aaa', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif' }}>
+                  Back to Canvas Routes
+                </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
