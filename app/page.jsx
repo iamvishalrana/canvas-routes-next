@@ -93,6 +93,7 @@ export default function Home() {
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
   const [showMembershipPopup, setShowMembershipPopup] = useState(false)
+  const [showCCDPopup, setShowCCDPopup] = useState(false)
   const [queryForm, setQueryForm] = useState({ name: '', email: '', message: '' })
   const [queryStatus, setQueryStatus] = useState(null)
   const [queryError, setQueryError] = useState(null)
@@ -136,9 +137,15 @@ export default function Home() {
 
 
   useEffect(() => {
-    document.body.style.overflow = (pastModalEvent !== null || showEventsPopup) ? 'hidden' : ''
+    if (localStorage.getItem('cr_ccd_popup_v1')) return
+    const t = setTimeout(() => setShowCCDPopup(true), 2000)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = (pastModalEvent !== null || showEventsPopup || showCCDPopup) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [pastModalEvent, showEventsPopup])
+  }, [pastModalEvent, showEventsPopup, showCCDPopup])
 
   useEffect(() => {
     setCookieBannerVisible(getConsent() === null)
@@ -823,6 +830,50 @@ export default function Home() {
             <div style={{ marginTop: '1.25rem' }}>
               <button onClick={() => { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') }} style={{ background: 'none', border: 'none', fontSize: '10px', color: '#bbb', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif' }}>
                 Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CARS, COFFEE & DAD JOKES POPUP */}
+      {showCCDPopup && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') } }}
+          style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,30,20,0.78)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}
+        >
+          <div style={{ position: 'relative', maxWidth: '460px', width: '100%', boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }}>
+            {/* Close */}
+            <button
+              onClick={() => { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') }}
+              style={{ position: 'absolute', top: '0.65rem', right: '0.65rem', zIndex: 10, background: 'rgba(0,0,0,0.45)', border: 'none', cursor: 'pointer', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+              aria-label="Close"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            {/* Poster image */}
+            <Image
+              src="/CCD.png"
+              alt="Cars, Coffee & Dad Jokes — Father's Day Weekend Special, June 20 at Cafe Napoleon"
+              width={460}
+              height={460}
+              style={{ display: 'block', width: '100%', height: 'auto' }}
+              priority
+            />
+            {/* CTA bar */}
+            <div style={{ background: '#0F1E14', padding: '1.1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+              <div style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)' }}>
+                June 20 · Cafe Napoleon · LaSalle
+              </div>
+              <button
+                onClick={() => {
+                  setShowCCDPopup(false)
+                  localStorage.setItem('cr_ccd_popup_v1', '1')
+                  setTimeout(() => document.getElementById('join')?.scrollIntoView({ behavior: 'smooth' }), 120)
+                }}
+                style={{ background: '#c5a882', color: '#0F1E14', border: 'none', padding: '0.65rem 1.6rem', fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                Register Now
               </button>
             </div>
           </div>
