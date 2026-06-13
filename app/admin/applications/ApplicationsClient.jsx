@@ -88,6 +88,7 @@ export default function ApplicationsClient() {
   const [emailSending, setEmailSending] = useState(false)
   const [emailGenerating, setEmailGenerating] = useState(false)
   const [emailResult, setEmailResult] = useState(null) // { id, success, error }
+  const [emailPreviewExpanded, setEmailPreviewExpanded] = useState(false)
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -269,6 +270,14 @@ export default function ApplicationsClient() {
     } finally {
       setAddingContact(prev => { const n = new Set(prev); n.delete(appId); return n })
     }
+  }
+
+  function previewEmailHtml(subject, body) {
+    const escaped = body
+      .split(/\n\n+/)
+      .map(p => `<p style="margin:0 0 1.2em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">${p.replace(/\n/g, '<br/>')}</p>`)
+      .join('')
+    return `<div style="padding:48px 40px 20px;">${escaped}</div><div style="padding:20px 40px 40px;border-top:0.5px solid rgba(0,0,0,0.08);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#bbb;line-height:1.6;">Canvas Routes · Montreal, QC · info@canvasroutes.com</div>`
   }
 
   function openEmailComposer(a) {
@@ -846,55 +855,73 @@ export default function ApplicationsClient() {
 
                       {/* Email composer */}
                       {emailComposerId === a.id && (
-                        <div style={{ marginTop: '1rem', padding: '1.25rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-                          <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.75rem' }}>
-                            From: Jerry — Canvas Routes &lt;jerry@canvasroutes.com&gt; &nbsp;·&nbsp; To: {a.email}
-                          </div>
-                          <div style={{ marginBottom: '0.6rem' }}>
-                            <L>Subject</L>
-                            <input
-                              style={inp}
-                              value={emailSubject}
-                              onChange={e => setEmailSubject(e.target.value)}
-                              placeholder="Subject line"
-                            />
-                          </div>
-                          <div style={{ marginBottom: '0.75rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                              <L style={{ marginBottom: 0 }}>Body</L>
-                              <button
-                                onClick={() => generateEmail(a.id)}
-                                disabled={emailGenerating || emailSending}
-                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '3px 10px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: emailGenerating ? 'default' : 'pointer', color: emailGenerating ? '#bbb' : '#555', display: 'flex', alignItems: 'center', gap: '5px', transition: 'border-color 0.15s' }}
-                              >
-                                {emailGenerating ? '…writing' : '✦ Write with AI'}
-                              </button>
+                        <div style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>
+                              From: Jerry — Canvas Routes &lt;jerry@canvasroutes.com&gt; &nbsp;·&nbsp; To: {a.email}
                             </div>
-                            <textarea
-                              style={{ ...inp, height: '220px', resize: 'vertical', lineHeight: '1.65' }}
-                              value={emailBody}
-                              onChange={e => setEmailBody(e.target.value)}
-                              placeholder="Email body…"
-                            />
-                            <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>
-                              Double line breaks become paragraphs. Review and edit before sending.
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <PrimaryBtn
-                              onClick={() => sendEmail(a.id)}
-                              disabled={emailSending || !emailSubject.trim() || !emailBody.trim()}
+                            <button
+                              onClick={() => setEmailPreviewExpanded(v => !v)}
+                              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '3px 10px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}
                             >
-                              {emailSending ? 'Sending…' : 'Send'}
-                            </PrimaryBtn>
-                            <GhostBtn small onClick={() => setEmailComposerId(null)}>Cancel</GhostBtn>
+                              {emailPreviewExpanded ? 'Collapse Preview' : 'Expand Preview'}
+                            </button>
                           </div>
-                          {emailResult?.id === a.id && emailResult.success && (
-                            <div style={{ marginTop: '0.6rem', fontSize: '12px', color: '#3B6B2F' }}>✓ Email sent to {a.email}</div>
-                          )}
-                          {emailResult?.id === a.id && emailResult.error && (
-                            <Err msg={emailResult.error} />
-                          )}
+                          <div style={{ display: 'grid', gridTemplateColumns: emailPreviewExpanded ? '1fr 1fr' : '1fr', gap: 0 }}>
+                            <div style={{ padding: '1.25rem', borderRight: emailPreviewExpanded ? '0.5px solid rgba(0,0,0,0.08)' : 'none' }}>
+                              <div style={{ marginBottom: '0.6rem' }}>
+                                <L>Subject</L>
+                                <input
+                                  style={inp}
+                                  value={emailSubject}
+                                  onChange={e => setEmailSubject(e.target.value)}
+                                  placeholder="Subject line"
+                                />
+                              </div>
+                              <div style={{ marginBottom: '0.75rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                                  <L style={{ marginBottom: 0 }}>Body</L>
+                                  <button
+                                    onClick={() => generateEmail(a.id)}
+                                    disabled={emailGenerating || emailSending}
+                                    style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '3px 10px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: emailGenerating ? 'default' : 'pointer', color: emailGenerating ? '#bbb' : '#555', display: 'flex', alignItems: 'center', gap: '5px', transition: 'border-color 0.15s', fontFamily: 'var(--font-inter),sans-serif' }}
+                                  >
+                                    {emailGenerating ? '…writing' : '✦ Write with AI'}
+                                  </button>
+                                </div>
+                                <textarea
+                                  style={{ ...inp, height: emailPreviewExpanded ? '360px' : '220px', resize: 'vertical', lineHeight: '1.65' }}
+                                  value={emailBody}
+                                  onChange={e => setEmailBody(e.target.value)}
+                                  placeholder="Email body…"
+                                />
+                                <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>
+                                  Double line breaks become paragraphs.
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <PrimaryBtn
+                                  onClick={() => sendEmail(a.id)}
+                                  disabled={emailSending || !emailSubject.trim() || !emailBody.trim()}
+                                >
+                                  {emailSending ? 'Sending…' : 'Send'}
+                                </PrimaryBtn>
+                                <GhostBtn small onClick={() => setEmailComposerId(null)}>Cancel</GhostBtn>
+                              </div>
+                              {emailResult?.id === a.id && emailResult.success && (
+                                <div style={{ marginTop: '0.6rem', fontSize: '12px', color: '#3B6B2F' }}>✓ Email sent to {a.email}</div>
+                              )}
+                              {emailResult?.id === a.id && emailResult.error && (
+                                <Err msg={emailResult.error} />
+                              )}
+                            </div>
+                            {emailPreviewExpanded && (
+                              <div style={{ padding: '0', background: '#fff', overflow: 'auto' }}>
+                                <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', padding: '0.6rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>Preview</div>
+                                <div dangerouslySetInnerHTML={{ __html: previewEmailHtml(emailSubject, emailBody || ' ') }} />
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
