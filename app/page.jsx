@@ -865,16 +865,13 @@ export default function Home() {
               <div style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)' }}>
                 June 20 · Cafe Napoleon · LaSalle
               </div>
-              <button
-                onClick={() => {
-                  setShowCCDPopup(false)
-                  localStorage.setItem('cr_ccd_popup_v1', '1')
-                  setTimeout(() => document.getElementById('join')?.scrollIntoView({ behavior: 'smooth' }), 120)
-                }}
-                style={{ background: '#c5a882', color: '#0F1E14', border: 'none', padding: '0.65rem 1.6rem', fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0 }}
+              <Link
+                href="/cars-coffee-dad-jokes"
+                onClick={() => { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') }}
+                style={{ background: '#c5a882', color: '#0F1E14', padding: '0.65rem 1.6rem', fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-block' }}
               >
                 Register Now
-              </button>
+              </Link>
             </div>
           </div>
         </div>
