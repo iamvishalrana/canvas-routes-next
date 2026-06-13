@@ -848,6 +848,52 @@ export default function ContactsClient() {
                   </div>
                   )}
 
+                  {/* RSVP History */}
+                  {editingContact !== c.contact_id && (
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>RSVP History</div>
+                      {!c.rsvp_history?.length ? (
+                        <div style={{ fontSize: '12px', color: '#ccc' }}>No RSVPs on record.</div>
+                      ) : (
+                        [...c.rsvp_history].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((rsvp, ri) => {
+                          const isConfirmed = !!rsvp.confirmed_at
+                          const isExpired = !isConfirmed && new Date(rsvp.expires_at) < new Date()
+                          const answers = rsvp.answers || {}
+                          const ARRIVAL = { opening: 'Right at opening', first_hour: 'Within first hour', later: 'Later on' }
+                          return (
+                            <div key={ri} style={{ marginBottom: '0.6rem', padding: '0.85rem 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)' }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: isConfirmed && Object.keys(answers).length ? '0.6rem' : '0.3rem' }}>
+                                <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', lineHeight: 1.4 }}>{rsvp.event_name}</div>
+                                {isConfirmed ? (
+                                  <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.05)', flexShrink: 0 }}>Confirmed</span>
+                                ) : isExpired ? (
+                                  <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 8px', flexShrink: 0 }}>Expired</span>
+                                ) : (
+                                  <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.35)', padding: '2px 8px', flexShrink: 0 }}>Pending</span>
+                                )}
+                              </div>
+                              {isConfirmed && Object.keys(answers).length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginBottom: '0.35rem' }}>
+                                  {answers.bringing_guest !== null && answers.bringing_guest !== undefined && <div style={{ fontSize: '11px', color: '#555' }}>Bringing guest: <strong style={{ fontWeight: '500' }}>{answers.bringing_guest ? 'Yes' : 'No'}</strong></div>}
+                                  {answers.car_paint && <div style={{ fontSize: '11px', color: '#555' }}>Car colour: <strong style={{ fontWeight: '500' }}>{answers.car_paint}</strong></div>}
+                                  {answers.car_mods && <div style={{ fontSize: '11px', color: '#555' }}>Mods: <strong style={{ fontWeight: '500' }}>{answers.car_mods}</strong></div>}
+                                  {answers.arrival && <div style={{ fontSize: '11px', color: '#555' }}>Arrival: <strong style={{ fontWeight: '500' }}>{ARRIVAL[answers.arrival] || answers.arrival}</strong></div>}
+                                  {answers.dietary && <div style={{ fontSize: '11px', color: '#555' }}>Dietary: <strong style={{ fontWeight: '500' }}>{answers.dietary}</strong></div>}
+                                  {answers.passengers !== null && answers.passengers !== undefined && <div style={{ fontSize: '11px', color: '#555' }}>People in car: <strong style={{ fontWeight: '500' }}>{answers.passengers}</strong></div>}
+                                  {answers.whatsapp !== null && answers.whatsapp !== undefined && <div style={{ fontSize: '11px', color: '#555' }}>WhatsApp group: <strong style={{ fontWeight: '500' }}>{answers.whatsapp ? 'Yes' : 'No'}</strong></div>}
+                                </div>
+                              )}
+                              <div style={{ fontSize: '10px', color: '#bbb' }}>
+                                Invited {new Date(rsvp.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                {isConfirmed && ` · Confirmed ${new Date(rsvp.confirmed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                              </div>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  )}
+
                   {/* Admin Notes */}
                   {editingContact !== c.contact_id && (
                     <AppAdminNotes key={c.id} appId={c.id} initialNotes={c.admin_notes} onSaved={notes => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, admin_notes: notes } : x))} />

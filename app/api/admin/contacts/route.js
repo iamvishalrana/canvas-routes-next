@@ -24,18 +24,32 @@ export async function GET(request) {
   if (appsErr) return Response.json({ error: appsErr.message }, { status: 500 })
 
   const appMap = Object.fromEntries((applications || []).map(a => [a.id, a]))
-  const merged = contacts.map(c => ({
+
+  const [{ data: members }, { data: rsvpTokens }] = await Promise.all([
+    supabase.from('members').select('email'),
+    supabase.from('rsvp_tokens')
+      .select('application_id, event_name, confirmed_at, answers, expires_at, created_at')
+      .in('application_id', appIds)
+      .order('created_at', { ascending: false }),
+  ])
+
+  const rsvpByApp = {}
+  for (const t of (rsvpTokens || [])) {
+    if (!rsvpByApp[t.application_id]) rsvpByApp[t.application_id] = []
+    rsvpByApp[t.application_id].push(t)
+  }
+
+  const memberEmails = new Set((members || []).map(m => m.email?.toLowerCase()))
+  const result = contacts.map(c => ({
     ...(appMap[c.application_id] || {}),
     contact_id: c.id,
     application_id: c.application_id,
     contact_created_at: c.created_at,
     notes: c.notes || null,
+    is_invited: memberEmails.has(((appMap[c.application_id] || {}).email || '').toLowerCase()),
+    rsvp_history: rsvpByApp[c.application_id] || [],
   }))
-
-  const { data: members } = await supabase.from('members').select('email')
-  const memberEmails = new Set((members || []).map(m => m.email?.toLowerCase()))
-  const withInvited = merged.map(c => ({ ...c, is_invited: memberEmails.has((c.email || '').toLowerCase()) }))
-  return Response.json(withInvited)
+  return Response.json(result)
 }
 
 export async function POST(request) {
