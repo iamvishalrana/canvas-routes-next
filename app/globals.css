@@ -8,9 +8,9 @@
 }
 @keyframes card-press-spring {
   0%   { transform: scale(1); }
-  18%  { transform: scale(0.963); }
-  55%  { transform: scale(1.024); }
-  78%  { transform: scale(0.996); }
+  18%  { transform: scale(0.965); }
+  55%  { transform: scale(1.016); }
+  78%  { transform: scale(0.998); }
   100% { transform: scale(1); }
 }
 @keyframes faq-exhaust {

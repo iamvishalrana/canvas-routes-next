@@ -56,15 +56,15 @@ export default async function CardPage() {
     }}>
 
       {/* Back link */}
-      <div style={{ width: '100%', maxWidth: '380px', marginBottom: '1.25rem' }}>
+      <div style={{ width: '100%', maxWidth: '396px', padding: '0 8px', marginBottom: '1.25rem' }}>
         <Link href="/members/dashboard" style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(139,109,71,0.65)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           Dashboard
         </Link>
       </div>
 
-      {/* The card */}
-      <div style={{ width: '100%', maxWidth: '380px' }}>
+      {/* The card — padding gives the scale/tilt animation room without clipping */}
+      <div style={{ width: '100%', maxWidth: '396px', padding: '0 8px', overflow: 'visible' }}>
       <CardInteractive>
       <div style={{
         width: '100%',
