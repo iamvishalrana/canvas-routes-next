@@ -66,7 +66,7 @@ export default function PromoCodesClient() {
       .finally(() => setLoading(false))
   }, [])
   useEffect(() => { load() }, [load])
-  useRealtimeSync('promo_codes', load)
+  // no realtime table for promo codes
 
   const activeCodes    = codes.filter(c => c.active).length
   const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)
