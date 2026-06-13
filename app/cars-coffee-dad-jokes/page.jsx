@@ -369,7 +369,7 @@ export default function CCDPage() {
                   onFocus={() => setFocused('more')} onBlur={() => setFocused(null)}
                   maxLength={500}
                   rows={3}
-                  placeholder="Any dad jokes ready? Tell us what you're bringing, who you're coming with, or anything else we should know."
+                  placeholder="Anything else you'd like us to know."
                   style={{ ...base, resize:'vertical', lineHeight:1.65, ...inp(focused==='more', !!form.more, false) }}
                 />
               </div>
