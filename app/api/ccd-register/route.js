@@ -113,8 +113,8 @@ export async function POST(request) {
   const normalEmail = email.toLowerCase().trim()
   const firstName = name.trim().split(' ')[0]
 
-  // Save to DB — upsert so duplicate emails update rather than error
-  try {
+  // Save to DB — skip silently if Supabase env vars are absent (local dev without .env.local)
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) try {
     const supabase = createAdminClient()
     const { data: existing } = await supabase
       .from('applications')
