@@ -18,7 +18,10 @@ export function useRealtimeSync(tables, onRefresh) {
           .on('postgres_changes', { event: '*', schema: 'public', table }, () => {
             cbRef.current()
           })
-          .subscribe()
+          .subscribe((status, err) => {
+            // Swallow connection errors (e.g. Safari SecurityError) — page works without realtime
+            if (err) { /* silent degradation */ }
+          })
         channels.push(ch)
       })
     } catch {
