@@ -361,7 +361,7 @@ export default function CCDPage() {
               {/* Tell us about yourself */}
               <div>
                 <label htmlFor="ccd-more" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
-                  Tell us about yourself <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span>
+                  Tell us more <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span>
                 </label>
                 <textarea
                   id="ccd-more"
@@ -369,7 +369,7 @@ export default function CCDPage() {
                   onFocus={() => setFocused('more')} onBlur={() => setFocused(null)}
                   maxLength={500}
                   rows={3}
-                  placeholder="Your car, what you drive, why you want to come — anything you'd like us to know."
+                  placeholder="Any dad jokes ready? Tell us what you're bringing, who you're coming with, or anything else we should know."
                   style={{ ...base, resize:'vertical', lineHeight:1.65, ...inp(focused==='more', !!form.more, false) }}
                 />
               </div>
