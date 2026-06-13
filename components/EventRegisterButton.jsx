@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
@@ -82,6 +83,7 @@ function PayForm({ event, onSuccess, onClose }) {
 }
 
 export default function EventRegisterButton({ event, isRegistered, memberTier, compact = false, onRegistrationComplete }) {
+  const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
   const [clientSecret, setClientSecret] = useState(null)
   const [loadingPI, setLoadingPI] = useState(false)
@@ -160,6 +162,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         if (!res.ok) { setRegError(data.error || 'Registration failed.'); return }
         setDone(true)
         onRegistrationComplete?.()
+        router.refresh()
       } catch {
         setRegError('Network error — please try again.')
       } finally {
@@ -213,13 +216,15 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
           onClick={e => { if (e.target === e.currentTarget) setModalOpen(false) }}
           style={{
             position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1rem',
+            overflowY: 'auto', WebkitOverflowScrolling: 'touch',
           }}
         >
           <div style={{
             background: '#fff', maxWidth: '480px', width: '100%',
             padding: '2.25rem 2rem 2rem',
             boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            margin: 'auto',
           }}>
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter)', marginBottom: '0.4rem' }}>
@@ -241,7 +246,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
             <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
               <PayForm
                 event={event}
-                onSuccess={() => { setModalOpen(false); setClientSecret(null); setDone(true); onRegistrationComplete?.() }}
+                onSuccess={() => { setModalOpen(false); setClientSecret(null); setDone(true); onRegistrationComplete?.(); router.refresh() }}
                 onClose={() => { setModalOpen(false); setClientSecret(null) }}
               />
             </Elements>

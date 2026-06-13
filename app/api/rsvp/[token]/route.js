@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
+import { checkRateLimit } from '../../../../lib/rateLimit'
 
 async function getEventType(supabase, eventName) {
   const trimmed = eventName.trim()
@@ -12,6 +13,9 @@ async function getEventType(supabase, eventName) {
 }
 
 export async function GET(request, { params }) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim()
+  if (ip && await checkRateLimit(ip, 60, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
+
   const { token } = await params
   if (!token) return Response.json({ error: 'Invalid link.' }, { status: 400 })
 
@@ -42,6 +46,9 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim()
+  if (ip && await checkRateLimit(ip, 20, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
+
   const { token } = await params
   if (!token) return Response.json({ error: 'Invalid link.' }, { status: 400 })
 
@@ -91,12 +98,15 @@ export async function POST(request, { params }) {
   // Update applications.registrations to mark confirmed
   const { data: app } = await supabase.from('applications').select('registrations').eq('id', tokenRow.application_id).single()
   if (app?.registrations) {
+    const evBase = (s) => s?.trim().toLowerCase().split(/\s[—–]\s/)[0].trim() || ''
+    const tokenBase = evBase(tokenRow.event_name)
     const updated = app.registrations.map(r =>
-      r.event?.trim().toLowerCase() === tokenRow.event_name?.trim().toLowerCase()
+      evBase(r.event) === tokenBase
         ? { ...r, rsvp_confirmed: true, rsvp_confirmed_at: new Date().toISOString() }
         : r
     )
-    await supabase.from('applications').update({ registrations: updated }).eq('id', tokenRow.application_id)
+    const { error: regUpdateErr } = await supabase.from('applications').update({ registrations: updated }).eq('id', tokenRow.application_id)
+    if (regUpdateErr) captureException(regUpdateErr, { context: 'rsvp-confirm-reg-update', token })
   }
 
   // Notify admin

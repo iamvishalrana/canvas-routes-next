@@ -72,7 +72,7 @@ export async function POST(request) {
 
       case 'payment_intent.succeeded': {
         const pi       = event.data.object
-        const { type, email, name, eventName, event_id, member_id } = pi.metadata
+        const { type, email, name, event_name: eventName, event_id, member_id } = pi.metadata
         const amountPaid = pi.amount_received  // cents
         const normalEmail = email?.toLowerCase().trim()
 

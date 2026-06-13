@@ -321,7 +321,12 @@ export default function EventsClient() {
           const base = s => s.split(/\s[—–]\s/)[0].trim()
           return base(norm) === base(eventName)
         }))
-        .map(c => ({ name: c.name, email: c.email, type: 'Contact', status: 'legacy' }))
+        .map(c => {
+          // Find the specific registration entry for this event to surface its registered_at
+          const base = s => normalizeEventName(s).split(/\s[—–]\s/)[0].trim()
+          const reg = (c.registrations || []).find(r => base(r.event) === base(eventName))
+          return { name: c.name || '—', email: c.email || '—', type: 'Public', status: 'registered', registeredAt: reg?.registered_at || null }
+        })
       const seen = new Set()
       const combined = [...newRegs, ...contactRegs].filter(r => {
         const k = (r.email || r.name || '').toLowerCase()
@@ -628,17 +633,17 @@ export default function EventsClient() {
                                       <div style={{ fontSize: '12px', color: '#333', fontWeight: '500' }}>{r.name || '—'}</div>
                                       <div style={{ fontSize: '11px', color: '#888' }}>{r.email || '—'}</div>
                                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
-                                        <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535' }}>{r.type}</span>
-                                        {r.status && r.status !== 'legacy' && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888' }}>{r.status}</span>}
+                                        <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
+                                        {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888' }}>{r.status}</span>}
                                       </div>
                                     </div>
                                   ) : (
                                     <>
                                       <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
                                       <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
-                                      <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535' }}>{r.type}</div>
-                                      <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free') ? '#3B6B2F' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status || '—'}</div>
-                                      <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : '—'}</div>
+                                      <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
+                                      <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'registered') ? '#3B6B2F' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status || '—'}</div>
+                                      <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</div>
                                     </>
                                   )}
                                 </div>
