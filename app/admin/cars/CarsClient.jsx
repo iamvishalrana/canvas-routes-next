@@ -26,7 +26,7 @@ export default function CarsClient() {
       .catch(() => setLoading(false))
   }, [])
   useEffect(() => { load() }, [load])
-  useRealtimeSync('member', load)
+  useRealtimeSync('members', load)
 
   function startEdit(m, carIndex, car) {
     setEditing({ memberId: m.id, carIndex })
