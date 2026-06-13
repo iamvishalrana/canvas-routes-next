@@ -253,7 +253,7 @@ export default function BroadcastsClient() {
   }, [])
 
   useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
-  useRealtimeSync('broadcats', loadHistory)
+  useRealtimeSync('broadcasts', loadHistory)
 
   useEffect(() => {
     if (audience === 'specific_emails') { setRecipientCount(null); return }
