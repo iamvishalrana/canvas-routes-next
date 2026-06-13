@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import CardInteractive from './CardInteractive'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Member Card | Canvas Routes' } }
@@ -66,9 +67,10 @@ export default async function CardPage() {
       </div>
 
       {/* The card */}
+      <div style={{ width: '100%', maxWidth: '380px' }}>
+      <CardInteractive>
       <div style={{
         width: '100%',
-        maxWidth: '380px',
         background: 'linear-gradient(160deg, #162618 0%, #0F1E14 60%)',
         border: '0.5px solid rgba(197,168,130,0.25)',
         borderRadius: '16px',
@@ -87,7 +89,7 @@ export default async function CardPage() {
         {/* Logo + season */}
         <div style={{ padding: 'clamp(1.25rem, 4vw, 1.5rem) clamp(1.25rem, 4vw, 1.75rem) 1.25rem', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '72px', height: 'auto', opacity: 0.85 }} />
+            <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '96px', height: 'auto', opacity: 0.9 }} />
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.15rem' }}>Season</div>
               <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>2026</div>
@@ -180,6 +182,8 @@ export default async function CardPage() {
             </div>
           </div>
         </div>
+      </div>
+      </CardInteractive>
       </div>
 
       {/* Home screen hint */}
