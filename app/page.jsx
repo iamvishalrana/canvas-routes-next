@@ -92,7 +92,6 @@ export default function Home() {
   const [showEventsPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
-  const [showMembershipPopup, setShowMembershipPopup] = useState(false)
   const [showCCDPopup, setShowCCDPopup] = useState(false)
   const [queryForm, setQueryForm] = useState({ name: '', email: '', message: '' })
   const [queryStatus, setQueryStatus] = useState(null)
@@ -111,19 +110,10 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const LAUNCH = new Date('2026-06-10T23:00:00Z') // 7 PM EDT June 10
-    const check = () => {
-      if (new Date() >= LAUNCH) {
-        setMembershipLive(true)
-        if (!localStorage.getItem('cr_membership_popup_v1')) setShowMembershipPopup(true)
-        return true
-      }
-      return false
-    }
-    if (!check()) {
-      const t = setInterval(() => { if (check()) clearInterval(t) }, 15000)
-      return () => clearInterval(t)
-    }
+    const LAUNCH = new Date('2026-06-10T23:00:00Z')
+    if (new Date() >= LAUNCH) { setMembershipLive(true); return }
+    const t = setInterval(() => { if (new Date() >= LAUNCH) { setMembershipLive(true); clearInterval(t) } }, 15000)
+    return () => clearInterval(t)
   }, [])
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
   const refSource = useRef('')
@@ -808,34 +798,6 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* MEMBERSHIP LAUNCH POPUP */}
-      {showMembershipPopup && (
-        <div onClick={e => { if (e.target === e.currentTarget) { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') } }} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,30,20,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-          <div style={{ background: '#F5F1EC', maxWidth: '440px', width: '100%', padding: '2.75rem 2.25rem 2.25rem', position: 'relative', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.3)' }}>
-            <button onClick={() => { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') }} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', lineHeight: 1, padding: '4px' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-            <div style={{ width: '28px', height: '1px', background: '#c5a882', margin: '0 auto 1.75rem' }} />
-            <div style={{ fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '1rem' }}>Canvas Routes — Season 2026</div>
-            <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2rem, 6vw, 2.6rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, letterSpacing: '-0.01em', marginBottom: '0.5rem' }}>
-              Memberships<br />Are Now Open.
-            </div>
-            <div style={{ width: '28px', height: '1px', background: '#c5a882', margin: '1.25rem auto' }} />
-            <p style={{ fontSize: '13px', color: '#666', lineHeight: 1.85, marginBottom: '2rem', fontFamily: 'var(--font-inter), sans-serif', maxWidth: '320px', margin: '0 auto 2rem' }}>
-              Join the Canvas Routes community. Curated routes, invite-only events, and partner perks — built for drivers who love the road.
-            </p>
-            <Link href="/membership" onClick={() => { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') }} style={{ display: 'inline-block', background: '#0F1E14', color: '#F5F1EC', padding: '1rem 2.75rem', fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-              Apply Now
-            </Link>
-            <div style={{ marginTop: '1.25rem' }}>
-              <button onClick={() => { setShowMembershipPopup(false); localStorage.setItem('cr_membership_popup_v1', '1') }} style={{ background: 'none', border: 'none', fontSize: '10px', color: '#bbb', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif' }}>
-                Maybe later
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* CARS, COFFEE & DAD JOKES POPUP */}
       {showCCDPopup && (
         <div
@@ -852,13 +814,11 @@ export default function Home() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             {/* Poster image */}
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/CCD.png"
               alt="Cars, Coffee & Dad Jokes — Father's Day Weekend Special, June 20 at Cafe Napoleon"
-              width={460}
-              height={460}
               style={{ display: 'block', width: '100%', height: 'auto' }}
-              priority
             />
             {/* CTA bar */}
             <div style={{ background: '#0F1E14', padding: '1.1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
