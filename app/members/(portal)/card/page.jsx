@@ -8,7 +8,7 @@ import CardInteractive from './CardInteractive'
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Member Card | Canvas Routes' } }
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com').replace(/\/$/, '')
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com').replace(/\/+$/, '')
 
 export default async function CardPage() {
   const supabase = await createClient()
@@ -35,8 +35,9 @@ export default async function CardPage() {
   const tierLabel = member.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'
   const status = member.membership_status || 'pending'
   const isActive = status === 'active'
-  const memberNumber = member.membership_number ? String(member.membership_number).padStart(3, '0') : null
-  const joinYear = member.created_at ? new Date(member.created_at).getFullYear() : 2026
+  const memberNumber = member.membership_number != null ? String(member.membership_number).padStart(3, '0') : null
+  const rawYear = member.created_at ? new Date(member.created_at).getFullYear() : NaN
+  const joinYear = Number.isFinite(rawYear) ? rawYear : 2026
   const verifyUrl = `${SITE_URL}/verify/${member.id}`
 
   const carYear = member.car_year?.trim() || null
@@ -47,15 +48,11 @@ export default async function CardPage() {
 
   return (
     <div style={{
-      minHeight: '100dvh',
-      background: '#F5F1EC',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      padding: 'clamp(1.25rem, 5vw, 2rem) clamp(0.75rem, 4vw, 1rem)',
+      padding: '0 clamp(0.75rem, 4vw, 1rem) 2rem',
       fontFamily: 'var(--font-inter),sans-serif',
-      boxSizing: 'border-box',
     }}>
 
       {/* Back link */}
@@ -92,7 +89,7 @@ export default async function CardPage() {
             <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.15rem' }}>Season</div>
             <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>2026</div>
           </div>
-          <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
+          <Image src="/white-outline.png" alt="Canvas Routes" width={162} height={108} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
         </div>
 
         {/* Member info — tight gap below logo, no divider between them */}
@@ -102,7 +99,7 @@ export default async function CardPage() {
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.3rem' }}>Member</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem, 6vw, 2rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '0.55rem' }}>
-              {member.name || 'Canvas Routes Member'}
+              {member.name?.trim() || 'Canvas Routes Member'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <span style={{
@@ -161,11 +158,12 @@ export default async function CardPage() {
           <div style={{ flexShrink: 0, background: '#F5F1EC', borderRadius: '6px', padding: '7px', lineHeight: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0F1E14&bgcolor=F5F1EC&qzone=2&data=${encodeURIComponent(verifyUrl)}`}
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0F1E14&bgcolor=F5F1EC&qzone=2&data=${encodeURIComponent(verifyUrl)}`}
               alt="Verification QR"
               width={96}
               height={96}
-              style={{ display: 'block', imageRendering: 'pixelated' }}
+              loading="eager"
+              style={{ display: 'block' }}
             />
           </div>
           <div style={{ minWidth: 0 }}>
@@ -182,7 +180,7 @@ export default async function CardPage() {
       </div>
 
       {/* Home screen hint */}
-      <p style={{ margin: '1.25rem auto 0', fontSize: '11px', color: 'rgba(0,0,0,0.3)', textAlign: 'center', maxWidth: '260px', lineHeight: '1.6' }}>
+      <p style={{ margin: '1.25rem 0 0', fontSize: '11px', color: 'rgba(0,0,0,0.3)', textAlign: 'center', maxWidth: '260px', lineHeight: '1.6' }}>
         Add this page to your home screen for quick access. On iPhone, tap Share → Add to Home Screen.
       </p>
     </div>

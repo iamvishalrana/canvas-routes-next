@@ -3,8 +3,8 @@ import { useRef, useState, useEffect } from 'react'
 
 export default function CardInteractive({ children }) {
   const tiltRef   = useRef(null)
-  const bounceRef = useRef(null)          // direct DOM control — no React state
-  const bounceTimer = useRef(null)
+  const bounceRef = useRef(null)
+  const bounceTimer  = useRef(null)
   const shimmerTimer = useRef(null)
   const [tilt, setTilt]       = useState({ x: 0, y: 0 })
   const [gloss, setGloss]     = useState({ x: 50, y: 50 })
@@ -12,14 +12,25 @@ export default function CardInteractive({ children }) {
   const [shimmer, setShimmer] = useState(false)
   const touchStartRef = useRef(null)
 
-  // ── Shimmer once on mount ─────────────────────────────
+  // Shimmer once on mount
   useEffect(() => {
+    let cancelled = false
     const t = setTimeout(() => {
+      if (cancelled) return
       setShimmer(true)
-      shimmerTimer.current = setTimeout(() => setShimmer(false), 900)
+      shimmerTimer.current = setTimeout(() => {
+        if (!cancelled) setShimmer(false)
+      }, 900)
     }, 550)
-    return () => { clearTimeout(t); clearTimeout(shimmerTimer.current) }
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+      clearTimeout(shimmerTimer.current)
+    }
   }, [])
+
+  // Clean up bounce timer on unmount
+  useEffect(() => () => clearTimeout(bounceTimer.current), [])
 
   function getCoords(clientX, clientY) {
     const el = tiltRef.current
@@ -32,20 +43,20 @@ export default function CardInteractive({ children }) {
     return { px, py, tx, ty }
   }
 
-  // Restart CSS animation via direct DOM manipulation — guaranteed, no batching issues
+  // Direct DOM animation restart — no React batching issues
   function triggerBounce() {
     const el = bounceRef.current
     if (!el) return
     clearTimeout(bounceTimer.current)
     el.style.animation = 'none'
-    void el.offsetHeight                  // force reflow so browser clears the animation
+    void el.offsetHeight // force reflow
     el.style.animation = 'card-press-spring 0.58s cubic-bezier(0.34, 1.52, 0.64, 1) forwards'
     bounceTimer.current = setTimeout(() => {
       if (bounceRef.current) bounceRef.current.style.animation = 'none'
     }, 600)
   }
 
-  // ── Mouse ──────────────────────────────────────────────
+  // Mouse
   function onMouseMove(e) {
     const { px, py, tx, ty } = getCoords(e.clientX, e.clientY)
     setTilt({ x: tx, y: ty })
@@ -55,7 +66,7 @@ export default function CardInteractive({ children }) {
   function onMouseLeave() { setGlossOn(false); setTilt({ x: 0, y: 0 }) }
   function onMouseUp()    { triggerBounce() }
 
-  // ── Touch ──────────────────────────────────────────────
+  // Touch
   function onTouchStart(e) {
     const t = e.touches[0]
     touchStartRef.current = { x: t.clientX, y: t.clientY }
@@ -86,25 +97,9 @@ export default function CardInteractive({ children }) {
 
   return (
     <>
-      <style>{`
-        @keyframes shimmer-card {
-          0%   { left: -75%; opacity: 0; }
-          12%  { opacity: 1; }
-          88%  { opacity: 1; }
-          100% { left: 145%; opacity: 0; }
-        }
-        @keyframes card-press-spring {
-          0%   { transform: scale(1); }
-          18%  { transform: scale(0.963); }
-          55%  { transform: scale(1.024); }
-          78%  { transform: scale(0.996); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
-
-      {/* Bounce wrapper — driven by direct DOM ref, never stutters */}
-      <div ref={bounceRef} style={{ width: '100%', willChange: 'transform' }}>
-        {/* Tilt wrapper */}
+      {/* Bounce wrapper */}
+      <div ref={bounceRef} style={{ width: '100%' }}>
+        {/* Tilt wrapper — transformStyle: flat (not preserve-3d) fixes Safari overflow:hidden clipping */}
         <div
           ref={tiltRef}
           onMouseMove={onMouseMove}
@@ -119,7 +114,7 @@ export default function CardInteractive({ children }) {
             position: 'relative',
             transform: `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
             transition: tiltTrans,
-            transformStyle: 'preserve-3d',
+            transformStyle: 'flat',
             userSelect: 'none',
             WebkitUserSelect: 'none',
             cursor: 'default',
@@ -128,7 +123,7 @@ export default function CardInteractive({ children }) {
         >
           {children}
 
-          {/* Gloss */}
+          {/* Gloss — follows pointer */}
           <div style={{
             position: 'absolute', inset: 0, borderRadius: '16px',
             background: glossOn

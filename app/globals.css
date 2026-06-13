@@ -1,4 +1,18 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+@keyframes shimmer-card {
+  0%   { left: -75%; opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { left: 145%; opacity: 0; }
+}
+@keyframes card-press-spring {
+  0%   { transform: scale(1); }
+  18%  { transform: scale(0.963); }
+  55%  { transform: scale(1.024); }
+  78%  { transform: scale(0.996); }
+  100% { transform: scale(1); }
+}
 @keyframes faq-exhaust {
   0%   { opacity: 0.5; transform: translate(0px,0px)  scale(1);   }
   100% { opacity: 0;   transform: translate(-8px,0px) scale(2.4); }
