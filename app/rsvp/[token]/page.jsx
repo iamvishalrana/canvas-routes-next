@@ -137,6 +137,19 @@ export default function RsvpPage() {
             <a href="https://www.instagram.com/canvasroutes" style={{ display: 'inline-block', padding: '0.85rem 2rem', border: '1px solid rgba(197,168,130,0.4)', color: '#c5a882', textDecoration: 'none', fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }}>
               Follow @canvasroutes →
             </a>
+
+            <div style={{ marginTop: '3rem', paddingTop: '2.5rem', borderTop: '0.5px solid rgba(197,168,130,0.12)' }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>Canvas Routes Membership</div>
+              <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.75rem', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.85rem', lineHeight: 1.25 }}>
+                Make this a regular thing.
+              </h2>
+              <p style={{ color: 'rgba(245,241,236,0.5)', fontSize: '13px', lineHeight: '1.85', marginBottom: '1.75rem' }}>
+                Canvas Routes membership gives you early access to events, exclusive road trips, and a community of people who take their cars seriously. Apply once — we review every member personally.
+              </p>
+              <a href="/membership" style={{ display: 'inline-block', padding: '0.85rem 2rem', background: '#c5a882', color: '#0F1E14', textDecoration: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Apply for Membership →
+              </a>
+            </div>
           </>}
 
           {state === 'ready' && <>
