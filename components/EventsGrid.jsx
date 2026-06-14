@@ -88,6 +88,7 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
 
 function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
   const rawDate = ev.date_display || ev.date || ''
+  const [photoFailed, setPhotoFailed] = useState(false)
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -114,18 +115,16 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
           </button>
         </div>
 
-        {/* Photo — wrapper div handles the overlap behind the sticky bar.
-            Padding on <img> is unreliable across browsers; use overflow:hidden
-            on the container instead. Image starts invisible so the browser's
-            broken-image icon never flashes; onLoad reveals it, onError hides the wrapper. */}
-        {ev.photo_url && (
+        {/* Photo — state-driven so onError works even when the browser fires it
+            synchronously from cache before the element is mounted in the DOM. */}
+        {ev.photo_url && !photoFailed && (
           <div style={{ marginTop: '-44px', height: '244px', overflow: 'hidden', flexShrink: 0 }}>
             <img
               src={ev.photo_url}
               alt=""
               style={{ width: '100%', height: '244px', objectFit: 'cover', objectPosition: 'center', display: 'block', opacity: 0, transition: 'opacity 0.2s' }}
               onLoad={e => { e.currentTarget.style.opacity = '1' }}
-              onError={e => { e.currentTarget.parentElement.style.display = 'none' }}
+              onError={() => setPhotoFailed(true)}
             />
           </div>
         )}
