@@ -102,6 +102,47 @@ function TabBar({ tabs, active, onChange }) {
   )
 }
 
+// ── Field info tooltips ───────────────────────────────────────────────────────
+const FIELD_INFO = {
+  name:                 'Shown on the event tile and popup on the homepage, and in the members events portal.',
+  date:                 'The actual event date in YYYY-MM-DD format. Used for sorting, calendar invites, and auto-formatting the date when no Date Display is set.',
+  type:                 'Categorises the event. Also controls which RSVP questions members see on the confirm-your-spot page — Road Trip shows dietary / passengers / WhatsApp; all other types show guest / colour / mods / arrival time.',
+  date_display:         'Optional free-text override for how the date appears to members. Useful for multi-day events (e.g. "June 7–8, 2026") or month-only ranges. Leave blank to auto-format the Date field.',
+  location:             'Shown on the tile, popup, and used to generate an embedded map preview. Use the full venue name or address for the best map match.',
+  description:          'Short teaser shown on the event tile and in the popup. 1–2 sentences is ideal.',
+  registration_url:     'If set, the event tile shows a "Registration Open · Click to Register" link pointing here instead of the member portal. Use this for public events with their own page (e.g. /cars-coffee-dad-jokes).',
+  registration_opens:   'Date and time when members can start registering in the portal. Leave blank to disable member registration for this event entirely.',
+  registration_closes:  'Optional cut-off after which the register button shows "Registration Closed." Leave blank to keep registration open indefinitely once it opens.',
+  member_price:         'Price in CAD. Enter 0.00 for free events. Paid events trigger a Stripe checkout. Leave blank if this event uses an external registration URL instead.',
+  capacity:             'Maximum confirmed spots. Enforced atomically at the database level to prevent overbooking. Leave blank for unlimited.',
+  priority_window:      'Inner Circle members get exclusive early access until this date and time. After the window closes, all members can register. Leave blank to open to everyone at the same time.',
+  photo:                'Shown in the popup when a visitor clicks the event tile on the homepage. Landscape images work best — at least 800 px wide. JPEG, PNG, or WebP.',
+}
+
+function InfoTip({ field }) {
+  const [show, setShow] = useState(false)
+  const text = FIELD_INFO[field]
+  if (!text) return null
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: '4px', verticalAlign: 'middle' }}>
+      <button
+        type="button"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onFocus={() => setShow(true)}
+        onBlur={() => setShow(false)}
+        style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.22)', borderRadius: '50%', width: '13px', height: '13px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#aaa', fontSize: '8px', fontWeight: '700', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}
+      >i</button>
+      {show && (
+        <span style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', background: '#1a1a1a', color: '#f0f0f0', fontSize: '11px', lineHeight: '1.55', padding: '7px 11px', borderRadius: '4px', width: '230px', whiteSpace: 'normal', zIndex: 500, pointerEvents: 'none', fontFamily: 'var(--font-inter),sans-serif', boxShadow: '0 2px 12px rgba(0,0,0,0.3)', letterSpacing: '0' }}>
+          {text}
+          <span style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid #1a1a1a' }} />
+        </span>
+      )}
+    </span>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function EventsClient() {
@@ -555,24 +596,24 @@ export default function EventsClient() {
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>New Event</div>
         <form onSubmit={post}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            <div><L>Event Name *</L><input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Into the Laurentians" maxLength={200} /></div>
-            <div><L>Date * (YYYY-MM-DD)</L><input style={inp} type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></div>
-            <div><L>Type *</L><SelectWrap value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
+            <div><L>Event Name *<InfoTip field="name" /></L><input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Into the Laurentians" maxLength={200} /></div>
+            <div><L>Date *<InfoTip field="date" /></L><input style={inp} type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></div>
+            <div><L>Type *<InfoTip field="type" /></L><SelectWrap value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
           </div>
-          <div style={{ marginBottom: '0.75rem' }}><L>Date Display (optional — overrides date shown to members)</L><input style={inp} value={form.date_display} onChange={e => setForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
-          <div style={{ marginBottom: '0.75rem' }}><L>Location</L><input style={inp} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="Montreal → Mont-Tremblant" /></div>
-          <div style={{ marginBottom: '0.75rem' }}><L>Description</L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} /></div>
-          <div style={{ marginBottom: '1rem' }}><L>External Registration URL (optional)</L><input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
+          <div style={{ marginBottom: '0.75rem' }}><L>Date Display<InfoTip field="date_display" /></L><input style={inp} value={form.date_display} onChange={e => setForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
+          <div style={{ marginBottom: '0.75rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="Montreal → Mont-Tremblant" /></div>
+          <div style={{ marginBottom: '0.75rem' }}><L>Description<InfoTip field="description" /></L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} /></div>
+          <div style={{ marginBottom: '1rem' }}><L>External Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
           <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Member Registration</div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div><L>Registration Opens</L><input style={inp} type="datetime-local" value={form.registration_opens_at} onChange={e => setForm(p => ({ ...p, registration_opens_at: e.target.value }))} /></div>
-              <div><L>Registration Closes (optional)</L><input style={inp} type="datetime-local" value={form.registration_closes_at} onChange={e => setForm(p => ({ ...p, registration_closes_at: e.target.value }))} /></div>
+              <div><L>Registration Opens<InfoTip field="registration_opens" /></L><input style={inp} type="datetime-local" value={form.registration_opens_at} onChange={e => setForm(p => ({ ...p, registration_opens_at: e.target.value }))} /></div>
+              <div><L>Registration Closes<InfoTip field="registration_closes" /></L><input style={inp} type="datetime-local" value={form.registration_closes_at} onChange={e => setForm(p => ({ ...p, registration_closes_at: e.target.value }))} /></div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.75rem' }}>
-              <div><L>Member Price (CAD)</L><input style={inp} type="number" min="0" step="0.01" value={form.member_price ? (form.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : '' })) }} placeholder="0.00" /></div>
-              <div><L>Capacity (optional)</L><input style={inp} type="number" min="1" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} placeholder="Unlimited" /></div>
-              <div><L>IC Priority Window Ends</L><input style={inp} type="datetime-local" value={form.priority_window_end} onChange={e => setForm(p => ({ ...p, priority_window_end: e.target.value }))} /></div>
+              <div><L>Member Price (CAD)<InfoTip field="member_price" /></L><input style={inp} type="number" min="0" step="0.01" value={form.member_price ? (form.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : '' })) }} placeholder="0.00" /></div>
+              <div><L>Capacity<InfoTip field="capacity" /></L><input style={inp} type="number" min="1" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} placeholder="Unlimited" /></div>
+              <div><L>IC Priority Window Ends<InfoTip field="priority_window" /></L><input style={inp} type="datetime-local" value={form.priority_window_end} onChange={e => setForm(p => ({ ...p, priority_window_end: e.target.value }))} /></div>
             </div>
           </div>
           <PrimaryBtn type="submit" disabled={posting}>{posting ? 'Adding…' : 'Add Event'}</PrimaryBtn>
@@ -886,28 +927,28 @@ export default function EventsClient() {
                     {tab === 'settings' && (
                       <div style={{ padding: '1.5rem' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                          <div><L>Name</L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
-                          <div><L>Date (YYYY-MM-DD)</L><input style={inp} type="date" value={editForm.date || ''} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} /></div>
-                          <div><L>Type</L><SelectWrap value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
+                          <div><L>Name<InfoTip field="name" /></L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
+                          <div><L>Date<InfoTip field="date" /></L><input style={inp} type="date" value={editForm.date || ''} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} /></div>
+                          <div><L>Type<InfoTip field="type" /></L><SelectWrap value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
                         </div>
-                        <div style={{ marginBottom: '0.6rem' }}><L>Date Display (optional)</L><input style={inp} value={editForm.date_display || ''} onChange={e => setEditForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
-                        <div style={{ marginBottom: '0.6rem' }}><L>Location</L><input style={inp} value={editForm.location || ''} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} /></div>
-                        <div style={{ marginBottom: '0.6rem' }}><L>Description</L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
-                        <div style={{ marginBottom: '0.75rem' }}><L>Registration URL (external, optional)</L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
+                        <div style={{ marginBottom: '0.6rem' }}><L>Date Display<InfoTip field="date_display" /></L><input style={inp} value={editForm.date_display || ''} onChange={e => setEditForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
+                        <div style={{ marginBottom: '0.6rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={editForm.location || ''} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} /></div>
+                        <div style={{ marginBottom: '0.6rem' }}><L>Description<InfoTip field="description" /></L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
+                        <div style={{ marginBottom: '0.75rem' }}><L>External Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
                         <div style={{ paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.75rem' }}>
                           <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Member Registration</div>
                           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                            <div><L>Registration Opens</L><input style={inp} type="datetime-local" value={editForm.registration_opens_at ? editForm.registration_opens_at.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, registration_opens_at: e.target.value || null }))} /></div>
-                            <div><L>Registration Closes (optional)</L><input style={inp} type="datetime-local" value={editForm.registration_closes_at ? editForm.registration_closes_at.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, registration_closes_at: e.target.value || null }))} /></div>
+                            <div><L>Registration Opens<InfoTip field="registration_opens" /></L><input style={inp} type="datetime-local" value={editForm.registration_opens_at ? editForm.registration_opens_at.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, registration_opens_at: e.target.value || null }))} /></div>
+                            <div><L>Registration Closes<InfoTip field="registration_closes" /></L><input style={inp} type="datetime-local" value={editForm.registration_closes_at ? editForm.registration_closes_at.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, registration_closes_at: e.target.value || null }))} /></div>
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.6rem' }}>
-                            <div><L>Member Price (CAD)</L><input style={inp} type="number" min="0" step="0.01" value={editForm.member_price ? (editForm.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setEditForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : null })) }} placeholder="0.00" /></div>
-                            <div><L>Capacity</L><input style={inp} type="number" min="1" value={editForm.capacity || ''} onChange={e => setEditForm(p => ({ ...p, capacity: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Unlimited" /></div>
-                            <div><L>IC Priority Window Ends</L><input style={inp} type="datetime-local" value={editForm.priority_window_end ? editForm.priority_window_end.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, priority_window_end: e.target.value || null }))} /></div>
+                            <div><L>Member Price (CAD)<InfoTip field="member_price" /></L><input style={inp} type="number" min="0" step="0.01" value={editForm.member_price ? (editForm.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setEditForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : null })) }} placeholder="0.00" /></div>
+                            <div><L>Capacity<InfoTip field="capacity" /></L><input style={inp} type="number" min="1" value={editForm.capacity || ''} onChange={e => setEditForm(p => ({ ...p, capacity: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Unlimited" /></div>
+                            <div><L>IC Priority Window Ends<InfoTip field="priority_window" /></L><input style={inp} type="datetime-local" value={editForm.priority_window_end ? editForm.priority_window_end.replace(' ', 'T').slice(0, 16) : ''} onChange={e => setEditForm(p => ({ ...p, priority_window_end: e.target.value || null }))} /></div>
                           </div>
                         </div>
                         <div style={{ paddingTop: '0.5rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '1rem' }}>
-                          <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Event Photo</div>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Event Photo<InfoTip field="photo" /></div>
                           {item.photo_url && (
                             <div style={{ marginBottom: '0.6rem', position: 'relative', display: 'inline-block' }}>
                               <img src={item.photo_url} alt="" style={{ width: '160px', height: '90px', objectFit: 'cover', display: 'block', border: '0.5px solid rgba(0,0,0,0.1)' }} />
