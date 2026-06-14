@@ -565,20 +565,26 @@ export default function EventsClient() {
         name: r.members?.name || r.name || '—', email: r.members?.email || r.email || '—',
         type: 'Member', status: r.stripe_payment_status, amount: r.amount_paid,
       }))
+      const evBase = s => normalizeEventName(s).split(/\s[—–]\s/)[0].trim()
       const contactRegs = (Array.isArray(contacts) ? contacts : [])
         .filter(c => (c.registrations || []).some(r => {
           const norm = normalizeEventName(r.event)
           if (norm === eventName) return true
-          // Strip trailing date (everything after " — " or " – ") so stored names like
-          // "Cars, Coffee & Dad Jokes — June 20, 2026" match event table name "Cars, Coffee & Dad Jokes"
-          const base = s => s.split(/\s[—–]\s/)[0].trim()
-          return base(norm) === base(eventName)
+          return evBase(norm) === evBase(eventName)
         }))
         .map(c => {
-          // Find the specific registration entry for this event to surface its registered_at
-          const base = s => normalizeEventName(s).split(/\s[—–]\s/)[0].trim()
-          const reg = (c.registrations || []).find(r => base(r.event) === base(eventName))
-          return { name: c.name || '—', email: c.email || '—', type: 'Public', status: 'registered', registeredAt: reg?.registered_at || null }
+          const reg = (c.registrations || []).find(r => evBase(r.event) === evBase(eventName))
+          const rsvpToken = (c.rsvp_history || []).find(t => evBase(t.event_name) === evBase(eventName))
+          const isConfirmed = !!(rsvpToken?.confirmed_at || reg?.rsvp_confirmed)
+          return {
+            name: c.name || '—',
+            email: c.email || '—',
+            type: 'Public',
+            status: isConfirmed ? 'confirmed' : 'registered',
+            registeredAt: reg?.registered_at || null,
+            rsvpAnswers: rsvpToken?.answers || null,
+            confirmedAt: rsvpToken?.confirmed_at || null,
+          }
         })
       const seen = new Set()
       const combined = [...newRegs, ...contactRegs].filter(r => {
@@ -938,7 +944,7 @@ export default function EventsClient() {
                                         <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
                                         <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
-                                        <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'registered') ? '#3B6B2F' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status || '—'}</div>
+                                        <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status || '—'}</div>
                                         <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                           {canSend && !result?.sent && (
@@ -967,6 +973,17 @@ export default function EventsClient() {
                                       </>
                                     )}
                                   </div>
+                                  {r.rsvpAnswers && (
+                                    <div style={{ padding: '0.4rem 0.85rem 0.6rem', background: '#fafaf9', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                                      {Object.entries(r.rsvpAnswers).filter(([, v]) => v != null && v !== '').map(([k, v]) => (
+                                        <span key={k} style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
+                                          <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>{k.replace(/_/g, ' ')}</span>
+                                          {' '}
+                                          <span style={{ color: '#333' }}>{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}</span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               )
                             })}
