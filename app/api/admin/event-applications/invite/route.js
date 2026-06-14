@@ -134,15 +134,22 @@ export async function POST(request) {
   }
   if (expiresAt <= now) expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
-  // Upsert token — one per application+event (replace if re-sending)
+  // Preserve confirmed_at and answers if already set — re-inviting must not un-confirm
+  const { data: existingToken } = await supabase
+    .from('rsvp_tokens')
+    .select('confirmed_at, answers')
+    .eq('application_id', applicationId)
+    .eq('event_name', eventName)
+    .maybeSingle()
+
   const { data: tokenRow, error: tokenErr } = await supabase
     .from('rsvp_tokens')
     .upsert({
       application_id: applicationId,
       event_name: eventName,
       expires_at: expiresAt.toISOString(),
-      confirmed_at: null,
-      answers: null,
+      confirmed_at: existingToken?.confirmed_at ?? null,
+      answers: existingToken?.answers ?? null,
       declined_at: null,
     }, { onConflict: 'application_id,event_name', ignoreDuplicates: false })
     .select('token')

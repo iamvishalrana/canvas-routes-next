@@ -109,14 +109,22 @@ export async function POST(request, { params }) {
   }
   if (expiresAt <= now) expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
+  // Preserve confirmed_at and answers if already set — re-sending must not un-confirm
+  const { data: existingToken } = await admin
+    .from('rsvp_tokens')
+    .select('confirmed_at, answers')
+    .eq('application_id', app.id)
+    .eq('event_name', ev.name)
+    .maybeSingle()
+
   const { data: tokenRow, error: tokenErr } = await admin
     .from('rsvp_tokens')
     .upsert({
       application_id: app.id,
       event_name: ev.name,
       expires_at: expiresAt.toISOString(),
-      confirmed_at: null,
-      answers: null,
+      confirmed_at: existingToken?.confirmed_at ?? null,
+      answers: existingToken?.answers ?? null,
       declined_at: null,
     }, { onConflict: 'application_id,event_name', ignoreDuplicates: false })
     .select('token')

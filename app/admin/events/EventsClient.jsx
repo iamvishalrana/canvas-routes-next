@@ -143,6 +143,8 @@ function InfoTip({ field }) {
   )
 }
 
+const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' }
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function EventsClient() {
@@ -151,7 +153,6 @@ export default function EventsClient() {
   const [isMobile, setIsMobile] = useState(false)
 
   // Create form
-  const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' }
   const [form, setForm] = useState(EMPTY_FORM)
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
@@ -414,6 +415,7 @@ export default function EventsClient() {
       setAddRegName(p => ({ ...p, [eventId]: '' }))
       setAddRegEmail(p => ({ ...p, [eventId]: '' }))
       setAddRegOpen(p => ({ ...p, [eventId]: false }))
+      setAddRegErr(p => ({ ...p, [eventId]: null }))
       // Force-reload the registrants panel (stays open, shows updated list)
       const item = items.find(i => i.id === eventId)
       if (item) toggleRegistrants(eventId, item.name, { forceReload: true })
@@ -519,7 +521,7 @@ export default function EventsClient() {
   }
 
   async function toggleRegistrants(eventId, eventName, { forceReload = false } = {}) {
-    if (!forceReload && showRegistrants === eventId) { setShowRegistrants(null); return }
+    if (!forceReload && showRegistrants === eventId) { setShowRegistrants(null); setConfirmEmailPending(null); return }
     setShowRegistrants(eventId)
     if (!forceReload && registrantsData[eventId]) return
     setLoadingRegistrants(true)
@@ -567,6 +569,7 @@ export default function EventsClient() {
     const key = `${app.id}-${ev.name}`
     setInviting(p => ({ ...p, [key]: true }))
     setInviteErr(p => ({ ...p, [key]: null }))
+    setInviteDone(p => ({ ...p, [key]: false }))
     try {
       const res = await fetch('/api/admin/event-applications/invite', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },

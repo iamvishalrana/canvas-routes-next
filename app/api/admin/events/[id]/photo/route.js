@@ -46,18 +46,16 @@ export async function POST(request, { params }) {
   const admin = createAdminClient()
   await admin.storage.createBucket('event-photos', { public: true }).catch(() => {})
 
-  // Delete the previous photo from storage before uploading the new one
+  // Read old photo path BEFORE uploading so we can delete it after success
   const { data: ev } = await admin.from('events').select('photo_url').eq('id', id).maybeSingle()
   const oldPath = storagePathFromUrl(ev?.photo_url)
-  if (oldPath) {
-    await admin.storage.from('event-photos').remove([oldPath]).catch(() => {})
-  }
 
   // Timestamp in filename busts CDN and browser caches on every upload
   const ts = Date.now()
   const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
   const path = `${id}-${ts}.${ext}`
 
+  // Upload new file first — if this fails the old photo is untouched
   const { error: uploadErr } = await admin.storage
     .from('event-photos')
     .upload(path, buffer, { contentType: file.type, upsert: false })
@@ -72,7 +70,14 @@ export async function POST(request, { params }) {
   const { error: updateErr } = await admin.from('events').update({ photo_url: publicUrl }).eq('id', id)
   if (updateErr) {
     captureException(updateErr, { context: 'admin-event-photo-db', eventId: id })
+    // New file is uploaded but DB not updated — clean up the orphan
+    await admin.storage.from('event-photos').remove([path]).catch(() => {})
     return Response.json({ error: 'Photo uploaded but could not be saved. Please try again.' }, { status: 500 })
+  }
+
+  // DB updated — now safe to delete the old file
+  if (oldPath) {
+    await admin.storage.from('event-photos').remove([oldPath]).catch(() => {})
   }
 
   return Response.json({ url: publicUrl })

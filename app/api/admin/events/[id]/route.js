@@ -30,7 +30,27 @@ export async function DELETE(request, { params }) {
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const supabase = createAdminClient()
+
+  // Fetch event data before deletion so we can clean up storage and tokens
+  const { data: ev } = await supabase.from('events').select('name, photo_url').eq('id', id).maybeSingle()
+
   const { error } = await supabase.from('events').delete().eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+
+  // Clean up storage photo (event_registrations cascades via FK; rsvp_tokens has no FK to events)
+  if (ev?.photo_url) {
+    try {
+      const u = new URL(ev.photo_url)
+      const match = u.pathname.match(/\/storage\/v1\/object\/public\/event-photos\/(.+)/)
+      const storagePath = match ? match[1].split('?')[0] : null
+      if (storagePath) await supabase.storage.from('event-photos').remove([storagePath]).catch(() => {})
+    } catch {}
+  }
+
+  // Delete orphaned rsvp_tokens (no FK cascade since rsvp_tokens has no event_id column)
+  if (ev?.name) {
+    await supabase.from('rsvp_tokens').delete().eq('event_name', ev.name).catch(() => {})
+  }
+
   return Response.json({ success: true })
 }
