@@ -463,7 +463,7 @@ export default function EventsClient() {
       const res = await fetch(`/api/admin/events/${eventId}/registrants/confirm-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: r.email, name: r.name }),
+        body: JSON.stringify({ email: r.email, name: r.name, isResend: !!r.inviteSent }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setConfirmEmailResult(p => ({ ...p, [key]: { error: d.error || 'Send failed.' } })); return }
@@ -584,6 +584,7 @@ export default function EventsClient() {
             registeredAt: reg?.registered_at || null,
             rsvpAnswers: rsvpToken?.answers || null,
             confirmedAt: rsvpToken?.confirmed_at || null,
+            inviteSent: !!rsvpToken,
           }
         })
       const seen = new Set()
@@ -922,10 +923,10 @@ export default function EventsClient() {
                                           <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                                             {canSend && !result?.sent && (
                                               isPending
-                                                ? <><span style={{ fontSize: '10px', color: '#555' }}>Send?</span>
+                                                ? <><span style={{ fontSize: '10px', color: '#555' }}>{r.inviteSent ? 'Resend?' : 'Send?'}</span>
                                                     <PrimaryBtn small disabled={sending} onClick={() => { setConfirmEmailPending(null); sendConfirmEmail(item.id, r) }}>{sending ? '…' : 'Yes'}</PrimaryBtn>
                                                     <GhostBtn small onClick={() => setConfirmEmailPending(null)}>No</GhostBtn></>
-                                                : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>Invite</GhostBtn>
+                                                : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>{r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                             )}
                                             {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
                                             {isDeletePending
@@ -954,7 +955,7 @@ export default function EventsClient() {
                                                   <PrimaryBtn small disabled={sending} onClick={() => { setConfirmEmailPending(null); sendConfirmEmail(item.id, r) }}>{sending ? '…' : 'Yes'}</PrimaryBtn>
                                                   <GhostBtn small onClick={() => setConfirmEmailPending(null)}>No</GhostBtn>
                                                 </div>
-                                              : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>Invite</GhostBtn>
+                                              : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>{r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                           )}
                                           {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
                                           {result?.error && <span style={{ fontSize: '10px', color: '#7B2032' }}>{result.error}</span>}

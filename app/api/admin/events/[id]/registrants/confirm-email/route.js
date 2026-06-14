@@ -10,7 +10,7 @@ export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const { email, name } = await request.json().catch(() => ({}))
+  const { email, name, isResend = false } = await request.json().catch(() => ({}))
 
   if (!email?.trim() || !name?.trim()) {
     return Response.json({ error: 'Email and name are required.' }, { status: 400 })
@@ -77,9 +77,11 @@ export async function POST(request, { params }) {
         from: 'Canvas Routes <jerry@canvasroutes.com>',
         to: email.trim(),
         reply_to: 'jerry@canvasroutes.com',
-        subject: `You're invited — ${ev.name}`,
-        html: buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip),
-        text: `Hey ${firstName},\n\nYou're invited to ${ev.name}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\nSee you there,\nJerry`,
+        subject: isResend ? `Reminder — your spot at ${ev.name}` : `You're invited — ${ev.name}`,
+        html: buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip, isResend),
+        text: isResend
+          ? `Hey ${firstName},\n\nJust a reminder — your invitation to ${ev.name} is still open. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\nSee you there,\nJerry`
+          : `Hey ${firstName},\n\nYou're invited to ${ev.name}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\nSee you there,\nJerry`,
       }),
     })
     if (!res.ok) {
