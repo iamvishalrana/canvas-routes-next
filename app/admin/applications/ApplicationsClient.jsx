@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
-  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel,
+  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
@@ -770,14 +770,7 @@ export default function ApplicationsClient() {
                               <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>N/A</span>
                             ) : isPast ? (
                               <>
-                                <button onClick={() => toggleAttended(a.id, eventName, true)}
-                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg?.attended === true ? '#3B6B2F' : '#888' }}>
-                                  ✓ Attended
-                                </button>
-                                <button onClick={() => toggleAttended(a.id, eventName, false)}
-                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: reg?.attended === false ? '#7B2032' : '#888' }}>
-                                  ✗ No-show
-                                </button>
+                                <AttendanceToggle value={reg?.attended ?? null} onChange={v => toggleAttended(a.id, eventName, v)} />
                               </>
                             ) : (
                               <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
@@ -847,7 +840,7 @@ export default function ApplicationsClient() {
                       {deleteAppConfirm === a.id && (
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete application from {a.name || a.email}?</span>
-                          <GhostBtn small onClick={() => deleteApp(a)}>Confirm</GhostBtn>
+                          <DangerBtn small onClick={() => deleteApp(a)}>Confirm Delete</DangerBtn>
                           <GhostBtn small onClick={() => { setDeleteAppConfirm(null); setDeleteAppError(p => ({ ...p, [a.id]: null })) }}>Cancel</GhostBtn>
                           {deleteAppError[a.id] && <Err msg={deleteAppError[a.id]} />}
                         </div>

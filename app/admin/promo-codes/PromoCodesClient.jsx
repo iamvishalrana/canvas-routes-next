@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
-import { inp, L, PrimaryBtn, DangerBtn, Err, Success } from '../_components/shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, Success } from '../_components/shared'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.5rem' }
@@ -43,6 +43,7 @@ export default function PromoCodesClient() {
   const [formOk, setFormOk]       = useState(null)
   const [deactivating, setDeactivating] = useState(null)
   const [deactivateErr, setDeactivateErr] = useState(null)
+  const [deactivateConfirm, setDeactivateConfirm] = useState(null)
   const [isMobile, setIsMobile]           = useState(false)
   const [editing, setEditing]           = useState(null)  // code id being edited
   const [editForm, setEditForm]         = useState({ maxRedemptions: '', expiresAt: '' })
@@ -118,8 +119,8 @@ export default function PromoCodesClient() {
     }
   }
 
-  async function handleDeactivate(id, code) {
-    if (!confirm(`Deactivate promo code "${code}"?`)) return
+  async function handleDeactivate(id) {
+    setDeactivateConfirm(null)
     setDeactivating(id)
     setDeactivateErr(null)
     try {
@@ -327,12 +328,12 @@ export default function PromoCodesClient() {
                   </div>
                   {editErr && <div style={{ fontSize: '11px', color: '#7B2032' }}>{editErr}</div>}
                   <div style={{ display: 'flex', gap: '0.35rem' }}>
-                    <button onClick={() => handleSaveEdit(c)} disabled={editSaving} style={{ padding: '0.35rem 0.8rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: editSaving ? 'wait' : 'pointer' }}>{editSaving ? 'Saving…' : 'Save'}</button>
-                    <button onClick={() => setEditing(null)} style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Cancel</button>
+                    <PrimaryBtn onClick={() => handleSaveEdit(c)} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save'}</PrimaryBtn>
+                    <GhostBtn small onClick={() => setEditing(null)}>Cancel</GhostBtn>
                   </div>
                 </div>
               ) : c.active ? (
-                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
                   <button
                     onClick={() => loadUsage(c.id)}
                     disabled={usageLoading === c.id}
@@ -340,10 +341,16 @@ export default function PromoCodesClient() {
                   >
                     {usageLoading === c.id ? '…' : 'Usage'}
                   </button>
-                  <button onClick={() => startEdit(c)} style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Edit</button>
-                  <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
-                    {deactivating === c.id ? 'Deactivating…' : 'Deactivate'}
-                  </DangerBtn>
+                  <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
+                  {deactivateConfirm === c.id ? (
+                    <>
+                      <span style={{ fontSize: '11px', color: '#7B2032' }}>Deactivate?</span>
+                      <DangerBtn small onClick={() => handleDeactivate(c.id)} disabled={deactivating === c.id}>{deactivating === c.id ? 'Deactivating…' : 'Confirm'}</DangerBtn>
+                      <GhostBtn small onClick={() => setDeactivateConfirm(null)}>Cancel</GhostBtn>
+                    </>
+                  ) : (
+                    <DangerBtn small onClick={() => setDeactivateConfirm(c.id)}>Deactivate</DangerBtn>
+                  )}
                 </div>
               ) : (
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
@@ -415,12 +422,12 @@ export default function PromoCodesClient() {
                         </div>
                         {editErr && <div style={{ fontSize: '11px', color: '#7B2032' }}>{editErr}</div>}
                         <div style={{ display: 'flex', gap: '0.35rem' }}>
-                          <button onClick={() => handleSaveEdit(c)} disabled={editSaving} style={{ padding: '0.3rem 0.7rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: editSaving ? 'wait' : 'pointer' }}>{editSaving ? '…' : 'Save'}</button>
-                          <button onClick={() => setEditing(null)} style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Cancel</button>
+                          <PrimaryBtn onClick={() => handleSaveEdit(c)} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save'}</PrimaryBtn>
+                          <GhostBtn small onClick={() => setEditing(null)}>Cancel</GhostBtn>
                         </div>
                       </div>
                     ) : c.active ? (
-                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => loadUsage(c.id)}
                           disabled={usageLoading === c.id}
@@ -428,10 +435,16 @@ export default function PromoCodesClient() {
                         >
                           {usageLoading === c.id ? '…' : 'Usage'}
                         </button>
-                        <button onClick={() => startEdit(c)} style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Edit</button>
-                        <DangerBtn small onClick={() => handleDeactivate(c.id, c.code)} disabled={deactivating === c.id}>
-                          {deactivating === c.id ? '…' : 'Deactivate'}
-                        </DangerBtn>
+                        <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
+                        {deactivateConfirm === c.id ? (
+                          <>
+                            <span style={{ fontSize: '11px', color: '#7B2032' }}>Deactivate?</span>
+                            <DangerBtn small onClick={() => handleDeactivate(c.id)} disabled={deactivating === c.id}>{deactivating === c.id ? 'Deactivating…' : 'Confirm'}</DangerBtn>
+                            <GhostBtn small onClick={() => setDeactivateConfirm(null)}>Cancel</GhostBtn>
+                          </>
+                        ) : (
+                          <DangerBtn small onClick={() => setDeactivateConfirm(c.id)}>Deactivate</DangerBtn>
+                        )}
                       </div>
                     ) : (
                       <button

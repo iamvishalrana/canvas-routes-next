@@ -6,7 +6,7 @@ import {
   CAR_MAKES, MONTHS, DOB_YEARS, CANONICAL_EVENTS,
   normalizeEventName, parseCarMakeModel,
   inp, sel, L, CopyBtn, AdminNotesPanel,
-  GhostBtn, PrimaryBtn, DangerBtn, Err,
+  GhostBtn, PrimaryBtn, DangerBtn, Err, AttendanceToggle,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
@@ -390,7 +390,7 @@ export default function ContactsClient() {
           {deleteSelectedConfirm ? (
             <>
               <span style={{ fontSize: '11px', color: '#7B2032' }}>Remove {selected.size} contact{selected.size > 1 ? 's' : ''}?</span>
-              <GhostBtn small onClick={deleteSelected}>Confirm</GhostBtn>
+              <DangerBtn small onClick={deleteSelected}>Confirm Delete</DangerBtn>
               <GhostBtn small onClick={() => setDeleteSelectedConfirm(false)}>Cancel</GhostBtn>
             </>
           ) : (
@@ -830,14 +830,7 @@ export default function ContactsClient() {
                               <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>N/A</span>
                             ) : isPast ? (
                               <>
-                                <button onClick={() => toggleAttended(c.contact_id, eventName, true)}
-                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === true ? 'rgba(59,107,47,0.1)' : 'transparent', color: reg?.attended === true ? '#3B6B2F' : '#888' }}>
-                                  ✓ Attended
-                                </button>
-                                <button onClick={() => toggleAttended(c.contact_id, eventName, false)}
-                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: reg?.attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: reg?.attended === false ? 'rgba(123,32,50,0.08)' : 'transparent', color: reg?.attended === false ? '#7B2032' : '#888' }}>
-                                  ✗ No-show
-                                </button>
+                                <AttendanceToggle value={reg?.attended ?? null} onChange={v => toggleAttended(c.contact_id, eventName, v)} />
                               </>
                             ) : (
                               <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
@@ -919,7 +912,7 @@ export default function ContactsClient() {
                       {removeContactConfirm === c.contact_id && (
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '11px', color: '#7B2032' }}>Remove this contact?</span>
-                          <GhostBtn small onClick={() => removeContact(c.contact_id)}>Confirm</GhostBtn>
+                          <DangerBtn small onClick={() => removeContact(c.contact_id)}>Confirm Remove</DangerBtn>
                           <GhostBtn small onClick={() => { setRemoveContactConfirm(null); setRemoveContactError(null) }}>Cancel</GhostBtn>
                           {removeContactError && <Err msg={removeContactError} />}
                         </div>

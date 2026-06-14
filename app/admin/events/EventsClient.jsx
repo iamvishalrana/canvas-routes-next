@@ -4,7 +4,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   EVENT_TYPES, MEMBER_ATTENDANCE_KEYS, normalizeEventName,
   parseCarMakeModel,
-  inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err,
+  inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch,
 } from '../_components/shared'
 
 // ── RSVP helpers (previously in EventApplicationsClient) ──────────────────────
@@ -128,6 +128,7 @@ export default function EventsClient() {
 
   // Registration toggle
   const [regToggleError, setRegToggleError] = useState({})
+  const [regToggling, setRegToggling] = useState({})
 
   // Reorder
   const [moving, setMoving] = useState(false)
@@ -301,16 +302,20 @@ export default function EventsClient() {
 
   async function setRegEnabled(id, value) {
     setRegToggleError(p => ({ ...p, [id]: null }))
-    const res = await fetch(`/api/admin/events/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registration_enabled: value }),
-    })
-    if (res.ok) {
-      setItems(prev => prev.map(ev => ev.id === id ? { ...ev, registration_enabled: value } : ev))
-    } else {
-      const d = await res.json().catch(() => ({}))
-      setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update registration.' }))
-    }
+    setRegToggling(p => ({ ...p, [id]: true }))
+    try {
+      const res = await fetch(`/api/admin/events/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_enabled: value }),
+      })
+      if (res.ok) {
+        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, registration_enabled: value } : ev))
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update registration.' }))
+      }
+    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
+    finally { setRegToggling(p => ({ ...p, [id]: false })) }
   }
 
   async function del(id) {
@@ -560,12 +565,17 @@ export default function EventsClient() {
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
                     </div>
-                    <button
-                      onClick={() => setRegEnabled(item.id, !item.registration_enabled)}
-                      style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-inter)', border: `0.5px solid ${item.registration_enabled ? 'rgba(59,107,47,0.35)' : 'rgba(0,0,0,0.15)'}`, color: item.registration_enabled ? '#3B6B2F' : '#888', background: item.registration_enabled ? 'rgba(59,107,47,0.05)' : 'transparent' }}
-                    >
-                      {item.registration_enabled ? 'Reg On' : 'Reg Off'}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ToggleSwitch
+                        checked={!!item.registration_enabled}
+                        onChange={v => setRegEnabled(item.id, v)}
+                        disabled={regToggling[item.id]}
+                        label="Registration enabled"
+                      />
+                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                        Reg
+                      </span>
+                    </div>
                     {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
                     <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name)}>
                       {showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`}

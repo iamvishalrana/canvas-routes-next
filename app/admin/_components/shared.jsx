@@ -104,6 +104,37 @@ export function DangerBtn({ onClick, small, disabled, children }) {
   )
 }
 
+export function ToggleSwitch({ checked, onChange, disabled, label }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      disabled={disabled}
+      style={{ position: 'relative', display: 'inline-block', width: '34px', height: '19px', background: checked ? '#0F1E14' : 'rgba(0,0,0,0.15)', border: 'none', borderRadius: '10px', cursor: disabled ? 'wait' : 'pointer', transition: 'background 0.18s', flexShrink: 0, padding: 0, verticalAlign: 'middle', opacity: disabled ? 0.55 : 1 }}
+    >
+      <span style={{ position: 'absolute', top: '2.5px', left: checked ? '17px' : '2.5px', width: '14px', height: '14px', background: '#fff', borderRadius: '50%', transition: 'left 0.15s', boxShadow: '0 1px 2px rgba(0,0,0,0.25)', display: 'block', pointerEvents: 'none' }} />
+    </button>
+  )
+}
+
+export function AttendanceToggle({ value, onChange, disabled }) {
+  const seg = (active, color, border, bg, label, newVal) => (
+    <button type="button" onClick={() => onChange(active ? null : newVal)} disabled={disabled}
+      style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: active ? `0.5px solid ${border}` : '0.5px solid rgba(0,0,0,0.14)', background: active ? bg : '#fff', color: active ? color : '#aaa', opacity: disabled ? 0.6 : 1 }}>
+      {label}
+    </button>
+  )
+  return (
+    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+      {seg(value === true,  '#3B6B2F', '#3B6B2F',             'rgba(59,107,47,0.1)',  '✓ Attended', true)}
+      {seg(value === false, '#7B2032', 'rgba(123,32,50,0.4)', 'rgba(123,32,50,0.08)', '✗ No-show',  false)}
+    </div>
+  )
+}
+
 export function Err({ msg }) {
   if (!msg) return null
   return <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.6rem' }}>{msg}</div>

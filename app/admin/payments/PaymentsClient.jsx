@@ -42,7 +42,7 @@ function Actions({ r, ctx }) {
     refunding, refundReason, refundErr, refundBusy,
     receiptConfirm, receiptBusy, receiptDone, receiptErr,
     doCapture, doCancel, doRefund, resendReceipt,
-    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm,
+    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm, setRefundErr,
   } = ctx
   const isPaid = ['paid', 'partially_refunded'].includes(r.stripe_payment_status)
   const isAuthorized = r.stripe_payment_status === 'authorized'
@@ -254,7 +254,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
     refunding, refundReason, refundErr, refundBusy,
     receiptConfirm, receiptBusy, receiptDone, receiptErr,
     doCapture, doCancel, doRefund, resendReceipt,
-    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm,
+    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm, setRefundErr,
   }
 
   return (

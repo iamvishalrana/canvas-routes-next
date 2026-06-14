@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 
 function buildAnnouncementEmail(title, content) {
@@ -116,6 +116,7 @@ export default function AnnouncementsClient() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [publishing, setPublishing] = useState(null)
+  const [publishError, setPublishError] = useState({})
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
   const [announcementSearch, setAnnouncementSearch] = useState('')
@@ -158,12 +159,16 @@ export default function AnnouncementsClient() {
   async function togglePublish(item) {
     if (publishing === item.id) return
     setPublishing(item.id)
+    setPublishError(p => ({ ...p, [item.id]: null }))
     try {
       const res = await fetch(`/api/admin/announcements/${item.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: !item.published }),
       })
-      if (res.ok) load()
-    } catch {}
+      if (res.ok) { load() } else {
+        const d = await res.json().catch(() => ({}))
+        setPublishError(p => ({ ...p, [item.id]: d.error || 'Could not update.' }))
+      }
+    } catch { setPublishError(p => ({ ...p, [item.id]: 'Network error.' })) }
     finally { setPublishing(null) }
   }
 
@@ -346,7 +351,13 @@ export default function AnnouncementsClient() {
                       >
                         Email
                       </button>
-                      <GhostBtn onClick={() => togglePublish(item)} small disabled={publishing === item.id}>{publishing === item.id ? '…' : item.published ? 'Unpublish' : 'Publish'}</GhostBtn>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ToggleSwitch checked={!!item.published} onChange={() => togglePublish(item)} disabled={publishing === item.id} label="Published" />
+                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.published ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                          {publishing === item.id ? '…' : item.published ? 'Live' : 'Draft'}
+                        </span>
+                        {publishError[item.id] && <Err msg={publishError[item.id]} />}
+                      </div>
                       <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content, audience: item.audience || 'all' }); setSaveError(null) }} small>Edit</GhostBtn>
                       <DangerBtn small onClick={() => setDeleteConfirm(item.id)}>Delete</DangerBtn>
                     </div>
@@ -369,13 +380,9 @@ export default function AnnouncementsClient() {
                           </select>
                           <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                         </div>
-                        <button
-                          onClick={() => sendEmail(item)}
-                          disabled={emailSending}
-                          style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 16px', background: emailSending ? '#ccc' : '#0F1E14', color: '#F5F1EC', border: 'none', cursor: emailSending ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
-                        >
+                        <PrimaryBtn onClick={() => sendEmail(item)} disabled={emailSending}>
                           {emailSending ? 'Sending…' : 'Send'}
-                        </button>
+                        </PrimaryBtn>
                         <GhostBtn small onClick={() => setEmailingId(null)}>Cancel</GhostBtn>
                       </div>
                       {emailResult[item.id]?.error && (
@@ -388,7 +395,7 @@ export default function AnnouncementsClient() {
               {deleteConfirm === item.id && (
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this announcement?</span>
-                  <GhostBtn small onClick={() => del(item.id)}>Confirm</GhostBtn>
+                  <DangerBtn small onClick={() => del(item.id)}>Confirm Delete</DangerBtn>
                   <GhostBtn small onClick={() => setDeleteConfirm(null)}>Cancel</GhostBtn>
                 </div>
               )}

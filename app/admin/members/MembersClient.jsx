@@ -8,7 +8,7 @@ import {
   parseCarMakeModel,
   inp, sel,
   L, Badge, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
-  AdminNotesPanel, Pagination,
+  AdminNotesPanel, Pagination, AttendanceToggle,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
@@ -143,16 +143,7 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
               <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ fontSize: '12px', color: '#444', flex: 1 }}>{ev.name}</span>
                 {isPast ? (
-                  <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                    <button onClick={() => onToggleAttendance(m, ev.name, true)}
-                      style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === true ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.14)', background: attended === true ? 'rgba(59,107,47,0.1)' : '#fff', color: attended === true ? '#3B6B2F' : '#aaa' }}>
-                      ✓ Attended
-                    </button>
-                    <button onClick={() => onToggleAttendance(m, ev.name, false)}
-                      style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: attended === false ? '0.5px solid #7B2032' : '0.5px solid rgba(0,0,0,0.14)', background: attended === false ? 'rgba(123,32,50,0.08)' : '#fff', color: attended === false ? '#7B2032' : '#aaa' }}>
-                      ✗ No-show
-                    </button>
-                  </div>
+                  <AttendanceToggle value={attended} onChange={v => onToggleAttendance(m, ev.name, v)} />
                 ) : (
                   <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
                 )}
@@ -889,7 +880,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                     <div style={{ padding: '0.75rem 1.25rem', background: 'rgba(123,32,50,0.04)', borderTop: '0.5px solid rgba(123,32,50,0.1)' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: '#7B2032' }}>Delete {m.name || m.email}? This permanently removes them.</span>
-                        <GhostBtn small onClick={() => deleteMember(m)}>Confirm</GhostBtn>
+                        <DangerBtn small onClick={() => deleteMember(m)}>Confirm Delete</DangerBtn>
                         <GhostBtn small onClick={() => { setDeleteMemberConfirm(null); setDeleteMemberError(null) }}>Cancel</GhostBtn>
                       </div>
                       {deleteMemberError && <Err msg={deleteMemberError} />}
