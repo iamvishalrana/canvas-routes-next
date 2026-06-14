@@ -600,7 +600,9 @@ export default function Home() {
                       if (now < opens) return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Registration opens {opens.toLocaleDateString('en-CA', {month:'short',day:'numeric'})}</div>
                       return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#999",paddingBottom:"2px",display:"inline-block"}}>Registration Closed</div>
                     })()
-                  : e.href
+                  : e.photo_url
+                    ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B5B2E",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Details <span style={{fontSize:"13px"}}>→</span></div>
+                    : e.href
                     ? routesLaunched
                       ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
                       : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
