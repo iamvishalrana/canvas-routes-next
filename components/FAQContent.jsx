@@ -102,6 +102,10 @@ const SECTIONS = [
         a: 'We plan every route to avoid highways as much as possible. After the first regroup stop we take nothing but backroads all the way to the destination. Every route is personally mapped and scouted before the trip. Expect winding two-lane roads, elevation changes, lake views and long sweeping corners.',
       },
       {
+        q: 'How do you choose your routes?',
+        a: 'Every route we run has been driven by us — multiple times. Before anything is announced, we go out and scout the full road ourselves: every turn, every stop, every restaurant, every viewpoint. We drive it in different conditions, time the segments, eat the food, and only sign off on a route once there are zero question marks left. By the time you show up, every detail has already been figured out.',
+      },
+      {
         q: 'Do I find out the route in advance?',
         a: 'The full itinerary is shared privately with confirmed participants ahead of the trip. We generally keep the specific stops and roads a surprise — part of the Canvas Routes experience is the discovery along the way.',
       },
