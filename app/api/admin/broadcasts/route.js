@@ -2,7 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 
-const MAX_RECIPIENTS = 200
+const MAX_RECIPIENTS = 2000
 const RESEND_BATCH_SIZE = 100 // Resend /emails/batch max per call
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
 
