@@ -1,14 +1,7 @@
 import { stripe } from '../../../../lib/stripe.js'
 import { checkRateLimit, acquireLock, releaseLock } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
-
-const PRICES = {
-  road_trip_standard:      20000,
-  road_trip_member:        16000,
-  road_trip_inner_circle:  14000,
-  membership_routes:        9900,
-  membership_inner_circle: 24900,
-}
+import { PRICES } from '../../../../lib/prices.js'
 
 export async function POST(request) {
   if (!stripe) {

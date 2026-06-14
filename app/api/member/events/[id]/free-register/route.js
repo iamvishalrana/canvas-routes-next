@@ -8,6 +8,12 @@ export async function POST(request, { params }) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const origin = request.headers.get('origin')
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
+  if (origin && !origin.startsWith('http://localhost') && origin !== siteUrl) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')?.trim() || 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
@@ -51,19 +57,22 @@ export async function POST(request, { params }) {
   const memberName = member.name?.trim() || user.email.split('@')[0]
   const normalEmail = user.email.toLowerCase().trim()
 
-  // Write to event_registrations so the member portal shows "Registered"
-  const { error: regErr } = await admin.from('event_registrations').insert({
-    event_id: eventId,
-    member_id: user.id,
-    email: normalEmail,
-    name: memberName,
-    stripe_payment_intent_id: null,
-    stripe_payment_status: 'free',
-    amount_paid: 0,
+  // Write to event_registrations atomically (RPC enforces capacity at DB level)
+  const { data: rpcResult, error: regErr } = await admin.rpc('register_for_event', {
+    p_event_id:                 eventId,
+    p_member_id:                user.id,
+    p_email:                    normalEmail,
+    p_name:                     memberName,
+    p_stripe_payment_intent_id: null,
+    p_stripe_payment_status:    'free',
+    p_amount_paid:              0,
   })
   if (regErr) {
     captureException(regErr, { context: 'free-register-event-reg', eventId, memberId: user.id })
     return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
+  }
+  if (rpcResult?.error) {
+    return Response.json({ error: rpcResult.error }, { status: 400 })
   }
 
   // Notify admin

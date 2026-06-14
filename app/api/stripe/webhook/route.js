@@ -240,6 +240,25 @@ export async function POST(request) {
         break
       }
 
+      case 'charge.refunded': {
+        // Fires when a refund is issued from the Stripe dashboard or API
+        const charge = event.data.object
+        const piId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id
+        if (!piId) break
+        const status = charge.refunded ? 'refunded' : 'partially_refunded'
+        const supabase = createAdminClient()
+        await Promise.all([
+          supabase.from('applications')
+            .update({ stripe_payment_status: status, stripe_amount_refunded: charge.amount_refunded })
+            .eq('stripe_payment_intent_id', piId),
+          supabase.from('event_registrations')
+            .update({ stripe_payment_status: 'refunded' })
+            .eq('stripe_payment_intent_id', piId),
+        ]).catch(err => captureException(err, { context: 'charge-refunded-webhook', piId }))
+        console.log(`Refund recorded: ${piId} — status ${status}`)
+        break
+      }
+
       case 'payment_intent.created':
       case 'charge.succeeded':
       case 'charge.updated':

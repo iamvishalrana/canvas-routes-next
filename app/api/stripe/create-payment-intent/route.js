@@ -1,15 +1,7 @@
 import { stripe } from '../../../../lib/stripe.js'
 import { checkRateLimit } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
-
-// Prices in CAD cents
-const PRICES = {
-  road_trip_standard:     20000,  // $200 CAD — non-member
-  road_trip_member:       16000,  // $160 CAD — Routes Member (placeholder, confirm on integration)
-  road_trip_inner_circle: 14000,  // $140 CAD — Inner Circle (placeholder, confirm on integration)
-  membership_routes:       9900,  // $99 CAD
-  membership_inner_circle: 24900, // $249 CAD
-}
+import { PRICES } from '../../../../lib/prices.js'
 
 const VALID_TYPES = Object.keys(PRICES)
 

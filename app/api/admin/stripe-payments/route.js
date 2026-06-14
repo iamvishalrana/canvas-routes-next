@@ -104,26 +104,5 @@ export async function GET() {
 
   records.sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
 
-  // Sync any records missing stripe fields back to the applications table
-  const toSync = records.filter(r => r.email && r.stripe_payment_intent_id && !appsByEmail[r.email]?.stripe_payment_status)
-  if (toSync.length > 0) {
-    try {
-      await supabase.from('applications').upsert(
-        toSync.map(r => ({
-          email:                    r.email,
-          name:                     r.name || undefined,
-          stripe_payment_intent_id: r.stripe_payment_intent_id,
-          stripe_payment_status:    r.stripe_payment_status,
-          stripe_amount_paid:       r.stripe_amount_paid,
-          stripe_payment_type:      r.stripe_payment_type,
-          stripe_paid_at:           r.stripe_paid_at,
-        })),
-        { onConflict: 'email' }
-      )
-    } catch (syncErr) {
-      console.error('stripe-payments: DB sync failed:', syncErr?.message)
-    }
-  }
-
   return Response.json(records)
 }

@@ -9,6 +9,12 @@ export async function POST(request, { params }) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const origin = request.headers.get('origin')
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
+  if (origin && !origin.startsWith('http://localhost') && origin !== siteUrl) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')?.trim()
     || 'unknown'
@@ -88,19 +94,22 @@ export async function POST(request, { params }) {
     if (count >= ev.capacity) return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
   }
 
-  const { error: regError } = await admin.from('event_registrations').upsert({
-    event_id: eventId,
-    member_id: user.id,
-    email: user.email || '',
-    name: member.name || '',
-    stripe_payment_intent_id: piId,
-    stripe_payment_status: isFree ? 'free' : 'paid',
-    amount_paid: amountPaid,
-  }, { onConflict: 'uq_event_reg_event_member' })
+  const { data: rpcResult, error: regError } = await admin.rpc('register_for_event', {
+    p_event_id:                 eventId,
+    p_member_id:                user.id,
+    p_email:                    user.email || '',
+    p_name:                     member.name || '',
+    p_stripe_payment_intent_id: piId,
+    p_stripe_payment_status:    isFree ? 'free' : 'paid',
+    p_amount_paid:              amountPaid,
+  })
 
   if (regError) {
-    captureException(regError, { context: 'event-register-upsert', eventId })
+    captureException(regError, { context: 'event-register-rpc', eventId })
     return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
+  }
+  if (rpcResult?.error) {
+    return Response.json({ error: rpcResult.error }, { status: 400 })
   }
 
   // Notify admin
