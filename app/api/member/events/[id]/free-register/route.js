@@ -2,6 +2,7 @@ import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry'
 import { checkRateLimit } from '../../../../../../lib/rateLimit'
+import { buildEventConfirmHtml } from '../../../../../../lib/eventConfirmEmail'
 
 export async function POST(request, { params }) {
   const supabase = await createClient()
@@ -22,7 +23,7 @@ export async function POST(request, { params }) {
   const admin = createAdminClient()
 
   const [{ data: ev }, { data: member }] = await Promise.all([
-    admin.from('events').select('id, name, registration_enabled, registration_url, registration_opens_at, registration_closes_at, capacity, priority_window_end').eq('id', eventId).single(),
+    admin.from('events').select('id, name, date, date_display, location, registration_enabled, registration_url, registration_opens_at, registration_closes_at, capacity, priority_window_end').eq('id', eventId).single(),
     admin.from('members').select('name, car_year, car_make, car_model, phone, instagram, tier').eq('id', user.id).maybeSingle(),
   ])
 
@@ -75,8 +76,25 @@ export async function POST(request, { params }) {
     return Response.json({ error: rpcResult.error }, { status: 400 })
   }
 
-  // Notify admin
   if (process.env.RESEND_API_KEY) {
+    const firstName = memberName.split(' ')[0] || 'there'
+    const dateDisplay = ev.date_display || ev.date || null
+
+    // Confirmation to member
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <jerry@canvasroutes.com>',
+        to: normalEmail,
+        reply_to: 'jerry@canvasroutes.com',
+        subject: `You're registered — ${ev.name}`,
+        html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree: true, amountPaid: 0 }),
+        text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
+      }),
+    }).catch(() => {})
+
+    // Notify admin
     fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },

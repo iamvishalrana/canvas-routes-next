@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { stripe } from '../../../../../../lib/stripe.js'
 import { checkRateLimit } from '../../../../../../lib/rateLimit'
 import { captureException } from '../../../../../../lib/sentry'
+import { buildEventConfirmHtml } from '../../../../../../lib/eventConfirmEmail'
 
 export async function POST(request, { params }) {
   const supabase = await createClient()
@@ -28,7 +29,7 @@ export async function POST(request, { params }) {
   const admin = createAdminClient()
 
   const [{ data: ev }, { data: member }] = await Promise.all([
-    admin.from('events').select('id, name, registration_opens_at, registration_closes_at, capacity, member_price, priority_window_end, registration_enabled').eq('id', eventId).single(),
+    admin.from('events').select('id, name, date, date_display, location, registration_opens_at, registration_closes_at, capacity, member_price, priority_window_end, registration_enabled').eq('id', eventId).single(),
     admin.from('members').select('tier, name').eq('id', user.id).maybeSingle(),
   ])
 
@@ -112,10 +113,27 @@ export async function POST(request, { params }) {
     return Response.json({ error: rpcResult.error }, { status: 400 })
   }
 
-  // Notify admin
   if (process.env.RESEND_API_KEY) {
     const memberName = member.name?.trim() || user.email.split('@')[0]
+    const firstName = memberName.split(' ')[0] || 'there'
     const amountLabel = isFree ? 'Free' : `$${(amountPaid / 100).toFixed(2)} CAD`
+    const dateDisplay = ev.date_display || ev.date || null
+
+    // Confirmation to member
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <jerry@canvasroutes.com>',
+        to: user.email,
+        reply_to: 'jerry@canvasroutes.com',
+        subject: `You're registered — ${ev.name}`,
+        html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid }),
+        text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}${!isFree ? `. Payment: ${amountLabel}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
+      }),
+    }).catch(() => {})
+
+    // Notify admin
     fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
