@@ -29,12 +29,15 @@ export async function POST(request, { params }) {
       await stripe.paymentIntents.cancel(app.stripe_payment_intent_id)
     } else {
       // Already captured — issue a full refund
-      await stripe.refunds.create({ payment_intent: app.stripe_payment_intent_id })
+      await stripe.refunds.create(
+        { payment_intent: app.stripe_payment_intent_id },
+        { idempotencyKey: `reject-refund-${app.stripe_payment_intent_id}` }
+      )
     }
 
     await supabase.from('applications').update({
       stripe_payment_status: 'rejected',
-    }).eq('id', id)
+    }).eq('id', id).in('stripe_payment_status', ['authorized', 'paid'])
 
     return Response.json({ ok: true })
   } catch (err) {

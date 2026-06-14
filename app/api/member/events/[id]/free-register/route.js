@@ -16,12 +16,31 @@ export async function POST(request, { params }) {
   const admin = createAdminClient()
 
   const [{ data: ev }, { data: member }] = await Promise.all([
-    admin.from('events').select('id, name, registration_enabled, registration_url').eq('id', eventId).single(),
-    admin.from('members').select('name, car_year, car_make, car_model, phone, instagram').eq('id', user.id).maybeSingle(),
+    admin.from('events').select('id, name, registration_enabled, registration_url, registration_opens_at, registration_closes_at, capacity, priority_window_end').eq('id', eventId).single(),
+    admin.from('members').select('name, car_year, car_make, car_model, phone, instagram, tier').eq('id', user.id).maybeSingle(),
   ])
 
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
   if (ev.registration_enabled === false) return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
+
+  const now = new Date()
+  if (ev.registration_opens_at && now < new Date(ev.registration_opens_at)) {
+    if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member?.tier !== 'inner_circle') {
+      return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
+    }
+    if (!ev.priority_window_end || member?.tier !== 'inner_circle') {
+      return Response.json({ error: 'Registration is not open yet.' }, { status: 400 })
+    }
+  }
+  if (ev.registration_closes_at && now > new Date(ev.registration_closes_at)) {
+    return Response.json({ error: 'Registration has closed for this event.' }, { status: 400 })
+  }
+  if (ev.capacity) {
+    const { count } = await admin.from('event_registrations')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', eventId).in('stripe_payment_status', ['free', 'paid'])
+    if (count >= ev.capacity) return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
+  }
   if (!member) return Response.json({ error: 'Member profile not found.' }, { status: 404 })
 
   // Guard against double-registration

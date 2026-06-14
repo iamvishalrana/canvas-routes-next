@@ -1,18 +1,24 @@
 import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { requireAdmin } from '../../../lib/supabase/authCheck'
 import PaymentsClient from './PaymentsClient'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Payments — Admin' }
 
 export default async function PaymentsPage() {
+  if (!await requireAdmin()) {
+    const { redirect } = await import('next/navigation')
+    redirect('/admin')
+  }
+
   const records = []
 
   // Fetch from Stripe
   if (stripe) {
     try {
-      const piList = await stripe.paymentIntents.list({ limit: 100, expand: ['data.latest_charge'] })
-      const canvasPIs = piList.data.filter(pi => pi.metadata?.type)
+      const piList = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
+      const canvasPIs = piList.filter(pi => pi.metadata?.type)
 
       for (const pi of canvasPIs) {
         const email = pi.metadata.email?.toLowerCase().trim() || ''

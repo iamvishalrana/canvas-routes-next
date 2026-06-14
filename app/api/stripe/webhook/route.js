@@ -117,11 +117,23 @@ export async function POST(request) {
             .is('stripe_paid_at', null)
           console.log(`Membership payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         } else if (type?.startsWith('road_trip_')) {
-          // Road trip payment confirmed — send confirmation email
+          // Road trip payment confirmed — record in DB and send confirmation email
           const amountFormatted = `$${(amountPaid / 100).toFixed(2)} CAD`
           const firstName = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel = eventName || 'Canvas Routes Road Trip'
           console.log(`Road trip payment confirmed: ${type} — ${normalEmail} — ${amountFormatted}`)
+          // Write to applications so the payment appears in admin records
+          await supabase.from('applications').upsert({
+            email:                     normalEmail,
+            name:                      name || '',
+            stripe_payment_intent_id:  pi.id,
+            stripe_payment_status:     'paid',
+            stripe_amount_paid:        amountPaid,
+            stripe_payment_type:       type,
+            stripe_paid_at:            new Date().toISOString(),
+          }, { onConflict: 'email' }).catch(err =>
+            captureException(err, { context: 'road-trip-payment-db', piId: pi.id })
+          )
           if (process.env.RESEND_API_KEY && normalEmail) {
             try {
               await fetch('https://api.resend.com/emails', {

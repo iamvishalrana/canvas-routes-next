@@ -71,6 +71,10 @@ export async function POST(request, { params }) {
     if (pi.status !== 'succeeded') {
       return Response.json({ error: 'Payment has not been completed.' }, { status: 400 })
     }
+    if (pi.amount_received < ev.member_price) {
+      captureException(new Error('Event PI amount below event price'), { context: 'event-register-amount-check', piId: paymentIntentId, piAmount: pi.amount_received, eventPrice: ev.member_price })
+      return Response.json({ error: 'Payment amount does not match event price.' }, { status: 400 })
+    }
     amountPaid = pi.amount_received
     piId = paymentIntentId
   }

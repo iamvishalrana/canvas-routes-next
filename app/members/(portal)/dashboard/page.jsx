@@ -349,7 +349,7 @@ export default async function DashboardPage() {
                             <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             Registered
                           </span>
-                        ) : ev.registration_opens_at ? (
+                        ) : ev.registration_opens_at && (() => { const now = new Date(); const opens = new Date(ev.registration_opens_at); const closes = ev.registration_closes_at ? new Date(ev.registration_closes_at) : null; return now >= opens && (!closes || now <= closes) })() ? (
                           <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#555', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 8px', fontFamily: 'var(--font-inter), sans-serif' }}>
                             Registration Open →
                           </span>

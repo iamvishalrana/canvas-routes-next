@@ -8,7 +8,7 @@ export async function POST(request, { params }) {
   if (!stripe) return Response.json({ error: 'Not configured.' }, { status: 503 })
 
   const { piId } = await params
-  if (!piId) return Response.json({ error: 'Missing payment intent ID.' }, { status: 400 })
+  if (!piId || !piId.startsWith('pi_')) return Response.json({ error: 'Invalid payment intent ID.' }, { status: 400 })
 
   try {
     await stripe.paymentIntents.cancel(piId)

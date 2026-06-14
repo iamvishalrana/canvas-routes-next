@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -8,27 +8,29 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null
 
-function PayForm({ event, onSuccess, onClose }) {
+function PayForm({ event, onSuccess, onClose, onPayingChange }) {
   const stripe = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState(null)
 
+  function setPayingState(v) { setPaying(v); onPayingChange?.(v) }
+
   async function handlePay(e) {
     e.preventDefault()
     if (!stripe || !elements) return
-    setPaying(true); setError(null)
+    setPayingState(true); setError(null)
 
     const submitResult = await elements.submit()
-    if (submitResult?.error) { setError(submitResult.error.message); setPaying(false); return }
+    if (submitResult?.error) { setError(submitResult.error.message); setPayingState(false); return }
 
     const { error: stripeErr, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required',
       confirmParams: { return_url: window.location.href },
     })
-    if (stripeErr) { setError(stripeErr.message); setPaying(false); return }
-    if (!paymentIntent) { setError('Payment did not complete. Please try again.'); setPaying(false); return }
+    if (stripeErr) { setError(stripeErr.message); setPayingState(false); return }
+    if (!paymentIntent) { setError('Payment did not complete. Please try again.'); setPayingState(false); return }
 
     const res = await fetch(`/api/member/events/${event.id}/register`, {
       method: 'POST',
@@ -36,8 +38,11 @@ function PayForm({ event, onSuccess, onClose }) {
       body: JSON.stringify({ paymentIntentId: paymentIntent.id }),
     })
     const data = await res.json().catch(() => ({}))
-    setPaying(false)
-    if (!res.ok) { setError(data.error || 'Registration failed. Please contact support.'); return }
+    setPayingState(false)
+    if (!res.ok) {
+      setError(`${data.error || 'Registration failed.'} Reference: ${paymentIntent.id}. Please contact support.`)
+      return
+    }
     onSuccess()
   }
 
@@ -90,6 +95,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   const [piError, setPiError] = useState(null)
   const [registering, setRegistering] = useState(false)
   const [regError, setRegError] = useState(null)
+  const payingRef = useRef(false)
   const [done, setDone] = useState(isRegistered)
   useEffect(() => { setDone(isRegistered) }, [isRegistered])
 
@@ -213,7 +219,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
       {/* Payment modal */}
       {modalOpen && clientSecret && stripePromise && (
         <div
-          onClick={e => { if (e.target === e.currentTarget) setModalOpen(false) }}
+          onClick={e => { if (e.target === e.currentTarget && !payingRef.current) setModalOpen(false) }}
           style={{
             position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)',
             display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1rem',
@@ -248,6 +254,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
                 event={event}
                 onSuccess={() => { setModalOpen(false); setClientSecret(null); setDone(true); onRegistrationComplete?.(); router.refresh() }}
                 onClose={() => { setModalOpen(false); setClientSecret(null) }}
+                onPayingChange={v => { payingRef.current = v }}
               />
             </Elements>
           </div>

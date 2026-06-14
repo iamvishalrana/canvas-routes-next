@@ -1,6 +1,7 @@
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { stripe } from '../../../lib/stripe.js'
 
 function h(str) {
   return String(str ?? '')
@@ -145,7 +146,7 @@ function confirmHtml(firstName, tier) {
 function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel, tier, source, more, referredBy, paymentIntentId }) {
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const dobStr = dob_month ? `${MONTHS_SHORT[parseInt(dob_month) - 1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : null
-  const TIER_PRICES = { routes_member: '$99 CAD', inner_circle: '$249 CAD' }
+  const TIER_PRICES = { 'Routes Member': '$99 CAD', 'Inner Circle': '$249 CAD' }
   const amountStr = TIER_PRICES[tier] || ''
   const paymentCell = paymentIntentId
     ? `Authorized — ${amountStr} &nbsp;<a href="https://dashboard.stripe.com/payments/${paymentIntentId}" style="color:#8A6535;font-size:11px;">View in Stripe ↗</a>`
@@ -229,6 +230,33 @@ export async function POST(request) {
   const firstName = h(name.trim().split(' ')[0])
   const fullCar = [carMake, carModel].filter(Boolean).join(' ')
   const normalEmail = email.toLowerCase().trim()
+
+  // Verify the PaymentIntent belongs to this user and matches the submitted tier
+  if (paymentIntentId && stripe) {
+    try {
+      const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+      const TIER_TYPE_MAP = { 'Routes Member': 'membership_routes', 'Inner Circle': 'membership_inner_circle' }
+      const TIER_PRICE_MAP = { 'Routes Member': 9900, 'Inner Circle': 24900 }
+      const expectedType = TIER_TYPE_MAP[tier]
+      const piEmail = pi.metadata?.email?.toLowerCase().trim()
+      if (
+        pi.metadata?.type !== expectedType ||
+        !['requires_capture', 'succeeded'].includes(pi.status) ||
+        piEmail !== normalEmail
+      ) {
+        captureMessage('Membership waitlist PI verification failed', { piId: paymentIntentId, piEmail, normalEmail, piType: pi.metadata?.type, expectedType, piStatus: pi.status })
+        return Response.json({ error: 'Payment verification failed. Please contact support.' }, { status: 400 })
+      }
+      // Reject if amount is suspiciously low (below 50% of tier price — covers legitimate promo codes)
+      if (pi.amount < Math.floor(TIER_PRICE_MAP[tier] * 0.5)) {
+        captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, expected: TIER_PRICE_MAP[tier] })
+        return Response.json({ error: 'Payment amount invalid. Please contact support.' }, { status: 400 })
+      }
+    } catch (err) {
+      // Don't block if Stripe is unavailable — log and proceed
+      captureException(err, { context: 'membership-waitlist-pi-verify', paymentIntentId })
+    }
+  }
 
   // Save to DB first so data is never lost if email sending fails
   try {

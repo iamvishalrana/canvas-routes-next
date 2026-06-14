@@ -113,7 +113,7 @@ export async function POST(request) {
     // Calculate discounted amount
     let discountedAmount
     if (coupon.percent_off) {
-      discountedAmount = Math.round(currentAmount * (1 - coupon.percent_off / 100))
+      discountedAmount = Math.max(50, Math.round(currentAmount * (1 - coupon.percent_off / 100)))
     } else if (coupon.amount_off) {
       discountedAmount = Math.max(50, currentAmount - coupon.amount_off) // Stripe minimum is 50 cents
     } else {

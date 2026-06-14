@@ -53,7 +53,7 @@ export async function POST(request) {
         type,
         email:     email.toLowerCase().trim(),
         name:      name.trim(),
-        eventName: eventName || '',
+        event_name: eventName || '',
       },
       description: buildDescription(type, eventName),
       automatic_payment_methods: { enabled: true },
