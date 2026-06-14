@@ -3,7 +3,7 @@ import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 
 const MAX_RECIPIENTS = 200
-const BATCH_SIZE = 10
+const RESEND_BATCH_SIZE = 100 // Resend /emails/batch max per call
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
 
 function buildUnsubscribeFooter(email) {
@@ -132,35 +132,35 @@ export async function POST(request) {
   let failed = 0
   const failedRecipients = []
 
-  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-    const batch = recipients.slice(i, i + BATCH_SIZE)
-    const results = await Promise.all(batch.map(async recipient => {
-      try {
-        const res = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: 'Canvas Routes <info@canvasroutes.com>',
-            to: recipient.email,
-            subject: subject.trim().replace(/\{\{name\}\}/gi, recipient.name || 'there'),
-            html: html
-              .replace(/\{\{name\}\}/gi, recipient.name || 'there')
-              .replace('<!-- UNSUBSCRIBE_FOOTER -->', buildUnsubscribeFooter(recipient.email)),
-          }),
-        })
-        if (res.ok) return { ok: true }
+  // Use Resend's batch endpoint — one API call per 100 emails, no per-request rate limits
+  for (let i = 0; i < recipients.length; i += RESEND_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + RESEND_BATCH_SIZE)
+    const payload = batch.map(recipient => ({
+      from: 'Canvas Routes <info@canvasroutes.com>',
+      to: recipient.email,
+      subject: subject.trim().replace(/\{\{name\}\}/gi, recipient.name || 'there'),
+      html: html
+        .replace(/\{\{name\}\}/gi, recipient.name || 'there')
+        .replace('<!-- UNSUBSCRIBE_FOOTER -->', buildUnsubscribeFooter(recipient.email)),
+    }))
+    try {
+      const res = await fetch('https://api.resend.com/emails/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify(payload),
+      })
+      if (res.ok) {
+        sent += batch.length
+      } else {
         let reason = `HTTP ${res.status}`
         try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
-        return { ok: false, email: recipient.email, name: recipient.name || '', reason }
-      } catch (err) {
-        return { ok: false, email: recipient.email, name: recipient.name || '', reason: err.message || 'Network error' }
+        failed += batch.length
+        for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
       }
-    }))
-    for (const r of results) {
-      if (r.ok) { sent++ } else { failed++; failedRecipients.push({ email: r.email, name: r.name, reason: r.reason }) }
+    } catch (err) {
+      const reason = err.message || 'Network error'
+      failed += batch.length
+      for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
     }
   }
 
