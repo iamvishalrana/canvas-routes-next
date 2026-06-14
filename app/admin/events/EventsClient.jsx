@@ -207,6 +207,11 @@ export default function EventsClient() {
   const [allContacts, setAllContacts] = useState([])
   const [contactsLoaded, setContactsLoaded] = useState(false)
 
+  // Remove registrant (key = `${eventId}::${email}`)
+  const [deleteRegConfirm, setDeleteRegConfirm] = useState(null)
+  const [deletingReg, setDeletingReg] = useState({})
+  const [deleteRegErr, setDeleteRegErr] = useState({})
+
   // Invite actions
   const [inviting, setInviting] = useState({})
   const [inviteErr, setInviteErr] = useState({})
@@ -423,6 +428,30 @@ export default function EventsClient() {
       setAddRegErr(p => ({ ...p, [eventId]: 'Network error.' }))
     } finally {
       setAddingReg(p => ({ ...p, [eventId]: false }))
+    }
+  }
+
+  async function deleteRegistrant(eventId, email) {
+    const key = `${eventId}::${email}`
+    setDeletingReg(p => ({ ...p, [key]: true }))
+    setDeleteRegErr(p => ({ ...p, [key]: null }))
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/registrants`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setDeleteRegErr(p => ({ ...p, [key]: d.error || 'Failed to remove.' })); return }
+      setDeleteRegConfirm(null)
+      setRegistrantsData(prev => ({
+        ...prev,
+        [eventId]: (prev[eventId] || []).filter(r => r.email !== email),
+      }))
+    } catch {
+      setDeleteRegErr(p => ({ ...p, [key]: 'Network error.' }))
+    } finally {
+      setDeletingReg(p => ({ ...p, [key]: false }))
     }
   }
 
@@ -855,9 +884,9 @@ export default function EventsClient() {
                         <div style={{ overflowX: 'auto' }}>
                           <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isMobile ? 'unset' : '580px' }}>
                             {!isMobile && (
-                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-                                {['Name', 'Email', 'Type', 'Status', 'Paid', ''].map(h => (
-                                  <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 100px 60px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                                {['Name', 'Email', 'Type', 'Status', 'Paid', '', ''].map((h, i) => (
+                                  <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                                 ))}
                               </div>
                             )}
@@ -867,9 +896,12 @@ export default function EventsClient() {
                               const result = confirmEmailResult[indivKey]
                               const isPending = confirmEmailPending === indivKey
                               const canSend = r.email && r.email !== '—'
+                              const isDeletePending = deleteRegConfirm === indivKey
+                              const isDeleting = !!deletingReg[indivKey]
+                              const deleteErr = deleteRegErr[indivKey]
                               return (
                                 <div key={ri}>
-                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 100px 60px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
                                     {isMobile ? (
                                       <div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -881,18 +913,25 @@ export default function EventsClient() {
                                               {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888' }}>{r.status}</span>}
                                             </div>
                                           </div>
-                                          {canSend && !result?.sent && (
-                                            isPending
-                                              ? <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                                                  <span style={{ fontSize: '10px', color: '#555' }}>Send?</span>
-                                                  <PrimaryBtn small disabled={sending} onClick={() => { setConfirmEmailPending(null); sendConfirmEmail(item.id, r) }}>{sending ? '…' : 'Yes'}</PrimaryBtn>
-                                                  <GhostBtn small onClick={() => setConfirmEmailPending(null)}>No</GhostBtn>
-                                                </div>
-                                              : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>Invite</GhostBtn>
-                                          )}
-                                          {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
+                                          <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                            {canSend && !result?.sent && (
+                                              isPending
+                                                ? <><span style={{ fontSize: '10px', color: '#555' }}>Send?</span>
+                                                    <PrimaryBtn small disabled={sending} onClick={() => { setConfirmEmailPending(null); sendConfirmEmail(item.id, r) }}>{sending ? '…' : 'Yes'}</PrimaryBtn>
+                                                    <GhostBtn small onClick={() => setConfirmEmailPending(null)}>No</GhostBtn></>
+                                                : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>Invite</GhostBtn>
+                                            )}
+                                            {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
+                                            {isDeletePending
+                                              ? <><span style={{ fontSize: '10px', color: '#555' }}>Remove?</span>
+                                                  <DangerBtn small disabled={isDeleting} onClick={() => deleteRegistrant(item.id, r.email)}>{isDeleting ? '…' : 'Yes'}</DangerBtn>
+                                                  <GhostBtn small onClick={() => setDeleteRegConfirm(null)}>No</GhostBtn></>
+                                              : <DangerBtn small onClick={() => { setDeleteRegConfirm(indivKey); setDeleteRegErr(p => ({ ...p, [indivKey]: null })) }}>Remove</DangerBtn>
+                                            }
+                                          </div>
                                         </div>
                                         {result?.error && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem' }}>{result.error}</div>}
+                                        {deleteErr && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem' }}>{deleteErr}</div>}
                                       </div>
                                     ) : (
                                       <>
@@ -913,6 +952,17 @@ export default function EventsClient() {
                                           )}
                                           {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
                                           {result?.error && <span style={{ fontSize: '10px', color: '#7B2032' }}>{result.error}</span>}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                                          {isDeletePending
+                                            ? <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                                <span style={{ fontSize: '10px', color: '#555' }}>Remove?</span>
+                                                <DangerBtn small disabled={isDeleting} onClick={() => deleteRegistrant(item.id, r.email)}>{isDeleting ? '…' : 'Yes'}</DangerBtn>
+                                                <GhostBtn small onClick={() => setDeleteRegConfirm(null)}>No</GhostBtn>
+                                              </div>
+                                            : <DangerBtn small onClick={() => { setDeleteRegConfirm(indivKey); setDeleteRegErr(p => ({ ...p, [indivKey]: null })) }}>Remove</DangerBtn>
+                                          }
+                                          {deleteErr && <span style={{ fontSize: '10px', color: '#7B2032' }}>{deleteErr}</span>}
                                         </div>
                                       </>
                                     )}

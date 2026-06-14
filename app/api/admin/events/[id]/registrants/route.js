@@ -126,3 +126,36 @@ export async function POST(request, { params }) {
 
   return Response.json({ success: true })
 }
+
+export async function DELETE(request, { params }) {
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const { id: eventId } = await params
+  const { email } = await request.json().catch(() => ({}))
+  if (!email?.trim()) return Response.json({ error: 'Email required.' }, { status: 400 })
+
+  const admin = createAdminClient()
+  const normalEmail = email.toLowerCase().trim()
+
+  // Remove from event_registrations (member-portal registrations)
+  const { error: regErr } = await admin
+    .from('event_registrations')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('email', normalEmail)
+  if (regErr) captureException(regErr, { context: 'delete-registrant-event-reg', eventId, email: normalEmail })
+
+  // Remove event from applications.registrations array (covers both member and public registrants)
+  const { data: ev } = await admin.from('events').select('name').eq('id', eventId).maybeSingle()
+  if (ev?.name) {
+    const { data: app } = await admin.from('applications').select('id, registrations').eq('email', normalEmail).maybeSingle()
+    if (app?.registrations?.length) {
+      const evBase = s => (s || '').trim().toLowerCase().split(/\s[—–]\s/)[0].trim()
+      const updated = app.registrations.filter(r => evBase(r.event) !== evBase(ev.name))
+      if (updated.length !== app.registrations.length) {
+        await admin.from('applications').update({ registrations: updated }).eq('id', app.id)
+      }
+    }
+  }
+
+  return Response.json({ success: true })
+}
