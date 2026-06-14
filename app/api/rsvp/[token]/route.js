@@ -115,31 +115,48 @@ export async function POST(request, { params }) {
   const appName  = tokenRow.applications?.name  || 'Someone'
   const appEmail = tokenRow.applications?.email || ''
   if (process.env.RESEND_API_KEY) {
-    const answerLines = isRoadTrip
-      ? [
-          answers.dietary    ? `Dietary: ${answers.dietary}` : 'Dietary: None',
-          answers.passengers !== null ? `People in car: ${answers.passengers}` : null,
-          answers.whatsapp !== null ? `WhatsApp group: ${answers.whatsapp ? 'Yes' : 'No'}` : null,
-        ]
-      : [
-          answers.bringing_guest !== null ? `Bringing a guest: ${answers.bringing_guest ? 'Yes' : 'No'}` : null,
-          answers.car_paint  ? `Colour: ${answers.car_paint}` : null,
-          answers.car_mods   ? `Mods: ${answers.car_mods}`    : null,
-          answers.arrival    ? `Arrival: ${{ opening: 'Right at opening', first_hour: 'Within first hour', later: 'Later on' }[answers.arrival] || answers.arrival}` : null,
-        ]
+    const row = (label, value) => value != null && value !== ''
+      ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
+      : ''
+    const arrivalLabel = { opening: 'Right at opening', first_hour: 'Within the first hour', later: 'Later on' }
+    const adminHtml = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#ffffff;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
+      <tr><td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">RSVP confirmed</td></tr>
+      <tr><td>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          ${row('Event', `<strong>${tokenRow.event_name}</strong>`)}
+          ${row('Name', `<strong>${appName}</strong>`)}
+          ${row('Email', `<a href="mailto:${appEmail}" style="color:#1a1a1a;">${appEmail}</a>`)}
+          ${isRoadTrip ? `
+          ${row('Dietary', answers.dietary || 'None')}
+          ${row('People in car', answers.passengers != null ? String(answers.passengers) : '')}
+          ${row('WhatsApp group', answers.whatsapp != null ? (answers.whatsapp ? 'Yes' : 'No') : '')}
+          ` : `
+          ${row('Bringing a guest', answers.bringing_guest != null ? (answers.bringing_guest ? 'Yes' : 'No') : '')}
+          ${row('Car colour', answers.car_paint || '')}
+          ${row('Mods', answers.car_mods || '')}
+          ${row('Arrival', answers.arrival ? (arrivalLabel[answers.arrival] || answers.arrival) : '')}
+          `}
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
 
-    // Fire-and-forget — DB is already committed, don't block the 200 on email latency
-    fetch('https://api.resend.com/emails', {
+    // Await both sends — fire-and-forget was causing ETIMEDOUT when the function terminated mid-write
+    await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
       body: JSON.stringify({
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'jerry@canvasroutes.com',
         subject: `RSVP Confirmed — ${appName} — ${tokenRow.event_name}`,
-        text: [
-          `${appName} (${appEmail}) confirmed their spot for ${tokenRow.event_name}.`,
-          ...answerLines.filter(Boolean),
-        ].join('\n'),
+        html: adminHtml,
       }),
     }).catch(err => captureException(err, { context: 'rsvp-admin-notify', token }))
 
@@ -156,7 +173,7 @@ export async function POST(request, { params }) {
           eventId: event?.id || null,
           date: event?.date || null,
         })
-        fetch('https://api.resend.com/emails', {
+        await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
           body: JSON.stringify({
