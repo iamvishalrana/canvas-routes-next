@@ -53,8 +53,8 @@ function buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl
       </td></tr>
       <tr><td style="padding-bottom:32px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-          <tr><td style="background-color:#c5a882;">
-            <a href="${rsvpUrl}" style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#0F1E14;text-decoration:none;font-weight:600;">Confirm My Spot &rarr;</a>
+          <tr><td style="border:1px solid rgba(197,168,130,0.5);">
+            <a href="${rsvpUrl}" style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#c5a882;text-decoration:none;font-weight:600;">Confirm My Spot &rarr;</a>
           </td></tr>
         </table>
       </td></tr>

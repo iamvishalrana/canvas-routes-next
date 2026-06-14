@@ -145,9 +145,8 @@ export async function POST(request, { params }) {
 
     if (appEmail) {
       const firstName = appName.split(' ')[0]
-      // Build HTML inside the Promise chain so a throw (e.g. invalid date) is caught rather than crashing the route
-      Promise.resolve()
-        .then(() => buildEventConfirmHtml({
+      try {
+        const html = buildEventConfirmHtml({
           firstName,
           eventName: tokenRow.event_name,
           dateDisplay: event?.date_display || null,
@@ -156,8 +155,8 @@ export async function POST(request, { params }) {
           amountPaid: 0,
           eventId: event?.id || null,
           date: event?.date || null,
-        }))
-        .then(html => fetch('https://api.resend.com/emails', {
+        })
+        fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
           body: JSON.stringify({
@@ -167,8 +166,10 @@ export async function POST(request, { params }) {
             subject: `You're in — ${tokenRow.event_name}`,
             html,
           }),
-        }))
-        .catch(err => captureException(err, { context: 'rsvp-final-invite', token }))
+        }).catch(err => captureException(err, { context: 'rsvp-final-invite', token }))
+      } catch (err) {
+        captureException(err, { context: 'rsvp-final-invite', token })
+      }
     }
   }
 
