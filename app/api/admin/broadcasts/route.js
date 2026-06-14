@@ -34,7 +34,7 @@ export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
-  const { subject, html, body_html, audience, specificEmails } = await request.json()
+  const { subject, html, body_html, audience, specificEmails, excludeEmails } = await request.json()
 
   if (!subject?.trim()) return Response.json({ error: 'Subject is required.' }, { status: 400 })
   if (!html?.trim()) return Response.json({ error: 'Email body is required.' }, { status: 400 })
@@ -110,6 +110,12 @@ export async function POST(request) {
     }
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
+  }
+
+  // Filter out manually excluded emails
+  if (Array.isArray(excludeEmails) && excludeEmails.length > 0) {
+    const excludeSet = new Set(excludeEmails.map(e => e.toLowerCase().trim()))
+    recipients = recipients.filter(r => !excludeSet.has(r.email.toLowerCase()))
   }
 
   // Filter out anyone who has unsubscribed

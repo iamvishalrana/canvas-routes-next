@@ -325,6 +325,7 @@ export default function BroadcastsClient() {
   const [tab, setTab]                           = useState('compose')
   const [audience, setAudience]                 = useState('specific_emails')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
+  const [excludeChipEmails, setExcludeChipEmails] = useState([])        // exclude list
   const [subject, setSubject]                   = useState('')
   const [bodyHtml, setBodyHtml]                 = useState('')          // explicit state for draft save
   const [showConfirm, setShowConfirm]           = useState(false)
@@ -377,6 +378,7 @@ export default function BroadcastsClient() {
       if (saved.subject) setSubject(saved.subject)
       if (saved.audience) setAudience(saved.audience)
       if (Array.isArray(saved.chipEmails) && saved.chipEmails.length) setChipEmails(saved.chipEmails)
+      if (Array.isArray(saved.excludeChipEmails) && saved.excludeChipEmails.length) setExcludeChipEmails(saved.excludeChipEmails)
       if (saved.bodyHtml && saved.bodyHtml !== '<p></p>') {
         editor.commands.setContent(saved.bodyHtml)
         setBodyHtml(saved.bodyHtml)
@@ -387,8 +389,8 @@ export default function BroadcastsClient() {
   // 4. Auto-save draft to localStorage on any change
   useEffect(() => {
     if (!draftRestoredRef.current) return
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails })) } catch {}
-  }, [subject, bodyHtml, audience, chipEmails])
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, excludeChipEmails })) } catch {}
+  }, [subject, bodyHtml, audience, chipEmails, excludeChipEmails])
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -468,6 +470,7 @@ export default function BroadcastsClient() {
           body_html: bodyHtml,
           audience,
           ...(audience === 'specific_emails' ? { specificEmails: parsedEmails } : {}),
+          ...(excludeChipEmails.length > 0 ? { excludeEmails: excludeChipEmails } : {}),
         }),
       })
       const data = await res.json()
@@ -477,6 +480,7 @@ export default function BroadcastsClient() {
       editor?.chain().clearContent().unsetAllMarks().run()
       setBodyHtml('')
       setChipEmails([])
+      setExcludeChipEmails([])
       setAudience('specific_emails')
       try { localStorage.removeItem(DRAFT_KEY) } catch {}  // 4. clear draft on send
     } catch {
@@ -698,6 +702,27 @@ export default function BroadcastsClient() {
                     {audience !== 'specific_emails' && (
                       <div style={{ fontSize: '11px', color: countLoading ? '#ccc' : '#3B6B2F', minHeight: '16px' }}>
                         {countLoading ? 'Counting…' : recipientCount !== null ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}${recipientCount > MAX_RECIPIENTS ? ` (capped at ${MAX_RECIPIENTS})` : ''}` : ''}
+                      </div>
+                    )}
+                    {/* Exclude emails — visible for all non-specific audiences */}
+                    {audience !== 'specific_emails' && (
+                      <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.4rem' }}>Exclude emails</div>
+                        <ChipInput
+                          chips={excludeChipEmails}
+                          onAdd={email => setExcludeChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
+                          onRemove={email => setExcludeChipEmails(prev => prev.filter(e => e !== email))}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem' }}>
+                          <span style={{ fontSize: '11px', color: excludeChipEmails.length > 0 ? '#8A6535' : '#ccc' }}>
+                            {excludeChipEmails.length > 0 ? `${excludeChipEmails.length} excluded` : 'None'}
+                          </span>
+                          {excludeChipEmails.length > 0 && (
+                            <button onClick={() => setExcludeChipEmails([])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>
+                              Clear
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                     {/* 1. Chip email input */}
