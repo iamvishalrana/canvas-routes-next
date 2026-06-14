@@ -604,12 +604,12 @@ export default function BroadcastsClient() {
                         </div>
                       </div>
                       {/* 3. expand body toggle */}
-                      {h.body_html && (
+                      {(h.body_html || h.failed_recipients?.length > 0) && (
                         <button
                           onClick={() => setExpandedHistoryId(expandedHistoryId === h.id ? null : h.id)}
-                          style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '3px 8px', cursor: 'pointer', color: '#888', fontSize: '10px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                          style={{ background: h.failed_count > 0 ? 'rgba(123,32,50,0.05)' : 'none', border: h.failed_count > 0 ? '0.5px solid rgba(123,32,50,0.25)' : '0.5px solid rgba(0,0,0,0.12)', padding: '3px 8px', cursor: 'pointer', color: h.failed_count > 0 ? '#7B2032' : '#888', fontSize: '10px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
                         >
-                          {expandedHistoryId === h.id ? 'Hide' : 'Preview'}
+                          {expandedHistoryId === h.id ? 'Hide' : h.failed_count > 0 ? 'Details' : 'Preview'}
                         </button>
                       )}
                       {/* 2. re-use button */}
@@ -622,13 +622,29 @@ export default function BroadcastsClient() {
                       </button>
                     </div>
                   </div>
-                  {/* 3. expanded body preview */}
-                  {expandedHistoryId === h.id && h.body_html && (
+                  {/* 3. expanded details: failed recipients + body preview */}
+                  {expandedHistoryId === h.id && (
                     <div style={{ padding: '1.25rem 1.5rem', borderBottom: idx < history.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', background: '#fafaf9' }}>
-                      <div
-                        style={{ fontSize: '14px', lineHeight: '1.75', color: '#444', fontFamily: 'Arial,sans-serif' }}
-                        dangerouslySetInnerHTML={{ __html: h.body_html }}
-                      />
+                      {h.failed_recipients?.length > 0 && (
+                        <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.85rem 1rem', background: 'rgba(123,32,50,0.04)', border: '0.5px solid rgba(123,32,50,0.18)' }}>
+                          <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            {h.failed_recipients.length} failed recipient{h.failed_recipients.length !== 1 ? 's' : ''}
+                          </div>
+                          {h.failed_recipients.map((f, fi) => (
+                            <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < h.failed_recipients.length - 1 ? '0.4rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>
+                              <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{f.name || f.email}</span>
+                              {f.name && <span style={{ color: '#999' }}> · {f.email}</span>}
+                              {f.reason && <span style={{ color: '#7B2032' }}> — {f.reason}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {h.body_html && (
+                        <div
+                          style={{ fontSize: '14px', lineHeight: '1.75', color: '#444', fontFamily: 'Arial,sans-serif' }}
+                          dangerouslySetInnerHTML={{ __html: h.body_html }}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

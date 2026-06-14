@@ -23,7 +23,7 @@ export async function GET() {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('broadcasts')
-    .select('id, subject, body_html, audience, specific_emails, sent_count, failed_count, sent_at')
+    .select('id, subject, body_html, audience, specific_emails, sent_count, failed_count, failed_recipients, sent_at')
     .order('sent_at', { ascending: false })
     .limit(100)
   return Response.json(data || [])
@@ -130,6 +130,7 @@ export async function POST(request) {
 
   let sent = 0
   let failed = 0
+  const failedRecipients = []
 
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
     const batch = recipients.slice(i, i + BATCH_SIZE)
@@ -150,11 +151,17 @@ export async function POST(request) {
               .replace('<!-- UNSUBSCRIBE_FOOTER -->', buildUnsubscribeFooter(recipient.email)),
           }),
         })
-        return res.ok ? 'sent' : 'failed'
-      } catch { return 'failed' }
+        if (res.ok) return { ok: true }
+        let reason = `HTTP ${res.status}`
+        try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
+        return { ok: false, email: recipient.email, name: recipient.name || '', reason }
+      } catch (err) {
+        return { ok: false, email: recipient.email, name: recipient.name || '', reason: err.message || 'Network error' }
+      }
     }))
-    sent   += results.filter(r => r === 'sent').length
-    failed += results.filter(r => r === 'failed').length
+    for (const r of results) {
+      if (r.ok) { sent++ } else { failed++; failedRecipients.push({ email: r.email, name: r.name, reason: r.reason }) }
+    }
   }
 
   // Save to broadcast history using normalized emails, not the raw client input
@@ -166,6 +173,7 @@ export async function POST(request) {
       specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
       sent_count: sent,
       failed_count: failed,
+      failed_recipients: failedRecipients.length > 0 ? failedRecipients : null,
     })
   } catch {} // don't fail the response if history write fails
 
