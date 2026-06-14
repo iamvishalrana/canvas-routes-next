@@ -116,13 +116,15 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
 
         {/* Photo — wrapper div handles the overlap behind the sticky bar.
             Padding on <img> is unreliable across browsers; use overflow:hidden
-            on the container instead. onError hides the whole wrapper. */}
+            on the container instead. Image starts invisible so the browser's
+            broken-image icon never flashes; onLoad reveals it, onError hides the wrapper. */}
         {ev.photo_url && (
           <div style={{ marginTop: '-44px', height: '244px', overflow: 'hidden', flexShrink: 0 }}>
             <img
               src={ev.photo_url}
               alt=""
-              style={{ width: '100%', height: '244px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+              style={{ width: '100%', height: '244px', objectFit: 'cover', objectPosition: 'center', display: 'block', opacity: 0, transition: 'opacity 0.2s' }}
+              onLoad={e => { e.currentTarget.style.opacity = '1' }}
               onError={e => { e.currentTarget.parentElement.style.display = 'none' }}
             />
           </div>
@@ -178,7 +180,7 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
                   </span>
                 ) : (
                   <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)' }}>
-                    Register
+                    Registration Open · Click to Register
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </a>
                 )
