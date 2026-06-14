@@ -18,6 +18,15 @@ const COUNTRY_CODES = [
   '+886', '+961', '+962', '+965', '+966', '+968', '+971', '+972', '+973', '+974',
 ]
 
+function formatEventDate(isoDate) {
+  if (!isoDate) return ''
+  try {
+    const [y, m, d] = isoDate.split('-').map(Number)
+    const date = new Date(y, m - 1, d)
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch { return isoDate }
+}
+
 const PAST_EVENTS = {
   'Cars & Coffee': {
     img: '/cc-page.jpg', imgAlt: 'Cars & Coffee event poster', imgPos: 'top',
@@ -554,7 +563,7 @@ export default function Home() {
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
             {date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true},
             ...dbEvents.map(ev => ({
-              date: ev.date, name: ev.name, loc: ev.location || '', type: ev.type,
+              date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '', type: ev.type,
               teaser: ev.description || '', _id: ev.id,
               photo_url: ev.photo_url || null,
               registration_opens_at: ev.registration_opens_at, registration_closes_at: ev.registration_closes_at,
