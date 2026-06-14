@@ -162,6 +162,10 @@ export default function EventsClient() {
   const [addRegEmail, setAddRegEmail] = useState({})
   const [addingReg, setAddingReg] = useState({})
   const [addRegErr, setAddRegErr] = useState({})
+  const [addRegSearch, setAddRegSearch] = useState({})
+  const [addRegShowDrop, setAddRegShowDrop] = useState({})
+  const [allContacts, setAllContacts] = useState([])
+  const [contactsLoaded, setContactsLoaded] = useState(false)
 
   // Invite actions
   const [inviting, setInviting] = useState({})
@@ -338,6 +342,18 @@ export default function EventsClient() {
     if (!res.ok) { setDeleteEventError(p => ({ ...p, [id]: 'Failed to delete event.' })); return }
     setDeleteEventConfirm(null)
     load()
+  }
+
+  async function ensureContactsLoaded() {
+    if (contactsLoaded) return
+    try {
+      const res = await fetch('/api/admin/contacts')
+      if (res.ok) {
+        const data = await res.json()
+        setAllContacts((Array.isArray(data) ? data : []).map(c => ({ name: c.name || '', email: c.email || '' })).filter(c => c.email))
+        setContactsLoaded(true)
+      }
+    } catch {}
   }
 
   async function addRegistrant(eventId) {
@@ -695,7 +711,7 @@ export default function EventsClient() {
                             {regEmailResult[item.id]?.sent != null && !regEmailOpen[item.id] && (
                               <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Sent to {regEmailResult[item.id].sent}{regEmailResult[item.id].failed > 0 ? `, ${regEmailResult[item.id].failed} failed` : ''}.</span>
                             )}
-                            <GhostBtn small onClick={() => { setAddRegOpen(p => ({ ...p, [item.id]: !p[item.id] })); setAddRegErr(p => ({ ...p, [item.id]: null })) }}>
+                            <GhostBtn small onClick={() => { setAddRegOpen(p => ({ ...p, [item.id]: !p[item.id] })); setAddRegErr(p => ({ ...p, [item.id]: null })); setAddRegSearch(p => ({ ...p, [item.id]: '' })); ensureContactsLoaded() }}>
                               {addRegOpen[item.id] ? 'Cancel' : '+ Add'}
                             </GhostBtn>
                             <GhostBtn small onClick={() => { setRegEmailOpen(p => ({ ...p, [item.id]: !p[item.id] })); setRegEmailResult(p => ({ ...p, [item.id]: null })) }}>
@@ -707,7 +723,50 @@ export default function EventsClient() {
                         {/* Manual add registrant form */}
                         {addRegOpen[item.id] && (
                           <div style={{ marginBottom: '1rem', padding: '0.85rem 1rem', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.08)' }}>
-                            <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#666', marginBottom: '0.6rem', fontFamily: 'var(--font-inter)' }}>Add registrant — no email will be sent</div>
+                            <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#666', marginBottom: '0.65rem', fontFamily: 'var(--font-inter)' }}>
+                              Add registrant — no email will be sent
+                            </div>
+
+                            {/* Contact search */}
+                            <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+                              <input
+                                placeholder="Search existing contacts by name or email…"
+                                value={addRegSearch[item.id] || ''}
+                                onChange={e => { setAddRegSearch(p => ({ ...p, [item.id]: e.target.value })); setAddRegShowDrop(p => ({ ...p, [item.id]: true })) }}
+                                onFocus={() => setAddRegShowDrop(p => ({ ...p, [item.id]: true }))}
+                                onBlur={() => setTimeout(() => setAddRegShowDrop(p => ({ ...p, [item.id]: false })), 150)}
+                                style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                              {addRegShowDrop[item.id] && (addRegSearch[item.id] || '').trim().length >= 1 && (() => {
+                                const q = (addRegSearch[item.id] || '').toLowerCase()
+                                const matches = allContacts.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)).slice(0, 8)
+                                return (
+                                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '0.5px solid rgba(0,0,0,0.14)', borderTop: 'none', zIndex: 50, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                                    {matches.length === 0 ? (
+                                      <div style={{ padding: '0.6rem 0.8rem', fontSize: '12px', color: '#bbb', fontFamily: 'var(--font-inter)' }}>No matching contacts — fill in manually below.</div>
+                                    ) : matches.map((c, ci) => (
+                                      <div
+                                        key={ci}
+                                        onMouseDown={() => {
+                                          setAddRegName(p => ({ ...p, [item.id]: c.name }))
+                                          setAddRegEmail(p => ({ ...p, [item.id]: c.email }))
+                                          setAddRegSearch(p => ({ ...p, [item.id]: '' }))
+                                          setAddRegShowDrop(p => ({ ...p, [item.id]: false }))
+                                        }}
+                                        style={{ padding: '0.55rem 0.8rem', cursor: 'pointer', borderBottom: ci < matches.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#fafaf9'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        <div style={{ fontSize: '13px', color: '#1a1a1a', fontFamily: 'var(--font-inter)' }}>{c.name || '—'}</div>
+                                        <div style={{ fontSize: '11px', color: '#888', fontFamily: 'var(--font-inter)' }}>{c.email}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              })()}
+                            </div>
+
+                            {/* Name + email fields (pre-filled from search or typed manually) */}
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                               <input
                                 placeholder="Name"
