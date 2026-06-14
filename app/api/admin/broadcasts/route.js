@@ -75,11 +75,11 @@ export async function POST(request) {
     } else if (audience === 'all_contacts') {
       recipients = await fetchContacts()
     } else if (audience === 'contacts_non_members') {
-      const [allContacts, activeMembers] = await Promise.all([
+      const [allContacts, allMembers] = await Promise.all([
         fetchContacts(),
-        fetchMembers({ membership_status: 'active' }),
+        fetchMembers(),
       ])
-      const memberEmails = new Set(activeMembers.map(m => m.email.toLowerCase()))
+      const memberEmails = new Set(allMembers.map(m => m.email.toLowerCase()))
       recipients = allContacts.filter(c => !memberEmails.has(c.email.toLowerCase()))
     } else if (audience === 'everyone') {
       const [members, contacts] = await Promise.all([
