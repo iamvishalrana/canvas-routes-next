@@ -128,7 +128,7 @@ export async function POST(request, { params }) {
         to: user.email,
         reply_to: 'jerry@canvasroutes.com',
         subject: `You're registered — ${ev.name}`,
-        html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid }),
+        html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid, eventId, date: ev.date || null }),
         text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}${!isFree ? `. Payment: ${amountLabel}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
       }),
     }).catch(() => {})
