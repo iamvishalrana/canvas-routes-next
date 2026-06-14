@@ -149,12 +149,9 @@ export default function EventsClient() {
   const [sendingRegEmail, setSendingRegEmail] = useState({})
   const [regEmailResult, setRegEmailResult] = useState({})
 
-  // Individual registrant email compose (key = `${eventId}::${email}`)
-  const [indivEmailOpen, setIndivEmailOpen] = useState(null)
-  const [indivEmailSubject, setIndivEmailSubject] = useState('')
-  const [indivEmailBody, setIndivEmailBody] = useState('')
-  const [sendingIndivEmail, setSendingIndivEmail] = useState(false)
-  const [indivEmailResult, setIndivEmailResult] = useState(null)
+  // Individual registrant confirm email (key = `${eventId}::${email}`)
+  const [sendingConfirmEmail, setSendingConfirmEmail] = useState({})
+  const [confirmEmailResult, setConfirmEmailResult] = useState({})
 
   // Manual add registrant
   const [addRegOpen, setAddRegOpen] = useState({})
@@ -383,41 +380,23 @@ export default function EventsClient() {
     }
   }
 
-  function openIndivEmail(eventId, r) {
+  async function sendConfirmEmail(eventId, r) {
     const key = `${eventId}::${r.email}`
-    setIndivEmailOpen(prev => prev === key ? null : key)
-    setIndivEmailResult(null)
-    setIndivEmailSubject('')
-    setIndivEmailBody('')
-  }
-
-  async function sendEmailToRegistrant(r) {
-    if (!r.email || r.email === '—') return
-    const subject = indivEmailSubject.trim()
-    const body = indivEmailBody.trim()
-    if (!subject || !body) return
-    const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:600px;">' +
-      body.split('\n').map(l => l.trim()
-        ? `<p style="margin:0 0 14px;">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`
-        : ''
-      ).join('') +
-      '<!-- UNSUBSCRIBE_FOOTER --></div>'
-    setSendingIndivEmail(true)
-    setIndivEmailResult(null)
+    setSendingConfirmEmail(p => ({ ...p, [key]: true }))
+    setConfirmEmailResult(p => ({ ...p, [key]: null }))
     try {
-      const res = await fetch('/api/admin/broadcasts', {
+      const res = await fetch(`/api/admin/events/${eventId}/registrants/confirm-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, html, body_html: body, audience: 'specific_emails', specificEmails: [r.email] }),
+        body: JSON.stringify({ email: r.email, name: r.name }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) { setIndivEmailResult({ error: d.error || 'Send failed.' }); return }
-      setIndivEmailResult({ sent: true, name: r.name || r.email })
-      setIndivEmailOpen(null)
+      if (!res.ok) { setConfirmEmailResult(p => ({ ...p, [key]: { error: d.error || 'Send failed.' } })); return }
+      setConfirmEmailResult(p => ({ ...p, [key]: { sent: true } }))
     } catch {
-      setIndivEmailResult({ error: 'Network error.' })
+      setConfirmEmailResult(p => ({ ...p, [key]: { error: 'Network error.' } }))
     } finally {
-      setSendingIndivEmail(false)
+      setSendingConfirmEmail(p => ({ ...p, [key]: false }))
     }
   }
 
@@ -825,18 +804,11 @@ export default function EventsClient() {
                           </div>
                         )}
 
-                        {/* Last-sent confirmation toast */}
-                        {indivEmailResult?.sent && (
-                          <div style={{ marginBottom: '0.75rem', fontSize: '12px', color: '#3B6B2F' }}>
-                            Email sent to {indivEmailResult.name}.
-                          </div>
-                        )}
-
                         {/* Registrants table */}
                         <div style={{ overflowX: 'auto' }}>
                           <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isMobile ? 'unset' : '580px' }}>
                             {!isMobile && (
-                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 80px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
                                 {['Name', 'Email', 'Type', 'Status', 'Paid', ''].map(h => (
                                   <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                                 ))}
@@ -844,10 +816,11 @@ export default function EventsClient() {
                             )}
                             {registrantsData[item.id].map((r, ri) => {
                               const indivKey = `${item.id}::${r.email}`
-                              const isOpen = indivEmailOpen === indivKey
+                              const sending = !!sendingConfirmEmail[indivKey]
+                              const result = confirmEmailResult[indivKey]
                               return (
                                 <div key={ri}>
-                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 80px', padding: '0.55rem 0.85rem', borderBottom: (!isOpen && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', background: isOpen ? 'rgba(197,168,130,0.04)' : 'transparent' }}>
+                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
                                     {isMobile ? (
                                       <div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -860,9 +833,12 @@ export default function EventsClient() {
                                             </div>
                                           </div>
                                           {r.email && r.email !== '—' && (
-                                            <GhostBtn small onClick={() => openIndivEmail(item.id, r)}>{isOpen ? 'Cancel' : 'Email'}</GhostBtn>
+                                            <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>
+                                              {sending ? '…' : result?.sent ? '✓ Sent' : 'Confirm'}
+                                            </GhostBtn>
                                           )}
                                         </div>
+                                        {result?.error && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem' }}>{result.error}</div>}
                                       </div>
                                     ) : (
                                       <>
@@ -871,45 +847,17 @@ export default function EventsClient() {
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'registered') ? '#3B6B2F' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status || '—'}</div>
                                         <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</div>
-                                        <div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                                           {r.email && r.email !== '—' && (
-                                            <GhostBtn small onClick={() => openIndivEmail(item.id, r)}>{isOpen ? 'Cancel' : 'Email'}</GhostBtn>
+                                            <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>
+                                              {sending ? '…' : result?.sent ? '✓ Sent' : 'Send Confirm'}
+                                            </GhostBtn>
                                           )}
+                                          {result?.error && <span style={{ fontSize: '10px', color: '#7B2032' }}>{result.error}</span>}
                                         </div>
                                       </>
                                     )}
                                   </div>
-                                  {/* Inline compose for this registrant */}
-                                  {isOpen && (
-                                    <div style={{ padding: '0.85rem', background: '#fafaf9', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', borderTop: '0.5px solid rgba(197,168,130,0.2)' }}>
-                                      <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6535', marginBottom: '0.6rem', fontFamily: 'var(--font-inter)' }}>
-                                        Email to {r.name || r.email}
-                                      </div>
-                                      <div style={{ marginBottom: '0.45rem' }}>
-                                        <input
-                                          placeholder="Subject"
-                                          value={indivEmailSubject}
-                                          onChange={e => setIndivEmailSubject(e.target.value)}
-                                          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
-                                        />
-                                      </div>
-                                      <div style={{ marginBottom: '0.6rem' }}>
-                                        <textarea
-                                          placeholder="Message"
-                                          value={indivEmailBody}
-                                          onChange={e => setIndivEmailBody(e.target.value)}
-                                          rows={4}
-                                          style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
-                                        />
-                                      </div>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                                        <PrimaryBtn disabled={sendingIndivEmail || !indivEmailSubject.trim() || !indivEmailBody.trim()} onClick={() => sendEmailToRegistrant(r)}>
-                                          {sendingIndivEmail ? 'Sending…' : 'Send'}
-                                        </PrimaryBtn>
-                                        {indivEmailResult?.error && <span style={{ fontSize: '12px', color: '#7B2032' }}>{indivEmailResult.error}</span>}
-                                      </div>
-                                    </div>
-                                  )}
                                 </div>
                               )
                             })}

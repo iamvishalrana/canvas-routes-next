@@ -46,14 +46,17 @@ export async function POST(request, { params }) {
     registrations: [...prevRegs, newReg],
     source: existing?.source || 'Manual — Admin',
     ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
-  }, { onConflict: 'email' }).select('id').single()
+  }, { onConflict: 'email' }).select('id').maybeSingle()
 
   if (appErr) return Response.json({ error: appErr.message }, { status: 500 })
 
+  // maybeSingle() returns null data if upsert committed but returned 0 rows — fall back to a SELECT
+  const appId = appData?.id ?? (await admin.from('applications').select('id').eq('email', normalEmail).maybeSingle()).data?.id
+
   // Ensure contact row exists
-  if (appData?.id) {
+  if (appId) {
     await admin.from('contacts').upsert(
-      { application_id: appData.id },
+      { application_id: appId },
       { onConflict: 'application_id', ignoreDuplicates: true }
     ).catch(() => {})
   }
