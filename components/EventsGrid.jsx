@@ -47,9 +47,6 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
       onClick={onClick}
       style={{ background: isPast ? 'rgba(255,255,255,0.7)' : '#fff', border: '0.5px solid rgba(0,0,0,0.08)', overflow: 'hidden', cursor: 'pointer' }}
     >
-      {ev.photo_url && (
-        <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: 'auto', display: 'block' }} onError={e => { e.currentTarget.style.display = 'none' }} />
-      )}
       <div style={{ padding: '1.75rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
         <div style={{ flexShrink: 0, width: '48px' }}>
           <DateBlock rawDate={rawDate} />
