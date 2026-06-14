@@ -373,10 +373,9 @@ export default function EventsClient() {
       setAddRegName(p => ({ ...p, [eventId]: '' }))
       setAddRegEmail(p => ({ ...p, [eventId]: '' }))
       setAddRegOpen(p => ({ ...p, [eventId]: false }))
-      // Bust cache and reload registrants
-      setRegistrantsData(prev => { const n = { ...prev }; delete n[eventId]; return n })
+      // Force-reload the registrants panel (stays open, shows updated list)
       const item = items.find(i => i.id === eventId)
-      if (item) toggleRegistrants(eventId, item.name)
+      if (item) toggleRegistrants(eventId, item.name, { forceReload: true })
     } catch {
       setAddRegErr(p => ({ ...p, [eventId]: 'Network error.' }))
     } finally {
@@ -496,10 +495,10 @@ export default function EventsClient() {
     }
   }
 
-  async function toggleRegistrants(eventId, eventName) {
-    if (showRegistrants === eventId) { setShowRegistrants(null); return }
+  async function toggleRegistrants(eventId, eventName, { forceReload = false } = {}) {
+    if (!forceReload && showRegistrants === eventId) { setShowRegistrants(null); return }
     setShowRegistrants(eventId)
-    if (registrantsData[eventId]) return
+    if (!forceReload && registrantsData[eventId]) return
     setLoadingRegistrants(true)
     try {
       const [regRes, cRes] = await Promise.all([
@@ -782,7 +781,7 @@ export default function EventsClient() {
                                 style={{ flex: '1 1 180px', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
                               />
                               <PrimaryBtn
-                                disabled={addingReg[item.id] || !addRegName[item.id]?.trim() || !addRegEmail[item.id]?.trim()}
+                                disabled={addingReg[item.id] || !addRegName[item.id]?.trim() || !addRegEmail[item.id]?.trim() || !(addRegEmail[item.id] || '').includes('@')}
                                 onClick={() => addRegistrant(item.id)}
                               >
                                 {addingReg[item.id] ? 'Adding…' : 'Add'}

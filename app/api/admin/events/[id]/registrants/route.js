@@ -33,7 +33,7 @@ export async function POST(request, { params }) {
 
   // Upsert into applications — add this event to their registrations array
   const { data: existing } = await admin.from('applications')
-    .select('id, registrations')
+    .select('id, registrations, source')
     .eq('email', normalEmail)
     .maybeSingle()
 
