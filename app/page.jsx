@@ -60,6 +60,8 @@ export default function Home() {
   const [meetsOpen, setMeetsOpen] = useState(false)
   const [routesOpen, setRoutesOpen] = useState(false)
   const [pastModalEvent, setPastModalEvent] = useState(null)
+  const [pastModalImageFailed, setPastModalImageFailed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [routesLaunched, setRoutesLaunched] = useState(true)
   const [dbEvents, setDbEvents] = useState([])
 
@@ -131,6 +133,15 @@ export default function Home() {
     const t = setTimeout(() => setShowCCDPopup(true), 2000)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => { setPastModalImageFailed(false) }, [pastModalEvent])
 
   useEffect(() => {
     document.body.style.overflow = (pastModalEvent !== null || showEventsPopup || showCCDPopup) ? 'hidden' : ''
@@ -748,16 +759,18 @@ export default function Home() {
             <div
               key="past-modal"
               onClick={() => setPastModalEvent(null)}
-              style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1.5rem"}}
+              style={{position:"fixed",inset:0,background:"rgba(15,30,20,0.92)",zIndex:1000,display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",padding:isMobile?0:"1.5rem"}}
             >
               <div
                 onClick={ev => ev.stopPropagation()}
-                style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)"}}
+                style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)",borderRadius:isMobile?"16px 16px 0 0":"0",maxHeight:isMobile?"92svh":"none",overflowY:isMobile?"auto":"visible",WebkitOverflowScrolling:"touch"}}
               >
+                <div style={{position:"sticky",top:0,zIndex:10,display:"flex",justifyContent:"flex-end",padding:"0.6rem 0.75rem",background:"#0F1E14"}}>
+                  <button onClick={() => setPastModalEvent(null)} style={{background:"rgba(255,255,255,0.12)",border:"none",cursor:"pointer",color:"#fff",width:isMobile?"36px":"28px",height:isMobile?"36px":"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+                </div>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.75),transparent)",zIndex:1}} />
-                <button onClick={() => setPastModalEvent(null)} style={{position:"absolute",top:"0.6rem",right:"0.6rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1,width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
-                {d.img && <Image src={d.img} alt={d.imgAlt||''} width={842} height={1215} style={{width:"100%",height:"auto",display:"block"}} />}
-                <div style={{padding:"1.8rem 2rem 2rem"}}>
+                {d.img && !pastModalImageFailed && <Image src={d.img} alt={d.imgAlt||''} width={842} height={1215} style={{width:"100%",height:"auto",display:"block",marginTop:"-44px"}} onError={() => setPastModalImageFailed(true)} />}
+                <div style={{padding:isMobile?"1.25rem 1.25rem calc(2rem + env(safe-area-inset-bottom))":"1.8rem 2rem 2rem"}}>
                   <div style={{fontSize:"10px",letterSpacing:"0.22em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",marginBottom:"0.5rem"}}>{d.meta}</div>
                   <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#F5F1EC",lineHeight:"1.1",marginBottom:"0.4rem"}}>{d.title}</div>
                   {d.sub && <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1rem",fontStyle:"italic",color:"rgba(245,241,236,0.5)",marginBottom:"1.4rem"}}>{d.sub}</div>}
