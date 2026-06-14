@@ -1,5 +1,9 @@
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
+import { captureException } from '../../../../../../lib/sentry'
+import { buildInviteHtml } from '../../../../../../lib/inviteEmail'
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
 
 export async function GET(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -24,8 +28,11 @@ export async function POST(request, { params }) {
 
   const admin = createAdminClient()
 
-  // Get the event name so we can write to applications.registrations
-  const { data: ev, error: evErr } = await admin.from('events').select('name').eq('id', id).maybeSingle()
+  const { data: ev, error: evErr } = await admin
+    .from('events')
+    .select('name, type, date, location')
+    .eq('id', id)
+    .maybeSingle()
   if (evErr) return Response.json({ error: evErr.message }, { status: 500 })
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
 
@@ -51,15 +58,70 @@ export async function POST(request, { params }) {
 
   if (appErr) return Response.json({ error: appErr.message }, { status: 500 })
 
-  // maybeSingle() returns null data if upsert committed but returned 0 rows — fall back to a SELECT
   const appId = appData?.id ?? (await admin.from('applications').select('id').eq('email', normalEmail).maybeSingle()).data?.id
 
-  // Ensure contact row exists
   if (appId) {
     await admin.from('contacts').upsert(
       { application_id: appId },
       { onConflict: 'application_id', ignoreDuplicates: true }
     ).catch(() => {})
+  }
+
+  // Auto-send the Confirm My Spot invite email
+  if (appId && process.env.RESEND_API_KEY) {
+    const now = new Date()
+    let expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    if (ev.date) {
+      const cutoff = new Date(new Date(ev.date).getTime() - 48 * 60 * 60 * 1000)
+      if (cutoff < expiresAt) expiresAt = cutoff
+    }
+    if (expiresAt <= now) expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+
+    const { data: existingToken } = await admin
+      .from('rsvp_tokens')
+      .select('confirmed_at, answers')
+      .eq('application_id', appId)
+      .eq('event_name', ev.name)
+      .maybeSingle()
+
+    const { data: tokenRow, error: tokenErr } = await admin
+      .from('rsvp_tokens')
+      .upsert({
+        application_id: appId,
+        event_name: ev.name,
+        expires_at: expiresAt.toISOString(),
+        confirmed_at: existingToken?.confirmed_at ?? null,
+        answers: existingToken?.answers ?? null,
+        declined_at: null,
+      }, { onConflict: 'application_id,event_name', ignoreDuplicates: false })
+      .select('token')
+      .single()
+
+    if (tokenErr || !tokenRow) {
+      captureException(tokenErr, { context: 'registrant-auto-invite-token', appId, eventId: id })
+    } else {
+      const firstName = trimmedName.split(' ')[0]
+      const rsvpUrl = `${SITE}/rsvp/${tokenRow.token}`
+      const isRoadTrip = ev.type === 'Road Trip'
+      const textSignoff = isRoadTrip ? 'See you on the road' : 'See you there'
+
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Canvas Routes <jerry@canvasroutes.com>',
+            to: normalEmail,
+            reply_to: 'jerry@canvasroutes.com',
+            subject: `You're invited — ${ev.name}`,
+            html: buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip),
+            text: `Hey ${firstName},\n\nYou're invited to ${ev.name}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
+          }),
+        })
+      } catch (err) {
+        captureException(err, { context: 'registrant-auto-invite-email', email: normalEmail, eventId: id })
+      }
+    }
   }
 
   return Response.json({ success: true })
