@@ -581,7 +581,7 @@ export default function Home() {
                   ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",paddingBottom:"2px",display:"inline-block"}}>Invite Only</div>
                   : e.membersOnly
                   ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",border:"0.5px solid rgba(59,107,47,0.35)",padding:"3px 10px",display:"inline-block",background:"rgba(59,107,47,0.06)"}}>Members Only</div>
-                  : e.registration_opens_at ? (() => {
+                  : (e.registration_opens_at && !e.photo_url) ? (() => {
                       const now = new Date()
                       const opens = new Date(e.registration_opens_at)
                       const closes = e.registration_closes_at ? new Date(e.registration_closes_at) : null
