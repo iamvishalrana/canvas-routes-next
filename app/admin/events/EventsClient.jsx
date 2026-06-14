@@ -784,7 +784,7 @@ export default function EventsClient() {
                         {addRegOpen[item.id] && (
                           <div style={{ marginBottom: '1rem', padding: '0.85rem 1rem', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.08)' }}>
                             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#666', marginBottom: '0.65rem', fontFamily: 'var(--font-inter)' }}>
-                              Add registrant — no email will be sent
+                              Add registrant — invite email sent automatically
                             </div>
 
                             {/* Contact search */}
@@ -901,7 +901,7 @@ export default function EventsClient() {
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
                               const isPending = confirmEmailPending === indivKey
-                              const canSend = r.email && r.email !== '—'
+                              const canSend = r.email && r.email !== '—' && r.status !== 'confirmed'
                               const isDeletePending = deleteRegConfirm === indivKey
                               const isDeleting = !!deletingReg[indivKey]
                               const deleteErr = deleteRegErr[indivKey]

@@ -290,7 +290,7 @@ export default function RsvpPage() {
 
                 {/* Meet: arrival */}
                 <div>
-                  <div style={LABEL}>When are you planning to arrive?</div>
+                  <div style={LABEL}>When are you planning to arrive? <span style={{ color: 'rgba(245,241,236,0.3)', textTransform: 'none', letterSpacing: 0, fontSize: '10px' }}>optional</span></div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {[
                       { val: 'opening',  label: 'Right at opening' },
@@ -334,6 +334,11 @@ export default function RsvpPage() {
               </button>
 
               {!isRoadTrip && bringingGuest === null && (
+                <p style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', margin: '-0.75rem 0 0', textAlign: 'center' }}>
+                  Select an option above to continue
+                </p>
+              )}
+              {isRoadTrip && whatsapp === null && (
                 <p style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', margin: '-0.75rem 0 0', textAlign: 'center' }}>
                   Select an option above to continue
                 </p>

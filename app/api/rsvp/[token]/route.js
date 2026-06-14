@@ -177,9 +177,9 @@ export async function POST(request, { params }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
           body: JSON.stringify({
-            from: 'Canvas Routes <info@canvasroutes.com>',
+            from: 'Canvas Routes <jerry@canvasroutes.com>',
             to: appEmail,
-            reply_to: 'info@canvasroutes.com',
+            reply_to: 'jerry@canvasroutes.com',
             subject: `You're in — ${tokenRow.event_name}`,
             html,
           }),

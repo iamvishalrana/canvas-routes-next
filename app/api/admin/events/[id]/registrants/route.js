@@ -99,7 +99,7 @@ export async function POST(request, { params }) {
 
     if (tokenErr || !tokenRow) {
       captureException(tokenErr, { context: 'registrant-auto-invite-token', appId, eventId: id })
-    } else {
+    } else if (!existingToken?.confirmed_at) {
       const firstName = trimmedName.split(' ')[0]
       const rsvpUrl = `${SITE}/rsvp/${tokenRow.token}`
       const isRoadTrip = ev.type === 'Road Trip'
