@@ -156,6 +156,13 @@ export default function EventsClient() {
   const [sendingIndivEmail, setSendingIndivEmail] = useState(false)
   const [indivEmailResult, setIndivEmailResult] = useState(null)
 
+  // Manual add registrant
+  const [addRegOpen, setAddRegOpen] = useState({})
+  const [addRegName, setAddRegName] = useState({})
+  const [addRegEmail, setAddRegEmail] = useState({})
+  const [addingReg, setAddingReg] = useState({})
+  const [addRegErr, setAddRegErr] = useState({})
+
   // Invite actions
   const [inviting, setInviting] = useState({})
   const [inviteErr, setInviteErr] = useState({})
@@ -331,6 +338,34 @@ export default function EventsClient() {
     if (!res.ok) { setDeleteEventError(p => ({ ...p, [id]: 'Failed to delete event.' })); return }
     setDeleteEventConfirm(null)
     load()
+  }
+
+  async function addRegistrant(eventId) {
+    const name = (addRegName[eventId] || '').trim()
+    const email = (addRegEmail[eventId] || '').trim()
+    if (!name || !email) return
+    setAddingReg(p => ({ ...p, [eventId]: true }))
+    setAddRegErr(p => ({ ...p, [eventId]: null }))
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/registrants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setAddRegErr(p => ({ ...p, [eventId]: d.error || 'Failed.' })); return }
+      setAddRegName(p => ({ ...p, [eventId]: '' }))
+      setAddRegEmail(p => ({ ...p, [eventId]: '' }))
+      setAddRegOpen(p => ({ ...p, [eventId]: false }))
+      // Bust cache and reload registrants
+      setRegistrantsData(prev => { const n = { ...prev }; delete n[eventId]; return n })
+      const item = items.find(i => i.id === eventId)
+      if (item) toggleRegistrants(eventId, item.name)
+    } catch {
+      setAddRegErr(p => ({ ...p, [eventId]: 'Network error.' }))
+    } finally {
+      setAddingReg(p => ({ ...p, [eventId]: false }))
+    }
   }
 
   function openIndivEmail(eventId, r) {
@@ -651,20 +686,52 @@ export default function EventsClient() {
                       <div style={{ fontSize: '13px', color: '#ccc' }}>No registrants on record.</div>
                     ) : (
                       <>
-                        {/* Email compose header */}
+                        {/* Header row: count + action buttons */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                           <div style={{ fontSize: '12px', color: '#666' }}>
                             {registrantsData[item.id].length} registrant{registrantsData[item.id].length !== 1 ? 's' : ''}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                             {regEmailResult[item.id]?.sent != null && !regEmailOpen[item.id] && (
                               <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Sent to {regEmailResult[item.id].sent}{regEmailResult[item.id].failed > 0 ? `, ${regEmailResult[item.id].failed} failed` : ''}.</span>
                             )}
+                            <GhostBtn small onClick={() => { setAddRegOpen(p => ({ ...p, [item.id]: !p[item.id] })); setAddRegErr(p => ({ ...p, [item.id]: null })) }}>
+                              {addRegOpen[item.id] ? 'Cancel' : '+ Add'}
+                            </GhostBtn>
                             <GhostBtn small onClick={() => { setRegEmailOpen(p => ({ ...p, [item.id]: !p[item.id] })); setRegEmailResult(p => ({ ...p, [item.id]: null })) }}>
-                              {regEmailOpen[item.id] ? 'Cancel' : 'Email Registrants'}
+                              {regEmailOpen[item.id] ? 'Cancel' : 'Email All'}
                             </GhostBtn>
                           </div>
                         </div>
+
+                        {/* Manual add registrant form */}
+                        {addRegOpen[item.id] && (
+                          <div style={{ marginBottom: '1rem', padding: '0.85rem 1rem', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.08)' }}>
+                            <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#666', marginBottom: '0.6rem', fontFamily: 'var(--font-inter)' }}>Add registrant — no email will be sent</div>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                              <input
+                                placeholder="Name"
+                                value={addRegName[item.id] || ''}
+                                onChange={e => setAddRegName(p => ({ ...p, [item.id]: e.target.value }))}
+                                style={{ flex: '1 1 140px', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                              <input
+                                placeholder="Email"
+                                type="email"
+                                value={addRegEmail[item.id] || ''}
+                                onChange={e => setAddRegEmail(p => ({ ...p, [item.id]: e.target.value }))}
+                                style={{ flex: '1 1 180px', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                              <PrimaryBtn
+                                disabled={addingReg[item.id] || !addRegName[item.id]?.trim() || !addRegEmail[item.id]?.trim()}
+                                onClick={() => addRegistrant(item.id)}
+                              >
+                                {addingReg[item.id] ? 'Adding…' : 'Add'}
+                              </PrimaryBtn>
+                            </div>
+                            {addRegErr[item.id] && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.4rem' }}>{addRegErr[item.id]}</div>}
+                          </div>
+                        )}
 
                         {/* Email compose form */}
                         {regEmailOpen[item.id] && (
