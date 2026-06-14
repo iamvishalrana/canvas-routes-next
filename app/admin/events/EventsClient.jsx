@@ -11,6 +11,9 @@ import {
 
 function StatusChip({ rsvp }) {
   if (!rsvp) return <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em' }}>—</span>
+  if (rsvp.declined_at) return (
+    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.35)', padding: '2px 8px', background: 'rgba(123,32,50,0.05)', whiteSpace: 'nowrap' }}>Declined</span>
+  )
   if (rsvp.confirmed_at) return (
     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 8px', background: 'rgba(59,107,47,0.07)', whiteSpace: 'nowrap' }}>✓ Confirmed</span>
   )
@@ -45,19 +48,30 @@ function RsvpAnswers({ answers }) {
   )
 }
 
-function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendInvite }) {
+function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendInvite, declining, declineErr, onDecline, onUndecline }) {
   if (app.rsvp?.confirmed_at) {
     return <span style={{ fontSize: '10px', color: '#3B6B2F', letterSpacing: '0.06em' }}>✓ Confirmed</span>
   }
-  const busy = inviting[keyStr]
-  const isInvited = !!app.rsvp
+  const busy = inviting[keyStr] || declining?.[keyStr]
+  const isDeclined = !!app.rsvp?.declined_at
+  const isInvited = !!app.rsvp && !isDeclined
+  if (isDeclined) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      <GhostBtn small onClick={() => onUndecline(app.id, ev.name)} disabled={busy}>{busy ? '…' : 'Undo Decline'}</GhostBtn>
+      {declineErr?.[keyStr] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{declineErr[keyStr]}</div>}
+    </div>
+  )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-      <GhostBtn small onClick={() => sendInvite(app, ev)} disabled={busy}>
-        {busy ? '…' : isInvited ? 'Re-send Invite' : 'Send Invite'}
-      </GhostBtn>
+      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+        <GhostBtn small onClick={() => sendInvite(app, ev)} disabled={busy}>
+          {busy ? '…' : isInvited ? 'Re-invite' : 'Approve'}
+        </GhostBtn>
+        <DangerBtn small onClick={() => onDecline(app.id, ev.name)} disabled={busy}>Decline</DangerBtn>
+      </div>
       {inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{inviteErr[keyStr]}</div>}
-      {inviteDone[keyStr] && !inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#3B6B2F' }}>Invite sent.</div>}
+      {inviteDone[keyStr] && !inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#3B6B2F' }}>Approved — invite sent.</div>}
+      {declineErr?.[keyStr] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{declineErr[keyStr]}</div>}
     </div>
   )
 }
@@ -127,10 +141,21 @@ export default function EventsClient() {
   const [registrantsData, setRegistrantsData] = useState({})
   const [loadingRegistrants, setLoadingRegistrants] = useState(false)
 
+  // Email registrants compose
+  const [regEmailOpen, setRegEmailOpen] = useState({})
+  const [regEmailSubject, setRegEmailSubject] = useState({})
+  const [regEmailBody, setRegEmailBody] = useState({})
+  const [sendingRegEmail, setSendingRegEmail] = useState({})
+  const [regEmailResult, setRegEmailResult] = useState({})
+
   // Invite actions
   const [inviting, setInviting] = useState({})
   const [inviteErr, setInviteErr] = useState({})
   const [inviteDone, setInviteDone] = useState({})
+
+  // Decline actions
+  const [declining, setDeclining] = useState({})
+  const [declineErr, setDeclineErr] = useState({})
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -294,6 +319,80 @@ export default function EventsClient() {
     if (!res.ok) { setDeleteEventError(p => ({ ...p, [id]: 'Failed to delete event.' })); return }
     setDeleteEventConfirm(null)
     load()
+  }
+
+  async function sendEmailToRegistrants(eventId) {
+    const registrants = registrantsData[eventId] || []
+    const emails = [...new Set(registrants.map(r => r.email).filter(e => e && e !== '—'))]
+    if (!emails.length) return
+    const subject = (regEmailSubject[eventId] || '').trim()
+    const body = (regEmailBody[eventId] || '').trim()
+    if (!subject || !body) return
+    const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:600px;">' +
+      body.split('\n').map(l => l.trim()
+        ? `<p style="margin:0 0 14px;">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`
+        : ''
+      ).join('') +
+      '<!-- UNSUBSCRIBE_FOOTER --></div>'
+    setSendingRegEmail(p => ({ ...p, [eventId]: true }))
+    setRegEmailResult(p => ({ ...p, [eventId]: null }))
+    try {
+      const res = await fetch('/api/admin/broadcasts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, html, body_html: body, audience: 'specific_emails', specificEmails: emails }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setRegEmailResult(p => ({ ...p, [eventId]: { error: d.error || 'Send failed.' } })); return }
+      setRegEmailResult(p => ({ ...p, [eventId]: { sent: d.sent, failed: d.failed } }))
+      setRegEmailSubject(p => ({ ...p, [eventId]: '' }))
+      setRegEmailBody(p => ({ ...p, [eventId]: '' }))
+      setRegEmailOpen(p => ({ ...p, [eventId]: false }))
+    } catch {
+      setRegEmailResult(p => ({ ...p, [eventId]: { error: 'Network error.' } }))
+    } finally {
+      setSendingRegEmail(p => ({ ...p, [eventId]: false }))
+    }
+  }
+
+  async function declineApplication(appId, eventName) {
+    const key = `${appId}-${eventName}`
+    setDeclining(p => ({ ...p, [key]: true }))
+    setDeclineErr(p => ({ ...p, [key]: null }))
+    try {
+      const res = await fetch('/api/admin/event-applications/decline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId: appId, eventName }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setDeclineErr(p => ({ ...p, [key]: d.error || 'Failed.' })); return }
+      load()
+    } catch {
+      setDeclineErr(p => ({ ...p, [key]: 'Network error.' }))
+    } finally {
+      setDeclining(p => ({ ...p, [key]: false }))
+    }
+  }
+
+  async function undeclineApplication(appId, eventName) {
+    const key = `${appId}-${eventName}`
+    setDeclining(p => ({ ...p, [key]: true }))
+    setDeclineErr(p => ({ ...p, [key]: null }))
+    try {
+      const res = await fetch('/api/admin/event-applications/decline', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId: appId, eventName }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setDeclineErr(p => ({ ...p, [key]: d.error || 'Failed.' })); return }
+      load()
+    } catch {
+      setDeclineErr(p => ({ ...p, [key]: 'Network error.' }))
+    } finally {
+      setDeclining(p => ({ ...p, [key]: false }))
+    }
   }
 
   async function toggleRegistrants(eventId, eventName) {
@@ -468,6 +567,9 @@ export default function EventsClient() {
                       {item.registration_enabled ? 'Reg On' : 'Reg Off'}
                     </button>
                     {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
+                    <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name)}>
+                      {showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`}
+                    </GhostBtn>
                     <GhostBtn small onClick={() => isEditing ? setEditing(null) : openEdit(item)}>
                       {isEditing ? 'Close' : 'Edit'}
                     </GhostBtn>
@@ -485,6 +587,103 @@ export default function EventsClient() {
                   </div>
                 )}
 
+                {/* ── Standalone registrants panel ────────────────────────── */}
+                {showRegistrants === item.id && (
+                  <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)', padding: '1.25rem 1.5rem' }}>
+                    {loadingRegistrants && !registrantsData[item.id] ? (
+                      <div style={{ fontSize: '13px', color: '#ccc' }}>Loading…</div>
+                    ) : !registrantsData[item.id] || registrantsData[item.id].length === 0 ? (
+                      <div style={{ fontSize: '13px', color: '#ccc' }}>No registrants on record.</div>
+                    ) : (
+                      <>
+                        {/* Email compose header */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {registrantsData[item.id].length} registrant{registrantsData[item.id].length !== 1 ? 's' : ''}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            {regEmailResult[item.id]?.sent != null && !regEmailOpen[item.id] && (
+                              <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Sent to {regEmailResult[item.id].sent}{regEmailResult[item.id].failed > 0 ? `, ${regEmailResult[item.id].failed} failed` : ''}.</span>
+                            )}
+                            <GhostBtn small onClick={() => { setRegEmailOpen(p => ({ ...p, [item.id]: !p[item.id] })); setRegEmailResult(p => ({ ...p, [item.id]: null })) }}>
+                              {regEmailOpen[item.id] ? 'Cancel' : 'Email Registrants'}
+                            </GhostBtn>
+                          </div>
+                        </div>
+
+                        {/* Email compose form */}
+                        {regEmailOpen[item.id] && (
+                          <div style={{ marginBottom: '1rem', padding: '1rem', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.08)' }}>
+                            <div style={{ marginBottom: '0.5rem' }}>
+                              <input
+                                placeholder="Subject"
+                                value={regEmailSubject[item.id] || ''}
+                                onChange={e => setRegEmailSubject(p => ({ ...p, [item.id]: e.target.value }))}
+                                style={{ width: '100%', padding: '0.7rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                            <div style={{ marginBottom: '0.75rem' }}>
+                              <textarea
+                                placeholder={'Message\n\nUse {{name}} for personalization.'}
+                                value={regEmailBody[item.id] || ''}
+                                onChange={e => setRegEmailBody(p => ({ ...p, [item.id]: e.target.value }))}
+                                rows={5}
+                                style={{ width: '100%', padding: '0.7rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                              />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                              <PrimaryBtn
+                                disabled={sendingRegEmail[item.id] || !regEmailSubject[item.id]?.trim() || !regEmailBody[item.id]?.trim()}
+                                onClick={() => sendEmailToRegistrants(item.id)}
+                              >
+                                {sendingRegEmail[item.id]
+                                  ? 'Sending…'
+                                  : `Send to ${[...new Set((registrantsData[item.id] || []).map(r => r.email).filter(e => e && e !== '—'))].length}`}
+                              </PrimaryBtn>
+                              {regEmailResult[item.id]?.error && <span style={{ fontSize: '12px', color: '#7B2032' }}>{regEmailResult[item.id].error}</span>}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Registrants table */}
+                        <div style={{ overflowX: 'auto' }}>
+                          <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isMobile ? 'unset' : '540px' }}>
+                            {!isMobile && (
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px 80px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                                {['Name', 'Email', 'Type', 'Status', 'Paid'].map(h => (
+                                  <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
+                                ))}
+                              </div>
+                            )}
+                            {registrantsData[item.id].map((r, ri) => (
+                              <div key={ri} style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px 80px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                                {isMobile ? (
+                                  <div>
+                                    <div style={{ fontSize: '12px', color: '#333', fontWeight: '500' }}>{r.name || '—'}</div>
+                                    <div style={{ fontSize: '11px', color: '#888' }}>{r.email || '—'}</div>
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
+                                      {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888' }}>{r.status}</span>}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
+                                    <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
+                                    <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
+                                    <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'registered') ? '#3B6B2F' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status || '—'}</div>
+                                    <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</div>
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {/* ── Expanded edit panel ──────────────────────────────────── */}
                 {isEditing && (
                   <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>
@@ -492,13 +691,9 @@ export default function EventsClient() {
                       tabs={[
                         { id: 'settings',     label: `Settings` },
                         { id: 'applications', label: `Applications${item.total_applications > 0 ? ` (${item.total_applications})` : ''}` },
-                        { id: 'registrants',  label: 'Registrants' },
                       ]}
                       active={tab}
-                      onChange={id => {
-                        setActiveTab(p => ({ ...p, [item.id]: id }))
-                        if (id === 'registrants') toggleRegistrants(item.id, item.name)
-                      }}
+                      onChange={id => setActiveTab(p => ({ ...p, [item.id]: id }))}
                     />
 
                     {/* ── Settings tab ──────────────────────────────────── */}
@@ -581,7 +776,7 @@ export default function EventsClient() {
                                       </div>
                                       {app.rsvp?.answers && <RsvpAnswers answers={app.rsvp.answers} />}
                                       <div style={{ marginTop: '0.65rem' }}>
-                                        <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} />
+                                        <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} declining={declining} declineErr={declineErr} onDecline={declineApplication} onUndecline={undeclineApplication} />
                                       </div>
                                     </div>
                                   ) : (
@@ -598,7 +793,7 @@ export default function EventsClient() {
                                           : <span style={{ fontSize: '10px', color: '#bbb' }}>—</span>}
                                       </div>
                                       <StatusChip rsvp={app.rsvp} />
-                                      <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} />
+                                      <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} declining={declining} declineErr={declineErr} onDecline={declineApplication} onUndecline={undeclineApplication} />
                                     </div>
                                   )}
                                 </div>
@@ -609,50 +804,6 @@ export default function EventsClient() {
                       </div>
                     )}
 
-                    {/* ── Registrants tab ───────────────────────────────── */}
-                    {tab === 'registrants' && (
-                      <div style={{ padding: '1.25rem 1.5rem' }}>
-                        {loadingRegistrants && !registrantsData[item.id] ? (
-                          <div style={{ fontSize: '13px', color: '#ccc' }}>Loading…</div>
-                        ) : !registrantsData[item.id] || registrantsData[item.id].length === 0 ? (
-                          <div style={{ fontSize: '13px', color: '#ccc' }}>No registrants on record.</div>
-                        ) : (
-                          <div style={{ overflowX: 'auto' }}>
-                            <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isMobile ? 'unset' : '540px' }}>
-                              {!isMobile && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px 80px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-                                  {['Name', 'Email', 'Type', 'Status', 'Paid'].map(h => (
-                                    <div key={h} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
-                                  ))}
-                                </div>
-                              )}
-                              {registrantsData[item.id].map((r, ri) => (
-                                <div key={ri} style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 80px 80px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
-                                  {isMobile ? (
-                                    <div>
-                                      <div style={{ fontSize: '12px', color: '#333', fontWeight: '500' }}>{r.name || '—'}</div>
-                                      <div style={{ fontSize: '11px', color: '#888' }}>{r.email || '—'}</div>
-                                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
-                                        <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
-                                        {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888' }}>{r.status}</span>}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
-                                      <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
-                                      <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
-                                      <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'registered') ? '#3B6B2F' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status || '—'}</div>
-                                      <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</div>
-                                    </>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

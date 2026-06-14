@@ -143,6 +143,7 @@ export async function POST(request) {
       expires_at: expiresAt.toISOString(),
       confirmed_at: null,
       answers: null,
+      declined_at: null,
     }, { onConflict: 'application_id,event_name', ignoreDuplicates: false })
     .select('token')
     .single()
