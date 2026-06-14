@@ -164,7 +164,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
     setAuthorizedBusy(r.stripe_payment_intent_id)
     setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
-      const res = await fetch(`/api/admin/applications/${r.id}/capture`, { method: 'POST' })
+      const res = await fetch(`/api/admin/stripe-payments/${r.stripe_payment_intent_id}/capture`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) { setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Capture failed.' })); return }
       setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'paid' } : x))
@@ -177,7 +177,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
     setAuthorizedBusy(r.stripe_payment_intent_id)
     setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
-      const res = await fetch(`/api/admin/applications/${r.id}/reject`, { method: 'POST' })
+      const res = await fetch(`/api/admin/stripe-payments/${r.stripe_payment_intent_id}/cancel`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) { setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Cancel failed.' })); return }
       setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'rejected' } : x))
