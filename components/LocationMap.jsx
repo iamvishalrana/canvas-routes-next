@@ -29,13 +29,13 @@ export default function LocationMap({ location }) {
   )
 
   return (
-    <div style={{ marginBottom: '1.75rem' }}>
+    <div style={{ marginBottom: '1.25rem' }}>
       {staticMapUrl && !imgFailed && (
         <a href={googleUrl} target="_blank" rel="noreferrer" style={{ display: 'block', marginBottom: '0.75rem' }}>
           <img
             src={staticMapUrl}
             alt={location}
-            style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: 'center', display: 'block', border: '0.5px solid rgba(0,0,0,0.09)' }}
+            style={{ width: '100%', height: '140px', objectFit: 'cover', objectPosition: 'center', display: 'block', border: '0.5px solid rgba(0,0,0,0.09)' }}
             onError={() => setImgFailed(true)}
           />
         </a>

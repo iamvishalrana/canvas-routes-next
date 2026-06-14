@@ -48,7 +48,7 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
       style={{ background: isPast ? 'rgba(255,255,255,0.7)' : '#fff', border: '0.5px solid rgba(0,0,0,0.08)', overflow: 'hidden', cursor: 'pointer' }}
     >
       {ev.photo_url && (
-        <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: 'auto', display: 'block' }} />
+        <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: 'auto', display: 'block' }} onError={e => { e.currentTarget.style.display = 'none' }} />
       )}
       <div style={{ padding: '1.75rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
         <div style={{ flexShrink: 0, width: '48px' }}>
@@ -102,7 +102,7 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
     >
-      <div style={{ background: '#F5F1EC', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }}>
+      <div style={{ background: '#F5F1EC', width: '100%', maxWidth: '480px', maxHeight: '88vh', overflowY: 'auto', position: 'relative', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }}>
         {/* Close — sticky header row so button never scrolls away */}
         <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', padding: '0.6rem 0.75rem', background: '#F5F1EC' }}>
           <button
@@ -116,10 +116,10 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
 
         {/* Photo — negative margin pulls it behind the sticky bar so nothing is hidden */}
         {ev.photo_url && (
-          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: 'auto', display: 'block', marginTop: '-44px', paddingTop: '44px', boxSizing: 'border-box' }} />
+          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: 'center', display: 'block', marginTop: '-44px', paddingTop: '44px', boxSizing: 'border-box' }} onError={e => { e.currentTarget.style.display = 'none' }} />
         )}
 
-        <div style={{ padding: '1.75rem 2rem 2rem' }}>
+        <div style={{ padding: '1.25rem 1.5rem 1.75rem' }}>
           {/* Type + registered */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '3px 10px', background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.type}</span>
@@ -132,7 +132,7 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
           </div>
 
           {/* Name */}
-          <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.8rem, 5vw, 2.4rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, margin: '0 0 1rem', letterSpacing: '-0.01em' }}>{ev.name}</h2>
+          <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, margin: '0 0 0.85rem', letterSpacing: '-0.01em' }}>{ev.name}</h2>
 
           {/* Date + location */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -155,7 +155,7 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
 
           {/* Description */}
           {ev.description && (
-            <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.85, letterSpacing: '0.01em', marginBottom: '1.75rem' }}>{ev.description}</p>
+            <p style={{ fontSize: '13px', color: '#555', lineHeight: 1.75, letterSpacing: '0.01em', marginBottom: '1.25rem' }}>{ev.description}</p>
           )}
 
           {/* Registration — only render the section when there is content to show */}
