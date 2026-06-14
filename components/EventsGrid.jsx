@@ -114,9 +114,18 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
           </button>
         </div>
 
-        {/* Photo — negative margin pulls it behind the sticky bar so nothing is hidden */}
+        {/* Photo — wrapper div handles the overlap behind the sticky bar.
+            Padding on <img> is unreliable across browsers; use overflow:hidden
+            on the container instead. onError hides the whole wrapper. */}
         {ev.photo_url && (
-          <img src={ev.photo_url} alt={ev.name} style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: 'center', display: 'block', marginTop: '-44px', paddingTop: '44px', boxSizing: 'border-box' }} onError={e => { e.currentTarget.style.display = 'none' }} />
+          <div style={{ marginTop: '-44px', height: '244px', overflow: 'hidden', flexShrink: 0 }}>
+            <img
+              src={ev.photo_url}
+              alt=""
+              style={{ width: '100%', height: '244px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+              onError={e => { e.currentTarget.parentElement.style.display = 'none' }}
+            />
+          </div>
         )}
 
         <div style={{ padding: '1.25rem 1.5rem 1.75rem' }}>
