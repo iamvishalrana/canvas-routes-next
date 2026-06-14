@@ -1,15 +1,17 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
 import { checkRateLimit } from '../../../../lib/rateLimit'
+import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail'
 
-async function getEventType(supabase, eventName) {
+async function getEvent(supabase, eventName) {
   const trimmed = eventName.trim()
+  const cols = 'id, type, date, date_display, location'
   // Try exact match first, then base name (strips trailing " — Date" suffix)
-  const { data: exact } = await supabase.from('events').select('type').ilike('name', trimmed).maybeSingle()
-  if (exact) return exact.type || null
+  const { data: exact } = await supabase.from('events').select(cols).ilike('name', trimmed).maybeSingle()
+  if (exact) return exact
   const base = trimmed.split(/\s[—–]\s/)[0].trim()
-  const { data: partial } = await supabase.from('events').select('type').ilike('name', `${base}%`).maybeSingle()
-  return partial?.type || null
+  const { data: partial } = await supabase.from('events').select(cols).ilike('name', `${base}%`).maybeSingle()
+  return partial || null
 }
 
 export async function GET(request, { params }) {
@@ -33,11 +35,11 @@ export async function GET(request, { params }) {
     return Response.json({ error: "This invitation has expired. Please reply to your invite email and we'll sort it out.", expired: true }, { status: 410 })
   }
 
-  const eventType = await getEventType(supabase, data.event_name)
+  const event = await getEvent(supabase, data.event_name)
 
   return Response.json({
     eventName: data.event_name,
-    eventType,
+    eventType: event?.type || null,
     applicantName: data.applications?.name || '',
     alreadyConfirmed: !!data.confirmed_at,
     confirmedAt: data.confirmed_at,
@@ -68,8 +70,8 @@ export async function POST(request, { params }) {
   }
   if (tokenRow.confirmed_at) return Response.json({ alreadyConfirmed: true, eventName: tokenRow.event_name })
 
-  const eventType = await getEventType(supabase, tokenRow.event_name)
-  const isRoadTrip = eventType === 'Road Trip'
+  const event = await getEvent(supabase, tokenRow.event_name)
+  const isRoadTrip = event?.type === 'Road Trip'
 
   // Build answers based on event type
   const answers = isRoadTrip
@@ -109,10 +111,11 @@ export async function POST(request, { params }) {
     if (regUpdateErr) captureException(regUpdateErr, { context: 'rsvp-confirm-reg-update', token })
   }
 
-  // Notify admin
+  // Notify admin + send final invite to registrant
   const appName  = tokenRow.applications?.name  || 'Someone'
   const appEmail = tokenRow.applications?.email || ''
   if (process.env.RESEND_API_KEY) {
+    // Admin notification
     try {
       const answerLines = isRoadTrip
         ? [
@@ -141,6 +144,36 @@ export async function POST(request, { params }) {
       })
     } catch (err) {
       captureException(err, { context: 'rsvp-admin-notify', token })
+    }
+
+    // Final invite email to registrant
+    if (appEmail) {
+      try {
+        const firstName = appName.split(' ')[0]
+        const html = buildEventConfirmHtml({
+          firstName,
+          eventName: tokenRow.event_name,
+          dateDisplay: event?.date_display || null,
+          location: event?.location || null,
+          isFree: true,
+          amountPaid: 0,
+          eventId: event?.id || null,
+          date: event?.date || null,
+        })
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Canvas Routes <info@canvasroutes.com>',
+            to: appEmail,
+            reply_to: 'info@canvasroutes.com',
+            subject: `You're in — ${tokenRow.event_name}`,
+            html,
+          }),
+        })
+      } catch (err) {
+        captureException(err, { context: 'rsvp-final-invite', token })
+      }
     }
   }
 

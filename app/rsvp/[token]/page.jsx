@@ -132,7 +132,7 @@ export default function RsvpPage() {
             <p style={{ color: 'rgba(245,241,236,0.45)', fontSize: '13px', lineHeight: '1.8', marginBottom: '2rem' }}>
               {isRoadTrip
                 ? "You'll receive the full itinerary — meeting point, timing, and everything you need — closer to the date. Keep an eye on your inbox."
-                : "We'll send event details closer to the date. See you there."}
+                : "A confirmation has been sent to your email with the event details and a calendar invite."}
             </p>
             <a href="https://www.instagram.com/canvasroutes" style={{ display: 'inline-block', padding: '0.85rem 2rem', border: '1px solid rgba(197,168,130,0.4)', color: '#c5a882', textDecoration: 'none', fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }}>
               Follow @canvasroutes →
