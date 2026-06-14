@@ -198,7 +198,7 @@ function Signature() {
 }
 
 // ── 5. Preview panel with from/subject header ────────────────────────────────
-function PreviewPanel({ bodyHtml, bodyEmpty, maxHeight, subject }) {
+function PreviewPanel({ bodyHtml, bodyEmpty, maxHeight, subject, fromEmail }) {
   return (
     <div style={{ border: '0.5px solid rgba(0,0,0,0.12)', background: '#fff', overflow: 'hidden' }}>
       {/* Browser chrome */}
@@ -209,7 +209,7 @@ function PreviewPanel({ bodyHtml, bodyEmpty, maxHeight, subject }) {
       <div style={{ padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf9' }}>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline', marginBottom: '0.2rem' }}>
           <span style={{ fontSize: '10px', color: '#ccc', fontFamily: 'Arial,sans-serif', width: '44px', flexShrink: 0 }}>From</span>
-          <span style={{ fontSize: '12px', color: '#555', fontFamily: 'Arial,sans-serif' }}>Canvas Routes &lt;info@canvasroutes.com&gt;</span>
+          <span style={{ fontSize: '12px', color: '#555', fontFamily: 'Arial,sans-serif' }}>Canvas Routes &lt;{fromEmail || 'info@canvasroutes.com'}&gt;</span>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
           <span style={{ fontSize: '10px', color: '#ccc', fontFamily: 'Arial,sans-serif', width: '44px', flexShrink: 0 }}>Subject</span>
@@ -324,6 +324,7 @@ function Toolbar({ editor }) {
 export default function BroadcastsClient() {
   const [tab, setTab]                           = useState('compose')
   const [audience, setAudience]                 = useState('specific_emails')
+  const [fromEmail, setFromEmail]               = useState('info@canvasroutes.com')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
   const [excludeChipEmails, setExcludeChipEmails] = useState([])        // exclude list
   const [subject, setSubject]                   = useState('')
@@ -377,6 +378,7 @@ export default function BroadcastsClient() {
       if (!saved) return
       if (saved.subject) setSubject(saved.subject)
       if (saved.audience) setAudience(saved.audience)
+      if (saved.fromEmail) setFromEmail(saved.fromEmail)
       if (Array.isArray(saved.chipEmails) && saved.chipEmails.length) setChipEmails(saved.chipEmails)
       if (Array.isArray(saved.excludeChipEmails) && saved.excludeChipEmails.length) setExcludeChipEmails(saved.excludeChipEmails)
       if (saved.bodyHtml && saved.bodyHtml !== '<p></p>') {
@@ -389,8 +391,8 @@ export default function BroadcastsClient() {
   // 4. Auto-save draft to localStorage on any change
   useEffect(() => {
     if (!draftRestoredRef.current) return
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, excludeChipEmails })) } catch {}
-  }, [subject, bodyHtml, audience, chipEmails, excludeChipEmails])
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, excludeChipEmails, fromEmail })) } catch {}
+  }, [subject, bodyHtml, audience, chipEmails, excludeChipEmails, fromEmail])
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -469,6 +471,7 @@ export default function BroadcastsClient() {
           html: buildHtml(bodyHtml),
           body_html: bodyHtml,
           audience,
+          fromEmail,
           ...(audience === 'specific_emails' ? { specificEmails: parsedEmails } : {}),
           ...(excludeChipEmails.length > 0 ? { excludeEmails: excludeChipEmails } : {}),
         }),
@@ -481,6 +484,7 @@ export default function BroadcastsClient() {
       setBodyHtml('')
       setChipEmails([])
       setExcludeChipEmails([])
+      setFromEmail('info@canvasroutes.com')
       setAudience('specific_emails')
       try { localStorage.removeItem(DRAFT_KEY) } catch {}  // 4. clear draft on send
     } catch {
@@ -687,6 +691,22 @@ export default function BroadcastsClient() {
               {/* ── Left column ── */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
+                {/* From */}
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>From</div>
+                  </div>
+                  <div style={{ padding: '1rem 1.25rem' }}>
+                    <div style={{ position: 'relative' }}>
+                      <select style={{ ...sel, width: '100%' }} value={fromEmail} onChange={e => setFromEmail(e.target.value)}>
+                        <option value="info@canvasroutes.com">Canvas Routes — info@canvasroutes.com</option>
+                        <option value="jerry@canvasroutes.com">Jerry — jerry@canvasroutes.com</option>
+                      </select>
+                      <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Audience */}
                 <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
@@ -836,7 +856,7 @@ export default function BroadcastsClient() {
                   </button>
                 </div>
                 {/* 5. Inline preview with from/subject header */}
-                <PreviewPanel bodyHtml={bodyHtml} bodyEmpty={bodyEmpty} maxHeight="calc(100vh - 18rem)" subject={subject} />
+                <PreviewPanel bodyHtml={bodyHtml} bodyEmpty={bodyEmpty} maxHeight="calc(100vh - 18rem)" subject={subject} fromEmail={fromEmail} />
               </div>
 
               {/* Expanded preview modal */}

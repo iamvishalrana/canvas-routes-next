@@ -34,7 +34,12 @@ export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
-  const { subject, html, body_html, audience, specificEmails, excludeEmails } = await request.json()
+  const { subject, html, body_html, audience, specificEmails, excludeEmails, fromEmail } = await request.json()
+  const ALLOWED_FROM = ['info@canvasroutes.com', 'jerry@canvasroutes.com']
+  const resolvedFrom = ALLOWED_FROM.includes(fromEmail) ? fromEmail : 'info@canvasroutes.com'
+  const fromHeader = resolvedFrom === 'jerry@canvasroutes.com'
+    ? 'Canvas Routes <jerry@canvasroutes.com>'
+    : 'Canvas Routes <info@canvasroutes.com>'
 
   if (!subject?.trim()) return Response.json({ error: 'Subject is required.' }, { status: 400 })
   if (!html?.trim()) return Response.json({ error: 'Email body is required.' }, { status: 400 })
@@ -142,7 +147,7 @@ export async function POST(request) {
   for (let i = 0; i < recipients.length; i += RESEND_BATCH_SIZE) {
     const batch = recipients.slice(i, i + RESEND_BATCH_SIZE)
     const payload = batch.map(recipient => ({
-      from: 'Canvas Routes <info@canvasroutes.com>',
+      from: fromHeader,
       to: recipient.email,
       subject: subject.trim().replace(/\{\{name\}\}/gi, recipient.name || 'there'),
       html: html
