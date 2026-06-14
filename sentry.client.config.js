@@ -9,6 +9,8 @@ Sentry.init({
     /runtime\.sendMessage/,
     /window\.webkit\.messageHandlers/,
     /webkit\.messageHandlers/,
+    // Sentry's own addEventListener instrumentation hitting a non-array Next.js internal
+    /elm\.events\.push is not a function/,
   ],
 
   beforeSend(event, hint) {
