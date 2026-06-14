@@ -47,6 +47,20 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
   }
 
+  // Notify admin
+  if (process.env.RESEND_API_KEY) {
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: 'info@canvasroutes.com',
+        subject: `Event Registration — ${ev.name} — ${memberName}`,
+        text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${normalEmail}\nPayment: Free`,
+      }),
+    }).catch(() => {})
+  }
+
   // Also write to applications + contacts so they appear in the admin event registrants panel
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) try {
     const { data: existingApp } = await admin
