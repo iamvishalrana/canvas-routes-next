@@ -22,14 +22,15 @@ export async function POST(request, { params }) {
   ])
 
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
+  if (!member) return Response.json({ error: 'Member profile not found.' }, { status: 404 })
   if (ev.registration_enabled === false) return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
 
   const now = new Date()
   if (ev.registration_opens_at && now < new Date(ev.registration_opens_at)) {
-    if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member?.tier !== 'inner_circle') {
+    if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
       return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
     }
-    if (!ev.priority_window_end || member?.tier !== 'inner_circle') {
+    if (!ev.priority_window_end || member.tier !== 'inner_circle') {
       return Response.json({ error: 'Registration is not open yet.' }, { status: 400 })
     }
   }
@@ -42,11 +43,11 @@ export async function POST(request, { params }) {
       .eq('event_id', eventId).in('stripe_payment_status', ['free', 'paid'])
     if (count >= ev.capacity) return Response.json({ error: 'This event is at capacity.' }, { status: 400 })
   }
-  if (!member) return Response.json({ error: 'Member profile not found.' }, { status: 404 })
 
-  // Guard against double-registration
+  // Guard against double-registration — only block confirmed rows, not stale pending
   const { data: existing } = await admin.from('event_registrations')
-    .select('id').eq('event_id', eventId).eq('member_id', user.id).maybeSingle()
+    .select('id').eq('event_id', eventId).eq('member_id', user.id)
+    .in('stripe_payment_status', ['free', 'paid']).maybeSingle()
   if (existing) return Response.json({ alreadyRegistered: true, success: true })
 
   const memberName = member.name?.trim() || user.email.split('@')[0]

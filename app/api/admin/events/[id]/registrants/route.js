@@ -25,7 +25,8 @@ export async function POST(request, { params }) {
   const admin = createAdminClient()
 
   // Get the event name so we can write to applications.registrations
-  const { data: ev } = await admin.from('events').select('name').eq('id', id).single()
+  const { data: ev, error: evErr } = await admin.from('events').select('name').eq('id', id).maybeSingle()
+  if (evErr) return Response.json({ error: evErr.message }, { status: 500 })
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
 
   const normalEmail = email.toLowerCase().trim()

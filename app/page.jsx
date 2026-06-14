@@ -777,13 +777,15 @@ export default function Home() {
                 onClick={ev => ev.stopPropagation()}
                 style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)",borderRadius:isMobile?"16px 16px 0 0":"0",maxHeight:isMobile?"92svh":"none",overflowY:isMobile?"auto":"visible",WebkitOverflowScrolling:"touch"}}
               >
-                {/* Close button floats over the image */}
-                <button onClick={() => setPastModalEvent(null)} style={{position:"absolute",top:"0.65rem",right:"0.65rem",zIndex:10,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",width:"30px",height:"30px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+                {/* Close — sticky so it stays visible when the sheet scrolls on mobile */}
+                <div style={{position:"sticky",top:0,zIndex:10,display:"flex",justifyContent:"flex-end",padding:"0.5rem 0.6rem",background:"transparent",pointerEvents:"none"}}>
+                  <button onClick={() => setPastModalEvent(null)} style={{pointerEvents:"auto",background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",color:"#fff",width:"30px",height:"30px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",fontFamily:"var(--font-inter),sans-serif"}}>×</button>
+                </div>
 
-                {/* Photo — flush to top, no container */}
+                {/* Photo — pulled up behind the transparent sticky bar */}
                 {d.img && !pastModalImageFailed && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={d.img} alt={d.imgAlt||''} style={{width:"100%",height:"auto",display:"block"}} onError={() => setPastModalImageFailed(true)} />
+                  <img src={d.img} alt={d.imgAlt||''} style={{width:"100%",height:"auto",display:"block",marginTop:"-42px"}} onError={() => setPastModalImageFailed(true)} />
                 )}
 
                 <div style={{padding:isMobile?"1.25rem 1.25rem calc(2rem + env(safe-area-inset-bottom))":"1.8rem 2rem 2rem"}}>

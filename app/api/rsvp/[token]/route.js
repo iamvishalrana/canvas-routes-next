@@ -115,65 +115,57 @@ export async function POST(request, { params }) {
   const appName  = tokenRow.applications?.name  || 'Someone'
   const appEmail = tokenRow.applications?.email || ''
   if (process.env.RESEND_API_KEY) {
-    // Admin notification
-    try {
-      const answerLines = isRoadTrip
-        ? [
-            answers.dietary    ? `Dietary: ${answers.dietary}` : 'Dietary: None',
-            answers.passengers !== null ? `People in car: ${answers.passengers}` : null,
-            answers.whatsapp !== null ? `WhatsApp group: ${answers.whatsapp ? 'Yes' : 'No'}` : null,
-          ]
-        : [
-            answers.bringing_guest !== null ? `Bringing a guest: ${answers.bringing_guest ? 'Yes' : 'No'}` : null,
-            answers.car_paint  ? `Colour: ${answers.car_paint}` : null,
-            answers.car_mods   ? `Mods: ${answers.car_mods}`    : null,
-            answers.arrival    ? `Arrival: ${{ opening: 'Right at opening', first_hour: 'Within first hour', later: 'Later on' }[answers.arrival] || answers.arrival}` : null,
-          ]
-      await fetch('https://api.resend.com/emails', {
+    const answerLines = isRoadTrip
+      ? [
+          answers.dietary    ? `Dietary: ${answers.dietary}` : 'Dietary: None',
+          answers.passengers !== null ? `People in car: ${answers.passengers}` : null,
+          answers.whatsapp !== null ? `WhatsApp group: ${answers.whatsapp ? 'Yes' : 'No'}` : null,
+        ]
+      : [
+          answers.bringing_guest !== null ? `Bringing a guest: ${answers.bringing_guest ? 'Yes' : 'No'}` : null,
+          answers.car_paint  ? `Colour: ${answers.car_paint}` : null,
+          answers.car_mods   ? `Mods: ${answers.car_mods}`    : null,
+          answers.arrival    ? `Arrival: ${{ opening: 'Right at opening', first_hour: 'Within first hour', later: 'Later on' }[answers.arrival] || answers.arrival}` : null,
+        ]
+
+    // Fire-and-forget — DB is already committed, don't block the 200 on email latency
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: 'jerry@canvasroutes.com',
+        subject: `RSVP Confirmed — ${appName} — ${tokenRow.event_name}`,
+        text: [
+          `${appName} (${appEmail}) confirmed their spot for ${tokenRow.event_name}.`,
+          ...answerLines.filter(Boolean),
+        ].join('\n'),
+      }),
+    }).catch(err => captureException(err, { context: 'rsvp-admin-notify', token }))
+
+    if (appEmail) {
+      const firstName = appName.split(' ')[0]
+      const html = buildEventConfirmHtml({
+        firstName,
+        eventName: tokenRow.event_name,
+        dateDisplay: event?.date_display || null,
+        location: event?.location || null,
+        isFree: true,
+        amountPaid: 0,
+        eventId: event?.id || null,
+        date: event?.date || null,
+      })
+      fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
         body: JSON.stringify({
           from: 'Canvas Routes <info@canvasroutes.com>',
-          to: 'jerry@canvasroutes.com',
-          subject: `RSVP Confirmed — ${appName} — ${tokenRow.event_name}`,
-          text: [
-            `${appName} (${appEmail}) confirmed their spot for ${tokenRow.event_name}.`,
-            ...answerLines.filter(Boolean),
-          ].join('\n'),
+          to: appEmail,
+          reply_to: 'info@canvasroutes.com',
+          subject: `You're in — ${tokenRow.event_name}`,
+          html,
         }),
-      })
-    } catch (err) {
-      captureException(err, { context: 'rsvp-admin-notify', token })
-    }
-
-    // Final invite email to registrant
-    if (appEmail) {
-      try {
-        const firstName = appName.split(' ')[0]
-        const html = buildEventConfirmHtml({
-          firstName,
-          eventName: tokenRow.event_name,
-          dateDisplay: event?.date_display || null,
-          location: event?.location || null,
-          isFree: true,
-          amountPaid: 0,
-          eventId: event?.id || null,
-          date: event?.date || null,
-        })
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-          body: JSON.stringify({
-            from: 'Canvas Routes <info@canvasroutes.com>',
-            to: appEmail,
-            reply_to: 'info@canvasroutes.com',
-            subject: `You're in — ${tokenRow.event_name}`,
-            html,
-          }),
-        })
-      } catch (err) {
-        captureException(err, { context: 'rsvp-final-invite', token })
-      }
+      }).catch(err => captureException(err, { context: 'rsvp-final-invite', token }))
     }
   }
 

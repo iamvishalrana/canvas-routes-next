@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
-  EVENT_TYPES, MEMBER_ATTENDANCE_KEYS, normalizeEventName,
+  EVENT_TYPES, normalizeEventName,
   parseCarMakeModel,
   inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch,
 } from '../_components/shared'
@@ -306,7 +306,7 @@ export default function EventsClient() {
   }
 
   async function removePhoto(eventId) {
-    setUploadingPhoto(eventId)
+    setUploadingPhoto(eventId); setPhotoError(null)
     try {
       const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'DELETE' })
       if (res.ok) setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: null } : ev))
@@ -335,10 +335,12 @@ export default function EventsClient() {
 
   async function del(id) {
     setDeleteEventError(p => ({ ...p, [id]: null }))
-    const res = await fetch(`/api/admin/events/${id}`, { method: 'DELETE' })
-    if (!res.ok) { setDeleteEventError(p => ({ ...p, [id]: 'Failed to delete event.' })); return }
-    setDeleteEventConfirm(null)
-    load()
+    try {
+      const res = await fetch(`/api/admin/events/${id}`, { method: 'DELETE' })
+      if (!res.ok) { setDeleteEventError(p => ({ ...p, [id]: 'Failed to delete event.' })); return }
+      setDeleteEventConfirm(null)
+      load()
+    } catch { setDeleteEventError(p => ({ ...p, [id]: 'Network error.' })) }
   }
 
   async function ensureContactsLoaded() {
