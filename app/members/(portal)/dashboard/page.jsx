@@ -97,11 +97,11 @@ export default async function DashboardPage() {
     const s = str.trim()
     if (/^[A-Za-z]+ \d{4}$/.test(s)) {
       const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2'))
-      if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+      if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth(), 1)
     }
     if (/^\d{4}-\d{2}$/.test(s)) {
       const [y, m] = s.split('-').map(Number)
-      return new Date(y, m, 0)
+      return new Date(y, m - 1, 1)
     }
     const d = new Date(s)
     return isNaN(d) ? null : d

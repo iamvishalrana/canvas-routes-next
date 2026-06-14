@@ -3,8 +3,8 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export async function PATCH(request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json()
   const allowed = ['name', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))

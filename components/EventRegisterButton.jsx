@@ -8,6 +8,73 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null
 
+function RegistrationConfirmPopup({ eventName, onClose }) {
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+      }}
+    >
+      <div style={{
+        background: '#0F1E14', maxWidth: '420px', width: '100%',
+        padding: '2.5rem 2rem 2rem',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+        textAlign: 'center',
+      }}>
+        {/* Checkmark */}
+        <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            width: '44px', height: '44px', borderRadius: '50%',
+            border: '1.5px solid rgba(197,168,130,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+
+        <div style={{ fontSize: '8px', letterSpacing: '0.32em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.75rem' }}>
+          You&apos;re registered
+        </div>
+
+        <h2 style={{
+          fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.4rem, 4vw, 1.9rem)',
+          fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, margin: '0 0 1.75rem',
+          letterSpacing: '-0.01em',
+        }}>
+          {eventName}
+        </h2>
+
+        <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, marginBottom: '2rem' }}>
+          A confirmation email is on its way. We&apos;ll see you there.
+        </p>
+
+        <button
+          onClick={onClose}
+          style={{
+            background: 'transparent', color: '#F5F1EC',
+            border: '0.5px solid rgba(245,241,236,0.3)',
+            padding: '0.65rem 2rem', fontSize: '8.5px', letterSpacing: '0.24em',
+            textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif',
+            cursor: 'pointer',
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function PayForm({ event, onSuccess, onClose, onPayingChange }) {
   const stripe = useStripe()
   const elements = useElements()
@@ -97,6 +164,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   const [regError, setRegError] = useState(null)
   const payingRef = useRef(false)
   const [done, setDone] = useState(isRegistered)
+  const [confirmedName, setConfirmedName] = useState(null)
   useEffect(() => { setDone(isRegistered) }, [isRegistered])
 
   const now = new Date()
@@ -159,7 +227,9 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   if (!regOpen) return null
 
   async function handleClick() {
+    // Bug fix: clear both error states on every attempt
     setPiError(null)
+    setRegError(null)
     if (isFree) {
       setRegistering(true)
       try {
@@ -167,6 +237,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         const data = await res.json().catch(() => ({}))
         if (!res.ok) { setRegError(data.error || 'Registration failed.'); return }
         setDone(true)
+        setConfirmedName(event.name)
         onRegistrationComplete?.()
         router.refresh()
       } catch {
@@ -176,16 +247,22 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
       }
       return
     }
+    // Bug fix: wrap PI fetch in try/catch so a network error doesn't leave loadingPI stuck
     setLoadingPI(true)
-    const res = await fetch('/api/stripe/event-payment-intent', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventId: event.id }),
-    })
-    const data = await res.json().catch(() => ({}))
-    setLoadingPI(false)
-    if (!res.ok) { setPiError(data.error || 'Could not start registration.'); return }
-    setClientSecret(data.clientSecret)
-    setModalOpen(true)
+    try {
+      const res = await fetch('/api/stripe/event-payment-intent', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: event.id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setPiError(data.error || 'Could not start registration.'); return }
+      setClientSecret(data.clientSecret)
+      setModalOpen(true)
+    } catch {
+      setPiError('Network error — please try again.')
+    } finally {
+      setLoadingPI(false)
+    }
   }
 
   const btnLabel = isFree
@@ -252,13 +329,28 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
             <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
               <PayForm
                 event={event}
-                onSuccess={() => { setModalOpen(false); setClientSecret(null); setDone(true); onRegistrationComplete?.(); router.refresh() }}
+                onSuccess={() => {
+                  setModalOpen(false)
+                  setClientSecret(null)
+                  setDone(true)
+                  setConfirmedName(event.name)
+                  onRegistrationComplete?.()
+                  router.refresh()
+                }}
                 onClose={() => { setModalOpen(false); setClientSecret(null) }}
                 onPayingChange={v => { payingRef.current = v }}
               />
             </Elements>
           </div>
         </div>
+      )}
+
+      {/* Registration confirmation popup */}
+      {confirmedName && (
+        <RegistrationConfirmPopup
+          eventName={confirmedName}
+          onClose={() => setConfirmedName(null)}
+        />
       )}
     </>
   )

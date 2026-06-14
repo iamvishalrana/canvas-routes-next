@@ -3,8 +3,8 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export async function POST(request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const formData = await request.formData()
   const file = formData.get('photo')

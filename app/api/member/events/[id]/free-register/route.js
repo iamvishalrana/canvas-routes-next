@@ -75,31 +75,30 @@ export async function POST(request, { params }) {
     const firstName = memberName.split(' ')[0] || 'there'
     const dateDisplay = ev.date_display || ev.date || null
 
-    // Confirmation to member
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-      body: JSON.stringify({
-        from: 'Canvas Routes <jerry@canvasroutes.com>',
-        to: normalEmail,
-        reply_to: 'jerry@canvasroutes.com',
-        subject: `You're registered — ${ev.name}`,
-        html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree: true, amountPaid: 0, eventId, date: ev.date || null }),
-        text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
-      }),
-    }).catch(() => {})
-
-    // Notify admin
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-      body: JSON.stringify({
-        from: 'Canvas Routes <info@canvasroutes.com>',
-        to: 'info@canvasroutes.com',
-        subject: `Event Registration — ${ev.name} — ${memberName}`,
-        text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${normalEmail}\nPayment: Free`,
-      }),
-    }).catch(() => {})
+    await Promise.all([
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Canvas Routes <jerry@canvasroutes.com>',
+          to: normalEmail,
+          reply_to: 'jerry@canvasroutes.com',
+          subject: `You're registered — ${ev.name}`,
+          html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree: true, amountPaid: 0, eventId, date: ev.date || null }),
+          text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
+        }),
+      }).catch(err => captureException(err, { context: 'free-register-member-email', eventId })),
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Canvas Routes <info@canvasroutes.com>',
+          to: 'info@canvasroutes.com',
+          subject: `Event Registration — ${ev.name} — ${memberName}`,
+          text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${normalEmail}\nPayment: Free`,
+        }),
+      }).catch(err => captureException(err, { context: 'free-register-admin-email', eventId })),
+    ])
   }
 
   // Also write to applications + contacts so they appear in the admin event registrants panel

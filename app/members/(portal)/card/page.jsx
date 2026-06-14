@@ -20,13 +20,13 @@ export default async function CardPage() {
   const [{ data: member }, { data: application }] = await Promise.all([
     admin
       .from('members')
-      .select('id, name, tier, membership_status, membership_number, created_at, car_year, car_make, car_model')
+      .select('id, name, tier, membership_status, membership_number, created_at, car_year, car_make, car_model, cars')
       .eq('id', user.id)
       .maybeSingle(),
     admin
       .from('applications')
       .select('car_paint')
-      .eq('email', user.email)
+      .eq('email', user.email?.toLowerCase())
       .maybeSingle(),
   ])
 
@@ -40,9 +40,10 @@ export default async function CardPage() {
   const joinYear = Number.isFinite(rawYear) ? rawYear : 2026
   const verifyUrl = `${SITE_URL}/verify/${member.id}`
 
-  const carYear = member.car_year?.trim() || null
-  const carMake = member.car_make?.trim() || null
-  const carModel = member.car_model?.trim() || null
+  const primaryCar = member.cars?.[0]
+  const carYear = (primaryCar?.year || member.car_year)?.toString().trim() || null
+  const carMake = (primaryCar?.make || member.car_make)?.trim() || null
+  const carModel = (primaryCar?.model || member.car_model)?.trim() || null
   const carLine = [carYear, carMake, carModel].filter(Boolean).join(' ') || null
   const carPaint = application?.car_paint?.trim() || null
 

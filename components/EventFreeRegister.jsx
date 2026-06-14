@@ -1,11 +1,79 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+function RegistrationConfirmPopup({ eventName, onClose }) {
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+      }}
+    >
+      <div style={{
+        background: '#0F1E14', maxWidth: '420px', width: '100%',
+        padding: '2.5rem 2rem 2rem',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+        textAlign: 'center',
+      }}>
+        {/* Checkmark */}
+        <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            width: '44px', height: '44px', borderRadius: '50%',
+            border: '1.5px solid rgba(197,168,130,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+
+        <div style={{ fontSize: '8px', letterSpacing: '0.32em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.75rem' }}>
+          You&apos;re registered
+        </div>
+
+        <h2 style={{
+          fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.4rem, 4vw, 1.9rem)',
+          fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, margin: '0 0 1.75rem',
+          letterSpacing: '-0.01em',
+        }}>
+          {eventName}
+        </h2>
+
+        <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, marginBottom: '2rem' }}>
+          A confirmation email is on its way. We&apos;ll see you there.
+        </p>
+
+        <button
+          onClick={onClose}
+          style={{
+            background: 'transparent', color: '#F5F1EC',
+            border: '0.5px solid rgba(245,241,236,0.3)',
+            padding: '0.65rem 2rem', fontSize: '8.5px', letterSpacing: '0.24em',
+            textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif',
+            cursor: 'pointer',
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function EventFreeRegister({ eventId, eventName, initiallyRegistered }) {
   const router = useRouter()
   const [state, setState] = useState(initiallyRegistered ? 'done' : 'idle')
   const [error, setError] = useState(null)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   async function confirm() {
     setState('loading')
@@ -15,6 +83,7 @@ export default function EventFreeRegister({ eventId, eventName, initiallyRegiste
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setError(data.error || 'Registration failed. Please try again.'); setState('confirm'); return }
       setState('done')
+      setShowConfirm(true)
       router.refresh()
     } catch {
       setError('Network error — please try again.')
@@ -24,16 +93,24 @@ export default function EventFreeRegister({ eventId, eventName, initiallyRegiste
 
   if (state === 'done') {
     return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-        fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase',
-        color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)',
-        padding: '0.45rem 1rem', background: 'rgba(59,107,47,0.04)',
-        fontFamily: 'var(--font-inter), sans-serif',
-      }}>
-        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Registered
-      </span>
+      <>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+          fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase',
+          color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)',
+          padding: '0.45rem 1rem', background: 'rgba(59,107,47,0.04)',
+          fontFamily: 'var(--font-inter), sans-serif',
+        }}>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Registered
+        </span>
+        {showConfirm && (
+          <RegistrationConfirmPopup
+            eventName={eventName}
+            onClose={() => setShowConfirm(false)}
+          />
+        )}
+      </>
     )
   }
 

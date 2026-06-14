@@ -30,13 +30,19 @@ export async function POST(request, { params }) {
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
   if (ev.registration_enabled === false) return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
 
-  const now = new Date()
-  const regOpen = ev.registration_opens_at && now >= new Date(ev.registration_opens_at) && (!ev.registration_closes_at || now <= new Date(ev.registration_closes_at))
-  if (!regOpen) return Response.json({ error: 'Registration is not open.' }, { status: 400 })
   if (!member) return Response.json({ error: 'Member record not found.' }, { status: 404 })
 
-  if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
-    return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
+  const now = new Date()
+  if (ev.registration_opens_at && now < new Date(ev.registration_opens_at)) {
+    if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
+      return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
+    }
+    if (!ev.priority_window_end || member.tier !== 'inner_circle') {
+      return Response.json({ error: 'Registration is not open yet.' }, { status: 400 })
+    }
+  }
+  if (ev.registration_closes_at && now > new Date(ev.registration_closes_at)) {
+    return Response.json({ error: 'Registration has closed for this event.' }, { status: 400 })
   }
 
   // Early-exit if already registered (before any PI work)
@@ -113,31 +119,30 @@ export async function POST(request, { params }) {
     const amountLabel = isFree ? 'Free' : `$${(amountPaid / 100).toFixed(2)} CAD`
     const dateDisplay = ev.date_display || ev.date || null
 
-    // Confirmation to member
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-      body: JSON.stringify({
-        from: 'Canvas Routes <jerry@canvasroutes.com>',
-        to: user.email,
-        reply_to: 'jerry@canvasroutes.com',
-        subject: `You're registered — ${ev.name}`,
-        html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid, eventId, date: ev.date || null }),
-        text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}${!isFree ? `. Payment: ${amountLabel}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
-      }),
-    }).catch(() => {})
-
-    // Notify admin
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-      body: JSON.stringify({
-        from: 'Canvas Routes <info@canvasroutes.com>',
-        to: 'info@canvasroutes.com',
-        subject: `Event Registration — ${ev.name} — ${memberName}`,
-        text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${user.email}\nPayment: ${amountLabel}`,
-      }),
-    }).catch(() => {})
+    await Promise.all([
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Canvas Routes <jerry@canvasroutes.com>',
+          to: user.email,
+          reply_to: 'jerry@canvasroutes.com',
+          subject: `You're registered — ${ev.name}`,
+          html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid, eventId, date: ev.date || null }),
+          text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}${!isFree ? `. Payment: ${amountLabel}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
+        }),
+      }).catch(err => captureException(err, { context: 'event-register-member-email', eventId })),
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Canvas Routes <info@canvasroutes.com>',
+          to: 'info@canvasroutes.com',
+          subject: `Event Registration — ${ev.name} — ${memberName}`,
+          text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${user.email}\nPayment: ${amountLabel}`,
+        }),
+      }).catch(err => captureException(err, { context: 'event-register-admin-email', eventId })),
+    ])
   }
 
   return Response.json({ success: true })
