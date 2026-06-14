@@ -9,8 +9,9 @@ export async function PATCH(request, { params }) {
   const supabase = createAdminClient()
 
   // Capture old email BEFORE any update so we can find the applications row later
-  const { data: memberBefore } = await supabase.from('members').select('email').eq('id', id).single()
-  const oldEmail = memberBefore?.email?.toLowerCase().trim()
+  const { data: memberBefore, error: memberLookupErr } = await supabase.from('members').select('email').eq('id', id).maybeSingle()
+  if (memberLookupErr || !memberBefore) return Response.json({ error: 'Member not found.' }, { status: 404 })
+  const oldEmail = memberBefore.email?.toLowerCase().trim()
 
   if (body.email) {
     const newEmail = body.email.trim().toLowerCase()
@@ -18,7 +19,8 @@ export async function PATCH(request, { params }) {
     if (authErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? authErr.message : 'Database error' }, { status: 500 })
   }
 
-  const allowed = ['membership_status', 'tier', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'car_paint', 'dob_day', 'dob_month', 'dob_year', 'cars', 'event_attendance', 'admin_notes', 'notes', 'membership_number']
+  // car_paint is not a column on members — it lives on applications (synced below)
+  const allowed = ['membership_status', 'tier', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars', 'event_attendance', 'admin_notes', 'notes', 'membership_number']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if (update.email) update.email = update.email.trim().toLowerCase()

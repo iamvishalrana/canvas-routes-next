@@ -116,7 +116,7 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
         <div style={{ ...sectionPad, ...sep }}>
           <div style={label}>Photo</div>
           <a href={m.car_photo_url} target="_blank" rel="noreferrer">
-            <img src={m.car_photo_url} alt={m.name} style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }} />
+            <img src={m.car_photo_url} alt={m.name} style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }} onError={e => { e.currentTarget.style.display = 'none' }} />
           </a>
         </div>
       )}
@@ -469,7 +469,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
           <div>
             <L>Email *</L>
             <input style={inp} type="email" value={inviteForm.email}
-              onChange={e => { setInviteForm(p => ({ ...p, email: e.target.value })); if (appData) setAppData(null) }}
+              onChange={e => { setInviteForm(p => ({ ...p, email: e.target.value })); setInviteConfirm(false); if (appData) setAppData(null) }}
               onBlur={e => lookupApplication(e.target.value)}
               placeholder="email@example.com" />
           </div>
@@ -759,7 +759,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                         </div>
                         <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                           <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
-                          <DangerBtn onClick={() => setDeleteMemberConfirm(m.id)} small>Del</DangerBtn>
+                          <DangerBtn onClick={() => { setDeleteMemberConfirm(m.id); setDeleteMemberError(null) }} small>Del</DangerBtn>
                         </div>
                       </div>
                       <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.25rem' }}>{m.email}</div>
@@ -865,7 +865,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem' }} onClick={e => e.stopPropagation()}>
                       <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
-                      <DangerBtn onClick={() => setDeleteMemberConfirm(m.id)} small>Delete</DangerBtn>
+                      <DangerBtn onClick={() => { setDeleteMemberConfirm(m.id); setDeleteMemberError(null) }} small>Delete</DangerBtn>
                     </div>
                   </div>
                   )}

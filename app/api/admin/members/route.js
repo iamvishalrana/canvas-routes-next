@@ -182,7 +182,10 @@ export async function POST(request) {
   }
 
   const { error: insertErr } = await supabase.from('members').insert(memberData)
-  if (insertErr) return Response.json({ error: insertErr.message }, { status: 500 })
+  if (insertErr) {
+    await supabase.auth.admin.deleteUser(invited.user.id).catch(() => {})
+    return Response.json({ error: insertErr.message }, { status: 500 })
+  }
 
   // Send custom invite email via Resend
   if (process.env.RESEND_API_KEY) {

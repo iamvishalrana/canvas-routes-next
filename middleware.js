@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server'
 
 export async function middleware(request) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (request.nextUrl.pathname.startsWith('/members') || request.nextUrl.pathname.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/members/login', request.url))
+    }
     return NextResponse.next({ request })
   }
 
@@ -54,5 +57,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/members/:path*', '/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/members/:path*', '/admin/:path*', '/api/admin/:path*', '/api/member/:path*'],
 }

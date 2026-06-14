@@ -1,6 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -101,6 +102,7 @@ function PhotoSection({ carPhotoUrl, photoUploading, photoError, fileInputRef, o
 }
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [user, setUser] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', instagram: '', dob_day: '', dob_month: '', dob_year: '' })
   const [cars, setCars] = useState([{ ...EMPTY_CAR }])
@@ -240,6 +242,7 @@ export default function ProfilePage() {
         setSaved(true)
         savedForm.current = { ...form }
         savedCars.current = cars.map(c => ({ ...c }))
+        router.refresh()
         setEditing(false)
       }
     } catch {
