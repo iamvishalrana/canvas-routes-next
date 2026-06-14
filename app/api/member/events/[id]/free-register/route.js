@@ -9,12 +9,6 @@ export async function POST(request, { params }) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const origin = request.headers.get('origin')
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
-  if (origin && !origin.startsWith('http://localhost') && origin !== siteUrl) {
-    return Response.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')?.trim() || 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
