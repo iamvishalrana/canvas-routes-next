@@ -89,26 +89,54 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
 function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
   const rawDate = ev.date_display || ev.date || ''
   const [photoFailed, setPhotoFailed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const prev = document.body.style.overflow
+    const check = () => setIsMobile(window.innerWidth < 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    // iOS-safe scroll lock: record scroll position and fix body in place
+    const scrollY = window.scrollY
+    const prev = { overflow: document.body.style.overflow, position: document.body.style.position, top: document.body.style.top, width: document.body.style.width }
     document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
     function onKey(e) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey) }
+    return () => {
+      document.body.style.overflow = prev.overflow
+      document.body.style.position = prev.position
+      document.body.style.top = prev.top
+      document.body.style.width = prev.width
+      window.scrollTo(0, scrollY)
+      window.removeEventListener('keydown', onKey)
+    }
   }, [onClose])
+
+  const overlayStyle = isMobile
+    ? { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }
+    : { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }
+
+  const sheetStyle = isMobile
+    ? { background: '#F5F1EC', width: '100%', maxHeight: '92svh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', position: 'relative', boxShadow: '0 -8px 40px rgba(0,0,0,0.2)', borderRadius: '16px 16px 0 0' }
+    : { background: '#F5F1EC', width: '100%', maxWidth: '480px', maxHeight: '88svh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', position: 'relative', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }
 
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
-      style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+      style={overlayStyle}
     >
-      <div style={{ background: '#F5F1EC', width: '100%', maxWidth: '480px', maxHeight: '88vh', overflowY: 'auto', position: 'relative', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }}>
+      <div style={sheetStyle}>
         {/* Close — sticky header row so button never scrolls away */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', padding: '0.6rem 0.75rem', background: '#F5F1EC' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', padding: isMobile ? '0.75rem 1rem' : '0.6rem 0.75rem', background: '#F5F1EC' }}>
           <button
             onClick={onClose}
-            style={{ background: 'rgba(15,30,20,0.85)', border: 'none', cursor: 'pointer', color: '#F5F1EC', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ background: 'rgba(15,30,20,0.85)', border: 'none', cursor: 'pointer', color: '#F5F1EC', width: isMobile ? '36px' : '28px', height: isMobile ? '36px' : '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: isMobile ? '50%' : '0' }}
             aria-label="Close"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -118,18 +146,18 @@ function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
         {/* Photo — state-driven so onError works even when the browser fires it
             synchronously from cache before the element is mounted in the DOM. */}
         {ev.photo_url && !photoFailed && (
-          <div style={{ marginTop: '-44px', height: '244px', overflow: 'hidden', flexShrink: 0 }}>
+          <div style={{ marginTop: '-44px', height: isMobile ? '200px' : '244px', overflow: 'hidden', flexShrink: 0 }}>
             <img
               src={ev.photo_url}
               alt=""
-              style={{ width: '100%', height: '244px', objectFit: 'cover', objectPosition: 'center', display: 'block', opacity: 0, transition: 'opacity 0.2s' }}
+              style={{ width: '100%', height: isMobile ? '200px' : '244px', objectFit: 'cover', objectPosition: 'center', display: 'block', opacity: 0, transition: 'opacity 0.2s' }}
               onLoad={e => { e.currentTarget.style.opacity = '1' }}
               onError={() => setPhotoFailed(true)}
             />
           </div>
         )}
 
-        <div style={{ padding: '1.25rem 1.5rem 1.75rem' }}>
+        <div style={{ padding: isMobile ? '1rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom))' : '1.25rem 1.5rem 1.75rem' }}>
           {/* Type + registered */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '3px 10px', background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.type}</span>
