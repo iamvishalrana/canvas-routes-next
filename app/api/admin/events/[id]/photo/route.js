@@ -47,7 +47,7 @@ export async function POST(request, { params }) {
   await admin.storage.createBucket('event-photos', { public: true }).catch(() => {})
 
   // Delete the previous photo from storage before uploading the new one
-  const { data: ev } = await admin.from('events').select('photo_url').eq('id', id).single().catch(() => ({ data: null }))
+  const { data: ev } = await admin.from('events').select('photo_url').eq('id', id).maybeSingle()
   const oldPath = storagePathFromUrl(ev?.photo_url)
   if (oldPath) {
     await admin.storage.from('event-photos').remove([oldPath]).catch(() => {})
@@ -85,7 +85,7 @@ export async function DELETE(request, { params }) {
   const admin = createAdminClient()
 
   // Read the current photo_url so we can delete the exact storage file
-  const { data: ev } = await admin.from('events').select('photo_url').eq('id', id).single().catch(() => ({ data: null }))
+  const { data: ev } = await admin.from('events').select('photo_url').eq('id', id).maybeSingle()
   const oldPath = storagePathFromUrl(ev?.photo_url)
 
   const { error: updateErr } = await admin.from('events').update({ photo_url: null }).eq('id', id)
