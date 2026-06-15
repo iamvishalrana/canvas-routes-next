@@ -1,7 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
-import EventRegisterButton from './EventRegisterButton'
-import LocationMap from './LocationMap'
+import { useRouter } from 'next/navigation'
 import FadeUp from './FadeUp'
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -23,17 +21,17 @@ function getDateParts(rawDate) {
   }
 }
 
-function DateBlock({ rawDate, large = false }) {
+function DateBlock({ rawDate }) {
   const { day, month, year } = getDateParts(rawDate)
   if (day) return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: large ? '3rem' : '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{day}</div>
+      <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.6rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{day}</div>
       <div style={{ fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginTop: '3px' }}>{month}</div>
     </div>
   )
   if (month) return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: large ? '13px' : '12px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500' }}>{month}</div>
+      <div style={{ fontSize: '12px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500' }}>{month}</div>
       <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'var(--font-inter), sans-serif', marginTop: '2px' }}>{year}</div>
     </div>
   )
@@ -45,16 +43,17 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
   return (
     <div
       onClick={onClick}
+      className="ev-card"
       style={{ background: isPast ? 'rgba(255,255,255,0.7)' : '#fff', border: '0.5px solid rgba(0,0,0,0.08)', overflow: 'hidden', cursor: 'pointer' }}
     >
-      <div style={{ padding: '1.75rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+      <div className="ev-card-inner" style={{ padding: '1.75rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
         <div style={{ flexShrink: 0, width: '48px' }}>
           <DateBlock rawDate={rawDate} />
         </div>
         <div style={{ width: '0.5px', background: 'rgba(197,168,130,0.2)', alignSelf: 'stretch', minHeight: '40px' }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.01em', lineHeight: 1.3 }}>{ev.name}</div>
+            <div className="ev-card-name" style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.01em', lineHeight: 1.3 }}>{ev.name}</div>
             <span style={{ fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '2px 8px', flexShrink: 0, background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.type}</span>
           </div>
           {ev.location && (
@@ -83,172 +82,8 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
   )
 }
 
-function EventModal({ ev, isRegistered, tier, onClose, onRegistered }) {
-  const rawDate = ev.date_display || ev.date || ''
-  const [photoFailed, setPhotoFailed] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
-
-  useEffect(() => {
-    // iOS-safe scroll lock: record scroll position and fix body in place
-    const scrollY = window.scrollY
-    const prev = { overflow: document.body.style.overflow, position: document.body.style.position, top: document.body.style.top, width: document.body.style.width }
-    document.body.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollY}px`
-    document.body.style.width = '100%'
-    function onKey(e) { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = prev.overflow
-      document.body.style.position = prev.position
-      document.body.style.top = prev.top
-      document.body.style.width = prev.width
-      window.scrollTo(0, scrollY)
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [onClose])
-
-  const overlayStyle = isMobile
-    ? { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }
-    : { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }
-
-  const sheetStyle = isMobile
-    ? { background: '#F5F1EC', width: '100%', maxHeight: '92svh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', position: 'relative', boxShadow: '0 -8px 40px rgba(0,0,0,0.2)', borderRadius: '16px 16px 0 0' }
-    : { background: '#F5F1EC', width: '100%', maxWidth: '480px', maxHeight: '88svh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', position: 'relative', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }
-
-  return (
-    <div
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-      style={overlayStyle}
-    >
-      <div style={sheetStyle}>
-        {/* Close — sticky header row so button never scrolls away */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', padding: isMobile ? '0.75rem 1rem' : '0.6rem 0.75rem', background: '#F5F1EC' }}>
-          <button
-            onClick={onClose}
-            style={{ background: 'rgba(15,30,20,0.85)', border: 'none', cursor: 'pointer', color: '#F5F1EC', width: isMobile ? '36px' : '28px', height: isMobile ? '36px' : '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: isMobile ? '50%' : '0' }}
-            aria-label="Close"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-
-        {/* Photo — state-driven so onError works even when the browser fires it
-            synchronously from cache before the element is mounted in the DOM. */}
-        {ev.photo_url && !photoFailed && (
-          <div style={{ marginTop: '-44px', height: isMobile ? '200px' : '244px', overflow: 'hidden', flexShrink: 0 }}>
-            <img
-              src={ev.photo_url}
-              alt=""
-              style={{ width: '100%', height: isMobile ? '200px' : '244px', objectFit: 'cover', objectPosition: 'center', display: 'block', opacity: 0, transition: 'opacity 0.2s' }}
-              onLoad={e => { e.currentTarget.style.opacity = '1' }}
-              onError={() => setPhotoFailed(true)}
-            />
-          </div>
-        )}
-
-        <div style={{ padding: isMobile ? '1rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom))' : '1.25rem 1.5rem 1.75rem' }}>
-          {/* Type + registered */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '3px 10px', background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.type}</span>
-            {isRegistered && (
-              <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 10px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                Registered
-              </span>
-            )}
-          </div>
-
-          {/* Name */}
-          <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, margin: '0 0 0.85rem', letterSpacing: '-0.01em' }}>{ev.name}</h2>
-
-          {/* Date + location */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'center', marginBottom: '1.5rem' }}>
-            {rawDate && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter)' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                {rawDate}
-              </div>
-            )}
-            {ev.location && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter)' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {ev.location}
-              </div>
-            )}
-          </div>
-
-          {/* Mini map */}
-          {ev.location && <LocationMap location={ev.location} />}
-
-          {/* Description */}
-          {ev.description && (
-            <p style={{ fontSize: '13px', color: '#555', lineHeight: 1.75, letterSpacing: '0.01em', marginBottom: '1.25rem' }}>{ev.description}</p>
-          )}
-
-          {/* Registration — only render the section when there is content to show */}
-          {ev.registration_enabled !== false && (ev.registration_enabled || ev.registration_opens_at || ev.registration_url) && (
-            <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)', paddingTop: '1.5rem' }}>
-              {ev.registration_url ? (
-                isRegistered ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '0.45rem 1rem', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    Registered
-                  </span>
-                ) : (
-                  <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)' }}>
-                    Registration Open · Click to Register
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                  </a>
-                )
-              ) : ev.registration_opens_at ? (
-                <div>
-                  <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                    <div>
-                      <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.25rem' }}>Member Price</div>
-                      <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>
-                        {ev.member_price > 0 ? <>{`$${(ev.member_price / 100).toFixed(2)}`} <span style={{ fontSize: '9px', color: '#aaa', fontFamily: 'var(--font-inter)', fontWeight: '400' }}>CAD</span></> : 'Free'}
-                      </div>
-                    </div>
-                    {ev.capacity && (
-                      <div>
-                        <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.25rem' }}>Capacity</div>
-                        <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{ev.capacity}</div>
-                      </div>
-                    )}
-                  </div>
-                  <EventRegisterButton event={ev} isRegistered={isRegistered} memberTier={tier} compact={false}
-                    onRegistrationComplete={() => onRegistered?.(ev.id, ev.member_price > 0 ? 'paid' : 'free')} />
-                </div>
-              ) : ev.registration_enabled ? (
-                <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '0.5rem 1.1rem', fontFamily: 'var(--font-inter)', background: 'rgba(197,168,130,0.04)', display: 'inline-block' }}>
-                  Registration Opening Soon
-                </span>
-              ) : null}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function EventsGrid({ upcoming, past, regMap, tier }) {
-  const [selected, setSelected] = useState(null)
-  const [localRegMap, setLocalRegMap] = useState(regMap)
-
-  function handleRegistered(eventId, status = 'free') {
-    setLocalRegMap(prev => ({ ...prev, [eventId]: status }))
-  }
-
-  const selectedIsRegistered = selected ? ['free', 'paid'].includes(localRegMap[selected.id]) : false
+  const router = useRouter()
 
   return (
     <>
@@ -262,7 +97,12 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {upcoming.map((ev, i) => (
               <FadeUp key={ev.id} delay={i * 70}>
-                <EventCard ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={false} onClick={() => setSelected(ev)} />
+                <EventCard
+                  ev={ev}
+                  isRegistered={['free', 'paid'].includes(regMap[ev.id])}
+                  isPast={false}
+                  onClick={() => router.push(`/members/events/${ev.id}`)}
+                />
               </FadeUp>
             ))}
           </div>
@@ -275,22 +115,34 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', opacity: 0.6 }}>
             {past.map((ev, i) => (
               <FadeUp key={ev.id} delay={i * 60}>
-                <EventCard ev={ev} isRegistered={['free', 'paid'].includes(localRegMap[ev.id])} isPast={true} onClick={() => setSelected(ev)} />
+                <EventCard
+                  ev={ev}
+                  isRegistered={['free', 'paid'].includes(regMap[ev.id])}
+                  isPast={true}
+                  onClick={() => router.push(`/members/events/${ev.id}`)}
+                />
               </FadeUp>
             ))}
           </div>
         </section>
       )}
 
-      {selected && (
-        <EventModal
-          ev={selected}
-          isRegistered={selectedIsRegistered}
-          tier={tier}
-          onClose={() => setSelected(null)}
-          onRegistered={handleRegistered}
-        />
-      )}
+      <style>{`
+        .ev-card {
+          transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+        @media (hover: hover) {
+          .ev-card:hover {
+            box-shadow: 0 6px 28px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+            border-color: rgba(197,168,130,0.35) !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .ev-card-inner { padding: 1.25rem !important; gap: 1rem !important; }
+          .ev-card-name { font-size: 14px !important; }
+        }
+      `}</style>
     </>
   )
 }

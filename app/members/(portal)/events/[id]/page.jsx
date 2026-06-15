@@ -45,7 +45,7 @@ export default async function EventDetailPage({ params }) {
   return (
     <div style={{ maxWidth: '680px' }}>
       {ev.photo_url && (
-        <div style={{ marginBottom: '2rem', marginLeft: '-2rem', marginRight: '-2rem', marginTop: '-1rem' }}>
+        <div className="ev-detail-photo">
           <img
             src={ev.photo_url}
             alt={ev.name}
@@ -53,6 +53,7 @@ export default async function EventDetailPage({ params }) {
           />
         </div>
       )}
+      <div className="ev-detail-body">
       <div style={{ marginBottom: '1.5rem' }}>
         <Link href="/members/events" style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', textDecoration: 'none', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -117,7 +118,7 @@ export default async function EventDetailPage({ params }) {
 
       {/* Stripe-based internal registration — only when no external URL */}
       {!ev.registration_url && ev.registration_enabled !== false && ev.registration_opens_at && (
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', padding: '1.75rem 2rem', background: '#fff', marginBottom: '2rem' }}>
+        <div className="ev-reg-card" style={{ border: '0.5px solid rgba(0,0,0,0.09)', padding: '1.75rem 2rem', background: '#fff', marginBottom: '2rem' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>
             Registration
           </div>
@@ -168,6 +169,27 @@ export default async function EventDetailPage({ params }) {
           <span style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter)' }}>Registration Opening Soon</span>
         </div>
       )}
+
+      </div>
+
+      <style>{`
+        .ev-detail-photo {
+          margin: -1rem -2rem 2rem;
+        }
+        @media (max-width: 640px) {
+          .ev-detail-photo { margin: -1.75rem -1rem 1.5rem; }
+        }
+        @keyframes evDetailFadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .ev-detail-body {
+          animation: evDetailFadeIn 0.35s ease forwards;
+        }
+        @media (max-width: 640px) {
+          .ev-reg-card { padding: 1.25rem 1rem !important; }
+        }
+      `}</style>
     </div>
   )
 }
