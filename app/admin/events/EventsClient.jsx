@@ -207,6 +207,9 @@ export default function EventsClient() {
   const [allContacts, setAllContacts] = useState([])
   const [contactsLoaded, setContactsLoaded] = useState(false)
 
+  // RSVP answers expanded state (key = `${eventId}::${email}`)
+  const [rsvpExpanded, setRsvpExpanded] = useState({})
+
   // Remove registrant (key = `${eventId}::${email}`)
   const [deleteRegConfirm, setDeleteRegConfirm] = useState(null)
   const [deletingReg, setDeletingReg] = useState({})
@@ -974,16 +977,27 @@ export default function EventsClient() {
                                       </>
                                     )}
                                   </div>
-                                  {r.rsvpAnswers && (
-                                    <div style={{ padding: '0.4rem 0.85rem 0.6rem', background: '#fafaf9', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                                      {Object.entries(r.rsvpAnswers).filter(([, v]) => v != null && v !== '').map(([k, v]) => (
-                                        <span key={k} style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
-                                          <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>{k.replace(/_/g, ' ')}</span>
-                                          {' '}
-                                          <span style={{ color: '#333' }}>{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}</span>
-                                        </span>
-                                      ))}
-                                    </div>
+                                  {r.rsvpAnswers && Object.values(r.rsvpAnswers).some(v => v != null && v !== '') && (
+                                    <>
+                                      <button
+                                        onClick={() => setRsvpExpanded(p => ({ ...p, [indivKey]: !p[indivKey] }))}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[indivKey] && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                                      >
+                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" style={{ transform: rsvpExpanded[indivKey] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter)' }}>RSVP Answers</span>
+                                      </button>
+                                      {rsvpExpanded[indivKey] && (
+                                        <div style={{ padding: '0.4rem 0.85rem 0.65rem', background: '#fafaf9', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                                          {Object.entries(r.rsvpAnswers).filter(([, v]) => v != null && v !== '').map(([k, v]) => (
+                                            <span key={k} style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
+                                              <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>{k.replace(/_/g, ' ')}</span>
+                                              {' '}
+                                              <span style={{ color: '#333' }}>{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}</span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               )
