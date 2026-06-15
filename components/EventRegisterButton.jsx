@@ -75,7 +75,7 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
   )
 }
 
-function PayForm({ event, onSuccess, onClose, onPayingChange }) {
+function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFail }) {
   const stripe = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
@@ -107,7 +107,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange }) {
     const data = await res.json().catch(() => ({}))
     setPayingState(false)
     if (!res.ok) {
-      setError(`${data.error || 'Registration failed.'} Reference: ${paymentIntent.id}. Please contact support.`)
+      onPaySuccessRegFail?.(paymentIntent.id)
       return
     }
     onSuccess()
@@ -165,6 +165,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   const payingRef = useRef(false)
   const [done, setDone] = useState(isRegistered)
   const [confirmedName, setConfirmedName] = useState(null)
+  const [chargedButFailed, setChargedButFailed] = useState(null)
   useEffect(() => { setDone(isRegistered) }, [isRegistered])
 
   const now = new Date()
@@ -224,6 +225,14 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
     )
   }
 
+  if (chargedButFailed) {
+    return (
+      <div style={{ fontSize: '12px', color: '#7B2032', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, padding: '0.6rem 0.75rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)', maxWidth: '380px' }}>
+        Your payment was taken but registration didn&apos;t complete. Please contact us with reference: <strong>{chargedButFailed}</strong>
+      </div>
+    )
+  }
+
   if (!regOpen) return null
 
   async function handleClick() {
@@ -239,7 +248,6 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         setDone(true)
         setConfirmedName(event.name)
         onRegistrationComplete?.()
-        router.refresh()
       } catch {
         setRegError('Network error — please try again.')
       } finally {
@@ -335,7 +343,11 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
                   setDone(true)
                   setConfirmedName(event.name)
                   onRegistrationComplete?.()
-                  router.refresh()
+                }}
+                onPaySuccessRegFail={piId => {
+                  setModalOpen(false)
+                  setClientSecret(null)
+                  setChargedButFailed(piId)
                 }}
                 onClose={() => { setModalOpen(false); setClientSecret(null) }}
                 onPayingChange={v => { payingRef.current = v }}
@@ -345,11 +357,11 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         </div>
       )}
 
-      {/* Registration confirmation popup */}
+      {/* Registration confirmation popup — router.refresh() deferred to onClose to avoid race */}
       {confirmedName && (
         <RegistrationConfirmPopup
           eventName={confirmedName}
-          onClose={() => setConfirmedName(null)}
+          onClose={() => { setConfirmedName(null); router.refresh() }}
         />
       )}
     </>

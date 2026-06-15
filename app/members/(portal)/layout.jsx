@@ -9,8 +9,8 @@ export const metadata = { title: { absolute: 'Members Portal | Canvas Routes' } 
 
 export default async function PortalLayout({ children }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/members/login')
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) redirect('/members/login')
   const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
   const isAdmin = user && adminEmails.includes(user.email)
 
