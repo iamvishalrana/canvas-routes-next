@@ -302,6 +302,7 @@ export default function ApplicationsClient() {
     setEmailSubject(subject)
     setEmailBody(body)
     setEmailResult(null)
+    setEmailPreviewExpanded(false)
     setEmailComposerId(a.id)
   }
 
@@ -363,7 +364,7 @@ export default function ApplicationsClient() {
     .filter(a => {
       if (showFilter === 'unseen' && seenAppIds.has(a.id)) return false
       if (showFilter === 'pending' && a.is_member) return false
-      return !search || [a.name, a.email, a.car_year, a.car_model, a.source, a.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && a.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
+      return !search || [a.name, a.email, a.car_year, a.car_model, a.car_paint, a.instagram, a.source, a.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && a.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
     })
     .sort((a, b) => {
       if (sortApps === 'newest') return new Date(b.created_at) - new Date(a.created_at)
@@ -514,9 +515,15 @@ export default function ApplicationsClient() {
               {(() => {
                 const isGreyed = a.is_contact && !a.reregistered_at
                 const handleRowClick = () => {
-                  setExpanded(expanded === a.id ? null : a.id)
-                  if (editingApp === a.id) setEditingApp(null)
-                  if (appTierPick === a.id) setAppTierPick(null)
+                  const isCollapsing = expanded === a.id
+                  setExpanded(isCollapsing ? null : a.id)
+                  if (isCollapsing && editingApp === a.id) setEditingApp(null)
+                  setAppTierPick(null)
+                  if (isCollapsing) {
+                    if (deleteAppConfirm === a.id) setDeleteAppConfirm(null)
+                    if (rejectConfirm === a.id) setRejectConfirm(null)
+                    if (editingNote === a.id) setEditingNote(null)
+                  }
                   if (a.reregistered_at) {
                     setApps(prev => prev.map(x => x.id === a.id ? { ...x, reregistered_at: null } : x))
                     fetch(`/api/admin/applications/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reregistered_at: null }) })
