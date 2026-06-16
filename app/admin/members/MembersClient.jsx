@@ -389,7 +389,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   const filtered = members
     .filter(m =>
       (statusFilter === 'all' || m.membership_status === statusFilter) &&
-      (!search || [m.name, m.email, m.membership_status, m.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))))
+      (!search || [m.name, m.email, m.membership_status, m.phone, m.car_make, m.car_model, m.car_year, m.instagram].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))) || (m.cars || []).some(c => [c.make, c.model, c.year, c.paint, c.license_plate].some(v => v?.toLowerCase().includes(search.toLowerCase()))))
     )
     .sort((a, b) => {
       if (sort === 'name_az') return (a.name || '').localeCompare(b.name || '')
@@ -581,7 +581,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div style={{ position: 'relative', width: isMobile ? '100%' : '260px' }}>
-            <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, status…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, status…" value={search} onChange={e => setSearch(e.target.value)} />
             {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
           </div>
         </div>
