@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
   car_year TEXT,
   car_make TEXT,
   car_model TEXT,
+  car_paint TEXT,
   source TEXT,
   more TEXT,
   dob_month SMALLINT,
@@ -106,6 +107,7 @@ CREATE TABLE IF NOT EXISTS public.contacts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   application_id UUID UNIQUE REFERENCES public.applications(id) ON DELETE CASCADE,
   notes TEXT,
+  car_paint TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
