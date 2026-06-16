@@ -64,7 +64,7 @@ export async function POST(request, { params }) {
     await admin.from('contacts').upsert(
       { application_id: appId },
       { onConflict: 'application_id', ignoreDuplicates: true }
-    ).catch(() => {})
+    )
   }
 
   // Auto-send the Confirm My Spot invite email
