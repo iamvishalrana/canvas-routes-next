@@ -105,8 +105,8 @@ export default function GlobalSearch() {
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '10vh' }}
       onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: '520px', margin: '0 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.12)', boxShadow: '0 16px 60px rgba(0,0,0,0.2)', maxHeight: '70vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', animation: 'srBackdrop 0.18s ease' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: '520px', margin: '0 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.12)', boxShadow: '0 16px 60px rgba(0,0,0,0.2)', maxHeight: '70vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'srPanel 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
 
         {/* Input */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.9rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
@@ -133,7 +133,11 @@ export default function GlobalSearch() {
           )}
         </div>
 
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg) } }
+          @keyframes srBackdrop { from { opacity: 0 } to { opacity: 1 } }
+          @keyframes srPanel { from { opacity: 0; transform: translateY(-10px) scale(0.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
+        `}</style>
       </div>
     </div>,
     document.body

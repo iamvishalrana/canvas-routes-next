@@ -71,6 +71,7 @@ export default function ApplicationsClient() {
   const [addContactError, setAddContactError] = useState({})
   const [sortApps, setSortApps] = useState('newest')
   const [emailsCopied, setEmailsCopied] = useState(false)
+  const [selected, setSelected] = useState(new Set())
   const [appTierPick, setAppTierPick] = useState(null)
   const [deleteAppConfirm, setDeleteAppConfirm] = useState(null)
   const [deleteAppError, setDeleteAppError] = useState({})
@@ -129,7 +130,7 @@ export default function ApplicationsClient() {
     setDeleteAppError(p => ({ ...p, [app.id]: null }))
     try {
       const res = await fetch(`/api/admin/applications/${app.id}`, { method: 'DELETE' })
-      if (res.ok) { setDeleteAppConfirm(null); setExpanded(null); setEditingApp(null); loadApps() }
+      if (res.ok) { setDeleteAppConfirm(null); setExpanded(null); setEditingApp(null); setSelected(prev => { const n = new Set(prev); n.delete(app.id); return n }); loadApps() }
       else setDeleteAppError(p => ({ ...p, [app.id]: 'Failed to delete.' }))
     } catch {
       setDeleteAppError(p => ({ ...p, [app.id]: 'Network error.' }))
@@ -398,7 +399,8 @@ export default function ApplicationsClient() {
   }
 
   function copyEmails() {
-    const emails = filtered.map(a => a.email).filter(Boolean).join(', ')
+    const source = selected.size > 0 ? filtered.filter(a => selected.has(a.id)) : filtered
+    const emails = source.map(a => a.email).filter(Boolean).join(', ')
     navigator.clipboard?.writeText(emails).then(() => {
       setEmailsCopied(true)
       setTimeout(() => setEmailsCopied(false), 1500)
@@ -431,17 +433,32 @@ export default function ApplicationsClient() {
         ))}
       </div>
 
+      {selected.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
+          <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
+          <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
+          <ExportButton
+            filename="applications"
+            title="Applications (selected)"
+            headers={['Name', 'Email', 'Phone', 'Car Year', 'Car Model', 'Car Paint', 'Source', 'Payment Status', 'Registered']}
+            rows={filtered.filter(a => selected.has(a.id)).map(a => [
+              a.name || '', a.email || '', a.phone || '',
+              a.car_year || '', a.car_model || '', a.car_paint || '',
+              a.source || '', a.stripe_payment_status || '',
+              a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA') : '',
+            ])}
+            style={{ padding: '4px 10px', fontSize: '10px' }}
+          />
+          <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
             {filtered.length} of {apps.length} application{apps.length !== 1 ? 's' : ''}
           </div>
-          {apps.length > 0 && (
-            <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-              {emailsCopied ? 'Copied!' : 'Copy Emails'}
-            </button>
-          )}
-          {filtered.length > 0 && (
+          {filtered.length > 0 && selected.size === 0 && (
             <ExportButton
               filename="applications"
               title="Applications"
@@ -502,7 +519,16 @@ export default function ApplicationsClient() {
         <div style={isMobile ? {} : { overflowX: 'auto' }}>
         <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', ...(isMobile ? {} : { minWidth: '700px' }) }}>
           {!isMobile && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+              <input type="checkbox"
+                checked={filtered.length > 0 && filtered.every(a => selected.has(a.id))}
+                ref={el => { if (el) el.indeterminate = filtered.some(a => selected.has(a.id)) && !filtered.every(a => selected.has(a.id)) }}
+                onChange={e => {
+                  if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(a => a.id)]))
+                  else setSelected(prev => { const n = new Set(prev); filtered.forEach(a => n.delete(a.id)); return n })
+                }}
+                style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+              />
               {['Name', 'Email', 'Car', 'DOB', 'Date', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
               ))}
@@ -594,9 +620,16 @@ export default function ApplicationsClient() {
                 )
                 if (isMobile) {
                   return (
-                    <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: isGreyed ? 'rgba(0,0,0,0.025)' : undefined }} onClick={handleRowClick}>
+                    <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: selected.has(a.id) ? 'rgba(197,168,130,0.06)' : isGreyed ? 'rgba(0,0,0,0.025)' : undefined }} onClick={handleRowClick}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', minWidth: 0 }}>
+                          <div onClick={e => e.stopPropagation()}>
+                            <input type="checkbox"
+                              checked={selected.has(a.id)}
+                              onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(a.id) : n.delete(a.id); return n })}
+                              style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                            />
+                          </div>
                           {!seenAppIds.has(a.id) && (
                           <button
                             onClick={e => { e.stopPropagation(); markSeen(a.id) }}
@@ -620,9 +653,16 @@ export default function ApplicationsClient() {
                 }
                 return (
                 <div
-                  style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: isGreyed ? 'rgba(0,0,0,0.025)' : undefined }}
+                  style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(a.id) ? 'rgba(197,168,130,0.06)' : isGreyed ? 'rgba(0,0,0,0.025)' : undefined }}
                   onClick={handleRowClick}
                 >
+                  <div onClick={e => e.stopPropagation()}>
+                    <input type="checkbox"
+                      checked={selected.has(a.id)}
+                      onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(a.id) : n.delete(a.id); return n })}
+                      style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                    />
+                  </div>
                   <div style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                     {!seenAppIds.has(a.id) && (
                       <button
