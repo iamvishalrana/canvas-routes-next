@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   EVENT_TYPES, normalizeEventName,
@@ -148,6 +149,7 @@ const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', descrip
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function EventsClient() {
+  const router = useRouter()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
@@ -564,11 +566,24 @@ export default function EventsClient() {
       ])
       const regData  = regRes.ok ? await regRes.json() : []
       const contacts = cRes.ok  ? await cRes.json()   : []
-      const newRegs = (Array.isArray(regData) ? regData : []).map(r => ({
-        name: r.members?.name || r.name || '—', email: r.members?.email || r.email || '—',
-        type: 'Member', status: r.stripe_payment_status, amount: r.amount_paid,
-      }))
       const evBase = s => normalizeEventName(s).split(/\s[—–]\s/)[0].trim()
+      const contactByEmail = Object.fromEntries(
+        (Array.isArray(contacts) ? contacts : []).map(c => [(c.email || '').toLowerCase(), c])
+      )
+      const newRegs = (Array.isArray(regData) ? regData : []).map(r => {
+        const email = r.members?.email || r.email || '—'
+        const contact = contactByEmail[email.toLowerCase()] || {}
+        const { make, model } = parseCarMakeModel(contact.car_model)
+        return {
+          name: r.members?.name || r.name || '—',
+          email,
+          type: 'Member',
+          status: r.stripe_payment_status,
+          amount: r.amount_paid,
+          car: [contact.car_year, make, model].filter(Boolean).join(' ') || null,
+          href: `/admin/members?q=${encodeURIComponent(email)}`,
+        }
+      })
       const contactRegs = (Array.isArray(contacts) ? contacts : [])
         .filter(c => (c.registrations || []).some(r => {
           const norm = normalizeEventName(r.event)
@@ -579,6 +594,7 @@ export default function EventsClient() {
           const reg = (c.registrations || []).find(r => evBase(r.event) === evBase(eventName))
           const rsvpToken = (c.rsvp_history || []).find(t => evBase(t.event_name) === evBase(eventName))
           const isConfirmed = !!(rsvpToken?.confirmed_at || reg?.rsvp_confirmed)
+          const { make, model } = parseCarMakeModel(c.car_model)
           return {
             name: c.name || '—',
             email: c.email || '—',
@@ -588,6 +604,8 @@ export default function EventsClient() {
             rsvpAnswers: rsvpToken?.answers || null,
             confirmedAt: rsvpToken?.confirmed_at || null,
             inviteSent: !!rsvpToken,
+            car: [c.car_year, make, model].filter(Boolean).join(' ') || null,
+            href: `/admin/contacts?q=${encodeURIComponent(c.email || c.name || '')}`,
           }
         })
       const seen = new Set()
@@ -916,8 +934,12 @@ export default function EventsClient() {
                                       <div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                           <div>
-                                            <div style={{ fontSize: '12px', color: '#333', fontWeight: '500' }}>{r.name || '—'}</div>
+                                            {r.href
+                                              ? <button onClick={() => router.push(r.href)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '12px', color: '#333', fontWeight: '500', textAlign: 'left', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.2)' }}>{r.name || '—'}</button>
+                                              : <div style={{ fontSize: '12px', color: '#333', fontWeight: '500' }}>{r.name || '—'}</div>
+                                            }
                                             <div style={{ fontSize: '11px', color: '#888' }}>{r.email || '—'}</div>
+                                            {r.car && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '1px' }}>{r.car}</div>}
                                             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
                                               <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
                                               {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888' }}>{r.status}</span>}
@@ -945,7 +967,13 @@ export default function EventsClient() {
                                       </div>
                                     ) : (
                                       <>
-                                        <div style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</div>
+                                        <div>
+                                          {r.href
+                                            ? <button onClick={() => router.push(r.href)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '12px', color: '#333', textAlign: 'left', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.2)' }}>{r.name || '—'}</button>
+                                            : <span style={{ fontSize: '12px', color: '#333' }}>{r.name || '—'}</span>
+                                          }
+                                          {r.car && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '1px' }}>{r.car}</div>}
+                                        </div>
                                         <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status || '—'}</div>
