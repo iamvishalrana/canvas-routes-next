@@ -31,6 +31,7 @@ const SECTIONS = [
     items: [
       { href: '/admin/payments',    label: 'Payments'    },
       { href: '/admin/revenue',     label: 'Revenue'     },
+      { href: '/admin/expenses',    label: 'Expenses'    },
       { href: '/admin/promo-codes', label: 'Promo Codes' },
     ],
   },

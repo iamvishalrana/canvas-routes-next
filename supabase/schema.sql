@@ -113,3 +113,19 @@ CREATE TABLE IF NOT EXISTS public.contacts (
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.contacts
   USING (false) WITH CHECK (false);
+
+-- Expenses
+CREATE TABLE IF NOT EXISTS public.expenses (
+  id           UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
+  expense_date DATE           NOT NULL,
+  event_name   TEXT,
+  vendor       TEXT,
+  amount       NUMERIC(10,2)  NOT NULL DEFAULT 0,
+  tax_amount   NUMERIC(10,2)  NOT NULL DEFAULT 0,
+  category     TEXT,
+  receipt_url  TEXT,
+  created_at   TIMESTAMPTZ    DEFAULT now()
+);
+ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.expenses
+  USING (false) WITH CHECK (false);
