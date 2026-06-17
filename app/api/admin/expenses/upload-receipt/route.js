@@ -2,13 +2,14 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 
-function slugify(str) {
-  if (!str?.trim()) return 'general'
-  return str.trim().toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
+function sanitizeFolderPath(raw) {
+  if (!raw?.trim()) return 'general'
+  return raw.trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\-\/]/g, '')   // only alphanumeric, hyphens, slashes
+    .replace(/\/+/g, '/')             // collapse consecutive slashes
+    .replace(/^\/|\/$/g, '')          // strip leading/trailing slashes
+    .replace(/\.\.+/g, '')            // strip path traversal
     || 'general'
 }
 
@@ -23,8 +24,8 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const file = formData.get('file')
-  const eventName = formData.get('event_name') || ''
+  const file       = formData.get('file')
+  const folderPath = formData.get('folder_path') || ''
 
   if (!file || typeof file === 'string') return Response.json({ error: 'No file provided.' }, { status: 400 })
   if (!ALLOWED_TYPES.includes(file.type)) {
@@ -36,7 +37,7 @@ export async function POST(request) {
     return Response.json({ error: 'File too large (max 10 MB).' }, { status: 400 })
   }
 
-  const folder = slugify(eventName)
+  const folder = sanitizeFolderPath(folderPath)
   const ext = file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'
   const filename = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
 

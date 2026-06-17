@@ -6,6 +6,11 @@ const CATEGORIES = ['Fuel', 'Food & Beverages', 'Venue / Parking', 'Photography 
 
 const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', amount: '', tax_amount: '', category: '', receipt_url: '' }
 
+function computeFolderPath(eventName, date) {
+  const slug = slugify(eventName)
+  return date ? `${slug}/${date}` : slug
+}
+
 function fmt(n) {
   const num = parseFloat(n) || 0
   return `$${num.toFixed(2)}`
@@ -35,6 +40,8 @@ export default function ExpensesClient() {
   const [expenses, setExpenses]     = useState([])
   const [loading, setLoading]       = useState(true)
   const [form, setForm]             = useState(EMPTY_FORM)
+  const [folderPath, setFolderPath] = useState('general')
+  const folderEditedRef             = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const [formErr, setFormErr]       = useState(null)
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -52,6 +59,13 @@ export default function ExpensesClient() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Auto-compute folder path from event_name + expense_date unless manually overridden
+  useEffect(() => {
+    if (!folderEditedRef.current) {
+      setFolderPath(computeFolderPath(form.event_name, form.expense_date))
+    }
+  }, [form.event_name, form.expense_date])
 
   // Group by event_name, sorted by most recent expense in each group
   const groups = (() => {
@@ -86,7 +100,7 @@ export default function ExpensesClient() {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      fd.append('event_name', form.event_name)
+      fd.append('folder_path', folderPath)
       const res = await fetch('/api/admin/expenses/upload-receipt', { method: 'POST', body: fd })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Upload failed.'); return }
@@ -113,6 +127,8 @@ export default function ExpensesClient() {
       if (!res.ok) { setFormErr(data.error || 'Failed to save.'); return }
       setExpenses(prev => [data, ...prev])
       setForm(EMPTY_FORM)
+      setFolderPath('general')
+      folderEditedRef.current = false
       setReceiptName('')
       if (fileRef.current) fileRef.current.value = ''
     } catch {
@@ -206,8 +222,26 @@ export default function ExpensesClient() {
           </div>
         </div>
 
-        {/* Receipt upload row */}
-        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+        {/* Folder path + receipt upload row */}
+        <div style={{ marginBottom: '0.6rem' }}>
+          <L>Receipt Folder</L>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '12px', color: '#bbb', userSelect: 'none' }}>receipts /</span>
+            <input
+              style={{ ...inp, flex: 1, fontFamily: 'monospace', fontSize: '12px', color: '#555' }}
+              value={folderPath}
+              placeholder="general"
+              onChange={e => { folderEditedRef.current = true; setFolderPath(e.target.value) }}
+              onBlur={e => { if (!e.target.value.trim()) { folderEditedRef.current = false; setFolderPath(computeFolderPath(form.event_name, form.expense_date)) } }}
+              maxLength={200}
+            />
+          </div>
+          <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.25rem' }}>
+            Auto-filled from event + date. Edit to override — subfolders use <code style={{ background: 'rgba(0,0,0,0.05)', padding: '0 3px' }}>folder/subfolder</code>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleFileChange} />
           <button type="button" onClick={() => fileRef.current?.click()}
             disabled={uploadingFile}
