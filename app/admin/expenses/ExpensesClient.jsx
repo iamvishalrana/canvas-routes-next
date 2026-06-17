@@ -35,8 +35,8 @@ export default function ExpensesClient() {
   const [expenses, setExpenses]         = useState([])
   const [loading, setLoading]           = useState(true)
   const [form, setForm]                 = useState(EMPTY_FORM)
-  const [folderPath, setFolderPath]     = useState('general')
-  const folderEditedRef                 = useRef(false)
+  const [folderEvent, setFolderEvent]   = useState('General')
+  const folderManualRef                 = useRef(false)
   const [submitting, setSubmitting]     = useState(false)
   const [formErr, setFormErr]           = useState(null)
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -60,9 +60,10 @@ export default function ExpensesClient() {
   }, [])
   useEffect(() => { load() }, [load])
 
+  // Sync folder selection to the form's event name unless user picked manually
   useEffect(() => {
-    if (!folderEditedRef.current) setFolderPath(computeFolderPath(form.event_name, form.expense_date))
-  }, [form.event_name, form.expense_date])
+    if (!folderManualRef.current) setFolderEvent(form.event_name?.trim() || 'General')
+  }, [form.event_name])
 
   // Groups: all events sorted by most recent
   const allGroups = (() => {
@@ -134,9 +135,10 @@ export default function ExpensesClient() {
     if (!file) return
     setUploadingFile(true); setFormErr(null)
     try {
+      const uploadPath = slugify(folderEvent) + (form.expense_date ? `/${form.expense_date}` : '')
       const fd = new FormData()
       fd.append('file', file)
-      fd.append('folder_path', folderPath)
+      fd.append('folder_path', uploadPath)
       const res = await fetch('/api/admin/expenses/upload-receipt', { method: 'POST', body: fd })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Upload failed.'); return }
@@ -165,8 +167,8 @@ export default function ExpensesClient() {
       const groupName = data.event_name?.trim() || 'General'
       setOpenGroups(p => ({ ...p, [groupName]: true }))
       setForm(EMPTY_FORM)
-      setFolderPath('general')
-      folderEditedRef.current = false
+      setFolderEvent('General')
+      folderManualRef.current = false
       setReceiptName('')
       if (fileRef.current) fileRef.current.value = ''
     } catch { setFormErr('Network error.') }
@@ -264,17 +266,48 @@ export default function ExpensesClient() {
           </div>
         </div>
 
-        <div style={{ marginBottom: '0.6rem' }}>
-          <L>Receipt Folder</L>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '12px', color: '#bbb', userSelect: 'none', whiteSpace: 'nowrap' }}>receipts /</span>
-            <input style={{ ...inp, flex: 1, fontFamily: 'monospace', fontSize: '12px', color: '#555' }}
-              value={folderPath} placeholder="general"
-              onChange={e => { folderEditedRef.current = true; setFolderPath(e.target.value) }}
-              onBlur={e => { if (!e.target.value.trim()) { folderEditedRef.current = false; setFolderPath(computeFolderPath(form.event_name, form.expense_date)) } }}
-              maxLength={200} />
-          </div>
-        </div>
+        {/* Folder selector */}
+        {(() => {
+          const existingNames = [...new Set(expenses.map(e => e.event_name?.trim()).filter(Boolean))]
+          const formName = form.event_name?.trim()
+          const options = ['General', ...existingNames, ...(formName && !existingNames.includes(formName) ? [formName] : [])]
+          const previewPath = `receipts/${slugify(folderEvent)}${form.expense_date ? `/${form.expense_date}` : ''}/`
+          return (
+            <div style={{ marginBottom: '0.6rem' }}>
+              <L>Save Receipt To</L>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                {options.map(name => {
+                  const active = folderEvent === name
+                  return (
+                    <button key={name} type="button"
+                      onClick={() => { folderManualRef.current = true; setFolderEvent(name) }}
+                      style={{
+                        fontSize: '11px', padding: '5px 12px', border: '0.5px solid', cursor: 'pointer',
+                        fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.15s',
+                        background: active ? '#0F1E14' : 'none',
+                        color:      active ? '#F5F1EC' : '#666',
+                        borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.18)',
+                      }}>
+                      {name}
+                    </button>
+                  )
+                })}
+                {/* Dropdown for any custom value not in the list */}
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={options.includes(folderEvent) ? '' : folderEvent}
+                    onChange={e => { if (e.target.value) { folderManualRef.current = true; setFolderEvent(e.target.value) } }}
+                    style={{ ...sel, fontSize: '11px', padding: '5px 28px 5px 10px', color: options.includes(folderEvent) ? '#bbb' : '#333' }}>
+                    <option value="">Other…</option>
+                    {existingNames.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                  <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                </div>
+              </div>
+              <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'monospace' }}>{previewPath}</div>
+            </div>
+          )
+        })()}
 
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleFileChange} />
