@@ -1,12 +1,16 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { loadStripe } from '@stripe/stripe-js'
+import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
-const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null
+let _stripePromise = null
+function getStripe() {
+  if (!_stripePromise && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+    _stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  }
+  return _stripePromise
+}
 
 function RegistrationConfirmPopup({ eventName, onClose }) {
   useEffect(() => {
@@ -302,7 +306,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
       )}
 
       {/* Payment modal */}
-      {modalOpen && clientSecret && stripePromise && (
+      {modalOpen && clientSecret && getStripe() && (
         <div
           onClick={e => { if (e.target === e.currentTarget && !payingRef.current) setModalOpen(false) }}
           style={{
@@ -334,7 +338,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
                 </span>
               </div>
             </div>
-            <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
+            <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
               <PayForm
                 event={event}
                 onSuccess={() => {

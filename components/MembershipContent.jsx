@@ -3,14 +3,18 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import SiteFooter from './SiteFooter'
-import { loadStripe } from '@stripe/stripe-js'
+import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { User, Mail, Phone, Car, Share2, Calendar } from 'lucide-react'
 import { captureException } from '../lib/sentry'
 
-const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null
+let _stripePromise = null
+function getStripe() {
+  if (!_stripePromise && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+    _stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  }
+  return _stripePromise
+}
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -827,7 +831,7 @@ export default function MembershipContent() {
             </FadeUp>
           ) : paymentStep && clientSecret ? (
             <Elements
-              stripe={stripePromise}
+              stripe={getStripe()}
               fonts={[{ cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap' }]}
               options={{
                 clientSecret,
