@@ -275,6 +275,7 @@ export async function POST(request) {
       email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),
+      car_make: carMake?.trim() || null,
       car_model: fullCar || carMake,
       car_paint: carPaint?.trim() || null,
       phone: phone || null,
