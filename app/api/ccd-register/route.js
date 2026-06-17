@@ -122,7 +122,8 @@ export async function POST(request) {
     return Response.json({ error: 'Car model is required.' }, { status: 400 })
   if (!dob_month || !dob_day)
     return Response.json({ error: 'Date of birth month and day are required.' }, { status: 400 })
-  if (!source?.trim())
+  const VALID_SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
+  if (!source || !VALID_SOURCES.includes(source))
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
 
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
@@ -156,6 +157,7 @@ export async function POST(request) {
       email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),
+      car_make: carMake?.trim() || null,
       car_model: fullCarModel,
       dob_month: dob_month ? parseInt(dob_month) : null,
       dob_day: dob_day ? parseInt(dob_day) : null,

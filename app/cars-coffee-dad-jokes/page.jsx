@@ -10,7 +10,7 @@ const COUNTRY_CODES = ['+1','+7','+20','+27','+30','+31','+32','+33','+34','+36'
 
 const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
 
-const YEARS = Array.from({ length: 60 }, (_, i) => String(2025 - i))
+const YEARS = Array.from({ length: 60 }, (_, i) => String(new Date().getFullYear() - i))
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1))
 const DOB_YEARS = Array.from({ length: 85 }, (_, i) => String(2009 - i))
