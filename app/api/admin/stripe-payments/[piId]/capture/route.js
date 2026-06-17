@@ -10,6 +10,15 @@ export async function POST(request, { params }) {
   const { piId } = await params
   if (!piId || !piId.startsWith('pi_')) return Response.json({ error: 'Invalid payment intent ID.' }, { status: 400 })
 
+  // Verify the PI belongs to a Canvas Routes application before touching it in Stripe
+  const supabase = createAdminClient()
+  const { data: app } = await supabase.from('applications')
+    .select('id, stripe_payment_status')
+    .eq('stripe_payment_intent_id', piId)
+    .maybeSingle()
+  if (!app) return Response.json({ error: 'Payment not found.' }, { status: 404 })
+  if (app.stripe_payment_status === 'paid') return Response.json({ error: 'Already captured.' }, { status: 400 })
+
   try {
     await stripe.paymentIntents.capture(piId, {}, { idempotencyKey: `capture-${piId}` })
   } catch (err) {
@@ -18,7 +27,6 @@ export async function POST(request, { params }) {
   }
 
   // Update DB — best-effort; webhook will rescue if this fails
-  const supabase = createAdminClient()
   const { error: dbErr } = await supabase.from('applications')
     .update({ stripe_payment_status: 'paid', stripe_paid_at: new Date().toISOString() })
     .eq('stripe_payment_intent_id', piId)

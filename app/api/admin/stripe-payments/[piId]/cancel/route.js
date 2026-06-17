@@ -10,6 +10,14 @@ export async function POST(request, { params }) {
   const { piId } = await params
   if (!piId || !piId.startsWith('pi_')) return Response.json({ error: 'Invalid payment intent ID.' }, { status: 400 })
 
+  const supabase = createAdminClient()
+  const { data: app } = await supabase.from('applications')
+    .select('id, stripe_payment_status')
+    .eq('stripe_payment_intent_id', piId)
+    .maybeSingle()
+  if (!app) return Response.json({ error: 'Payment not found.' }, { status: 404 })
+  if (app.stripe_payment_status === 'rejected') return Response.json({ error: 'Already cancelled.' }, { status: 400 })
+
   try {
     await stripe.paymentIntents.cancel(piId)
   } catch (err) {
@@ -18,7 +26,6 @@ export async function POST(request, { params }) {
   }
 
   // Update DB — best-effort; webhook will rescue if this fails
-  const supabase = createAdminClient()
   const { error: dbErr } = await supabase.from('applications')
     .update({ stripe_payment_status: 'rejected' })
     .eq('stripe_payment_intent_id', piId)

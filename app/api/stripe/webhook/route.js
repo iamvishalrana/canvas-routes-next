@@ -118,6 +118,10 @@ export async function POST(request) {
           console.log(`Membership payment confirmed: ${type} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         } else if (type?.startsWith('road_trip_')) {
           // Road trip payment confirmed — record in DB and send confirmation email
+          if (!normalEmail) {
+            captureMessage('Road trip payment succeeded but no email in metadata', { piId: pi.id })
+            break
+          }
           const amountFormatted = `$${(amountPaid / 100).toFixed(2)} CAD`
           const firstName = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel = eventName || 'Canvas Routes Road Trip'

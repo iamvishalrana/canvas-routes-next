@@ -20,9 +20,16 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { code, paymentIntentId, remove } = body
+  const { code, paymentIntentId, email, remove } = body
 
-  if (!paymentIntentId || typeof paymentIntentId !== 'string') {
+  if (!paymentIntentId || typeof paymentIntentId !== 'string' || !paymentIntentId.startsWith('pi_')) {
+    return Response.json({ error: 'Invalid request.' }, { status: 400 })
+  }
+
+  // Require the caller to identify themselves — the email must match the PI's metadata
+  // so promo codes can't be applied to another user's payment intent
+  const callerEmail = email?.toLowerCase().trim()
+  if (!callerEmail) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
@@ -30,6 +37,9 @@ export async function POST(request) {
   if (remove) {
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+      if (pi.metadata?.email?.toLowerCase().trim() !== callerEmail) {
+        return Response.json({ error: 'Invalid request.' }, { status: 400 })
+      }
       const canonicalAmount = PRICES[pi.metadata?.type]
       if (!canonicalAmount) {
         return Response.json({ error: 'Invalid request.' }, { status: 400 })
@@ -85,6 +95,11 @@ export async function POST(request) {
     } catch (err) {
       await releaseLock(lockKey)
       throw err
+    }
+    // Verify the PI belongs to the caller
+    if (pi.metadata?.email?.toLowerCase().trim() !== callerEmail) {
+      await releaseLock(lockKey)
+      return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
     // Only allow promo codes on membership payments
     if (!['membership_routes', 'membership_inner_circle'].includes(pi.metadata?.type)) {

@@ -136,7 +136,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       const res = await fetch('/api/stripe/apply-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoInput.trim(), paymentIntentId }),
+        body: JSON.stringify({ code: promoInput.trim(), paymentIntentId, email: formData.email }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setPromoError(data.error || 'Invalid promo code.'); return }
@@ -155,7 +155,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       const res = await fetch('/api/stripe/apply-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ remove: true, paymentIntentId, originalAmount: originalAmountCents }),
+        body: JSON.stringify({ remove: true, paymentIntentId, email: formData.email, originalAmount: originalAmountCents }),
       })
       if (res.ok) {
         setPromoApplied(null)

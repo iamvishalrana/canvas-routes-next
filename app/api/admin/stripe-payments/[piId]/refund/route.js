@@ -13,6 +13,15 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Invalid payment intent ID.' }, { status: 400 })
   }
 
+  // Verify the PI belongs to a Canvas Routes record before issuing a refund
+  const supabase = createAdminClient()
+  const { data: app } = await supabase.from('applications')
+    .select('id, stripe_payment_status')
+    .eq('stripe_payment_intent_id', piId)
+    .maybeSingle()
+  if (!app) return Response.json({ error: 'Payment not found.' }, { status: 404 })
+  if (app.stripe_payment_status === 'refunded') return Response.json({ error: 'Already refunded.' }, { status: 400 })
+
   let body = {}
   try { body = await request.json() } catch {}
   const VALID_REASONS = ['requested_by_customer', 'duplicate', 'fraudulent']
@@ -25,7 +34,6 @@ export async function POST(request, { params }) {
     )
 
     // Best-effort DB sync — ignore errors
-    const supabase = createAdminClient()
     await supabase
       .from('applications')
       .update({ stripe_payment_status: 'refunded' })
