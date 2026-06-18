@@ -9,11 +9,16 @@ Sentry.init({
     /runtime\.sendMessage/,
     /window\.webkit\.messageHandlers/,
     /webkit\.messageHandlers/,
-    // Sentry's own addEventListener instrumentation hitting a non-array Next.js internal
+    /setupIosCallbackHandler/,
     /elm\.events\.push is not a function/,
   ],
 
   beforeSend(event, hint) {
+    // Drop errors originating from injected third-party scripts (Facebook IAB, etc.)
+    // identified by the app:// or app:/// filename scheme in their stack frames.
+    const frames = event.exception?.values?.[0]?.stacktrace?.frames
+    if (frames?.some(f => f.filename?.startsWith('app://'))) return null
+
     const err = hint?.originalException
     // Safari throws SecurityError (DOMException code 18) when WebSocket is blocked
     // by ITP or privacy policy. The page works fine — realtime sync just degrades.
