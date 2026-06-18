@@ -138,7 +138,7 @@ export default function Home() {
 
 
   useEffect(() => {
-    const t = setTimeout(() => setShowCCDPopup(true), 2000)
+    const t = setTimeout(() => setShowCCDPopup(true), 1000)
     return () => clearTimeout(t)
   }, [])
 
