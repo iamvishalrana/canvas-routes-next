@@ -20,11 +20,13 @@ export const CANONICAL_EVENTS = [
   { name: 'Cars & Coffee — May 9, 2026', date: '2026-05-09' },
   { name: 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026', date: '2026-05-23' },
   { name: 'Into the Laurentians — June 7, 2026', date: '2026-06-07' },
+  { name: 'Cars, Coffee & Dad Jokes — June 20, 2026', date: '2026-06-20' },
 ]
 export const MEMBER_ATTENDANCE_KEYS = {
   'Cars & Coffee — May 9, 2026': 'cc_may9',
   'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026': 'gp_may23',
   'Into the Laurentians — June 7, 2026': 'laurentians_jun7',
+  'Cars, Coffee & Dad Jokes — June 20, 2026': 'ccd_jun20',
 }
 export const NAME_ALIASES = {
   'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
