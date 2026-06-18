@@ -32,22 +32,22 @@ export async function GET(request) {
   ] = await Promise.all([
     // Members: standard text columns
     supabase.from('members')
-      .select('id, name, email, phone, instagram, membership_status, tier, car_make, car_model, cars')
+      .select('id, name, email, phone, instagram, membership_status, tier, car_make, car_model, car_year, cars')
       .or(memberOr)
       .limit(5),
     // Members: license plate search via cars JSONB cast
     supabase.from('members')
-      .select('id, name, email, phone, instagram, membership_status, tier, car_make, car_model, cars')
+      .select('id, name, email, phone, instagram, membership_status, tier, car_make, car_model, car_year, cars')
       .filter('cars::text', 'ilike', pattern)
       .limit(5),
     // Applications: all text fields
     supabase.from('applications')
-      .select('id, name, email, phone, instagram, car_model, stripe_payment_status')
+      .select('id, name, email, phone, instagram, car_make, car_model, car_year, stripe_payment_status')
       .or(appOr)
       .limit(5),
     // Contacts: search via linked application fields
     supabase.from('applications')
-      .select('id, name, email, phone, instagram, car_model, contacts(id)')
+      .select('id, name, email, phone, instagram, car_make, car_model, car_year, contacts(id)')
       .or(appOr)
       .limit(10),
   ])
@@ -66,7 +66,7 @@ export async function GET(request) {
     .map(a => ({
       id: a.contacts[0].id,
       application_id: a.id,
-      applications: { name: a.name, email: a.email, car_model: a.car_model },
+      applications: { name: a.name, email: a.email, car_make: a.car_make, car_model: a.car_model, car_year: a.car_year },
     }))
 
   return Response.json({

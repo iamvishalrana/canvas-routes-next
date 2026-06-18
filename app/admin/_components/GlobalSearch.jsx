@@ -83,15 +83,23 @@ export default function GlobalSearch() {
   const q = query.toLowerCase()
   function sub(m) {
     const parts = []
-    const car = [m.car_make, m.car_model].filter(Boolean).join(' ')
+    const car = [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ')
     if (car) parts.push(car)
     if (m.phone && m.phone.toLowerCase().includes(q)) parts.push(m.phone)
     if (m.instagram && m.instagram.toLowerCase().includes(q)) parts.push(m.instagram)
     return parts.join(' · ')
   }
   const memberItems  = (results?.members || []).map(m => ({ name: m.name, email: m.email, badge: m.membership_status, sub: sub(m), color: '#3B6B2F', href: `/admin/members?q=${encodeURIComponent(m.email || m.name || '')}` }))
-  const appItems     = (results?.applications || []).map(a => ({ name: a.name, email: a.email, badge: a.stripe_payment_status, sub: [a.car_model, a.phone?.toLowerCase().includes(q) ? a.phone : null].filter(Boolean).join(' · '), color: '#8A6535', href: `/admin/applications?q=${encodeURIComponent(a.email || a.name || '')}` }))
-  const contactItems = (results?.contacts || []).map(c => ({ name: c.applications?.name, email: c.applications?.email, sub: c.applications?.car_model, color: '#555', href: `/admin/contacts?q=${encodeURIComponent(c.applications?.email || c.applications?.name || '')}` }))
+  const appItems     = (results?.applications || []).map(a => {
+    const car = [a.car_year, a.car_model].filter(Boolean).join(' ')
+    const parts = [car, a.phone?.toLowerCase().includes(q) ? a.phone : null].filter(Boolean)
+    return { name: a.name, email: a.email, badge: a.stripe_payment_status, sub: parts.join(' · '), color: '#8A6535', href: `/admin/applications?q=${encodeURIComponent(a.email || a.name || '')}` }
+  })
+  const contactItems = (results?.contacts || []).map(c => {
+    const app = c.applications || {}
+    const car = [app.car_year, app.car_model].filter(Boolean).join(' ')
+    return { name: app.name, email: app.email, sub: car, color: '#555', href: `/admin/contacts?q=${encodeURIComponent(app.email || app.name || '')}` }
+  })
 
   if (!open) return (
     <button onClick={() => setOpen(true)}
