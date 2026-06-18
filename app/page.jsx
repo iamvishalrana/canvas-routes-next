@@ -138,7 +138,6 @@ export default function Home() {
 
 
   useEffect(() => {
-    if (localStorage.getItem('cr_ccd_popup_v1')) return
     const t = setTimeout(() => setShowCCDPopup(true), 2000)
     return () => clearTimeout(t)
   }, [])
@@ -844,13 +843,13 @@ export default function Home() {
       {/* CARS, COFFEE & DAD JOKES POPUP */}
       {showCCDPopup && (
         <div
-          onClick={e => { if (e.target === e.currentTarget) { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') } }}
+          onClick={e => { if (e.target === e.currentTarget) { setShowCCDPopup(false);  } }}
           style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,30,20,0.78)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1.25rem', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
         >
           <div style={{ position: 'relative', maxWidth: '460px', width: '100%', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', margin: 'auto' }}>
             {/* Close */}
             <button
-              onClick={() => { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') }}
+              onClick={() => { setShowCCDPopup(false);  }}
               style={{ position: 'absolute', top: '0.65rem', right: '0.65rem', zIndex: 10, background: 'rgba(0,0,0,0.45)', border: 'none', cursor: 'pointer', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
               aria-label="Close"
             >
@@ -870,7 +869,7 @@ export default function Home() {
               </div>
               <Link
                 href="/cars-coffee-dad-jokes"
-                onClick={() => { setShowCCDPopup(false); localStorage.setItem('cr_ccd_popup_v1', '1') }}
+                onClick={() => { setShowCCDPopup(false);  }}
                 style={{ background: '#c5a882', color: '#0F1E14', padding: '0.65rem 1.6rem', fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-block' }}
               >
                 Register Now
