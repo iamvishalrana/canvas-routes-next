@@ -42,7 +42,7 @@ function confirmHtml(firstName, { year, carMake, carModel, dob_month, dob_day, d
           ${row('Date of birth', dob)}
         </table>
         <p style="margin:0 0 1.4em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
-          Add <a href="mailto:info@canvasroutes.com" style="color:#8A6535;text-decoration:none;">info@canvasroutes.com</a> to your contacts so our follow-up doesn't end up in spam.
+          Add <a href="mailto:jerry@canvasroutes.com" style="color:#8A6535;text-decoration:none;">jerry@canvasroutes.com</a> to your contacts so our follow-up doesn't end up in spam.
         </p>
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 1.4em;background:#fafaf8;border:0.5px solid rgba(197,168,130,0.35);padding:20px 24px;">
           <tr>

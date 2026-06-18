@@ -84,6 +84,7 @@ export async function POST(request, { params }) {
         reply_to: 'jerry@canvasroutes.com',
         subject: subject.trim(),
         html: emailHtml({ subject: subject.trim(), body: body.trim(), recipientEmail: app.email }),
+        text: body.trim() + '\n\n—\nCanvas Routes · Montreal, QC\ninfo@canvasroutes.com',
       }),
     })
 
