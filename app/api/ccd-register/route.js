@@ -201,6 +201,7 @@ export async function POST(request) {
         reply_to: 'info@canvasroutes.com',
         subject: "You're registered — Cars, Coffee & Dad Jokes · June 20",
         html: confirmHtml(firstName, receiptData),
+        text: `Hi ${firstName},\n\nWe've received your registration for Cars, Coffee & Dad Jokes — our Father's Day Weekend Special on June 20 at Cafe Napoleon in LaSalle.\n\nEntry is invite-only, so we'll review your registration and follow up with confirmation details. Expect a personal email from us before the event.\n\nAdd jerry@canvasroutes.com to your contacts so our follow-up doesn't end up in spam.\n\nSee you on June 20,\nJerry\nCanvas Routes`,
       }),
     })
   } catch (e) {

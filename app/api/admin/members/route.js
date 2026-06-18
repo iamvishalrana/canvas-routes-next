@@ -200,11 +200,12 @@ export async function POST(request) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Canvas Routes <membership@canvasroutes.com>',
+          from: 'Canvas Routes <jerry@canvasroutes.com>',
           to: email,
-          reply_to: 'info@canvasroutes.com',
+          reply_to: 'jerry@canvasroutes.com',
           subject: "You're in — Canvas Routes 2026",
           html: inviteHtml({ firstName, tier, actionLink }),
+          text: `Hey ${firstName},\n\nYou're in — welcome to Canvas Routes.\n\nSet up your member portal here:\n${actionLink}\n\nSee you on the road,\nJerry\nCanvas Routes`,
         }),
       })
 

@@ -182,6 +182,7 @@ export async function POST(request, { params }) {
             reply_to: 'jerry@canvasroutes.com',
             subject: `You're in — ${tokenRow.event_name}`,
             html,
+            text: `Hey ${firstName},\n\nYou're confirmed for ${tokenRow.event_name}${event?.date_display ? ` on ${event.date_display}` : ''}${event?.location ? ` at ${event.location}` : ''}.\n\nWe'll be in touch with final details closer to the date.\n\nSee you there,\nJerry\nCanvas Routes`,
           }),
         }).catch(err => captureException(err, { context: 'rsvp-final-invite', token }))
       } catch (err) {

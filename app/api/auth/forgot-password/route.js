@@ -133,11 +133,12 @@ export async function POST(request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Canvas Routes <membership@canvasroutes.com>',
+        from: 'Canvas Routes <info@canvasroutes.com>',
         to: email.trim(),
         reply_to: 'info@canvasroutes.com',
         subject: 'Reset your Canvas Routes password',
         html: resetHtml({ actionLink }),
+        text: `Reset your Canvas Routes password\n\nClick this link to reset your password:\n${actionLink}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.\n\nCanvas Routes · Montreal, QC`,
       }),
     })
 
