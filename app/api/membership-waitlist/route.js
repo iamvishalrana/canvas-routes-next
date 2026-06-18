@@ -199,6 +199,19 @@ export async function POST(request) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 
+  // Check membership_open setting
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabase = createAdminClient()
+      const { data: setting } = await supabase.from('settings').select('value').eq('key', 'membership_open').maybeSingle()
+      if (setting && setting.value === 'false') {
+        const { data: msgSetting } = await supabase.from('settings').select('value').eq('key', 'membership_closed_message').maybeSingle()
+        const msg = msgSetting?.value?.trim() || 'Membership applications are currently paused. Check back soon.'
+        return Response.json({ error: msg }, { status: 503 })
+      }
+    } catch {}
+  }
+
   let body
   try { body = await request.json() } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 })

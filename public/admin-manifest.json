@@ -1,0 +1,15 @@
+{
+  "name": "Canvas Routes Admin",
+  "short_name": "CR Admin",
+  "description": "Canvas Routes admin panel",
+  "start_url": "/admin/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0F1E14",
+  "theme_color": "#0F1E14",
+  "icons": [
+    { "src": "/favicon.png",      "sizes": "32x32",   "type": "image/png" },
+    { "src": "/white-outline.png","sizes": "512x512",  "type": "image/png", "purpose": "any maskable" }
+  ]
+}

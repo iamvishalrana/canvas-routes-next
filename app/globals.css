@@ -487,6 +487,24 @@ section[id] {
   .admin-main { padding-top: 3.75rem; }
 }
 
+/* iOS home screen PWA — safe areas for notch / Dynamic Island / home indicator */
+@media (display-mode: standalone) {
+  .admin-hamburger {
+    top: calc(1rem + env(safe-area-inset-top)) !important;
+    left: calc(1rem + env(safe-area-inset-left)) !important;
+  }
+  .admin-main {
+    padding-top: calc(3.75rem + env(safe-area-inset-top)) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  .admin-sidebar-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .admin-sidebar-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* Admin animations */
 @keyframes adminFadeIn {
   from { opacity: 0; transform: translateY(6px); }

@@ -45,6 +45,7 @@ const SECTIONS = [
   {
     id: 'system', label: 'System',
     items: [
+      { href: '/admin/settings',     label: 'Settings'     },
       { href: '/admin/activity-log', label: 'Activity Log' },
       { href: '/admin/tools',        label: 'Tools'        },
     ],
@@ -289,7 +290,7 @@ function NavContent({ pathname, onNavClick }) {
 
       <BirthdaysWidget />
 
-      <div className="admin-sidebar-footer" style={{ padding: '0.75rem 1.25rem', borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
+      <div className="admin-sidebar-footer admin-sidebar-safe-bottom" style={{ padding: '0.75rem 1.25rem', borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
         <Link href="/members/dashboard" onClick={onNavClick} style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', textDecoration: 'none', letterSpacing: '0.06em', transition: 'color 0.2s' }}
           onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.55)'}
           onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.3)'}
@@ -298,6 +299,21 @@ function NavContent({ pathname, onNavClick }) {
         </Link>
       </div>
     </>
+  )
+}
+
+function AdminBanner() {
+  const [banner, setBanner] = useState(null)
+  useEffect(() => {
+    fetch('/api/admin/settings').then(r => r.ok ? r.json() : {}).then(s => {
+      setBanner(s.admin_banner?.trim() || null)
+    }).catch(() => {})
+  }, [])
+  if (!banner) return null
+  return (
+    <div style={{ background: 'rgba(197,168,130,0.12)', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: '0.6rem 1.25rem', fontSize: '12px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.5 }}>
+      {banner}
+    </div>
   )
 }
 
@@ -343,7 +359,7 @@ export default function AdminShell({ children }) {
         zIndex: 400, display: 'flex', flexDirection: 'column',
         borderRight: '1px solid rgba(197,168,130,0.1)', overflowY: 'auto',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
+        <div className="admin-sidebar-safe-top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
           <Link href="/" onClick={() => setIsOpen(false)} style={{ display: 'flex' }}>
             <Image src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '80px', height: 'auto', opacity: 0.9 }} />
           </Link>
@@ -359,7 +375,7 @@ export default function AdminShell({ children }) {
         minHeight: '100vh', position: 'sticky', top: 0, height: '100vh',
         overflow: 'hidden',
       }}>
-        <div style={{ padding: '0.2rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+        <div className="admin-sidebar-safe-top" style={{ padding: '0.2rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
           <Link href="/" className="admin-sidebar-logo" style={{ display: 'flex' }}>
             <Image src="/white-outline.png" alt="Canvas Routes" width={200} height={133} style={{ width: '110px', height: 'auto', opacity: 0.9 }} />
           </Link>
@@ -370,6 +386,7 @@ export default function AdminShell({ children }) {
       </aside>
 
       <main className="admin-main" style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
+        <AdminBanner />
         <div key={pathname} className="admin-page-enter">
           {children}
         </div>
