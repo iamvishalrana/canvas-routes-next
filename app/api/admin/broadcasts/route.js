@@ -12,10 +12,45 @@ function buildUnsubscribeFooter(email) {
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:32px;">
   <tr><td style="padding-top:16px;border-top:1px solid rgba(0,0,0,0.08);text-align:center;">
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaa;margin:0;">
+      Canvas Routes &nbsp;&middot;&nbsp; Montreal, QC<br/>
       <a href="${url}" style="color:#bbb;text-decoration:underline;">Unsubscribe</a>
     </p>
   </td></tr>
 </table>`
+}
+
+function htmlToPlainText(html) {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function buildEmail({ from, recipient, subject, html, unsubUrl }) {
+  const unsubFooter = buildUnsubscribeFooter(recipient.email)
+  const resolvedHtml = html.includes('<!-- UNSUBSCRIBE_FOOTER -->')
+    ? html.replace('<!-- UNSUBSCRIBE_FOOTER -->', unsubFooter)
+    : html + unsubFooter
+  const finalHtml = resolvedHtml.replace(/\{\{name\}\}/gi, recipient.name || 'there')
+  return {
+    from,
+    to: recipient.email,
+    subject: subject.replace(/\{\{name\}\}/gi, recipient.name || 'there'),
+    html: finalHtml,
+    text: htmlToPlainText(finalHtml) + `\n\nUnsubscribe: ${unsubUrl}`,
+    headers: {
+      'List-Unsubscribe': `<${unsubUrl}>, <mailto:info@canvasroutes.com?subject=unsubscribe&body=${encodeURIComponent(recipient.email)}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      'Precedence': 'bulk',
+    },
+  }
 }
 
 export async function GET() {
@@ -146,14 +181,10 @@ export async function POST(request) {
   // Use Resend's batch endpoint — one API call per 100 emails, no per-request rate limits
   for (let i = 0; i < recipients.length; i += RESEND_BATCH_SIZE) {
     const batch = recipients.slice(i, i + RESEND_BATCH_SIZE)
-    const payload = batch.map(recipient => ({
-      from: fromHeader,
-      to: recipient.email,
-      subject: subject.trim().replace(/\{\{name\}\}/gi, recipient.name || 'there'),
-      html: html
-        .replace(/\{\{name\}\}/gi, recipient.name || 'there')
-        .replace('<!-- UNSUBSCRIBE_FOOTER -->', buildUnsubscribeFooter(recipient.email)),
-    }))
+    const payload = batch.map(recipient => {
+      const unsubUrl = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(recipient.email)}`
+      return buildEmail({ from: fromHeader, recipient, subject: subject.trim(), html, unsubUrl })
+    })
     try {
       const res = await fetch('https://api.resend.com/emails/batch', {
         method: 'POST',
