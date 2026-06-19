@@ -148,6 +148,7 @@ export default function CCDPage() {
               { label:'Time',     value:'9:00 AM – 11:30 AM' },
               { label:'Venue',    value:'Cafe Napoleon, LaSalle' },
               { label:'Entry',    value:'Invite only' },
+              { label:'Cost',     value:'Free' },
             ].map(({ label, value }) => (
               <div key={label} style={{ textAlign:'center', minWidth:'110px' }}>
                 <div style={{ fontSize:'9px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.3rem' }}>{label}</div>
@@ -170,9 +171,12 @@ export default function CCDPage() {
             <h1 style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'clamp(2.2rem,6vw,3rem)', fontWeight:'300', color:'#1a1a1a', lineHeight:1.1, marginBottom:'1.25rem' }}>
               Request your spot.
             </h1>
-            <p style={{ fontSize:'14px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', maxWidth:'380px', margin:'0 auto' }}>
-              Entry is invite-only. Fill in your details below and we&apos;ll follow up with confirmation before the event.
+            <p style={{ fontSize:'14px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', maxWidth:'380px', margin:'0 auto 1rem' }}>
+              Entry is invite-only and completely free. Fill in your details below and we&apos;ll follow up with confirmation before the event.
             </p>
+            <div style={{ display:'inline-block', fontSize:'11px', letterSpacing:'0.12em', textTransform:'uppercase', color:'#3B6B2F', border:'0.5px solid rgba(59,107,47,0.35)', background:'rgba(59,107,47,0.06)', padding:'4px 14px', fontFamily:'var(--font-inter), sans-serif' }}>
+              No cost to attend
+            </div>
           </div>
 
           {status === 'success' ? (
