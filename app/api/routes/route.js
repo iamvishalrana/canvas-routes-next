@@ -19,99 +19,38 @@ function customerHtml(firstName) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registration received &#8212; Canvas Routes</title>
 </head>
-<body style="margin:0;padding:0;background-color:#0F1E14;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
-    <tr>
-      <td align="center" style="padding:48px 16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
-
-          <!-- Logo -->
-          <tr>
-            <td style="padding-bottom:32px;">
-              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
-            </td>
-          </tr>
-
-          <!-- Gold divider -->
-          <tr>
-            <td style="padding-bottom:28px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr></table>
-            </td>
-          </tr>
-
-          <!-- Eyebrow -->
-          <tr>
-            <td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">
-              Canvas Routes &middot; Road Trip
-            </td>
-          </tr>
-
-          <!-- Headline -->
-          <tr>
-            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:36px;font-weight:300;line-height:1.2;color:#F5F1EC;">
-              You&apos;re registered, ${firstName}.
-            </td>
-          </tr>
-
-          <!-- Subtext -->
-          <tr>
-            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
-              We&apos;ve received your registration for Into the Laurentians &mdash; First Route.
-            </td>
-          </tr>
-
-          <!-- Dark card -->
-          <tr>
-            <td style="padding-bottom:32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:rgba(197,168,130,0.08);border:0.5px solid rgba(197,168,130,0.2);">
-                <tr>
-                  <td style="padding:24px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                      <!-- Event row -->
-                      <tr>
-                        <td style="padding-bottom:16px;border-bottom:1px solid rgba(197,168,130,0.1);">
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:6px;">Event</div>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">Into the Laurentians &mdash; June 7, 2026</div>
-                        </td>
-                      </tr>
-                      <!-- Payment row -->
-                      <tr>
-                        <td style="padding-top:16px;">
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:6px;">Payment</div>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">We&apos;ll be in touch shortly with payment details. $200 per car.</div>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Instagram button -->
-          <tr>
-            <td style="padding-bottom:40px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="border:1px solid rgba(197,168,130,0.4);">
-                    <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;text-decoration:none;">&#64;canvasroutes &rarr;</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding-top:20px;border-top:1px solid rgba(197,168,130,0.15);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.35);">
-              &copy; 2026 Canvas Routes. Montreal, QC.
-            </td>
-          </tr>
-
+<body style="margin:0;padding:0;background-color:#F5F1EC;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
+  <tr><td align="center" style="padding:32px 16px 48px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
+      <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
+        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:24px;opacity:0.92;" />
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40" style="margin-bottom:20px;"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
+        <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Canvas Routes &middot; Road Trip</p>
+        <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:300;line-height:1.2;color:#F5F1EC;">You&apos;re registered, ${firstName}.</h1>
+      </td></tr>
+      <tr><td style="background:#ffffff;padding:36px 40px 32px;">
+        <p style="margin:0 0 1.4em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#444;">We&apos;ve received your registration for Into the Laurentians &mdash; First Route.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;border-left:3px solid #c5a882;margin-bottom:28px;">
+          <tr><td style="padding:18px 20px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Event</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;margin-bottom:14px;">Into the Laurentians &mdash; June 7, 2026</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;border-top:1px solid rgba(0,0,0,0.06);padding-top:14px;">Payment</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#555;">We&apos;ll be in touch shortly with payment details. $200 per car.</div>
+          </td></tr>
         </table>
-      </td>
-    </tr>
-  </table>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="border:0.5px solid rgba(0,0,0,0.18);">
+            <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:11px 22px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#555;text-decoration:none;">&#64;canvasroutes &rarr;</a>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="background:#0F1E14;padding:16px 40px;">
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);">&copy; 2026 Canvas Routes. Montreal, QC.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
 </body>
 </html>`
 }

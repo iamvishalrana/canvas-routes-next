@@ -11,78 +11,31 @@ function resetHtml({ actionLink }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reset your Canvas Routes password</title>
 </head>
-<body style="margin:0;padding:0;background-color:#0F1E14;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
-    <tr>
-      <td align="center" style="padding:48px 16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
-
-          <!-- Logo -->
-          <tr>
-            <td style="padding-bottom:32px;">
-              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
-            </td>
-          </tr>
-
-          <!-- Gold divider -->
-          <tr>
-            <td style="padding-bottom:28px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr></table>
-            </td>
-          </tr>
-
-          <!-- Eyebrow -->
-          <tr>
-            <td style="padding-bottom:14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">
-              Canvas Routes &middot; Members
-            </td>
-          </tr>
-
-          <!-- Headline -->
-          <tr>
-            <td style="padding-bottom:20px;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:300;line-height:1.2;color:#F5F1EC;">
-              Reset your password.
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:rgba(245,241,236,0.72);">
-              We received a request to reset the password for your Canvas Routes account. Click the button below to choose a new one.
-            </td>
-          </tr>
-
-          <!-- CTA button -->
-          <tr>
-            <td style="padding-bottom:16px;" align="center">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td align="center" style="background-color:#c5a882;">
-                    <a href="${actionLink}" style="display:block;padding:16px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#0F1E14;text-decoration:none;font-weight:600;">Reset my password &rarr;</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Expiry note -->
-          <tr>
-            <td style="padding-bottom:40px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:rgba(245,241,236,0.4);">
-              This link expires in 1 hour. If you didn&apos;t request a password reset, you can safely ignore this email.
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding-top:20px;border-top:1px solid rgba(197,168,130,0.15);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.35);">
-              &copy; 2026 Canvas Routes. Montreal, QC.
-            </td>
-          </tr>
-
+<body style="margin:0;padding:0;background-color:#F5F1EC;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
+  <tr><td align="center" style="padding:32px 16px 48px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
+      <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
+        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:24px;opacity:0.92;" />
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40" style="margin-bottom:20px;"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
+        <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Canvas Routes &middot; Members</p>
+        <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:300;line-height:1.2;color:#F5F1EC;">Reset your password.</h1>
+      </td></tr>
+      <tr><td style="background:#ffffff;padding:36px 40px 32px;">
+        <p style="margin:0 0 1.5em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#444;">We received a request to reset the password for your Canvas Routes account. Click the button below to choose a new one.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px;">
+          <tr><td style="background:#0F1E14;">
+            <a href="${actionLink}" style="display:block;padding:15px 32px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#F5F1EC;text-decoration:none;font-weight:600;text-align:center;">Reset my password &rarr;</a>
+          </td></tr>
         </table>
-      </td>
-    </tr>
-  </table>
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#bbb;">This link expires in 1 hour. If you didn&apos;t request a password reset, you can safely ignore this email.</p>
+      </td></tr>
+      <tr><td style="background:#0F1E14;padding:16px 40px;">
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);">&copy; 2026 Canvas Routes. Montreal, QC.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
 </body>
 </html>`
 }
