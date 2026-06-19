@@ -2,6 +2,7 @@ import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
+import { PRICES } from '../../../lib/prices.js'
 
 function h(str) {
   return String(str ?? '')
@@ -249,7 +250,6 @@ export async function POST(request) {
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
       const TIER_TYPE_MAP = { 'Routes Member': 'membership_routes', 'Inner Circle': 'membership_inner_circle' }
-      const TIER_PRICE_MAP = { 'Routes Member': 9900, 'Inner Circle': 24900 }
       const expectedType = TIER_TYPE_MAP[tier]
       const piEmail = pi.metadata?.email?.toLowerCase().trim()
       if (
@@ -261,7 +261,7 @@ export async function POST(request) {
         return Response.json({ error: 'Payment verification failed. Please contact support.' }, { status: 400 })
       }
       // Reject if amount is suspiciously low (below 50% of tier price — covers legitimate promo codes)
-      if (pi.amount < Math.floor(TIER_PRICE_MAP[tier] * 0.5)) {
+      if (pi.amount < Math.floor((PRICES[expectedType] ?? 0) * 0.5)) {
         captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, expected: TIER_PRICE_MAP[tier] })
         return Response.json({ error: 'Payment amount invalid. Please contact support.' }, { status: 400 })
       }
