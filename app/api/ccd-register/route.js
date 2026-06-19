@@ -10,10 +10,8 @@ function h(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-function confirmHtml(firstName, { year, carMake, carModel, dob_month, dob_day, dob_year }) {
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+function confirmHtml(firstName, { year, carMake, carModel }) {
   const car = [year, carMake, carModel].filter(Boolean).join(' ')
-  const dob = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : null
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -67,7 +65,6 @@ function confirmHtml(firstName, { year, carMake, carModel, dob_month, dob_day, d
                 <td style="padding:16px 20px;">
                   <p style="margin:0 0 5px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Your car</p>
                   <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:400;color:#1a1a1a;">${h(car)}</p>
-                  ${dob ? `<p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#999;">Born ${h(dob)}</p>` : ''}
                 </td>
               </tr>
             </table>` : ''}
@@ -104,9 +101,7 @@ function confirmHtml(firstName, { year, carMake, carModel, dob_month, dob_day, d
 </html>`
 }
 
-function notifyHtml({ name, email, year, carMake, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source }) {
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
-  const dobStr = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''
+function notifyHtml({ name, email, year, carMake, carModel, phone, instagram, more, source }) {
   const row = (label, value) => value
     ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
     : ''
@@ -119,7 +114,6 @@ function notifyHtml({ name, email, year, carMake, carModel, dob_month, dob_day, 
     ${row('Name', `<strong>${h(name)}</strong>`)}
     ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
     ${row('Car', h(fullCar))}
-    ${row('Date of Birth', dobStr ? h(dobStr) : '')}
     ${row('Phone', phone ? h(phone) : '')}
     ${row('Instagram', instagram ? h(instagram) : '')}
     ${row('About', more ? h(more) : '')}
@@ -140,7 +134,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { name, email, year, carMake, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, _hp } = body
+  const { name, email, year, carMake, carModel, phone, instagram, more, source, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -153,8 +147,6 @@ export async function POST(request) {
     return Response.json({ error: 'Car make is required.' }, { status: 400 })
   if (!carModel?.trim())
     return Response.json({ error: 'Car model is required.' }, { status: 400 })
-  if (!dob_month || !dob_day)
-    return Response.json({ error: 'Date of birth month and day are required.' }, { status: 400 })
   const VALID_SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
   if (!source || !VALID_SOURCES.includes(source))
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
@@ -192,9 +184,6 @@ export async function POST(request) {
       car_year: year.trim(),
       car_make: carMake?.trim() || null,
       car_model: fullCarModel,
-      dob_month: dob_month ? parseInt(dob_month) : null,
-      dob_day: dob_day ? parseInt(dob_day) : null,
-      dob_year: dob_year ? parseInt(dob_year) : null,
       phone: phone || null,
       instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
       more: more || null,
@@ -221,7 +210,7 @@ export async function POST(request) {
     return Response.json({ success: true })
   }
 
-  const receiptData = { year: year?.trim(), carMake: carMake?.trim(), carModel: carModel?.trim(), dob_month, dob_day, dob_year }
+  const receiptData = { year: year?.trim(), carMake: carMake?.trim(), carModel: carModel?.trim() }
 
   // Confirmation email to registrant
   try {
@@ -250,7 +239,7 @@ export async function POST(request) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'info@canvasroutes.com',
         subject: `CCD Registration — ${year?.trim()} ${fullCarModel} — ${name.trim()}`,
-        html: notifyHtml({ name, email, year, carMake, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source }),
+        html: notifyHtml({ name, email, year, carMake, carModel, phone, instagram, more, source }),
       }),
     })
   } catch (e) {

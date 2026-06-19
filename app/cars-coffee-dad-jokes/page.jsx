@@ -11,9 +11,6 @@ const COUNTRY_CODES = ['+1','+7','+20','+27','+30','+31','+32','+33','+34','+36'
 const SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
 
 const YEARS = Array.from({ length: 60 }, (_, i) => String(new Date().getFullYear() - i))
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
-const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1))
-const DOB_YEARS = Array.from({ length: 85 }, (_, i) => String(2009 - i))
 
 function Chevron() {
   return (
@@ -38,7 +35,7 @@ const base = {
 }
 
 export default function CCDPage() {
-  const [form, setForm] = useState({ name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'' })
+  const [form, setForm] = useState({ name:'', email:'', year:'', carMake:'', carModel:'', phone:'', instagram:'', more:'', source:'' })
   const [countryCode, setCountryCode] = useState('+1')
   const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [focused, setFocused] = useState(null)
@@ -72,14 +69,12 @@ export default function CCDPage() {
     if (!form.year) newErrors.year = true
     if (!form.carMake) newErrors.carMake = true
     if (!form.carModel.trim()) newErrors.carModel = true
-    if (!form.dob_month) newErrors.dob_month = true
-    if (!form.dob_day) newErrors.dob_day = true
     if (!phoneOptOut && !form.phone.trim()) newErrors.phone = true
     if (!form.source) newErrors.source = true
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors)
-      const first = ['name','email','year','carMake','carModel','dob_month','dob_day','phone','source'].find(f => newErrors[f])
+      const first = ['name','email','year','carMake','carModel','phone','source'].find(f => newErrors[f])
       if (first) document.getElementById(`ccd-${first}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
       return
     }
@@ -98,9 +93,6 @@ export default function CCDPage() {
           carModel: form.carModel.trim(),
           phone: !phoneOptOut && form.phone.trim() ? `${countryCode} ${form.phone.trim()}` : '',
           instagram: form.instagram.trim().replace(/^@+/,'') || '',
-          dob_month: form.dob_month || '',
-          dob_day: form.dob_day || '',
-          dob_year: form.dob_year || '',
           more: form.more.trim() || '',
           source: form.source,
           _hp: honeypotRef.current?.value || '',
@@ -291,51 +283,6 @@ export default function CCDPage() {
                 />
               </div>
 
-              {/* Date of birth */}
-              <div>
-                <div style={{ fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: (errors.dob_month || errors.dob_day) ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
-                  Date of Birth <span style={{ color:'#d06070' }}>*</span> <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0, fontSize:'9px' }}>(year optional)</span>
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'1.8fr 1fr 1.2fr', gap:'0.75rem' }}>
-                  <div style={{ position:'relative' }}>
-                    <select
-                      id="ccd-dob_month"
-                      value={form.dob_month} onChange={e => update('dob_month', e.target.value)}
-                      onFocus={() => setFocused('dob_month')} onBlur={() => setFocused(null)}
-                      style={{ ...base, ...inp(focused==='dob_month', !!form.dob_month, errors.dob_month), paddingRight:'2rem', cursor:'pointer' }}
-                    >
-                      <option value="">Month</option>
-                      {MONTHS.map((m, i) => <option key={m} value={String(i+1)}>{m}</option>)}
-                    </select>
-                    <Chevron />
-                  </div>
-                  <div style={{ position:'relative' }}>
-                    <select
-                      id="ccd-dob_day"
-                      value={form.dob_day} onChange={e => update('dob_day', e.target.value)}
-                      onFocus={() => setFocused('dob_day')} onBlur={() => setFocused(null)}
-                      style={{ ...base, ...inp(focused==='dob_day', !!form.dob_day, errors.dob_day), paddingRight:'2rem', cursor:'pointer' }}
-                    >
-                      <option value="">Day</option>
-                      {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                    <Chevron />
-                  </div>
-                  <div style={{ position:'relative' }}>
-                    <select
-                      id="ccd-dob_year"
-                      value={form.dob_year} onChange={e => update('dob_year', e.target.value)}
-                      onFocus={() => setFocused('dob_year')} onBlur={() => setFocused(null)}
-                      style={{ ...base, ...inp(focused==='dob_year', !!form.dob_year, false), paddingRight:'2rem', cursor:'pointer' }}
-                    >
-                      <option value="">Year</option>
-                      {DOB_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                    <Chevron />
-                  </div>
-                </div>
-              </div>
-
               {/* Phone */}
               <div>
                 <label htmlFor="ccd-phone" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.phone ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
@@ -397,10 +344,10 @@ export default function CCDPage() {
                   id="ccd-more"
                   value={form.more} onChange={e => update('more', e.target.value)}
                   onFocus={() => setFocused('more')} onBlur={() => setFocused(null)}
-                  maxLength={500}
-                  rows={3}
+                  maxLength={300}
+                  rows={2}
                   placeholder="Anything else you'd like us to know."
-                  style={{ ...base, resize:'vertical', lineHeight:1.65, ...inp(focused==='more', !!form.more, false) }}
+                  style={{ ...base, resize:'none', lineHeight:1.65, ...inp(focused==='more', !!form.more, false) }}
                 />
               </div>
 
