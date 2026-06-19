@@ -237,6 +237,7 @@ export default function CCDPage() {
                 <label htmlFor="ccd-email" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.email ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Email <span style={{ color:'#d06070' }}>*</span></label>
                 <input
                   id="ccd-email" type="email" autoComplete="email"
+                  autoCapitalize="none" autoCorrect="off" spellCheck={false}
                   value={form.email} onChange={e => update('email', e.target.value)}
                   onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
                   style={{ ...base, ...inp(focused==='email', !!form.email, errors.email) }}
@@ -378,6 +379,7 @@ export default function CCDPage() {
                   <span style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', color:'#aaa', fontSize:'14px', fontFamily:'var(--font-inter), sans-serif', pointerEvents:'none' }}>@</span>
                   <input
                     id="ccd-instagram" type="text" autoComplete="username"
+                    autoCapitalize="none" autoCorrect="off" spellCheck={false}
                     value={form.instagram} onChange={e => update('instagram', e.target.value.replace(/^@+/,''))}
                     onFocus={() => setFocused('instagram')} onBlur={() => setFocused(null)}
                     style={{ ...base, ...inp(focused==='instagram', !!form.instagram, false), paddingLeft:'1.85rem' }}

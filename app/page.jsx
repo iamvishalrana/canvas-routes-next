@@ -152,8 +152,30 @@ export default function Home() {
   useEffect(() => { setPastModalImageFailed(false) }, [pastModalEvent])
 
   useEffect(() => {
-    document.body.style.overflow = (pastModalEvent !== null || showEventsPopup || showCCDPopup) ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    const isOpen = pastModalEvent !== null || showEventsPopup || showCCDPopup
+    if (!isOpen) {
+      const savedTop = document.body.style.top
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      if (savedTop) window.scrollTo(0, -parseInt(savedTop, 10))
+      return
+    }
+    // iOS-compatible scroll lock — overflow:hidden alone has no effect on iOS Safari/IAB
+    const scrollY = window.scrollY
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+    return () => {
+      const top = document.body.style.top
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      if (top) window.scrollTo(0, -parseInt(top, 10))
+    }
   }, [pastModalEvent, showEventsPopup, showCCDPopup])
 
   useEffect(() => {
@@ -776,7 +798,7 @@ export default function Home() {
             >
               <div
                 onClick={ev => ev.stopPropagation()}
-                style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)",borderRadius:isMobile?"16px 16px 0 0":"0",maxHeight:isMobile?"92svh":"none",overflowY:isMobile?"auto":"visible",WebkitOverflowScrolling:"touch"}}
+                style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)",borderRadius:isMobile?"16px 16px 0 0":"0",maxHeight:isMobile?"90vh":"none",overflowY:isMobile?"auto":"visible",WebkitOverflowScrolling:"touch"}}
               >
                 {/* Close — sticky so it stays visible when the sheet scrolls on mobile */}
                 <div style={{position:"sticky",top:0,zIndex:10,display:"flex",justifyContent:"flex-end",padding:"0.5rem 0.6rem",background:"transparent",pointerEvents:"none"}}>
