@@ -168,7 +168,7 @@ export default function EventsClient() {
 
   // Photo
   const [uploadingPhoto, setUploadingPhoto] = useState(null)
-  const [photoError, setPhotoError] = useState(null)
+  const [photoError, setPhotoError] = useState({})
 
   // Registration toggle
   const [regToggleError, setRegToggleError] = useState({})
@@ -347,24 +347,24 @@ export default function EventsClient() {
   }
 
   async function uploadPhoto(eventId, file) {
-    setUploadingPhoto(eventId); setPhotoError(null)
+    setUploadingPhoto(eventId); setPhotoError(p => ({ ...p, [eventId]: null }))
     try {
       const fd = new FormData(); fd.append('photo', file)
       const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'POST', body: fd })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setPhotoError(data.error || 'Upload failed.'); return }
+      if (!res.ok) { setPhotoError(p => ({ ...p, [eventId]: data.error || 'Upload failed.' })); return }
       setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: data.url } : ev))
-    } catch { setPhotoError('Network error — upload failed.') }
+    } catch { setPhotoError(p => ({ ...p, [eventId]: 'Network error — upload failed.' })) }
     finally { setUploadingPhoto(null) }
   }
 
   async function removePhoto(eventId) {
-    setUploadingPhoto(eventId); setPhotoError(null)
+    setUploadingPhoto(eventId); setPhotoError(p => ({ ...p, [eventId]: null }))
     try {
       const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'DELETE' })
       if (res.ok) setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: null } : ev))
-      else setPhotoError('Could not remove photo.')
-    } catch { setPhotoError('Network error — could not remove photo.') }
+      else setPhotoError(p => ({ ...p, [eventId]: 'Could not remove photo.' }))
+    } catch { setPhotoError(p => ({ ...p, [eventId]: 'Network error — could not remove photo.' })) }
     finally { setUploadingPhoto(null) }
   }
 
@@ -780,14 +780,12 @@ export default function EventsClient() {
                   <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)', padding: '1.25rem 1.5rem' }}>
                     {loadingRegistrants && !registrantsData[item.id] ? (
                       <div style={{ fontSize: '13px', color: '#ccc' }}>Loading…</div>
-                    ) : !registrantsData[item.id] || registrantsData[item.id].length === 0 ? (
-                      <div style={{ fontSize: '13px', color: '#ccc' }}>No registrants on record.</div>
                     ) : (
                       <>
-                        {/* Header row: count + action buttons */}
+                        {/* Header row: count + action buttons — always visible */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                           <div style={{ fontSize: '12px', color: '#666' }}>
-                            {registrantsData[item.id].length} registrant{registrantsData[item.id].length !== 1 ? 's' : ''}
+                            {(registrantsData[item.id] || []).length} registrant{(registrantsData[item.id] || []).length !== 1 ? 's' : ''}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                             {regEmailResult[item.id]?.sent != null && !regEmailOpen[item.id] && (
@@ -796,9 +794,11 @@ export default function EventsClient() {
                             <GhostBtn small onClick={() => { setAddRegOpen(p => ({ ...p, [item.id]: !p[item.id] })); setAddRegErr(p => ({ ...p, [item.id]: null })); setAddRegSearch(p => ({ ...p, [item.id]: '' })); ensureContactsLoaded() }}>
                               {addRegOpen[item.id] ? 'Cancel' : '+ Add'}
                             </GhostBtn>
-                            <GhostBtn small onClick={() => { setRegEmailOpen(p => ({ ...p, [item.id]: !p[item.id] })); setRegEmailResult(p => ({ ...p, [item.id]: null })) }}>
-                              {regEmailOpen[item.id] ? 'Cancel' : 'Email All'}
-                            </GhostBtn>
+                            {(registrantsData[item.id] || []).length > 0 && (
+                              <GhostBtn small onClick={() => { setRegEmailOpen(p => ({ ...p, [item.id]: !p[item.id] })); setRegEmailResult(p => ({ ...p, [item.id]: null })) }}>
+                                {regEmailOpen[item.id] ? 'Cancel' : 'Email All'}
+                              </GhostBtn>
+                            )}
                           </div>
                         </div>
 
@@ -908,8 +908,13 @@ export default function EventsClient() {
                           </div>
                         )}
 
+                        {/* Empty state — shown after add form, so add is still accessible */}
+                        {(!registrantsData[item.id] || registrantsData[item.id].length === 0) && !addRegOpen[item.id] && (
+                          <div style={{ fontSize: '13px', color: '#ccc', paddingTop: '0.5rem' }}>No registrants on record.</div>
+                        )}
+
                         {/* Registrants table */}
-                        <div style={{ overflowX: 'auto' }}>
+                        {(registrantsData[item.id] || []).length > 0 && <div style={{ overflowX: 'auto' }}>
                           <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isMobile ? 'unset' : '580px' }}>
                             {!isMobile && (
                               <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 100px 60px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
@@ -923,7 +928,7 @@ export default function EventsClient() {
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
                               const isPending = confirmEmailPending === indivKey
-                              const canSend = r.email && r.email !== '—' && r.status !== 'confirmed'
+                              const canSend = r.email && r.email !== '—' && r.status !== 'confirmed' && r.type !== 'Member'
                               const isDeletePending = deleteRegConfirm === indivKey
                               const isDeleting = !!deletingReg[indivKey]
                               const deleteErr = deleteRegErr[indivKey]
@@ -1031,7 +1036,7 @@ export default function EventsClient() {
                               )
                             })}
                           </div>
-                        </div>
+                        </div>}
                       </>
                     )}
                   </div>
@@ -1086,7 +1091,7 @@ export default function EventsClient() {
                             {uploadingPhoto === item.id ? 'Uploading…' : item.photo_url ? 'Replace Photo' : 'Upload Photo'}
                             <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingPhoto === item.id} onChange={e => { if (e.target.files[0]) uploadPhoto(item.id, e.target.files[0]) }} />
                           </label>
-                          {photoError && <Err msg={photoError} />}
+                          {photoError[item.id] && <Err msg={photoError[item.id]} />}
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</PrimaryBtn>
