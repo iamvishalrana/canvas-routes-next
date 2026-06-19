@@ -37,11 +37,12 @@ const base = {
 export default function CCDPage() {
   const [form, setForm] = useState({ name:'', email:'', year:'', carMake:'', carModel:'', phone:'', instagram:'', more:'', source:'' })
   const [countryCode, setCountryCode] = useState('+1')
-  const [phoneOptOut, setPhoneOptOut] = useState(false)
+  const [phoneShown, setPhoneShown] = useState(false)   // phone is opt-in, hidden by default
   const [focused, setFocused] = useState(null)
   const [errors, setErrors] = useState({})
-  const [status, setStatus] = useState(null) // null | 'loading' | 'success'
+  const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
+  const [shareCopied, setShareCopied] = useState(false)
   const honeypotRef = useRef(null)
 
   function update(field, value) {
@@ -61,6 +62,18 @@ export default function CCDPage() {
     return v.replace(/[^\d\s\-()]/g,'').slice(0,20)
   }
 
+  function handleShare() {
+    const url = window.location.href
+    if (navigator.share) {
+      navigator.share({ title: 'Cars, Coffee & Dad Jokes — June 20', text: 'Cars & coffee in Montreal, June 20. Free entry, invite only.', url }).catch(() => {})
+    } else {
+      navigator.clipboard?.writeText(url).then(() => {
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 2000)
+      }).catch(() => {})
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     const newErrors = {}
@@ -69,7 +82,8 @@ export default function CCDPage() {
     if (!form.year) newErrors.year = true
     if (!form.carMake) newErrors.carMake = true
     if (!form.carModel.trim()) newErrors.carModel = true
-    if (!phoneOptOut && !form.phone.trim()) newErrors.phone = true
+    // Phone only required if the user chose to add it
+    if (phoneShown && !form.phone.trim()) newErrors.phone = true
     if (!form.source) newErrors.source = true
 
     if (Object.keys(newErrors).length) {
@@ -91,7 +105,7 @@ export default function CCDPage() {
           year: form.year,
           carMake: form.carMake,
           carModel: form.carModel.trim(),
-          phone: !phoneOptOut && form.phone.trim() ? `${countryCode} ${form.phone.trim()}` : '',
+          phone: phoneShown && form.phone.trim() ? `${countryCode} ${form.phone.trim()}` : '',
           instagram: form.instagram.trim().replace(/^@+/,'') || '',
           more: form.more.trim() || '',
           source: form.source,
@@ -109,6 +123,13 @@ export default function CCDPage() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 640px) {
+          .ccd-submit-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem; background: #F5F1EC; border-top: 0.5px solid rgba(0,0,0,0.1); z-index: 50; }
+          .ccd-form-pad { padding-bottom: 5.5rem !important; }
+        }
+      `}</style>
+
       {/* ── Nav ── */}
       <nav style={{ position:'fixed', top:0, left:0, right:0, zIndex:100, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.9rem 2rem', background:'#0F1E14', borderBottom:'0.5px solid rgba(197,168,130,0.12)' }}>
         <Link href="/">
@@ -132,15 +153,14 @@ export default function CCDPage() {
             priority
           />
         </div>
-        {/* Event detail bar */}
         <div style={{ borderTop:'0.5px solid rgba(197,168,130,0.15)', padding:'1.5rem 2rem' }}>
           <div style={{ maxWidth:'520px', margin:'0 auto', display:'flex', flexWrap:'wrap', gap:'1rem', justifyContent:'center' }}>
             {[
-              { label:'Date',     value:'Saturday, June 20' },
-              { label:'Time',     value:'9:00 AM – 11:30 AM' },
-              { label:'Venue',    value:'Cafe Napoleon, LaSalle' },
-              { label:'Entry',    value:'Invite only' },
-              { label:'Cost',     value:'Free' },
+              { label:'Date',  value:'Saturday, June 20' },
+              { label:'Time',  value:'9:00 AM – 11:30 AM' },
+              { label:'Venue', value:'Cafe Napoleon, LaSalle' },
+              { label:'Entry', value:'Invite only' },
+              { label:'Cost',  value:'Free' },
             ].map(({ label, value }) => (
               <div key={label} style={{ textAlign:'center', minWidth:'110px' }}>
                 <div style={{ fontSize:'9px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.3rem' }}>{label}</div>
@@ -152,7 +172,7 @@ export default function CCDPage() {
       </div>
 
       {/* ── Form ── */}
-      <div style={{ background:'#F5F1EC', padding:'5rem 1.5rem 6rem' }}>
+      <div className="ccd-form-pad" style={{ background:'#F5F1EC', padding:'5rem 1.5rem 6rem' }}>
         <div style={{ maxWidth:'520px', margin:'0 auto' }}>
 
           <div style={{ textAlign:'center', marginBottom:'3rem' }}>
@@ -177,34 +197,52 @@ export default function CCDPage() {
               <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'2.2rem', fontWeight:'300', color:'#1a1a1a', marginBottom:'0.75rem' }}>
                 You&apos;re registered.
               </div>
-              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', marginBottom:'1rem', maxWidth:'360px', margin:'0 auto 1rem' }}>
-                We&apos;ve got your details. Check your inbox for a confirmation — we&apos;ll follow up with everything you need before June 20.
+              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', maxWidth:'360px', margin:'0 auto 1rem' }}>
+                We&apos;ve got your details. Check your inbox for a confirmation — we&apos;ll follow up before June 20.
               </p>
-              <p style={{ fontSize:'12px', color:'#aaa', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', marginBottom:'2.5rem', maxWidth:'320px', margin:'0 auto 2.5rem' }}>
-                If you don&apos;t see it, check your junk or spam folder and mark it as not spam so our follow-up reaches you.
+              <p style={{ fontSize:'12px', color:'#aaa', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'320px', margin:'0 auto 2rem' }}>
+                If you don&apos;t see it, check your junk folder and mark it as not spam so our follow-up reaches you.
               </p>
-              <div style={{ width:'40px', height:'0.5px', background:'rgba(197,168,130,0.4)', margin:'0 auto 2rem' }} />
-              <div style={{ fontSize:'9px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.75rem' }}>
-                While you wait
+
+              {/* Share CTA */}
+              <div style={{ borderTop:'0.5px solid rgba(0,0,0,0.07)', paddingTop:'1.75rem', marginBottom:'1.75rem' }}>
+                <div style={{ fontSize:'9px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.6rem' }}>
+                  Know someone who drives?
+                </div>
+                <p style={{ fontSize:'13px', color:'#888', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'300px', margin:'0 auto 1.25rem' }}>
+                  Spots are limited. If you know someone who&apos;d love this, send them the link.
+                </p>
+                <button
+                  onClick={handleShare}
+                  style={{ background: shareCopied ? '#3B6B2F' : '#0F1E14', color:'#F5F1EC', border:'none', padding:'0.85rem 2rem', fontSize:'10px', letterSpacing:'0.2em', textTransform:'uppercase', cursor:'pointer', fontFamily:'var(--font-inter), sans-serif', transition:'background 0.2s' }}
+                >
+                  {shareCopied ? '✓ Link copied' : 'Share this event →'}
+                </button>
               </div>
-              <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'1.5rem', fontWeight:'300', color:'#1a1a1a', lineHeight:1.2, marginBottom:'0.75rem' }}>
-                Canvas Routes Membership
-              </div>
-              <p style={{ fontSize:'13px', color:'#666', lineHeight:1.75, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1rem' }}>
-                Road trips, invite-only meets, and partner perks — built for drivers who love the road.
-              </p>
-              <p style={{ fontSize:'12px', color:'#666', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1.25rem' }}>
-                As a thank-you for coming out, use code{' '}
-                <span style={{ fontFamily:'var(--font-inter), sans-serif', letterSpacing:'0.12em', color:'#0F1E14', fontWeight:'500', background:'rgba(197,168,130,0.15)', padding:'2px 8px', border:'0.5px solid rgba(197,168,130,0.4)' }}>FOUNDING</span>
-                {' '}for a special discount when you apply for membership.
-              </p>
-              <Link href="/membership" style={{ display:'inline-block', background:'#0F1E14', color:'#F5F1EC', padding:'0.85rem 2.5rem', fontSize:'10px', letterSpacing:'0.22em', textTransform:'uppercase', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif', marginBottom:'1.5rem' }}>
-                Apply for Membership
-              </Link>
-              <div>
-                <Link href="/" style={{ fontSize:'10px', letterSpacing:'0.14em', textTransform:'uppercase', color:'#aaa', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif' }}>
-                  Back to Canvas Routes
+
+              <div style={{ borderTop:'0.5px solid rgba(0,0,0,0.07)', paddingTop:'1.75rem' }}>
+                <div style={{ fontSize:'9px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.75rem' }}>
+                  While you wait
+                </div>
+                <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'1.5rem', fontWeight:'300', color:'#1a1a1a', lineHeight:1.2, marginBottom:'0.75rem' }}>
+                  Canvas Routes Membership
+                </div>
+                <p style={{ fontSize:'13px', color:'#666', lineHeight:1.75, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1rem' }}>
+                  Road trips, invite-only meets, and partner perks — built for drivers who love the road.
+                </p>
+                <p style={{ fontSize:'12px', color:'#666', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1.25rem' }}>
+                  As a thank-you for coming out, use code{' '}
+                  <span style={{ fontFamily:'var(--font-inter), sans-serif', letterSpacing:'0.12em', color:'#0F1E14', fontWeight:'500', background:'rgba(197,168,130,0.15)', padding:'2px 8px', border:'0.5px solid rgba(197,168,130,0.4)' }}>FOUNDING</span>
+                  {' '}for a special discount.
+                </p>
+                <Link href="/membership" style={{ display:'inline-block', background:'#0F1E14', color:'#F5F1EC', padding:'0.85rem 2.5rem', fontSize:'10px', letterSpacing:'0.22em', textTransform:'uppercase', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif', marginBottom:'1.5rem' }}>
+                  Apply for Membership
                 </Link>
+                <div>
+                  <Link href="/" style={{ fontSize:'10px', letterSpacing:'0.14em', textTransform:'uppercase', color:'#aaa', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif' }}>
+                    Back to Canvas Routes
+                  </Link>
+                </div>
               </div>
             </div>
           ) : (
@@ -283,12 +321,28 @@ export default function CCDPage() {
                 />
               </div>
 
-              {/* Phone */}
+              {/* Instagram */}
               <div>
-                <label htmlFor="ccd-phone" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.phone ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
-                  Phone {phoneOptOut ? <span style={{ color:'#aaa', letterSpacing:0, textTransform:'none' }}>(skipped)</span> : <span style={{ color:'#d06070' }}>*</span>}
-                </label>
-                {!phoneOptOut && (
+                <label htmlFor="ccd-instagram" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Instagram <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span></label>
+                <div style={{ position:'relative' }}>
+                  <span style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', color:'#aaa', fontSize:'14px', fontFamily:'var(--font-inter), sans-serif', pointerEvents:'none' }}>@</span>
+                  <input
+                    id="ccd-instagram" type="text" autoComplete="username"
+                    autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                    value={form.instagram} onChange={e => update('instagram', e.target.value.replace(/^@+/,''))}
+                    onFocus={() => setFocused('instagram')} onBlur={() => setFocused(null)}
+                    style={{ ...base, ...inp(focused==='instagram', !!form.instagram, false), paddingLeft:'1.85rem' }}
+                    placeholder="yourhandle"
+                  />
+                </div>
+              </div>
+
+              {/* Phone — opt-in, hidden by default */}
+              {phoneShown ? (
+                <div>
+                  <label htmlFor="ccd-phone" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.phone ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
+                    Phone <span style={{ color:'#d06070' }}>*</span>
+                  </label>
                   <div style={{ display:'flex', gap:'0.5rem' }}>
                     <div style={{ position:'relative', width:'80px', flexShrink:0 }}>
                       <select
@@ -309,33 +363,29 @@ export default function CCDPage() {
                       placeholder="(514) 555-0100"
                     />
                   </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => { setPhoneOptOut(p => !p); if (errors.phone) setErrors(p => ({ ...p, phone:false })) }}
-                  style={{ marginTop:'0.4rem', background:'none', border:'none', padding:0, fontSize:'11px', color:'#aaa', cursor:'pointer', fontFamily:'var(--font-inter), sans-serif', textDecoration:'underline', textDecorationColor:'rgba(0,0,0,0.2)' }}
-                >
-                  {phoneOptOut ? 'Add phone number' : "I'd rather not share my number"}
-                </button>
-              </div>
-
-              {/* Instagram */}
-              <div>
-                <label htmlFor="ccd-instagram" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Instagram <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span></label>
-                <div style={{ position:'relative' }}>
-                  <span style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', color:'#aaa', fontSize:'14px', fontFamily:'var(--font-inter), sans-serif', pointerEvents:'none' }}>@</span>
-                  <input
-                    id="ccd-instagram" type="text" autoComplete="username"
-                    autoCapitalize="none" autoCorrect="off" spellCheck={false}
-                    value={form.instagram} onChange={e => update('instagram', e.target.value.replace(/^@+/,''))}
-                    onFocus={() => setFocused('instagram')} onBlur={() => setFocused(null)}
-                    style={{ ...base, ...inp(focused==='instagram', !!form.instagram, false), paddingLeft:'1.85rem' }}
-                    placeholder="yourhandle"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => { setPhoneShown(false); setForm(p => ({ ...p, phone:'' })); setErrors(p => ({ ...p, phone:false })) }}
+                    style={{ marginTop:'0.4rem', background:'none', border:'none', padding:0, fontSize:'11px', color:'#aaa', cursor:'pointer', fontFamily:'var(--font-inter), sans-serif', textDecoration:'underline', textDecorationColor:'rgba(0,0,0,0.2)' }}
+                  >
+                    Remove
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setPhoneShown(true)}
+                    style={{ background:'none', border:'0.5px solid rgba(0,0,0,0.15)', padding:'0.7rem 1rem', width:'100%', textAlign:'left', fontSize:'13px', color:'#aaa', cursor:'pointer', fontFamily:'var(--font-inter), sans-serif', display:'flex', alignItems:'center', gap:'0.5rem' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add phone number
+                    <span style={{ marginLeft:'auto', fontSize:'10px', color:'#c5a882', letterSpacing:'0.06em' }}>helps us reach you directly</span>
+                  </button>
+                </div>
+              )}
 
-              {/* Tell us about yourself */}
+              {/* Tell us more */}
               <div>
                 <label htmlFor="ccd-more" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
                   Tell us more <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span>
@@ -351,7 +401,7 @@ export default function CCDPage() {
                 />
               </div>
 
-              {/* Source */}
+              {/* Source — just above submit */}
               <div>
                 <label htmlFor="ccd-source" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.source ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>How did you hear about us? <span style={{ color:'#d06070' }}>*</span></label>
                 <div style={{ position:'relative' }}>
@@ -372,16 +422,19 @@ export default function CCDPage() {
                 <p style={{ fontSize:'13px', color:'#7B2032', margin:0, fontFamily:'var(--font-inter), sans-serif' }}>{serverError}</p>
               )}
 
-              <button
-                type="submit"
-                disabled={status === 'loading'}
-                style={{ marginTop:'0.5rem', width:'100%', padding:'1.1rem', background:'#0F1E14', color:'#F5F1EC', border:'none', fontSize:'10px', letterSpacing:'0.26em', textTransform:'uppercase', cursor: status === 'loading' ? 'not-allowed' : 'pointer', opacity: status === 'loading' ? 0.7 : 1, fontFamily:'var(--font-inter), sans-serif', transition:'opacity 0.15s' }}
-              >
-                {status === 'loading' ? 'Submitting…' : 'Request My Spot'}
-              </button>
+              {/* Submit — sticky on mobile via CSS */}
+              <div className="ccd-submit-wrap">
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  style={{ width:'100%', padding:'1.1rem', background:'#0F1E14', color:'#F5F1EC', border:'none', fontSize:'10px', letterSpacing:'0.26em', textTransform:'uppercase', cursor: status === 'loading' ? 'not-allowed' : 'pointer', opacity: status === 'loading' ? 0.7 : 1, fontFamily:'var(--font-inter), sans-serif', transition:'opacity 0.15s' }}
+                >
+                  {status === 'loading' ? 'Submitting…' : 'Request My Spot'}
+                </button>
+              </div>
 
               <p style={{ textAlign:'center', fontSize:'11px', color:'#bbb', fontFamily:'var(--font-inter), sans-serif', lineHeight:1.6, margin:0 }}>
-                Entry is strictly invite-only. Submitting this form is not a guarantee of attendance — we&apos;ll confirm by email.
+                Entry is strictly invite-only. Submitting is not a guarantee of attendance — we&apos;ll confirm by email.
               </p>
             </form>
           )}
