@@ -14,9 +14,7 @@ function confirmHtml(firstName, { year, carMake, carModel, dob_month, dob_day, d
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const car = [year, carMake, carModel].filter(Boolean).join(' ')
   const dob = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : null
-  const row = (label, value) => value
-    ? `<tr><td style="padding:6px 14px 6px 0;font-family:Arial,sans-serif;font-size:12px;color:#999;white-space:nowrap;vertical-align:top;">${label}</td><td style="padding:6px 0;font-family:Arial,sans-serif;font-size:12px;color:#333;vertical-align:top;">${h(value)}</td></tr>`
-    : ''
+
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -24,49 +22,84 @@ function confirmHtml(firstName, { year, carMake, carModel, dob_month, dob_day, d
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registration received — Canvas Routes</title>
 </head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr>
-      <td style="padding:48px 40px 20px;">
-        <p style="margin:0 0 1.4em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
-          Hi ${h(firstName)},
-        </p>
-        <p style="margin:0 0 1.4em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
-          We've received your registration for <strong style="color:#1a1a1a;">Cars, Coffee &amp; Dad Jokes</strong> — our Father's Day Weekend Special on June 20 at Cafe Napoleon in LaSalle.
-        </p>
-        <p style="margin:0 0 1.4em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
-          Entry is invite-only, so we'll review your registration and follow up with confirmation details. Expect a personal email from us before the event.
-        </p>
-        <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 1.4em;border:0.5px solid rgba(0,0,0,0.08);padding:12px 16px;background:#fafafa;">
-          ${row('Car', car)}
-          ${row('Date of birth', dob)}
-        </table>
-        <p style="margin:0 0 1.4em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
-          Add <a href="mailto:jerry@canvasroutes.com" style="color:#8A6535;text-decoration:none;">jerry@canvasroutes.com</a> to your contacts so our follow-up doesn't end up in spam.
-        </p>
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 1.4em;background:#fafaf8;border:0.5px solid rgba(197,168,130,0.35);padding:20px 24px;">
-          <tr>
-            <td>
-              <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;">Founding Member Offer</p>
-              <p style="margin:0 0 12px 0;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.7;color:#333;">As a thank-you for coming out, use code <strong style="font-family:Arial,Helvetica,sans-serif;letter-spacing:2px;color:#1a1a1a;">FOUNDING</strong> when you apply for a Canvas Routes membership for a special discount.</p>
-              <a href="https://canvasroutes.com/membership" style="display:inline-block;background:#0F1E14;color:#F5F1EC;padding:10px 24px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;">Apply for Membership &rarr;</a>
-            </td>
-          </tr>
-        </table>
-        <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">
-          See you on June 20,<br/>Jerry<br/>Canvas Routes
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:20px 40px 40px;border-top:0.5px solid rgba(0,0,0,0.08);">
-        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#bbb;line-height:1.6;">
-          Canvas Routes &nbsp;&middot;&nbsp; Montreal, QC &nbsp;&middot;&nbsp;
-          <a href="mailto:info@canvasroutes.com" style="color:#bbb;">info@canvasroutes.com</a>
-        </p>
-      </td>
-    </tr>
-  </table>
+<body style="margin:0;padding:0;background-color:#F5F1EC;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
+  <tr>
+    <td align="center" style="padding:32px 16px 48px;">
+
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
+
+        <!-- ── Header ─────────────────────────────────────────── -->
+        <tr>
+          <td style="background:#0F1E14;padding:36px 40px 32px;">
+            <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:28px;opacity:0.92;" />
+            <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#c5a882;">Father&rsquo;s Day Weekend &middot; June 20</p>
+            <h1 style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#F5F1EC;line-height:1.15;">Cars, Coffee<br/>&amp; Dad Jokes</h1>
+            <!-- Event detail chips -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding-right:24px;vertical-align:top;">
+                  <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(197,168,130,0.55);">Time</p>
+                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.8);">9:00 – 11:30 AM</p>
+                </td>
+                <td style="padding-right:24px;padding-left:24px;border-left:1px solid rgba(197,168,130,0.18);vertical-align:top;">
+                  <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(197,168,130,0.55);">Venue</p>
+                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.8);">Cafe Napoleon, LaSalle</p>
+                </td>
+                <td style="padding-left:24px;border-left:1px solid rgba(197,168,130,0.18);vertical-align:top;">
+                  <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(197,168,130,0.55);">Entry</p>
+                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.8);">Invite only &middot; Free</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ── Body ──────────────────────────────────────────── -->
+        <tr>
+          <td style="background:#ffffff;padding:40px 40px 36px;">
+            <p style="margin:0 0 1.3em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">Hi ${h(firstName)},</p>
+            <p style="margin:0 0 1.3em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">We&rsquo;ve received your registration. Entry is invite-only, so we&rsquo;ll review your details and follow up with confirmation before the event.</p>
+
+            ${car ? `<!-- Car card -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 1.5em;background:#F5F1EC;border-left:3px solid #c5a882;">
+              <tr>
+                <td style="padding:16px 20px;">
+                  <p style="margin:0 0 5px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Your car</p>
+                  <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:400;color:#1a1a1a;">${h(car)}</p>
+                  ${dob ? `<p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#999;">Born ${h(dob)}</p>` : ''}
+                </td>
+              </tr>
+            </table>` : ''}
+
+            <p style="margin:0 0 1.3em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">Add <a href="mailto:jerry@canvasroutes.com" style="color:#3B6B2F;text-decoration:underline;text-underline-offset:3px;">jerry@canvasroutes.com</a> to your contacts so our follow-up doesn&rsquo;t land in spam.</p>
+            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">See you on June 20,<br/>Jerry<br/>Canvas Routes</p>
+          </td>
+        </tr>
+
+        <!-- ── Founding offer ─────────────────────────────────── -->
+        <tr>
+          <td style="background:#0F1E14;padding:28px 40px 32px;">
+            <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Founding Member Offer</p>
+            <p style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.75;color:rgba(245,241,236,0.7);">As a thank-you for coming out, use code <strong style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;color:#F5F1EC;font-weight:600;">FOUNDING</strong> when you apply for a Canvas Routes membership for a special discount.</p>
+            <a href="https://canvasroutes.com/membership" style="display:inline-block;background:#c5a882;color:#0F1E14;padding:11px 26px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;font-weight:700;">Apply for Membership &rarr;</a>
+          </td>
+        </tr>
+
+        <!-- ── Footer ─────────────────────────────────────────── -->
+        <tr>
+          <td style="background:#EDE8E1;padding:18px 40px;">
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaa;line-height:1.6;">
+              Canvas Routes &nbsp;&middot;&nbsp; Montreal, QC &nbsp;&middot;&nbsp;
+              <a href="mailto:info@canvasroutes.com" style="color:#aaa;text-decoration:none;">info@canvasroutes.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
 </body>
 </html>`
 }
