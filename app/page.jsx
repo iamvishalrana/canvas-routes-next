@@ -47,6 +47,12 @@ const PAST_EVENTS = {
     tags: ['June 7, 2026', 'Route', 'Members Only'],
     routeHref: '/itinerary-into-the-laurentians-june-7',
   },
+  'Cars, Coffee & Dad Jokes': {
+    img: '/CCD.png', imgAlt: 'Cars, Coffee & Dad Jokes poster', imgPos: 'top',
+    meta: 'LaSalle · June 20, 2026', title: 'Cars, Coffee & Dad Jokes',
+    sub: "Father's Day Weekend Special.",
+    tags: ['09:30 – 12:00 PM', 'Open to all', 'Free entry'],
+  },
 }
 
 export default function Home() {
@@ -103,7 +109,6 @@ export default function Home() {
   const [showEventsPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
-  const [showCCDPopup, setShowCCDPopup] = useState(false)
   const [queryForm, setQueryForm] = useState({ name: '', email: '', message: '' })
   const [queryStatus, setQueryStatus] = useState(null)
   const [queryError, setQueryError] = useState(null)
@@ -138,11 +143,6 @@ export default function Home() {
 
 
   useEffect(() => {
-    const t = setTimeout(() => setShowCCDPopup(true), 1000)
-    return () => clearTimeout(t)
-  }, [])
-
-  useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640)
     check()
     window.addEventListener('resize', check)
@@ -152,7 +152,7 @@ export default function Home() {
   useEffect(() => { setPastModalImageFailed(false) }, [pastModalEvent])
 
   useEffect(() => {
-    const isOpen = pastModalEvent !== null || showEventsPopup || showCCDPopup
+    const isOpen = pastModalEvent !== null || showEventsPopup
     if (!isOpen) {
       const savedTop = document.body.style.top
       document.body.style.overflow = ''
@@ -176,7 +176,7 @@ export default function Home() {
       document.body.style.width = ''
       if (top) window.scrollTo(0, -parseInt(top, 10))
     }
-  }, [pastModalEvent, showEventsPopup, showCCDPopup])
+  }, [pastModalEvent, showEventsPopup])
 
   useEffect(() => {
     setCookieBannerVisible(getConsent() === null)
@@ -583,6 +583,7 @@ export default function Home() {
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
             {date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true},
+            {date:"June 20, 2026",name:"Cars, Coffee & Dad Jokes",loc:"Cafe Napoleon, LaSalle",type:"Past Event",past:true},
             ...dbEvents.map(ev => ({
               date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '', type: ev.type,
               teaser: ev.description || '', _id: ev.id,
@@ -861,45 +862,6 @@ export default function Home() {
           Join
         </Link>
       </div>
-
-      {/* CARS, COFFEE & DAD JOKES POPUP */}
-      {showCCDPopup && (
-        <div
-          onClick={e => { if (e.target === e.currentTarget) { setShowCCDPopup(false);  } }}
-          style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,30,20,0.78)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1.25rem', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
-        >
-          <div style={{ position: 'relative', maxWidth: '460px', width: '100%', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', margin: 'auto' }}>
-            {/* Close */}
-            <button
-              onClick={() => { setShowCCDPopup(false);  }}
-              style={{ position: 'absolute', top: '0.65rem', right: '0.65rem', zIndex: 10, background: 'rgba(0,0,0,0.45)', border: 'none', cursor: 'pointer', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
-              aria-label="Close"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-            {/* Poster image */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/CCD.png"
-              alt="Cars, Coffee & Dad Jokes — Father's Day Weekend Special, June 20 at Cafe Napoleon"
-              style={{ display: 'block', width: '100%', height: 'auto' }}
-            />
-            {/* CTA bar */}
-            <div style={{ background: '#0F1E14', padding: '1.1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-              <div style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)' }}>
-                June 20 · Cafe Napoleon · LaSalle
-              </div>
-              <Link
-                href="/cars-coffee-dad-jokes"
-                onClick={() => { setShowCCDPopup(false);  }}
-                style={{ background: '#c5a882', color: '#0F1E14', padding: '0.65rem 1.6rem', fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-block' }}
-              >
-                Register Now
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* FOOTER */}
       <SiteFooter />
