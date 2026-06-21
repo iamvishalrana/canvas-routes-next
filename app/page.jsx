@@ -107,10 +107,19 @@ export default function Home() {
         }))
       })
       .catch(() => {})
+    fetch('/api/public/settings')
+      .then(r => r.json())
+      .then(s => {
+        if (s.homepage_banner) setHomepageBanner(s.homepage_banner)
+        if (s.event_page_url) setEventPageUrl(s.event_page_url)
+      })
+      .catch(() => {})
   }, [])
   const [showEventsPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
+  const [homepageBanner, setHomepageBanner] = useState(null)
+  const [eventPageUrl, setEventPageUrl] = useState(null)
   const [queryForm, setQueryForm] = useState({ name: '', email: '', message: '' })
   const [queryStatus, setQueryStatus] = useState(null)
   const [queryError, setQueryError] = useState(null)
@@ -420,6 +429,17 @@ export default function Home() {
           <span></span><span></span><span></span>
         </button>
       </nav>
+
+      {/* HOMEPAGE ANNOUNCEMENT BANNER */}
+      {homepageBanner && (
+        eventPageUrl
+          ? <a href={eventPageUrl} style={{display:"block",background:"#0F1E14",padding:"0.6rem 1.5rem",textAlign:"center",fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
+              {homepageBanner} <span style={{opacity:0.6,marginLeft:"0.4rem"}}>→</span>
+            </a>
+          : <div style={{background:"#0F1E14",padding:"0.6rem 1.5rem",textAlign:"center",fontSize:"11px",letterSpacing:"0.12em",textTransform:"uppercase",color:"#c5a882",fontFamily:"var(--font-inter),sans-serif"}}>
+              {homepageBanner}
+            </div>
+      )}
 
       {/* MOBILE MENU */}
       <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>

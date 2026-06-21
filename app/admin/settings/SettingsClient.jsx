@@ -88,11 +88,13 @@ export default function SettingsClient() {
       .then(data => {
         setSettings(data)
         setDrafts({
-          notify_email:             data.notify_email             || '',
+          notify_email:              data.notify_email              || '',
           membership_closed_message: data.membership_closed_message || '',
-          ccd_closed_message:        data.ccd_closed_message        || '',
+          event_closed_message:      data.event_closed_message      || '',
           founder_promo_code:        data.founder_promo_code        || '',
           admin_banner:              data.admin_banner              || '',
+          homepage_banner:           data.homepage_banner           || '',
+          event_page_url:            data.event_page_url            || '',
         })
       })
       .catch(() => {})
@@ -172,28 +174,28 @@ export default function SettingsClient() {
         <SavedIndicator k="membership_closed_message" />
 
         <ToggleSetting
-          label="CCD Registration Open"
-          description="When off, the CCD registration form is hidden and the page shows a closed notice."
-          value={boolVal('ccd_registration_open', true)}
-          saving={saving.ccd_registration_open}
-          onChange={v => saveSetting('ccd_registration_open', v ? 'true' : 'false')}
+          label="Event Registration Open"
+          description="When off, the standalone event registration form is hidden and the page shows a closed notice. Reuse this for each new one-off event page."
+          value={boolVal('event_registration_open', true)}
+          saving={saving.event_registration_open}
+          onChange={v => saveSetting('event_registration_open', v ? 'true' : 'false')}
         />
-        {errors.ccd_registration_open && <Err msg={errors.ccd_registration_open} />}
-        <SavedIndicator k="ccd_registration_open" />
+        {errors.event_registration_open && <Err msg={errors.event_registration_open} />}
+        <SavedIndicator k="event_registration_open" />
 
         <div style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
           <TextSetting
-            label="CCD Closed Message"
-            description="Shown when CCD registration is off."
-            value={drafts.ccd_closed_message}
-            onChange={v => setDrafts(p => ({ ...p, ccd_closed_message: v }))}
-            onSave={() => saveSetting('ccd_closed_message', drafts.ccd_closed_message)}
-            saving={saving.ccd_closed_message}
+            label="Event Closed Message"
+            description="Shown on the event page when registration is off. Update this for each new event."
+            value={drafts.event_closed_message}
+            onChange={v => setDrafts(p => ({ ...p, event_closed_message: v }))}
+            onSave={() => saveSetting('event_closed_message', drafts.event_closed_message)}
+            saving={saving.event_closed_message}
             placeholder="Registration for this event is now closed."
             type="textarea"
           />
-          {errors.ccd_closed_message && <Err msg={errors.ccd_closed_message} />}
-          <SavedIndicator k="ccd_closed_message" />
+          {errors.event_closed_message && <Err msg={errors.event_closed_message} />}
+          <SavedIndicator k="event_closed_message" />
         </div>
       </div>
 
@@ -202,13 +204,13 @@ export default function SettingsClient() {
         <div style={SECTION_LABEL}>Email</div>
 
         <TextSetting
-          label="Founder Promo Code"
-          description="The promo code shown in CCD registration confirmation emails."
+          label="Event Promo Code"
+          description="Promo code included in event registration confirmation emails. Update before each new event."
           value={drafts.founder_promo_code}
           onChange={v => setDrafts(p => ({ ...p, founder_promo_code: v.toUpperCase() }))}
           onSave={() => saveSetting('founder_promo_code', drafts.founder_promo_code)}
           saving={saving.founder_promo_code}
-          placeholder="FOUNDING"
+          placeholder="e.g. FOUNDING"
         />
         {errors.founder_promo_code && <Err msg={errors.founder_promo_code} />}
         <SavedIndicator k="founder_promo_code" />
@@ -245,6 +247,37 @@ export default function SettingsClient() {
           />
           {errors.admin_banner && <Err msg={errors.admin_banner} />}
           <SavedIndicator k="admin_banner" />
+        </div>
+      </div>
+
+      {/* Homepage */}
+      <div style={CARD}>
+        <div style={SECTION_LABEL}>Homepage</div>
+
+        <TextSetting
+          label="Announcement Banner"
+          description="A short message shown as a public banner on the homepage — use it to announce upcoming events, registration openings, or news. Leave blank to hide the banner."
+          value={drafts.homepage_banner}
+          onChange={v => setDrafts(p => ({ ...p, homepage_banner: v }))}
+          onSave={() => saveSetting('homepage_banner', drafts.homepage_banner)}
+          saving={saving.homepage_banner}
+          placeholder="e.g. New event July 19 — registration now open"
+        />
+        {errors.homepage_banner && <Err msg={errors.homepage_banner} />}
+        <SavedIndicator k="homepage_banner" />
+
+        <div style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
+          <TextSetting
+            label="Event Page URL"
+            description="The URL the announcement banner links to. Set alongside the banner text. Can be an internal path (/cars-coffee-dad-jokes) or a full URL."
+            value={drafts.event_page_url}
+            onChange={v => setDrafts(p => ({ ...p, event_page_url: v }))}
+            onSave={() => saveSetting('event_page_url', drafts.event_page_url)}
+            saving={saving.event_page_url}
+            placeholder="e.g. /next-event or https://canvasroutes.com/next-event"
+          />
+          {errors.event_page_url && <Err msg={errors.event_page_url} />}
+          <SavedIndicator k="event_page_url" />
         </div>
       </div>
 
