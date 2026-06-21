@@ -489,12 +489,10 @@ export default function Home() {
               </div>
             </div>
           </FadeUp>
-          <FadeIn delay={150} style={{height:"100%"}}>
-            <div className="about-img" style={{position:"relative",height:"100%"}}>
-              <div style={{width:"100%",height:"100%",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
-              <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
-            </div>
-          </FadeIn>
+          <div className="about-img" style={{position:"relative"}}>
+            <div style={{width:"100%",height:"100%",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
+            <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
+          </div>
         </div>
       </section>
 
