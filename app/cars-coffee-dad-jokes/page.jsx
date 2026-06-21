@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import SiteFooter from '../../components/SiteFooter'
+import PageLoader from '../../components/PageLoader'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -123,6 +124,7 @@ export default function CCDPage() {
 
   return (
     <>
+      <PageLoader images={['/CCD.png']} minMs={600} />
       <style>{`
         @media (max-width: 640px) {
           .ccd-submit-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem; background: #F5F1EC; border-top: 0.5px solid rgba(0,0,0,0.1); z-index: 50; }

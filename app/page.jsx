@@ -5,6 +5,8 @@ import Image from 'next/image'
 import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, ClipboardList } from 'lucide-react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SiteFooter from '../components/SiteFooter'
+import FadeUp from '../components/FadeUp'
+import FadeIn from '../components/FadeIn'
 import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -435,18 +437,31 @@ export default function Home() {
 
       {/* HERO */}
       <section id="top" className="hero">
-        <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem"}}><MapPin size={12} strokeWidth={1.5} />Montreal · Est. 2025</div>
-        <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
-        <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="hero-logo" />
-        <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem"}}></div>
-        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em"}}>The Community. The Routes. The Canvas.</div>
-        <div className="hero-buttons">
+        <style>{`
+          @keyframes cr-fade-up {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes cr-fade-in {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+        `}</style>
+        <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",animation:"cr-fade-up 0.65s ease both",animationDelay:"100ms"}}><MapPin size={12} strokeWidth={1.5} />Montreal · Est. 2025</div>
+        <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem",animation:"cr-fade-in 0.6s ease both",animationDelay:"280ms"}}></div>
+        <div style={{animation:"cr-fade-up 0.75s ease both",animationDelay:"380ms"}}>
+          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="hero-logo" />
+        </div>
+        <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem",animation:"cr-fade-in 0.5s ease both",animationDelay:"600ms"}}></div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em",animation:"cr-fade-up 0.65s ease both",animationDelay:"680ms"}}>The Community. The Routes. The Canvas.</div>
+        <div className="hero-buttons" style={{animation:"cr-fade-up 0.65s ease both",animationDelay:"820ms"}}>
           <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
           <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>About Us</a>
         </div>
         <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}
           aria-label="Scroll down"
-          className={`hero-scroll-arrow${showStickyCta ? ' hero-scroll-arrow--hidden' : ''}`}>
+          className={`hero-scroll-arrow${showStickyCta ? ' hero-scroll-arrow--hidden' : ''}`}
+          style={{animation:"cr-fade-in 0.6s ease both",animationDelay:"1100ms"}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <polyline points="19 12 12 19 5 12"/>
@@ -457,25 +472,29 @@ export default function Home() {
       {/* ABOUT */}
       <section id="about" style={{background:"#EDE8E1",padding:"6rem 3rem"}}>
         <div className="about-grid">
-          <div>
-            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>About Us</div>
-            <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#7B2032"}}>art form.</em><br/>We treat it like one.</div>
-            <div style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",maxWidth:"520px",marginBottom:"1.5rem"}}>
-              <strong style={{color:"#1a1a1a",fontWeight:"500"}}>We are driving enthusiasts before car enthusiasts.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We are not a show-and-tell club. We drive. The best roads deserve the best company, and great cars are meant to be experienced, not just owned.
-              <br/><br/>
-              Based in Montreal, we take the best roads in Quebec, Ontario, Vermont, Maine and New York — and fill them with people who actually care about the drive. Every route is hand-picked. Every detail is considered. Every event ends with you already thinking about the next one.
-              <br/><br/>
-              Canvas Routes is for those who understand that a great car deserves great roads. If you've chosen your car for the way it makes you feel — the sound, the handling, the experience — you're exactly who we built this for.
+          <FadeUp>
+            <div>
+              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>About Us</div>
+              <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#7B2032"}}>art form.</em><br/>We treat it like one.</div>
+              <div style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",maxWidth:"520px",marginBottom:"1.5rem"}}>
+                <strong style={{color:"#1a1a1a",fontWeight:"500"}}>We are driving enthusiasts before car enthusiasts.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We are not a show-and-tell club. We drive. The best roads deserve the best company, and great cars are meant to be experienced, not just owned.
+                <br/><br/>
+                Based in Montreal, we take the best roads in Quebec, Ontario, Vermont, Maine and New York — and fill them with people who actually care about the drive. Every route is hand-picked. Every detail is considered. Every event ends with you already thinking about the next one.
+                <br/><br/>
+                Canvas Routes is for those who understand that a great car deserves great roads. If you've chosen your car for the way it makes you feel — the sound, the handling, the experience — you're exactly who we built this for.
+              </div>
+              <div style={{display:"flex",gap:"1rem",flexWrap:"wrap"}}>
+                <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #3B6B2F",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",textDecoration:"none"}}>Car Meets</a>
+                <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #7B2032",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",textDecoration:"none"}}>Routes</a>
+              </div>
             </div>
-            <div style={{display:"flex",gap:"1rem",flexWrap:"wrap"}}>
-              <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #3B6B2F",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",textDecoration:"none"}}>Car Meets</a>
-              <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #7B2032",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",textDecoration:"none"}}>Routes</a>
+          </FadeUp>
+          <FadeIn delay={150} style={{height:"100%"}}>
+            <div className="about-img" style={{position:"relative",height:"100%"}}>
+              <div style={{width:"100%",height:"100%",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
+              <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
             </div>
-          </div>
-          <div className="about-img" style={{position:"relative"}}>
-            <div style={{width:"100%",height:"100%",backgroundImage:"url('/route-photo.jpg')",backgroundSize:"cover",backgroundPosition:"center"}} />
-            <div style={{position:"absolute",inset:0}} onContextMenu={e=>e.preventDefault()} />
-          </div>
+          </FadeIn>
         </div>
       </section>
 
@@ -561,11 +580,13 @@ export default function Home() {
 
       {/* EVENTS */}
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
-        <div style={{textAlign:"center",marginBottom:"4rem"}}>
-          <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>On the calendar</div>
-          <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
-          <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
-        </div>
+        <FadeUp>
+          <div style={{textAlign:"center",marginBottom:"4rem"}}>
+            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>On the calendar</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
+            <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
+          </div>
+        </FadeUp>
         <div className="events-grid">
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
@@ -581,7 +602,8 @@ export default function Home() {
               member_price: ev.member_price,
             })),
           ].map((e,i) => (
-            <div key={i} className="event-card" style={e.past
+            <FadeUp key={i} delay={i * 70}>
+            <div className="event-card" style={e.past
               ? {background:"#0F1E14",border:"1px solid rgba(197,168,130,0.55)",padding:"2rem",position:"relative",overflow:"hidden",cursor:"pointer"}
               : (e.photo_url || e.inviteOnly)
                 ? {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem",cursor:"pointer"}
@@ -621,6 +643,7 @@ export default function Home() {
                     : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
               }
             </div>
+            </FadeUp>
           ))}
         </div>
       </section>
@@ -689,10 +712,12 @@ export default function Home() {
 
       {/* CONTACT */}
       <section id="contact" style={{background:"#EDE8E1",padding:"6rem 3rem",textAlign:"center"}}>
+        <FadeUp>
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Get in touch</div>
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>Let's talk <em style={{color:"#7B2032"}}>routes.</em></div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem auto"}}></div>
         <p style={{fontSize:"0.95rem",lineHeight:"1.8",color:"#555",maxWidth:"420px",margin:"0 auto 3rem"}}>Have a question, a partnership idea, or just want to know more? Reach out — we'd love to hear from you.</p>
+        </FadeUp>
         <div className="contact-links" style={{flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
           <div style={{display:"flex",gap:"3rem",justifyContent:"center",flexWrap:"wrap"}}>
           <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="contact-link">
@@ -739,8 +764,10 @@ export default function Home() {
 
       {/* JOIN */}
       <section id="join" style={{textAlign:"center",padding:"8rem 2rem",background:"#F5F1EC"}}>
+        <FadeUp>
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
         <div className="join-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
+        </FadeUp>
 
         {membershipLive ? (
           <div style={{marginBottom:"3rem"}}>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ROUTE_PATH } from './routePath'
 import SiteFooter from '../../components/SiteFooter'
+import PageLoader from '../../components/PageLoader'
 
 const PASSWORD = 'laurentians'
 
@@ -374,6 +375,7 @@ export default function DrivePage() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
+      <PageLoader images={['/car-yvon-maggi.jpeg','/car-julien-fernandez.jpeg','/car-tanya-ghingold.jpg','/car-jerry.jpeg']} minMs={700} />
       {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} name={lightbox.name} car={lightbox.car} desc={lightbox.desc} onClose={closeLightbox} />}
       <style>{`
         .map-wrap { height: 320px; }
