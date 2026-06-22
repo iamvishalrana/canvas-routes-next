@@ -112,6 +112,7 @@ export async function POST(request) {
       },
       description: `Canvas Routes — ${EVENT_NAME}`,
       automatic_payment_methods: { enabled: true },
+      capture_method: 'manual',
     })
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {

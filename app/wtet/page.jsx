@@ -82,12 +82,19 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
     <form onSubmit={handlePay} style={{display:'flex',flexDirection:'column',gap:0}}>
 
       {/* Header */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.75rem'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.25rem'}}>
         <div style={{display:'flex',alignItems:'center',gap:'0.45rem'}}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span style={{fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',color:'#999',fontFamily:'var(--font-inter),sans-serif'}}>Secure checkout</span>
         </div>
         <span style={{fontSize:'10px',color:'#bbb',fontFamily:'var(--font-inter),sans-serif'}}>Powered by Stripe</span>
+      </div>
+
+      {/* Hold notice */}
+      <div style={{padding:'0.75rem 1rem',background:'rgba(197,168,130,0.08)',border:'0.5px solid rgba(197,168,130,0.3)',marginBottom:'1.5rem'}}>
+        <div style={{fontSize:'11px',color:'#7B5B2E',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>
+          <strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for $200 but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.
+        </div>
       </div>
 
       {/* Order summary */}
@@ -137,7 +144,7 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
         ) : (
           <>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Pay $200.00 CAD
+            Authorize $200.00 CAD
           </>
         )}
       </button>
@@ -381,7 +388,7 @@ export default function WtetPage() {
                 { label:'Seconds', val: countdown.s },
               ].map(({ label, val }, i) => (
                 <div key={label} style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
-                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#F5F1EC',lineHeight:1,letterSpacing:'-0.02em'}}>{String(val).padStart(2,'0')}</div>
+                  <div style={{fontFamily:'var(--font-inter),sans-serif',fontSize:'2.2rem',fontWeight:'200',color:'#F5F1EC',lineHeight:1,letterSpacing:'-0.04em',fontVariantNumeric:'tabular-nums'}}>{String(val).padStart(2,'0')}</div>
                   <div style={{fontSize:'8px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.5)',marginTop:'0.4rem',fontFamily:'var(--font-inter),sans-serif'}}>{label}</div>
                 </div>
               ))}
@@ -410,7 +417,7 @@ export default function WtetPage() {
           ].map(({ num, unit }, i, arr) => (
             <div key={unit} style={{display:'contents'}}>
               <div style={{textAlign:'center',padding:'0 2rem'}}>
-                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'1.9rem',fontWeight:'300',color:'#1a1a1a',lineHeight:1}}>{num}</div>
+                <div style={{fontFamily:'var(--font-inter),sans-serif',fontSize:'1.8rem',fontWeight:'200',color:'#1a1a1a',lineHeight:1,letterSpacing:'-0.03em',fontVariantNumeric:'tabular-nums'}}>{num}</div>
                 <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#aaa',marginTop:'4px',fontFamily:'var(--font-inter),sans-serif'}}>{unit}</div>
               </div>
               {i < arr.length - 1 && <div className="stat-divider" style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
@@ -595,12 +602,18 @@ export default function WtetPage() {
           {/* SUCCESS */}
           {status === 'success' && (
             <div style={{textAlign:'center',padding:'5rem 0'}}>
-              <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#3B6B2F',marginBottom:'1rem'}}>You&apos;re in.</div>
+              <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>Authorization received.</div>
               <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
-              <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 0'}}>
-                Payment confirmed. A receipt and confirmation are on their way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{form.email}</strong>. Check your junk folder if you don&apos;t see it — and add <strong style={{color:'#1a1a1a',fontWeight:'500'}}>jerry@canvasroutes.com</strong> to your contacts so our follow-up gets through.
+              <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
+                Your $200 hold is placed — nothing has been charged yet. We&apos;ll review your registration personally and be in touch at <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{form.email}</strong>.
               </p>
-              <div style={{marginTop:'2.5rem'}}>
+              <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2rem'}}>
+                If your spot is confirmed, the charge goes through and you&apos;ll get full event details. If not, the hold is released with no charge.
+              </p>
+              <p style={{fontSize:'0.85rem',color:'#999',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2.5rem'}}>
+                Add <strong style={{color:'#555',fontWeight:'500'}}>jerry@canvasroutes.com</strong> to your contacts so our message gets through.
+              </p>
+              <div>
                 <Link href="/" style={{fontSize:'11px',letterSpacing:'0.14em',textTransform:'uppercase',color:'#888',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif'}}>← Back to Canvas Routes</Link>
               </div>
             </div>
@@ -651,7 +664,7 @@ export default function WtetPage() {
                 <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Claim your seat at the wheel.</div>
                 <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 1.5rem'}} />
                 <p style={{fontSize:'14px',color:'#777',lineHeight:'1.8',maxWidth:'420px',margin:'0 auto',fontFamily:'var(--font-inter),sans-serif'}}>
-                  Fill in your details and you&apos;ll be taken directly to payment. Your spot is confirmed only once payment goes through.
+                  Fill in your details and authorize a hold on your card. We review every registration — your card is only charged once your spot is confirmed.
                 </p>
               </div>
 
@@ -851,8 +864,8 @@ export default function WtetPage() {
 
                 {/* Payment note */}
                 <div style={{marginBottom:'2.5rem',padding:'1rem 1.2rem',border:'0.5px solid rgba(0,0,0,0.12)',background:'rgba(197,168,130,0.06)'}}>
-                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Payment — $200 per car</div>
-                  <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll be taken to a secure payment step immediately after submitting this form. Payment is collected upfront to confirm your spot.</div>
+                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — $200 per car</div>
+                  <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a $200 hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
                 </div>
 
                 {/* Honeypot */}

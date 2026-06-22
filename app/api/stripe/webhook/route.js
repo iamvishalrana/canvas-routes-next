@@ -166,8 +166,8 @@ export async function POST(request) {
         // Customer authorized the hold — admin approval needed before capture
         const pi       = event.data.object
         const { type, email, name } = pi.metadata
-        // Only membership payments use manual capture — guard against accidental matches
-        if (!type?.startsWith('membership_')) break
+        // Membership payments and road trip (WTET) use manual capture
+        if (!type?.startsWith('membership_') && type !== 'road_trip_wtet') break
         const amountHeld = pi.amount
         const normalEmail = email?.toLowerCase().trim()
 
