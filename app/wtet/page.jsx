@@ -166,7 +166,24 @@ export default function WtetPage() {
   const [regOpen, setRegOpen]         = useState(true)
   const [closedMsg, setClosedMsg]     = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
+  const [countdown, setCountdown]     = useState(null)
   const honeypotRef = useRef(null)
+
+  useEffect(() => {
+    const EVENT = new Date('2026-07-05T12:00:00Z') // 8 AM EDT
+    function tick() {
+      const diff = EVENT - new Date()
+      if (diff <= 0) { setCountdown(null); return }
+      const d = Math.floor(diff / 86400000)
+      const h = Math.floor((diff % 86400000) / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setCountdown({ d, h, m, s })
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     fetch('/api/public/settings')
@@ -287,7 +304,20 @@ export default function WtetPage() {
           .wtet-form-section { padding: 3rem 1.25rem 5rem !important; }
           .incl-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
           .reg-box-row { flex-direction: column !important; gap: 0.25rem !important; }
+          .wtet-stats-bar { flex-wrap: wrap !important; gap: 1rem 2rem !important; padding: 1.25rem 1.5rem !important; }
+          .wtet-stats-bar .stat-divider { display: none !important; }
         }
+        @keyframes wtet-scroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .wtet-strip-wrap { overflow: hidden; width: 100%; }
+        .wtet-strip-wrap:hover .wtet-strip { animation-play-state: paused; }
+        .wtet-strip { display: flex; gap: 4px; width: max-content; animation: wtet-scroll 40s linear infinite; }
+        .wtet-strip-photo { width: 260px; height: 190px; flex-shrink: 0; overflow: hidden; }
+        @media (max-width: 640px) { .wtet-strip-photo { width: 180px; height: 130px; } }
+        .wtet-strip-photo img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.88; transition: opacity 0.3s; }
+        .wtet-strip-wrap:hover .wtet-strip-photo img { opacity: 1; }
       `}</style>
 
       {/* NAV */}
@@ -337,12 +367,57 @@ export default function WtetPage() {
             Sunday · July 5, 2026
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem'}} />
-          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto',lineHeight:'1.9',letterSpacing:'0.01em'}}>
+          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em'}}>
             Through wine country, over the mountains, along Chemin des Cantons. Lunch on the lake in Georgeville.
           </p>
+
+          {/* Countdown */}
+          {countdown && (
+            <div style={{display:'inline-flex',gap:'0',marginBottom:'3rem',border:'0.5px solid rgba(197,168,130,0.2)',overflow:'hidden'}}>
+              {[
+                { label:'Days',    val: countdown.d },
+                { label:'Hours',   val: countdown.h },
+                { label:'Minutes', val: countdown.m },
+                { label:'Seconds', val: countdown.s },
+              ].map(({ label, val }, i) => (
+                <div key={label} style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
+                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#F5F1EC',lineHeight:1,letterSpacing:'-0.02em'}}>{String(val).padStart(2,'0')}</div>
+                  <div style={{fontSize:'8px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.5)',marginTop:'0.4rem',fontFamily:'var(--font-inter),sans-serif'}}>{label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
+              style={{display:'inline-block',padding:'0.9rem 2.5rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
+              Claim your spot →
+            </a>
+          </div>
         </div>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)',zIndex:2}} />
       </section>
+
+      {/* STATS BAR */}
+      <div style={{background:'#F5F1EC',borderBottom:'0.5px solid rgba(0,0,0,0.07)'}}>
+        <div className="wtet-stats-bar" style={{maxWidth:'860px',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'0',padding:'1.5rem 3rem'}}>
+          {[
+            { num:'~250', unit:'km' },
+            { num:'90%',  unit:'backroads' },
+            { num:'6',    unit:'stops' },
+            { num:'1',    unit:'vineyard' },
+            { num:'15',   unit:'cars max' },
+          ].map(({ num, unit }, i, arr) => (
+            <div key={unit} style={{display:'contents'}}>
+              <div style={{textAlign:'center',padding:'0 2rem'}}>
+                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'1.9rem',fontWeight:'300',color:'#1a1a1a',lineHeight:1}}>{num}</div>
+                <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#aaa',marginTop:'4px',fontFamily:'var(--font-inter),sans-serif'}}>{unit}</div>
+              </div>
+              {i < arr.length - 1 && <div className="stat-divider" style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* DETAILS */}
       <section className="wtet-details" style={{background:'#EDE8E1',padding:'5rem 3rem'}}>
@@ -362,6 +437,63 @@ export default function WtetPage() {
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
                 <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
                 <span style={{fontSize:'14px',color:'#555',lineHeight:'1.75'}}>{note}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Pull quote */}
+          <div style={{borderLeft:'3px solid #c5a882',paddingLeft:'1.5rem',marginBottom:'2.5rem'}}>
+            <p style={{fontFamily:'var(--font-cormorant),serif',fontSize:'1.45rem',fontWeight:'300',color:'#1a1a1a',lineHeight:'1.5',margin:'0 0 0.6rem',fontStyle:'italic'}}>
+              &ldquo;Chemin des Cantons is one of those roads that makes you forget about everything except the next corner.&rdquo;
+            </p>
+            <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Canvas Routes — Into the Laurentians, June 2026</div>
+          </div>
+
+          <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
+            style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'500'}}>
+            Register — $200 per car →
+          </a>
+        </div>
+      </section>
+
+      {/* PHOTO STRIP */}
+      <section style={{background:'#0F1E14',padding:'4rem 0',overflow:'hidden'}}>
+        <div style={{maxWidth:'860px',margin:'0 auto',padding:'0 2rem',marginBottom:'1.75rem',display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
+          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.6rem,3.5vw,2.2rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:1}}>From the road</div>
+          <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif'}}>Into the Laurentians · June 2026</div>
+        </div>
+        <div className="wtet-strip-wrap">
+          <div className="wtet-strip">
+            {[
+              '/car-yvon-maggi.jpeg',
+              '/car-julien-fernandez.jpeg',
+              '/events/cc-may9-overview.jpeg',
+              '/car-alexandre-boutin.jpeg',
+              '/car-tanya-ghingold.jpg',
+              '/events/cc-may9-ferraris.jpeg',
+              '/car-marc-antoine-sauve.jpg',
+              '/car-jerry.jpeg',
+              '/car-nicholas-kong.jpeg',
+              '/car-jean-philippe.png',
+              '/car-frederic-lefebvre.jpeg',
+              '/car-louis-guindon.png',
+            ].concat([
+              '/car-yvon-maggi.jpeg',
+              '/car-julien-fernandez.jpeg',
+              '/events/cc-may9-overview.jpeg',
+              '/car-alexandre-boutin.jpeg',
+              '/car-tanya-ghingold.jpg',
+              '/events/cc-may9-ferraris.jpeg',
+              '/car-marc-antoine-sauve.jpg',
+              '/car-jerry.jpeg',
+              '/car-nicholas-kong.jpeg',
+              '/car-jean-philippe.png',
+              '/car-frederic-lefebvre.jpeg',
+              '/car-louis-guindon.png',
+            ]).map((src, i) => (
+              <div key={i} className="wtet-strip-photo">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" loading="lazy" />
               </div>
             ))}
           </div>
@@ -513,8 +645,14 @@ export default function WtetPage() {
           {showForm && (
             <>
               <div style={{textAlign:'center',marginBottom:'3.5rem'}}>
-                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Apply for your spot</div>
-                <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 0'}} />
+                <div style={{display:'inline-block',fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#7B5B2E',border:'0.5px solid rgba(123,91,46,0.35)',background:'rgba(123,91,46,0.06)',padding:'4px 14px',marginBottom:'1.5rem',fontFamily:'var(--font-inter),sans-serif'}}>
+                  Limited to 15 cars
+                </div>
+                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Claim your seat at the wheel.</div>
+                <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 1.5rem'}} />
+                <p style={{fontSize:'14px',color:'#777',lineHeight:'1.8',maxWidth:'420px',margin:'0 auto',fontFamily:'var(--font-inter),sans-serif'}}>
+                  Fill in your details and you&apos;ll be taken directly to payment. Your spot is confirmed only once payment goes through.
+                </p>
               </div>
 
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
