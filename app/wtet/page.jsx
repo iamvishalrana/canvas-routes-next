@@ -111,9 +111,9 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
           </div>
         </div>
         {[
-          'Group lunch at Auberge Est McGowan, Georgeville',
-          'Guided convoy — Dix 30 to the Eastern Townships',
-          'Vineyard stop at Vignoble Domaine du Brésée',
+          'Winery experience at Vignoble Domaine du Brésée',
+          'Lakeside lunch at Auberge Est McGowan (Michelin-trained chef)',
+          'Guided convoy — Dix 30 to Georgeville via Chemin des Cantons',
         ].map((item, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -436,9 +436,9 @@ export default function WtetPage() {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {[
-              'We leave Brossard and take the backroads south through wine country to Dunham, stopping at Vignoble Domaine du Brésée.',
+              'We leave Brossard and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — wine tasting included.',
               'From there we pick up Chemin des Cantons — one of Quebec\'s best driving roads — through Sutton, Glen Sutton, Highwater, Austin, and Magog.',
-              'The day ends at Auberge Est Restaurant McGowan in Georgeville with lunch on Lake Memphrémagog.',
+              'The day ends at Auberge Est McGowan in Georgeville — a chef with Michelin-calibre training, lakeside setting, and a meal that matches.',
               'We leave together, stop together, arrive together. The convoy is part of what makes the day.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
@@ -519,10 +519,10 @@ export default function WtetPage() {
           {[
             { label:'Meetup', venue:'Quartier Dix 30', address:'Brossard, QC', desc:'The group gathers in the Dix 30 parking lot. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
             { label:'Fuel Stop', venue:'Shell — Bromont Outlets', address:'Bromont, QC', desc:'Fill up before we head into the backroads. Last proper fuel stop before Chemin des Cantons.', pays:false },
-            { label:'Vineyard Stop', venue:'Vignoble Domaine du Brésée', address:'Dunham, QC', desc:'A stop in the Eastern Townships wine country. The cars line up outside and we take in the vineyard.', pays:false },
+            { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Take in the vines, the scenery, and the company before the mountains.', pays:true },
             { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The main event. Winding through the mountains — tight corners, elevation changes, and quiet roads the whole way.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'The road opens back up as we come out the other side. Lake Memphrémagog in view as we approach Magog.', pays:false },
-            { label:'Group Lunch', venue:'Auberge Est — McGowan Restaurant', address:'Georgeville, QC', desc:'Lunch at the lake. A proper sit-down meal with the whole group before the drive back to Montreal.', pays:true },
+            { label:'Group Lunch', venue:'Auberge Est — McGowan Restaurant', address:'Georgeville, QC', desc:'Lunch on Lake Memphrémagog at a restaurant helmed by a chef with a Michelin-calibre professional background. The food matches the view. A proper sit-down meal with the full group to close out the day.', pays:true },
           ].map((stop, i, arr) => (
             <div key={i} style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
               <div style={{width:'6px',height:'6px',borderRadius:'50%',background:stop.pays?'#c5a882':'rgba(197,168,130,0.35)',flexShrink:0,marginTop:'6px'}} />
@@ -542,7 +542,7 @@ export default function WtetPage() {
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
-              {['Group lunch at Auberge Est McGowan, Georgeville','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
+              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Group lunch at Auberge Est McGowan, Georgeville','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.7)',lineHeight:'1.65'}}>{item}</span>
@@ -551,7 +551,7 @@ export default function WtetPage() {
             </div>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>Not included</div>
-              {['Gas — fill up at the Shell in Bromont','Vineyard tastings or purchases at Domaine du Brésée','Any personal food or drinks beyond group lunch'].map((item, i) => (
+              {['Gas — fill up at the Shell in Bromont','Any personal wine purchases at Domaine du Brésée','Any food or drinks beyond what\'s listed above'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,236,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.45)',lineHeight:'1.65'}}>{item}</span>
