@@ -106,7 +106,7 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
             <div style={{fontSize:'12px',color:'#999',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>{email}</div>
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
-            <div style={{fontSize:'1.35rem',fontWeight:'300',color:'#1a1a1a',lineHeight:1,fontFamily:'var(--font-inter),sans-serif'}}>$200.00</div>
+            <div style={{fontFamily:'var(--font-playfair),serif',fontSize:'1.5rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1}}>$200.00</div>
             <div style={{fontSize:'10px',color:'#aaa',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>CAD · per car</div>
           </div>
         </div>
@@ -388,7 +388,7 @@ export default function WtetPage() {
                 { label:'Seconds', val: countdown.s },
               ].map(({ label, val }, i) => (
                 <div key={label} style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
-                  <div style={{fontFamily:'var(--font-inter),sans-serif',fontSize:'2.2rem',fontWeight:'200',color:'#F5F1EC',lineHeight:1,letterSpacing:'-0.04em',fontVariantNumeric:'tabular-nums'}}>{String(val).padStart(2,'0')}</div>
+                  <div style={{fontFamily:'var(--font-playfair),serif',fontSize:'2.4rem',fontWeight:'400',color:'#F5F1EC',lineHeight:1,letterSpacing:'0'}}>{String(val).padStart(2,'0')}</div>
                   <div style={{fontSize:'8px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.5)',marginTop:'0.4rem',fontFamily:'var(--font-inter),sans-serif'}}>{label}</div>
                 </div>
               ))}
@@ -417,7 +417,7 @@ export default function WtetPage() {
           ].map(({ num, unit }, i, arr) => (
             <div key={unit} style={{display:'contents'}}>
               <div style={{textAlign:'center',padding:'0 2rem'}}>
-                <div style={{fontFamily:'var(--font-inter),sans-serif',fontSize:'1.8rem',fontWeight:'200',color:'#1a1a1a',lineHeight:1,letterSpacing:'-0.03em',fontVariantNumeric:'tabular-nums'}}>{num}</div>
+                <div style={{fontFamily:'var(--font-playfair),serif',fontSize:'2rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1}}>{num}</div>
                 <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#aaa',marginTop:'4px',fontFamily:'var(--font-inter),sans-serif'}}>{unit}</div>
               </div>
               {i < arr.length - 1 && <div className="stat-divider" style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
@@ -431,7 +431,7 @@ export default function WtetPage() {
         <div style={{maxWidth:'680px',margin:'0 auto'}}>
           <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#888',marginBottom:'2rem'}}>Pricing &amp; details</div>
           <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC',display:'flex',alignItems:'baseline',gap:'1rem',flexWrap:'wrap'}}>
-            <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'3rem',fontWeight:'300',color:'#1a1a1a',lineHeight:'1'}}>$200</div>
+            <div style={{fontFamily:'var(--font-playfair),serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1'}}>$200</div>
             <div style={{fontSize:'13px',color:'#888',letterSpacing:'0.04em'}}>per car — up to 2 people</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
@@ -564,7 +564,7 @@ export default function WtetPage() {
             <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>Price</div>
-                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'1.6rem',fontWeight:'300',color:'#F5F1EC'}}>$200 <span style={{fontSize:'13px',color:'rgba(245,241,236,0.4)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.02em'}}>per car · up to 2 people</span></div>
+                <div style={{fontFamily:'var(--font-playfair),serif',fontSize:'1.7rem',fontWeight:'400',color:'#F5F1EC'}}>$200 <span style={{fontSize:'13px',color:'rgba(245,241,236,0.4)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.02em'}}>per car · up to 2 people</span></div>
               </div>
               <div style={{height:'0.5px',background:'rgba(197,168,130,0.1)'}} />
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
