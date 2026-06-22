@@ -1,4 +1,4 @@
-import { Cormorant_Garamond, Inter, Playfair_Display } from 'next/font/google'
+import { Cormorant_Garamond, Inter, Playfair_Display, Bebas_Neue } from 'next/font/google'
 import CookieBanner from '../components/CookieBanner'
 import RouteTracker from '../components/RouteTracker'
 import BackToTop from '../components/BackToTop'
@@ -25,6 +25,13 @@ const playfair = Playfair_Display({
   weight: ['400', '500'],
   style: ['normal', 'italic'],
   variable: '--font-playfair',
+  display: 'swap',
+})
+
+const bebas = Bebas_Neue({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-bebas',
   display: 'swap',
 })
 
@@ -166,7 +173,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${inter.variable} ${playfair.variable}`}>
+    <html lang="en" className={`${cormorant.variable} ${inter.variable} ${playfair.variable} ${bebas.variable}`}>
       <head>
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/gtag-consent.js" />
