@@ -383,7 +383,7 @@ export default function WtetPage() {
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem'}} />
           <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em'}}>
-            Through wine country, over the mountains, along Chemin des Cantons. A curated lunch to close the day.
+            Serene backroads through wine country, mountain passes your car was built for, and a fine dining experience to close the day.
           </p>
 
           {/* Countdown */}
