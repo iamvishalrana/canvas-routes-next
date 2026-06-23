@@ -112,7 +112,7 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
         </div>
         {[
           'Winery experience at Vignoble Domaine du Brésée',
-          'Curated premium lunch — Magog region, Michelin-star kitchen',
+          'Curated premium lunch in the Magog region',
           'Guided convoy — Dix 30 through Chemin des Cantons',
         ].map((item, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
@@ -368,7 +368,7 @@ export default function WtetPage() {
             Whips to Eastern Townships
           </h1>
           <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.1rem,2.5vw,1.4rem)',fontStyle:'italic',color:'rgba(245,241,236,0.4)',marginBottom:'1.2rem'}}>
-            Brossard to the Eastern Townships
+            Montreal to Lac Memphrémagog
           </div>
           <div style={{display:'inline-block',padding:'0.45rem 1.2rem',border:'0.5px solid rgba(197,168,130,0.5)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'2.5rem'}}>
             Sunday · July 5, 2026
@@ -436,9 +436,9 @@ export default function WtetPage() {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {[
-              'We leave Brossard and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included.',
-              'From there we pick up Chemin des Cantons — one of Quebec\'s best driving roads — through Sutton, Glen Sutton, Highwater, Austin, and Magog.',
-              'The day ends with a curated premium lunch in the Magog region — restaurant chosen for the setting and the kitchen. Details sent to confirmed registrants.',
+              'We leave Montreal and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included, with a special discount on wine purchases for the group.',
+              'From there we pick up Chemin des Cantons — tight corners, elevation changes, and the kind of mountain roads that make you forget everything except what\'s ahead. Through Sutton, Glen Sutton, Highwater, Austin, and Magog.',
+              'The day ends with a curated premium lunch in the Magog region. The restaurant is chosen for the drive — for the setting, the kitchen, and how well it closes out a day like this. Details sent to confirmed registrants.',
               'Driver-focused cars only. Exotics, sports cars, and enthusiast vehicles. This is a drive, not a show.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
@@ -448,62 +448,10 @@ export default function WtetPage() {
             ))}
           </div>
 
-          {/* Pull quote */}
-          <div style={{borderLeft:'3px solid #c5a882',paddingLeft:'1.5rem',marginBottom:'2.5rem'}}>
-            <p style={{fontFamily:'var(--font-cormorant),serif',fontSize:'1.45rem',fontWeight:'300',color:'#1a1a1a',lineHeight:'1.5',margin:'0 0 0.6rem',fontStyle:'italic'}}>
-              &ldquo;Chemin des Cantons is one of those roads that makes you forget about everything except the next corner.&rdquo;
-            </p>
-            <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Canvas Routes — Into the Laurentians, June 2026</div>
-          </div>
-
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
             style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'500'}}>
             Register — $200 per car →
           </a>
-        </div>
-      </section>
-
-      {/* PHOTO STRIP */}
-      <section style={{background:'#0F1E14',padding:'4rem 0',overflow:'hidden'}}>
-        <div style={{maxWidth:'860px',margin:'0 auto',padding:'0 2rem',marginBottom:'1.75rem',display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
-          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.6rem,3.5vw,2.2rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:1}}>From the road</div>
-          <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif'}}>Into the Laurentians · June 2026</div>
-        </div>
-        <div className="wtet-strip-wrap">
-          <div className="wtet-strip">
-            {[
-              '/car-yvon-maggi.jpeg',
-              '/car-julien-fernandez.jpeg',
-              '/events/cc-may9-overview.jpeg',
-              '/car-alexandre-boutin.jpeg',
-              '/car-tanya-ghingold.jpg',
-              '/events/cc-may9-ferraris.jpeg',
-              '/car-marc-antoine-sauve.jpg',
-              '/car-jerry.jpeg',
-              '/car-nicholas-kong.jpeg',
-              '/car-jean-philippe.png',
-              '/car-frederic-lefebvre.jpeg',
-              '/car-louis-guindon.png',
-            ].concat([
-              '/car-yvon-maggi.jpeg',
-              '/car-julien-fernandez.jpeg',
-              '/events/cc-may9-overview.jpeg',
-              '/car-alexandre-boutin.jpeg',
-              '/car-tanya-ghingold.jpg',
-              '/events/cc-may9-ferraris.jpeg',
-              '/car-marc-antoine-sauve.jpg',
-              '/car-jerry.jpeg',
-              '/car-nicholas-kong.jpeg',
-              '/car-jean-philippe.png',
-              '/car-frederic-lefebvre.jpeg',
-              '/car-louis-guindon.png',
-            ]).map((src, i) => (
-              <div key={i} className="wtet-strip-photo">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" loading="lazy" />
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -521,7 +469,7 @@ export default function WtetPage() {
           {[
             { label:'Meetup', venue:'Quartier Dix 30', address:'Brossard, QC', desc:'The group gathers in the Dix 30 parking lot. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
             { label:'Fuel Stop', venue:'Shell — Bromont Outlets', address:'Bromont, QC', desc:'Fill up before we head into the backroads. Last proper fuel stop before Chemin des Cantons.', pays:false },
-            { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Take in the vines, the scenery, and the company before the mountains.', pays:true },
+            { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Canvas Routes guests receive a special discount on wine purchases.', pays:true },
             { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The main event. Winding through the mountains — tight corners, elevation changes, and quiet roads the whole way.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'The road opens back up as we come out the other side. Lake Memphrémagog in view as we approach Magog.', pays:false },
             { label:'Premium Lunch', venue:'Magog Region, QC', address:'Location revealed upon confirmation', desc:'We curate the restaurant for every route — chosen for the setting, the kitchen, and how well it closes out a day like this. Details shared with confirmed registrants.', pays:true },
@@ -551,7 +499,7 @@ export default function WtetPage() {
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
-              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Curated premium lunch — Magog region (Michelin-star kitchen)','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
+              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Curated premium lunch in the Magog region','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.7)',lineHeight:'1.65'}}>{item}</span>
@@ -560,7 +508,7 @@ export default function WtetPage() {
             </div>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>Not included</div>
-              {['Gas — fill up at the Shell in Bromont','Any personal wine purchases at Domaine du Brésée','Any food or drinks beyond what\'s listed above'].map((item, i) => (
+              {['Gas for your car','Any additional purchases at any of our stops'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,236,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.45)',lineHeight:'1.65'}}>{item}</span>
