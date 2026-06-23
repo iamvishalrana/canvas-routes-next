@@ -85,24 +85,22 @@ function StaggerGrid({ children, style, className }) {
 }
 
 const TIER1 = [
-  'Access to the Canvas Routes members community — a private group of drivers who chose their car with intention',
-  'Priority access to all Cars & Coffee events',
-  'Access to Canvas Routes routes',
-  'Access to member-only events throughout the season',
-  '10% discount on your next route when referring a member',
-  '25% discount at one Canvas Routes partner',
-  'Canvas Routes car perfume — refreshed every 2 months, picked up at any event throughout the season',
+  'Priority registration on all Cars & Coffee and member-only events',
+  'Early access window on every route — before public spots open',
+  'Preferred member pricing on all routes',
+  '10% off your next route for every member you refer',
+  '25% discount at a Canvas Routes partner',
   'Canvas Routes full grain leather keychain',
+  'Canvas Routes car perfume — refreshed every 2 months at any event',
 ]
 
 const TIER2_EXTRA = [
-  'Exclusive 48hr priority access to all Canvas Routes events before public registration opens',
-  '25% referral discount when referring a Tier 2 member',
+  '48hr first-access window on all events — before Routes Members and before the public',
+  '$70 route credit applied to your first route of the season',
   'Professional car photoshoot on a Canvas Routes route',
-  '$70 off one of the next two routes — your membership starts paying for itself from day one',
-  'Exclusive discounts from all Canvas Routes partners — new partners added throughout the season',
-  'Canvas Routes merchandise baseball cap',
-  'Invitation to the Inner Circle end-of-season closing event — members only, not open to the public',
+  'Exclusive discounts across all Canvas Routes partners',
+  'Canvas Routes cap',
+  'Inner Circle end-of-season closing event — private, not open to the public',
 ]
 
 const PERKS = [
@@ -537,7 +535,7 @@ export default function MembershipContent() {
       </div>
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', minHeight: '72vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
           <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
@@ -584,12 +582,13 @@ export default function MembershipContent() {
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.75rem' }}>
               A season of roads<br />you&apos;ll remember.
             </div>
-            <p style={{ ...BODY, color: '#444', marginBottom: '1.1rem' }}>
-              Canvas Routes membership is built around the drive. Not the parking lot. Not the Instagram photo. The act of getting behind the wheel and going somewhere worth going — with people who feel the same way.
+            <p style={{ ...BODY, color: '#444', marginBottom: '1.75rem' }}>
+              Canvas Routes is built around the drive — not the parking lot. Members get priority access to every Cars &amp; Coffee, every route, and every experience on the calendar from June through November.
             </p>
-            <p style={{ ...BODY, color: '#444' }}>
-              From June to November, members get priority access to every Cars &amp; Coffee, every route, and every experience on the Canvas Routes calendar. Two tiers, both built to give you more of what brought you here.
-            </p>
+            <a href="#register" onClick={e => { e.preventDefault(); document.getElementById('register')?.scrollIntoView({ behavior: 'smooth' }) }}
+              style={{ display: 'inline-block', padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Apply now →
+            </a>
           </FadeUp>
 
           <FadeUp delay={0.15} style={{ display: 'flex', flexDirection: 'column' }} className="mem-about-img">
@@ -642,7 +641,7 @@ export default function MembershipContent() {
                   <div style={{ height: '0.5px', background: 'rgba(245,241,236,0.08)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
                     <div style={{ ...LABEL, color: 'rgba(245,241,236,0.35)', marginBottom: '0.35rem' }}>What you get</div>
-                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.7)' }}>Full access to every Canvas Routes event and route all season — priority registration included.</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.7)' }}>Your seat at every Cars &amp; Coffee, every route, every member event — June through November.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
@@ -676,7 +675,7 @@ export default function MembershipContent() {
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
                     <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>What you get</div>
-                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First access to everything, plus a $70 route credit — your membership starts paying for itself from day one.</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First in on everything — 48hrs before Routes Members. Includes a $70 route credit applied to your first route.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
@@ -697,83 +696,6 @@ export default function MembershipContent() {
           <FadeUp style={{ textAlign: 'center', marginTop: '1.75rem' }}>
             <span style={{ ...SMALL, color: '#888' }}>Season runs June — November. Inner Circle access extends through December.</span>
           </FadeUp>
-        </div>
-      </section>
-
-      {/* ── ROAD TRIP SAVINGS ───────────────────────────────────────── */}
-      <section style={{ background: '#F5F1EC', padding: 'clamp(4rem,6vw,6rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-        <style>{`
-          .rt-savings{display:grid;grid-template-columns:1fr 1fr;gap:clamp(3rem,6vw,7rem);align-items:start}
-          @media(max-width:680px){.rt-savings{grid-template-columns:1fr !important}}
-        `}</style>
-        <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
-          <div className="rt-savings">
-            <FadeUp>
-              <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Routes</div>
-              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: '1.15', marginBottom: '1.5rem' }}>
-                Your seat is held<br />before the doors open.
-              </div>
-              <p style={{ ...BODY, color: '#555' }}>
-                Every Canvas Routes route begins with a dedicated window exclusive to members — at a rate that reflects the commitment you've made to this community. Once that window closes, remaining spots are made available to the public. The drive is open to everyone. Members simply never have to wonder if there's room for them.
-              </p>
-            </FadeUp>
-            <FadeUp delay={0.1}>
-              <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: 'rgba(197,168,130,0.04)', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
-                <div style={{ ...LABEL, color: '#c5a882', marginBottom: '1.25rem' }}>Member rate</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.4', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                  Every route, at a rate built for members.
-                </div>
-                <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.25)', marginBottom: '1.25rem' }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  {[
-                    'Early access window on every route',
-                    'Preferred member pricing across both tiers',
-                    'Inner Circle members receive an additional $70 credit',
-                    'Public registration opens once the member window closes',
-                  ].map((line, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                      <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#c5a882', flexShrink: 0, marginTop: '7px' }} />
-                      <span style={{ ...BODY, fontSize: '13px', color: '#666' }}>{line}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </FadeUp>
-          </div>
-        </div>
-      </section>
-
-      {/* ── PHOTO BREAK 2 ───────────────────────────────────────────── */}
-      <div style={{ position: 'relative', height: 'clamp(200px,28vw,360px)', overflow: 'hidden' }}>
-        <img src="/events/may9-cars2.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,13,0.4)' }} />
-      </div>
-
-      {/* ── PHYSICAL PERKS ──────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(5rem,8vw,8rem) clamp(1.5rem,5vw,5rem)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-        <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
-          <FadeUp style={{ marginBottom: 'clamp(2.5rem,4vw,4rem)' }}>
-            <div style={{ ...LABEL, color: '#c5a882', marginBottom: '0.75rem' }}>What you receive</div>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,4vw,2.8rem)', fontWeight: '300', color: '#1a1a1a' }}>
-              Membership you can hold.
-            </div>
-          </FadeUp>
-
-          <StaggerGrid style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)' }} className="mem-perks">
-            {PERKS.map((p, i) => (
-              <div key={i}
-                style={{ background: p.tier === 2 ? '#0F1E14' : '#F5F1EC', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                  <div style={{ width: '20px', height: '0.5px', background: p.tier === 2 ? 'rgba(197,168,130,0.5)' : '#c5a882' }} />
-                  <span style={{ ...LABEL, color: p.tier === 2 ? 'rgba(197,168,130,0.85)' : '#888', background: p.tier === 2 ? 'rgba(197,168,130,0.08)' : 'rgba(0,0,0,0.05)', border: `0.5px solid ${p.tier === 2 ? 'rgba(197,168,130,0.2)' : 'rgba(0,0,0,0.1)'}`, padding: '2px 8px' }}>
-                    {p.tier === 2 ? 'Inner Circle' : 'All members'}
-                  </span>
-                </div>
-                <div style={{ fontSize: '0.95rem', fontWeight: '600', color: p.tier === 2 ? '#F5F1EC' : '#1a1a1a', marginBottom: '0.65rem', lineHeight: 1.3, fontFamily: 'var(--font-inter),sans-serif' }}>{p.label}</div>
-                <div style={{ ...BODY, color: p.tier === 2 ? 'rgba(245,241,236,0.72)' : '#555' }}>{p.sub}</div>
-              </div>
-            ))}
-          </StaggerGrid>
         </div>
       </section>
 
@@ -801,7 +723,7 @@ export default function MembershipContent() {
       </section>
 
       {/* ── REGISTRATION ────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)' }}>
+      <section id="register" style={{ position: 'relative', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <img src="/membership-form.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.65) 0%, rgba(10,20,13,0.72) 100%)' }} />
