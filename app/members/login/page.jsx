@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [setupMsg, setSetupMsg] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [focused, setFocused] = useState(null)
+  const [redirectTo, setRedirectTo] = useState('/members/dashboard')
 
   useEffect(() => { document.title = 'Sign In — Canvas Routes' }, [])
 
@@ -32,6 +33,9 @@ export default function LoginPage() {
     const err = params.get('error')
     if (err) { setError(err); window.history.replaceState({}, '', window.location.pathname) }
     if (params.get('setup') === '1') { setSetupMsg(true); window.history.replaceState({}, '', window.location.pathname) }
+    const redirect = params.get('redirect')
+    // Only allow redirects to internal /members/* paths to prevent open redirects
+    if (redirect && redirect.startsWith('/members/')) setRedirectTo(redirect)
   }, [])
 
   async function handleLogin(e) {
@@ -47,7 +51,7 @@ export default function LoginPage() {
         setError(data.error || 'Incorrect email or password.')
         setLoading(false)
       } else {
-        router.push('/members/dashboard')
+        router.push(redirectTo)
         router.refresh()
       }
     } catch {

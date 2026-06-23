@@ -239,24 +239,28 @@ export default function WtetPage() {
   function validate() {
     const e = {}
     if (!form.isMember) e.isMember = true
-    if (form.name.trim().length < 2) e.name = true
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-    if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
-    if (!form.dob_month) e.dob_month = true
-    if (!form.dob_day)   e.dob_day   = true
-    if (!form.year)      e.year      = true
-    if (!form.carMake)   e.carMake   = true
-    if (!form.carModel.trim()) e.carModel = true
-    if (!form.passengers)  e.passengers  = true
-    if (!form.hasChildren) e.hasChildren = true
-    if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
-    if (!form.source) e.source = true
+    // Non-member form fields only
+    if (form.isMember !== 'yes') {
+      if (form.name.trim().length < 2) e.name = true
+      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+      if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
+      if (!form.dob_month) e.dob_month = true
+      if (!form.dob_day)   e.dob_day   = true
+      if (!form.year)      e.year      = true
+      if (!form.carMake)   e.carMake   = true
+      if (!form.carModel.trim()) e.carModel = true
+      if (!form.passengers)  e.passengers  = true
+      if (!form.hasChildren) e.hasChildren = true
+      if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
+      if (!form.source) e.source = true
+    }
     setErrors(e)
     return e
   }
 
   async function handleSubmit() {
     if (status === 'loading') return
+    if (form.isMember === 'yes') return // members use the portal flow
     const errs = validate()
     if (Object.keys(errs).length > 0) {
       const order = ['isMember','name','email','phone','dob_month','dob_day','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
@@ -662,6 +666,23 @@ export default function WtetPage() {
                   {errors.isMember && <span style={{fontSize:'11px',color:'#7B2032'}}>Please select one</span>}
                 </div>
 
+                {/* Member redirect — show instead of rest of form */}
+                {form.isMember === 'yes' && (
+                  <div style={{padding:'1.5rem',background:'#0F1E14',marginBottom:'1rem'}}>
+                    <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.7)',marginBottom:'0.6rem',fontFamily:'var(--font-inter),sans-serif'}}>Members register through the portal</div>
+                    <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
+                      Log in to your Canvas Routes account to register at the member rate of $179. Your details will be pre-filled from your profile.
+                    </p>
+                    <a href={`/members/login?redirect=${encodeURIComponent('/members/events/wtet')}`}
+                      style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
+                      Go to Members Portal →
+                    </a>
+                  </div>
+                )}
+
+                {/* Rest of form — only for non-members */}
+                {form.isMember !== 'yes' && <>
+
                 {/* Name + Email */}
                 <div className="join-form-row" style={{marginBottom:'1rem'}}>
                   <div className="join-form-field">
@@ -872,6 +893,8 @@ export default function WtetPage() {
                   style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',marginBottom:'1rem'}}>
                   {status==='loading' ? 'Setting up payment…' : `Continue to payment — $${price}`}
                 </button>
+
+                </>}
 
               </form>
             </>
