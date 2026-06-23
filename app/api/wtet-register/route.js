@@ -4,7 +4,8 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
-const AMOUNT_CENTS = 20000 // $200 CAD
+const MEMBER_PRICE_CENTS    = 17900 // $179 CAD
+const NONMEMBER_PRICE_CENTS = 19900 // $199 CAD
 
 export async function POST(request) {
   if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
@@ -31,7 +32,8 @@ export async function POST(request) {
     } catch { /* allow through if settings table unavailable */ }
   }
 
-  const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, _hp } = body
+  const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, _hp } = body
+  const amountCents = isMember === true ? MEMBER_PRICE_CENTS : NONMEMBER_PRICE_CENTS
   if (_hp) return Response.json({ success: true, clientSecret: null })
 
   // Validate required fields
@@ -99,7 +101,7 @@ export async function POST(request) {
   // Create Stripe PaymentIntent — immediate capture
   try {
     const pi = await stripe.paymentIntents.create({
-      amount: AMOUNT_CENTS,
+      amount: amountCents,
       currency: 'cad',
       receipt_email: normalEmail,
       metadata: {
@@ -109,6 +111,7 @@ export async function POST(request) {
         event_name: EVENT_NAME,
         passengers: passengers || '',
         has_children: hasChildren || '',
+        is_member: isMember ? 'yes' : 'no',
       },
       description: `Canvas Routes — ${EVENT_NAME}`,
       automatic_payment_methods: { enabled: true },

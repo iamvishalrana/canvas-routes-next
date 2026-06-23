@@ -36,7 +36,7 @@ function Chevron() {
 
 // ── Stripe payment form ───────────────────────────────────────────────────────
 
-function PaymentForm({ name, email, onSuccess, onBack }) {
+function PaymentForm({ name, email, price, onSuccess, onBack }) {
   const stripe   = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
@@ -106,7 +106,7 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
             <div style={{fontSize:'12px',color:'#999',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>{email}</div>
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
-            <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>$200.00</div>
+            <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>${price}.00</div>
             <div style={{fontSize:'10px',color:'#aaa',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>CAD · per car</div>
           </div>
         </div>
@@ -144,7 +144,7 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
         ) : (
           <>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Authorize $200.00 CAD
+            Authorize ${price}.00 CAD
           </>
         )}
       </button>
@@ -162,7 +162,7 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function WtetPage() {
-  const [form, setForm] = useState({ name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'' })
+  const [form, setForm] = useState({ name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'', isMember:'' })
   const [errors, setErrors]           = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
   const [countryCode, setCountryCode] = useState('+1')
@@ -234,8 +234,11 @@ export default function WtetPage() {
     return { width:'100%', padding:'0.9rem 1.2rem', border, background, boxShadow, fontSize:'13px', fontFamily:'var(--font-inter),sans-serif', outline:'none', color:'#1a1a1a', transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s', WebkitAppearance:'none', MozAppearance:'none', appearance:'none' }
   }
 
+  const price = form.isMember === 'yes' ? 179 : 199
+
   function validate() {
     const e = {}
+    if (!form.isMember) e.isMember = true
     if (form.name.trim().length < 2) e.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
     if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
@@ -256,7 +259,7 @@ export default function WtetPage() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
-      const order = ['name','email','phone','dob_month','dob_day','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
+      const order = ['isMember','name','email','phone','dob_month','dob_day','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) document.getElementById(`field-${first}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
       return
@@ -276,6 +279,7 @@ export default function WtetPage() {
           phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '',
           carModel: [form.carMake, form.carModel].filter(Boolean).join(' '),
           dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`,
+          isMember: form.isMember === 'yes',
           _hp: honeypotRef.current?.value || '',
         }),
         signal: controller.signal,
@@ -430,14 +434,22 @@ export default function WtetPage() {
       <section className="wtet-details" style={{background:'#EDE8E1',padding:'5rem 3rem'}}>
         <div style={{maxWidth:'680px',margin:'0 auto'}}>
           <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#888',marginBottom:'2rem'}}>Pricing &amp; details</div>
-          <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC',display:'flex',alignItems:'baseline',gap:'1rem',flexWrap:'wrap'}}>
-            <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3.5rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$200</div>
-            <div style={{fontSize:'13px',color:'#888',letterSpacing:'0.04em'}}>per car — up to 2 people</div>
+          <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC',display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap'}}>
+            <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
+              <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Members</div>
+              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
+            </div>
+            <div style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
+            <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
+              <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>Non-members</div>
+              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
+            </div>
+            <div style={{fontSize:'12px',color:'#aaa',alignSelf:'flex-end',paddingBottom:'4px',fontFamily:'var(--font-inter),sans-serif'}}>per car · up to 2 people</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {[
               'We leave Montreal and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included, with a special discount on wine purchases for the group.',
-              'From there we pick up Chemin des Cantons — tight corners, elevation changes, and the kind of mountain roads that make you forget everything except what\'s ahead. Through Sutton, Glen Sutton, Highwater, Austin, and Magog.',
+              'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and skirts the US border at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the best stretches of road in Quebec, full stop.',
               'The day ends with a curated premium lunch in the Magog region. The restaurant is chosen for the drive — for the setting, the kitchen, and how well it closes out a day like this. Details sent to confirmed registrants.',
               'Driver-focused cars only. Exotics, sports cars, and enthusiast vehicles. This is a drive, not a show.',
             ].map((note, i) => (
@@ -450,7 +462,7 @@ export default function WtetPage() {
 
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
             style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'500'}}>
-            Register — $200 per car →
+            Register — from $179 →
           </a>
         </div>
       </section>
@@ -470,8 +482,8 @@ export default function WtetPage() {
             { label:'Meetup', venue:'Quartier Dix 30', address:'Brossard, QC', desc:'The group gathers in the Dix 30 parking lot. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
             { label:'Fuel Stop', venue:'Shell — Bromont Outlets', address:'Bromont, QC', desc:'Fill up before we head into the backroads. Last proper fuel stop before Chemin des Cantons.', pays:false },
             { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Canvas Routes guests receive a special discount on wine purchases.', pays:true },
-            { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The main event. Winding through the mountains — tight corners, elevation changes, and quiet roads the whole way.', pays:false },
-            { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'The road opens back up as we come out the other side. Lake Memphrémagog in view as we approach Magog.', pays:false },
+            { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The main event. The road climbs into the Sutton Mountains in technical corners, tightens through Glen Sutton\'s forested switchbacks, and skirts the US border at Highwater. Quiet, undisturbed pavement through dense Appalachian forest — almost no traffic, no shortcuts, no straightening it out. This is what the day is built around.', pays:false },
+            { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'Coming through Austin, the trees give way and the landscape opens. The road straightens and drops toward the valley floor, with Lake Memphrémagog spreading out below. A proper payoff — the kind of view that earns a slow roll-in.', pays:false },
             { label:'Premium Lunch', venue:'Magog Region, QC', address:'Location revealed upon confirmation', desc:'We curate the restaurant for every route — chosen for the setting, the kitchen, and how well it closes out a day like this. Details shared with confirmed registrants.', pays:true },
           ].map((stop, i, arr) => (
             <div key={i} style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
@@ -521,7 +533,10 @@ export default function WtetPage() {
             <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>Price</div>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2rem',fontWeight:'400',color:'#F5F1EC',letterSpacing:'0.04em'}}>$200 <span style={{fontSize:'13px',color:'rgba(245,241,236,0.4)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.02em'}}>per car · up to 2 people</span></div>
+                <div style={{display:'flex',gap:'1.5rem',alignItems:'baseline',flexWrap:'wrap'}}>
+                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'#c5a882',letterSpacing:'0.04em'}}>$179 <span style={{fontSize:'11px',color:'rgba(197,168,130,0.55)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>members</span></span>
+                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'rgba(245,241,236,0.6)',letterSpacing:'0.04em'}}>$199 <span style={{fontSize:'11px',color:'rgba(245,241,236,0.35)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>non-members</span></span>
+                </div>
               </div>
               <div style={{height:'0.5px',background:'rgba(197,168,130,0.1)'}} />
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
@@ -562,7 +577,7 @@ export default function WtetPage() {
               <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>Authorization received.</div>
               <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
               <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
-                Your $200 hold is placed — nothing has been charged yet. We&apos;ll review your registration personally and be in touch at <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{form.email}</strong>.
+                Your ${price} hold is placed — nothing has been charged yet. We&apos;ll review your registration personally and be in touch at <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{form.email}</strong>.
               </p>
               <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2rem'}}>
                 If your spot is confirmed, the charge goes through and you&apos;ll get full event details. If not, the hold is released with no charge.
@@ -604,6 +619,7 @@ export default function WtetPage() {
                 <PaymentForm
                   name={form.name}
                   email={form.email}
+                  price={price}
                   onSuccess={() => setStatus('success')}
                   onBack={() => { setStatus(null); setClientSecret(null) }}
                 />
@@ -626,6 +642,25 @@ export default function WtetPage() {
               </div>
 
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
+
+                {/* Member status */}
+                <div className="join-form-field" style={{marginBottom:'1.5rem',padding:'1.25rem',background:'rgba(197,168,130,0.06)',border:`0.5px solid ${errors.isMember ? '#7B2032' : 'rgba(197,168,130,0.25)'}`}}>
+                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a1a',marginBottom:'0.85rem',fontFamily:'var(--font-inter),sans-serif'}}>
+                    Are you a current Canvas Routes member?
+                  </div>
+                  <div style={{display:'flex',gap:'0.75rem',marginBottom:'0.5rem'}}>
+                    {[{val:'yes',label:`Yes — member rate · $179`},{val:'no',label:`No · $199`}].map(({val,label}) => {
+                      const sel = form.isMember === val
+                      return (
+                        <button key={val} type="button" onClick={() => updateForm('isMember', val)}
+                          style={{flex:1,padding:'0.75rem',border:`1px solid ${sel?'#3B6B2F':errors.isMember?'#7B2032':'rgba(0,0,0,0.2)'}`,background:sel?'rgba(59,107,47,0.06)':'transparent',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',fontSize:'12px',color:sel?'#3B6B2F':'#555',transition:'all 0.15s',textAlign:'left',letterSpacing:'0.02em'}}>
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {errors.isMember && <span style={{fontSize:'11px',color:'#7B2032'}}>Please select one</span>}
+                </div>
 
                 {/* Name + Email */}
                 <div className="join-form-row" style={{marginBottom:'1rem'}}>
@@ -821,8 +856,8 @@ export default function WtetPage() {
 
                 {/* Payment note */}
                 <div style={{marginBottom:'2.5rem',padding:'1rem 1.2rem',border:'0.5px solid rgba(0,0,0,0.12)',background:'rgba(197,168,130,0.06)'}}>
-                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — $200 per car</div>
-                  <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a $200 hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
+                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — ${price} per car</div>
+                  <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a ${price} hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
                 </div>
 
                 {/* Honeypot */}
@@ -835,7 +870,7 @@ export default function WtetPage() {
                 <button type="submit" disabled={status==='loading'}
                   className="btn-push join-submit-btn"
                   style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',marginBottom:'1rem'}}>
-                  {status==='loading' ? 'Setting up payment…' : 'Continue to payment — $200'}
+                  {status==='loading' ? 'Setting up payment…' : `Continue to payment — $${price}`}
                 </button>
 
               </form>
