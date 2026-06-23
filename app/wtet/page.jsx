@@ -112,8 +112,8 @@ function PaymentForm({ name, email, onSuccess, onBack }) {
         </div>
         {[
           'Winery experience at Vignoble Domaine du Brésée',
-          'Lakeside lunch at Auberge et Restaurant McGowan (Michelin-star kitchen)',
-          'Guided convoy — Dix 30 to Georgeville via Chemin des Cantons',
+          'Curated premium lunch — Magog region, Michelin-star kitchen',
+          'Guided convoy — Dix 30 through Chemin des Cantons',
         ].map((item, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -368,14 +368,14 @@ export default function WtetPage() {
             Whips to Eastern Townships
           </h1>
           <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.1rem,2.5vw,1.4rem)',fontStyle:'italic',color:'rgba(245,241,236,0.4)',marginBottom:'1.2rem'}}>
-            Brossard to Georgeville, QC
+            Brossard to the Eastern Townships
           </div>
           <div style={{display:'inline-block',padding:'0.45rem 1.2rem',border:'0.5px solid rgba(197,168,130,0.5)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'2.5rem'}}>
             Sunday · July 5, 2026
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem'}} />
           <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em'}}>
-            Through wine country, over the mountains, along Chemin des Cantons. Lunch on the lake in Georgeville.
+            Through wine country, over the mountains, along Chemin des Cantons. A curated lunch to close the day.
           </p>
 
           {/* Countdown */}
@@ -438,7 +438,7 @@ export default function WtetPage() {
             {[
               'We leave Brossard and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included.',
               'From there we pick up Chemin des Cantons — one of Quebec\'s best driving roads — through Sutton, Glen Sutton, Highwater, Austin, and Magog.',
-              'The day ends at Auberge et Restaurant McGowan in Georgeville — Michelin-star kitchen background, lakeside setting on Lake Memphrémagog.',
+              'The day ends with a curated premium lunch in the Magog region — restaurant chosen for the setting and the kitchen. Details sent to confirmed registrants.',
               'Driver-focused cars only. Exotics, sports cars, and enthusiast vehicles. This is a drive, not a show.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
@@ -508,8 +508,10 @@ export default function WtetPage() {
       </section>
 
       {/* ITINERARY */}
-      <section className="wtet-itinerary" style={{background:'#0F1E14',padding:'6rem 2rem 7rem'}}>
-        <div style={{maxWidth:'560px',margin:'0 auto'}}>
+      <section className="wtet-itinerary" style={{position:'relative',padding:'6rem 2rem 7rem',overflow:'hidden'}}>
+        <img src="/membership-form.jpeg" alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center 40%',zIndex:0}} />
+        <div style={{position:'absolute',inset:0,background:'rgba(8,16,10,0.88)',zIndex:1}} />
+        <div style={{maxWidth:'560px',margin:'0 auto',position:'relative',zIndex:2}}>
           <div style={{textAlign:'center',marginBottom:'4rem'}}>
             <div style={{fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem'}}>Canvas Routes · July 5, 2026</div>
             <h2 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.8rem,4vw,2.6rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.1',margin:0}}>What Your Day Looks Like</h2>
@@ -522,7 +524,7 @@ export default function WtetPage() {
             { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Take in the vines, the scenery, and the company before the mountains.', pays:true },
             { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The main event. Winding through the mountains — tight corners, elevation changes, and quiet roads the whole way.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'The road opens back up as we come out the other side. Lake Memphrémagog in view as we approach Magog.', pays:false },
-            { label:'Group Lunch', venue:'Auberge et Restaurant McGowan', venueHref:'https://www.google.com/maps/search/Auberge+et+Restaurant+McGowan+Georgeville+QC', address:'Georgeville, QC', desc:'Lunch on Lake Memphrémagog. The kitchen carries a Michelin-star background — the food is serious, the setting is exceptional. A proper close to the day with the whole group.', pays:true },
+            { label:'Premium Lunch', venue:'Magog Region, QC', address:'Location revealed upon confirmation', desc:'We curate the restaurant for every route — chosen for the setting, the kitchen, and how well it closes out a day like this. Details shared with confirmed registrants.', pays:true },
           ].map((stop, i, arr) => (
             <div key={i} style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
               <div style={{width:'6px',height:'6px',borderRadius:'50%',background:stop.pays?'#c5a882':'rgba(197,168,130,0.35)',flexShrink:0,marginTop:'6px'}} />
@@ -549,7 +551,7 @@ export default function WtetPage() {
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
-              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Group lunch at Auberge et Restaurant McGowan — Michelin-star kitchen','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
+              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Curated premium lunch — Magog region (Michelin-star kitchen)','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.7)',lineHeight:'1.65'}}>{item}</span>
