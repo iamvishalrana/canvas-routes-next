@@ -136,7 +136,7 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
       )}
 
       <button type="submit" disabled={!stripe || paying}
-        style={{width:'100%',padding:'1.05rem',background:paying?'rgba(197,168,130,0.65)':'#c5a882',border:'none',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',fontWeight:'700',cursor:paying?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',transition:'background 0.2s',marginBottom:'0.85rem'}}>
+        style={{width:'100%',padding:'1.05rem',background:paying?'rgba(15,30,20,0.45)':'#0F1E14',border:'none',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',fontWeight:'700',cursor:paying?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',transition:'background 0.2s',marginBottom:'0.85rem'}}>
         {paying ? (
           <>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin 1s linear infinite'}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -322,6 +322,50 @@ export default function WtetPage() {
           to   { opacity: 1; }
         }
 
+        /* ── Date badge – periodic golden streak (same pattern as tier-badge-shimmer) ── */
+        @keyframes wtet-date-streak {
+          0%, 100% { left: -110%; opacity: 0; }
+          6%        { opacity: 1; }
+          20%       { left: 130%; opacity: 0; }
+          21%, 99%  { left: -110%; opacity: 0; }
+        }
+        .wtet-date-badge {
+          position: relative;
+          overflow: hidden;
+        }
+        .wtet-date-badge::after {
+          content: '';
+          position: absolute;
+          top: -20%; left: -110%;
+          width: 55%; height: 140%;
+          background: linear-gradient(105deg, transparent 15%, rgba(255,215,100,0.22) 50%, transparent 85%);
+          transform: skewX(-12deg);
+          animation: wtet-date-streak 4.5s ease-in-out 1.6s infinite;
+          pointer-events: none;
+        }
+
+        /* ── Hero CTA – one-time shimmer sweep on load (same pattern as shimmer-card) ── */
+        @keyframes wtet-cta-shimmer {
+          0%   { left: -80%; opacity: 0; }
+          15%  { opacity: 1; }
+          85%  { opacity: 1; }
+          100% { left: 130%; opacity: 0; }
+        }
+        .wtet-hero-cta {
+          position: relative;
+          overflow: hidden;
+        }
+        .wtet-hero-cta::after {
+          content: '';
+          position: absolute;
+          top: -10%; left: -80%;
+          width: 40%; height: 120%;
+          background: linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.28) 50%, transparent 90%);
+          transform: skewX(-10deg);
+          animation: wtet-cta-shimmer 0.9s cubic-bezier(0.4,0,0.2,1) 1.4s forwards;
+          pointer-events: none;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 768px) {
           .wtet-hero { padding: clamp(100px,14vw,160px) 1.25rem 4rem !important; }
@@ -387,7 +431,7 @@ export default function WtetPage() {
           <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.1rem,2.5vw,1.4rem)',fontStyle:'italic',color:'rgba(245,241,236,0.4)',marginBottom:'1.2rem',animation:'wtet-fade-up 0.7s ease both',animationDelay:'450ms'}}>
             Montreal to Lac Memphrémagog
           </div>
-          <div style={{display:'inline-block',padding:'0.45rem 1.2rem',border:'0.5px solid rgba(197,168,130,0.5)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'2.5rem',animation:'wtet-fade-in 0.6s ease both',animationDelay:'600ms'}}>
+          <div className="wtet-date-badge" style={{display:'inline-block',padding:'0.45rem 1.2rem',border:'0.5px solid rgba(197,168,130,0.65)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(245,241,236,0.88)',marginBottom:'2.5rem',animation:'wtet-fade-in 0.6s ease both',animationDelay:'600ms'}}>
             Sunday · July 5, 2026
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'wtet-fade-in 0.5s ease both',animationDelay:'700ms'}} />
@@ -413,8 +457,8 @@ export default function WtetPage() {
           )}
 
           <div style={{animation:'wtet-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
-            <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
-              style={{display:'inline-block',padding:'0.9rem 2.5rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
+            <a href="#form" className="wtet-hero-cta" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
+              style={{display:'inline-block',padding:'0.9rem 2.5rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
               Secure your seat →
             </a>
           </div>
@@ -485,7 +529,7 @@ export default function WtetPage() {
           </div>
 
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
-            style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
+            style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
             Register — from $179 →
           </a>
           </FadeUp>
@@ -711,7 +755,7 @@ export default function WtetPage() {
                       Log in to your Canvas Routes account to register at the member rate of $179. Your details will be pre-filled from your profile.
                     </p>
                     <a href={`/members/login?redirect=${encodeURIComponent('/members/events/wtet')}`}
-                      style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
+                      style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
                       Go to Members Portal →
                     </a>
                   </div>
@@ -926,7 +970,7 @@ export default function WtetPage() {
                 {(status==='error') && <div style={{fontSize:'12px',color:'#7B2032',marginBottom:'0.75rem'}}>{serverError}</div>}
 
                 <button type="submit" disabled={status==='loading'}
-                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:status==='loading'?'rgba(197,168,130,0.65)':'#c5a882',color:'#0F1E14',border:'none',marginBottom:'1rem'}}>
+                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:status==='loading'?'rgba(15,30,20,0.45)':'#0F1E14',color:'#F5F1EC',border:'none',marginBottom:'1rem'}}>
                   {status==='loading' ? 'Setting up payment…' : `Continue to payment — $${price}`}
                 </button>
 
