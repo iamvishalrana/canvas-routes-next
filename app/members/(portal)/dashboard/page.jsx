@@ -72,7 +72,35 @@ export default async function DashboardPage() {
       ? [{ year: member.car_year, make: member.car_make, model: member.car_model, license_plate: '' }]
       : []
 
-  const attendedEvents = (application?.registrations || []).filter(r => r.attended === true)
+  // Attendance can come from two sources:
+  // 1. applications.registrations[].attended (road trip registrations)
+  // 2. members.event_attendance keyed by short slug (set from the Members admin panel)
+  const ATTENDANCE_KEY_TO_NAME = {
+    cc_may9:          'Cars & Coffee — May 9, 2026',
+    gp_may23:         'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+    laurentians_jun7: 'Into the Laurentians — June 7, 2026',
+    ccd_jun20:        'Cars, Coffee & Dad Jokes — June 20, 2026',
+  }
+  const EVENT_NAME_ALIASES = {
+    'Into the Laurentians — May 31, 2026':              'Into the Laurentians — June 7, 2026',
+    'Grand Prix Weekend Cars & Coffee — May 23, 2026':  'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
+  }
+  function resolveEventName(name) { return EVENT_NAME_ALIASES[name] || name }
+
+  const appAttended = (application?.registrations || [])
+    .filter(r => r.attended === true)
+    .map(r => ({ event: resolveEventName(r.event) }))
+
+  const memberAttended = Object.entries(member?.event_attendance || {})
+    .filter(([, v]) => v === true)
+    .map(([key]) => ({ event: ATTENDANCE_KEY_TO_NAME[key] || key }))
+
+  // Union both sources; deduplicate by resolved event name
+  const appAttendedNames = new Set(appAttended.map(r => r.event))
+  const attendedEvents = [
+    ...appAttended,
+    ...memberAttended.filter(r => !appAttendedNames.has(r.event)),
+  ]
 
   const memberSince = member?.created_at
     ? new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })

@@ -184,7 +184,7 @@ export default function ApplicationsClient() {
     const app = apps.find(a => a.id === appId)
     if (!app) return
     const existing = app.registrations || []
-    const idx = existing.findIndex(r => r.event === eventName)
+    const idx = existing.findIndex(r => normalizeEventName(r.event) === eventName)
     let newRegs
     if (idx !== -1) {
       newRegs = existing.map((r, i) =>
