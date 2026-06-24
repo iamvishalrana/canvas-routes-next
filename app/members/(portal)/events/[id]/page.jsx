@@ -11,6 +11,12 @@ function isInternalUrl(url) {
   if (!url) return false
   try { return new URL(url).hostname.endsWith(OUR_DOMAIN) } catch { return url.startsWith('/') }
 }
+// Matches both '/members/...' and 'https://[www.]canvasroutes.com/members/...'
+function isMembersPortalUrl(url) {
+  if (!url) return false
+  if (url.startsWith('/members/')) return true
+  try { return new URL(url).pathname.startsWith('/members/') } catch { return false }
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -106,7 +112,7 @@ export default async function EventDetailPage({ params }) {
           2. Other internal canvasroutes.com URL → EventFreeRegister inline flow
           3. External URL → open in new tab
           Cases 2 & 3 respect registration_enabled. */}
-      {ev.registration_url && ev.registration_url.startsWith('/members/') ? (
+      {ev.registration_url && isMembersPortalUrl(ev.registration_url) ? (
         <Link href={ev.registration_url} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', marginBottom: '2rem' }}>
           Register
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
