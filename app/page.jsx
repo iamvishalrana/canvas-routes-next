@@ -180,7 +180,7 @@ export default function Home() {
   useEffect(() => { setPastModalImageFailed(false) }, [pastModalEvent])
 
   useEffect(() => {
-    const isOpen = pastModalEvent !== null || showEventsPopup
+    const isOpen = pastModalEvent !== null || showEventsPopup || showWtetPopup
     if (!isOpen) {
       const savedTop = document.body.style.top
       document.body.style.overflow = ''
@@ -204,7 +204,7 @@ export default function Home() {
       document.body.style.width = ''
       if (top) window.scrollTo(0, -parseInt(top, 10))
     }
-  }, [pastModalEvent, showEventsPopup])
+  }, [pastModalEvent, showEventsPopup, showWtetPopup])
 
   useEffect(() => {
     setCookieBannerVisible(getConsent() === null)
