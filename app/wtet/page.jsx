@@ -875,8 +875,8 @@ export default function WtetPage() {
                   <a href="mailto:jerry@canvasroutes.com" style={{color:'#7B5B2E',textDecoration:'none'}}>jerry@canvasroutes.com</a>
                 </p>
               </div>
-              {/* Early check-in CTA */}
-              {clientSecret && (
+              {/* Early check-in CTA — members only; non-members get this link in their capture confirmation email */}
+              {wasMemberRef.current && clientSecret && (
                 <div style={{marginBottom:'1.5rem'}}>
                   <Link
                     href={`/wtet/checkin?t=${clientSecret.split('_secret_')[0]}`}

@@ -1,4 +1,5 @@
 import { createAdminClient } from '../../../lib/supabase/admin.js'
+import { captureException } from '../../../lib/sentry.js'
 
 export const runtime = 'nodejs'
 
@@ -47,12 +48,14 @@ export async function POST(request) {
 
   const { data, error: lookupErr } = await supabase
     .from('applications')
-    .select('id')
+    .select('id, name, email')
     .eq('stripe_payment_intent_id', token)
     .in('stripe_payment_status', ['paid', 'authorized'])
     .maybeSingle()
 
   if (lookupErr || !data) return Response.json({ error: 'Not found' }, { status: 404 })
+
+  const cleanedPassengers = passengers_list.map(p => ({ name: p.name.trim(), age: p.age.toString().trim() }))
 
   const { error: updateErr } = await supabase
     .from('applications')
@@ -60,13 +63,49 @@ export async function POST(request) {
       wtet_checkin: {
         dietary:         dietary || null,
         whatsapp:        whatsapp || null,
-        passengers_list: passengers_list.map(p => ({ name: p.name.trim(), age: p.age.toString().trim() })),
+        passengers_list: cleanedPassengers,
         completed_at:    new Date().toISOString(),
       },
     })
     .eq('stripe_payment_intent_id', token)
 
   if (updateErr) return Response.json({ error: 'Failed to save' }, { status: 500 })
+
+  // Notify Jerry so he can prep dietary requirements, add to WhatsApp group, etc.
+  if (process.env.RESEND_API_KEY) {
+    const passengerRows = cleanedPassengers.map((p, i) =>
+      `<tr><td style="padding:6px 12px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">${i === 0 ? 'Driver' : `Passenger ${i + 1}`}</td><td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${p.name}, age ${p.age}</td></tr>`
+    ).join('')
+
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: 'jerry@canvasroutes.com',
+        subject: `WTET Check-in Completed — ${data.name || 'Registrant'}`,
+        html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fff;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
+      <tr><td style="padding-bottom:16px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;">WTET Early Check-in</td></tr>
+      <tr><td style="padding-bottom:24px;font-family:Arial,Helvetica,sans-serif;font-size:20px;color:#1a1a1a;font-weight:400;">${data.name || 'A registrant'} has completed their check-in.</td></tr>
+      <tr><td>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td style="padding:8px 12px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;width:160px;">Email</td><td style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${data.email || '—'}</td></tr>
+          <tr><td style="padding:8px 12px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">Dietary</td><td style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${dietary || 'None'}</td></tr>
+          <tr><td style="padding:8px 12px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">WhatsApp</td><td style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${whatsapp || 'Not provided'}</td></tr>
+        </table>
+        <div style="margin-top:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;">Passengers</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${passengerRows}</table>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`,
+      }),
+    }).catch(err => captureException(err, { context: 'wtet-checkin-notify-jerry', token }))
+  }
 
   return Response.json({ success: true })
 }
