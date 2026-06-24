@@ -804,7 +804,7 @@ export default function ApplicationsClient() {
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
                         const isPast = eventDate ? new Date(eventDate) <= today : true
-                        const isNA = isPast && (!reg || (reg.registered_at === null && reg.attended === null))
+                        const isNA = isPast && reg !== null && reg.registered_at === null && reg.attended === null
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
