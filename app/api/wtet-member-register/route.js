@@ -139,6 +139,11 @@ export async function POST(request) {
       description: `Canvas Routes — ${EVENT_NAME} (Member rate)`,
       automatic_payment_methods: { enabled: true },
     })
+    // Store PI ID immediately so wtet-member-confirm can find this row after payment
+    await admin.from('applications')
+      .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_wtet' })
+      .eq('email', normalEmail)
+      .catch(err => captureException(err, { context: 'wtet-member-register-pi-store', email: normalEmail }))
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {
     captureException(err, { context: 'wtet-member-create-pi', email: normalEmail })

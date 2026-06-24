@@ -5,13 +5,18 @@ export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
 
-  const [{ data: events }, { data: apps }, { data: tokens }] = await Promise.all([
+  const [{ data: events }, { data: apps }, { data: tokens }, { data: members }] = await Promise.all([
     supabase.from('events').select('id, name, date, date_display, location, type, capacity').order('date', { ascending: true }),
-    supabase.from('applications').select('id, name, email, phone, car_year, car_model, car_paint, source, registrations, is_member, stripe_payment_status, created_at'),
+    supabase.from('applications').select('id, name, email, phone, car_year, car_model, car_paint, source, registrations, is_member, stripe_payment_status, stripe_payment_type, stripe_amount_paid, created_at'),
     supabase.from('rsvp_tokens').select('application_id, event_name, confirmed_at, answers, expires_at, token, created_at'),
+    supabase.from('members').select('email, tier'),
   ])
 
   if (!events) return Response.json({ error: 'Failed to load events' }, { status: 500 })
+
+  // Build a lookup: email → member tier
+  const tierByEmail = {}
+  for (const m of (members || [])) if (m.email) tierByEmail[m.email.toLowerCase()] = m.tier
 
   // Build a lookup: event_name → array of rsvp tokens
   const tokensByEvent = {}
@@ -39,6 +44,7 @@ export async function GET() {
     const appsWithRsvp = evApps.map(a => ({
       ...a,
       rsvp: tokenByApp[a.id] || null,
+      member_tier: tierByEmail[a.email?.toLowerCase()] || null,
     }))
 
     const confirmedCount = evTokens.filter(t => t.confirmed_at).length

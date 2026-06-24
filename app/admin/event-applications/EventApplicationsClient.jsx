@@ -3,6 +3,20 @@ import { useState, useEffect, useCallback } from 'react'
 import { parseCarMakeModel, GhostBtn, DangerBtn, PrimaryBtn, Err } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 
+function PaymentChip({ status, amount }) {
+  const isPaid = status === 'paid'
+  return (
+    <div>
+      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: `0.5px solid ${isPaid ? 'rgba(59,107,47,0.35)' : 'rgba(197,168,130,0.4)'}`, background: isPaid ? 'rgba(59,107,47,0.07)' : 'rgba(197,168,130,0.07)', color: isPaid ? '#3B6B2F' : '#8A6535', whiteSpace: 'nowrap' }}>
+        {isPaid ? '✓ Paid' : 'Authorized'}
+      </span>
+      {amount > 0 && (
+        <div style={{ fontSize: '10px', color: '#888', marginTop: '3px' }}>${(amount / 100).toFixed(2)} CAD</div>
+      )}
+    </div>
+  )
+}
+
 function StatusChip({ rsvp }) {
   if (!rsvp) return <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em' }}>—</span>
   if (rsvp.confirmed_at) return (
@@ -163,6 +177,8 @@ export default function EventApplicationsClient() {
                           const car = [app.car_year, make, model].filter(Boolean).join(' ')
                           const isInvited = !!app.rsvp
                           const isConfirmed = !!app.rsvp?.confirmed_at
+                          const isPaidRegistrant = ['paid', 'authorized'].includes(app.stripe_payment_status) && app.stripe_payment_type === 'road_trip_wtet'
+                          const tierLabel = app.member_tier === 'inner_circle' ? 'Inner Circle' : app.member_tier === 'routes_member' ? 'Routes Member' : app.is_member ? 'Member' : null
 
                           return (
                             <div key={app.id} style={{ borderBottom: idx < (ev.applications ?? []).length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
@@ -172,15 +188,18 @@ export default function EventApplicationsClient() {
                                     <div>
                                       <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '0.15rem' }}>{app.name || '—'}</div>
                                       <div style={{ fontSize: '11px', color: '#888' }}>{car || '—'}</div>
+                                      {tierLabel && <div style={{ fontSize: '10px', color: '#c5a882', marginTop: '0.15rem' }}>{tierLabel}</div>}
                                     </div>
-                                    <StatusChip rsvp={app.rsvp} />
+                                    {isPaidRegistrant
+                                      ? <PaymentChip status={app.stripe_payment_status} amount={app.stripe_amount_paid} />
+                                      : <StatusChip rsvp={app.rsvp} />}
                                   </div>
-                                  {app.rsvp?.answers && (
-                                    <RsvpAnswers answers={app.rsvp.answers} />
+                                  {app.rsvp?.answers && <RsvpAnswers answers={app.rsvp.answers} />}
+                                  {!isPaidRegistrant && (
+                                    <div style={{ marginTop: '0.65rem' }}>
+                                      <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} isInvited={isInvited} isConfirmed={isConfirmed} />
+                                    </div>
                                   )}
-                                  <div style={{ marginTop: '0.65rem' }}>
-                                    <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} isInvited={isInvited} isConfirmed={isConfirmed} />
-                                  </div>
                                 </div>
                               ) : (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 140px', padding: '0.85rem 1.5rem', alignItems: 'start', gap: '0.5rem' }}>
@@ -191,13 +210,19 @@ export default function EventApplicationsClient() {
                                   </div>
                                   <div style={{ fontSize: '12px', color: '#666' }}>{car || '—'}</div>
                                   <div>
-                                    {app.is_member
-                                      ? <span style={{ fontSize: '10px', color: '#3B6B2F', letterSpacing: '0.06em' }}>✓ Member</span>
+                                    {tierLabel
+                                      ? <span style={{ fontSize: '10px', color: '#c5a882', letterSpacing: '0.04em' }}>{tierLabel}</span>
                                       : <span style={{ fontSize: '10px', color: '#bbb' }}>—</span>}
                                   </div>
-                                  <div><StatusChip rsvp={app.rsvp} /></div>
                                   <div>
-                                    <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} isInvited={isInvited} isConfirmed={isConfirmed} />
+                                    {isPaidRegistrant
+                                      ? <PaymentChip status={app.stripe_payment_status} amount={app.stripe_amount_paid} />
+                                      : <StatusChip rsvp={app.rsvp} />}
+                                  </div>
+                                  <div>
+                                    {!isPaidRegistrant && (
+                                      <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} isInvited={isInvited} isConfirmed={isConfirmed} />
+                                    )}
                                   </div>
                                 </div>
                               )}

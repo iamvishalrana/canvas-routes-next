@@ -93,14 +93,16 @@ export async function POST(request) {
   const amount = `$${(pi.amount_received / 100).toFixed(2)} CAD`
   const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
 
-  // Update application to mark payment as paid (best-effort — webhook may also do this)
+  // Update application to mark payment as paid — look up by email since the PI ID
+  // may not be stored yet if wtet-member-register's update hasn't propagated
   const admin = createAdminClient()
   await admin.from('applications').update({
+    stripe_payment_intent_id: pi.id,
     stripe_payment_status: 'paid',
     stripe_amount_paid: pi.amount_received,
     stripe_payment_type: 'road_trip_wtet',
     stripe_paid_at: new Date().toISOString(),
-  }).eq('stripe_payment_intent_id', pi.id).catch(err =>
+  }).eq('email', normalEmail).catch(err =>
     captureException(err, { context: 'wtet-member-confirm-db', piId: pi.id })
   )
 
