@@ -46,6 +46,7 @@ export async function POST(request) {
   if (!carModel?.trim()) return Response.json({ error: 'Car model is required.' }, { status: 400 })
   if (!passengers) return Response.json({ error: 'Number of passengers is required.' }, { status: 400 })
   if (!hasChildren) return Response.json({ error: 'Please answer the children question.' }, { status: 400 })
+  if (hasChildren === 'yes' && !childrenAges?.trim()) return Response.json({ error: 'Please provide the ages of children attending.' }, { status: 400 })
   const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
   if (!source || !VALID_SOURCES.includes(source))
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
@@ -78,6 +79,9 @@ export async function POST(request) {
       car_model: fullCarModel,
       phone: phone || null,
       instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
+      passengers: passengers || null,
+      has_children: hasChildren || null,
+      children_ages: childrenAges || null,
       more: more || null,
       source: source || null,
       dob: dob || null,

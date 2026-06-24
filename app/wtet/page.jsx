@@ -287,6 +287,23 @@ export default function WtetPage() {
       .catch(() => {})
   }, [])
 
+  // Handle Stripe redirect return (3DS auth) — detect payment_intent params in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const piId           = params.get('payment_intent')
+    const piSecret       = params.get('payment_intent_client_secret')
+    const redirectStatus = params.get('redirect_status')
+    if (!piId) return
+    window.history.replaceState({}, '', '/wtet')
+    if (redirectStatus === 'succeeded') {
+      if (piSecret) setClientSecret(piSecret)
+      setStatus('success')
+    } else if (redirectStatus === 'failed') {
+      setServerError('Payment was not completed. Please try again.')
+      setStatus('error')
+    }
+  }, [])
+
   // Detect logged-in members and pre-fill their details
   useEffect(() => {
     fetch('/api/member/me')
