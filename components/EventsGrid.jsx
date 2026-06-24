@@ -101,7 +101,11 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
                   ev={ev}
                   isRegistered={['free', 'paid'].includes(regMap[ev.id])}
                   isPast={false}
-                  onClick={() => router.push(`/members/events/${ev.id}`)}
+                  onClick={() => {
+                    // Events with a full registration URL go there directly — skip the detail page
+                    if (ev.registration_url?.startsWith('http')) window.location.href = ev.registration_url
+                    else router.push(`/members/events/${ev.id}`)
+                  }}
                 />
               </FadeUp>
             ))}

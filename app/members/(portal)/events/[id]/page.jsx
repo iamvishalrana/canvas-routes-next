@@ -42,6 +42,11 @@ export default async function EventDetailPage({ params }) {
 
   if (!ev) notFound()
 
+  // Events with a full URL registration page go there directly — no intermediate detail page needed
+  if (ev.registration_url?.startsWith('http') && !isMembersPortalUrl(ev.registration_url)) {
+    redirect(ev.registration_url)
+  }
+
   const tier = member?.tier || 'routes_member'
   const isRegistered = !!(registration && ['free', 'paid'].includes(registration.stripe_payment_status))
   const now = new Date()
@@ -118,7 +123,9 @@ export default async function EventDetailPage({ params }) {
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </Link>
       ) : ev.registration_url && ev.registration_enabled !== false && (
-        isInternalUrl(ev.registration_url) ? (
+        // Absolute URLs always navigate — never trigger EventFreeRegister.
+        // Only relative paths (in-portal free events) use EventFreeRegister.
+        !ev.registration_url.startsWith('http') && isInternalUrl(ev.registration_url) ? (
           <EventFreeRegister
             eventId={ev.id}
             eventName={ev.name}
