@@ -515,7 +515,8 @@ export default function WtetPage() {
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
-          .wtet-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; }
+          .wtet-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
+          .wtet-hero-overlay { background: linear-gradient(to bottom, rgba(8,16,10,0.5) 0%, rgba(8,16,10,0.82) 100%) !important; }
           .wtet-details { padding: 3rem 1.25rem !important; }
           .wtet-itinerary  { padding: 3.5rem 1.25rem 4.5rem !important; }
           .wtet-form-section { padding: 2.5rem 1.25rem 4.5rem !important; }
@@ -531,6 +532,8 @@ export default function WtetPage() {
           .wtet-price-row .price-divider { display: none !important; }
           .wtet-member-grid { grid-template-columns: 1fr 1fr !important; }
           .reg-box-row     { flex-direction: column !important; gap: 0.25rem !important; }
+          .wtet-per-car-shared { display: none !important; }
+          .wtet-per-car-inline { display: inline !important; }
 
           /* Hero CTA full-width */
           .wtet-hero-cta   { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
@@ -572,14 +575,14 @@ export default function WtetPage() {
 
       {/* HERO */}
       <section className="wtet-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/wtet.png')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
-        <div style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
+        <div className="wtet-hero-overlay" style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
         <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem',animation:'wtet-fade-in 0.7s ease both',animationDelay:'100ms'}}>Canvas Routes</div>
         <div style={{position:'relative',zIndex:2}}>
           <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.05',marginBottom:'0.75rem',letterSpacing:'-0.01em',animation:'wtet-fade-up 0.8s ease both',animationDelay:'250ms'}}>
             Whips to Eastern Townships
           </h1>
-          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.1rem,2.5vw,1.4rem)',fontStyle:'italic',color:'rgba(245,241,236,0.4)',marginBottom:'1.2rem',animation:'wtet-fade-up 0.7s ease both',animationDelay:'450ms'}}>
+          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.2rem,2.8vw,1.55rem)',fontStyle:'italic',color:'rgba(245,241,236,0.82)',marginBottom:'1.2rem',letterSpacing:'0.01em',textShadow:'0 1px 12px rgba(0,0,0,0.6)',animation:'wtet-fade-up 0.7s ease both',animationDelay:'450ms'}}>
             Montreal to Lac Memphrémagog
           </div>
           <div className="wtet-date-badge" style={{display:'inline-block',padding:'0.5rem 1.4rem',border:'1px solid rgba(197,168,130,0.7)',background:'rgba(197,168,130,0.12)',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#F5F1EC',marginBottom:'2.5rem',animation:'wtet-fade-in 0.6s ease both',animationDelay:'600ms'}}>
@@ -647,20 +650,26 @@ export default function WtetPage() {
             <div className="wtet-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap',marginBottom:'0.75rem'}}>
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Members</div>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
+                <div style={{display:'flex',alignItems:'baseline',gap:'0.6rem',flexWrap:'wrap'}}>
+                  <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
+                  <span className="wtet-per-car-inline" style={{fontSize:'11px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',display:'none'}}>per car · up to 2</span>
+                </div>
               </div>
               <div className="price-divider" style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>Non-members</div>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
+                <div style={{display:'flex',alignItems:'baseline',gap:'0.6rem',flexWrap:'wrap'}}>
+                  <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
+                  <span className="wtet-per-car-inline" style={{fontSize:'11px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',display:'none'}}>per car · up to 2</span>
+                </div>
               </div>
             </div>
-            <div style={{fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif'}}>per car · up to 2 people</div>
+            <div className="wtet-per-car-shared" style={{fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif'}}>per car · up to 2 people</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {[
               'We leave Montreal and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included, with a special discount on wine purchases for the group.',
-              'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and skirts the US border at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the best stretches of road in Quebec, full stop.',
+              'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the finest driver\'s roads in Quebec.',
               'The day ends with a curated premium lunch in the Magog region. The restaurant is chosen for the drive — for the setting, the kitchen, and how well it closes out a day like this. Details sent to confirmed registrants.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
@@ -704,7 +713,7 @@ export default function WtetPage() {
             { label:'Meetup', venue:'Quartier Dix 30', address:'Brossard, QC', desc:'The group gathers in the Dix 30 parking lot. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
             { label:'Fuel Stop', venue:'Shell — Bromont Outlets', address:'Bromont, QC', desc:'Fill up before we head into the backroads. Last proper fuel stop before Chemin des Cantons.', pays:false },
             { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Canvas Routes guests receive a special discount on wine purchases.', pays:true },
-            { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The main event. The road climbs into the Sutton Mountains in technical corners, tightens through Glen Sutton\'s forested switchbacks, and skirts the US border at Highwater. Quiet, undisturbed pavement through dense Appalachian forest — almost no traffic, no shortcuts, no straightening it out. This is what the day is built around.', pays:false },
+            { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton\'s forested switchbacks, and cuts deep into the Appalachian forest at Highwater. Quiet, undisturbed pavement with almost no traffic and nowhere to straighten it out — the kind of road most drivers never find. This is the heart of the day.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'Coming through Austin, the trees give way and the landscape opens. The road straightens and drops toward the valley floor, with Lake Memphrémagog spreading out below. A proper payoff — the kind of view that earns a slow roll-in.', pays:false },
             { label:'Premium Lunch', venue:'Magog Region, QC', address:'Location revealed upon confirmation', desc:'We curate the restaurant for every route — chosen for the setting, the kitchen, and how well it closes out a day like this. Details shared with confirmed registrants.', pays:true },
           ].map((stop, i, arr) => (
@@ -897,7 +906,7 @@ export default function WtetPage() {
                 {!memberProfile && (
                   <div id="field-isMember" style={{marginBottom:'1.5rem'}}>
                     <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
-                      Are you a Canvas Routes member?
+                      Choose one to secure your spot
                     </div>
                     <div className="wtet-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
                       {[
