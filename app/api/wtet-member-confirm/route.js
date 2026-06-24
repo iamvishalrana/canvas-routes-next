@@ -21,11 +21,11 @@ function buildConfirmHtml(firstName, amount, checkinUrl) {
       </td></tr>
       <tr><td style="background:#ffffff;padding:36px 40px 32px;">
         <p style="margin:0 0 1.4em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#444;">Your payment for <strong style="color:#1a1a1a;font-weight:500;">${EVENT_NAME}</strong> has been received. You&apos;re on the list.</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;border-left:3px solid #c5a882;margin-bottom:24px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#EDE8E1;border-left:3px solid #c5a882;margin-bottom:24px;">
           <tr><td style="padding:18px 20px;">
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Event</div>
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;margin-bottom:14px;">${EVENT_NAME}</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;border-top:1px solid rgba(0,0,0,0.06);padding-top:14px;">Payment</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;border-top:1px solid rgba(0,0,0,0.12);padding-top:14px;">Payment</div>
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#3B6B2F;font-weight:500;">${amount} &mdash; Confirmed</div>
           </td></tr>
         </table>
