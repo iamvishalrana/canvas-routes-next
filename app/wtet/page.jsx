@@ -139,13 +139,13 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
 
       {/* Order summary */}
       <div style={{borderTop:'0.5px solid rgba(0,0,0,0.08)',borderBottom:'0.5px solid rgba(0,0,0,0.08)',padding:'1.25rem 0',marginBottom:'1.25rem'}}>
-        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'1rem',marginBottom:'0.75rem'}}>
+        <div className="wtet-order-summary" style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'1rem',marginBottom:'0.75rem'}}>
           <div>
             <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.3rem',fontFamily:'var(--font-inter),sans-serif'}}>Canvas Routes · July 5, 2026</div>
             <div style={{fontSize:'15px',color:'#1a1a1a',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>Whips to Eastern Townships</div>
             <div style={{fontSize:'12px',color:'#999',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>{email}</div>
           </div>
-          <div style={{textAlign:'right',flexShrink:0}}>
+          <div className="wtet-order-price" style={{textAlign:'right',flexShrink:0}}>
             {promoResult ? (
               <>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.1rem',fontWeight:'400',color:'#bbb',lineHeight:1,letterSpacing:'0.03em',textDecoration:'line-through'}}>${price}.00</div>
@@ -515,24 +515,51 @@ export default function WtetPage() {
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
-          .wtet-hero { padding: clamp(100px,14vw,160px) 1.25rem 4rem !important; }
-          .wtet-details { padding: 3.5rem 1.25rem !important; }
-          .wtet-itinerary { padding: 4rem 1.25rem 5rem !important; }
-          .wtet-form-section { padding: 3rem 1.25rem 5rem !important; }
-          .incl-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
-          .reg-box-row { flex-direction: column !important; gap: 0.25rem !important; }
-          .wtet-stats-bar { flex-wrap: wrap !important; gap: 1rem 2rem !important; padding: 1.25rem 1.5rem !important; }
+          .wtet-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; }
+          .wtet-details { padding: 3rem 1.25rem !important; }
+          .wtet-itinerary  { padding: 3.5rem 1.25rem 4.5rem !important; }
+          .wtet-form-section { padding: 2.5rem 1.25rem 4.5rem !important; }
+
+          /* Stats */
+          .wtet-stats-bar  { flex-wrap: wrap !important; gap: 0 !important; padding: 1.25rem 0.5rem !important; justify-content: center !important; }
           .wtet-stats-bar .stat-divider { display: none !important; }
-          .wtet-price-row { flex-direction: column !important; gap: 0.75rem !important; }
+          .wtet-stat       { flex: 0 0 33.333% !important; padding: 0.75rem 0.25rem !important; }
+
+          /* Grids */
+          .incl-grid       { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          .wtet-price-row  { flex-direction: column !important; gap: 0.75rem !important; }
           .wtet-price-row .price-divider { display: none !important; }
-          .wtet-member-grid { grid-template-columns: 1fr !important; }
+          .wtet-member-grid { grid-template-columns: 1fr 1fr !important; }
+          .reg-box-row     { flex-direction: column !important; gap: 0.25rem !important; }
+
+          /* Hero CTA full-width */
+          .wtet-hero-cta   { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+
+          /* Itinerary stop items */
+          .wtet-stop       { gap: 1rem !important; padding: 1.25rem 0 !important; }
         }
         @media (max-width: 480px) {
-          .wtet-countdown { gap: 0 !important; }
-          .wtet-countdown-cell { padding: 0.75rem 0.9rem !important; min-width: 58px !important; }
-          .wtet-countdown-num { font-size: 2rem !important; }
-          .wtet-stats-bar { justify-content: flex-start !important; }
+          /* Countdown */
+          .wtet-countdown      { gap: 0 !important; }
+          .wtet-countdown-cell { padding: 0.65rem 0.75rem !important; min-width: 52px !important; }
+          .wtet-countdown-num  { font-size: 1.8rem !important; }
+
+          /* Stats — 2 per row */
+          .wtet-stat { flex: 0 0 50% !important; }
+
+          /* Member selector — single column on very small screens */
+          .wtet-member-grid { grid-template-columns: 1fr !important; }
+
+          /* Form rows */
           .join-form-row { flex-direction: column !important; }
+
+          /* DOB — stack month+day+year nicely */
+          .wtet-dob-grid { grid-template-columns: 1fr 1fr !important; }
+          .wtet-dob-year { grid-column: 1 / -1 !important; }
+
+          /* Payment notice and order summary */
+          .wtet-order-summary { flex-direction: column !important; gap: 0.75rem !important; }
+          .wtet-order-price   { text-align: left !important; }
         }
       `}</style>
 
@@ -600,13 +627,13 @@ export default function WtetPage() {
             { num:'1',    unit:'vineyard' },
             { num:'15',   unit:'cars max' },
           ].map(({ num, unit }, i, arr) => (
-            <div key={unit} style={{display:'contents'}}>
-              <div style={{textAlign:'center',padding:'0 2rem'}}>
+            <>
+              <div key={unit} className="wtet-stat" style={{textAlign:'center',padding:'0 2rem'}}>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.4rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.04em'}}>{num}</div>
                 <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#aaa',marginTop:'4px',fontFamily:'var(--font-inter),sans-serif'}}>{unit}</div>
               </div>
-              {i < arr.length - 1 && <div className="stat-divider" style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
-            </div>
+              {i < arr.length - 1 && <div key={`d${i}`} className="stat-divider" style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
+            </>
           ))}
         </div>
       </div>
@@ -682,7 +709,7 @@ export default function WtetPage() {
             { label:'Premium Lunch', venue:'Magog Region, QC', address:'Location revealed upon confirmation', desc:'We curate the restaurant for every route — chosen for the setting, the kitchen, and how well it closes out a day like this. Details shared with confirmed registrants.', pays:true },
           ].map((stop, i, arr) => (
             <FadeUp key={i} delay={i * 80}>
-            <div style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
+            <div className="wtet-stop" style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
               <div style={{width:'6px',height:'6px',borderRadius:'50%',background:stop.pays?'#c5a882':'rgba(197,168,130,0.35)',flexShrink:0,marginTop:'6px'}} />
               <div style={{flex:1}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'0.35rem'}}>{stop.label}</div>
@@ -981,7 +1008,7 @@ export default function WtetPage() {
                 {/* Date of birth */}
                 <div id="field-dob_month" className="join-form-field" style={{marginBottom:'1rem'}}>
                   <div className="join-label" style={{marginBottom:'0.5rem'}}>Date of birth<span style={{color:'#7B2032',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>(year optional)</span></div>
-                  <div style={{display:'grid',gridTemplateColumns:'1.4fr 1fr 1.2fr',gap:'0.75rem'}}>
+                  <div className="wtet-dob-grid" style={{display:'grid',gridTemplateColumns:'1.4fr 1fr 1.2fr',gap:'0.75rem'}}>
                     <div style={{position:'relative'}}>
                       <select value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)} style={{...inputStyle('dob_month'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Month</option>
@@ -994,7 +1021,7 @@ export default function WtetPage() {
                         {Array.from({length:31},(_,i)=>i+1).map(d => <option key={d} value={String(d)}>{d}</option>)}
                       </select><Chevron />
                     </div>
-                    <div style={{position:'relative'}}>
+                    <div className="wtet-dob-year" style={{position:'relative'}}>
                       <select value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)} style={{...inputStyle('dob_year'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Year</option>
                         {Array.from({length:2015-1945+1},(_,i)=>2015-i).map(y => <option key={y} value={String(y)}>{y}</option>)}
