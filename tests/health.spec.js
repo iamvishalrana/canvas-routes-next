@@ -193,6 +193,40 @@ test('partners API rejects invalid business type', async ({ request }) => {
   }
 })
 
+// ─── WTET Registration ────────────────────────────────────────────────────────
+
+test('wtet page loads', async ({ page }) => {
+  await page.goto('/wtet')
+  await expect(page.getByRole('heading', { name: /Whips to Eastern Townships/i })).toBeVisible({ timeout: 15000 })
+})
+
+test('wtet page shows form or closed message', async ({ page }) => {
+  await page.goto('/wtet')
+  const form = page.locator('#field-name')
+  const closed = page.locator('text=Registration is now closed')
+  await expect(form.or(closed)).toBeVisible({ timeout: 15000 })
+})
+
+test('wtet register API validation works', async ({ request }) => {
+  const res = await request.post('/api/wtet-register', { data: {} })
+  expect([400, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Full name is required.')
+  }
+})
+
+test('wtet member register API requires auth', async ({ request }) => {
+  const res = await request.post('/api/wtet-member-register', { data: {} })
+  expect([401, 429]).toContain(res.status())
+})
+
+test('wtet checkin page loads', async ({ page }) => {
+  await page.goto('/wtet/checkin')
+  // no token → page renders error state without crashing
+  await expect(page.locator('text=Link not found')).toBeVisible({ timeout: 15000 })
+})
+
 // ─── Members Portal ───────────────────────────────────────────────────────────
 
 test('portal dashboard redirects to login when unauthenticated', async ({ page }) => {
