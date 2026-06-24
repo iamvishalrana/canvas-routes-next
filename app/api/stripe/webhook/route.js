@@ -5,6 +5,48 @@ import { captureException, captureMessage } from '../../../../lib/sentry.js'
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
 
+function buildRoadTripHoldHtml(firstName, eventLabel, amount) {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background-color:#F5F1EC;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
+  <tr><td align="center" style="padding:32px 16px 48px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
+      <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
+        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:24px;opacity:0.92;" />
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40" style="margin-bottom:20px;"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
+        <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Canvas Routes &middot; Road Trip</p>
+        <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:300;line-height:1.2;color:#F5F1EC;">Registration received, ${firstName}.</h1>
+      </td></tr>
+      <tr><td style="background:#ffffff;padding:36px 40px 32px;">
+        <p style="margin:0 0 1.4em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#444;">We&apos;ve received your registration for <strong style="color:#1a1a1a;font-weight:500;">${eventLabel}</strong>.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;border-left:3px solid #c5a882;margin-bottom:24px;">
+          <tr><td style="padding:18px 20px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Event</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;margin-bottom:14px;">${eventLabel}</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;border-top:1px solid rgba(0,0,0,0.06);padding-top:14px;">Authorization hold</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;font-weight:500;">${amount} &mdash; held, not charged</div>
+          </td></tr>
+        </table>
+        <p style="margin:0 0 1em;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#666;">Your card has been authorized but <strong style="color:#1a1a1a;font-weight:500;">nothing has been charged yet.</strong> We review every registration personally &mdash; if you&apos;re confirmed, the charge goes through and you&apos;ll receive full event details. If we can&apos;t place you, the hold is released with no charge.</p>
+        <p style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#999;">Add <strong style="color:#555;font-weight:500;">jerry@canvasroutes.com</strong> to your contacts so our reply gets through.</p>
+        <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:#666;">Questions? Reply directly to this email or reach out at <a href="mailto:jerry@canvasroutes.com" style="color:#3B6B2F;text-decoration:none;">jerry@canvasroutes.com</a>.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="border:0.5px solid rgba(0,0,0,0.18);">
+            <a href="https://www.instagram.com/canvasroutes" style="display:inline-block;padding:11px 22px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#555;text-decoration:none;">Follow &#64;canvasroutes &rarr;</a>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="background:#0F1E14;padding:16px 40px;">
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);">&copy; 2026 Canvas Routes. Montreal, QC. &nbsp;&middot;&nbsp; <a href="https://canvasroutes.com" style="color:rgba(197,168,130,0.4);text-decoration:none;">canvasroutes.com</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
+}
+
 function buildRoadTripConfirmHtml(firstName, eventLabel, amount) {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -165,7 +207,7 @@ export async function POST(request) {
       case 'payment_intent.requires_capture': {
         // Customer authorized the hold — admin approval needed before capture
         const pi       = event.data.object
-        const { type, email, name } = pi.metadata
+        const { type, email, name, event_name: piEventName } = pi.metadata
         // Membership payments and road trip (WTET) use manual capture
         if (!type?.startsWith('membership_') && type !== 'road_trip_wtet') break
         const amountHeld = pi.amount
@@ -184,6 +226,29 @@ export async function POST(request) {
         }, { onConflict: 'email' })
 
         console.log(`Payment authorized (held): ${type} — ${normalEmail} — $${(amountHeld / 100).toFixed(2)} CAD`)
+
+        // Send registration received email for road trip holds
+        if (type === 'road_trip_wtet' && process.env.RESEND_API_KEY) {
+          const firstName   = (name || '').trim().split(' ')[0] || 'there'
+          const eventLabel  = piEventName || 'Whips to Eastern Townships'
+          const amountFmt   = `$${(amountHeld / 100).toFixed(2)} CAD`
+          try {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+              body: JSON.stringify({
+                from: 'Canvas Routes <jerry@canvasroutes.com>',
+                to: normalEmail,
+                reply_to: 'jerry@canvasroutes.com',
+                subject: `Registration received — ${eventLabel}`,
+                html: buildRoadTripHoldHtml(firstName, eventLabel, amountFmt),
+                text: `Hey ${firstName},\n\nWe've received your registration for ${eventLabel}.\n\nYour ${amountFmt} hold is placed — your card has not been charged. We review every registration personally. If you're confirmed, the charge goes through and you'll receive full event details. If not, the hold is released with no charge.\n\nAdd jerry@canvasroutes.com to your contacts so our reply gets through.\n\nQuestions? Reply to this email.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+              }),
+            })
+          } catch (emailErr) {
+            captureException(emailErr, { context: 'road-trip-hold-email', email: normalEmail })
+          }
+        }
         break
       }
 
