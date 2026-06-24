@@ -132,7 +132,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
         <div style={{fontSize:'11px',color:isMember?'#3B6B2F':'#7B5B2E',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>
           {isMember
             ? <><strong style={{fontWeight:'500'}}>Member rate — $179 CAD.</strong> Payment is charged immediately. Your spot is confirmed as soon as it clears.</>
-            : <><strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for ${price} but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.</>
+            : <><strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for ${displayPrice} but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.</>
           }
         </div>
       </div>
@@ -259,6 +259,7 @@ export default function WtetPage() {
   const [clientSecret, setClientSecret] = useState(null)
   const [countdown, setCountdown]     = useState(null)
   const [memberProfile, setMemberProfile] = useState(null) // set when a member is logged in
+  const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
 
   useEffect(() => {
@@ -403,7 +404,7 @@ export default function WtetPage() {
           body: JSON.stringify({
             carYear:       form.year,
             carMake:       form.carMake,
-            carModel:      [form.carMake, form.carModel].filter(Boolean).join(' '),
+            carModel:      form.carModel,   // API combines make + model — don't pre-combine here
             passengers:    form.passengers,
             hasChildren:   form.hasChildren,
             childrenAges:  form.childrenAges,
@@ -413,6 +414,7 @@ export default function WtetPage() {
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
+        wasMemberRef.current = true
         setClientSecret(data.clientSecret)
         setStatus('payment')
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -442,6 +444,7 @@ export default function WtetPage() {
       clearTimeout(timeout)
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
+      wasMemberRef.current = false
       setClientSecret(data.clientSecret)
       setStatus('payment')
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -797,12 +800,12 @@ export default function WtetPage() {
           {/* SUCCESS */}
           {status === 'success' && (
             <div style={{textAlign:'center',padding:'5rem 0'}}>
-              {memberProfile ? (
+              {wasMemberRef.current ? (
                 <>
                   <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>You&apos;re in.</div>
                   <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
                   <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
-                    Your $179 payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{memberProfile.email}</strong>.
+                    Your $179 payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{memberProfile?.email || form.email}</strong>.
                   </p>
                   <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2.5rem'}}>
                     We&apos;ll send the full itinerary and everything you need closer to July 5.

@@ -183,8 +183,10 @@ export async function POST(request) {
             captureException(err, { context: 'road-trip-payment-db', piId: pi.id })
           )
           if (process.env.RESEND_API_KEY && normalEmail) {
-            try {
-              await fetch('https://api.resend.com/emails', {
+            const isMember = pi.metadata?.is_member === 'yes'
+            await Promise.all([
+              // Registrant confirmation
+              fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
                 body: JSON.stringify({
@@ -195,10 +197,19 @@ export async function POST(request) {
                   html: buildRoadTripConfirmHtml(firstName, eventLabel, amountFormatted),
                   text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. In the meantime, follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                 }),
-              })
-            } catch (emailErr) {
-              captureException(emailErr, { context: 'road-trip-payment-confirm-email', email: normalEmail })
-            }
+              }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),
+              // Admin notification
+              fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                body: JSON.stringify({
+                  from: 'Canvas Routes <info@canvasroutes.com>',
+                  to: 'jerry@canvasroutes.com',
+                  subject: `New WTET Registration — ${name || normalEmail}`,
+                  text: `New registration for ${eventLabel}\n\nName: ${name || '—'}\nEmail: ${normalEmail}\nAmount: ${amountFormatted}\nType: ${isMember ? 'Member (paid immediately)' : 'Non-member (manual capture)'}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}`,
+                }),
+              }).catch(err => captureException(err, { context: 'road-trip-admin-email', email: normalEmail })),
+            ])
           }
         }
         break
@@ -227,13 +238,14 @@ export async function POST(request) {
 
         console.log(`Payment authorized (held): ${type} — ${normalEmail} — $${(amountHeld / 100).toFixed(2)} CAD`)
 
-        // Send registration received email for road trip holds
+        // Send registration received email + admin notification for road trip holds
         if (type === 'road_trip_wtet' && process.env.RESEND_API_KEY) {
           const firstName   = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel  = piEventName || 'Whips to Eastern Townships'
           const amountFmt   = `$${(amountHeld / 100).toFixed(2)} CAD`
-          try {
-            await fetch('https://api.resend.com/emails', {
+          await Promise.all([
+            // Registrant hold email
+            fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
               body: JSON.stringify({
@@ -244,10 +256,19 @@ export async function POST(request) {
                 html: buildRoadTripHoldHtml(firstName, eventLabel, amountFmt),
                 text: `Hey ${firstName},\n\nWe've received your registration for ${eventLabel}.\n\nYour ${amountFmt} hold is placed — your card has not been charged. We review every registration personally. If you're confirmed, the charge goes through and you'll receive full event details. If not, the hold is released with no charge.\n\nAdd jerry@canvasroutes.com to your contacts so our reply gets through.\n\nQuestions? Reply to this email.\n\nSee you on the road,\nJerry\nCanvas Routes`,
               }),
-            })
-          } catch (emailErr) {
-            captureException(emailErr, { context: 'road-trip-hold-email', email: normalEmail })
-          }
+            }).catch(err => captureException(err, { context: 'road-trip-hold-email', email: normalEmail })),
+            // Admin notification — new non-member registration awaiting review
+            fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+              body: JSON.stringify({
+                from: 'Canvas Routes <info@canvasroutes.com>',
+                to: 'jerry@canvasroutes.com',
+                subject: `New WTET Registration (pending review) — ${name || normalEmail}`,
+                text: `New non-member registration for ${eventLabel} — awaiting your manual review and capture.\n\nName: ${name || '—'}\nEmail: ${normalEmail}\nHold: ${amountFmt}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}\n\nLog in to Stripe to capture or release this payment.`,
+              }),
+            }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
+          ])
         }
         break
       }
