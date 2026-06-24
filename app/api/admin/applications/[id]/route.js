@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { EVENT_ATTENDANCE_KEYS, normalizeEventName } from '../../../../../lib/eventMeta.js'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -32,6 +33,19 @@ export async function PATCH(request, { params }) {
     if (Object.keys(memberSync).length > 0) {
       const { data: mem } = await supabase.from('members').select('id').eq('email', app.email.toLowerCase()).maybeSingle()
       if (mem) await supabase.from('members').update(memberSync).eq('id', mem.id)
+    }
+  }
+
+  // Sync registrations attendance → members.event_attendance
+  if ('registrations' in body && app?.email) {
+    const { data: member } = await supabase.from('members').select('id, event_attendance').eq('email', app.email.toLowerCase()).maybeSingle()
+    if (member) {
+      const attendance = { ...(member.event_attendance || {}) }
+      for (const reg of (body.registrations || [])) {
+        const key = EVENT_ATTENDANCE_KEYS[normalizeEventName(reg.event)]
+        if (key) attendance[key] = reg.attended ?? null
+      }
+      await supabase.from('members').update({ event_attendance: attendance }).eq('id', member.id)
     }
   }
 

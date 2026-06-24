@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { ATTENDANCE_KEY_TO_EVENT, normalizeEventName } from '../../../../../lib/eventMeta.js'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -65,6 +66,35 @@ export async function PATCH(request, { params }) {
     if (newEmail && oldEmail && newEmail !== oldEmail) appSync.email = newEmail
     if (Object.keys(appSync).length > 0) {
       await supabase.from('applications').update(appSync).eq('email', oldEmail || memberEmail)
+    }
+
+    // Sync event_attendance → applications.registrations[].attended
+    if ('event_attendance' in body) {
+      const newAttendance = body.event_attendance || {}
+      const { data: app } = await supabase.from('applications').select('id, registrations').eq('email', memberEmail).maybeSingle()
+      if (app) {
+        const regs = [...(app.registrations || [])]
+        let changed = false
+        // Update existing registration entries that map to a key in event_attendance
+        const updatedRegs = regs.map(reg => {
+          const canonName = normalizeEventName(reg.event)
+          const key = Object.keys(ATTENDANCE_KEY_TO_EVENT).find(k => ATTENDANCE_KEY_TO_EVENT[k] === canonName)
+          if (key && key in newAttendance && newAttendance[key] !== reg.attended) {
+            changed = true
+            return { ...reg, attended: newAttendance[key] }
+          }
+          return reg
+        })
+        // Create placeholder entries for keys not yet in registrations (non-null values only)
+        for (const [key, attended] of Object.entries(newAttendance)) {
+          if (attended === null) continue
+          const eventName = ATTENDANCE_KEY_TO_EVENT[key]
+          if (!eventName) continue
+          const exists = updatedRegs.some(r => normalizeEventName(r.event) === eventName)
+          if (!exists) { updatedRegs.push({ event: eventName, registered_at: null, attended }); changed = true }
+        }
+        if (changed) await supabase.from('applications').update({ registrations: updatedRegs }).eq('id', app.id)
+      }
     }
 
     // Sync notes to contacts.notes — use memberEmail (new email if changed, applications is now updated)

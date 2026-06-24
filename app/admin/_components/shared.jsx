@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { EVENT_ATTENDANCE_KEYS, EVENT_NAME_ALIASES, normalizeEventName as _normalizeEventName } from '../../../lib/eventMeta.js'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -22,17 +23,9 @@ export const CANONICAL_EVENTS = [
   { name: 'Into the Laurentians — June 7, 2026', date: '2026-06-07' },
   { name: 'Cars, Coffee & Dad Jokes — June 20, 2026', date: '2026-06-20' },
 ]
-export const MEMBER_ATTENDANCE_KEYS = {
-  'Cars & Coffee — May 9, 2026': 'cc_may9',
-  'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026': 'gp_may23',
-  'Into the Laurentians — June 7, 2026': 'laurentians_jun7',
-  'Cars, Coffee & Dad Jokes — June 20, 2026': 'ccd_jun20',
-}
-export const NAME_ALIASES = {
-  'Grand Prix Weekend Cars & Coffee — May 23, 2026': 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026',
-  'Into the Laurentians — May 31, 2026': 'Into the Laurentians — June 7, 2026',
-}
-export function normalizeEventName(name) { return NAME_ALIASES[name] || name }
+export const MEMBER_ATTENDANCE_KEYS = EVENT_ATTENDANCE_KEYS
+export const NAME_ALIASES = EVENT_NAME_ALIASES
+export { _normalizeEventName as normalizeEventName }
 export function parseCarMakeModel(combined) {
   const s = (combined || '').trim()
   if (!s) return { make: '', model: '' }
