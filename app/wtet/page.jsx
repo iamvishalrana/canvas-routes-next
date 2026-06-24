@@ -166,7 +166,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
         </div>
         {[
           'Winery experience at Vignoble Domaine du Brésée',
-          'Lunch at a curated high-end restaurant overlooking Lac Memphrémagog',
+          'Lunch at Auberge & Restaurant McGowan, Georgeville — chef with 2 Michelin star experience',
           'Guided convoy — Montreal to Lac Memphrémagog',
         ].map((item, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
@@ -699,7 +699,7 @@ export default function WtetPage() {
             {[
               'We leave Montreal and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included, with a special discount on wine purchases for the group.',
               'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the finest driver\'s roads in Quebec.',
-              'The day ends with lunch at a carefully selected high-end restaurant with views over Lac Memphrémagog. Chosen for the setting, the kitchen, and how it fits the spirit of the day — an elevated close to an exceptional drive. Details sent to confirmed registrants.',
+              'The day ends with lunch at Auberge & Restaurant McGowan in Georgeville, overlooking Lac Memphrémagog. The chef brings a two Michelin star work experience background to a kitchen that earns its setting — an elevated close to an exceptional drive.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
                 <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
@@ -744,7 +744,7 @@ export default function WtetPage() {
             { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Canvas Routes guests receive a special discount on wine purchases.', pays:true },
             { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton\'s forested switchbacks, and cuts deep into the Appalachian forest at Highwater. Quiet, undisturbed pavement with almost no traffic and nowhere to straighten it out — the kind of road most drivers never find. This is the heart of the day.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'Coming through Austin, the trees give way and the landscape opens. The road straightens and drops toward the valley floor, with Lake Memphrémagog spreading out below. A proper payoff — the kind of view that earns a slow roll-in.', pays:false },
-            { label:'Premium Lunch', venue:'Overlooking Lac Memphrémagog', address:'Location revealed upon confirmation', desc:'A carefully selected high-end restaurant with views over the lake — chosen for the setting, the kitchen, and how it fits the spirit of the day. An elevated close to an exceptional drive. Details shared with confirmed registrants.', pays:true },
+            { label:'Premium Lunch', venue:'Auberge & Restaurant McGowan', address:'Georgeville, QC', desc:'Lunch overlooking Lac Memphrémagog at one of the region\'s most thoughtfully run restaurants. The chef brings a two Michelin star work experience background — an elevated close to a day that earns it.', pays:true },
           ].map((stop, i, arr) => (
             <FadeUp key={i} delay={i * 80}>
             <div className="wtet-stop" style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
@@ -774,7 +774,7 @@ export default function WtetPage() {
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
-              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Lunch at a curated high-end restaurant overlooking Lac Memphrémagog','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
+              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Lunch at Auberge & Restaurant McGowan, Georgeville — chef with 2 Michelin star experience','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.7)',lineHeight:'1.65'}}>{item}</span>
