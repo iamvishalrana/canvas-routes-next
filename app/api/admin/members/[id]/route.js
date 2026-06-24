@@ -19,6 +19,20 @@ export async function PATCH(request, { params }) {
     if (authErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? authErr.message : 'Database error' }, { status: 500 })
   }
 
+  // Check for duplicate membership number if being set
+  if (body.membership_number && String(body.membership_number).trim() !== '') {
+    const { data: existing } = await supabase
+      .from('members')
+      .select('id, name, email')
+      .eq('membership_number', String(body.membership_number).trim())
+      .neq('id', id)
+      .maybeSingle()
+    if (existing) {
+      const who = existing.name || existing.email || 'another member'
+      return Response.json({ error: `Membership number ${body.membership_number} is already assigned to ${who}.` }, { status: 400 })
+    }
+  }
+
   // car_paint is not a column on members — it lives on applications (synced below)
   const allowed = ['membership_status', 'tier', 'name', 'email', 'phone', 'instagram', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars', 'event_attendance', 'admin_notes', 'notes', 'membership_number']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))

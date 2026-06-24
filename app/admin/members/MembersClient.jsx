@@ -7,7 +7,7 @@ import {
   CANONICAL_EVENTS, MEMBER_ATTENDANCE_KEYS,
   parseCarMakeModel,
   inp, sel,
-  L, Badge, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
+  L, Badge, CopyBtn, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
   AdminNotesPanel, Pagination, AttendanceToggle,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
@@ -395,6 +395,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       if (sort === 'name_az') return (a.name || '').localeCompare(b.name || '')
       if (sort === 'name_za') return (b.name || '').localeCompare(a.name || '')
       if (sort === 'oldest') return new Date(a.join_date || a.created_at) - new Date(b.join_date || b.created_at)
+      if (sort === 'member_num_asc') return (parseInt(a.membership_number || '9999')) - (parseInt(b.membership_number || '9999'))
+      if (sort === 'member_num_desc') return (parseInt(b.membership_number || '9999')) - (parseInt(a.membership_number || '9999'))
       return new Date(b.join_date || b.created_at) - new Date(a.join_date || a.created_at) // newest
     })
 
@@ -572,11 +574,13 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
           </div>
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <select value={sort} onChange={e => setSort(e.target.value)}
-              style={{ ...sel, width: '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name_az">Name A → Z</option>
               <option value="name_za">Name Z → A</option>
+              <option value="member_num_asc">Member # ↑</option>
+              <option value="member_num_desc">Member # ↓</option>
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -812,10 +816,20 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                       />
                     </div>
                     <div>
-                      <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
+                        {m.membership_number && (
+                          <span style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '1px 6px', background: 'rgba(197,168,130,0.06)' }}>
+                            #{String(m.membership_number).padStart(3, '0')}
+                          </span>
+                        )}
+                      </div>
                       {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{m.notes}</div>}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>
+                    <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      {m.email}
+                      <CopyBtn value={m.email} />
+                    </div>
                     <div><Badge status={m.membership_status} /></div>
                     <div style={{ fontSize: '12px', color: '#888' }}>
                       <div>

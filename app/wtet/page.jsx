@@ -811,7 +811,7 @@ export default function WtetPage() {
                   <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
                     Your $179 payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{memberProfile?.email || form.email}</strong>.
                   </p>
-                  <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2.5rem'}}>
+                  <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2rem'}}>
                     We&apos;ll send the full itinerary and everything you need closer to July 5.
                   </p>
                 </>
@@ -825,10 +825,32 @@ export default function WtetPage() {
                   <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2rem'}}>
                     If your spot is confirmed, the charge goes through and you&apos;ll get full event details. If not, the hold is released with no charge.
                   </p>
-                  <p style={{fontSize:'0.85rem',color:'#999',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2.5rem'}}>
-                    Add <strong style={{color:'#555',fontWeight:'500'}}>jerry@canvasroutes.com</strong> to your contacts so our message gets through.
-                  </p>
                 </>
+              )}
+              {/* Add to contacts callout */}
+              <div style={{maxWidth:'400px',margin:'0 auto 2rem',padding:'0.85rem 1rem',background:'rgba(197,168,130,0.08)',border:'0.5px solid rgba(197,168,130,0.35)',textAlign:'left'}}>
+                <p style={{fontSize:'12px',color:'#777',lineHeight:'1.7',margin:'0 0 0.3rem',fontFamily:'var(--font-inter),sans-serif'}}>
+                  Add us to your contacts so you don&apos;t miss our emails — they may land in spam.
+                </p>
+                <p style={{fontSize:'12px',color:'#999',margin:0,fontFamily:'var(--font-inter),sans-serif'}}>
+                  <a href="mailto:info@canvasroutes.com" style={{color:'#7B5B2E',textDecoration:'none'}}>info@canvasroutes.com</a>
+                  {' · '}
+                  <a href="mailto:jerry@canvasroutes.com" style={{color:'#7B5B2E',textDecoration:'none'}}>jerry@canvasroutes.com</a>
+                </p>
+              </div>
+              {/* Early check-in CTA */}
+              {clientSecret && (
+                <div style={{marginBottom:'1.5rem'}}>
+                  <Link
+                    href={`/wtet/checkin?t=${clientSecret.split('_secret_')[0]}`}
+                    style={{display:'inline-block',padding:'0.85rem 2rem',background:'#0F1E14',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',fontFamily:'var(--font-inter),sans-serif',textDecoration:'none'}}
+                  >
+                    Complete Early Check-in →
+                  </Link>
+                  <p style={{fontSize:'12px',color:'#bbb',marginTop:'0.75rem',fontFamily:'var(--font-inter),sans-serif'}}>
+                    If you&apos;ve already completed the check-in, you can ignore this.
+                  </p>
+                </div>
               )}
               <div>
                 <Link href="/" style={{fontSize:'11px',letterSpacing:'0.14em',textTransform:'uppercase',color:'#888',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif'}}>← Back to Canvas Routes</Link>

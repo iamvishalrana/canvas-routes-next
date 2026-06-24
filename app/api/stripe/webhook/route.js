@@ -47,7 +47,7 @@ function buildRoadTripHoldHtml(firstName, eventLabel, amount) {
 </body></html>`
 }
 
-function buildRoadTripConfirmHtml(firstName, eventLabel, amount) {
+function buildRoadTripConfirmHtml(firstName, eventLabel, amount, checkinUrl) {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
@@ -72,6 +72,13 @@ function buildRoadTripConfirmHtml(firstName, eventLabel, amount) {
           </td></tr>
         </table>
         <p style="margin:0 0 1em;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#666;">You&apos;ll receive a full itinerary, meeting point, and everything you need closer to the date. Keep an eye on <a href="https://www.instagram.com/canvasroutes" style="color:#3B6B2F;text-decoration:none;">@canvasroutes</a> for updates.</p>
+        <p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#666;">Add <strong style="color:#555;font-weight:500;">info@canvasroutes.com</strong> and <strong style="color:#555;font-weight:500;">jerry@canvasroutes.com</strong> to your contacts so you don&apos;t miss any updates &mdash; our emails may land in spam.</p>
+        ${checkinUrl ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+          <tr><td style="background:#0F1E14;">
+            <a href="${checkinUrl}" style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#F5F1EC;text-decoration:none;">Complete Early Check-in &rarr;</a>
+          </td></tr>
+        </table>
+        <p style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#bbb;">If you&apos;ve already completed the check-in, you can ignore this button.</p>` : ''}
         <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:#666;">Any questions &mdash; reply directly to this email or reach out at <a href="mailto:jerry@canvasroutes.com" style="color:#3B6B2F;text-decoration:none;">jerry@canvasroutes.com</a>.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0">
           <tr><td style="border:0.5px solid rgba(0,0,0,0.18);">
@@ -184,6 +191,7 @@ export async function POST(request) {
           )
           if (process.env.RESEND_API_KEY && normalEmail) {
             const isMember = pi.metadata?.is_member === 'yes'
+            const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
             await Promise.all([
               // Registrant confirmation
               fetch('https://api.resend.com/emails', {
@@ -194,7 +202,7 @@ export async function POST(request) {
                   to: normalEmail,
                   reply_to: 'jerry@canvasroutes.com',
                   subject: `Payment confirmed — ${eventLabel}`,
-                  html: buildRoadTripConfirmHtml(firstName, eventLabel, amountFormatted),
+                  html: buildRoadTripConfirmHtml(firstName, eventLabel, amountFormatted, checkinUrl),
                   text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. In the meantime, follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                 }),
               }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),

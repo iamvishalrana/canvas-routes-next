@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, CopyBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
@@ -46,6 +47,11 @@ function isRoadTripReg(eventName, roadTripFragments) {
   return true
 }
 
+function fmtDateTime(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
 export default function RoadTripsClient() {
   const [apps, setApps]             = useState([])
   const [events, setEvents]         = useState([])
@@ -53,6 +59,7 @@ export default function RoadTripsClient() {
   const [search, setSearch]         = useState('')
   const [activeTrip, setActiveTrip] = useState('all')
   const [isMobile, setIsMobile]     = useState(false)
+  const [selectedApp, setSelectedApp] = useState(null)
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -206,7 +213,9 @@ export default function RoadTripsClient() {
               {filtered.map(({ app, reg }, i) => (
                 <div key={`${app.id}-${i}`} style={{ ...CARD, padding: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
-                    <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{app.name || '—'}</div>
+                    <Link href={`/admin/contacts?q=${encodeURIComponent(app.email || '')}`} style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a', textDecoration: 'none' }}>
+                      {app.name || '—'}
+                    </Link>
                     <AttendedChip value={reg.attended} />
                   </div>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.3rem' }}>{app.email}</div>
@@ -233,38 +242,81 @@ export default function RoadTripsClient() {
                     <th style={TH}>Passengers</th>
                     <th style={TH}>Registered</th>
                     <th style={TH}>Attended</th>
+                    <th style={TH}>Check-in</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(({ app, reg }, i) => {
                     const isLast = i === filtered.length - 1
                     const td = isLast ? { ...TD, borderBottom: 'none' } : TD
+                    const rowKey = `${app.id}-${i}`
+                    const isSelected = selectedApp === rowKey
+                    const checkin = app.wtet_checkin
                     return (
-                      <tr key={`${app.id}-${i}`}
-                        onMouseEnter={e => e.currentTarget.style.background = '#fafaf9'}
-                        onMouseLeave={e => e.currentTarget.style.background = ''}
-                      >
-                        <td style={td}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            {app.name || <span style={{ color: '#ccc' }}>—</span>}
-                            <CopyBtn value={app.email} />
-                          </div>
-                        </td>
-                        <td style={{ ...td, fontSize: '12px', color: '#666' }}>{app.email || '—'}</td>
-                        <td style={{ ...td, fontSize: '12px', color: '#888' }}>
-                          {[app.car_year, app.car_model].filter(Boolean).join(' ') || '—'}
-                        </td>
-                        {trips.length > 1 && activeTrip === 'all' && (
-                          <td style={{ ...td, fontSize: '11px', color: '#888' }}>{reg.event}</td>
+                      <>
+                        <tr key={rowKey}
+                          onClick={() => setSelectedApp(isSelected ? null : rowKey)}
+                          style={{ cursor: 'pointer', background: isSelected ? '#faf9f6' : undefined }}
+                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#fafaf9' }}
+                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
+                        >
+                          <td style={td}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <Link
+                                href={`/admin/contacts?q=${encodeURIComponent(app.email || '')}`}
+                                onClick={e => e.stopPropagation()}
+                                style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: '500' }}
+                              >
+                                {app.name || <span style={{ color: '#ccc', fontWeight: '400' }}>—</span>}
+                              </Link>
+                              <CopyBtn value={app.email} />
+                            </div>
+                          </td>
+                          <td style={{ ...td, fontSize: '12px', color: '#666' }}>{app.email || '—'}</td>
+                          <td style={{ ...td, fontSize: '12px', color: '#888' }}>
+                            {[app.car_year, app.car_model].filter(Boolean).join(' ') || '—'}
+                          </td>
+                          {trips.length > 1 && activeTrip === 'all' && (
+                            <td style={{ ...td, fontSize: '11px', color: '#888' }}>{reg.event}</td>
+                          )}
+                          <td style={{ ...td, fontSize: '12px', color: '#888' }}>
+                            {app.passengers
+                              ? `${app.passengers}${app.has_children === 'yes' ? ' w/ kids' : ''}`
+                              : '—'}
+                          </td>
+                          <td style={{ ...td, fontSize: '11px', color: '#bbb' }}>{fmtDate(reg.registered_at)}</td>
+                          <td style={td}><AttendedChip value={reg.attended} /></td>
+                          <td style={{ ...td, fontSize: '11px' }}>
+                            {checkin
+                              ? <span style={{ color: '#3B6B2F', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Done</span>
+                              : <span style={{ color: '#ddd' }}>—</span>}
+                          </td>
+                        </tr>
+                        {isSelected && (
+                          <tr key={`${rowKey}-panel`}>
+                            <td colSpan={trips.length > 1 && activeTrip === 'all' ? 8 : 7} style={{ padding: 0, borderBottom: isLast ? 'none' : '0.5px solid rgba(0,0,0,0.05)' }}>
+                              <div style={{ background: '#faf9f6', borderLeft: '3px solid #c5a882', padding: '1rem 1.25rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                                <div>
+                                  <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Dietary</div>
+                                  <div style={{ fontSize: '13px', color: checkin?.dietary ? '#1a1a1a' : '#bbb' }}>{checkin?.dietary || 'None provided'}</div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>WhatsApp</div>
+                                  <div style={{ fontSize: '13px', color: checkin?.whatsapp ? '#1a1a1a' : '#bbb' }}>{checkin?.whatsapp || 'Not provided'}</div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Car photo</div>
+                                  <div style={{ fontSize: '13px', color: '#bbb' }}>{checkin?.car_photo_sent ? 'Sent' : 'Not recorded'}</div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Completed at</div>
+                                  <div style={{ fontSize: '13px', color: checkin?.completed_at ? '#1a1a1a' : '#bbb' }}>{checkin?.completed_at ? fmtDateTime(checkin.completed_at) : '—'}</div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                        <td style={{ ...td, fontSize: '12px', color: '#888' }}>
-                          {app.passengers
-                            ? `${app.passengers}${app.has_children === 'yes' ? ' w/ kids' : ''}`
-                            : '—'}
-                        </td>
-                        <td style={{ ...td, fontSize: '11px', color: '#bbb' }}>{fmtDate(reg.registered_at)}</td>
-                        <td style={td}><AttendedChip value={reg.attended} /></td>
-                      </tr>
+                      </>
                     )
                   })}
                 </tbody>
