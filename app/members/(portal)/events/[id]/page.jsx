@@ -42,14 +42,27 @@ export default async function EventDetailPage({ params }) {
 
   if (!ev) notFound()
 
-  // Events with a full URL registration page go there directly — no intermediate detail page needed
-  if (ev.registration_url?.startsWith('http') && !isMembersPortalUrl(ev.registration_url)) {
+  const now = new Date()
+
+  // Determine if the event is in the past
+  function parseEvDate(str) {
+    if (!str) return null
+    const s = str.trim()
+    if (/^[A-Za-z]+ \d{4}$/.test(s)) { const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2')); return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth() + 1, 0) }
+    if (/^\d{4}-\d{2}$/.test(s)) { const [y, m] = s.split('-').map(Number); return new Date(y, m, 0) }
+    const d = new Date(s); return isNaN(d) ? null : d
+  }
+  const evDate = parseEvDate(ev.date_display || ev.date)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const isPast = evDate ? evDate < today : false
+
+  // For upcoming events with a full registration URL, redirect there directly
+  if (!isPast && ev.registration_url?.startsWith('http') && !isMembersPortalUrl(ev.registration_url)) {
     redirect(ev.registration_url)
   }
 
   const tier = member?.tier || 'routes_member'
   const isRegistered = !!(registration && ['free', 'paid'].includes(registration.stripe_payment_status))
-  const now = new Date()
   const inPriorityWindow = ev.priority_window_end && now < new Date(ev.priority_window_end)
   const isInnerCircle = tier === 'inner_circle'
 
@@ -111,18 +124,33 @@ export default async function EventDetailPage({ params }) {
         </p>
       )}
 
+      {/* Past event — registration closed, link to the route page */}
+      {isPast && ev.registration_url && !isMembersPortalUrl(ev.registration_url) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem', border: '0.5px solid rgba(0,0,0,0.09)', background: '#fafaf8', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)' }}>Registration closed</span>
+          <span style={{ width: '1px', height: '14px', background: 'rgba(0,0,0,0.1)', flexShrink: 0 }} />
+          <Link
+            href={ev.registration_url}
+            style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7B5B2E', fontFamily: 'var(--font-inter)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+          >
+            View route page
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </Link>
+        </div>
+      )}
+
       {/* Registration CTA — three cases:
           1. /members/… path → portal sub-page. Always shown — registration_enabled
              is for Stripe/free flows and must not gate simple nav links.
           2. Other internal canvasroutes.com URL → EventFreeRegister inline flow
           3. External URL → open in new tab
           Cases 2 & 3 respect registration_enabled. */}
-      {ev.registration_url && isMembersPortalUrl(ev.registration_url) ? (
+      {!isPast && ev.registration_url && isMembersPortalUrl(ev.registration_url) ? (
         <Link href={ev.registration_url} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#0F1E14', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', marginBottom: '2rem' }}>
           Register
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </Link>
-      ) : ev.registration_url && ev.registration_enabled !== false && (
+      ) : !isPast && ev.registration_url && ev.registration_enabled !== false && (
         // Absolute URLs always navigate — never trigger EventFreeRegister.
         // Only relative paths (in-portal free events) use EventFreeRegister.
         !ev.registration_url.startsWith('http') && isInternalUrl(ev.registration_url) ? (
@@ -140,7 +168,7 @@ export default async function EventDetailPage({ params }) {
       )}
 
       {/* Stripe-based internal registration — only when no external URL */}
-      {!ev.registration_url && ev.registration_enabled !== false && ev.registration_opens_at && (
+      {!isPast && !ev.registration_url && ev.registration_enabled !== false && ev.registration_opens_at && (
         <div className="ev-reg-card" style={{ border: '0.5px solid rgba(0,0,0,0.09)', padding: '1.75rem 2rem', background: '#fff', marginBottom: '2rem' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>
             Registration
@@ -187,7 +215,7 @@ export default async function EventDetailPage({ params }) {
         </div>
       )}
 
-      {!ev.registration_url && ev.registration_enabled && !ev.registration_opens_at && (
+      {!isPast && !ev.registration_url && ev.registration_enabled && !ev.registration_opens_at && (
         <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', padding: '1.25rem 1.75rem', background: 'rgba(197,168,130,0.04)', marginBottom: '2rem' }}>
           <span style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter)' }}>Registration Opening Soon</span>
         </div>
