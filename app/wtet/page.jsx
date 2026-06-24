@@ -1,12 +1,12 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import SiteFooter from '../../components/SiteFooter'
 import FadeUp from '../../components/FadeUp'
+import SiteNav from '../../components/SiteNav'
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -253,7 +253,6 @@ export default function WtetPage() {
   const [status, setStatus]           = useState(null) // null | 'loading' | 'payment' | 'success' | 'error'
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
-  const [menuOpen, setMenuOpen]       = useState(false)
   const [regOpen, setRegOpen]         = useState(true)
   const [closedMsg, setClosedMsg]     = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
@@ -537,35 +536,12 @@ export default function WtetPage() {
         }
       `}</style>
 
-      {/* NAV */}
-      <nav className="nav">
-        <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
-        </Link>
-        <div className="nav-links">
-          <Link href="/" style={{color:'#555',textDecoration:'none'}}>Home</Link>
-          <Link href="/#events" style={{color:'#555',textDecoration:'none'}}>Events</Link>
-          <Link href="/#contact" style={{color:'#555',textDecoration:'none'}}>Contact</Link>
-          <Link href="/faq" style={{color:'#555',textDecoration:'none'}}>FAQ</Link>
-        </div>
-        <div className="nav-cta">
-          <Link href="/membership" className="nav-join">Membership</Link>
-          <Link href="/members/login" className="nav-members">Members Login</Link>
-        </div>
-        <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
-          <span></span><span></span><span></span>
-        </button>
-      </nav>
-
-      {/* MOBILE MENU */}
-      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
-        <Link href="/" onClick={() => setMenuOpen(false)} style={{color:'#555',textDecoration:'none'}}>Home</Link>
-        <Link href="/#events" onClick={() => setMenuOpen(false)} style={{color:'#555',textDecoration:'none'}}>Events</Link>
-        <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{color:'#555',textDecoration:'none'}}>Contact</Link>
-        <Link href="/faq" onClick={() => setMenuOpen(false)} style={{color:'#555',textDecoration:'none'}}>FAQ</Link>
-        <Link href="/membership" onClick={() => setMenuOpen(false)} style={{color:'#0F1E14',fontWeight:'500'}}>Membership</Link>
-        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{color:'#7B2032',fontWeight:'500'}}>Members Login</Link>
-      </div>
+      <SiteNav links={[
+        { href:'/', label:'Home' },
+        { href:'/#events', label:'Events' },
+        { href:'/#contact', label:'Contact' },
+        { href:'/faq', label:'FAQ' },
+      ]} />
 
       {/* HERO */}
       <section className="wtet-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/wtet.png')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>

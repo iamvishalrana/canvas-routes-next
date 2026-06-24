@@ -6,6 +6,7 @@ import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, Clipboa
 import ErrorBoundary from '../components/ErrorBoundary'
 import SiteFooter from '../components/SiteFooter'
 import FadeUp from '../components/FadeUp'
+import SiteNav from '../components/SiteNav'
 import FadeIn from '../components/FadeIn'
 import { getConsent } from '../lib/consent'
 
@@ -65,7 +66,6 @@ export default function Home() {
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [igPosts, setIgPosts] = useState([])
 
   useEffect(() => {
@@ -408,27 +408,15 @@ export default function Home() {
     <ErrorBoundary>
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a"}}>
 
-      {/* NAV */}
-      <nav className="nav">
-        <a href="/" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
-        </a>
-        <div className="nav-links">
-          <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
-          <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
-          <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
-          <Link href="/faq">FAQ</Link>
-        </div>
-        <div className="nav-cta">
-          <Link href="/membership" className="nav-join">
-            {membershipLive ? 'Membership' : 'Join'}
-          </Link>
-          <Link href="/members/login" className="nav-members">Members Login</Link>
-        </div>
-        <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
-          <span></span><span></span><span></span>
-        </button>
-      </nav>
+      <SiteNav
+        ctaLabel={membershipLive ? 'Membership' : 'Join'}
+        links={[
+          { href:'#about',   label:'About Us', onClick: e => { e.preventDefault(); smoothScroll('about') } },
+          { href:'#events',  label:'Events',   onClick: e => { e.preventDefault(); smoothScroll('events') } },
+          { href:'#contact', label:'Contact',  onClick: e => { e.preventDefault(); smoothScroll('contact') } },
+          { href:'/faq',     label:'FAQ' },
+        ]}
+      />
 
       {/* HOMEPAGE ANNOUNCEMENT BANNER */}
       {homepageBanner && (
@@ -440,20 +428,6 @@ export default function Home() {
               {homepageBanner}
             </div>
       )}
-
-      {/* MOBILE MENU */}
-      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
-        <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}>About Us</a>
-        <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }}>Car Meets</a>
-        <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }}>Routes</a>
-        <a href="#events" onClick={e => { e.preventDefault(); smoothScroll('events') }}>Events</a>
-        <a href="#contact" onClick={e => { e.preventDefault(); smoothScroll('contact') }}>Contact</a>
-        <Link href="/faq">FAQ</Link>
-        <Link href="/membership" style={{color:"#0F1E14",fontWeight:"500"}}>
-          {membershipLive ? 'Membership' : 'Join'}
-        </Link>
-        <Link href="/members/login" style={{color:"#7B2032",fontWeight:"500"}}>Members Login</Link>
-      </div>
 
       {/* HERO */}
       <section id="top" className="hero">

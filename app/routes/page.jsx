@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
+import SiteNav from '../../components/SiteNav'
 
 const ROUTES_CLOSED = new Date('2026-06-07T03:00:00Z').getTime() // 11 PM EDT June 6
 
@@ -34,7 +35,6 @@ export default function RoutesPage() {
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
-  const [menuOpen, setMenuOpen] = useState(false)
   const honeypotRef = useRef(null)
 
   useEffect(() => {
@@ -163,32 +163,12 @@ export default function RoutesPage() {
         }
       `}</style>
 
-      {/* NAV */}
-      <nav className="nav">
-        <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
-        </Link>
-        <div className="nav-links">
-          <Link href="/" style={{color:"#555",textDecoration:"none"}}>Home</Link>
-          <Link href="/#events" style={{color:"#555",textDecoration:"none"}}>Events</Link>
-          <Link href="/#contact" style={{color:"#555",textDecoration:"none"}}>Contact</Link>
-          <Link href="/faq" style={{color:"#555",textDecoration:"none"}}>FAQ</Link>
-        </div>
-        <div className="nav-cta"><Link href="/membership" className="nav-join">Membership</Link><Link href="/members/login" className="nav-members">Members Login</Link></div>
-        <button className="hamburger btn-push" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
-          <span></span><span></span><span></span>
-        </button>
-      </nav>
-
-      {/* MOBILE MENU */}
-      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
-        <Link href="/" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Home</Link>
-        <Link href="/#events" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Events</Link>
-        <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>Contact</Link>
-        <Link href="/faq" onClick={() => setMenuOpen(false)} style={{color:"#555",textDecoration:"none"}}>FAQ</Link>
-        <Link href="/membership" onClick={() => setMenuOpen(false)} style={{color:"#0F1E14",fontWeight:"500"}}>Membership</Link>
-        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{color:"#7B2032",fontWeight:"500"}}>Members Login</Link>
-      </div>
+      <SiteNav links={[
+        { href:'/', label:'Home' },
+        { href:'/#events', label:'Events' },
+        { href:'/#contact', label:'Contact' },
+        { href:'/faq', label:'FAQ' },
+      ]} />
 
       {/* HERO */}
       <section className="routes-hero" style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
