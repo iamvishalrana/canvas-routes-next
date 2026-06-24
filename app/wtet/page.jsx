@@ -114,7 +114,7 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
         {[
           'Winery experience at Vignoble Domaine du Brésée',
           'Curated premium lunch in the Magog region',
-          'Guided convoy — Dix 30 through Chemin des Cantons',
+          'Guided convoy — Montreal to Lac Memphrémagog',
         ].map((item, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
