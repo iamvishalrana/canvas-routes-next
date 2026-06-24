@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import SiteFooter from './SiteFooter'
+import SiteNav from './SiteNav'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { User, Mail, Phone, Car, Share2, Calendar } from 'lucide-react'
@@ -380,7 +381,6 @@ export default function MembershipContent() {
     if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'ViewContent', { content_name: 'Membership' })
   }, [])
 
-  const [menuOpen, setMenuOpen]           = useState(false)
   const [form, setForm]                   = useState(INIT_FORM)
   const [errors, setErrors]               = useState({})
   const [focusedField, setFocusedField]   = useState(null)
@@ -513,28 +513,12 @@ export default function MembershipContent() {
         input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.28); }
       `}</style>
 
-      {/* NAV */}
-      <nav className="nav">
-        <Link href="/"><Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" /></Link>
-        <div className="nav-links">
-          {['/', '/#events', '/#contact', '/faq'].map((href, i) => (
-            <Link key={i} href={href} style={{ color: '#555', textDecoration: 'none' }}>
-              {['Home', 'Events', 'Contact', 'FAQ'][i]}
-            </Link>
-          ))}
-        </div>
-        <div className="nav-cta"><Link href="/membership" className="nav-join">Membership</Link><Link href="/members/login" className="nav-members">Members Login</Link></div>
-        <button className="hamburger btn-push" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
-          <span /><span /><span />
-        </button>
-      </nav>
-      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
-        {[['/', 'Home'], ['/#events', 'Events'], ['/#contact', 'Contact'], ['/faq', 'FAQ']].map(([href, label]) => (
-          <Link key={href} href={href} onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>{label}</Link>
-        ))}
-        <Link href="/membership" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Membership</Link>
-        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
-      </div>
+      <SiteNav links={[
+        { href: '/',        label: 'Home' },
+        { href: '/#events', label: 'Events' },
+        { href: '/#contact',label: 'Contact' },
+        { href: '/faq',     label: 'FAQ' },
+      ]} ctaLabel="Membership" />
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
       <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>

@@ -12,8 +12,13 @@ import { createClient } from '../lib/supabase/client'
  *   links   – array of { href, label, onClick? } for the desktop + mobile nav
  *   ctaLabel – label for the Membership button (defaults to 'Membership')
  */
-export default function SiteNav({ links = [], ctaLabel = 'Membership' }) {
+export default function SiteNav({ links = [], ctaLabel = 'Membership', onMenuChange }) {
   const [menuOpen, setMenuOpen] = useState(false)
+
+  function toggleMenu(open) {
+    setMenuOpen(open)
+    onMenuChange?.(open)
+  }
   const [member, setMember]     = useState(null)  // null = not logged in / still checking
   const [checked, setChecked]   = useState(false)
 
@@ -77,7 +82,7 @@ export default function SiteNav({ links = [], ctaLabel = 'Membership' }) {
           )}
         </div>
 
-        <button className="hamburger btn-push" onClick={() => setMenuOpen(o => !o)}
+        <button className="hamburger btn-push" onClick={() => toggleMenu(!menuOpen)}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
           <span /><span /><span />
         </button>
@@ -87,16 +92,16 @@ export default function SiteNav({ links = [], ctaLabel = 'Membership' }) {
       <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
         {links.map((l, i) =>
           l.onClick
-            ? <a key={i} href={l.href} onClick={e => { l.onClick(e); setMenuOpen(false) }} style={linkStyle}>{l.label}</a>
-            : <Link key={i} href={l.href} onClick={() => setMenuOpen(false)} style={linkStyle}>{l.label}</Link>
+            ? <a key={i} href={l.href} onClick={e => { l.onClick(e); toggleMenu(false) }} style={linkStyle}>{l.label}</a>
+            : <Link key={i} href={l.href} onClick={() => toggleMenu(false)} style={linkStyle}>{l.label}</Link>
         )}
         {member ? (
           <>
-            <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Dashboard</Link>
-            <Link href="/members/profile"   onClick={() => setMenuOpen(false)} style={{ color: '#555' }}>Profile</Link>
-            <Link href="/members/events"    onClick={() => setMenuOpen(false)} style={{ color: '#555' }}>Events</Link>
+            <Link href="/members/dashboard" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Dashboard</Link>
+            <Link href="/members/profile"   onClick={() => toggleMenu(false)} style={{ color: '#555' }}>Profile</Link>
+            <Link href="/members/events"    onClick={() => toggleMenu(false)} style={{ color: '#555' }}>Events</Link>
             <button
-              onClick={() => { setMenuOpen(false); signOut() }}
+              onClick={() => { toggleMenu(false); signOut() }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 0, fontSize: '13px', color: '#7B2032', fontWeight: '500', textAlign: 'left' }}
             >
               Sign out
@@ -104,8 +109,8 @@ export default function SiteNav({ links = [], ctaLabel = 'Membership' }) {
           </>
         ) : (
           <>
-            <Link href="/membership" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>{ctaLabel}</Link>
-            <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
+            <Link href="/membership" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>{ctaLabel}</Link>
+            <Link href="/members/login" onClick={() => toggleMenu(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
           </>
         )}
       </div>

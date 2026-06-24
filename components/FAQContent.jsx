@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import SiteNav from './SiteNav'
 
 function renderAnswer(text) {
   if (!text) return text
@@ -1075,30 +1076,15 @@ export default function FAQContent() {
         }} />
       )}
 
-      {/* Nav */}
-      <nav className="nav">
-        <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
-        </Link>
-        <div className="nav-links">
-          <Link href="/" style={{ color: '#555', textDecoration: 'none' }}>Home</Link>
-          <Link href="/#events" style={{ color: '#555', textDecoration: 'none' }}>Events</Link>
-          <Link href="/#contact" style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
-          <Link href="/faq" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: '500' }}>FAQ</Link>
-        </div>
-        <div className="nav-cta"><Link href="/membership" className="nav-join">Membership</Link><Link href="/members/login" className="nav-members">Members Login</Link></div>
-        <button className="hamburger btn-push" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
-          <span /><span /><span />
-        </button>
-      </nav>
-      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
-        <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Home</Link>
-        <Link href="/#events" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Events</Link>
-        <Link href="/#contact" onClick={() => setMenuOpen(false)} style={{ color: '#555', textDecoration: 'none' }}>Contact</Link>
-        <Link href="/faq" onClick={() => setMenuOpen(false)} style={{ color: '#1a1a1a', fontWeight: '500' }}>FAQ</Link>
-        <Link href="/membership" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Membership</Link>
-        <Link href="/members/login" onClick={() => setMenuOpen(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
-      </div>
+      <SiteNav
+        links={[
+          { href: '/',         label: 'Home' },
+          { href: '/#events',  label: 'Events' },
+          { href: '/#contact', label: 'Contact' },
+          { href: '/faq',      label: 'FAQ' },
+        ]}
+        onMenuChange={setMenuOpen}
+      />
 
       {/* Hero */}
       <section style={{ minHeight: 'clamp(420px,60vh,560px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(140px,16vw,200px) 2rem clamp(4rem,8vw,6rem)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
