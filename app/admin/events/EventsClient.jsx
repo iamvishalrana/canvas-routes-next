@@ -665,7 +665,28 @@ export default function EventsClient() {
           <div style={{ marginBottom: '0.75rem' }}><L>Date Display<InfoTip field="date_display" /></L><input style={inp} value={form.date_display} onChange={e => setForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
           <div style={{ marginBottom: '0.75rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="Montreal → Mont-Tremblant" /></div>
           <div style={{ marginBottom: '0.75rem' }}><L>Description<InfoTip field="description" /></L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} /></div>
-          <div style={{ marginBottom: '1rem' }}><L>External Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
+          <div style={{ marginBottom: '0.75rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
+            <L>Registration Visibility</L>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              {[
+                { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
+                { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
+              ].map(({ val, label, desc }) => {
+                const sel = form.registration_visibility === val
+                return (
+                  <button key={val} type="button"
+                    onClick={() => setForm(p => ({ ...p, registration_visibility: val, registration_url: val === 'members' ? '' : p.registration_url }))}
+                    style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
+                    <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          {form.registration_visibility === 'public' && (
+            <div style={{ marginBottom: '0.75rem' }}><L>Public Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/wtet" /></div>
+          )}
           <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Member Registration</div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -676,24 +697,6 @@ export default function EventsClient() {
               <div><L>Member Price (CAD)<InfoTip field="member_price" /></L><input style={inp} type="number" min="0" step="0.01" value={form.member_price ? (form.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : '' })) }} placeholder="0.00" /></div>
               <div><L>Capacity<InfoTip field="capacity" /></L><input style={inp} type="number" min="1" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} placeholder="Unlimited" /></div>
               <div><L>IC Priority Window Ends<InfoTip field="priority_window" /></L><input style={inp} type="datetime-local" value={form.priority_window_end} onChange={e => setForm(p => ({ ...p, priority_window_end: e.target.value }))} /></div>
-            </div>
-          </div>
-          <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
-            <L>Registration Visibility</L>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              {[
-                { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
-                { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
-              ].map(({ val, label, desc }) => {
-                const sel = form.registration_visibility === val
-                return (
-                  <button key={val} type="button" onClick={() => setForm(p => ({ ...p, registration_visibility: val }))}
-                    style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
-                    <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
-                    <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
-                  </button>
-                )
-              })}
             </div>
           </div>
           <PrimaryBtn type="submit" disabled={posting}>{posting ? 'Adding…' : 'Add Event'}</PrimaryBtn>
@@ -1084,7 +1087,28 @@ export default function EventsClient() {
                         <div style={{ marginBottom: '0.6rem' }}><L>Date Display<InfoTip field="date_display" /></L><input style={inp} value={editForm.date_display || ''} onChange={e => setEditForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
                         <div style={{ marginBottom: '0.6rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={editForm.location || ''} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} /></div>
                         <div style={{ marginBottom: '0.6rem' }}><L>Description<InfoTip field="description" /></L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
-                        <div style={{ marginBottom: '0.75rem' }}><L>External Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/routes" /></div>
+                        <div style={{ marginBottom: '0.6rem', paddingTop: '0.6rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
+                          <L>Registration Visibility</L>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.5rem' }}>
+                            {[
+                              { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
+                              { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
+                            ].map(({ val, label, desc }) => {
+                              const sel = editForm.registration_visibility === val
+                              return (
+                                <button key={val} type="button"
+                                  onClick={() => setEditForm(p => ({ ...p, registration_visibility: val, registration_url: val === 'members' ? '' : p.registration_url }))}
+                                  style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
+                                  <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
+                                  <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        {editForm.registration_visibility === 'public' && (
+                          <div style={{ marginBottom: '0.6rem' }}><L>Public Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/wtet" /></div>
+                        )}
                         <div style={{ paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.75rem' }}>
                           <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Member Registration</div>
                           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
@@ -1111,24 +1135,6 @@ export default function EventsClient() {
                             <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingPhoto === item.id} onChange={e => { if (e.target.files[0]) uploadPhoto(item.id, e.target.files[0]) }} />
                           </label>
                           {photoError[item.id] && <Err msg={photoError[item.id]} />}
-                        </div>
-                        <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
-                          <L>Registration Visibility</L>
-                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.5rem' }}>
-                            {[
-                              { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
-                              { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
-                            ].map(({ val, label, desc }) => {
-                              const sel = editForm.registration_visibility === val
-                              return (
-                                <button key={val} type="button" onClick={() => setEditForm(p => ({ ...p, registration_visibility: val }))}
-                                  style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
-                                  <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
-                                  <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
-                                </button>
-                              )
-                            })}
-                          </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</PrimaryBtn>
