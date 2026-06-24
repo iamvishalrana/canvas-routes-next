@@ -406,7 +406,7 @@ export default function WtetPage() {
           <div>
             <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
               style={{display:'inline-block',padding:'0.9rem 2.5rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
-              Claim your spot →
+              Secure your seat →
             </a>
           </div>
         </div>
@@ -418,7 +418,7 @@ export default function WtetPage() {
         <div className="wtet-stats-bar" style={{maxWidth:'860px',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'0',padding:'1.5rem 3rem'}}>
           {[
             { num:'~250', unit:'km' },
-            { num:'90%',  unit:'backroads' },
+            { num:'70%',  unit:'backroads' },
             { num:'6',    unit:'stops' },
             { num:'1',    unit:'vineyard' },
             { num:'15',   unit:'cars max' },
