@@ -429,7 +429,7 @@ export default function EventsClient() {
       setAddRegErr(p => ({ ...p, [eventId]: null }))
       // Force-reload the registrants panel (stays open, shows updated list)
       const item = items.find(i => i.id === eventId)
-      if (item) toggleRegistrants(eventId, item.name, { forceReload: true })
+      if (item) toggleRegistrants(eventId, item.name, { forceReload: true, eventType: item.type, eventPrice: item.member_price })
     } catch {
       setAddRegErr(p => ({ ...p, [eventId]: 'Network error.' }))
     } finally {
@@ -555,11 +555,13 @@ export default function EventsClient() {
     }
   }
 
-  async function toggleRegistrants(eventId, eventName, { forceReload = false } = {}) {
+  async function toggleRegistrants(eventId, eventName, { forceReload = false, eventType = '', eventPrice = null } = {}) {
     if (!forceReload && showRegistrants === eventId) { setShowRegistrants(null); setConfirmEmailPending(null); return }
     setShowRegistrants(eventId)
     if (!forceReload && registrantsData[eventId]) return
     setLoadingRegistrants(true)
+    // Paid road trips require an authorized or captured hold to count as registered
+    const isPaidRoadTrip = eventType === 'Road Trip' && eventPrice > 0
     try {
       const [regRes, cRes] = await Promise.all([
         fetch(`/api/admin/events/${eventId}/registrants`),
@@ -586,11 +588,19 @@ export default function EventsClient() {
         }
       })
       const contactRegs = (Array.isArray(contacts) ? contacts : [])
-        .filter(c => (c.registrations || []).some(r => {
-          const norm = normalizeEventName(r.event)
-          if (norm === eventName) return true
-          return evBase(norm) === evBase(eventName)
-        }))
+        .filter(c => {
+          const hasReg = (c.registrations || []).some(r => {
+            const norm = normalizeEventName(r.event)
+            if (norm === eventName) return true
+            return evBase(norm) === evBase(eventName)
+          })
+          if (!hasReg) return false
+          // For paid road trips, only show contacts whose Stripe payment is authorized or captured
+          if (isPaidRoadTrip && c.stripe_payment_type?.startsWith('road_trip_')) {
+            return ['authorized', 'paid'].includes(c.stripe_payment_status)
+          }
+          return true
+        })
         .map(c => {
           const reg = (c.registrations || []).find(r => evBase(r.event) === evBase(eventName))
           const rsvpToken = (c.rsvp_history || []).find(t => evBase(t.event_name) === evBase(eventName))
@@ -779,7 +789,7 @@ export default function EventsClient() {
                       </span>
                     </div>
                     {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
-                    <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name)}>
+                    <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price })}>
                       {showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`}
                     </GhostBtn>
                     <GhostBtn small onClick={() => isEditing ? setEditing(null) : openEdit(item)}>
