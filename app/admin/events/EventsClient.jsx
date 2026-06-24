@@ -144,7 +144,7 @@ function InfoTip({ field }) {
   )
 }
 
-const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' }
+const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '', registration_visibility: 'members' }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -294,6 +294,7 @@ export default function EventsClient() {
       capacity: item.capacity || '', member_price: item.member_price || null,
       priority_window_end: item.priority_window_end || '',
       registration_enabled: item.registration_enabled,
+      registration_visibility: item.registration_visibility || 'members',
     })
     setSaveError(null)
     setActiveTab(p => ({ ...p, [item.id]: p[item.id] || 'settings' }))
@@ -675,6 +676,24 @@ export default function EventsClient() {
               <div><L>Member Price (CAD)<InfoTip field="member_price" /></L><input style={inp} type="number" min="0" step="0.01" value={form.member_price ? (form.member_price / 100).toFixed(2) : ''} onChange={e => { const cents = Math.round(parseFloat(e.target.value) * 100); setForm(p => ({ ...p, member_price: e.target.value && !isNaN(cents) ? cents : '' })) }} placeholder="0.00" /></div>
               <div><L>Capacity<InfoTip field="capacity" /></L><input style={inp} type="number" min="1" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} placeholder="Unlimited" /></div>
               <div><L>IC Priority Window Ends<InfoTip field="priority_window" /></L><input style={inp} type="datetime-local" value={form.priority_window_end} onChange={e => setForm(p => ({ ...p, priority_window_end: e.target.value }))} /></div>
+            </div>
+          </div>
+          <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
+            <L>Registration Visibility</L>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              {[
+                { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
+                { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
+              ].map(({ val, label, desc }) => {
+                const sel = form.registration_visibility === val
+                return (
+                  <button key={val} type="button" onClick={() => setForm(p => ({ ...p, registration_visibility: val }))}
+                    style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
+                    <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
+                  </button>
+                )
+              })}
             </div>
           </div>
           <PrimaryBtn type="submit" disabled={posting}>{posting ? 'Adding…' : 'Add Event'}</PrimaryBtn>
@@ -1092,6 +1111,24 @@ export default function EventsClient() {
                             <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingPhoto === item.id} onChange={e => { if (e.target.files[0]) uploadPhoto(item.id, e.target.files[0]) }} />
                           </label>
                           {photoError[item.id] && <Err msg={photoError[item.id]} />}
+                        </div>
+                        <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
+                          <L>Registration Visibility</L>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.5rem' }}>
+                            {[
+                              { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
+                              { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
+                            ].map(({ val, label, desc }) => {
+                              const sel = editForm.registration_visibility === val
+                              return (
+                                <button key={val} type="button" onClick={() => setEditForm(p => ({ ...p, registration_visibility: val }))}
+                                  style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
+                                  <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
+                                  <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</PrimaryBtn>
