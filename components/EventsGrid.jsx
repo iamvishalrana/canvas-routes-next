@@ -38,7 +38,7 @@ function DateBlock({ rawDate }) {
   return <div style={{ fontSize: '10px', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>{rawDate}</div>
 }
 
-function EventCard({ ev, isRegistered, isPast, onClick }) {
+function EventCard({ ev, isRegistered, isPast, isAttended, onClick }) {
   const rawDate = ev.date_display || ev.date || ''
   return (
     <div
@@ -66,7 +66,13 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
             <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.75, margin: '0 0 0.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-            {isRegistered && (
+            {isAttended && (
+              <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Attended
+              </span>
+            )}
+            {!isPast && isRegistered && (
               <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 Registered
@@ -82,8 +88,13 @@ function EventCard({ ev, isRegistered, isPast, onClick }) {
   )
 }
 
-export default function EventsGrid({ upcoming, past, regMap, tier }) {
+export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames = [] }) {
   const router = useRouter()
+
+  function isAttendedEvent(ev) {
+    const evLower = (ev.name || '').toLowerCase()
+    return attendedNames.some(name => name.includes(evLower) || evLower.includes(name.split(' —')[0].trim()))
+  }
 
   return (
     <>
@@ -123,6 +134,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier }) {
                   ev={ev}
                   isRegistered={['free', 'paid'].includes(regMap[ev.id])}
                   isPast={true}
+                  isAttended={isAttendedEvent(ev)}
                   onClick={() => router.push(`/members/events/${ev.id}`)}
                 />
               </FadeUp>

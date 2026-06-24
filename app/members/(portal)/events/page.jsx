@@ -27,14 +27,30 @@ export default async function EventsPage() {
   if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
-  const [{ data: events }, { data: registrations }, { data: member }] = await Promise.all([
+  const [{ data: events }, { data: registrations }, { data: member }, { data: application }] = await Promise.all([
     admin.from('events').select('*').order('date', { ascending: true }).limit(50),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
     admin.from('members').select('tier, name').eq('id', user.id).maybeSingle(),
+    admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle(),
   ])
 
   const regMap = {}
   for (const r of (registrations || [])) regMap[r.event_id] = r.stripe_payment_status
+
+  // Build a set of attended route event names (from applications.registrations marked by admin)
+  const attendedNames = new Set(
+    (application?.registrations || [])
+      .filter(r => r.attended === true)
+      .map(r => (r.event || '').toLowerCase())
+  )
+
+  function isAttendedEvent(ev) {
+    const evLower = (ev.name || '').toLowerCase()
+    for (const name of attendedNames) {
+      if (name.includes(evLower) || evLower.includes(name.split(' —')[0].trim())) return true
+    }
+    return false
+  }
 
   const tier = member?.tier || 'routes_member'
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -43,9 +59,10 @@ export default async function EventsPage() {
     const d = parseEventDate(ev.date_display || ev.date)
     return !d || d >= today
   })
+  // Past events: only show ones the admin has marked as attended for this member
   const past = (events || []).filter(ev => {
     const d = parseEventDate(ev.date_display || ev.date)
-    return d && d < today
+    return d && d < today && isAttendedEvent(ev)
   }).reverse()
 
   return (
@@ -59,7 +76,7 @@ export default async function EventsPage() {
         </h1>
       </header>
 
-      <EventsGrid upcoming={upcoming} past={past} regMap={regMap} tier={tier} />
+      <EventsGrid upcoming={upcoming} past={past} regMap={regMap} tier={tier} attendedNames={Array.from(attendedNames)} />
     </div>
   )
 }
