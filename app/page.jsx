@@ -2,12 +2,11 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, User, Mail, Car, Phone, Instagram, NotebookPen, Share2, ClipboardList } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SiteFooter from '../components/SiteFooter'
 import FadeUp from '../components/FadeUp'
 import SiteNav from '../components/SiteNav'
-import FadeIn from '../components/FadeIn'
 import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -79,7 +78,6 @@ export default function Home() {
   const [pastModalEvent, setPastModalEvent] = useState(null)
   const [pastModalImageFailed, setPastModalImageFailed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [routesLaunched, setRoutesLaunched] = useState(true)
   const [dbEvents, setDbEvents] = useState([])
 
   useEffect(() => {
@@ -115,7 +113,6 @@ export default function Home() {
       })
       .catch(() => {})
   }, [])
-  const [showEventsPopup] = useState(false)
   const [showWtetPopup, setShowWtetPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
@@ -180,7 +177,7 @@ export default function Home() {
   useEffect(() => { setPastModalImageFailed(false) }, [pastModalEvent])
 
   useEffect(() => {
-    const isOpen = pastModalEvent !== null || showEventsPopup || showWtetPopup
+    const isOpen = pastModalEvent !== null || showWtetPopup
     if (!isOpen) {
       const savedTop = document.body.style.top
       document.body.style.overflow = ''
@@ -204,7 +201,7 @@ export default function Home() {
       document.body.style.width = ''
       if (top) window.scrollTo(0, -parseInt(top, 10))
     }
-  }, [pastModalEvent, showEventsPopup, showWtetPopup])
+  }, [pastModalEvent, showWtetPopup])
 
   useEffect(() => {
     setCookieBannerVisible(getConsent() === null)
@@ -273,8 +270,6 @@ export default function Home() {
 
 
   const GPCC = 'Grand Prix Weekend - Cars, Coffee & Cruise — May 23, 2026'
-  const gpccClosed = new Date() >= new Date('2026-05-23T14:00:00-04:00')
-  const laurentiansIsPast = true
 
   function updateForm(field, value) {
     if (field === 'carModel') value = value.replace(/(^|\s)\S/g, c => c.toUpperCase())
@@ -747,9 +742,7 @@ export default function Home() {
                   : e.photo_url
                     ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B5B2E",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Details <span style={{fontSize:"13px"}}>→</span></div>
                     : e.href
-                    ? routesLaunched
-                      ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
-                      : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
+                    ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
                     : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
               }
             </div>
