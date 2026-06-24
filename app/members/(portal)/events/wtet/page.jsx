@@ -64,10 +64,10 @@ function PaymentStep({ email, onSuccess, onBack }) {
   return (
     <form onSubmit={handlePay}>
 
-      {/* Hold notice */}
-      <div style={{padding:'0.85rem 1rem',background:'rgba(197,168,130,0.08)',border:'0.5px solid rgba(197,168,130,0.28)',marginBottom:'1.25rem'}}>
-        <div style={{fontSize:'12px',color:'#7B5B2E',lineHeight:'1.6',fontFamily:'var(--font-inter),sans-serif'}}>
-          <strong style={{fontWeight:'500'}}>Member rate — $179 CAD.</strong> Your card will be authorized but not charged yet. We review each registration and only capture once your spot is confirmed.
+      {/* Payment notice */}
+      <div style={{padding:'0.85rem 1rem',background:'rgba(59,107,47,0.06)',border:'0.5px solid rgba(59,107,47,0.25)',marginBottom:'1.25rem'}}>
+        <div style={{fontSize:'12px',color:'#3B6B2F',lineHeight:'1.6',fontFamily:'var(--font-inter),sans-serif'}}>
+          <strong style={{fontWeight:'500'}}>Member rate — $179 CAD.</strong> Payment is charged immediately. Your spot is confirmed as soon as it clears.
         </div>
       </div>
 
@@ -102,7 +102,7 @@ function PaymentStep({ email, onSuccess, onBack }) {
         {paying ? (
           <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{animation:'spin 1s linear infinite'}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Processing…</>
         ) : (
-          <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Authorize $179 CAD · 2 people per car</>
+          <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Pay $179 CAD · 2 people per car</>
         )}
       </button>
 
@@ -225,7 +225,7 @@ export default function WtetMemberPage() {
             <span style={{fontSize:'13px',fontWeight:'500',color:'#3B6B2F',fontFamily:'var(--font-inter),sans-serif'}}>You&apos;re already registered</span>
           </div>
           <p style={{fontSize:'13px',color:'#555',lineHeight:'1.65',margin:0,fontFamily:'var(--font-inter),sans-serif'}}>
-            We have your registration on file. Your authorization hold is placed and we&apos;ll be in touch with confirmation details before July 5.
+            We have your registration on file. Your $179 payment is confirmed — check your email for the confirmation. We&apos;ll send full event details closer to July 5.
           </p>
         </div>
         <Link href="/members/events" style={{fontSize:'11px',letterSpacing:'0.14em',textTransform:'uppercase',color:'#888',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif'}}>← Back to Events</Link>
@@ -239,13 +239,13 @@ export default function WtetMemberPage() {
       <div style={{maxWidth:'540px'}}>
         <header style={{marginBottom:'2.5rem',paddingBottom:'1.5rem',borderBottom:'0.5px solid rgba(0,0,0,0.07)'}}>
           <div style={{fontSize:'9px',letterSpacing:'0.38em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.75rem',fontFamily:'var(--font-inter),sans-serif'}}>July 5, 2026</div>
-          <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(2rem,4vw,2.6rem)',fontWeight:'300',color:'#1a1a1a',lineHeight:1.05,margin:0}}>Authorization received.</h1>
+          <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(2rem,4vw,2.6rem)',fontWeight:'300',color:'#1a1a1a',lineHeight:1.05,margin:0}}>You&apos;re in.</h1>
         </header>
         <p style={{fontSize:'14px',color:'#555',lineHeight:'1.75',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
-          Your $179 hold is placed — your card has not been charged. We&apos;ll review your registration and be in touch at <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{profile?.email}</strong>.
+          Your $179 payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{profile?.email}</strong>.
         </p>
         <p style={{fontSize:'13px',color:'#888',lineHeight:'1.7',marginBottom:'2rem',fontFamily:'var(--font-inter),sans-serif'}}>
-          Once confirmed, the charge goes through and you&apos;ll receive full event details. If we can&apos;t place you, the hold is released with no charge.
+          We&apos;ll send full event details — meeting point, itinerary, and everything you need — closer to July 5.
         </p>
         <Link href="/members/events" style={{fontSize:'11px',letterSpacing:'0.14em',textTransform:'uppercase',color:'#888',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif'}}>← Back to Events</Link>
       </div>
@@ -317,7 +317,7 @@ export default function WtetMemberPage() {
               <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>Member rate</div>
               <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2rem',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>$179 <span style={{fontSize:'1rem',fontFamily:'var(--font-inter),sans-serif',color:'#aaa',letterSpacing:0}}>CAD · per car · up to 2 people</span></div>
             </div>
-            <div style={{fontSize:'11px',color:'#888',fontFamily:'var(--font-inter),sans-serif',maxWidth:'180px',lineHeight:'1.5',textAlign:'right'}}>Authorization hold — nothing charged until your spot is confirmed</div>
+            <div style={{fontSize:'11px',color:'#888',fontFamily:'var(--font-inter),sans-serif',maxWidth:'180px',lineHeight:'1.5',textAlign:'right'}}>Charged immediately — spot confirmed on payment</div>
           </div>
 
           {/* Section divider */}
@@ -482,7 +482,7 @@ export default function WtetMemberPage() {
           </button>
 
           <p style={{fontSize:'11px',color:'#bbb',textAlign:'center',marginTop:'0.85rem',lineHeight:'1.6',fontFamily:'var(--font-inter),sans-serif'}}>
-            Your card is authorized, not charged. Spot confirmed by the team before payment is captured.
+            Your $179 is charged now. A confirmation email will arrive shortly.
           </p>
         </form>
       )}

@@ -205,10 +205,10 @@ export async function POST(request) {
       }
 
       case 'payment_intent.requires_capture': {
-        // Customer authorized the hold — admin approval needed before capture
+        // Hold authorized — fires for membership PIs and non-member WTET PIs (manual capture).
+        // Member WTET PIs now use automatic capture and go straight to payment_intent.succeeded.
         const pi       = event.data.object
         const { type, email, name, event_name: piEventName } = pi.metadata
-        // Membership payments and road trip (WTET) use manual capture
         if (!type?.startsWith('membership_') && type !== 'road_trip_wtet') break
         const amountHeld = pi.amount
         const normalEmail = email?.toLowerCase().trim()

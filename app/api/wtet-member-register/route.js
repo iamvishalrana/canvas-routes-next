@@ -112,7 +112,7 @@ export async function POST(request) {
     captureException(e, { context: 'wtet-member-register-db-outer', email: normalEmail })
   }
 
-  // Create Stripe PI — manual capture (hold, not charge)
+  // Create Stripe PI — immediate capture for members (vetted, no manual review needed)
   try {
     const pi = await stripe.paymentIntents.create({
       amount: MEMBER_PRICE_CENTS,
@@ -130,7 +130,6 @@ export async function POST(request) {
       },
       description: `Canvas Routes — ${EVENT_NAME} (Member rate)`,
       automatic_payment_methods: { enabled: true },
-      capture_method: 'manual',
     })
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {
