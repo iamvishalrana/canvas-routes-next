@@ -64,6 +64,8 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
       if (!res.ok) { setPromoError(data.error || 'Invalid promo code.'); return }
       setPromoResult(data)
       setPromoInput('')
+      // Re-fetch the updated PI so Apple Pay / Google Pay show the discounted amount
+      if (elements) await elements.fetchUpdates()
     } catch { setPromoError('Could not apply promo code. Please try again.') }
     finally { setPromoApplying(false) }
   }
@@ -76,7 +78,10 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ remove: true, paymentIntentId, email }),
       })
-      if (res.ok) setPromoResult(null)
+      if (res.ok) {
+        setPromoResult(null)
+        if (elements) await elements.fetchUpdates()
+      }
     } catch {}
   }
 
