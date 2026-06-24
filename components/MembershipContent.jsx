@@ -85,9 +85,10 @@ function StaggerGrid({ children, style, className }) {
 }
 
 const TIER1 = [
-  'Priority registration on all Cars & Coffee and member-only events',
-  'Early access window on every route — before public spots open',
-  'Preferred member pricing on all routes',
+  'Priority registration on all Cars & Coffee and member events',
+  'First access window on every route — before public spots open',
+  'Discount on each Canvas Routes paid event',
+  'Members-only events throughout the season',
   '10% off your next route for every member you refer',
   '25% discount at a Canvas Routes partner',
   'Canvas Routes full grain leather keychain',
@@ -95,18 +96,19 @@ const TIER1 = [
 ]
 
 const TIER2_EXTRA = [
-  '48hr first-access window on all events — before Routes Members and before the public',
-  '$70 route credit applied to your first route of the season',
+  'First access window on all events — first in before Routes Members and before the public',
+  '$50 route credit applied to one of your next two routes after you subscribe',
+  'Special discount on each Canvas Routes paid event',
   'Professional car photoshoot on a Canvas Routes route',
   'Exclusive discounts across all Canvas Routes partners',
-  'Canvas Routes cap',
+  'Inner Circle curated members kit — Canvas Routes cap, tshirt, lanyard, and a premium coffee bag, handed to you at your first event',
   'Inner Circle end-of-season closing event — private, not open to the public',
 ]
 
 const PERKS = [
   { label: 'Leather Keychain', sub: 'Full grain leather. Canvas Routes merchandise. Handed to you at the first Canvas Routes event you attend after your membership is confirmed.', tier: 1 },
   { label: 'Car Perfume', sub: 'Refreshed every 2 months throughout the season, picked up at any Canvas Routes event.', tier: 1 },
-  { label: 'Cap', sub: 'Canvas Routes merchandise cap — handed to you at your first event of the season.', tier: 2 },
+  { label: 'Inner Circle Members Kit', sub: 'Canvas Routes cap, tshirt, lanyard, and a premium coffee bag — handed to you at your first event of the season.', tier: 2 },
   { label: 'Car Photoshoot', sub: 'One professional shoot of your car on a Canvas Routes route.', tier: 2 },
 ]
 
@@ -222,8 +224,8 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
   }
 
   const TIER_PERKS = {
-    'Inner Circle': ['48hr early access to all events', '$70 route credit included', 'Professional car photoshoot', 'Canvas Routes cap + members kit'],
-    'Routes Member': ['Priority registration for all events', 'Preferred member pricing on routes', 'Members-only events + community', 'Canvas Routes members kit'],
+    'Inner Circle': ['First access window on all events', '$50 route credit on next two routes', 'Special discount on each paid event', 'Inner Circle curated members kit'],
+    'Routes Member': ['Priority registration for all events', 'Discount on each paid event', 'Members-only events throughout the season', 'Canvas Routes members kit'],
   }
   const perks = TIER_PERKS[tier] || TIER_PERKS['Routes Member']
 
@@ -535,7 +537,7 @@ export default function MembershipContent() {
       </div>
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '72vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
           <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
@@ -675,7 +677,7 @@ export default function MembershipContent() {
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
                   <div style={{ marginBottom: '1.75rem' }}>
                     <div style={{ ...LABEL, color: 'rgba(197,168,130,0.5)', marginBottom: '0.35rem' }}>What you get</div>
-                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First in on everything — 48hrs before Routes Members. Includes a $70 route credit applied to your first route.</div>
+                    <div style={{ ...BODY, color: 'rgba(245,241,236,0.75)' }}>First in on everything — before Routes Members and before the public. Includes a $50 route credit applied to one of your next two routes after you subscribe, a special event discount, a professional car photoshoot, and an Inner Circle curated members kit.</div>
                   </div>
                 </div>
                 <div className="mem-tier-body" style={{ padding: '0 2.25rem 2.25rem' }}>
