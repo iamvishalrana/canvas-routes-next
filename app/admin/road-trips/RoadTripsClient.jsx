@@ -84,7 +84,7 @@ export default function RoadTripsClient() {
 
   // Names of events typed as Road Trip in the events table (lowercase for matching)
   const roadTripFragments = events
-    .filter(e => e.type === 'Road Trip')
+    .filter(e => e.type === 'Road Trip' || e.type === 'Route')
     .filter(e => e.name)
     .map(e => e.name.toLowerCase())
 
