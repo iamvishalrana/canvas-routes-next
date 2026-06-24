@@ -253,7 +253,7 @@ export default function ContactsClient() {
     const contact = contacts.find(c => c.contact_id === contactId)
     if (!contact) return
     const existing = contact.registrations || []
-    const idx = existing.findIndex(r => r.event === eventName)
+    const idx = existing.findIndex(r => normalizeEventName(r.event) === eventName)
     let newRegs
     if (idx !== -1) {
       newRegs = existing.map((r, i) => i === idx ? { ...r, attended: r.attended === value ? null : value } : r)
@@ -817,7 +817,7 @@ export default function ContactsClient() {
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
                         const isPast = eventDate ? new Date(eventDate) <= today : true
-                        const isNA = isPast && (!reg || (reg.registered_at === null && reg.attended === null))
+                        const isNA = isPast && reg !== null && reg.registered_at === null && reg.attended === null
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
