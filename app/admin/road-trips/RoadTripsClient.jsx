@@ -297,16 +297,26 @@ export default function RoadTripsClient() {
                             <td colSpan={trips.length > 1 && activeTrip === 'all' ? 8 : 7} style={{ padding: 0, borderBottom: isLast ? 'none' : '0.5px solid rgba(0,0,0,0.05)' }}>
                               <div style={{ background: '#faf9f6', borderLeft: '3px solid #c5a882', padding: '1rem 1.25rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
                                 <div>
+                                  <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Passengers</div>
+                                  {checkin?.passengers_list?.length > 0 ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                      {checkin.passengers_list.map((p, pi) => (
+                                        <div key={pi} style={{ fontSize: '12px', color: '#1a1a1a' }}>
+                                          {p.name}{p.age ? <span style={{ color: '#888', marginLeft: '0.3rem' }}>({p.age})</span> : null}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div style={{ fontSize: '13px', color: '#bbb' }}>Not provided</div>
+                                  )}
+                                </div>
+                                <div>
                                   <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Dietary</div>
                                   <div style={{ fontSize: '13px', color: checkin?.dietary ? '#1a1a1a' : '#bbb' }}>{checkin?.dietary || 'None provided'}</div>
                                 </div>
                                 <div>
                                   <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>WhatsApp</div>
                                   <div style={{ fontSize: '13px', color: checkin?.whatsapp ? '#1a1a1a' : '#bbb' }}>{checkin?.whatsapp || 'Not provided'}</div>
-                                </div>
-                                <div>
-                                  <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Car photo</div>
-                                  <div style={{ fontSize: '13px', color: '#bbb' }}>{checkin?.car_photo_sent ? 'Sent' : 'Not recorded'}</div>
                                 </div>
                                 <div>
                                   <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Completed at</div>
