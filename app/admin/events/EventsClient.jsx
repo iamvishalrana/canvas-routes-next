@@ -675,7 +675,7 @@ export default function EventsClient() {
                 const sel = form.registration_visibility === val
                 return (
                   <button key={val} type="button"
-                    onClick={() => setForm(p => ({ ...p, registration_visibility: val, registration_url: val === 'members' ? '' : p.registration_url }))}
+                    onClick={() => setForm(p => ({ ...p, registration_visibility: val }))}
                     style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
                     <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
                     <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
@@ -684,9 +684,11 @@ export default function EventsClient() {
               })}
             </div>
           </div>
-          {form.registration_visibility === 'public' && (
-            <div style={{ marginBottom: '0.75rem' }}><L>Public Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/wtet" /></div>
-          )}
+          <div style={{ marginBottom: '0.75rem' }}>
+            <L>{form.registration_visibility === 'public' ? 'Public Registration URL' : 'Member Registration URL'}<InfoTip field="registration_url" /></L>
+            <input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))}
+              placeholder={form.registration_visibility === 'public' ? 'https://canvasroutes.com/wtet' : '/members/events/wtet'} />
+          </div>
           <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Member Registration</div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -1097,7 +1099,7 @@ export default function EventsClient() {
                               const sel = editForm.registration_visibility === val
                               return (
                                 <button key={val} type="button"
-                                  onClick={() => setEditForm(p => ({ ...p, registration_visibility: val, registration_url: val === 'members' ? '' : p.registration_url }))}
+                                  onClick={() => setEditForm(p => ({ ...p, registration_visibility: val }))}
                                   style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
                                   <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
                                   <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
@@ -1106,9 +1108,11 @@ export default function EventsClient() {
                             })}
                           </div>
                         </div>
-                        {editForm.registration_visibility === 'public' && (
-                          <div style={{ marginBottom: '0.6rem' }}><L>Public Registration URL<InfoTip field="registration_url" /></L><input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="https://canvasroutes.com/wtet" /></div>
-                        )}
+                        <div style={{ marginBottom: '0.6rem' }}>
+                          <L>{editForm.registration_visibility === 'public' ? 'Public Registration URL' : 'Member Registration URL'}<InfoTip field="registration_url" /></L>
+                          <input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))}
+                            placeholder={editForm.registration_visibility === 'public' ? 'https://canvasroutes.com/wtet' : '/members/events/wtet'} />
+                        </div>
                         <div style={{ paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.75rem' }}>
                           <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Member Registration</div>
                           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
