@@ -135,7 +135,7 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
       )}
 
       <button type="submit" disabled={!stripe || paying}
-        style={{width:'100%',padding:'1.05rem',background:paying?'#2a4f20':'#0F1E14',border:'none',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',fontWeight:'600',cursor:paying?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',transition:'background 0.2s',marginBottom:'0.85rem'}}>
+        style={{width:'100%',padding:'1.05rem',background:paying?'rgba(197,168,130,0.65)':'#c5a882',border:'none',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',fontWeight:'700',cursor:paying?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',transition:'background 0.2s',marginBottom:'0.85rem'}}>
         {paying ? (
           <>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin 1s linear infinite'}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -474,7 +474,7 @@ export default function WtetPage() {
           </div>
 
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
-            style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'500'}}>
+            style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
             Register — from $179 →
           </a>
         </div>
@@ -658,22 +658,27 @@ export default function WtetPage() {
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
 
                 {/* Member status */}
-                <div className="join-form-field" style={{marginBottom:'1.5rem',padding:'1.25rem',background:'rgba(197,168,130,0.06)',border:`0.5px solid ${errors.isMember ? '#7B2032' : 'rgba(197,168,130,0.25)'}`}}>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a1a',marginBottom:'0.85rem',fontFamily:'var(--font-inter),sans-serif'}}>
-                    Are you a current Canvas Routes member?
+                <div style={{marginBottom:'1.5rem'}}>
+                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
+                    Are you a Canvas Routes member?
                   </div>
-                  <div style={{display:'flex',gap:'0.75rem',marginBottom:'0.5rem'}}>
-                    {[{val:'yes',label:`Yes — member rate · $179`},{val:'no',label:`No · $199`}].map(({val,label}) => {
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+                    {[
+                      {val:'yes', price:'$179', label:'Member rate', sublabel:'Canvas Routes member'},
+                      {val:'no',  price:'$199', label:'Standard rate', sublabel:'Not a member'},
+                    ].map(({val, price: p, label, sublabel}) => {
                       const sel = form.isMember === val
                       return (
                         <button key={val} type="button" onClick={() => updateForm('isMember', val)}
-                          style={{flex:1,padding:'0.75rem',border:`1px solid ${sel?'#3B6B2F':errors.isMember?'#7B2032':'rgba(0,0,0,0.2)'}`,background:sel?'rgba(59,107,47,0.06)':'transparent',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',fontSize:'12px',color:sel?'#3B6B2F':'#555',transition:'all 0.15s',textAlign:'left',letterSpacing:'0.02em'}}>
-                          {label}
+                          style={{padding:'1.1rem 1.25rem',border:`1.5px solid ${sel?'#c5a882':errors.isMember?'#7B2032':'rgba(0,0,0,0.14)'}`,background:sel?'rgba(197,168,130,0.08)':'#fff',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textAlign:'left',transition:'all 0.15s',display:'flex',flexDirection:'column',gap:'0.3rem'}}>
+                          <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.6rem',letterSpacing:'0.04em',color:sel?'#1a1a1a':'#888',lineHeight:1}}>{p}</span>
+                          <span style={{fontSize:'11px',fontWeight:'500',color:sel?'#1a1a1a':'#aaa',letterSpacing:'0.04em'}}>{label}</span>
+                          <span style={{fontSize:'10px',color:sel?'#888':'#ccc',letterSpacing:'0.02em'}}>{sublabel}</span>
                         </button>
                       )
                     })}
                   </div>
-                  {errors.isMember && <span style={{fontSize:'11px',color:'#7B2032'}}>Please select one</span>}
+                  {errors.isMember && <span style={{fontSize:'11px',color:'#7B2032',display:'block',marginTop:'0.5rem'}}>Please select one</span>}
                 </div>
 
                 {/* Member redirect — show instead of rest of form */}
@@ -899,8 +904,7 @@ export default function WtetPage() {
                 {(status==='error') && <div style={{fontSize:'12px',color:'#7B2032',marginBottom:'0.75rem'}}>{serverError}</div>}
 
                 <button type="submit" disabled={status==='loading'}
-                  className="btn-push join-submit-btn"
-                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',marginBottom:'1rem'}}>
+                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:status==='loading'?'rgba(197,168,130,0.65)':'#c5a882',color:'#0F1E14',border:'none',marginBottom:'1rem'}}>
                   {status==='loading' ? 'Setting up payment…' : `Continue to payment — $${price}`}
                 </button>
 
