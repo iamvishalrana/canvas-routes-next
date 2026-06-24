@@ -431,7 +431,7 @@ export default function WtetPage() {
           <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.1rem,2.5vw,1.4rem)',fontStyle:'italic',color:'rgba(245,241,236,0.4)',marginBottom:'1.2rem',animation:'wtet-fade-up 0.7s ease both',animationDelay:'450ms'}}>
             Montreal to Lac Memphrémagog
           </div>
-          <div className="wtet-date-badge" style={{display:'inline-block',padding:'0.45rem 1.2rem',border:'0.5px solid rgba(197,168,130,0.65)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(245,241,236,0.88)',marginBottom:'2.5rem',animation:'wtet-fade-in 0.6s ease both',animationDelay:'600ms'}}>
+          <div className="wtet-date-badge" style={{display:'inline-block',padding:'0.5rem 1.4rem',border:'1px solid rgba(197,168,130,0.7)',background:'rgba(197,168,130,0.12)',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#F5F1EC',marginBottom:'2.5rem',animation:'wtet-fade-in 0.6s ease both',animationDelay:'600ms'}}>
             Sunday · July 5, 2026
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'wtet-fade-in 0.5s ease both',animationDelay:'700ms'}} />
@@ -971,7 +971,7 @@ export default function WtetPage() {
 
                 <button type="submit" disabled={status==='loading'}
                   style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:status==='loading'?'rgba(15,30,20,0.45)':'#0F1E14',color:'#F5F1EC',border:'none',marginBottom:'1rem'}}>
-                  {status==='loading' ? 'Setting up payment…' : `Continue to payment — $${price}`}
+                  {status==='loading' ? 'Setting up payment…' : form.isMember === 'no' ? `Continue to payment — $${price}` : 'Continue to payment'}
                 </button>
 
                 </>}
