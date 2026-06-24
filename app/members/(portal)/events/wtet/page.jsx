@@ -253,12 +253,79 @@ export default function WtetMemberPage() {
   }
 
   return (
-    <div style={{maxWidth:'540px'}}>
-      <header style={{marginBottom:'2.5rem',paddingBottom:'1.5rem',borderBottom:'0.5px solid rgba(0,0,0,0.07)'}}>
-        <div style={{fontSize:'9px',letterSpacing:'0.38em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.75rem',fontFamily:'var(--font-inter),sans-serif'}}>Canvas Routes · July 5, 2026</div>
+    <div style={{maxWidth:'640px'}}>
+      {/* Header */}
+      <header style={{marginBottom:'2rem',paddingBottom:'1.5rem',borderBottom:'0.5px solid rgba(0,0,0,0.07)'}}>
+        <div style={{fontSize:'9px',letterSpacing:'0.38em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.75rem',fontFamily:'var(--font-inter),sans-serif'}}>Canvas Routes · Sunday, July 5, 2026</div>
         <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(2rem,4vw,2.8rem)',fontWeight:'300',color:'#1a1a1a',lineHeight:1.05,margin:'0 0 0.5rem'}}>Whips to Eastern Townships</h1>
-        <p style={{fontSize:'13px',color:'#888',margin:0,fontFamily:'var(--font-inter),sans-serif'}}>Member rate · $179 per car · up to 2 people</p>
+        <p style={{fontSize:'13px',color:'#888',margin:0,fontFamily:'var(--font-inter),sans-serif'}}>Montreal → Lac Memphrémagog</p>
       </header>
+
+      {/* Event info — only shown when not at payment step */}
+      {status !== 'payment' && !alreadyReg && (
+        <>
+          {/* Description */}
+          <p style={{fontSize:'14px',color:'#444',lineHeight:'1.85',marginBottom:'1.75rem',fontFamily:'var(--font-inter),sans-serif'}}>
+            Backroads through wine country, a private winery experience at Vignoble Domaine du Brésée in Dunham, Chemin des Cantons through the Sutton Mountains, and a curated premium lunch to close the day. One of the best drives in Quebec.
+          </p>
+
+          {/* Route stops */}
+          <div style={{marginBottom:'1.75rem',border:'0.5px solid rgba(0,0,0,0.09)',background:'#fff'}}>
+            <div style={{padding:'0.85rem 1.25rem',borderBottom:'0.5px solid rgba(0,0,0,0.06)',fontSize:'9px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#aaa',fontFamily:'var(--font-inter),sans-serif'}}>Route highlights</div>
+            {[
+              { label:'Meetup',             loc:'Quartier Dix 30, Brossard' },
+              { label:'Winery Experience',  loc:'Vignoble Domaine du Brésée, Dunham' },
+              { label:'Chemin des Cantons', loc:'Sutton → Glen Sutton → Highwater' },
+              { label:'Through the Ridge',  loc:'Austin → Magog' },
+              { label:'Premium Lunch',      loc:'Magog region — location TBD' },
+            ].map(({ label, loc }, i, arr) => (
+              <div key={i} style={{display:'flex',gap:'1rem',padding:'0.85rem 1.25rem',borderBottom:i<arr.length-1?'0.5px solid rgba(0,0,0,0.05)':'none',alignItems:'baseline'}}>
+                <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'rgba(197,168,130,0.5)',flexShrink:0,marginTop:'5px'}} />
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'11px',fontWeight:'500',color:'#1a1a1a',letterSpacing:'0.02em',fontFamily:'var(--font-inter),sans-serif'}}>{label}</div>
+                  <div style={{fontSize:'11px',color:'#aaa',marginTop:'1px',fontFamily:'var(--font-inter),sans-serif'}}>{loc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Included */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem',marginBottom:'1.75rem'}}>
+            <div style={{border:'0.5px solid rgba(0,0,0,0.09)',padding:'1rem 1.25rem',background:'#fff'}}>
+              <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.85rem',fontFamily:'var(--font-inter),sans-serif'}}>Included</div>
+              {['Winery tasting at Domaine du Brésée','Curated premium lunch','Guided convoy the full route','Access to private route itinerary'].map((item,i) => (
+                <div key={i} style={{display:'flex',gap:'0.5rem',alignItems:'flex-start',marginBottom:'0.55rem'}}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style={{fontSize:'12px',color:'#555',lineHeight:'1.55',fontFamily:'var(--font-inter),sans-serif'}}>{item}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{border:'0.5px solid rgba(0,0,0,0.09)',padding:'1rem 1.25rem',background:'#fff'}}>
+              <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#aaa',marginBottom:'0.85rem',fontFamily:'var(--font-inter),sans-serif'}}>Not included</div>
+              {['Gas for your car','Additional purchases at stops'].map((item,i) => (
+                <div key={i} style={{display:'flex',gap:'0.5rem',alignItems:'flex-start',marginBottom:'0.55rem'}}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeLinecap="round" style={{flexShrink:0,marginTop:'2px'}}><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span style={{fontSize:'12px',color:'#aaa',lineHeight:'1.55',fontFamily:'var(--font-inter),sans-serif'}}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'1rem 1.25rem',border:'0.5px solid rgba(197,168,130,0.35)',background:'rgba(197,168,130,0.04)',marginBottom:'2rem',flexWrap:'wrap',gap:'0.5rem'}}>
+            <div>
+              <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>Member rate</div>
+              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2rem',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>$179 <span style={{fontSize:'1rem',fontFamily:'var(--font-inter),sans-serif',color:'#aaa',letterSpacing:0}}>CAD · per car · up to 2 people</span></div>
+            </div>
+            <div style={{fontSize:'11px',color:'#888',fontFamily:'var(--font-inter),sans-serif',maxWidth:'180px',lineHeight:'1.5',textAlign:'right'}}>Authorization hold — nothing charged until your spot is confirmed</div>
+          </div>
+
+          {/* Section divider */}
+          <div style={{borderTop:'0.5px solid rgba(0,0,0,0.07)',marginBottom:'2rem',paddingTop:'2rem'}}>
+            <div style={{fontSize:'9px',letterSpacing:'0.28em',textTransform:'uppercase',color:'#999',fontFamily:'var(--font-inter),sans-serif'}}>Register your spot</div>
+          </div>
+        </>
+      )}
 
       {/* Payment step */}
       {status === 'payment' && clientSecret && (
