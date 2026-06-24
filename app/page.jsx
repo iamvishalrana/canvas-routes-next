@@ -378,7 +378,6 @@ export default function Home() {
   function smoothScroll(id) {
     const el = document.getElementById(id)
     if (el) el.scrollIntoView({ behavior: 'smooth' })
-    setMenuOpen(false)
   }
 
   function inputStyle(field) {

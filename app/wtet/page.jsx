@@ -355,7 +355,7 @@ export default function WtetPage() {
       if (!form.passengers)         e.passengers  = true
       if (!form.hasChildren)        e.hasChildren = true
       if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
-      if (!form.source)             e.source      = true
+
     } else {
       if (!form.isMember) e.isMember = true
       if (form.isMember !== 'yes') {
@@ -384,7 +384,7 @@ export default function WtetPage() {
     const errs = validate()
     if (Object.keys(errs).length > 0) {
       const order = memberProfile
-        ? ['year','carMake','carModel','passengers','hasChildren','childrenAges','source']
+        ? ['year','carMake','carModel','passengers','hasChildren','childrenAges']
         : ['isMember','name','email','phone','dob_month','dob_day','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) document.getElementById(`field-${first}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
@@ -1118,7 +1118,8 @@ export default function WtetPage() {
                   </div>
                 )}
 
-                {/* Source */}
+                {/* Source — only for non-members; members already know us */}
+                {!memberProfile && (
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
                   <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
                   <div style={{position:'relative'}}>
@@ -1133,6 +1134,7 @@ export default function WtetPage() {
                   </div>
                   {errors.source && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
                 </div>
+                )}
 
                 {/* More */}
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
