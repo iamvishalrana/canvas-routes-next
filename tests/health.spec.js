@@ -202,7 +202,9 @@ test('wtet page loads', async ({ page }) => {
 
 test('wtet page shows form or closed message', async ({ page }) => {
   await page.goto('/wtet')
-  const form = page.locator('#field-name')
+  // When open: member selector / form header is shown before any input is visible.
+  // When closed: the closed message is shown instead.
+  const form = page.locator('text=Claim your seat at the wheel')
   const closed = page.locator('text=Registration is now closed')
   await expect(form.or(closed)).toBeVisible({ timeout: 15000 })
 })
