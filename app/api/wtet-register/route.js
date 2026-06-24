@@ -7,7 +7,7 @@ const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 const MEMBER_PRICE_CENTS    = 17900 // $179 CAD
 const NONMEMBER_PRICE_CENTS = 19900 // $199 CAD
 // Must match the override in app/api/public/settings/route.js
-const WTET_REGISTRATION_OPEN = new Date('2026-06-24T21:00:00Z') // 4 pm EST
+const WTET_REGISTRATION_OPEN = new Date('2026-06-24T20:00:00Z') // live now
 
 export async function POST(request) {
   if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
