@@ -303,6 +303,18 @@ export default function WtetPage() {
     if (!piId) return
     window.history.replaceState({}, '', '/wtet')
     if (redirectStatus === 'succeeded') {
+      // Restore member context saved to sessionStorage before the redirect
+      const savedMemberPi = sessionStorage.getItem('wtet_member_pi')
+      sessionStorage.removeItem('wtet_member_pi')
+      if (savedMemberPi === piId) {
+        wasMemberRef.current = true
+        // Member confirmation email was never sent (redirect interrupted the normal flow) — send now
+        fetch('/api/wtet-member-confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId: piId }),
+        }).catch(() => {})
+      }
       if (piSecret) setClientSecret(piSecret)
       setStatus('success')
     } else if (redirectStatus === 'failed') {
@@ -437,6 +449,8 @@ export default function WtetPage() {
         const data = await res.json().catch(() => ({}))
         if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
         wasMemberRef.current = true
+        // Persist PI ID so 3DS redirect can restore member state and send confirm email
+        sessionStorage.setItem('wtet_member_pi', data.clientSecret.split('_secret_')[0])
         setClientSecret(data.clientSecret)
         setStatus('payment')
         window.scrollTo({ top: 0, behavior: 'smooth' })

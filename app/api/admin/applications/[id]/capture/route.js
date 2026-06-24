@@ -43,6 +43,7 @@ export async function POST(request, { params }) {
   const { error: dbErr } = await supabase.from('applications').update({
     stripe_payment_status: 'paid',
     stripe_paid_at: new Date().toISOString(),
+    stripe_amount_paid: pi.amount,
   }).eq('id', id)
   if (dbErr) captureException(dbErr, { context: 'admin-capture-db-write', appId: id })
 

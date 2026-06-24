@@ -45,6 +45,14 @@ export async function POST(request) {
   const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
 
   const admin = createAdminClient()
+
+  // Idempotency guard — if already confirmed (e.g. 3DS redirect called this twice), skip email
+  const { data: existingApp } = await admin.from('applications')
+    .select('stripe_payment_status')
+    .eq('email', normalEmail)
+    .maybeSingle()
+  const alreadyConfirmed = existingApp?.stripe_payment_status === 'paid'
+
   const { error: confirmDbErr } = await admin.from('applications').update({
     stripe_payment_intent_id: pi.id,
     stripe_payment_status: 'paid',
@@ -54,7 +62,7 @@ export async function POST(request) {
   }).eq('email', normalEmail)
   if (confirmDbErr) captureException(confirmDbErr, { context: 'wtet-member-confirm-db', piId: pi.id })
 
-  if (!process.env.RESEND_API_KEY) return Response.json({ ok: true })
+  if (!process.env.RESEND_API_KEY || alreadyConfirmed) return Response.json({ ok: true })
 
   try {
     await Promise.all([

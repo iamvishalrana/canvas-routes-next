@@ -61,7 +61,7 @@ export async function POST(request, { params }) {
 
   // Update DB — best-effort; webhook will rescue if this fails
   const { error: dbErr } = await supabase.from('applications')
-    .update({ stripe_payment_status: 'paid', stripe_paid_at: new Date().toISOString() })
+    .update({ stripe_payment_status: 'paid', stripe_paid_at: new Date().toISOString(), stripe_amount_paid: pi.amount })
     .eq('stripe_payment_intent_id', piId)
   if (dbErr) captureException(dbErr, { context: 'admin-capture-db', piId })
 
