@@ -367,7 +367,7 @@ export default function WtetPage() {
 
       {/* HERO */}
       <section className="wtet-hero" style={{background:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden'}}>
-        <Image src="/route-photo.jpg" alt="" fill sizes="100vw" style={{objectFit:'cover',objectPosition:'center 60%',zIndex:0}} priority />
+        <Image src="/wtet.png" alt="" fill sizes="100vw" style={{objectFit:'cover',objectPosition:'center 50%',zIndex:0}} priority />
         <div style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
         <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem'}}>Canvas Routes</div>
@@ -417,9 +417,9 @@ export default function WtetPage() {
       <div style={{background:'#F5F1EC',borderBottom:'0.5px solid rgba(0,0,0,0.07)'}}>
         <div className="wtet-stats-bar" style={{maxWidth:'860px',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'0',padding:'1.5rem 3rem'}}>
           {[
-            { num:'~250', unit:'km' },
+            { num:'~210', unit:'km' },
             { num:'70%',  unit:'backroads' },
-            { num:'6',    unit:'stops' },
+            { num:'4',    unit:'stops' },
             { num:'1',    unit:'vineyard' },
             { num:'15',   unit:'cars max' },
           ].map(({ num, unit }, i, arr) => (
@@ -455,13 +455,21 @@ export default function WtetPage() {
               'We leave Montreal and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included, with a special discount on wine purchases for the group.',
               'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and skirts the US border at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the best stretches of road in Quebec, full stop.',
               'The day ends with a curated premium lunch in the Magog region. The restaurant is chosen for the drive — for the setting, the kitchen, and how well it closes out a day like this. Details sent to confirmed registrants.',
-              'Driver-focused cars only. Exotics, sports cars, and enthusiast vehicles. This is a drive, not a show.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
                 <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
                 <span style={{fontSize:'14px',color:'#555',lineHeight:'1.75'}}>{note}</span>
               </div>
             ))}
+          </div>
+
+          {/* Car eligibility callout */}
+          <div style={{display:'flex',alignItems:'flex-start',gap:'1rem',padding:'1rem 1.25rem',border:'0.5px solid rgba(0,0,0,0.18)',background:'#F5F1EC',marginBottom:'2.5rem'}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><path d="M19 17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2z"/><circle cx="12" cy="11" r="3"/></svg>
+            <div>
+              <div style={{fontSize:'11px',fontWeight:'600',color:'#1a1a1a',letterSpacing:'0.04em',marginBottom:'0.25rem',fontFamily:'var(--font-inter),sans-serif'}}>Driver-focused cars only</div>
+              <div style={{fontSize:'13px',color:'#666',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>Exotics, sports cars, and enthusiast vehicles. This is a drive, not a show.</div>
+            </div>
           </div>
 
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
