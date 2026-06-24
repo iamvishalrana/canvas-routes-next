@@ -93,6 +93,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 
 .nav-join {
   font-size: 11px;
+  font-family: var(--font-inter), sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.5rem 1.2rem;
@@ -106,10 +107,12 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 
 .nav-members {
   font-size: 10px;
+  font-family: var(--font-inter), sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.35rem 1.2rem;
   border: 0.5px solid #7B2032;
+  background: none;
   text-decoration: none;
   color: #7B2032;
   text-align: center;

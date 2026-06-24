@@ -35,8 +35,7 @@ export default function SiteNav({ links = [], ctaLabel = 'Membership' }) {
     window.location.href = '/'
   }
 
-  const linkStyle  = { color: '#555', textDecoration: 'none' }
-  const btnBase    = { background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 0 }
+  const linkStyle = { color: '#555', textDecoration: 'none' }
 
   return (
     <>
@@ -57,20 +56,18 @@ export default function SiteNav({ links = [], ctaLabel = 'Membership' }) {
         <div className="nav-cta">
           {checked && member ? (
             <>
-              <span style={{ fontSize: '11px', color: '#888', letterSpacing: '0.06em', textAlign: 'center', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {/* Name label — same visual style as other small eyebrow labels on the site */}
+              <span style={{
+                fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
+                color: '#999', textAlign: 'center', fontFamily: 'var(--font-inter),sans-serif',
+              }}>
                 {member.firstName || 'Member'}
               </span>
-              <div style={{ display: 'flex', gap: '0.3rem' }}>
-                <Link href="/members/dashboard" className="nav-join" style={{ flex: 1, textAlign: 'center', fontSize: '10px' }}>
-                  Dashboard
-                </Link>
-                <Link href="/members/profile" className="nav-join" style={{ flex: 1, textAlign: 'center', fontSize: '10px' }}>
-                  Profile
-                </Link>
-                <button onClick={signOut} className="nav-members" style={{ cursor: 'pointer', flex: 1, fontSize: '10px' }}>
-                  Sign out
-                </button>
-              </div>
+              {/* Two buttons — exact same layout as Membership + Members Login */}
+              <Link href="/members/dashboard" className="nav-join">Dashboard</Link>
+              <button onClick={signOut} className="nav-members" style={{ cursor: 'pointer' }}>
+                Sign out
+              </button>
             </>
           ) : (
             <>
@@ -97,7 +94,11 @@ export default function SiteNav({ links = [], ctaLabel = 'Membership' }) {
           <>
             <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Dashboard</Link>
             <Link href="/members/profile"   onClick={() => setMenuOpen(false)} style={{ color: '#555' }}>Profile</Link>
-            <button onClick={() => { setMenuOpen(false); signOut() }} style={{ ...btnBase, fontSize: '13px', color: '#7B2032', fontWeight: '500', textAlign: 'left' }}>
+            <Link href="/members/events"    onClick={() => setMenuOpen(false)} style={{ color: '#555' }}>Events</Link>
+            <button
+              onClick={() => { setMenuOpen(false); signOut() }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 0, fontSize: '13px', color: '#7B2032', fontWeight: '500', textAlign: 'left' }}
+            >
               Sign out
             </button>
           </>
