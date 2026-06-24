@@ -44,7 +44,7 @@ function PaymentStep({ email, onSuccess, onBack }) {
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, confirmParams: {}, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/members/events/wtet` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError('Payment could not be processed. Please try again.')
