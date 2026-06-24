@@ -1,15 +1,26 @@
 import { test, expect } from '@playwright/test'
 
+// Dismiss the WTET launch popup if it's on screen, so it doesn't
+// interfere with subsequent interactions on the homepage.
+async function dismissPopup(page) {
+  const close = page.locator('button[aria-label="Close"]').first()
+  if (await close.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await close.click()
+  }
+}
+
 // ─── Homepage Join Form ───────────────────────────────────────────────────────
 
 test('homepage loads', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveTitle(/Canvas Routes/, { timeout: 15000 })
+  await dismissPopup(page)
   await expect(page.locator('img.hero-logo')).toBeVisible()
 })
 
 test('homepage inquiry form renders', async ({ page }) => {
   await page.goto('/')
+  await dismissPopup(page)
   await page.locator('#join').scrollIntoViewIfNeeded()
   await expect(page.locator('#join input[type="text"]')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('#join input[type="email"]')).toBeVisible()
