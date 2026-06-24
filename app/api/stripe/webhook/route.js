@@ -79,6 +79,7 @@ function buildRoadTripConfirmHtml(firstName, eventLabel, amount, checkinUrl) {
           </td></tr>
         </table>
         <p style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#bbb;">If you&apos;ve already completed the check-in, you can ignore this button.</p>` : ''}
+        <p style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#666;">Please note that we will have a <strong style="color:#1a1a1a;font-weight:500;">waiver for you to sign</strong> before the trip begins. This is standard for all Canvas Routes events and covers all passengers in your vehicle.</p>
         <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.8;color:#666;">Any questions &mdash; reply directly to this email or reach out at <a href="mailto:jerry@canvasroutes.com" style="color:#3B6B2F;text-decoration:none;">jerry@canvasroutes.com</a>.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0">
           <tr><td style="border:0.5px solid rgba(0,0,0,0.18);">
