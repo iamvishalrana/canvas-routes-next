@@ -147,14 +147,15 @@ export default function Home() {
   // WTET popup — appears on every reload once 4 pm IST (10:30 UTC) June 24 has passed
   useEffect(() => {
     const WTET_OPEN = new Date('2026-06-24T10:30:00Z') // 4:00 pm IST
+    let timer
     function check() {
       if (new Date() >= WTET_OPEN) {
         setShowWtetPopup(true)
-        clearInterval(timer)
+        clearInterval(timer) // safe: clearInterval(undefined) is a no-op on first call
       }
     }
     check()
-    const timer = setInterval(check, 10000)
+    timer = setInterval(check, 10000)
     return () => clearInterval(timer)
   }, [])
 
