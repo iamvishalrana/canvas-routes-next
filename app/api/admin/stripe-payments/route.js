@@ -1,6 +1,7 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { stripe } from '../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
+import { captureException } from '../../../../lib/sentry.js'
 
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -8,7 +9,13 @@ export async function GET() {
 
   const supabase = createAdminClient()
 
-  const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
+  let allPIs
+  try {
+    allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
+  } catch (err) {
+    captureException(err, { context: 'admin-stripe-payments-list' })
+    return Response.json({ error: 'Could not fetch payments from Stripe.' }, { status: 502 })
+  }
 
   // Filter to Canvas Routes payments only
   const canvasPIs = allPIs.filter(pi => pi.metadata?.type)

@@ -33,20 +33,18 @@ export async function POST(request, { params }) {
   }
 
   try {
-    await stripe.paymentIntents.capture(piId, {}, { idempotencyKey: `capture-${id}` })
-
-    const { error: dbErr } = await supabase.from('applications').update({
-      stripe_payment_status: 'paid',
-      stripe_paid_at: new Date().toISOString(),
-    }).eq('id', id)
-
-    if (dbErr) {
-      captureException(dbErr, { context: 'admin-capture-db-write', appId: id })
-    }
+    await stripe.paymentIntents.capture(piId, {}, { idempotencyKey: `capture-${piId}` })
   } catch (err) {
     captureException(err, { context: 'admin-approve-capture', appId: id })
     return Response.json({ error: err.message || 'Capture failed.' }, { status: 500 })
   }
+
+  // Capture succeeded — update DB separately so a DB error doesn't surface as "Capture failed"
+  const { error: dbErr } = await supabase.from('applications').update({
+    stripe_payment_status: 'paid',
+    stripe_paid_at: new Date().toISOString(),
+  }).eq('id', id)
+  if (dbErr) captureException(dbErr, { context: 'admin-capture-db-write', appId: id })
 
   // Send confirmation email to registrant — belt-and-suspenders alongside the webhook
   if (process.env.RESEND_API_KEY && pi.metadata?.type === 'road_trip_wtet' && pi.metadata?.is_member !== 'yes') {

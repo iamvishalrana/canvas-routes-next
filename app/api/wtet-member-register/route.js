@@ -81,10 +81,11 @@ export async function POST(request) {
 
   // Save to DB as pending
   try {
+    const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
     const newReg = {
       event: EVENT_NAME,
-      registered_at: new Date().toISOString(),
-      attended: null,
+      registered_at: existingReg?.registered_at || new Date().toISOString(),
+      attended: existingReg?.attended ?? null,
     }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME)
     const registrations = [...prevRegs, newReg]

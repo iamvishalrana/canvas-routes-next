@@ -3,7 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
-import { EVENT_ATTENDANCE_KEYS, ATTENDANCE_KEY_TO_EVENT, EVENT_NAME_ALIASES, normalizeEventName as resolveEventName } from '../../../../lib/eventMeta.js'
+import { ATTENDANCE_KEY_TO_EVENT, normalizeEventName as resolveEventName } from '../../../../lib/eventMeta.js'
 import FadeUp from '../../../../components/FadeUp'
 import CountUp from '../../../../components/CountUp'
 

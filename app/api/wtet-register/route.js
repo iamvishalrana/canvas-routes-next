@@ -38,7 +38,6 @@ export async function POST(request) {
   }
 
   const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, _hp } = body
-  const amountCents = isMember === true ? MEMBER_PRICE_CENTS : NONMEMBER_PRICE_CENTS
   if (_hp) return Response.json({ success: true, clientSecret: null })
 
   // Validate required fields
@@ -62,6 +61,17 @@ export async function POST(request) {
   const fullCarModel = [carMake, carModel].filter(Boolean).join(' ')
   const normalEmail = email.toLowerCase().trim()
   const firstName = name.trim().split(' ')[0]
+
+  // Verify member status server-side — never trust isMember from the client body alone
+  let verifiedMember = false
+  if (isMember === true && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { data: member } = await createAdminClient().from('members')
+        .select('id').eq('email', normalEmail).maybeSingle()
+      verifiedMember = !!member
+    } catch { /* fall back to non-member price */ }
+  }
+  const amountCents = verifiedMember ? MEMBER_PRICE_CENTS : NONMEMBER_PRICE_CENTS
 
   // Save to DB as pending before creating PI
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) try {
