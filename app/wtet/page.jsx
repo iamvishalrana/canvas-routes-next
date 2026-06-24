@@ -366,9 +366,7 @@ export default function WtetPage() {
       </div>
 
       {/* HERO */}
-      <section className="wtet-hero" style={{background:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden'}}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/wtet.png" alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center 50%',zIndex:0}} />
+      <section className="wtet-hero" style={{background:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/wtet.png')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
         <div style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
         <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem'}}>Canvas Routes</div>
