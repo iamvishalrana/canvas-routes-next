@@ -11,8 +11,9 @@ export async function GET(request) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('applications')
-    .select('name, email, wtet_checkin')
+    .select('name, email, wtet_checkin, stripe_payment_status')
     .eq('stripe_payment_intent_id', token)
+    .in('stripe_payment_status', ['paid', 'authorized'])
     .maybeSingle()
 
   if (error || !data) return Response.json({ error: 'Not found' }, { status: 404 })
@@ -39,6 +40,7 @@ export async function POST(request) {
     .from('applications')
     .select('id')
     .eq('stripe_payment_intent_id', token)
+    .in('stripe_payment_status', ['paid', 'authorized'])
     .maybeSingle()
 
   if (lookupErr || !data) return Response.json({ error: 'Not found' }, { status: 404 })

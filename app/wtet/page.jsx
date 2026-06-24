@@ -403,11 +403,10 @@ export default function WtetPage() {
           body: JSON.stringify({
             carYear:       form.year,
             carMake:       form.carMake,
-            carModel:      form.carModel,   // API combines make + model — don't pre-combine here
+            carModel:      form.carModel,
             passengers:    form.passengers,
             hasChildren:   form.hasChildren,
             childrenAges:  form.childrenAges,
-            source:        form.source,
             more:          form.more,
           }),
         })

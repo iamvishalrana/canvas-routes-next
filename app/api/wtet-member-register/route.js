@@ -50,7 +50,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { carYear, carMake, carModel, passengers, hasChildren, childrenAges, source, dietary, more } = body
+  const { carYear, carMake, carModel, passengers, hasChildren, childrenAges, more } = body
   const normalEmail = user.email.toLowerCase().trim()
 
   // Duplicate guard — one per member
@@ -72,6 +72,7 @@ export async function POST(request) {
   if (!carModel?.trim()) return Response.json({ error: 'Car model is required.' }, { status: 400 })
   if (!passengers) return Response.json({ error: 'Number of passengers is required.' }, { status: 400 })
   if (!hasChildren) return Response.json({ error: 'Please answer the children question.' }, { status: 400 })
+  if (hasChildren === 'yes' && !childrenAges?.trim()) return Response.json({ error: 'Please provide the ages of children attending.' }, { status: 400 })
 
   // Get member name for emails
   const { data: member } = await admin.from('members').select('name').eq('id', user.id).maybeSingle()
@@ -94,8 +95,10 @@ export async function POST(request) {
       car_year: carYear.trim(),
       car_make: carMake.trim(),
       car_model: fullCar,
-      source: source || null,
-      more: [dietary ? `Dietary: ${dietary}` : null, more || null].filter(Boolean).join('\n\n') || null,
+      passengers: passengers || null,
+      has_children: hasChildren || null,
+      children_ages: childrenAges || null,
+      more: more || null,
       registrations,
       stripe_payment_status: 'pending',
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
@@ -125,8 +128,12 @@ export async function POST(request) {
         event_name: EVENT_NAME,
         is_member: 'yes',
         member_id: user.id,
+        car_year: carYear.trim(),
+        car_make: carMake.trim(),
+        car_model: fullCar,
         passengers: passengers || '',
         has_children: hasChildren || '',
+        children_ages: childrenAges || '',
         original_amount: String(MEMBER_PRICE_CENTS),
       },
       description: `Canvas Routes — ${EVENT_NAME} (Member rate)`,
