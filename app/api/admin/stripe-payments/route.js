@@ -64,8 +64,8 @@ export async function GET() {
       stripe_payment_intent_id: pi.id,
       name: pi.metadata.name || '',
       email,
-      // amount_received is 0 for non-succeeded PIs — correct for failed/pending display
-      stripe_amount_paid:     pi.amount_received,
+      // amount_received is 0 until captured; use pi.amount for authorized holds
+      stripe_amount_paid: pi.status === 'requires_capture' ? pi.amount : pi.amount_received,
       stripe_amount_refunded: amountRefunded,
       stripe_payment_status,
       stripe_payment_type: pi.metadata.type || '',

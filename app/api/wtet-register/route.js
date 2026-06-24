@@ -108,7 +108,7 @@ export async function POST(request) {
     captureException(e, { context: 'wtet-register-db', email: normalEmail })
   }
 
-  // Create Stripe PaymentIntent — immediate capture
+  // Create Stripe PaymentIntent — manual capture (hold only)
   try {
     const pi = await stripe.paymentIntents.create({
       amount: amountCents,
@@ -132,6 +132,17 @@ export async function POST(request) {
       automatic_payment_methods: { enabled: true },
       capture_method: 'manual',
     })
+
+    // Store PI ID immediately so the admin capture route can find this row
+    // even if the payment_intent.requires_capture webhook hasn't fired yet.
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const _sb = createAdminClient()
+      const { error: piStoreErr } = await _sb.from('applications')
+        .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_wtet' })
+        .eq('email', normalEmail)
+      if (piStoreErr) captureException(piStoreErr, { context: 'wtet-register-pi-store', email: normalEmail })
+    }
+
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {
     captureException(err, { context: 'wtet-create-payment-intent', email: normalEmail })
