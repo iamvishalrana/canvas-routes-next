@@ -50,7 +50,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { carYear, carMake, carModel, passengers, hasChildren, childrenAges, more } = body
+  const { carYear, carMake, carModel, passengers, hasChildren, childrenAges, source, dietary, more } = body
   const normalEmail = user.email.toLowerCase().trim()
 
   // Duplicate guard — one per member
@@ -94,7 +94,8 @@ export async function POST(request) {
       car_year: carYear.trim(),
       car_make: carMake.trim(),
       car_model: fullCar,
-      more: more || null,
+      source: source || null,
+      more: [dietary ? `Dietary: ${dietary}` : null, more || null].filter(Boolean).join('\n\n') || null,
       registrations,
       stripe_payment_status: 'pending',
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),

@@ -123,13 +123,22 @@ export default function WtetMemberPage() {
   const [loading, setLoading]       = useState(true)
   const [alreadyReg, setAlreadyReg] = useState(false)
 
-  const [form, setForm] = useState({ carYear:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', more:'' })
+  const [form, setForm] = useState({ carYear:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', dietary:'', more:'' })
   const [errors, setErrors]         = useState({})
   const [status, setStatus]         = useState(null) // null | 'loading' | 'payment' | 'success' | 'error'
   const [serverError, setServerError] = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
 
   useEffect(() => {
+    // If Stripe redirected back after 3DS authentication, redirect_status=succeeded
+    // is in the URL but the page has reloaded with no payment state — detect and recover.
+    const params = new URLSearchParams(window.location.search)
+    const redirectStatus = params.get('redirect_status')
+    if (redirectStatus === 'succeeded') {
+      setStatus('success')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+
     Promise.all([
       fetch('/api/member/me').then(r => r.ok ? r.json() : null),
       fetch('/api/wtet-member-register').then(r => r.ok ? r.json() : null),
@@ -167,6 +176,7 @@ export default function WtetMemberPage() {
     if (!form.passengers)     e.passengers  = true
     if (!form.hasChildren)    e.hasChildren = true
     if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
+    if (!form.source)         e.source      = true
     setErrors(e)
     return e
   }
@@ -176,7 +186,7 @@ export default function WtetMemberPage() {
     if (status === 'loading') return
     const errs = validate()
     if (Object.keys(errs).length) {
-      const first = ['carYear','carMake','carModel','passengers','hasChildren','childrenAges'].find(f => errs[f])
+      const first = ['carYear','carMake','carModel','passengers','hasChildren','childrenAges','source'].find(f => errs[f])
       if (first) document.getElementById(`wtet-mem-${first}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
       return
     }
@@ -185,7 +195,7 @@ export default function WtetMemberPage() {
       const res = await fetch('/api/wtet-member-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' ') }),
+        body: JSON.stringify({ ...form, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), source: form.source, dietary: form.dietary }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setServerError(data.error || 'Something went wrong.'); setStatus('error'); return }
@@ -358,6 +368,32 @@ export default function WtetMemberPage() {
               {errors.childrenAges && <span style={{fontSize:'11px',color:'#d06070'}}>Please enter the ages</span>}
             </div>
           )}
+
+          {/* Source */}
+          <div style={{marginBottom:'1rem'}}>
+            <label style={LABEL} htmlFor="wtet-mem-source">How did you hear about this drive? *</label>
+            <div style={{position:'relative'}}>
+              <select id="wtet-mem-source" value={form.source} onChange={e => update('source', e.target.value)}
+                style={{...sel,border:`0.5px solid ${errors.source?'#d06070':'rgba(0,0,0,0.16)'}`}}>
+                <option value="">Select an option</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Friend / Word of mouth">Friend / Word of mouth</option>
+                <option value="Members portal">Members portal</option>
+                <option value="Email">Email</option>
+                <option value="Other">Other</option>
+              </select><Chevron />
+            </div>
+            {errors.source && <span style={{fontSize:'11px',color:'#d06070'}}>Required</span>}
+          </div>
+
+          {/* Dietary */}
+          <div style={{marginBottom:'1rem'}}>
+            <label style={LABEL} htmlFor="wtet-mem-dietary">Dietary restrictions <span style={{textTransform:'none',letterSpacing:0,opacity:0.6}}>(optional — for the lunch)</span></label>
+            <input id="wtet-mem-dietary" type="text" placeholder="e.g. vegetarian, gluten-free, none" value={form.dietary}
+              onChange={e => update('dietary', e.target.value)} maxLength={200}
+              style={inp} />
+          </div>
 
           {/* More */}
           <div style={{marginBottom:'1.75rem'}}>
