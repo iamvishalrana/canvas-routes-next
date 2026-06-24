@@ -9,7 +9,7 @@ import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import { sel, L, PrimaryBtn, GhostBtn, Err } from '../_components/shared'
 
-const MAX_RECIPIENTS = 200
+const MAX_RECIPIENTS = 2000
 const DRAFT_KEY = 'bc_draft'
 
 const AUDIENCE_LABELS = {
@@ -436,7 +436,7 @@ export default function BroadcastsClient() {
       const res = await fetch('/api/admin/broadcasts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: subject.trim() || '(Test)', html: buildHtml(bodyHtml), body_html: bodyHtml, audience: 'specific_emails', specificEmails: [email] }),
+        body: JSON.stringify({ subject: subject.trim() || '(Test)', html: buildHtml(bodyHtml), body_html: bodyHtml, audience: 'specific_emails', specificEmails: [email], fromEmail }),
       })
       const data = await res.json().catch(() => ({}))
       setTestResult(res.ok ? 'sent' : (data.error || 'Failed.'))

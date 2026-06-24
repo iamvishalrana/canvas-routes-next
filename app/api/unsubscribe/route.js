@@ -2,11 +2,17 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 
 export async function POST(request) {
   let email
-  try {
-    const body = await request.json()
-    email = body.email?.toLowerCase().trim()
-  } catch {
-    return Response.json({ error: 'Invalid request.' }, { status: 400 })
+  const contentType = request.headers.get('content-type') || ''
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    // RFC 8058 one-click unsubscribe — email is in the query string
+    email = new URL(request.url).searchParams.get('email')?.toLowerCase().trim()
+  } else {
+    try {
+      const body = await request.json()
+      email = body.email?.toLowerCase().trim()
+    } catch {
+      return Response.json({ error: 'Invalid request.' }, { status: 400 })
+    }
   }
 
   if (!email || !email.includes('@')) {
