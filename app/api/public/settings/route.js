@@ -2,8 +2,8 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 
 const PUBLIC_KEYS = ['homepage_banner', 'event_page_url', 'event_registration_open', 'event_closed_message']
 
-// 4:00 pm IST = 10:30 UTC on June 24 2026
-const WTET_REGISTRATION_OPEN = new Date('2026-06-24T10:30:00Z')
+// 4:00 pm EST = 21:00 UTC on June 24 2026
+const WTET_REGISTRATION_OPEN = new Date('2026-06-24T21:00:00Z')
 
 export async function GET() {
   try {
