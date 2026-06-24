@@ -31,11 +31,19 @@ export default async function EventsPage() {
     admin.from('events').select('*').order('date', { ascending: true }).limit(50),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
     admin.from('members').select('tier, name').eq('id', user.id).maybeSingle(),
-    admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle(),
+    admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle(),
   ])
 
   const regMap = {}
   for (const r of (registrations || [])) regMap[r.event_id] = r.stripe_payment_status
+
+  // WTET registrations live in applications (not event_registrations) — map payment type to event name
+  const ROAD_TRIP_TYPE_TO_NAME = {
+    'road_trip_wtet': 'Whips to Eastern Townships — July 5, 2026',
+  }
+  const paidRoadTripEventName = (['paid', 'authorized'].includes(application?.stripe_payment_status) && application?.stripe_payment_type)
+    ? (ROAD_TRIP_TYPE_TO_NAME[application.stripe_payment_type] || null)
+    : null
 
   // Build a set of attended route event names (from applications.registrations marked by admin)
   const attendedNames = new Set(
@@ -75,7 +83,7 @@ export default async function EventsPage() {
         </h1>
       </header>
 
-      <EventsGrid upcoming={upcoming} past={past} regMap={regMap} tier={tier} attendedNames={Array.from(attendedNames)} />
+      <EventsGrid upcoming={upcoming} past={past} regMap={regMap} tier={tier} attendedNames={Array.from(attendedNames)} paidRoadTripEventName={paidRoadTripEventName} />
     </div>
   )
 }

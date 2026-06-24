@@ -88,12 +88,19 @@ function EventCard({ ev, isRegistered, isPast, isAttended, onClick }) {
   )
 }
 
-export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames = [] }) {
+export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames = [], paidRoadTripEventName = null }) {
   const router = useRouter()
 
   function isAttendedEvent(ev) {
     const evLower = (ev.name || '').toLowerCase()
     return attendedNames.some(name => name.includes(evLower) || evLower.includes(name.split(' —')[0].trim()))
+  }
+
+  function isRegisteredForEvent(ev) {
+    if (['free', 'paid'].includes(regMap[ev.id])) return true
+    // Road trip events (e.g. WTET) register via applications table, not event_registrations
+    if (paidRoadTripEventName && ev.name === paidRoadTripEventName) return true
+    return false
   }
 
   return (
@@ -110,7 +117,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames
               <FadeUp key={ev.id} delay={i * 70}>
                 <EventCard
                   ev={ev}
-                  isRegistered={['free', 'paid'].includes(regMap[ev.id])}
+                  isRegistered={isRegisteredForEvent(ev)}
                   isPast={false}
                   onClick={() => {
                     // Events with a full registration URL go there directly — skip the detail page
@@ -132,7 +139,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames
               <FadeUp key={ev.id} delay={i * 60}>
                 <EventCard
                   ev={ev}
-                  isRegistered={['free', 'paid'].includes(regMap[ev.id])}
+                  isRegistered={isRegisteredForEvent(ev)}
                   isPast={true}
                   isAttended={isAttendedEvent(ev)}
                   onClick={() => router.push(`/members/events/${ev.id}`)}

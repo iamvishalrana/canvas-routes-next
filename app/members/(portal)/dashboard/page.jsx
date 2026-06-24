@@ -52,13 +52,21 @@ export default async function DashboardPage() {
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
     admin.from('events').select('*').order('date', { ascending: true }),
     user.email
-      ? admin.from('applications').select('registrations').eq('email', user.email.toLowerCase()).maybeSingle()
+      ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle()
       : Promise.resolve({ data: null }),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
   ])
 
   const eventRegMap = {}
   for (const r of (eventRegs || [])) eventRegMap[r.event_id] = r.stripe_payment_status
+
+  // WTET registrations live in applications (not event_registrations) — map payment type to event name
+  const ROAD_TRIP_TYPE_TO_NAME = {
+    'road_trip_wtet': 'Whips to Eastern Townships — July 5, 2026',
+  }
+  const paidRoadTripEventName = (['paid', 'authorized'].includes(application?.stripe_payment_status) && application?.stripe_payment_type)
+    ? (ROAD_TRIP_TYPE_TO_NAME[application.stripe_payment_type] || null)
+    : null
 
   const status = member?.membership_status || 'pending'
   const statusStyle = STATUS_COLORS[status] || STATUS_COLORS.pending
@@ -361,7 +369,7 @@ export default async function DashboardPage() {
                       )}
                       <div style={{ marginTop: '0.85rem' }}>
                         {ev.registration_enabled === false ? null
-                          : ['free', 'paid'].includes(eventRegMap[ev.id]) ? (
+                          : (paidRoadTripEventName === ev.name || ['free', 'paid'].includes(eventRegMap[ev.id])) ? (
                           <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                             <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             Registered
