@@ -64,8 +64,8 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
       if (!res.ok) { setPromoError(data.error || 'Invalid promo code.'); return }
       setPromoResult(data)
       setPromoInput('')
-      // Re-fetch the updated PI so Apple Pay / Google Pay show the discounted amount
-      if (elements) await elements.fetchUpdates()
+      // Instantly update the amount in Elements (including Apple Pay / Google Pay)
+      if (elements) await elements.update({ amount: data.discountedAmount })
     } catch { setPromoError('Could not apply promo code. Please try again.') }
     finally { setPromoApplying(false) }
   }
@@ -79,8 +79,9 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
         body: JSON.stringify({ remove: true, paymentIntentId, email }),
       })
       if (res.ok) {
+        const original = promoResult?.originalAmount ?? price * 100
         setPromoResult(null)
-        if (elements) await elements.fetchUpdates()
+        if (elements) await elements.update({ amount: original })
       }
     } catch {}
   }
@@ -101,7 +102,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/wtet` }, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/wtet` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError('Payment could not be processed. Please try again.')
@@ -214,17 +215,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
 
       {/* Stripe PaymentElement */}
       <div style={{marginBottom:'1.25rem'}}>
-        {promoResult && (
-          <div style={{fontSize:'11px',color:'#888',lineHeight:'1.6',marginBottom:'0.75rem',fontFamily:'var(--font-inter),sans-serif'}}>
-            Apple Pay and Google Pay are unavailable when a promo code is applied. Please pay by card.
-          </div>
-        )}
-        <PaymentElement options={{
-          layout: 'tabs',
-          wallets: promoResult
-            ? { applePay: 'never', googlePay: 'never' }
-            : { applePay: 'auto', googlePay: 'auto' },
-        }} />
+        <PaymentElement options={{layout:'tabs', wallets:{applePay:'auto', googlePay:'auto'}}} />
       </div>
 
       {error && (
@@ -900,7 +891,9 @@ export default function WtetPage() {
               <Elements
                 stripe={getStripe()}
                 options={{
-                  clientSecret,
+                  mode: 'payment',
+                  amount: price * 100,
+                  currency: 'cad',
                   appearance: {
                     theme: 'stripe',
                     variables: {
