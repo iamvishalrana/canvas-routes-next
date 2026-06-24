@@ -59,10 +59,9 @@ export default async function EventsPage() {
     const d = parseEventDate(ev.date_display || ev.date)
     return !d || d >= today
   })
-  // Past events: only show ones the admin has marked as attended for this member
   const past = (events || []).filter(ev => {
     const d = parseEventDate(ev.date_display || ev.date)
-    return d && d < today && isAttendedEvent(ev)
+    return d && d < today
   }).reverse()
 
   return (
