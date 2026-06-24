@@ -96,15 +96,14 @@ export async function POST(request) {
   // Update application to mark payment as paid — look up by email since the PI ID
   // may not be stored yet if wtet-member-register's update hasn't propagated
   const admin = createAdminClient()
-  await admin.from('applications').update({
+  const { error: confirmDbErr } = await admin.from('applications').update({
     stripe_payment_intent_id: pi.id,
     stripe_payment_status: 'paid',
     stripe_amount_paid: pi.amount_received,
     stripe_payment_type: 'road_trip_wtet',
     stripe_paid_at: new Date().toISOString(),
-  }).eq('email', normalEmail).catch(err =>
-    captureException(err, { context: 'wtet-member-confirm-db', piId: pi.id })
-  )
+  }).eq('email', normalEmail)
+  if (confirmDbErr) captureException(confirmDbErr, { context: 'wtet-member-confirm-db', piId: pi.id })
 
   if (!process.env.RESEND_API_KEY) return Response.json({ ok: true })
 

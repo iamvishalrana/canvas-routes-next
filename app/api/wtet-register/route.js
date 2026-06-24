@@ -98,10 +98,11 @@ export async function POST(request) {
     if (upsertErr) {
       captureException(upsertErr, { context: 'wtet-register-db-upsert', email: normalEmail })
     } else if (appData?.id) {
-      await supabase.from('contacts').upsert(
+      const { error: contactErr } = await supabase.from('contacts').upsert(
         { application_id: appData.id },
         { onConflict: 'application_id', ignoreDuplicates: true }
-      ).catch(err => captureException(err, { context: 'wtet-register-contacts', email: normalEmail }))
+      )
+      if (contactErr) captureException(contactErr, { context: 'wtet-register-contacts', email: normalEmail })
     }
   } catch (e) {
     captureException(e, { context: 'wtet-register-db', email: normalEmail })

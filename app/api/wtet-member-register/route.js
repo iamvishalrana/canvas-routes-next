@@ -106,10 +106,11 @@ export async function POST(request) {
 
     if (upsertErr) captureException(upsertErr, { context: 'wtet-member-register-db', email: normalEmail })
     else if (appData?.id) {
-      await admin.from('contacts').upsert(
+      const { error: contactErr } = await admin.from('contacts').upsert(
         { application_id: appData.id },
         { onConflict: 'application_id', ignoreDuplicates: true }
-      ).catch(err => captureException(err, { context: 'wtet-member-register-contacts' }))
+      )
+      if (contactErr) captureException(contactErr, { context: 'wtet-member-register-contacts' })
     }
   } catch (e) {
     captureException(e, { context: 'wtet-member-register-db-outer', email: normalEmail })
