@@ -6,6 +6,7 @@ import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import SiteFooter from '../../components/SiteFooter'
+import FadeUp from '../../components/FadeUp'
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -312,6 +313,17 @@ export default function WtetPage() {
   return (
     <div style={{background:'#F5F1EC',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',minHeight:'100vh'}}>
       <style>{`
+        /* ── Hero entrance animations ── */
+        @keyframes wtet-fade-up {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes wtet-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 768px) {
           .wtet-hero { padding: clamp(100px,14vw,160px) 1.25rem 4rem !important; }
           .wtet-details { padding: 3.5rem 1.25rem !important; }
@@ -321,18 +333,17 @@ export default function WtetPage() {
           .reg-box-row { flex-direction: column !important; gap: 0.25rem !important; }
           .wtet-stats-bar { flex-wrap: wrap !important; gap: 1rem 2rem !important; padding: 1.25rem 1.5rem !important; }
           .wtet-stats-bar .stat-divider { display: none !important; }
+          .wtet-price-row { flex-direction: column !important; gap: 0.75rem !important; }
+          .wtet-price-row .price-divider { display: none !important; }
+          .wtet-member-grid { grid-template-columns: 1fr !important; }
         }
-        @keyframes wtet-scroll {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+        @media (max-width: 480px) {
+          .wtet-countdown { gap: 0 !important; }
+          .wtet-countdown-cell { padding: 0.75rem 0.9rem !important; min-width: 58px !important; }
+          .wtet-countdown-num { font-size: 2rem !important; }
+          .wtet-stats-bar { justify-content: flex-start !important; }
+          .join-form-row { flex-direction: column !important; }
         }
-        .wtet-strip-wrap { overflow: hidden; width: 100%; }
-        .wtet-strip-wrap:hover .wtet-strip { animation-play-state: paused; }
-        .wtet-strip { display: flex; gap: 4px; width: max-content; animation: wtet-scroll 40s linear infinite; }
-        .wtet-strip-photo { width: 260px; height: 190px; flex-shrink: 0; overflow: hidden; }
-        @media (max-width: 640px) { .wtet-strip-photo { width: 180px; height: 130px; } }
-        .wtet-strip-photo img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.88; transition: opacity 0.3s; }
-        .wtet-strip-wrap:hover .wtet-strip-photo img { opacity: 1; }
       `}</style>
 
       {/* NAV */}
@@ -369,40 +380,40 @@ export default function WtetPage() {
       <section className="wtet-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/wtet.png')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
         <div style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
-        <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem'}}>Canvas Routes</div>
+        <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem',animation:'wtet-fade-in 0.7s ease both',animationDelay:'100ms'}}>Canvas Routes</div>
         <div style={{position:'relative',zIndex:2}}>
-          <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.05',marginBottom:'0.75rem',letterSpacing:'-0.01em'}}>
+          <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.05',marginBottom:'0.75rem',letterSpacing:'-0.01em',animation:'wtet-fade-up 0.8s ease both',animationDelay:'250ms'}}>
             Whips to Eastern Townships
           </h1>
-          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.1rem,2.5vw,1.4rem)',fontStyle:'italic',color:'rgba(245,241,236,0.4)',marginBottom:'1.2rem'}}>
+          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.1rem,2.5vw,1.4rem)',fontStyle:'italic',color:'rgba(245,241,236,0.4)',marginBottom:'1.2rem',animation:'wtet-fade-up 0.7s ease both',animationDelay:'450ms'}}>
             Montreal to Lac Memphrémagog
           </div>
-          <div style={{display:'inline-block',padding:'0.45rem 1.2rem',border:'0.5px solid rgba(197,168,130,0.5)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'2.5rem'}}>
+          <div style={{display:'inline-block',padding:'0.45rem 1.2rem',border:'0.5px solid rgba(197,168,130,0.5)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'2.5rem',animation:'wtet-fade-in 0.6s ease both',animationDelay:'600ms'}}>
             Sunday · July 5, 2026
           </div>
-          <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem'}} />
-          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em'}}>
+          <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'wtet-fade-in 0.5s ease both',animationDelay:'700ms'}} />
+          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'wtet-fade-up 0.7s ease both',animationDelay:'800ms'}}>
             Serene backroads through wine country, mountain passes your car was built for, and a fine dining experience to close the day.
           </p>
 
           {/* Countdown */}
           {countdown && (
-            <div style={{display:'inline-flex',gap:'0',marginBottom:'3rem',border:'0.5px solid rgba(197,168,130,0.2)',overflow:'hidden'}}>
+            <div className="wtet-countdown" style={{display:'inline-flex',gap:'0',marginBottom:'3rem',border:'0.5px solid rgba(197,168,130,0.2)',overflow:'hidden',animation:'wtet-fade-in 0.6s ease both',animationDelay:'950ms'}}>
               {[
                 { label:'Days',    val: countdown.d },
                 { label:'Hours',   val: countdown.h },
                 { label:'Minutes', val: countdown.m },
                 { label:'Seconds', val: countdown.s },
               ].map(({ label, val }, i) => (
-                <div key={label} style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
-                  <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.8rem',fontWeight:'400',color:'#F5F1EC',lineHeight:1,letterSpacing:'0.05em'}}>{String(val).padStart(2,'0')}</div>
+                <div key={label} className="wtet-countdown-cell" style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
+                  <div className="wtet-countdown-num" style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.8rem',fontWeight:'400',color:'#F5F1EC',lineHeight:1,letterSpacing:'0.05em'}}>{String(val).padStart(2,'0')}</div>
                   <div style={{fontSize:'8px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.5)',marginTop:'0.4rem',fontFamily:'var(--font-inter),sans-serif'}}>{label}</div>
                 </div>
               ))}
             </div>
           )}
 
-          <div>
+          <div style={{animation:'wtet-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
             <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
               style={{display:'inline-block',padding:'0.9rem 2.5rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
               Secure your seat →
@@ -436,14 +447,15 @@ export default function WtetPage() {
       {/* DETAILS */}
       <section className="wtet-details" style={{background:'#EDE8E1',padding:'5rem 3rem'}}>
         <div style={{maxWidth:'680px',margin:'0 auto'}}>
+          <FadeUp>
           <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#888',marginBottom:'2rem'}}>Pricing &amp; details</div>
           <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC'}}>
-            <div style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap',marginBottom:'0.75rem'}}>
+            <div className="wtet-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap',marginBottom:'0.75rem'}}>
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Members</div>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
               </div>
-              <div style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
+              <div className="price-divider" style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>Non-members</div>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
@@ -477,6 +489,7 @@ export default function WtetPage() {
             style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#c5a882',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
             Register — from $179 →
           </a>
+          </FadeUp>
         </div>
       </section>
 
@@ -485,11 +498,13 @@ export default function WtetPage() {
         <img src="/membership-form.jpeg" alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center 40%',zIndex:0}} />
         <div style={{position:'absolute',inset:0,background:'rgba(8,16,10,0.88)',zIndex:1}} />
         <div style={{maxWidth:'560px',margin:'0 auto',position:'relative',zIndex:2}}>
-          <div style={{textAlign:'center',marginBottom:'4rem'}}>
-            <div style={{fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem'}}>Canvas Routes · July 5, 2026</div>
-            <h2 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.8rem,4vw,2.6rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.1',margin:0}}>What Your Day Looks Like</h2>
-            <div style={{width:'30px',height:'0.5px',background:'rgba(197,168,130,0.4)',margin:'1.5rem auto'}} />
-          </div>
+          <FadeUp>
+            <div style={{textAlign:'center',marginBottom:'4rem'}}>
+              <div style={{fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem'}}>Canvas Routes · July 5, 2026</div>
+              <h2 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.8rem,4vw,2.6rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.1',margin:0}}>What Your Day Looks Like</h2>
+              <div style={{width:'30px',height:'0.5px',background:'rgba(197,168,130,0.4)',margin:'1.5rem auto'}} />
+            </div>
+          </FadeUp>
 
           {[
             { label:'Meetup', venue:'Quartier Dix 30', address:'Brossard, QC', desc:'The group gathers in the Dix 30 parking lot. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
@@ -499,7 +514,8 @@ export default function WtetPage() {
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'Coming through Austin, the trees give way and the landscape opens. The road straightens and drops toward the valley floor, with Lake Memphrémagog spreading out below. A proper payoff — the kind of view that earns a slow roll-in.', pays:false },
             { label:'Premium Lunch', venue:'Magog Region, QC', address:'Location revealed upon confirmation', desc:'We curate the restaurant for every route — chosen for the setting, the kitchen, and how well it closes out a day like this. Details shared with confirmed registrants.', pays:true },
           ].map((stop, i, arr) => (
-            <div key={i} style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
+            <FadeUp key={i} delay={i * 80}>
+            <div style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
               <div style={{width:'6px',height:'6px',borderRadius:'50%',background:stop.pays?'#c5a882':'rgba(197,168,130,0.35)',flexShrink:0,marginTop:'6px'}} />
               <div style={{flex:1}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'0.35rem'}}>{stop.label}</div>
@@ -517,10 +533,12 @@ export default function WtetPage() {
                 </div>
               </div>
             </div>
+            </FadeUp>
           ))}
 
           <div style={{height:'0.5px',background:'rgba(197,168,130,0.15)',margin:'4rem 0'}} />
 
+          <FadeUp>
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
@@ -541,7 +559,9 @@ export default function WtetPage() {
               ))}
             </div>
           </div>
+          </FadeUp>
 
+          <FadeUp delay={100}>
           <div style={{border:'0.5px solid rgba(197,168,130,0.25)',padding:'2rem',background:'rgba(197,168,130,0.05)'}}>
             <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
@@ -564,6 +584,7 @@ export default function WtetPage() {
             <span style={{fontSize:'14px',color:'rgba(245,241,236,0.35)',lineHeight:'1.8'}}>Questions? </span>
             <a href="mailto:info@canvasroutes.com" style={{fontSize:'14px',color:'rgba(197,168,130,0.6)',textDecoration:'underline',textUnderlineOffset:'3px'}}>info@canvasroutes.com</a>
           </div>
+          </FadeUp>
         </div>
       </section>
 
@@ -644,6 +665,7 @@ export default function WtetPage() {
           {/* REGISTRATION FORM */}
           {showForm && (
             <>
+              <FadeUp>
               <div style={{textAlign:'center',marginBottom:'3.5rem'}}>
                 <div style={{display:'inline-block',fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#7B5B2E',border:'0.5px solid rgba(123,91,46,0.35)',background:'rgba(123,91,46,0.06)',padding:'4px 14px',marginBottom:'1.5rem',fontFamily:'var(--font-inter),sans-serif'}}>
                   Limited to 15 cars
@@ -654,6 +676,7 @@ export default function WtetPage() {
                   Fill in your details and authorize a hold on your card. We review every registration — your card is only charged once your spot is confirmed.
                 </p>
               </div>
+              </FadeUp>
 
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
 
@@ -662,7 +685,7 @@ export default function WtetPage() {
                   <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
                     Are you a Canvas Routes member?
                   </div>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+                  <div className="wtet-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
                     {[
                       {val:'yes', price:'$179', label:'Member rate', sublabel:'Canvas Routes member'},
                       {val:'no',  price:'$199', label:'Standard rate', sublabel:'Not a member'},
