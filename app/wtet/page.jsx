@@ -37,7 +37,7 @@ function Chevron() {
 
 // ── Stripe payment form ───────────────────────────────────────────────────────
 
-function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, onBack }) {
+function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, onBack, onMemberConfirm }) {
   const stripe   = useStripe()
   const elements = useElements()
   const [paying, setPaying]         = useState(false)
@@ -112,6 +112,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
     }
 
     payingRef.current = false
+    if (isMember && onMemberConfirm) onMemberConfirm(paymentIntentId)
     onSuccess()
   }
 
@@ -907,6 +908,13 @@ export default function WtetPage() {
                   isMember={!!memberProfile}
                   onSuccess={() => setStatus('success')}
                   onBack={() => { setStatus(null); setClientSecret(null) }}
+                  onMemberConfirm={piId => {
+                    fetch('/api/wtet-member-confirm', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ paymentIntentId: piId }),
+                    }).catch(() => {})
+                  }}
                 />
               </Elements>
             </div>

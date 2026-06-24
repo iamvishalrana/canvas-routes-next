@@ -190,11 +190,13 @@ export async function POST(request) {
           }, { onConflict: 'email' }).catch(err =>
             captureException(err, { context: 'road-trip-payment-db', piId: pi.id })
           )
-          if (process.env.RESEND_API_KEY && normalEmail) {
-            const isMember = pi.metadata?.is_member === 'yes'
+          // Members get their confirmation email from /api/wtet-member-confirm (called
+          // directly by the page after payment). Webhook only sends for non-members
+          // (whose payment_intent.succeeded fires after admin manually captures the hold).
+          const isMember = pi.metadata?.is_member === 'yes'
+          if (!isMember && process.env.RESEND_API_KEY && normalEmail) {
             const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
             await Promise.all([
-              // Registrant confirmation
               fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -207,7 +209,6 @@ export async function POST(request) {
                   text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. In the meantime, follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                 }),
               }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),
-              // Admin notification
               fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -215,7 +216,7 @@ export async function POST(request) {
                   from: 'Canvas Routes <info@canvasroutes.com>',
                   to: 'jerry@canvasroutes.com',
                   subject: `New WTET Registration — ${name || normalEmail}`,
-                  text: `New registration for ${eventLabel}\n\nName: ${name || '—'}\nEmail: ${normalEmail}\nAmount: ${amountFormatted}\nType: ${isMember ? 'Member (paid immediately)' : 'Non-member (manual capture)'}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}`,
+                  text: `New registration for ${eventLabel}\n\nName: ${name || '—'}\nEmail: ${normalEmail}\nAmount: ${amountFormatted}\nType: Non-member (manual capture)\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}`,
                 }),
               }).catch(err => captureException(err, { context: 'road-trip-admin-email', email: normalEmail })),
             ])
