@@ -532,8 +532,6 @@ export default function WtetPage() {
           .wtet-price-row .price-divider { display: none !important; }
           .wtet-member-grid { grid-template-columns: 1fr 1fr !important; }
           .reg-box-row     { flex-direction: column !important; gap: 0.25rem !important; }
-          .wtet-per-car-shared { display: none !important; }
-          .wtet-per-car-inline { display: inline !important; }
 
           /* Hero CTA full-width */
           .wtet-hero-cta   { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
@@ -647,24 +645,18 @@ export default function WtetPage() {
           <FadeUp>
           <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#888',marginBottom:'2rem'}}>Pricing &amp; details</div>
           <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC'}}>
-            <div className="wtet-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap',marginBottom:'0.75rem'}}>
+            <div className="wtet-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap'}}>
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Members</div>
-                <div style={{display:'flex',alignItems:'baseline',gap:'0.6rem',flexWrap:'wrap'}}>
-                  <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
-                  <span className="wtet-per-car-inline" style={{fontSize:'11px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',display:'none'}}>per car · up to 2</span>
-                </div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
               </div>
               <div className="price-divider" style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>Non-members</div>
-                <div style={{display:'flex',alignItems:'baseline',gap:'0.6rem',flexWrap:'wrap'}}>
-                  <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
-                  <span className="wtet-per-car-inline" style={{fontSize:'11px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',display:'none'}}>per car · up to 2</span>
-                </div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
               </div>
             </div>
-            <div className="wtet-per-car-shared" style={{fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif'}}>per car · up to 2 people</div>
+            <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>2 people per car</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {[
