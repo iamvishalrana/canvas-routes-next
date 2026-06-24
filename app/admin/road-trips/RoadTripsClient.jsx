@@ -121,19 +121,19 @@ export default function RoadTripsClient() {
     <div style={SECTION}>
       <div style={{ marginBottom: '1.75rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem', fontFamily: 'var(--font-inter),sans-serif' }}>Admin</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>Road Trips</h1>
+        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>Routes</h1>
       </div>
 
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : trips.length === 0 ? (
-        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No road trip registrations yet.</div>
+        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No route registrations yet.</div>
       ) : (
         <>
           {/* Trip tabs — only shown when more than one trip */}
           {trips.length > 1 && (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-              {[{ id: 'all', label: 'All Trips' }, ...trips.map(t => ({ id: t, label: t }))].map(t => {
+              {[{ id: 'all', label: 'All Routes' }, ...trips.map(t => ({ id: t, label: t }))].map(t => {
                 const active = activeTrip === t.id
                 return (
                   <button key={t.id} onClick={() => { setActiveTrip(t.id); setSearch('') }} style={{
@@ -189,8 +189,8 @@ export default function RoadTripsClient() {
               </div>
               <ExportButton
                 filename="road-trips"
-                title="Road Trips"
-                headers={['Name', 'Email', 'Car', 'Trip', 'Passengers', 'Kids', 'Registered', 'Attended']}
+                title="Routes"
+                headers={['Name', 'Email', 'Car', 'Route', 'Passengers', 'Kids', 'Registered', 'Attended']}
                 rows={filtered.map(({ app, reg }) => [
                   app.name || '',
                   app.email || '',
@@ -238,7 +238,7 @@ export default function RoadTripsClient() {
                     <th style={TH}>Name</th>
                     <th style={TH}>Email</th>
                     <th style={TH}>Car</th>
-                    {trips.length > 1 && activeTrip === 'all' && <th style={TH}>Trip</th>}
+                    {trips.length > 1 && activeTrip === 'all' && <th style={TH}>Route</th>}
                     <th style={TH}>Passengers</th>
                     <th style={TH}>Registered</th>
                     <th style={TH}>Attended</th>

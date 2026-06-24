@@ -1,5 +1,5 @@
 import RoadTripsClient from './RoadTripsClient'
-export const metadata = { title: 'Road Trips — Admin' }
+export const metadata = { title: 'Routes — Admin' }
 export default function RoadTripsPage() {
   return <RoadTripsClient />
 }
