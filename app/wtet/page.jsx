@@ -214,7 +214,17 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
 
       {/* Stripe PaymentElement */}
       <div style={{marginBottom:'1.25rem'}}>
-        <PaymentElement options={{layout:'tabs', wallets:{applePay:'auto', googlePay:'auto'}}} />
+        {promoResult && (
+          <div style={{fontSize:'11px',color:'#888',lineHeight:'1.6',marginBottom:'0.75rem',fontFamily:'var(--font-inter),sans-serif'}}>
+            Apple Pay and Google Pay are unavailable when a promo code is applied. Please pay by card.
+          </div>
+        )}
+        <PaymentElement options={{
+          layout: 'tabs',
+          wallets: promoResult
+            ? { applePay: 'never', googlePay: 'never' }
+            : { applePay: 'auto', googlePay: 'auto' },
+        }} />
       </div>
 
       {error && (
