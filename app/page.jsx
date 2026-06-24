@@ -116,6 +116,7 @@ export default function Home() {
       .catch(() => {})
   }, [])
   const [showEventsPopup] = useState(false)
+  const [showWtetPopup, setShowWtetPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
   const [homepageBanner, setHomepageBanner] = useState(null)
@@ -142,6 +143,21 @@ export default function Home() {
     const t = setInterval(() => { if (new Date() >= LAUNCH) { setMembershipLive(true); clearInterval(t) } }, 15000)
     return () => clearInterval(t)
   }, [])
+
+  // WTET popup — appears on every reload once 4 pm IST (10:30 UTC) June 24 has passed
+  useEffect(() => {
+    const WTET_OPEN = new Date('2026-06-24T10:30:00Z') // 4:00 pm IST
+    function check() {
+      if (new Date() >= WTET_OPEN) {
+        setShowWtetPopup(true)
+        clearInterval(timer)
+      }
+    }
+    check()
+    const timer = setInterval(check, 10000)
+    return () => clearInterval(timer)
+  }, [])
+
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
   const refSource = useRef('')
 
@@ -416,6 +432,108 @@ export default function Home() {
           { href:'/faq',     label:'FAQ' },
         ]}
       />
+
+      {/* WTET LAUNCH POPUP — shown on every reload after 4 pm IST June 24 */}
+      {showWtetPopup && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Whips to Eastern Townships registration open"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1.5rem',
+            background: 'rgba(8,14,10,0.72)',
+            backdropFilter: 'blur(3px)',
+          }}
+          onClick={() => setShowWtetPopup(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#0F1E14', maxWidth: '480px', width: '100%',
+              position: 'relative', overflow: 'hidden',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
+            }}
+          >
+            {/* Gold top line */}
+            <div style={{ height: '2px', background: 'linear-gradient(90deg, transparent, #c5a882, transparent)' }} />
+
+            <div style={{ padding: 'clamp(2rem,5vw,2.75rem)' }}>
+              {/* Close */}
+              <button
+                onClick={() => setShowWtetPopup(false)}
+                aria-label="Close"
+                style={{
+                  position: 'absolute', top: '1rem', right: '1rem',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'rgba(245,241,236,0.35)', fontSize: '20px', lineHeight: 1, padding: '4px',
+                  fontFamily: 'var(--font-inter),sans-serif',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.75)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.35)'}
+              >
+                ×
+              </button>
+
+              {/* Eyebrow */}
+              <div style={{
+                fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
+                color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem',
+              }}>
+                Canvas Routes · July 5, 2026
+              </div>
+
+              {/* Heading */}
+              <h2 style={{
+                fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem,4vw,2.4rem)',
+                fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1,
+                margin: '0 0 0.6rem',
+              }}>
+                Whips to Eastern Townships
+              </h2>
+
+              {/* Sub */}
+              <div style={{
+                fontSize: '13px', color: 'rgba(197,168,130,0.7)',
+                fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic',
+                marginBottom: '1.25rem',
+              }}>
+                Montreal to Lac Memphrémagog
+              </div>
+
+              {/* Divider */}
+              <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.4)', marginBottom: '1.25rem' }} />
+
+              {/* Body */}
+              <p style={{
+                fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8',
+                fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1.75rem',
+              }}>
+                Registration is now open. Serene backroads through wine country, a private winery experience, and a curated lunch to close the day. Limited to 15 cars.
+              </p>
+
+              {/* CTA */}
+              <a
+                href="/wtet#form"
+                onClick={() => setShowWtetPopup(false)}
+                style={{
+                  display: 'inline-block', padding: '0.85rem 2rem',
+                  background: '#F5F1EC', color: '#0F1E14',
+                  fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                  fontFamily: 'var(--font-inter),sans-serif', fontWeight: '600',
+                  textDecoration: 'none', transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
+                onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
+              >
+                Secure your seat →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HOMEPAGE ANNOUNCEMENT BANNER */}
       {homepageBanner && (
