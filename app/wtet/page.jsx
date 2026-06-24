@@ -37,12 +37,48 @@ function Chevron() {
 
 // ── Stripe payment form ───────────────────────────────────────────────────────
 
-function PaymentForm({ name, email, price, onSuccess, onBack }) {
+function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, onBack }) {
   const stripe   = useStripe()
   const elements = useElements()
-  const [paying, setPaying] = useState(false)
-  const [error,  setError]  = useState(null)
-  const payingRef = useRef(false)
+  const [paying, setPaying]         = useState(false)
+  const [error,  setError]          = useState(null)
+  const payingRef                   = useRef(false)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoApplying, setPromoApplying] = useState(false)
+  const [promoError, setPromoError] = useState(null)
+  const [promoResult, setPromoResult] = useState(null) // { discountedAmount, originalAmount, percentOff, amountOff }
+
+  const paymentIntentId = clientSecret?.split('_secret_')[0]
+  const displayPrice = promoResult ? (promoResult.discountedAmount / 100).toFixed(2) : `${price}.00`
+
+  async function applyPromo() {
+    if (!promoInput.trim() || !paymentIntentId) return
+    setPromoApplying(true); setPromoError(null)
+    try {
+      const res = await fetch('/api/stripe/apply-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoInput.trim(), paymentIntentId, email }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setPromoError(data.error || 'Invalid promo code.'); return }
+      setPromoResult(data)
+      setPromoInput('')
+    } catch { setPromoError('Could not apply promo code. Please try again.') }
+    finally { setPromoApplying(false) }
+  }
+
+  async function removePromo() {
+    if (!paymentIntentId) return
+    try {
+      const res = await fetch('/api/stripe/apply-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remove: true, paymentIntentId, email }),
+      })
+      if (res.ok) setPromoResult(null)
+    } catch {}
+  }
 
   async function handlePay(e) {
     e.preventDefault()
@@ -91,15 +127,18 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
         <span style={{fontSize:'10px',color:'#bbb',fontFamily:'var(--font-inter),sans-serif'}}>Powered by Stripe</span>
       </div>
 
-      {/* Hold notice */}
-      <div style={{padding:'0.75rem 1rem',background:'rgba(197,168,130,0.08)',border:'0.5px solid rgba(197,168,130,0.3)',marginBottom:'1.5rem'}}>
-        <div style={{fontSize:'11px',color:'#7B5B2E',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>
-          <strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for $200 but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.
+      {/* Notice */}
+      <div style={{padding:'0.75rem 1rem',background:isMember?'rgba(59,107,47,0.06)':'rgba(197,168,130,0.08)',border:`0.5px solid ${isMember?'rgba(59,107,47,0.25)':'rgba(197,168,130,0.3)'}`,marginBottom:'1.5rem'}}>
+        <div style={{fontSize:'11px',color:isMember?'#3B6B2F':'#7B5B2E',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>
+          {isMember
+            ? <><strong style={{fontWeight:'500'}}>Member rate — $179 CAD.</strong> Payment is charged immediately. Your spot is confirmed as soon as it clears.</>
+            : <><strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for ${price} but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.</>
+          }
         </div>
       </div>
 
       {/* Order summary */}
-      <div style={{borderTop:'0.5px solid rgba(0,0,0,0.08)',borderBottom:'0.5px solid rgba(0,0,0,0.08)',padding:'1.25rem 0',marginBottom:'1.5rem'}}>
+      <div style={{borderTop:'0.5px solid rgba(0,0,0,0.08)',borderBottom:'0.5px solid rgba(0,0,0,0.08)',padding:'1.25rem 0',marginBottom:'1.25rem'}}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'1rem',marginBottom:'0.75rem'}}>
           <div>
             <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.3rem',fontFamily:'var(--font-inter),sans-serif'}}>Canvas Routes · July 5, 2026</div>
@@ -107,7 +146,14 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
             <div style={{fontSize:'12px',color:'#999',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>{email}</div>
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
-            <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>${price}.00</div>
+            {promoResult ? (
+              <>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.1rem',fontWeight:'400',color:'#bbb',lineHeight:1,letterSpacing:'0.03em',textDecoration:'line-through'}}>${price}.00</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#3B6B2F',lineHeight:1,letterSpacing:'0.03em'}}>${displayPrice}</div>
+              </>
+            ) : (
+              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>${price}.00</div>
+            )}
             <div style={{fontSize:'10px',color:'#aaa',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>CAD · per car · up to 2 people</div>
           </div>
         </div>
@@ -121,6 +167,43 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
             <span style={{fontSize:'11px',color:'#666',fontFamily:'var(--font-inter),sans-serif'}}>{item}</span>
           </div>
         ))}
+      </div>
+
+      {/* Promo code */}
+      <div style={{marginBottom:'1.25rem'}}>
+        {promoResult ? (
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.65rem 0.9rem',background:'rgba(59,107,47,0.06)',border:'0.5px solid rgba(59,107,47,0.25)'}}>
+            <div>
+              <div style={{fontSize:'11px',color:'#3B6B2F',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>
+                ✓ {promoResult.percentOff ? `${promoResult.percentOff}% off` : `$${(promoResult.amountOff/100).toFixed(2)} off`} applied
+              </div>
+              <div style={{fontSize:'11px',color:'#888',marginTop:'1px',fontFamily:'var(--font-inter),sans-serif'}}>
+                ${price}.00 → ${displayPrice} CAD
+              </div>
+            </div>
+            <button type="button" onClick={removePromo} style={{background:'none',border:'none',fontSize:'11px',color:'#aaa',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textDecoration:'underline',textUnderlineOffset:'2px',padding:0}}>
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div style={{display:'flex',gap:'0.5rem'}}>
+            <input
+              type="text"
+              placeholder="Promo code"
+              value={promoInput}
+              onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyPromo() } }}
+              style={{flex:1,padding:'0.75rem 1rem',border:'1px solid rgba(0,0,0,0.18)',background:'#fff',fontSize:'13px',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',outline:'none',letterSpacing:'0.06em'}}
+            />
+            <button type="button" onClick={applyPromo} disabled={promoApplying || !promoInput.trim()}
+              style={{padding:'0.75rem 1.25rem',background:'rgba(0,0,0,0.04)',border:'1px solid rgba(0,0,0,0.18)',fontSize:'11px',letterSpacing:'0.12em',textTransform:'uppercase',color:'#555',cursor:promoApplying||!promoInput.trim()?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',opacity:promoApplying||!promoInput.trim()?0.5:1,whiteSpace:'nowrap'}}>
+              {promoApplying ? '…' : 'Apply'}
+            </button>
+          </div>
+        )}
+        {promoError && (
+          <div style={{fontSize:'11px',color:'#d06070',marginTop:'0.4rem',fontFamily:'var(--font-inter),sans-serif'}}>{promoError}</div>
+        )}
       </div>
 
       {/* Stripe PaymentElement */}
@@ -145,7 +228,7 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
         ) : (
           <>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Authorize ${price}.00 CAD · 2 people per car
+            {isMember ? 'Pay' : 'Authorize'} ${displayPrice} CAD · 2 people per car
           </>
         )}
       </button>
@@ -772,9 +855,11 @@ export default function WtetPage() {
                 }}
               >
                 <PaymentForm
-                  name={form.name}
-                  email={form.email}
+                  name={form.name || memberProfile?.name || ''}
+                  email={form.email || memberProfile?.email || ''}
                   price={price}
+                  clientSecret={clientSecret}
+                  isMember={!!memberProfile}
                   onSuccess={() => setStatus('success')}
                   onBack={() => { setStatus(null); setClientSecret(null) }}
                 />

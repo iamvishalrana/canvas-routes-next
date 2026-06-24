@@ -112,6 +112,7 @@ export async function POST(request) {
         passengers: passengers || '',
         has_children: hasChildren || '',
         is_member: isMember ? 'yes' : 'no',
+        original_amount: String(amountCents),
       },
       description: `Canvas Routes — ${EVENT_NAME}`,
       automatic_payment_methods: { enabled: true },

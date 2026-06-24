@@ -33,14 +33,16 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  // Remove promo: reset to the server-side canonical price from PI metadata — never trust client amount
+  // Remove promo: reset to canonical price — use original_amount from metadata when available
   if (remove) {
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
       if (pi.metadata?.email?.toLowerCase().trim() !== callerEmail) {
         return Response.json({ error: 'Invalid request.' }, { status: 400 })
       }
-      const canonicalAmount = PRICES[pi.metadata?.type]
+      const canonicalAmount = pi.metadata?.original_amount
+        ? parseInt(pi.metadata.original_amount, 10)
+        : PRICES[pi.metadata?.type]
       if (!canonicalAmount) {
         return Response.json({ error: 'Invalid request.' }, { status: 400 })
       }
@@ -101,8 +103,9 @@ export async function POST(request) {
       await releaseLock(lockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
-    // Only allow promo codes on membership payments
-    if (!['membership_routes', 'membership_inner_circle'].includes(pi.metadata?.type)) {
+    // Allow promo codes on membership and WTET road trip payments
+    const allowedTypes = ['membership_routes', 'membership_inner_circle', 'road_trip_wtet']
+    if (!allowedTypes.includes(pi.metadata?.type)) {
       await releaseLock(lockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
