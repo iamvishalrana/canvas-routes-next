@@ -560,8 +560,9 @@ export default function EventsClient() {
     setShowRegistrants(eventId)
     if (!forceReload && registrantsData[eventId]) return
     setLoadingRegistrants(true)
-    // Paid road trips require an authorized or captured hold to count as registered
-    const isPaidRoadTrip = eventType === 'Road Trip' && eventPrice > 0
+    // Road trips with Stripe payment require an authorized or captured hold to count as registered.
+    // Don't require eventPrice > 0 — WTET uses a public page with its own pricing, not member_price.
+    const isPaidRoadTrip = eventType === 'Road Trip'
     try {
       const [regRes, cRes] = await Promise.all([
         fetch(`/api/admin/events/${eventId}/registrants`),
@@ -606,11 +607,15 @@ export default function EventsClient() {
           const rsvpToken = (c.rsvp_history || []).find(t => evBase(t.event_name) === evBase(eventName))
           const isConfirmed = !!(rsvpToken?.confirmed_at || reg?.rsvp_confirmed)
           const { make, model } = parseCarMakeModel(c.car_model)
+          // For paid road trip contacts, use the real Stripe payment status and amount
+          const isRoadTripPayment = c.stripe_payment_type?.startsWith('road_trip_')
+          const paymentStatus = isRoadTripPayment ? (c.stripe_payment_status || 'registered') : null
           return {
             name: c.name || '—',
             email: c.email || '—',
             type: 'Public',
-            status: isConfirmed ? 'confirmed' : 'registered',
+            status: paymentStatus ?? (isConfirmed ? 'confirmed' : 'registered'),
+            amount: isRoadTripPayment ? (c.stripe_amount_paid || null) : null,
             registeredAt: reg?.registered_at || null,
             rsvpAnswers: rsvpToken?.answers || null,
             confirmedAt: rsvpToken?.confirmed_at || null,
@@ -1015,7 +1020,7 @@ export default function EventsClient() {
                                         </div>
                                         <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
-                                        <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#8A6535' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status || '—'}</div>
+                                        <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#c5a882' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : r.status || '—'}</div>
                                         <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                           {canSend && !result?.sent && (
