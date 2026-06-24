@@ -107,7 +107,7 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
             <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>${price}.00</div>
-            <div style={{fontSize:'10px',color:'#aaa',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>CAD · per car</div>
+            <div style={{fontSize:'10px',color:'#aaa',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>CAD · per car · up to 2 people</div>
           </div>
         </div>
         {[
@@ -438,17 +438,19 @@ export default function WtetPage() {
       <section className="wtet-details" style={{background:'#EDE8E1',padding:'5rem 3rem'}}>
         <div style={{maxWidth:'680px',margin:'0 auto'}}>
           <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#888',marginBottom:'2rem'}}>Pricing &amp; details</div>
-          <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC',display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap'}}>
-            <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
-              <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Members</div>
-              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
+          <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC'}}>
+            <div style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap',marginBottom:'0.75rem'}}>
+              <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
+                <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>Members</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
+              </div>
+              <div style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
+              <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
+                <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>Non-members</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
+              </div>
             </div>
-            <div style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
-            <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
-              <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>Non-members</div>
-              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
-            </div>
-            <div style={{fontSize:'12px',color:'#aaa',alignSelf:'flex-end',paddingBottom:'4px',fontFamily:'var(--font-inter),sans-serif'}}>per car · up to 2 people</div>
+            <div style={{fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif'}}>per car · up to 2 people</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {[
@@ -550,6 +552,7 @@ export default function WtetPage() {
                   <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'rgba(245,241,236,0.6)',letterSpacing:'0.04em'}}>$199 <span style={{fontSize:'11px',color:'rgba(245,241,236,0.35)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>non-members</span></span>
                 </div>
               </div>
+              <div style={{fontSize:'11px',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>per car · up to 2 people</div>
               <div style={{height:'0.5px',background:'rgba(197,168,130,0.1)'}} />
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>Registration</div>
@@ -885,7 +888,7 @@ export default function WtetPage() {
 
                 {/* Payment note */}
                 <div style={{marginBottom:'2.5rem',padding:'1rem 1.2rem',border:'0.5px solid rgba(0,0,0,0.12)',background:'rgba(197,168,130,0.06)'}}>
-                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — ${price} per car</div>
+                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — ${price} per car · up to 2 people</div>
                   <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a ${price} hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
                 </div>
 
