@@ -60,7 +60,7 @@ function PaymentForm({ name, email, price, onSuccess, onBack }) {
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, confirmParams: {}, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/wtet` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError('Payment could not be processed. Please try again.')
@@ -282,7 +282,6 @@ export default function WtetPage() {
         body: JSON.stringify({
           ...form,
           phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '',
-          carModel: [form.carMake, form.carModel].filter(Boolean).join(' '),
           dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`,
           isMember: form.isMember === 'yes',
           _hp: honeypotRef.current?.value || '',
@@ -681,7 +680,7 @@ export default function WtetPage() {
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
 
                 {/* Member status */}
-                <div style={{marginBottom:'1.5rem'}}>
+                <div id="field-isMember" style={{marginBottom:'1.5rem'}}>
                   <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
                     Are you a Canvas Routes member?
                   </div>
