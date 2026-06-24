@@ -175,6 +175,7 @@ export default function WtetPage() {
   const [closedMsg, setClosedMsg]     = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
   const [countdown, setCountdown]     = useState(null)
+  const [memberProfile, setMemberProfile] = useState(null) // set when a member is logged in
   const honeypotRef = useRef(null)
 
   useEffect(() => {
@@ -199,6 +200,30 @@ export default function WtetPage() {
       .then(s => {
         if (s.event_registration_open === 'false') setRegOpen(false)
         if (s.event_closed_message) setClosedMsg(s.event_closed_message)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Detect logged-in members and pre-fill their details
+  useEffect(() => {
+    fetch('/api/member/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.member) return
+        const m = data.member
+        const email = data.user?.email || ''
+        setMemberProfile({ name: m.name || '', email })
+        setForm(f => ({
+          ...f,
+          isMember: 'yes',
+          name:     m.name     || f.name,
+          email:    email      || f.email,
+          year:     m.car_year || f.year,
+          carMake:  m.car_make || f.carMake,
+          carModel: m.car_model
+            ? m.car_model.replace(new RegExp(`^${(m.car_make || '').trim()}\\s*`, 'i'), '').trim()
+            : f.carModel,
+        }))
       })
       .catch(() => {})
   }, [])
@@ -239,21 +264,31 @@ export default function WtetPage() {
 
   function validate() {
     const e = {}
-    if (!form.isMember) e.isMember = true
-    // Non-member form fields only
-    if (form.isMember !== 'yes') {
-      if (form.name.trim().length < 2) e.name = true
-      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
-      if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
-      if (!form.dob_month) e.dob_month = true
-      if (!form.dob_day)   e.dob_day   = true
-      if (!form.year)      e.year      = true
-      if (!form.carMake)   e.carMake   = true
-      if (!form.carModel.trim()) e.carModel = true
-      if (!form.passengers)  e.passengers  = true
-      if (!form.hasChildren) e.hasChildren = true
+    if (memberProfile) {
+      // Logged-in member: only validate car + trip fields
+      if (!form.year)               e.year        = true
+      if (!form.carMake)            e.carMake     = true
+      if (!form.carModel.trim())    e.carModel    = true
+      if (!form.passengers)         e.passengers  = true
+      if (!form.hasChildren)        e.hasChildren = true
       if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
-      if (!form.source) e.source = true
+      if (!form.source)             e.source      = true
+    } else {
+      if (!form.isMember) e.isMember = true
+      if (form.isMember !== 'yes') {
+        if (form.name.trim().length < 2) e.name = true
+        if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+        if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
+        if (!form.dob_month) e.dob_month = true
+        if (!form.dob_day)   e.dob_day   = true
+        if (!form.year)      e.year      = true
+        if (!form.carMake)   e.carMake   = true
+        if (!form.carModel.trim()) e.carModel = true
+        if (!form.passengers)  e.passengers  = true
+        if (!form.hasChildren) e.hasChildren = true
+        if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
+        if (!form.source) e.source = true
+      }
     }
     setErrors(e)
     return e
@@ -261,10 +296,13 @@ export default function WtetPage() {
 
   async function handleSubmit() {
     if (status === 'loading') return
-    if (form.isMember === 'yes') return // members use the portal flow
+    // Non-logged-in user who clicked "Member rate" → redirect to login
+    if (form.isMember === 'yes' && !memberProfile) return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
-      const order = ['isMember','name','email','phone','dob_month','dob_day','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
+      const order = memberProfile
+        ? ['year','carMake','carModel','passengers','hasChildren','childrenAges','source']
+        : ['isMember','name','email','phone','dob_month','dob_day','year','carMake','carModel','passengers','hasChildren','childrenAges','source']
       const first = order.find(f => errs[f])
       if (first) document.getElementById(`field-${first}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
       return
@@ -272,9 +310,39 @@ export default function WtetPage() {
 
     setStatus('loading')
     setServerError(null)
+
+    if (memberProfile) {
+      // Logged-in member — immediate charge via member API
+      try {
+        const res = await fetch('/api/wtet-member-register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            carYear:       form.year,
+            carMake:       form.carMake,
+            carModel:      [form.carMake, form.carModel].filter(Boolean).join(' '),
+            passengers:    form.passengers,
+            hasChildren:   form.hasChildren,
+            childrenAges:  form.childrenAges,
+            source:        form.source,
+            more:          form.more,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
+        setClientSecret(data.clientSecret)
+        setStatus('payment')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } catch {
+        setServerError('Something went wrong. Please try again.')
+        setStatus('error')
+      }
+      return
+    }
+
+    // Non-member — authorization hold
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30000)
-
     try {
       const res = await fetch('/api/wtet-register', {
         method: 'POST',
@@ -283,20 +351,14 @@ export default function WtetPage() {
           ...form,
           phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '',
           dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`,
-          isMember: form.isMember === 'yes',
+          isMember: false,
           _hp: honeypotRef.current?.value || '',
         }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
       const data = await res.json().catch(() => ({}))
-
-      if (!res.ok) {
-        setServerError(data.error || 'Something went wrong. Please try again.')
-        setStatus('error')
-        return
-      }
-
+      if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
       setClientSecret(data.clientSecret)
       setStatus('payment')
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -652,17 +714,32 @@ export default function WtetPage() {
           {/* SUCCESS */}
           {status === 'success' && (
             <div style={{textAlign:'center',padding:'5rem 0'}}>
-              <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>Authorization received.</div>
-              <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
-              <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
-                Your ${price} hold is placed — nothing has been charged yet. We&apos;ll review your registration personally and be in touch at <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{form.email}</strong>.
-              </p>
-              <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2rem'}}>
-                If your spot is confirmed, the charge goes through and you&apos;ll get full event details. If not, the hold is released with no charge.
-              </p>
-              <p style={{fontSize:'0.85rem',color:'#999',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2.5rem'}}>
-                Add <strong style={{color:'#555',fontWeight:'500'}}>jerry@canvasroutes.com</strong> to your contacts so our message gets through.
-              </p>
+              {memberProfile ? (
+                <>
+                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>You&apos;re in.</div>
+                  <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
+                  <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
+                    Your $179 payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{memberProfile.email}</strong>.
+                  </p>
+                  <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2.5rem'}}>
+                    We&apos;ll send the full itinerary and everything you need closer to July 5.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>Authorization received.</div>
+                  <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
+                  <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
+                    Your ${price} hold is placed — nothing has been charged yet. We&apos;ll review your registration personally and be in touch at <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{form.email}</strong>.
+                  </p>
+                  <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2rem'}}>
+                    If your spot is confirmed, the charge goes through and you&apos;ll get full event details. If not, the hold is released with no charge.
+                  </p>
+                  <p style={{fontSize:'0.85rem',color:'#999',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2.5rem'}}>
+                    Add <strong style={{color:'#555',fontWeight:'500'}}>jerry@canvasroutes.com</strong> to your contacts so our message gets through.
+                  </p>
+                </>
+              )}
               <div>
                 <Link href="/" style={{fontSize:'11px',letterSpacing:'0.14em',textTransform:'uppercase',color:'#888',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif'}}>← Back to Canvas Routes</Link>
               </div>
@@ -716,54 +793,72 @@ export default function WtetPage() {
                 <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Claim your seat at the wheel.</div>
                 <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 1.5rem'}} />
                 <p style={{fontSize:'14px',color:'#777',lineHeight:'1.8',maxWidth:'420px',margin:'0 auto',fontFamily:'var(--font-inter),sans-serif'}}>
-                  Fill in your details and authorize a hold on your card. We review every registration — your card is only charged once your spot is confirmed.
+                  {memberProfile
+                    ? 'Your profile is pre-filled. Confirm your details and your $179 will be charged immediately — spot secured on payment.'
+                    : 'Fill in your details and authorize a hold on your card. We review every registration — your card is only charged once your spot is confirmed.'}
                 </p>
               </div>
               </FadeUp>
 
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
 
-                {/* Member status */}
-                <div id="field-isMember" style={{marginBottom:'1.5rem'}}>
-                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
-                    Are you a Canvas Routes member?
+                {/* Member status — only shown when NOT logged in as a member */}
+                {!memberProfile && (
+                  <div id="field-isMember" style={{marginBottom:'1.5rem'}}>
+                    <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
+                      Are you a Canvas Routes member?
+                    </div>
+                    <div className="wtet-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+                      {[
+                        {val:'yes', price:'$179', label:'Member rate', sublabel:'Canvas Routes member'},
+                        {val:'no',  price:'$199', label:'Standard rate', sublabel:'Not a member'},
+                      ].map(({val, price: p, label, sublabel}) => {
+                        const sel = form.isMember === val
+                        return (
+                          <button key={val} type="button" onClick={() => updateForm('isMember', val)}
+                            style={{padding:'1.1rem 1.25rem',border:`1.5px solid ${sel?'#c5a882':errors.isMember?'#7B2032':'rgba(0,0,0,0.14)'}`,background:sel?'rgba(197,168,130,0.08)':'#fff',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textAlign:'left',transition:'all 0.15s',display:'flex',flexDirection:'column',gap:'0.3rem'}}>
+                            <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.6rem',letterSpacing:'0.04em',color:sel?'#1a1a1a':'#888',lineHeight:1}}>{p}</span>
+                            <span style={{fontSize:'11px',fontWeight:'500',color:sel?'#1a1a1a':'#aaa',letterSpacing:'0.04em'}}>{label}</span>
+                            <span style={{fontSize:'10px',color:sel?'#888':'#ccc',letterSpacing:'0.02em'}}>{sublabel}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {errors.isMember && <span style={{fontSize:'11px',color:'#7B2032',display:'block',marginTop:'0.5rem'}}>Please select one</span>}
                   </div>
-                  <div className="wtet-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
-                    {[
-                      {val:'yes', price:'$179', label:'Member rate', sublabel:'Canvas Routes member'},
-                      {val:'no',  price:'$199', label:'Standard rate', sublabel:'Not a member'},
-                    ].map(({val, price: p, label, sublabel}) => {
-                      const sel = form.isMember === val
-                      return (
-                        <button key={val} type="button" onClick={() => updateForm('isMember', val)}
-                          style={{padding:'1.1rem 1.25rem',border:`1.5px solid ${sel?'#c5a882':errors.isMember?'#7B2032':'rgba(0,0,0,0.14)'}`,background:sel?'rgba(197,168,130,0.08)':'#fff',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textAlign:'left',transition:'all 0.15s',display:'flex',flexDirection:'column',gap:'0.3rem'}}>
-                          <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.6rem',letterSpacing:'0.04em',color:sel?'#1a1a1a':'#888',lineHeight:1}}>{p}</span>
-                          <span style={{fontSize:'11px',fontWeight:'500',color:sel?'#1a1a1a':'#aaa',letterSpacing:'0.04em'}}>{label}</span>
-                          <span style={{fontSize:'10px',color:sel?'#888':'#ccc',letterSpacing:'0.02em'}}>{sublabel}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {errors.isMember && <span style={{fontSize:'11px',color:'#7B2032',display:'block',marginTop:'0.5rem'}}>Please select one</span>}
-                </div>
+                )}
 
-                {/* Member redirect — show instead of rest of form */}
-                {form.isMember === 'yes' && (
+                {/* Logged-in member badge */}
+                {memberProfile && (
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0.9rem 1.1rem',background:'rgba(59,107,47,0.06)',border:'0.5px solid rgba(59,107,47,0.22)',marginBottom:'1.5rem'}}>
+                    <div>
+                      <div style={{fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>Member rate · $179</div>
+                      <div style={{fontSize:'14px',color:'#1a1a1a',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>{memberProfile.name}</div>
+                      <div style={{fontSize:'12px',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>{memberProfile.email}</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                )}
+
+                {/* Redirect box — only for non-logged-in users who select member rate */}
+                {form.isMember === 'yes' && !memberProfile && (
                   <div style={{padding:'1.5rem',background:'#0F1E14',marginBottom:'1rem'}}>
-                    <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.7)',marginBottom:'0.6rem',fontFamily:'var(--font-inter),sans-serif'}}>Members register through the portal</div>
+                    <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.7)',marginBottom:'0.6rem',fontFamily:'var(--font-inter),sans-serif'}}>Log in for the member rate</div>
                     <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
-                      Log in to your Canvas Routes account to register at the member rate of $179. Your details will be pre-filled from your profile.
+                      Log in to your Canvas Routes account and your details will be pre-filled automatically at $179.
                     </p>
-                    <a href={`/members/login?redirect=${encodeURIComponent('/members/events/wtet')}`}
+                    <a href={`/members/login?redirect=${encodeURIComponent('/wtet')}`}
                       style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
-                      Go to Members Portal →
+                      Log in to register →
                     </a>
                   </div>
                 )}
 
-                {/* Rest of form — only for non-members */}
-                {form.isMember !== 'yes' && <>
+                {/* Rest of form — members and non-members both fill this out */}
+                {(memberProfile || form.isMember === 'no') && <>
 
+                {/* Name / email / phone / DOB — not needed for logged-in members */}
+                {!memberProfile && <>
                 {/* Name + Email */}
                 <div className="join-form-row" style={{marginBottom:'1rem'}}>
                   <div className="join-form-field">
@@ -844,6 +939,7 @@ export default function WtetPage() {
                   </div>
                   {(errors.dob_month||errors.dob_day) && <span style={{fontSize:'11px',color:'#7B2032'}}>Month and day are required</span>}
                 </div>
+                </>}
 
                 {/* Car year + make */}
                 <div className="join-form-row" style={{marginBottom:'1rem'}}>
@@ -957,9 +1053,18 @@ export default function WtetPage() {
                 </div>
 
                 {/* Payment note */}
-                <div style={{marginBottom:'2.5rem',padding:'1rem 1.2rem',border:'0.5px solid rgba(0,0,0,0.12)',background:'rgba(197,168,130,0.06)'}}>
-                  <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — ${price} per car · up to 2 people</div>
-                  <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a ${price} hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
+                <div style={{marginBottom:'2.5rem',padding:'1rem 1.2rem',border:`0.5px solid ${memberProfile?'rgba(59,107,47,0.2)':'rgba(0,0,0,0.12)'}`,background:memberProfile?'rgba(59,107,47,0.05)':'rgba(197,168,130,0.06)'}}>
+                  {memberProfile ? (
+                    <>
+                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.4rem'}}>Member rate — $179 per car · up to 2 people</div>
+                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>Your $179 will be charged immediately. Your spot is confirmed as soon as the payment clears.</div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — ${price} per car · up to 2 people</div>
+                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a ${price} hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
+                    </>
+                  )}
                 </div>
 
                 {/* Honeypot */}
@@ -971,7 +1076,7 @@ export default function WtetPage() {
 
                 <button type="submit" disabled={status==='loading'}
                   style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:status==='loading'?'rgba(15,30,20,0.45)':'#0F1E14',color:'#F5F1EC',border:'none',marginBottom:'1rem'}}>
-                  {status==='loading' ? 'Setting up payment…' : form.isMember === 'no' ? `Continue to payment — $${price}` : 'Continue to payment'}
+                  {status==='loading' ? 'Setting up payment…' : memberProfile ? 'Secure your spot — $179' : form.isMember === 'no' ? `Continue to payment — $${price}` : 'Continue to payment'}
                 </button>
 
                 </>}
