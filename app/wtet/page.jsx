@@ -138,8 +138,8 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
       <div style={{padding:'0.75rem 1rem',background:isMember?'rgba(59,107,47,0.06)':'rgba(197,168,130,0.08)',border:`0.5px solid ${isMember?'rgba(59,107,47,0.25)':'rgba(197,168,130,0.3)'}`,marginBottom:'1.5rem'}}>
         <div style={{fontSize:'11px',color:isMember?'#3B6B2F':'#7B5B2E',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>
           {isMember
-            ? <><strong style={{fontWeight:'500'}}>Member rate — $179 CAD.</strong> Payment is charged immediately. Your spot is confirmed as soon as it clears.</>
-            : <><strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for ${displayPrice} but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.</>
+            ? <><strong style={{fontWeight:'500'}}>Member rate — $179 CAD · per car, up to 2 people.</strong> Payment is charged immediately. Your spot is confirmed as soon as it clears.</>
+            : <><strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for ${displayPrice} <span style={{opacity:0.7}}>(per car · up to 2 people)</span> but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.</>
           }
         </div>
       </div>
@@ -166,7 +166,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
         </div>
         {[
           'Winery experience at Vignoble Domaine du Brésée',
-          'Lunch at Auberge & Restaurant McGowan, Georgeville — chef with 2 Michelin star experience',
+          'Lunch at Auberge & Restaurant McGowan — 2× Michelin-star chef background · Georgeville',
           'Guided convoy — Montreal to Lac Memphrémagog',
         ].map((item, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
@@ -664,6 +664,7 @@ export default function WtetPage() {
             { num:'4',    unit:'stops' },
             { num:'1',    unit:'vineyard' },
             { num:'15',   unit:'cars max' },
+            { num:'2',    unit:'per car' },
           ].map(({ num, unit }, i, arr) => (
             <>
               <div key={unit} className="wtet-stat" style={{textAlign:'center',padding:'0 2rem'}}>
@@ -699,7 +700,7 @@ export default function WtetPage() {
             {[
               'We leave Montreal and head south through wine country to Dunham for a private winery experience at Vignoble Domaine du Brésée — tasting included, with a special discount on wine purchases for the group.',
               'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the finest driver\'s roads in Quebec.',
-              'The day ends with lunch at Auberge & Restaurant McGowan in Georgeville, overlooking Lac Memphrémagog. The chef brings a two Michelin star work experience background to a kitchen that earns its setting — an elevated close to an exceptional drive.',
+              'Lunch at Auberge & Restaurant McGowan in Georgeville — the chef brings a two Michelin star work experience background to a kitchen that earns its setting. Overlooking Lac Memphrémagog, this is the close the day deserves.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
                 <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
@@ -744,7 +745,7 @@ export default function WtetPage() {
             { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Dunham, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Wine tasting on the terrace, cars parked on the grounds. Canvas Routes guests receive a special discount on wine purchases.', pays:true },
             { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton\'s forested switchbacks, and cuts deep into the Appalachian forest at Highwater. Quiet, undisturbed pavement with almost no traffic and nowhere to straighten it out — the kind of road most drivers never find. This is the heart of the day.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'Coming through Austin, the trees give way and the landscape opens. The road straightens and drops toward the valley floor, with Lake Memphrémagog spreading out below. A proper payoff — the kind of view that earns a slow roll-in.', pays:false },
-            { label:'Premium Lunch', venue:'Auberge & Restaurant McGowan', venueHref:'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', address:'Georgeville, QC', desc:'Lunch overlooking Lac Memphrémagog at one of the region\'s most thoughtfully run restaurants. The chef brings a two Michelin star work experience background — an elevated close to a day that earns it.', pays:true },
+            { label:'Premium Lunch — 2× Michelin-Star Chef', venue:'Auberge & Restaurant McGowan', venueHref:'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', address:'Georgeville, QC', desc:'The chef brings a two Michelin star work experience background to a kitchen that earns its setting. Lunch overlooking Lac Memphrémagog — an elevated close to a day that earns it.', pays:true },
           ].map((stop, i, arr) => (
             <FadeUp key={i} delay={i * 80}>
             <div className="wtet-stop" style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
@@ -774,7 +775,7 @@ export default function WtetPage() {
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
-              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Lunch at Auberge & Restaurant McGowan, Georgeville — chef with 2 Michelin star experience','Guided convoy with a lead car the entire route','Access to the private route itinerary page'].map((item, i) => (
+              {['Winery experience at Vignoble Domaine du Brésée, Dunham','Lunch at Auberge & Restaurant McGowan, Georgeville — 2× Michelin-star chef background','Guided convoy with a lead car the entire route — per car, up to 2 people','Access to the private route itinerary page'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.7)',lineHeight:'1.65'}}>{item}</span>
