@@ -12,28 +12,35 @@ export default async function DashboardPage() {
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const in90 = new Date(today)
-  in90.setDate(in90.getDate() + 90)
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  const in90Str = `${in90.getFullYear()}-${String(in90.getMonth() + 1).padStart(2, '0')}-${String(in90.getDate()).padStart(2, '0')}`
+  const in180 = new Date(today)
+  in180.setDate(in180.getDate() + 180)
+  const todayStr = today.toISOString().slice(0, 10)
+  const in180Str = in180.toISOString().slice(0, 10)
 
-  const [
-    { count: totalMembers },
-    { count: activeMembers },
-    { count: totalContacts },
-    { count: paidApplications },
-    { data: recentMembers },
-    { data: recentContacts },
-    { data: upcomingEvents },
-  ] = await Promise.all([
-    supabase.from('members').select('*', { count: 'exact', head: true }),
-    supabase.from('members').select('*', { count: 'exact', head: true }).eq('membership_status', 'active'),
-    supabase.from('contacts').select('*', { count: 'exact', head: true }),
-    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('stripe_payment_status', 'paid'),
-    supabase.from('members').select('id, name, email, created_at, membership_status, tier').order('created_at', { ascending: false }).limit(7),
-    supabase.from('contacts').select('id, created_at, applications(name, email)').order('created_at', { ascending: false }).limit(5),
-    supabase.from('events').select('id, name, date, type').gte('date', todayStr).lte('date', in90Str).order('date').limit(5),
-  ])
+  let totalMembers = 0, activeMembers = 0, totalContacts = 0, paidApplications = 0
+  let recentMembers = [], recentContacts = [], upcomingEvents = []
+
+  try {
+    ;[
+      { count: totalMembers },
+      { count: activeMembers },
+      { count: totalContacts },
+      { count: paidApplications },
+      { data: recentMembers },
+      { data: recentContacts },
+      { data: upcomingEvents },
+    ] = await Promise.all([
+      supabase.from('members').select('*', { count: 'exact', head: true }),
+      supabase.from('members').select('*', { count: 'exact', head: true }).eq('membership_status', 'active'),
+      supabase.from('contacts').select('*', { count: 'exact', head: true }),
+      supabase.from('applications').select('*', { count: 'exact', head: true }).eq('stripe_payment_status', 'paid'),
+      supabase.from('members').select('id, name, email, created_at, membership_status, tier').order('created_at', { ascending: false }).limit(7),
+      supabase.from('contacts').select('id, created_at, applications(name, email)').order('created_at', { ascending: false }).limit(5),
+      supabase.from('events').select('id, name, date, type').gte('date', todayStr).lte('date', in180Str).order('date').limit(8),
+    ])
+  } catch {
+    // Partial failures degrade gracefully — stats will show 0/empty
+  }
 
   const recentSignups = [
     ...(recentMembers || []).map(m => ({ name: m.name || m.email, type: 'Member', date: m.created_at, tier: m.tier, status: m.membership_status })),
@@ -96,7 +103,7 @@ export default async function DashboardPage() {
             <Link href="/admin/events" style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>Manage →</Link>
           </div>
           {(upcomingEvents || []).length === 0 ? (
-            <div style={{ fontSize: '12px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>No upcoming events in the next 90 days.</div>
+            <div style={{ fontSize: '12px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>No upcoming events in the next 180 days.</div>
           ) : (upcomingEvents || []).map((e, i, arr) => (
             <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.55rem 0', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
               <div style={{ minWidth: 0 }}>

@@ -185,9 +185,10 @@ export default function ExpensesClient() {
   }
 
   function exportCSV() {
+    const source = filterEvent === 'all' ? expenses : expenses.filter(e => (e.event_name || 'General') === filterEvent)
     const rows = [
       ['Date', 'Event', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', 'Receipt'],
-      ...expenses.map(e => [
+      ...source.map(e => [
         e.expense_date, e.event_name || 'General', e.vendor || '', e.category || '',
         parseFloat(e.amount || 0).toFixed(2), parseFloat(e.tax_amount || 0).toFixed(2),
         (parseFloat(e.amount || 0) + parseFloat(e.tax_amount || 0)).toFixed(2),
@@ -403,9 +404,9 @@ export default function ExpensesClient() {
                 </button>
 
                 {isOpen && (
-                  <div>
+                  <div style={{ overflowX: 'auto' }}>
                     {/* Column headers */}
-                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '580px' }}>
                       {['Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
                         <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                       ))}
@@ -423,7 +424,7 @@ export default function ExpensesClient() {
                           style={{ borderBottom: i < group.items.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
 
                           {/* Data row */}
-                          <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '580px' }}>
                             <div style={{ fontSize: '12px', color: '#555' }}>{fmtDate(expense.expense_date)}</div>
                             <div style={{ fontSize: '12px', color: '#333' }}>
                               {expense.vendor || <span style={{ color: '#ddd' }}>—</span>}
@@ -534,7 +535,7 @@ export default function ExpensesClient() {
                     })}
 
                     {/* Group total row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '580px' }}>
                       <div style={{ gridColumn: '1 / 4', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
                       <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
                       <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>

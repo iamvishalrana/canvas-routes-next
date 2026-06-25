@@ -229,8 +229,9 @@ export default function EventsClient() {
   const [declining, setDeclining] = useState({})
   const [declineErr, setDeclineErr] = useState({})
 
+  const [isNarrow, setIsNarrow] = useState(false)
   useEffect(() => {
-    function check() { setIsMobile(window.innerWidth < 768) }
+    function check() { setIsMobile(window.innerWidth < 768); setIsNarrow(window.innerWidth < 1024) }
     check(); window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
@@ -669,6 +670,7 @@ export default function EventsClient() {
   const isEventPast = item => !!item.date && new Date(item.date) < today
   const displayItems = [...items.filter(i => !isEventPast(i)), ...items.filter(i => isEventPast(i))]
   const pastCount = displayItems.filter(isEventPast).length
+  const nonPastCount = displayItems.length - pastCount
 
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
@@ -798,10 +800,10 @@ export default function EventsClient() {
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
                     <div style={{ display: 'flex', gap: '0.2rem' }}>
-                      <button onClick={() => moveEvent(item.id, 'up')} disabled={idx === 0 || moving} title="Move up" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === 0 || moving ? 'not-allowed' : 'pointer', opacity: idx === 0 || moving ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
+                      <button onClick={() => moveEvent(item.id, 'up')} disabled={displayIdx === 0 || isPast || moving} title="Move up" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: displayIdx === 0 || isPast || moving ? 'not-allowed' : 'pointer', opacity: displayIdx === 0 || isPast || moving ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
                       </button>
-                      <button onClick={() => moveEvent(item.id, 'down')} disabled={idx === items.length - 1 || moving} title="Move down" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: idx === items.length - 1 || moving ? 'not-allowed' : 'pointer', opacity: idx === items.length - 1 || moving ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
+                      <button onClick={() => moveEvent(item.id, 'down')} disabled={displayIdx >= nonPastCount - 1 || isPast || moving} title="Move down" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: displayIdx >= nonPastCount - 1 || isPast || moving ? 'not-allowed' : 'pointer', opacity: displayIdx >= nonPastCount - 1 || isPast || moving ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
                     </div>
@@ -977,7 +979,7 @@ export default function EventsClient() {
 
                         {/* Registrants table */}
                         {(registrantsData[item.id] || []).length > 0 && <div style={{ overflowX: 'auto' }}>
-                          <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isMobile ? 'unset' : '680px' }}>
+                          <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isNarrow ? 'unset' : '680px' }}>
                             {!isMobile && (
                               <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 140px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
                                 {['Name', 'Email', 'Type', 'Status', 'Paid', '', ''].map((h, i) => (
@@ -1232,7 +1234,7 @@ export default function EventsClient() {
 
                     {/* ── Applications tab ──────────────────────────────── */}
                     {tab === 'applications' && (
-                      <div>
+                      <div style={{ overflowX: 'auto' }}>
                         {(item.applications ?? []).length === 0 ? (
                           <div style={{ padding: '2.5rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
                             No applications for this event yet.
@@ -1240,7 +1242,7 @@ export default function EventsClient() {
                         ) : (
                           <>
                             {!isMobile && (
-                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 150px', padding: '0.6rem 1.5rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 150px', padding: '0.6rem 1.5rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.06)', minWidth: '560px' }}>
                                 {['Name', 'Car', 'Member', 'RSVP', ''].map((h, i) => (
                                   <div key={i} style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                                 ))}
@@ -1267,7 +1269,7 @@ export default function EventsClient() {
                                       </div>
                                     </div>
                                   ) : (
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 150px', padding: '0.85rem 1.5rem', alignItems: 'start', gap: '0.5rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 150px', padding: '0.85rem 1.5rem', alignItems: 'start', gap: '0.5rem', minWidth: '560px' }}>
                                       <div>
                                         <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.1rem' }}>{app.name || '—'}</div>
                                         <div style={{ fontSize: '11px', color: '#aaa' }}>{app.email}</div>

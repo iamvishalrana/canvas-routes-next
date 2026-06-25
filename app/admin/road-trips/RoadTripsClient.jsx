@@ -156,7 +156,7 @@ export default function RoadTripsClient() {
           )}
 
           {/* Stats — all four derived from tabFiltered so they always add up */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
             {[
               { label: 'Total',    value: tabFiltered.length, color: '#1a1a1a' },
               { label: 'Attended', value: attended,           color: '#3B6B2F' },
@@ -295,7 +295,7 @@ export default function RoadTripsClient() {
                         {isSelected && (
                           <tr key={`${rowKey}-panel`}>
                             <td colSpan={trips.length > 1 && activeTrip === 'all' ? 8 : 7} style={{ padding: 0, borderBottom: isLast ? 'none' : '0.5px solid rgba(0,0,0,0.05)' }}>
-                              <div style={{ background: '#faf9f6', borderLeft: '3px solid #c5a882', padding: '1rem 1.25rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                              <div style={{ background: '#faf9f6', borderLeft: '3px solid #c5a882', padding: '1rem 1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '1rem' }}>
                                 <div>
                                   <div style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.3rem' }}>Passengers</div>
                                   {checkin?.passengers_list?.length > 0 ? (

@@ -68,7 +68,7 @@ export async function GET(request) {
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('members').select('*').order('join_date', { ascending: false })
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
   return Response.json(data)
 }
 
@@ -112,42 +112,27 @@ export async function POST(request) {
     return Response.json({ error: insertErr.message }, { status: 500 })
   }
 
-  // Send custom invite email via Resend
+  // Fire invite email async — do not block the response (rule #8)
   if (process.env.RESEND_API_KEY) {
-    try {
-      const firstName = (name || email).trim().split(' ')[0]
-      const actionLink = invited.properties?.action_link ?? ''
-
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Canvas Routes <jerry@canvasroutes.com>',
-          to: email,
-          reply_to: 'jerry@canvasroutes.com',
-          subject: "You're in — Canvas Routes 2026",
-          html: inviteHtml({ firstName, tier, actionLink }),
-          text: `Hey ${firstName},\n\nYou're in — welcome to Canvas Routes.\n\nSet up your member portal here:\n${actionLink}\n\nSee you on the road,\nJerry\nCanvas Routes`,
-        }),
-      })
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => 'unknown')
-        console.error('Invite email send error:', errText)
-        captureMessage(`Member invite email failed — ${email}`, { response: errText })
-        return Response.json({ error: 'Member was created but the invite email failed to send. Check Sentry and resend manually.' }, { status: 500 })
-      }
-    } catch (err) {
-      console.error('Invite email network error:', err)
-      captureException(err, { context: 'member-invite-email-network', email })
-      return Response.json({ error: 'Member was created but the invite email failed to send. Check Sentry and resend manually.' }, { status: 500 })
-    }
-  } else {
-    console.warn('RESEND_API_KEY not set — invite email not sent.')
-    return Response.json({ success: true, warning: 'Invite email was not sent: RESEND_API_KEY is not configured' })
+    const firstName = (name || email).trim().split(' ')[0]
+    const actionLink = invited.properties?.action_link ?? ''
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Canvas Routes <jerry@canvasroutes.com>',
+        to: email,
+        reply_to: 'jerry@canvasroutes.com',
+        subject: "You're in — Canvas Routes 2026",
+        html: inviteHtml({ firstName, tier, actionLink }),
+        text: `Hey ${firstName},\n\nYou're in — welcome to Canvas Routes.\n\nSet up your member portal here:\n${actionLink}\n\nSee you on the road,\nJerry\nCanvas Routes`,
+      }),
+    }).then(res => {
+      if (!res.ok) res.text().then(t => captureMessage(`Member invite email failed — ${email}`, { response: t })).catch(() => {})
+    }).catch(err => captureException(err, { context: 'member-invite-email-network', email }))
   }
 
   return Response.json({ success: true })

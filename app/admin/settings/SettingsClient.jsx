@@ -75,6 +75,7 @@ function TextSetting({ label, description, value, onChange, onSave, saving, plac
 export default function SettingsClient() {
   const [settings, setSettings] = useState({})
   const [loading, setLoading]   = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [saving, setSaving]     = useState({})
   const [errors, setErrors]     = useState({})
   const [saved, setSaved]       = useState({})
@@ -83,8 +84,9 @@ export default function SettingsClient() {
   const [drafts, setDrafts] = useState({})
 
   const load = useCallback(() => {
+    setLoadError(false)
     fetch('/api/admin/settings')
-      .then(r => r.ok ? r.json() : {})
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed')))
       .then(data => {
         setSettings(data)
         setDrafts({
@@ -97,7 +99,7 @@ export default function SettingsClient() {
           event_page_url:            data.event_page_url            || '',
         })
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [])
 
@@ -139,6 +141,16 @@ export default function SettingsClient() {
     </div>
   )
 
+  if (loadError) return (
+    <div style={SECTION_STYLE}>
+      <div style={{ background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.2)', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
+        <div style={{ fontSize: '13px', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '0.4rem' }}>Failed to load settings</div>
+        <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Could not reach the settings API. Saving is disabled to prevent overwriting values with defaults.</div>
+        <button onClick={load} style={{ marginTop: '0.75rem', padding: '0.35rem 0.9rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Retry</button>
+      </div>
+    </div>
+  )
+
   return (
     <div style={SECTION_STYLE}>
       <div style={{ marginBottom: '2rem' }}>
@@ -155,7 +167,7 @@ export default function SettingsClient() {
           description="When off, the membership form shows a paused message and stops accepting submissions."
           value={boolVal('membership_open', true)}
           saving={saving.membership_open}
-          onChange={v => saveSetting('membership_open', v ? 'true' : 'false')}
+          onChange={v => !loadError && saveSetting('membership_open', v ? 'true' : 'false')}
         />
         {errors.membership_open && <Err msg={errors.membership_open} />}
         <SavedIndicator k="membership_open" />
@@ -178,7 +190,7 @@ export default function SettingsClient() {
           description="When off, the standalone event registration form is hidden and the page shows a closed notice. Reuse this for each new one-off event page."
           value={boolVal('event_registration_open', true)}
           saving={saving.event_registration_open}
-          onChange={v => saveSetting('event_registration_open', v ? 'true' : 'false')}
+          onChange={v => !loadError && saveSetting('event_registration_open', v ? 'true' : 'false')}
         />
         {errors.event_registration_open && <Err msg={errors.event_registration_open} />}
         <SavedIndicator k="event_registration_open" />

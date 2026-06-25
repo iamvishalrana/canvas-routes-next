@@ -90,6 +90,7 @@ export default function ApplicationsClient() {
   const [emailGenerating, setEmailGenerating] = useState(false)
   const [emailResult, setEmailResult] = useState(null) // { id, success, error }
   const [emailPreviewExpanded, setEmailPreviewExpanded] = useState(false)
+  const generateAbortRef = useRef(null)
 
   const loadApps = useCallback(() => {
     setLoading(true)
@@ -308,10 +309,13 @@ export default function ApplicationsClient() {
   }
 
   async function generateEmail(appId) {
+    if (generateAbortRef.current) generateAbortRef.current.abort()
+    const controller = new AbortController()
+    generateAbortRef.current = controller
     setEmailGenerating(true)
     setEmailResult(null)
     try {
-      const res = await fetch(`/api/admin/applications/${appId}/generate-email`, { method: 'POST' })
+      const res = await fetch(`/api/admin/applications/${appId}/generate-email`, { method: 'POST', signal: controller.signal })
       const d = await res.json().catch(() => ({}))
       if (res.ok && d.body) {
         setEmailSubject(d.subject || emailSubject)
@@ -319,20 +323,24 @@ export default function ApplicationsClient() {
       } else {
         setEmailResult({ id: appId, error: d.error || 'Failed to generate email.' })
       }
-    } catch {
-      setEmailResult({ id: appId, error: 'Failed to generate email.' })
+    } catch (err) {
+      if (err.name !== 'AbortError') setEmailResult({ id: appId, error: 'Failed to generate email.' })
+    } finally {
+      setEmailGenerating(false)
     }
-    setEmailGenerating(false)
   }
 
   async function sendEmail(appId) {
     setEmailSending(true)
     setEmailResult(null)
     try {
+      const app = apps.find(a => a.id === appId)
+      const firstName = (app?.name || '').trim().split(' ')[0] || 'there'
+      const resolvedBody = emailBody.replace(/\{\{name\}\}/gi, firstName)
       const res = await fetch(`/api/admin/applications/${appId}/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: emailSubject, body: emailBody }),
+        body: JSON.stringify({ subject: emailSubject, body: resolvedBody }),
       })
       const d = await res.json().catch(() => ({}))
       if (res.ok && !d.error) {

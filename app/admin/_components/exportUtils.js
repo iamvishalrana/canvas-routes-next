@@ -60,7 +60,7 @@ export async function downloadDOCX(filename, title, headers, rows) {
 
   const headerRow = new TableRow({
     children: headers.map(h => new TableCell({
-      children: [new Paragraph({ children: [new TextRun({ text: String(h), bold: true, size: 18 })] })],
+      children: [new Paragraph({ children: [new TextRun({ text: String(h), bold: true, size: 18, color: 'F5F1EC' })] })],
       shading: { fill: '0F1E14' },
       borders: cellBorders,
     })),

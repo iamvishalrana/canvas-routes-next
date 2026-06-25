@@ -544,8 +544,9 @@ export default function BroadcastsClient() {
           border: 0.5px solid rgba(0,0,0,0.15);
         }
         .bc-history-row:hover { background: rgba(0,0,0,0.018) !important; }
-        .bc-reuse-btn { opacity: 0; transition: opacity 0.1s; }
+        .bc-reuse-btn { opacity: 0.5; transition: opacity 0.1s; }
         .bc-history-row:hover .bc-reuse-btn { opacity: 1; }
+        @media (hover: none) { .bc-reuse-btn { opacity: 1; } }
       `}</style>
 
       {/* Page header */}

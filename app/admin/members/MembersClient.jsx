@@ -14,7 +14,7 @@ import { ExportButton } from '../_components/ExportModal'
 
 // ─── Member Expanded Panel ────────────────────────────────────────────────────
 
-function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, noteValue, setEditingNote, setNoteValue, onSaveNote }) {
+function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, noteValue, setEditingNote, setNoteValue, onSaveNote, noteErr }) {
 
   const initials = (m.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const memberSinceRaw = m.created_at || m.password_set_at
@@ -167,6 +167,7 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
               <GhostBtn small onClick={() => onSaveNote(m.id, noteValue)}>Save</GhostBtn>
               <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
             </div>
+            {noteErr && editingNote === m.id && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem' }}>{noteErr}</div>}
           </div>
         ) : (
           <div onClick={() => { setEditingNote(m.id); setNoteValue(m.notes || '') }}
@@ -237,6 +238,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   const [statusFilter, setStatusFilter] = useState('all')
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
+  const [noteErr, setNoteErr] = useState(null)
   const [deleteMemberConfirm, setDeleteMemberConfirm] = useState(null)
   const [deleteMemberError, setDeleteMemberError] = useState(null)
   const [resendStatus, setResendStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | 'error' | errorMsg }
@@ -328,13 +330,14 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
 
   async function saveMemberNote(memberId, value) {
     const trimmed = value.trim()
+    setNoteErr(null)
     try {
       const res = await fetch(`/api/admin/members/${memberId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: trimmed || null }),
       })
-      if (!res.ok) return
-    } catch { return }
+      if (!res.ok) { setNoteErr('Failed to save note.'); return }
+    } catch { setNoteErr('Network error — please try again.'); return }
     setMembers(prev => prev.map(x => x.id === memberId ? { ...x, notes: trimmed || null } : x))
     setEditingNote(null)
   }
@@ -594,9 +597,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : (
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', overflowX: 'auto' }}>
           {!isMobile && (
-            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 0.85fr 0.85fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 0.85fr 0.85fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center', minWidth: '700px' }}>
               <input type="checkbox"
                 checked={filtered.length > 0 && filtered.every(m => selected.has(m.id))}
                 ref={el => { if (el) el.indeterminate = filtered.some(m => selected.has(m.id)) && !filtered.every(m => selected.has(m.id)) }}
@@ -805,7 +808,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                     </div>
                   ) : (
                   <div
-                    style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 0.85fr 0.85fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer' }}
+                    style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 0.85fr 0.85fr 0.85fr', padding: '0.9rem 1.25rem', alignItems: 'center', cursor: 'pointer', minWidth: '700px' }}
                     onClick={() => setExpanded(expanded === m.id ? null : m.id)}
                   >
                     <div onClick={e => e.stopPropagation()}>
@@ -887,7 +890,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                   {expanded === m.id && (
                     <div className="admin-panel-enter">
                       <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile}
-                        editingNote={editingNote} noteValue={noteValue} setEditingNote={setEditingNote} setNoteValue={setNoteValue} onSaveNote={saveMemberNote} />
+                        editingNote={editingNote} noteValue={noteValue} setEditingNote={setEditingNote} setNoteValue={setNoteValue} onSaveNote={saveMemberNote} noteErr={noteErr} />
                     </div>
                   )}
                   {deleteMemberConfirm === m.id && (

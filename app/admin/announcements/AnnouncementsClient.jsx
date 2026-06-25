@@ -151,7 +151,7 @@ export default function AnnouncementsClient() {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setPostError(data.error || 'Failed.'); return }
       setForm({ title: '', content: '', published: false, audience: 'all' })
-      load()
+      if (data.id) setItems(prev => [data, ...prev]); else load()
     } catch { setPostError('Network error.') }
     finally { setPosting(false) }
   }
@@ -160,15 +160,21 @@ export default function AnnouncementsClient() {
     if (publishing === item.id) return
     setPublishing(item.id)
     setPublishError(p => ({ ...p, [item.id]: null }))
+    const newPublished = !item.published
+    setItems(prev => prev.map(a => a.id === item.id ? { ...a, published: newPublished } : a))
     try {
       const res = await fetch(`/api/admin/announcements/${item.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: !item.published }),
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: newPublished }),
       })
-      if (res.ok) { load() } else {
+      if (!res.ok) {
+        setItems(prev => prev.map(a => a.id === item.id ? { ...a, published: item.published } : a))
         const d = await res.json().catch(() => ({}))
         setPublishError(p => ({ ...p, [item.id]: d.error || 'Could not update.' }))
       }
-    } catch { setPublishError(p => ({ ...p, [item.id]: 'Network error.' })) }
+    } catch {
+      setItems(prev => prev.map(a => a.id === item.id ? { ...a, published: item.published } : a))
+      setPublishError(p => ({ ...p, [item.id]: 'Network error.' }))
+    }
     finally { setPublishing(null) }
   }
 
@@ -179,8 +185,8 @@ export default function AnnouncementsClient() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm),
       })
       if (!res.ok) { const d = await res.json().catch(() => ({})); setSaveError(d.error || 'Failed to save.'); return }
+      setItems(prev => prev.map(a => a.id === editing ? { ...a, ...editForm } : a))
       setEditing(null)
-      load()
     } catch { setSaveError('Network error.') }
     finally { setSaving(false) }
   }
@@ -191,7 +197,7 @@ export default function AnnouncementsClient() {
       const res = await fetch(`/api/admin/announcements/${id}`, { method: 'DELETE' })
       if (!res.ok) { setDeleteError('Failed to delete announcement.'); return }
       setDeleteConfirm(null)
-      load()
+      setItems(prev => prev.filter(a => a.id !== id))
     } catch { setDeleteError('Network error.') }
   }
 

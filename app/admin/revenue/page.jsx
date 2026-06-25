@@ -1,5 +1,6 @@
 import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { requireAdmin } from '../../../lib/supabase/authCheck'
 import RevenueClient from './RevenueClient'
 
 export const dynamic = 'force-dynamic'
@@ -16,6 +17,11 @@ const TYPE_LABELS = {
 }
 
 export default async function RevenuePage() {
+  if (!await requireAdmin()) {
+    const { redirect } = await import('next/navigation')
+    redirect('/admin')
+  }
+
   let rows = []
 
   if (stripe) {

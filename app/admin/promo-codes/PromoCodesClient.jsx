@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, Success } from '../_components/shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, Success, CopyBtn } from '../_components/shared'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.5rem' }
@@ -341,7 +341,10 @@ export default function PromoCodesClient() {
           {codes.map(c => (
             <div key={c.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontFamily: 'monospace', fontWeight: '600', fontSize: '14px', letterSpacing: '0.04em' }}>{c.code}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span style={{ fontFamily: 'monospace', fontWeight: '600', fontSize: '14px', letterSpacing: '0.04em' }}>{c.code}</span>
+                  <CopyBtn value={c.code} />
+                </div>
                 <StatusChip active={c.active} />
               </div>
               <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>{fmtDiscount(c.coupon)}</div>
@@ -443,7 +446,7 @@ export default function PromoCodesClient() {
               {codes.map((c, i) => (
                 <React.Fragment key={c.id}>
                 <tr style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
-                  <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}>{c.code}</td>
+                  <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
                   <td style={TD}>{fmtDiscount(c.coupon)}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata)}</td>
                   <td style={{ ...TD, color: '#555' }}>

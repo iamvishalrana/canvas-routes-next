@@ -8,7 +8,7 @@ export async function GET(request) {
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('events').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('date', { ascending: true })
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
   return Response.json(data)
 }
 
@@ -39,6 +39,6 @@ export async function POST(request) {
     priority_window_end: priority_window_end || null,
     registration_visibility: ['members', 'public'].includes(registration_visibility) ? registration_visibility : 'members',
   }).select().single()
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
   return Response.json(data)
 }

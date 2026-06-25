@@ -205,10 +205,12 @@ export default function ContactsClient() {
 
   async function deleteSelected() {
     if (!selected.size) return
-    await Promise.all([...selected].map(id => fetch(`/api/admin/contacts/${id}`, { method: 'DELETE' })))
+    const results = await Promise.allSettled([...selected].map(id => fetch(`/api/admin/contacts/${id}`, { method: 'DELETE' })))
+    const failed = results.filter(r => r.status === 'rejected' || !r.value?.ok).length
     setSelected(new Set())
     setDeleteSelectedConfirm(false)
     loadContacts()
+    if (failed > 0) setSaveContactErr(`${failed} deletion(s) failed — please refresh and try again.`)
   }
 
   function startEditContact(c) {
@@ -240,13 +242,19 @@ export default function ContactsClient() {
       dob_day: editContactForm.dob_day ? parseInt(editContactForm.dob_day) : null,
       dob_year: editContactForm.dob_year ? parseInt(editContactForm.dob_year) : null,
     }
-    const res = await fetch(`/api/admin/contacts/${c.contact_id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-    })
-    setSavingContact(false)
-    if (!res.ok) { const d = await res.json(); setSaveContactErr(d.error || 'Failed to save.'); return }
-    setContacts(prev => prev.map(x => x.contact_id === c.contact_id ? { ...x, ...payload } : x))
-    setEditingContact(null)
+    try {
+      const res = await fetch(`/api/admin/contacts/${c.contact_id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setSaveContactErr(d.error || 'Failed to save.'); return }
+      setContacts(prev => prev.map(x => x.contact_id === c.contact_id ? { ...x, ...payload } : x))
+      setEditingContact(null)
+    } catch {
+      setSaveContactErr('Network error — please try again.')
+    } finally {
+      setSavingContact(false)
+    }
   }
 
   async function toggleAttended(contactId, eventName, value) {
@@ -737,7 +745,7 @@ export default function ContactsClient() {
                         </div>
                         <div>
                           <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Phone</div>
-                          <div style={{ fontSize: '13px', color: c.phone ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><span>{c.phone || '—'}</span><CopyBtn value={c.phone} /></div>
+                          <div style={{ fontSize: '13px', color: c.phone ? '#444' : '#ddd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.phone ? <a href={`tel:${c.phone.replace(/\s/g, '')}`} style={{ color: '#444', textDecoration: 'none' }}>{c.phone}</a> : '—'}<CopyBtn value={c.phone} /></div>
                         </div>
                         <div>
                           <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Instagram</div>

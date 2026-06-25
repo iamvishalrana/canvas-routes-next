@@ -18,6 +18,8 @@ export default function CarsClient() {
   const [editForm, setEditForm] = useState({})
   const [modDraft, setModDraft] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveErr, setSaveErr] = useState(null)
+  const [assignErr, setAssignErr] = useState({})
 
   const load = useCallback(() => {
     fetch('/api/admin/members')
@@ -34,26 +36,31 @@ export default function CarsClient() {
     setModDraft('')
   }
 
-  function cancelEdit() { setEditing(null); setEditForm({}); setModDraft('') }
+  function cancelEdit() { setEditing(null); setEditForm({}); setModDraft(''); setSaveErr(null) }
 
   async function saveCar() {
     if (!editing) return
-    setSaving(true)
+    setSaving(true); setSaveErr(null)
     const m = members.find(x => x.id === editing.memberId)
     const cars = [...(m.cars || [])]
     cars[editing.carIndex] = { ...cars[editing.carIndex], ...editForm }
-    const res = await fetch(`/api/admin/members/${m.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cars }),
-    })
-    setSaving(false)
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}))
-      alert(d.error || 'Failed to save car. Please try again.')
-      return
+    try {
+      const res = await fetch(`/api/admin/members/${m.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cars }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setSaveErr(d.error || 'Failed to save car. Please try again.')
+        return
+      }
+      setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars } : x))
+      cancelEdit()
+    } catch {
+      setSaveErr('Network error — please try again.')
+    } finally {
+      setSaving(false)
     }
-    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars } : x))
-    cancelEdit()
   }
 
   function addMod() {
@@ -89,8 +96,14 @@ export default function CarsClient() {
       if (res.ok) {
         setMembers(prev => prev.map(x => x.id === m.id ? { ...x, cars: newCars } : x))
         setAssignInputs(p => ({ ...p, [m.id]: '' }))
+        setAssignErr(p => ({ ...p, [m.id]: null }))
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setAssignErr(p => ({ ...p, [m.id]: d.error || 'Failed to assign.' }))
       }
-    } catch {}
+    } catch {
+      setAssignErr(p => ({ ...p, [m.id]: 'Network error — please try again.' }))
+    }
     setAssigning(p => ({ ...p, [m.id]: false }))
   }
 
@@ -205,6 +218,7 @@ export default function CarsClient() {
                       </div>
 
                       <GhostBtn small onClick={saveCar} disabled={saving}>{saving ? 'Saving…' : 'Save'}</GhostBtn>
+                      {saveErr && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.4rem' }}>{saveErr}</div>}
                     </div>
                   )}
                 </div>
@@ -237,6 +251,7 @@ export default function CarsClient() {
                       {assigning[m.id] ? '…' : 'Assign'}
                     </GhostBtn>
                   </div>
+                  {assignErr[m.id] && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem', gridColumn: '1 / -1' }}>{assignErr[m.id]}</div>}
                 </div>
               ))}
             </div>
