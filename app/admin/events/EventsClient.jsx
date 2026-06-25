@@ -212,6 +212,9 @@ export default function EventsClient() {
   // RSVP answers expanded state (key = `${eventId}::${email}`)
   const [rsvpExpanded, setRsvpExpanded] = useState({})
 
+  // Past events section
+  const [pastOpen, setPastOpen] = useState(false)
+
   // Remove registrant (key = `${eventId}::${email}`)
   const [deleteRegConfirm, setDeleteRegConfirm] = useState(null)
   const [deletingReg, setDeletingReg] = useState({})
@@ -662,6 +665,11 @@ export default function EventsClient() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const isEventPast = item => !!item.date && new Date(item.date) < today
+  const displayItems = [...items.filter(i => !isEventPast(i)), ...items.filter(i => isEventPast(i))]
+  const pastCount = displayItems.filter(isEventPast).length
+
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       <div style={{ marginBottom: '2rem' }}>
@@ -729,13 +737,27 @@ export default function EventsClient() {
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No events yet.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {items.map((item, idx) => {
+          {displayItems.map((item, displayIdx) => {
+            const isPast = isEventPast(item)
+            const isFirstPast = isPast && !isEventPast(displayItems[displayIdx - 1])
+            const idx = items.findIndex(ev => ev.id === item.id)
             const isEditing = editing === item.id
             const tab = activeTab[item.id] || 'settings'
             const spotsLeft = item.capacity ? item.capacity - (item.confirmed_count || 0) : null
 
             return (
-              <div key={item.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+              <div key={item.id} style={{ display: 'contents' }}>
+                {isFirstPast && (
+                  <button
+                    onClick={() => setPastOpen(p => !p)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem 1.25rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.08)', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif' }}
+                  >
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" style={{ transform: pastOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                    <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888' }}>Past Events</span>
+                    <span style={{ fontSize: '10px', color: '#bbb' }}>({pastCount})</span>
+                  </button>
+                )}
+                {(!isPast || pastOpen) && <div style={{ background: isPast ? '#fafaf8' : '#fff', border: '0.5px solid rgba(0,0,0,0.1)', opacity: isPast ? 0.85 : 1 }}>
 
                 {/* ── Event header (always visible) ───────────────────────── */}
                 <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1271,6 +1293,7 @@ export default function EventsClient() {
 
                   </div>
                 )}
+              </div>}
               </div>
             )
           })}

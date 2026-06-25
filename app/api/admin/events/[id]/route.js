@@ -50,7 +50,7 @@ export async function DELETE(request, { params }) {
 
   // Delete orphaned rsvp_tokens (no FK cascade since rsvp_tokens has no event_id column)
   if (ev?.name) {
-    await supabase.from('rsvp_tokens').delete().eq('event_name', ev.name).catch(() => {})
+    await supabase.from('rsvp_tokens').delete().eq('event_name', ev.name)
   }
 
   return Response.json({ success: true })
