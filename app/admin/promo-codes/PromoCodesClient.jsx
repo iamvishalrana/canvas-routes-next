@@ -34,7 +34,7 @@ function StatusChip({ active }) {
 const APPLIES_TO_OPTIONS = [
   { value: 'membership_routes',       label: 'Membership — Routes' },
   { value: 'membership_inner_circle', label: 'Membership — Inner Circle' },
-  { value: 'road_trip_wtet',          label: 'WTET Road Trip' },
+  { value: 'road_trip_wtet',          label: 'Whips to Eastern Townships — July 5, 2026' },
 ]
 
 function fmtAppliesTo(metadata) {
