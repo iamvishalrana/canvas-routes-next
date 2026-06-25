@@ -208,7 +208,7 @@ export async function POST(request) {
       }
       // Reject if amount is suspiciously low (below 50% of tier price — covers legitimate promo codes)
       if (pi.amount < Math.floor((PRICES[expectedType] ?? 0) * 0.5)) {
-        captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, expected: TIER_PRICE_MAP[tier] })
+        captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, expected: PRICES[TIER_TYPE_MAP[tier]] })
         return Response.json({ error: 'Payment amount invalid. Please contact support.' }, { status: 400 })
       }
     } catch (err) {
@@ -250,6 +250,7 @@ export async function POST(request) {
       more: more || null,
       referred_by: referredBy?.trim() || null,
       registrations,
+      stripe_payment_status: 'pending',
       // Store PI ID immediately so admin can act even if the webhook is delayed
       ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
@@ -259,51 +260,37 @@ export async function POST(request) {
     captureException(e, { context: 'membership-waitlist-db-save', email: normalEmail, name: name?.trim(), tier, paymentIntentId })
   }
 
-  // Confirmation email to applicant
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'Canvas Routes <info@canvasroutes.com>',
-        to: email,
-        reply_to: 'info@canvasroutes.com',
-        subject: `Your Canvas Routes application is in, ${firstName}`,
-        html: confirmHtml(firstName, tier),
-        text: `We've got you, ${name.trim().split(' ')[0]}.\n\nYour membership interest has been received. We'll be in touch once memberships open for the 2026 season.\n\nSpots are limited — we'll reach out before we open to the public.\n\n© 2026 Canvas Routes. Montreal, QC.`,
-      }),
-    })
-    if (!res.ok) {
-      const errText = await res.text().catch(() => 'unknown')
-      console.error(`ALERT: Membership confirm email failed — application from: ${normalEmail} — ${errText}`)
-      captureMessage(`Membership confirm email failed — ${normalEmail}`, { response: errText })
-    }
-  } catch (err) {
-    console.error(`ALERT: Membership confirm email network error — application from: ${normalEmail} — ${err}`)
-    captureException(err, { context: 'membership-confirm-email-network', email: normalEmail })
-  }
+  // Fire emails async — do not block the response on Resend latency.
+  // DB write above is the source of truth; email failures are logged to Sentry.
+  if (process.env.RESEND_API_KEY) {
+    Promise.allSettled([
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'Canvas Routes <info@canvasroutes.com>',
+          to: email,
+          reply_to: 'info@canvasroutes.com',
+          subject: `Your Canvas Routes application is in, ${firstName}`,
+          html: confirmHtml(firstName, tier),
+          text: `We've got you, ${name.trim().split(' ')[0]}.\n\nYour membership interest has been received. We'll be in touch once memberships open for the 2026 season.\n\nSpots are limited — we'll reach out before we open to the public.\n\n© 2026 Canvas Routes. Montreal, QC.`,
+        }),
+      }).then(r => { if (!r.ok) captureMessage(`Membership confirm email failed — ${normalEmail}`, { status: r.status }) })
+        .catch(err => captureException(err, { context: 'membership-confirm-email', email: normalEmail })),
 
-  // Notification email to admin
-  try {
-    const notifyRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'Canvas Routes <info@canvasroutes.com>',
-        to: 'info@canvasroutes.com',
-        subject: `Membership Registration — ${tier} — ${name.trim()}`,
-        html: notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel: fullCar, tier, source, more, referredBy, paymentIntentId }),
-        text: `Membership Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nDOB: ${dob_month ? `${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : '—'}\nYear: ${year}\nCar: ${fullCar}\nTier: ${tier}\nHow they heard: ${source}${more ? `\nMessage: ${more}` : ''}`,
-      }),
-    })
-    if (!notifyRes.ok) {
-      const errText = await notifyRes.text().catch(() => 'unknown')
-      console.error('Membership notify email failed:', errText)
-      captureMessage(`Membership notify email failed — ${normalEmail}`, { name, email, tier })
-    }
-  } catch (err) {
-    console.error('Membership notify email error:', err)
-    captureException(err, { context: 'membership-notify-email-network', email: normalEmail })
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'Canvas Routes <info@canvasroutes.com>',
+          to: 'info@canvasroutes.com',
+          subject: `Membership Registration — ${tier} — ${name.trim()}`,
+          html: notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, carModel: fullCar, tier, source, more, referredBy, paymentIntentId }),
+          text: `Membership Registration\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nDOB: ${dob_month ? `${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : '—'}\nYear: ${year}\nCar: ${fullCar}\nTier: ${tier}\nHow they heard: ${source}${more ? `\nMessage: ${more}` : ''}`,
+        }),
+      }).then(r => { if (!r.ok) captureMessage(`Membership notify email failed — ${normalEmail}`, { status: r.status }) })
+        .catch(err => captureException(err, { context: 'membership-notify-email', email: normalEmail })),
+    ])
   }
 
   return Response.json({ success: true })

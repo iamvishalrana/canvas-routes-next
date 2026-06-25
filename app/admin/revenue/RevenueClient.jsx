@@ -21,6 +21,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
   const routesRevenue = byType.find(t => t.key === 'membership_routes')?.revenue ?? 0
   const innerCircleRevenue = byType.find(t => t.key === 'membership_inner_circle')?.revenue ?? 0
   const roadTripRevenue = byType.filter(t => t.key?.startsWith('road_trip')).reduce((sum, t) => sum + (t.revenue ?? 0), 0)
+  const eventRevenue = byType.find(t => t.key === 'event_registration')?.revenue ?? 0
 
   const stats = [
     { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true },
@@ -28,6 +29,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
     { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
     { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
     { label: 'Road Trip Revenue', value: fmt(roadTripRevenue), color: '#1a1a1a', big: false },
+    { label: 'Event Revenue', value: fmt(eventRevenue), color: '#1a1a1a', big: false },
   ]
 
   return (

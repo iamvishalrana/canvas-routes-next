@@ -11,6 +11,8 @@ const TYPE_LABELS = {
   road_trip_standard:      'Road Trip (Standard)',
   road_trip_member:        'Road Trip (Member)',
   road_trip_inner_circle:  'Road Trip (Inner Circle)',
+  road_trip_wtet:          'WTET — July 5, 2026',
+  event_registration:      'Event Registration',
 }
 
 export default async function RevenuePage() {

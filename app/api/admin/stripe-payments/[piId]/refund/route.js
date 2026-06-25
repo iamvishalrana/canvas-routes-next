@@ -36,7 +36,7 @@ export async function POST(request, { params }) {
     // Best-effort DB sync — ignore errors
     await supabase
       .from('applications')
-      .update({ stripe_payment_status: 'refunded' })
+      .update({ stripe_payment_status: 'refunded', stripe_amount_refunded: refund.amount })
       .eq('stripe_payment_intent_id', piId)
       .catch(() => {})
 

@@ -133,9 +133,18 @@ export async function POST(request) {
         if (!normalEmail) break
 
         const supabase = createAdminClient()
-        // Upsert by email but don't overwrite name — existing applicants keep their stored name
+        // Upsert with all form fields stored in PI metadata (written by create-payment-intent
+        // for membership PIs) — ensures full application data is saved even if the client
+        // closed the tab before /api/membership-waitlist fired.
         await supabase.from('applications').upsert({
           email:                    normalEmail,
+          ...(name ? { name } : {}),
+          ...(pi.metadata?.phone    ? { phone:    pi.metadata.phone }    : {}),
+          ...(pi.metadata?.dob      ? { dob:      pi.metadata.dob }      : {}),
+          ...(pi.metadata?.car_year ? { car_year: pi.metadata.car_year } : {}),
+          ...(pi.metadata?.car_make ? { car_make: pi.metadata.car_make } : {}),
+          ...(pi.metadata?.car_model ? { car_model: pi.metadata.car_model } : {}),
+          ...(pi.metadata?.source   ? { source:   pi.metadata.source }   : {}),
           stripe_payment_intent_id: pi.id,
           stripe_payment_status:    'authorized',
           stripe_amount_paid:       amountHeld,
@@ -223,8 +232,10 @@ export async function POST(request) {
               const pi = await stripe.paymentIntents.retrieve(charge.payment_intent)
               const supabase = createAdminClient()
               if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
-                // event_registrations CHECK constraint does not include 'disputed' — skip DB update,
-                // Sentry alert above is sufficient for operational awareness
+                await supabase.from('event_registrations')
+                  .update({ stripe_payment_status: 'disputed' })
+                  .eq('event_id', pi.metadata.event_id)
+                  .eq('member_id', pi.metadata.member_id)
               } else {
                 await supabase.from('applications')
                   .update({ stripe_payment_status: 'disputed' })
@@ -233,6 +244,36 @@ export async function POST(request) {
             }
           } catch (err) {
             captureException(err, { context: 'dispute-webhook', chargeId })
+          }
+        }
+        break
+      }
+
+      case 'charge.dispute.closed': {
+        // Fires when a dispute is won (funds reinstated) or lost (funds withdrawn)
+        const dispute  = event.data.object
+        const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id
+        const newStatus = dispute.status === 'won' ? 'disputed_won' : 'disputed_lost'
+        captureMessage(`Stripe dispute ${dispute.status} — charge ${chargeId}`, { disputeId: dispute.id })
+        if (chargeId) {
+          try {
+            const charge = await stripe.charges.retrieve(chargeId)
+            if (charge.payment_intent) {
+              const pi = await stripe.paymentIntents.retrieve(charge.payment_intent)
+              const supabase = createAdminClient()
+              if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
+                await supabase.from('event_registrations')
+                  .update({ stripe_payment_status: newStatus })
+                  .eq('event_id', pi.metadata.event_id)
+                  .eq('member_id', pi.metadata.member_id)
+              } else {
+                await supabase.from('applications')
+                  .update({ stripe_payment_status: newStatus })
+                  .eq('stripe_payment_intent_id', charge.payment_intent)
+              }
+            }
+          } catch (err) {
+            captureException(err, { context: 'dispute-closed-webhook', chargeId })
           }
         }
         break
@@ -269,8 +310,9 @@ export async function POST(request) {
   } catch (err) {
     console.error('Stripe webhook handler error:', err)
     captureException(err, { context: 'stripe-webhook', eventType: event.type })
-    // Return 200 anyway — Stripe will retry on 5xx, which could cause duplicate processing
-    return new Response('Handler error logged.', { status: 200 })
+    // Return 500 so Stripe retries with exponential backoff (up to 72h).
+    // All handlers use upsert, so duplicate delivery on retry is safe.
+    return new Response('Handler error.', { status: 500 })
   }
 
   return new Response('OK', { status: 200 })

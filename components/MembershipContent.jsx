@@ -143,6 +143,8 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (!res.ok) { setPromoError(data.error || 'Invalid promo code.'); return }
       setPromoApplied({ code: promoInput.trim().toUpperCase(), ...data })
       setPromoInput('')
+      // Update Elements so Apple Pay / Google Pay wallet shows the discounted amount
+      if (elements) await elements.update({ amount: data.discountedAmount }).catch(() => {})
     } catch {
       setPromoError('Could not apply code. Please try again.')
     } finally {
@@ -161,6 +163,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (res.ok) {
         setPromoApplied(null)
         setPromoError(null)
+        if (elements) await elements.update({ amount: originalAmountCents }).catch(() => {})
       } else {
         setPromoError('Could not remove code. Please try again.')
       }
@@ -503,7 +506,13 @@ export default function MembershipContent() {
       const type = form.tier === 'Inner Circle' ? 'membership_inner_circle' : 'membership_routes'
       const res = await fetch('/api/stripe/create-payment-intent', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, email: form.email.trim(), name: form.name.trim(), eventName: form.tier }),
+        body: JSON.stringify({
+          type, email: form.email.trim(), name: form.name.trim(), eventName: form.tier,
+          // Stored in PI metadata so webhook can rescue full application data on tab-close
+          phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '',
+          dob: form.dob_month && form.dob_day ? `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}` : '',
+          year: form.year, carMake: form.carMake, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), source: form.source,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')

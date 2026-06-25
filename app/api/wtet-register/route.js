@@ -129,7 +129,7 @@ export async function POST(request) {
         email: normalEmail,
         name: name.trim(),
         event_name: EVENT_NAME,
-        is_member: isMember ? 'yes' : 'no',
+        is_member: verifiedMember ? 'yes' : 'no',
         car_year: year.trim(),
         car_make: carMake.trim(),
         car_model: fullCarModel,

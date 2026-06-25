@@ -25,7 +25,7 @@ export async function POST(request, { params }) {
     const refund = await stripe.refunds.create({ payment_intent: app.stripe_payment_intent_id })
     // Conditional update guards against duplicate refunds — only updates if still 'paid'
     const { count } = await supabase.from('applications')
-      .update({ stripe_payment_status: 'refunded' }, { count: 'exact' })
+      .update({ stripe_payment_status: 'refunded', stripe_amount_refunded: refund.amount }, { count: 'exact' })
       .eq('id', id)
       .eq('stripe_payment_status', 'paid')
     if (!count) captureException(new Error('Refund double-fire: row was no longer paid'), { context: 'admin-refund', appId: id })

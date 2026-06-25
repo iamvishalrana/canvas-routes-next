@@ -91,6 +91,13 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
     e.preventDefault()
     if (!stripe || !elements || payingRef.current) return
     payingRef.current = true
+
+    if (promoInput.trim()) {
+      setError('You have a promo code entered but not applied. Click "Apply" first or clear it.')
+      payingRef.current = false
+      return
+    }
+
     setPaying(true)
     setError(null)
 
@@ -947,11 +954,15 @@ export default function WtetPage() {
                   onSuccess={() => setStatus('success')}
                   onBack={() => { setStatus(null); setClientSecret(null) }}
                   onMemberConfirm={piId => {
-                    fetch('/api/wtet-member-confirm', {
+                    const confirm = () => fetch('/api/wtet-member-confirm', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ paymentIntentId: piId }),
-                    }).catch(() => {})
+                    })
+                    confirm().catch(() => {
+                      // Retry once after 4 seconds — covers transient server errors
+                      setTimeout(() => confirm().catch(() => {}), 4000)
+                    })
                   }}
                 />
               </Elements>
