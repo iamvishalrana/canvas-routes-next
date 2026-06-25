@@ -549,6 +549,9 @@ export default function WtetPage() {
           pointer-events: none;
         }
 
+        /* ── Prevent iOS input zoom (font-size must be ≥16px) ── */
+        input, select, textarea { font-size: 16px !important; }
+
         /* ── Responsive ── */
         @media (max-width: 768px) {
           .wtet-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
@@ -1023,14 +1026,14 @@ export default function WtetPage() {
                 <div className="join-form-row" style={{marginBottom:'1rem'}}>
                   <div className="join-form-field">
                     <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
-                    <input id="field-name" type="text" placeholder="Your full name" value={form.name} maxLength={100}
+                    <input id="field-name" type="text" name="name" autoComplete="name" inputMode="text" placeholder="Your full name" value={form.name} maxLength={100}
                       onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')}
                       onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
                     {errors.name && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
                   </div>
                   <div className="join-form-field">
                     <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
-                    <input id="field-email" type="email" placeholder="Your email" value={form.email}
+                    <input id="field-email" type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={form.email}
                       onChange={e => updateForm('email', e.target.value)} style={inputStyle('email')}
                       onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} />
                     {errors.email && <span style={{fontSize:'11px',color:'#7B2032'}}>Valid email required</span>}
@@ -1055,13 +1058,13 @@ export default function WtetPage() {
                         return (
                           <div style={{display:'flex',alignItems:'stretch',border,background:bg,boxShadow:shadow,transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s'}}>
                             <div style={{position:'relative',flexShrink:0}}>
-                              <select value={countryCode} onChange={e => { setCountryCode(e.target.value); setForm(p=>({...p,phone:''})) }}
+                              <select name="tel-country-code" autoComplete="off" value={countryCode} onChange={e => { setCountryCode(e.target.value); setForm(p=>({...p,phone:''})) }}
                                 style={{height:'100%',padding:'0.9rem 1.8rem 0.9rem 0.75rem',border:'none',borderRight:'1px solid rgba(0,0,0,0.1)',background:'transparent',fontSize:'13px',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',cursor:'pointer',outline:'none',WebkitAppearance:'none',appearance:'none',minWidth:'60px'}}>
                                 {COUNTRY_CODES.map(c => <option key={c} value={c}>{c}</option>)}
                               </select>
                               <Chevron />
                             </div>
-                            <input id="field-phone" type="tel" placeholder={countryCode==='+1'?'(514) 000-0000':'Phone number'} value={form.phone}
+                            <input id="field-phone" type="tel" name="tel" autoComplete="tel-national" placeholder={countryCode==='+1'?'(514) 000-0000':'Phone number'} value={form.phone}
                               onChange={e => updateForm('phone', formatPhone(e.target.value))}
                               style={{flex:1,padding:'0.9rem 1.2rem',border:'none',background:'transparent',fontSize:'13px',fontFamily:'var(--font-inter),sans-serif',outline:'none',color:'#1a1a1a',appearance:'none'}}
                               onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
@@ -1079,19 +1082,19 @@ export default function WtetPage() {
                   <div className="join-label" style={{marginBottom:'0.5rem'}}>Date of birth<span style={{color:'#7B2032',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>(year optional)</span></div>
                   <div className="wtet-dob-grid" style={{display:'grid',gridTemplateColumns:'1.4fr 1fr 1.2fr',gap:'0.75rem'}}>
                     <div style={{position:'relative'}}>
-                      <select value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)} style={{...inputStyle('dob_month'),cursor:'pointer',paddingRight:'2rem'}}>
+                      <select name="bday-month" autoComplete="bday-month" value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)} style={{...inputStyle('dob_month'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Month</option>
                         {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
                       </select><Chevron />
                     </div>
                     <div style={{position:'relative'}}>
-                      <select value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)} style={{...inputStyle('dob_day'),cursor:'pointer',paddingRight:'2rem'}}>
+                      <select name="bday-day" autoComplete="bday-day" value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)} style={{...inputStyle('dob_day'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Day</option>
                         {Array.from({length:31},(_,i)=>i+1).map(d => <option key={d} value={String(d)}>{d}</option>)}
                       </select><Chevron />
                     </div>
                     <div className="wtet-dob-year" style={{position:'relative'}}>
-                      <select value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)} style={{...inputStyle('dob_year'),cursor:'pointer',paddingRight:'2rem'}}>
+                      <select name="bday-year" autoComplete="bday-year" value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)} style={{...inputStyle('dob_year'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Year</option>
                         {Array.from({length:2015-1945+1},(_,i)=>2015-i).map(y => <option key={y} value={String(y)}>{y}</option>)}
                       </select><Chevron />
@@ -1106,7 +1109,7 @@ export default function WtetPage() {
                   <div className="join-form-field">
                     <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
                     <div style={{position:'relative'}}>
-                      <select id="field-year" value={form.year} onChange={e => updateForm('year', e.target.value)} style={{...inputStyle('year'),cursor:'pointer',paddingRight:'2rem'}}>
+                      <select id="field-year" autoComplete="off" value={form.year} onChange={e => updateForm('year', e.target.value)} style={{...inputStyle('year'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Select year</option>
                         {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y => <option key={y} value={String(y)}>{y}</option>)}
                       </select><Chevron />
@@ -1116,7 +1119,7 @@ export default function WtetPage() {
                   <div className="join-form-field">
                     <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
                     <div style={{position:'relative'}}>
-                      <select id="field-carMake" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)} style={{...inputStyle('carMake'),cursor:'pointer',paddingRight:'2rem'}}>
+                      <select id="field-carMake" autoComplete="off" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)} style={{...inputStyle('carMake'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Select make</option>
                         {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
                       </select><Chevron />
@@ -1128,7 +1131,7 @@ export default function WtetPage() {
                 {/* Model */}
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
                   <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
-                  <input id="field-carModel" type="text" placeholder="e.g. 911 Carrera S" value={form.carModel} maxLength={100}
+                  <input id="field-carModel" type="text" name="car-model" autoComplete="off" placeholder="e.g. 911 Carrera S" value={form.carModel} maxLength={100}
                     onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
                   {errors.carModel && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
@@ -1138,7 +1141,7 @@ export default function WtetPage() {
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
                   <label htmlFor="field-passengers" className="join-label">Passengers<Users size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>(including driver)</span></label>
                   <div style={{position:'relative'}}>
-                    <select id="field-passengers" value={form.passengers} onChange={e => updateForm('passengers', e.target.value)} style={{...inputStyle('passengers'),cursor:'pointer',paddingRight:'2rem'}}>
+                    <select id="field-passengers" autoComplete="off" value={form.passengers} onChange={e => updateForm('passengers', e.target.value)} style={{...inputStyle('passengers'),cursor:'pointer',paddingRight:'2rem'}}>
                       <option value="">Select</option>
                       <option value="1">1</option>
                       <option value="2">2</option>
@@ -1179,7 +1182,7 @@ export default function WtetPage() {
                 {form.hasChildren==='yes' && (
                   <div className="join-form-field" style={{marginBottom:'1rem'}}>
                     <label htmlFor="field-childrenAges" className="join-label">Ages of children<span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
-                    <input id="field-childrenAges" type="text" placeholder="e.g. 4, 7, 12" value={form.childrenAges} maxLength={100}
+                    <input id="field-childrenAges" type="text" autoComplete="off" placeholder="e.g. 4, 7, 12" value={form.childrenAges} maxLength={100}
                       onChange={e => updateForm('childrenAges', e.target.value)} style={inputStyle('childrenAges')}
                       onFocus={() => setFocusedField('childrenAges')} onBlur={() => setFocusedField(null)} />
                     {errors.childrenAges && <span style={{fontSize:'11px',color:'#7B2032'}}>Please enter the ages</span>}
@@ -1191,7 +1194,7 @@ export default function WtetPage() {
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
                   <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
                   <div style={{position:'relative'}}>
-                    <select id="field-source" value={form.source} onChange={e => updateForm('source', e.target.value)} style={{...inputStyle('source'),cursor:'pointer',paddingRight:'2rem'}}>
+                    <select id="field-source" autoComplete="off" value={form.source} onChange={e => updateForm('source', e.target.value)} style={{...inputStyle('source'),cursor:'pointer',paddingRight:'2rem'}}>
                       <option value="">Select an option</option>
                       <option value="Instagram">Instagram</option>
                       <option value="Facebook">Facebook</option>
@@ -1207,7 +1210,7 @@ export default function WtetPage() {
                 {/* More */}
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
                   <label htmlFor="field-more" className="join-label">Tell us more <span style={{color:'#888',fontWeight:'300'}}>(optional)</span></label>
-                  <textarea id="field-more" placeholder="Anything you'd like us to know — your car, your passengers, or what excites you about this trip..." value={form.more}
+                  <textarea id="field-more" autoComplete="off" placeholder="Anything you'd like us to know — your car, your passengers, or what excites you about this trip..." value={form.more}
                     onChange={e => updateForm('more', e.target.value)} rows={4} maxLength={500}
                     style={{...inputStyle('more'),resize:'vertical'}}
                     onFocus={() => setFocusedField('more')} onBlur={() => setFocusedField(null)} />

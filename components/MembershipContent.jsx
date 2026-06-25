@@ -863,7 +863,7 @@ export default function MembershipContent() {
                 <label htmlFor="inp-name" style={{ ...LABEL, color: errors.name ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'text' }}>
                   <User size={10} /><span>Full name</span><span style={{ color: '#d06070' }}>*</span>
                 </label>
-                <input id="inp-name" type="text" value={form.name} placeholder="First and Last name" autoComplete="name"
+                <input id="inp-name" type="text" name="name" value={form.name} placeholder="First and Last name" autoComplete="name" inputMode="text"
                   aria-invalid={errors.name ? 'true' : 'false'} aria-required="true"
                   onChange={e => set('name', capitaliseName(e.target.value))}
                   onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
@@ -875,7 +875,7 @@ export default function MembershipContent() {
                   <label htmlFor="inp-email" style={{ ...LABEL, color: errors.email ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'text' }}>
                     <Mail size={10} /><span>Email</span><span style={{ color: '#d06070' }}>*</span>
                   </label>
-                  <input id="inp-email" type="email" value={form.email} placeholder="your@email.com" autoComplete="email"
+                  <input id="inp-email" type="email" name="email" value={form.email} placeholder="your@email.com" autoComplete="email" inputMode="email"
                     aria-invalid={errors.email ? 'true' : 'false'} aria-required="true"
                     onChange={e => set('email', e.target.value)}
                     onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
@@ -886,13 +886,13 @@ export default function MembershipContent() {
                     <Phone size={10} /><span>Phone</span><span style={{ color: '#d06070' }}>*</span>
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${errors.phone ? 'rgba(208,96,112,0.8)' : focusedField === 'phone' || focusedField === 'countryCode' ? 'rgba(197,168,130,0.9)' : form.phone ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.12)'}`, transition: 'border-color 0.2s' }}>
-                    <select aria-label="Country code" value={countryCode} onChange={e => { setCountryCode(e.target.value); set('phone', '') }}
+                    <select aria-label="Country code" autoComplete="off" value={countryCode} onChange={e => { setCountryCode(e.target.value); set('phone', '') }}
                       onFocus={() => setFocusedField('countryCode')} onBlur={() => setFocusedField(null)}
                       style={{ padding: '0.6rem 0.2rem 0.6rem 0', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', flexShrink: 0 }}>
                       {COUNTRY_CODES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <span style={{ color: 'rgba(0,0,0,0.18)', margin: '0 0.5rem', fontSize: '13px', userSelect: 'none' }}>|</span>
-                    <input id="inp-phone" type="tel" value={form.phone}
+                    <input id="inp-phone" type="tel" name="tel" value={form.phone}
                       placeholder={countryCode === '+1' ? '(514) 000-0000' : 'Phone number'}
                       autoComplete="tel-national"
                       aria-invalid={errors.phone ? 'true' : 'false'} aria-required="true"
@@ -910,12 +910,12 @@ export default function MembershipContent() {
                 </div>
                 <div className="mem-dob-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '0 1.5rem' }}>
                   {[
-                    { field: 'dob_month', placeholder: 'Month', options: MONTHS.map((m, i) => ({ v: String(i+1), l: m })) },
-                    { field: 'dob_day',   placeholder: 'Day',   options: Array.from({length:31},(_,i)=>({v:String(i+1),l:String(i+1)})) },
-                    { field: 'dob_year',  placeholder: 'Year',  options: Array.from({length:2006-1945+1},(_,i)=>({v:String(2006-i),l:String(2006-i)})) },
-                  ].map(({ field, placeholder, options }) => (
+                    { field: 'dob_month', placeholder: 'Month', ac: 'bday-month', options: MONTHS.map((m, i) => ({ v: String(i+1), l: m })) },
+                    { field: 'dob_day',   placeholder: 'Day',   ac: 'bday-day',   options: Array.from({length:31},(_,i)=>({v:String(i+1),l:String(i+1)})) },
+                    { field: 'dob_year',  placeholder: 'Year',  ac: 'bday-year',  options: Array.from({length:2006-1945+1},(_,i)=>({v:String(2006-i),l:String(2006-i)})) },
+                  ].map(({ field, placeholder, ac, options }) => (
                     <div key={field} style={{ position: 'relative' }}>
-                      <select id={`inp-${field}`} aria-label={placeholder} value={form[field]} onChange={e => set(field, e.target.value)}
+                      <select id={`inp-${field}`} name={ac} autoComplete={ac} aria-label={placeholder} value={form[field]} onChange={e => set(field, e.target.value)}
                         onFocus={() => setFocusedField(field)} onBlur={() => setFocusedField(null)}
                         style={{ ...inp(field), paddingRight: '1.5rem', cursor: 'pointer', width: '100%' }}>
                         <option value="">{placeholder}</option>
@@ -937,7 +937,7 @@ export default function MembershipContent() {
                     <Car size={10} /><span>Year</span><span style={{ color: '#d06070' }}>*</span>
                   </label>
                   <div style={{ position: 'relative' }}>
-                    <select id="inp-year" aria-required="true" aria-invalid={errors.year ? 'true' : 'false'} value={form.year} onChange={e => set('year', e.target.value)}
+                    <select id="inp-year" autoComplete="off" aria-required="true" aria-invalid={errors.year ? 'true' : 'false'} value={form.year} onChange={e => set('year', e.target.value)}
                       onFocus={() => setFocusedField('year')} onBlur={() => setFocusedField(null)}
                       style={{ ...inp('year'), paddingRight: '1.5rem', cursor: 'pointer' }}>
                       <option value="">Year</option>
@@ -951,7 +951,7 @@ export default function MembershipContent() {
                     <Car size={10} /><span>Make</span><span style={{ color: '#d06070' }}>*</span>
                   </label>
                   <div style={{ position: 'relative' }}>
-                    <select id="inp-carMake" aria-required="true" aria-invalid={errors.carMake ? 'true' : 'false'} value={form.carMake} onChange={e => set('carMake', e.target.value)}
+                    <select id="inp-carMake" autoComplete="off" aria-required="true" aria-invalid={errors.carMake ? 'true' : 'false'} value={form.carMake} onChange={e => set('carMake', e.target.value)}
                       onFocus={() => setFocusedField('carMake')} onBlur={() => setFocusedField(null)}
                       style={{ ...inp('carMake'), paddingRight: '1.5rem', cursor: 'pointer' }}>
                       <option value="">Select make</option>
@@ -964,7 +964,7 @@ export default function MembershipContent() {
                   <label htmlFor="inp-carModel" style={{ ...LABEL, color: errors.carModel ? '#d06070' : '#c5a882', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'text' }}>
                     <Car size={10} /><span>Model</span><span style={{ color: '#d06070' }}>*</span>
                   </label>
-                  <input id="inp-carModel" type="text" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
+                  <input id="inp-carModel" type="text" name="car-model" autoComplete="off" value={form.carModel} placeholder="e.g. 911 Carrera, M3 Competition"
                     aria-required="true" aria-invalid={errors.carModel ? 'true' : 'false'}
                     onChange={e => set('carModel', e.target.value)}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)}
@@ -977,7 +977,7 @@ export default function MembershipContent() {
                   <Car size={10} /><span>Paint</span>
                   <span style={{ fontSize: '9px', letterSpacing: '0.04em', textTransform: 'none', color: '#bbb', fontWeight: '400' }}>optional</span>
                 </div>
-                <input type="text" value={form.carPaint} placeholder="e.g. Nardo Grey, Guards Red, Midnight Blue"
+                <input type="text" autoComplete="off" value={form.carPaint} placeholder="e.g. Nardo Grey, Guards Red, Midnight Blue"
                   onChange={e => set('carPaint', e.target.value)}
                   onFocus={() => setFocusedField('carPaint')} onBlur={() => setFocusedField(null)}
                   style={inp('carPaint')} maxLength={60} />
@@ -1049,7 +1049,7 @@ export default function MembershipContent() {
                   <Share2 size={10} /><span>How did you hear about us</span><span style={{ color: '#d06070' }}>*</span>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <select id="inp-source" aria-required="true" aria-invalid={errors.source ? 'true' : 'false'} value={form.source} onChange={e => { set('source', e.target.value); if (e.target.value !== 'Member referral') setErrors(p => ({ ...p, referredBy: false })) }}
+                  <select id="inp-source" autoComplete="off" aria-required="true" aria-invalid={errors.source ? 'true' : 'false'} value={form.source} onChange={e => { set('source', e.target.value); if (e.target.value !== 'Member referral') setErrors(p => ({ ...p, referredBy: false })) }}
                     onFocus={() => setFocusedField('source')} onBlur={() => setFocusedField(null)}
                     style={{ ...inp('source'), paddingRight: '1.5rem', cursor: 'pointer' }}>
                     <option value="">Select</option>
@@ -1064,7 +1064,7 @@ export default function MembershipContent() {
                   <div style={{ ...LABEL, color: 'rgba(197,168,130,0.55)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <User size={10} /><span>Referred by</span><span style={{ color: '#c5a882', textTransform: 'none', letterSpacing: 0, fontSize: '11px', marginLeft: '2px' }}>*</span>
                   </div>
-                  <input type="text" value={form.referredBy} placeholder="Member's name"
+                  <input type="text" autoComplete="off" value={form.referredBy} placeholder="Member's name"
                     onChange={e => set('referredBy', capitaliseName(e.target.value))}
                     onFocus={() => setFocusedField('referredBy')} onBlur={() => setFocusedField(null)}
                     style={inp('referredBy')} />
