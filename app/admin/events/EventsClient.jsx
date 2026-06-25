@@ -622,6 +622,7 @@ export default function EventsClient() {
             inviteSent: !!rsvpToken,
             car: [c.car_year, make, model].filter(Boolean).join(' ') || null,
             href: `/admin/contacts?q=${encodeURIComponent(c.email || c.name || '')}`,
+            wtetCheckin: c.wtet_checkin || null,
           }
         })
       const seen = new Set()
@@ -984,9 +985,11 @@ export default function EventsClient() {
                                             }
                                             <div style={{ fontSize: '11px', color: '#888' }}>{r.email || '—'}</div>
                                             {r.car && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '1px' }}>{r.car}</div>}
-                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap', alignItems: 'center' }}>
                                               <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
-                                              {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888' }}>{r.status}</span>}
+                                              {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : r.status}</span>}
+                                              {r.amount > 0 && <span style={{ fontSize: '10px', color: '#555' }}>${(r.amount / 100).toFixed(2)}</span>}
+                                              {!r.amount && r.status === 'free' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>Free</span>}
                                             </div>
                                           </div>
                                           <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -1053,13 +1056,13 @@ export default function EventsClient() {
                                     <>
                                       <button
                                         onClick={() => setRsvpExpanded(p => ({ ...p, [indivKey]: !p[indivKey] }))}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[indivKey] && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[indivKey] && !r.wtetCheckin && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
                                       >
                                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" style={{ transform: rsvpExpanded[indivKey] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
                                         <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter)' }}>RSVP Answers</span>
                                       </button>
                                       {rsvpExpanded[indivKey] && (
-                                        <div style={{ padding: '0.4rem 0.85rem 0.65rem', background: '#fafaf9', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                                        <div style={{ padding: '0.4rem 0.85rem 0.65rem', background: '#fafaf9', borderBottom: (!r.wtetCheckin && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                                           {Object.entries(r.rsvpAnswers).filter(([, v]) => v != null && v !== '').map(([k, v]) => (
                                             <span key={k} style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>{k.replace(/_/g, ' ')}</span>
@@ -1067,6 +1070,48 @@ export default function EventsClient() {
                                               <span style={{ color: '#333' }}>{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}</span>
                                             </span>
                                           ))}
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                  {r.wtetCheckin && (
+                                    <>
+                                      <button
+                                        onClick={() => setRsvpExpanded(p => ({ ...p, [`checkin_${indivKey}`]: !p[`checkin_${indivKey}`] }))}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[`checkin_${indivKey}`] && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                                      >
+                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" style={{ transform: rsvpExpanded[`checkin_${indivKey}`] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', fontFamily: 'var(--font-inter)' }}>✓ Check-in Complete</span>
+                                      </button>
+                                      {rsvpExpanded[`checkin_${indivKey}`] && (
+                                        <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: 'rgba(59,107,47,0.03)', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: r.wtetCheckin.passengers_list?.length ? '0.6rem' : 0 }}>
+                                            {r.wtetCheckin.dietary && (
+                                              <span style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
+                                                <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Dietary </span>
+                                                <span style={{ color: '#333' }}>{r.wtetCheckin.dietary}</span>
+                                              </span>
+                                            )}
+                                            {r.wtetCheckin.whatsapp && (
+                                              <span style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
+                                                <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>WhatsApp </span>
+                                                <span style={{ color: '#333' }}>{r.wtetCheckin.whatsapp}</span>
+                                              </span>
+                                            )}
+                                            {!r.wtetCheckin.dietary && !r.wtetCheckin.whatsapp && (
+                                              <span style={{ fontSize: '10px', color: '#aaa', fontFamily: 'var(--font-inter)' }}>No dietary restrictions · No WhatsApp provided</span>
+                                            )}
+                                          </div>
+                                          {r.wtetCheckin.passengers_list?.length > 0 && (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                              {r.wtetCheckin.passengers_list.map((p, pi) => (
+                                                <span key={pi} style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)', background: 'rgba(0,0,0,0.04)', padding: '2px 8px', border: '0.5px solid rgba(0,0,0,0.08)' }}>
+                                                  <span style={{ color: '#aaa', fontSize: '9px' }}>{pi === 0 ? 'Driver' : `P${pi + 1}`} </span>
+                                                  {p.name}, {p.age}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                     </>
