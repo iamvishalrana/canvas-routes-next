@@ -59,14 +59,117 @@ The membership form has a two-step flow: form validation → Stripe PaymentInten
 
 ## Stripe Payment Flow
 
-1. `POST /api/stripe/create-payment-intent` — creates a PaymentIntent, returns `clientSecret`
-2. Client renders Stripe `Elements` with the `clientSecret`
-3. `POST /api/stripe/apply-promo` — validates a Stripe promotion code and updates the PaymentIntent amount in-place
-4. `confirmPayment()` — Stripe handles the charge
-5. `POST /api/membership-waitlist` — saves application to DB + sends Resend emails (confirmation to applicant, notification to admin)
-6. `POST /api/stripe/webhook` — Stripe confirms payment server-side, updates `applications` row with Stripe fields
+Three flows exist:
 
-Webhook signature is verified via `STRIPE_WEBHOOK_SECRET`. Never trust payment status from the client.
+1. **WTET non-member** — `wtet-register` creates PI with `capture_method: 'manual'` (hold only). Admin captures manually after review.
+2. **WTET member** — `wtet-member-register` creates PI with automatic capture. `wtet-member-confirm` sends confirmation email after payment.
+3. **Membership** — `create-payment-intent` creates PI with `capture_method: 'manual'`. `membership-waitlist` saves form data + sends emails. Admin captures manually.
+
+Steps for each: PI creation → Stripe `Elements` → `confirmPayment()` → server API → webhook rescue.
+
+Webhook signature verified via `STRIPE_WEBHOOK_SECRET`. Never trust payment status from the client.
+
+## Payment Patterns — Required for Every New Event/Flow
+
+When building any new payment flow, these are mandatory. Each rule exists because a real bug was found and fixed.
+
+### Server-side API rules
+
+**1. Variable scope across try-blocks**
+Never declare a variable with `const` inside a `try {}` block if you need it outside. Use `let` before the block:
+```js
+// WRONG — `existing` is out of scope after the try closes
+if (condition) try {
+  const { data: existing } = await supabase...
+} catch {}
+if (existing?.stripe_payment_intent_id) ... // ReferenceError
+
+// CORRECT
+let existing = null
+if (condition) try {
+  const { data: existingData } = await supabase...
+  existing = existingData
+} catch {}
+if (existing?.stripe_payment_intent_id) ...
+```
+
+**2. Always cancel the previous PaymentIntent on re-registration**
+Every registration route must fetch `stripe_payment_intent_id` from the existing DB row and cancel it before creating a new PI, to prevent ghost holds on customer cards:
+```js
+const { data: existing } = await supabase.from('applications')
+  .select('registrations, stripe_payment_intent_id')
+  .eq('email', normalEmail).maybeSingle()
+
+const pi = await stripe.paymentIntents.create({ ... })
+
+if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
+  stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
+}
+```
+This pattern must be in: `wtet-register`, `wtet-member-register`, `membership-waitlist`. Check every new route.
+
+**3. Always write `stripe_payment_status: 'pending'` on the initial upsert**
+Every registration DB upsert must include `stripe_payment_status: 'pending'` so there is never a window where a row has a PI ID but no status.
+
+**4. Store all form fields in PI metadata**
+For any paid event where the client calls a separate API after `confirmPayment`, store all form fields in PI metadata at creation time. The webhook rescue path (`payment_intent.requires_capture`) reads from metadata and writes to DB — if the user closes the tab mid-flow, the data is not lost:
+```js
+metadata: {
+  type, email, name,
+  phone, dob, car_year, car_make, car_model, source, // form fields for rescue
+}
+```
+
+**5. Use server-verified values in PI metadata, never trust client-supplied values**
+For example, `is_member` must use the server-verified `verifiedMember` boolean, not the client-supplied `isMember` field from the request body. The metadata drives webhook routing (which email template fires) — wrong values cause wrong emails.
+
+**6. Idempotency keys on all Stripe write operations**
+Every `stripe.refunds.create()` and `stripe.paymentIntents.capture()` must have an idempotency key:
+```js
+stripe.refunds.create({ payment_intent: piId }, { idempotencyKey: `refund-${piId}` })
+stripe.paymentIntents.capture(piId, {}, { idempotencyKey: `capture-${piId}` })
+```
+Without this, admin double-clicks can issue duplicate charges/refunds.
+
+**7. Webhook must return 500 on handler crash — not 200**
+The final catch block in `app/api/stripe/webhook/route.js` must return `{ status: 500 }`. A 200 tells Stripe delivery was successful; Stripe won't retry. A 500 triggers exponential backoff retries for up to 72 hours. All handlers use `upsert` so retries are safe.
+
+**8. Emails in API routes must not block the response**
+Fire emails async — do not `await` Resend calls before returning the response. Use `Promise.allSettled([...])` without await, with per-call `.catch(() => captureException(...))`. Blocking on Resend can cause client timeouts and user re-submits even though the DB write already succeeded.
+
+**9. Dispute webhook must handle `warning_closed`**
+`charge.dispute.closed` has three terminal states: `won`, `lost`, and `warning_closed`. Only `lost` means funds were withdrawn. Use a three-way check:
+```js
+const newStatus = dispute.status === 'won' ? 'disputed_won'
+                : dispute.status === 'lost' ? 'disputed_lost'
+                : 'disputed' // warning_closed — no funds lost
+```
+
+**10. Admin capture routes must guard against wrong statuses**
+A capture route that only blocks `paid` will still attempt to capture a `failed`, `refunded`, or `disputed` PI (Stripe errors, confusing UX). Check explicitly:
+```js
+if (app.stripe_payment_status === 'paid') return error('Already captured.')
+if (app.stripe_payment_status && !['pending', 'authorized'].includes(app.stripe_payment_status)) {
+  return error(`Cannot capture: status is ${app.stripe_payment_status}`)
+}
+```
+
+### Client-side Stripe Elements rules
+
+**11. `elements.update({ amount })` is only valid in deferred-intent mode**
+`elements.update()` only works when `<Elements>` is initialized with `mode: 'payment'` and NO `clientSecret`. If `clientSecret` is already set (confirmed-intent mode), `elements.update()` is silently ignored or errors. The membership flow uses `clientSecret` — do not call `elements.update()` there. The WTET flow uses `mode: 'payment'` — `elements.update()` is correct there.
+
+**12. `confirmPayment` retry/confirm callbacks must check `res.ok`**
+`fetch().catch()` only fires on network-level errors (no connection, DNS failure). A 500 response resolves normally and bypasses `.catch()`. Any fire-and-forget confirmation call must explicitly check `res.ok`:
+```js
+const doConfirm = () =>
+  fetch('/api/wtet-member-confirm', { ... })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
+doConfirm().catch(() => setTimeout(() => doConfirm().catch(() => {}), 4000))
+```
+
+**13. Block payment if a promo code is typed but not applied**
+Both WTET and membership payment forms must check `promoInput.trim()` before `confirmPayment` and show an error if a code is entered but not applied. Do this before `setPaying(true)` so the button does not get stuck.
 
 ## Fonts & Design Tokens
 
