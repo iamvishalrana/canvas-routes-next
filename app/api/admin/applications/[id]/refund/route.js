@@ -22,7 +22,10 @@ export async function POST(request, { params }) {
   if (app.stripe_payment_status !== 'paid') return Response.json({ error: 'Payment is not refundable.' }, { status: 400 })
 
   try {
-    const refund = await stripe.refunds.create({ payment_intent: app.stripe_payment_intent_id })
+    const refund = await stripe.refunds.create(
+      { payment_intent: app.stripe_payment_intent_id },
+      { idempotencyKey: `refund-app-${app.stripe_payment_intent_id}` }
+    )
     // Conditional update guards against duplicate refunds — only updates if still 'paid'
     const { count } = await supabase.from('applications')
       .update({ stripe_payment_status: 'refunded', stripe_amount_refunded: refund.amount }, { count: 'exact' })

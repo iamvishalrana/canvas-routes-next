@@ -958,11 +958,9 @@ export default function WtetPage() {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ paymentIntentId: piId }),
-                    })
-                    confirm().catch(() => {
-                      // Retry once after 4 seconds — covers transient server errors
-                      setTimeout(() => confirm().catch(() => {}), 4000)
-                    })
+                    }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
+                    // Retry once after 4s on any failure (network error OR non-ok response)
+                    confirm().catch(() => setTimeout(() => confirm().catch(() => {}), 4000))
                   }}
                 />
               </Elements>

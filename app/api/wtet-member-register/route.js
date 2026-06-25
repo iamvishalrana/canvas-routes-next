@@ -57,7 +57,7 @@ export async function POST(request) {
   const admin = createAdminClient()
   const { data: existing } = await admin
     .from('applications')
-    .select('id, stripe_payment_status, registrations')
+    .select('id, stripe_payment_status, registrations, stripe_payment_intent_id')
     .eq('email', normalEmail)
     .maybeSingle()
 
@@ -141,6 +141,11 @@ export async function POST(request) {
       description: `Canvas Routes — ${EVENT_NAME} (Member rate)`,
       automatic_payment_methods: { enabled: true },
     })
+    // Cancel the previous PI if re-registering — prevents ghost holds on the member's card
+    if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
+      stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
+    }
+
     // Store PI ID immediately so wtet-member-confirm can find this row after payment
     const { error: piStoreErr } = await admin.from('applications')
       .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_wtet' })

@@ -74,9 +74,11 @@ export async function POST(request) {
   const amountCents = verifiedMember ? MEMBER_PRICE_CENTS : NONMEMBER_PRICE_CENTS
 
   // Save to DB as pending before creating PI
+  let existing = null  // declared here so it's in scope for the PI-cancel logic below
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) try {
     const supabase = createAdminClient()
-    const { data: existing } = await supabase.from('applications').select('id, registrations, stripe_payment_intent_id').eq('email', normalEmail).maybeSingle()
+    const { data: existingData } = await supabase.from('applications').select('id, registrations, stripe_payment_intent_id').eq('email', normalEmail).maybeSingle()
+    existing = existingData
 
     const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
     const newReg = {

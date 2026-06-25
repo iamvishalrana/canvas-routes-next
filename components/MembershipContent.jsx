@@ -143,8 +143,8 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (!res.ok) { setPromoError(data.error || 'Invalid promo code.'); return }
       setPromoApplied({ code: promoInput.trim().toUpperCase(), ...data })
       setPromoInput('')
-      // Update Elements so Apple Pay / Google Pay wallet shows the discounted amount
-      if (elements) await elements.update({ amount: data.discountedAmount }).catch(() => {})
+      // Note: elements.update() is only valid in deferred-intent mode (no clientSecret).
+      // Membership uses clientSecret mode — the PI is already updated server-side by apply-promo.
     } catch {
       setPromoError('Could not apply code. Please try again.')
     } finally {
@@ -163,7 +163,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (res.ok) {
         setPromoApplied(null)
         setPromoError(null)
-        if (elements) await elements.update({ amount: originalAmountCents }).catch(() => {})
+        // elements.update() not called — invalid in client-secret mode; PI restored server-side
       } else {
         setPromoError('Could not remove code. Please try again.')
       }

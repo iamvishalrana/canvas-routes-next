@@ -41,6 +41,9 @@ export async function POST(request, { params }) {
 
   if (!app) return Response.json({ error: 'Payment not found.' }, { status: 404 })
   if (app.stripe_payment_status === 'paid') return Response.json({ error: 'Already captured.' }, { status: 400 })
+  if (app.stripe_payment_status && !['pending', 'authorized'].includes(app.stripe_payment_status)) {
+    return Response.json({ error: `Payment cannot be captured (status: ${app.stripe_payment_status}).` }, { status: 400 })
+  }
 
   // Retrieve PI if we haven't yet (needed for amount and metadata)
   if (!pi) {

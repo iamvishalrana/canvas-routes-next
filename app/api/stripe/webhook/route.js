@@ -140,7 +140,15 @@ export async function POST(request) {
           email:                    normalEmail,
           ...(name ? { name } : {}),
           ...(pi.metadata?.phone    ? { phone:    pi.metadata.phone }    : {}),
-          ...(pi.metadata?.dob      ? { dob:      pi.metadata.dob }      : {}),
+          ...(pi.metadata?.dob ? (() => {
+            const [y, m, d] = (pi.metadata.dob || '').split('-').map(Number)
+            return {
+              dob: pi.metadata.dob,
+              ...(m ? { dob_month: m } : {}),
+              ...(d ? { dob_day: d }   : {}),
+              ...(y && y > 1900 ? { dob_year: y } : {}),
+            }
+          })() : {}),
           ...(pi.metadata?.car_year ? { car_year: pi.metadata.car_year } : {}),
           ...(pi.metadata?.car_make ? { car_make: pi.metadata.car_make } : {}),
           ...(pi.metadata?.car_model ? { car_model: pi.metadata.car_model } : {}),
@@ -253,7 +261,7 @@ export async function POST(request) {
         // Fires when a dispute is won (funds reinstated) or lost (funds withdrawn)
         const dispute  = event.data.object
         const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id
-        const newStatus = dispute.status === 'won' ? 'disputed_won' : 'disputed_lost'
+        const newStatus = dispute.status === 'won' ? 'disputed_won' : dispute.status === 'lost' ? 'disputed_lost' : 'disputed'
         captureMessage(`Stripe dispute ${dispute.status} — charge ${chargeId}`, { disputeId: dispute.id })
         if (chargeId) {
           try {
