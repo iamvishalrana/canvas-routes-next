@@ -302,7 +302,7 @@ export default function EasternTownshipsPage() {
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>The Drive</div>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
-            We leave Brossard, cross the bridge, and head east toward Bromont. After fuelling up at the Shell station by the outlets, we head south through Dunham wine country for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property and pick up a bottle at a special discount for the group.
+            We leave Brossard, cross the bridge, and head east toward Bromont. After fuelling up at the Shell station by the outlets, we head south through Dunham wine country for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property. Canvas Routes guests get a special price on any purchases at the winery.
           </p>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
             From there we pick up Chemin des Cantons. The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — quiet, undisturbed pavement with almost no traffic. Coming through Austin, the trees open and Lake Memphrémagog spreads out below.
