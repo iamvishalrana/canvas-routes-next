@@ -20,7 +20,9 @@ export async function POST(request, { params }) {
   if (!app) return Response.json({ error: 'Not found.' }, { status: 404 })
   if (!app.stripe_payment_intent_id) return Response.json({ error: 'No payment on record.' }, { status: 400 })
   if (app.stripe_payment_status === 'paid') return Response.json({ error: 'Already captured.' }, { status: 400 })
-  if (app.stripe_payment_status !== 'authorized') return Response.json({ error: 'Payment is not in an authorized state.' }, { status: 400 })
+  if (app.stripe_payment_status && !['pending', 'authorized'].includes(app.stripe_payment_status)) {
+    return Response.json({ error: `Cannot capture: payment status is '${app.stripe_payment_status}'.` }, { status: 400 })
+  }
 
   const piId = app.stripe_payment_intent_id
 
@@ -56,7 +58,8 @@ export async function POST(request, { params }) {
     const amount     = `$${(pi.amount / 100).toFixed(2)} CAD`
     const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${piId}`
 
-    await Promise.all([
+    // Fire async — do not await (rule #8)
+    Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },

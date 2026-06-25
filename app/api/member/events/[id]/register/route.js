@@ -47,8 +47,13 @@ export async function POST(request, { params }) {
 
   // Early-exit if already registered (before any PI work)
   const { data: existing } = await admin.from('event_registrations')
-    .select('stripe_payment_status').eq('event_id', eventId).eq('member_id', user.id).maybeSingle()
+    .select('stripe_payment_status, stripe_payment_intent_id').eq('event_id', eventId).eq('member_id', user.id).maybeSingle()
   if (existing && ['free', 'paid'].includes(existing.stripe_payment_status)) {
+    // If the webhook already wrote 'paid' for this exact PI before this API call landed,
+    // treat it as a successful idempotent registration rather than an error.
+    if (existing.stripe_payment_status === 'paid' && paymentIntentId && existing.stripe_payment_intent_id === paymentIntentId) {
+      return Response.json({ success: true })
+    }
     return Response.json({ error: 'You are already registered for this event.' }, { status: 400 })
   }
 
@@ -119,7 +124,8 @@ export async function POST(request, { params }) {
     const amountLabel = isFree ? 'Free' : `$${(amountPaid / 100).toFixed(2)} CAD`
     const dateDisplay = ev.date_display || ev.date || null
 
-    await Promise.all([
+    // Fire emails async — do not await (rule #8)
+    Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },

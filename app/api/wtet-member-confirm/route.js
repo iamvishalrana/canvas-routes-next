@@ -2,6 +2,7 @@ import { createClient } from '../../../lib/supabase/server'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { captureException } from '../../../lib/sentry.js'
+import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
@@ -11,6 +12,9 @@ export async function POST(request) {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  if (await checkRateLimit(ip)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request' }, { status: 400 }) }
@@ -64,34 +68,31 @@ export async function POST(request) {
 
   if (!process.env.RESEND_API_KEY || alreadyConfirmed) return Response.json({ ok: true })
 
-  try {
-    await Promise.all([
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: 'Canvas Routes <info@canvasroutes.com>',
-          to: normalEmail,
-          reply_to: 'jerry@canvasroutes.com',
-          subject: `Payment confirmed — ${EVENT_NAME}`,
-          html: buildWtetConfirmHtml(firstName, amount, checkinUrl, EVENT_NAME),
-          text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
-        }),
+  // Fire emails async — do not await (rule #8)
+  Promise.allSettled([
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: normalEmail,
+        reply_to: 'jerry@canvasroutes.com',
+        subject: `Payment confirmed — ${EVENT_NAME}`,
+        html: buildWtetConfirmHtml(firstName, amount, checkinUrl, EVENT_NAME),
+        text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
       }),
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: 'Canvas Routes <info@canvasroutes.com>',
-          to: 'jerry@canvasroutes.com',
-          subject: `WTET Member Payment Confirmed — ${memberName}`,
-          text: `Member payment confirmed for ${EVENT_NAME}.\n\nName: ${memberName}\nEmail: ${normalEmail}\nAmount: ${amount}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}`,
-        }),
+    }).catch(err => captureException(err, { context: 'wtet-member-confirm-member-email', email: normalEmail })),
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: 'jerry@canvasroutes.com',
+        subject: `WTET Member Payment Confirmed — ${memberName}`,
+        text: `Member payment confirmed for ${EVENT_NAME}.\n\nName: ${memberName}\nEmail: ${normalEmail}\nAmount: ${amount}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}`,
       }),
-    ])
-  } catch (err) {
-    captureException(err, { context: 'wtet-member-confirm-email', email: normalEmail })
-  }
+    }).catch(err => captureException(err, { context: 'wtet-member-confirm-admin-email', email: normalEmail })),
+  ])
 
   return Response.json({ ok: true })
 }

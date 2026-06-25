@@ -21,6 +21,9 @@ export async function POST(request, { params }) {
     .maybeSingle()
   if (!app) return Response.json({ error: 'Payment not found.' }, { status: 404 })
   if (app.stripe_payment_status === 'refunded') return Response.json({ error: 'Already refunded.' }, { status: 400 })
+  if (app.stripe_payment_status && !['paid', 'partially_refunded', 'disputed'].includes(app.stripe_payment_status)) {
+    return Response.json({ error: `Cannot refund: payment status is '${app.stripe_payment_status}'.` }, { status: 400 })
+  }
 
   let body = {}
   try { body = await request.json() } catch {}

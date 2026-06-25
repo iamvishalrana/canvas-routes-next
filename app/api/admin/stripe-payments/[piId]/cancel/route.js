@@ -17,6 +17,8 @@ export async function POST(request, { params }) {
     .maybeSingle()
   if (!app) return Response.json({ error: 'Payment not found.' }, { status: 404 })
   if (app.stripe_payment_status === 'rejected') return Response.json({ error: 'Already cancelled.' }, { status: 400 })
+  if (app.stripe_payment_status === 'paid') return Response.json({ error: 'Payment has already been captured — use refund instead.' }, { status: 400 })
+  if (app.stripe_payment_status === 'refunded') return Response.json({ error: 'Payment has already been refunded.' }, { status: 400 })
 
   try {
     await stripe.paymentIntents.cancel(piId)
