@@ -152,7 +152,7 @@ export default function ContactsClient() {
   }, [])
 
   useEffect(() => { loadContacts() }, [loadContacts])
-  useRealtimeSync('contacts', loadContacts)
+  useRealtimeSync(['contacts', 'members'], loadContacts)
 
   async function removeContact(contactId) {
     setRemoveContactError(null)

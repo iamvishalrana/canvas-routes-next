@@ -101,7 +101,7 @@ export default function ApplicationsClient() {
   }, [])
 
   useEffect(() => { loadApps() }, [loadApps])
-  useRealtimeSync('applications', loadApps)
+  useRealtimeSync(['applications', 'members'], loadApps)
 
   useEffect(() => {
     if (loading || seenInitRef.current) return

@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { ATTENDANCE_KEY_TO_EVENT, normalizeEventName } from '../../../../../lib/eventMeta.js'
+import { captureException } from '../../../../../lib/sentry.js'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -65,7 +66,8 @@ export async function PATCH(request, { params }) {
     // If email changed, update applications.email and use the old email to find the row
     if (newEmail && oldEmail && newEmail !== oldEmail) appSync.email = newEmail
     if (Object.keys(appSync).length > 0) {
-      await supabase.from('applications').update(appSync).eq('email', oldEmail || memberEmail)
+      const { error: appSyncErr } = await supabase.from('applications').update(appSync).eq('email', oldEmail || memberEmail)
+      if (appSyncErr) captureException(appSyncErr, { context: 'member-patch-sync-to-applications', email: oldEmail || memberEmail })
     }
 
     // Sync event_attendance → applications.registrations[].attended
@@ -93,7 +95,10 @@ export async function PATCH(request, { params }) {
           const exists = updatedRegs.some(r => normalizeEventName(r.event) === eventName)
           if (!exists) { updatedRegs.push({ event: eventName, registered_at: null, attended }); changed = true }
         }
-        if (changed) await supabase.from('applications').update({ registrations: updatedRegs }).eq('id', app.id)
+        if (changed) {
+          const { error: regSyncErr } = await supabase.from('applications').update({ registrations: updatedRegs }).eq('id', app.id)
+          if (regSyncErr) captureException(regSyncErr, { context: 'member-patch-sync-attendance', appId: app.id })
+        }
       }
     }
 
@@ -104,7 +109,8 @@ export async function PATCH(request, { params }) {
       if (app?.id) {
         const { data: contact } = await supabase.from('contacts').select('id').eq('application_id', app.id).maybeSingle()
         if (contact?.id) {
-          await supabase.from('contacts').update({ notes: noteVal }).eq('id', contact.id)
+          const { error: noteSyncErr } = await supabase.from('contacts').update({ notes: noteVal }).eq('id', contact.id)
+          if (noteSyncErr) captureException(noteSyncErr, { context: 'member-patch-sync-notes', contactId: contact.id })
         }
       }
     }
@@ -135,7 +141,8 @@ export async function DELETE(request, { params }) {
 
   // Delete application row by email — cascades to contacts
   if (member?.email) {
-    try { await supabase.from('applications').delete().eq('email', member.email.toLowerCase().trim()) } catch {}
+    const { error: appDelErr } = await supabase.from('applications').delete().eq('email', member.email.toLowerCase().trim())
+    if (appDelErr) captureException(appDelErr, { context: 'member-delete-application-cleanup', email: member.email })
   }
 
   return Response.json({ success: true })

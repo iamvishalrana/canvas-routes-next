@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, GhostBtn, DangerBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
@@ -136,6 +137,17 @@ function PiLink({ id, manual }) {
 export default function PaymentsClient({ initialRecords = [] }) {
   const [records, setRecords]         = useState(initialRecords)
   const [loading, setLoading]         = useState(false)
+
+  const load = useCallback(() => {
+    setLoading(true)
+    fetch('/api/admin/stripe-payments')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => { if (Array.isArray(data)) setRecords(data) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  useRealtimeSync('applications', load)
   const [filter, setFilter]           = useState('')
   const [sort, setSort]               = useState('date_desc')
   const [search, setSearch]           = useState('')

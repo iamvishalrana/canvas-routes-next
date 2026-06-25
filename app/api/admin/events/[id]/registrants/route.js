@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
     .from('event_registrations')
     .select('id, email, name, stripe_payment_status, amount_paid, registered_at')
     .eq('event_id', id)
-    .or('stripe_payment_status.in.(paid,free),stripe_payment_status.is.null')
+    .in('stripe_payment_status', ['paid', 'free'])
     .order('registered_at', { ascending: true })
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
   return Response.json(data || [])

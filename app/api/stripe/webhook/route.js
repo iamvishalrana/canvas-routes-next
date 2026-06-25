@@ -197,11 +197,18 @@ export async function POST(request) {
       }
 
       case 'payment_intent.canceled': {
-        // Admin rejected the application — hold released
         const pi    = event.data.object
         const email = pi.metadata?.email?.toLowerCase().trim()
-        if (email) {
-          const supabase = createAdminClient()
+        const supabase = createAdminClient()
+        if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
+          // Cancelled event PI — clear the pending row so the member can re-register
+          await supabase.from('event_registrations')
+            .update({ stripe_payment_status: 'failed' })
+            .eq('event_id', pi.metadata.event_id)
+            .eq('member_id', pi.metadata.member_id)
+            .eq('stripe_payment_status', 'pending')
+        } else if (email) {
+          // Membership/road trip hold released (admin reject)
           await supabase.from('applications')
             .update({ stripe_payment_status: 'rejected' })
             .eq('stripe_payment_intent_id', pi.id)

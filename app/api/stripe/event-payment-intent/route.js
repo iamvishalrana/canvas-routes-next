@@ -59,7 +59,7 @@ export async function POST(request) {
   }
 
   const { data: existing } = await admin.from('event_registrations')
-    .select('id, stripe_payment_status')
+    .select('id, stripe_payment_status, stripe_payment_intent_id')
     .eq('event_id', eventId)
     .eq('member_id', user.id)
     .maybeSingle()
@@ -69,6 +69,11 @@ export async function POST(request) {
 
   const amount = ev.member_price || 0
   if (amount === 0) return Response.json({ error: 'Use the free registration endpoint.' }, { status: 400 })
+
+  // Cancel any lingering pending PI before creating a new one (CLAUDE.md rule #2)
+  if (existing?.stripe_payment_intent_id) {
+    stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
+  }
 
   try {
     const pi = await stripe.paymentIntents.create({
