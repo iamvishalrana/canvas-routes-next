@@ -9,13 +9,13 @@ const PASSWORD = 'eastern'
 const STOPS = [
   { label: 'Quartier Dix 30 Parking', note: 'Meetup — TBD · Brossard', start: true, href: 'https://maps.app.goo.gl/QKzfxTBGnkmLvMCL6', lat: 45.4619, lng: -73.4632 },
   { label: 'Shell — Bromont Outlets', note: 'Bromont · Fuel up · regroup before the backroads', href: 'https://www.google.com/maps?q=45.3145,-72.6480', lat: 45.3145, lng: -72.6480 },
-  { label: 'Vignoble Domaine du Brésée', note: 'Dunham · Private winery experience · Wine tasting included', href: 'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', lat: 45.1255, lng: -72.8678 },
+  { label: 'Vignoble Domaine du Brésée', note: 'Dunham · Private winery experience', href: 'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', lat: 45.1255, lng: -72.8678 },
   { label: 'Sutton', note: 'Chemin des Cantons · Rolling through', href: 'https://www.google.com/maps?q=45.1038,-72.5544', lat: 45.1038, lng: -72.5544 },
   { label: 'Glen Sutton', note: 'Chemin des Cantons · Mountain roads', href: 'https://www.google.com/maps?q=45.0539,-72.5245', lat: 45.0539, lng: -72.5245 },
   { label: 'Highwater', note: 'Chemin des Cantons · Near the border', href: 'https://www.google.com/maps?q=45.0053,-72.4400', lat: 45.0053, lng: -72.4400 },
   { label: 'Austin', note: 'Chemin des Cantons · Lake Memphrémagog area', href: 'https://www.google.com/maps?q=45.1863,-72.2440', lat: 45.1863, lng: -72.2440 },
   { label: 'Magog', note: 'Chemin des Cantons · Lake view', href: 'https://www.google.com/maps?q=45.2679,-72.1493', lat: 45.2679, lng: -72.1493 },
-  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · 2× Michelin-star chef · Final destination', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1569, lng: -72.0797 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Chef from Michelin-starred kitchens · Final destination', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1569, lng: -72.0797 },
 ]
 
 function CopyButton({ text }) {
@@ -302,13 +302,13 @@ export default function EasternTownshipsPage() {
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>The Drive</div>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
-            We leave Brossard, cross the bridge, and head east toward Bromont. After fuelling up at the Shell station by the outlets, we head south through Dunham wine country for a private winery experience at Vignoble Domaine du Brésée — wine tasting on the terrace, cars on the grounds, with a special discount on wine purchases for the group.
+            We leave Brossard, cross the bridge, and head east toward Bromont. After fuelling up at the Shell station by the outlets, we head south through Dunham wine country for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property and pick up a bottle at a special discount for the group.
           </p>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
             From there we pick up Chemin des Cantons. The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — quiet, undisturbed pavement with almost no traffic. Coming through Austin, the trees open and Lake Memphrémagog spreads out below.
           </p>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: 0 }}>
-            We end at Auberge &amp; Restaurant McGowan in Georgeville for lunch on the lake. The chef brings a two Michelin star work experience background to a kitchen that earns its setting. Then the drive home.
+            We end at Auberge &amp; Restaurant McGowan in Georgeville for lunch on the lake. The chef has worked in kitchens that held two Michelin stars — the standard follows. Then the drive home.
           </p>
         </div>
 
