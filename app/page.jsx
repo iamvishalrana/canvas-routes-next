@@ -141,19 +141,13 @@ export default function Home() {
     return () => clearInterval(t)
   }, [])
 
-  // WTET popup — appears on every reload once 5 pm EDT (21:00 UTC) June 24 has passed
+  // WTET popup — shown once per session after launch time; sessionStorage prevents it
+  // re-appearing on every reload once the user has dismissed it
   useEffect(() => {
-    const WTET_OPEN = new Date('2026-06-24T20:00:00Z') // live now
-    let timer
-    function check() {
-      if (new Date() >= WTET_OPEN) {
-        setShowWtetPopup(true)
-        clearInterval(timer) // safe: clearInterval(undefined) is a no-op on first call
-      }
+    const WTET_OPEN = new Date('2026-06-24T20:00:00Z')
+    if (new Date() >= WTET_OPEN && !sessionStorage.getItem('wtet_popup_seen')) {
+      setShowWtetPopup(true)
     }
-    check()
-    timer = setInterval(check, 10000)
-    return () => clearInterval(timer)
   }, [])
 
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
@@ -442,7 +436,7 @@ export default function Home() {
             background: 'rgba(8,14,10,0.72)',
             backdropFilter: 'blur(3px)',
           }}
-          onClick={() => setShowWtetPopup(false)}
+          onClick={() => { setShowWtetPopup(false); sessionStorage.setItem('wtet_popup_seen', '1') }}
         >
           <div
             onClick={e => e.stopPropagation()}
@@ -458,7 +452,7 @@ export default function Home() {
             <div style={{ padding: 'clamp(2rem,5vw,2.75rem)' }}>
               {/* Close */}
               <button
-                onClick={() => setShowWtetPopup(false)}
+                onClick={() => { setShowWtetPopup(false); sessionStorage.setItem('wtet_popup_seen', '1') }}
                 aria-label="Close"
                 style={{
                   position: 'absolute', top: '1rem', right: '1rem',
@@ -513,7 +507,7 @@ export default function Home() {
               {/* CTA */}
               <a
                 href="/wtet"
-                onClick={() => setShowWtetPopup(false)}
+                onClick={() => { setShowWtetPopup(false); sessionStorage.setItem('wtet_popup_seen', '1') }}
                 style={{
                   display: 'inline-block', padding: '0.85rem 2rem',
                   background: '#F5F1EC', color: '#0F1E14',
@@ -927,7 +921,7 @@ export default function Home() {
                 {/* Photo — pulled up behind the transparent sticky bar */}
                 {d.img && !pastModalImageFailed && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={d.img} alt={d.imgAlt||''} style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"center 40%",display:"block",marginTop:"-42px"}} onError={() => setPastModalImageFailed(true)} />
+                  <img src={d.img} alt={d.imgAlt||''} style={{width:"100%",height:"auto",maxHeight:"220px",objectFit:"contain",background:"#0a160a",display:"block",marginTop:"-42px"}} onError={() => setPastModalImageFailed(true)} />
                 )}
 
                 <div style={{padding:isMobile?"1.25rem 1.25rem calc(2rem + env(safe-area-inset-bottom))":"1.8rem 2rem 2rem"}}>
