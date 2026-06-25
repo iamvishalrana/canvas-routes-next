@@ -98,15 +98,32 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: 0.6rem 1.4rem;
-  background: #c5a882;
-  border: none;
+  background: transparent;
+  border: 1px solid #0F1E14;
   text-decoration: none;
   color: #0F1E14;
   text-align: center;
-  transition: background 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 10px rgba(197,168,130,0.25);
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+  overflow: hidden;
 }
-.nav-join:hover { background: #b89570; box-shadow: 0 4px 16px rgba(197,168,130,0.35); }
+.nav-join:hover { background: #0F1E14; color: #F5F1EC; }
+.nav-join::after {
+  content: '';
+  position: absolute;
+  top: -20%; left: -110%;
+  width: 55%; height: 140%;
+  background: linear-gradient(105deg, transparent 15%, rgba(197,168,130,0.45) 50%, transparent 85%);
+  transform: skewX(-12deg);
+  animation: nav-join-streak 10s ease-in-out 1.5s infinite;
+  pointer-events: none;
+}
+@keyframes nav-join-streak {
+  0%, 100% { left: -110%; opacity: 0; }
+  4%        { opacity: 1; }
+  14%       { left: 130%; opacity: 0; }
+  15%, 99%  { left: -110%; opacity: 0; }
+}
 
 .nav-members {
   font-size: 10px;
