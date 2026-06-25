@@ -253,7 +253,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
             {promoApplied && (
               <div style={{ fontSize: '12px', color: 'rgba(0,0,0,0.25)', textDecoration: 'line-through', fontFamily: 'var(--font-inter),sans-serif' }}>${price} CAD</div>
             )}
-            <div style={{ fontSize: '1.35rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>${displayPrice}</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: '400', color: '#1a1a1a', lineHeight: 1, fontFamily: 'var(--font-bebas),sans-serif' }}>${displayPrice}</div>
             <div style={{ fontSize: '10px', color: '#aaa', marginTop: '0.2rem', fontFamily: 'var(--font-inter),sans-serif' }}>CAD / season</div>
           </div>
         </div>
@@ -620,7 +620,7 @@ export default function MembershipContent() {
                     Routes Member
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                    <span style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '200', color: '#F5F1EC', lineHeight: 1 }}>$99</span>
+                    <span style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: 'clamp(3rem,5.5vw,4.2rem)', fontWeight: '400', color: '#F5F1EC', lineHeight: 1 }}>$99</span>
                     <span style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', paddingBottom: '0.4rem' }}>CAD</span>
                   </div>
                   <div style={{ ...SMALL, color: 'rgba(245,241,236,0.4)', marginBottom: '2rem' }}>per season</div>
@@ -654,7 +654,7 @@ export default function MembershipContent() {
                     Inner Circle
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                    <span style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: 'clamp(2.8rem,5vw,3.8rem)', fontWeight: '200', color: '#c5a882', lineHeight: 1 }}>$249</span>
+                    <span style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: 'clamp(3rem,5.5vw,4.2rem)', fontWeight: '400', color: '#c5a882', lineHeight: 1 }}>$249</span>
                     <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.4rem' }}>CAD</span>
                   </div>
                   <div style={{ ...SMALL, color: 'rgba(245,241,236,0.4)', marginBottom: '2rem' }}>per season</div>
@@ -975,7 +975,7 @@ export default function MembershipContent() {
                             <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter),sans-serif' }}>Events, routes, community &amp; perks</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(245,241,236,0.5)', lineHeight: 1 }}>$99</div>
+                            <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(245,241,236,0.5)', lineHeight: 1 }}>$99</div>
                             <div style={{ fontSize: '9px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
                           </div>
                         </div>
@@ -999,7 +999,7 @@ export default function MembershipContent() {
                             <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $70 route credit</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                            <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '1.6rem', fontWeight: '300', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
+                            <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
                             <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
                           </div>
                         </div>

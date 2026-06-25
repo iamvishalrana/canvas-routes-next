@@ -12,7 +12,7 @@ import { createClient } from '../lib/supabase/client'
  *   links   – array of { href, label, onClick? } for the desktop + mobile nav
  *   ctaLabel – label for the Membership button (defaults to 'Membership')
  */
-export default function SiteNav({ links = [], ctaLabel = 'Membership', onMenuChange }) {
+export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMenuChange }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   function toggleMenu(open) {

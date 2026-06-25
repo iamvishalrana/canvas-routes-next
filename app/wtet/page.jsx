@@ -7,6 +7,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import SiteFooter from '../../components/SiteFooter'
 import FadeUp from '../../components/FadeUp'
 import SiteNav from '../../components/SiteNav'
+import PageLoader from '../../components/PageLoader'
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -495,6 +496,7 @@ export default function WtetPage() {
 
   return (
     <div style={{background:'#F5F1EC',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',minHeight:'100vh'}}>
+      <PageLoader images={['/wtet.png']} minMs={1500} />
       <style>{`
         /* ── Hero entrance animations ── */
         @keyframes wtet-fade-up {

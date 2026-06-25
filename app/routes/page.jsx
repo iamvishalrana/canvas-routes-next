@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 import SiteNav from '../../components/SiteNav'
+import PageLoader from '../../components/PageLoader'
 
 const ROUTES_CLOSED = new Date('2026-06-07T03:00:00Z').getTime() // 11 PM EDT June 6
 
@@ -151,6 +152,7 @@ export default function RoutesPage() {
 
   return (
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",minHeight:"100vh"}}>
+      <PageLoader images={['/trem-trip.png']} minMs={1500} />
       <style>{`
         @media (max-width: 768px) {
           .routes-hero { padding: clamp(100px,14vw,160px) 1.25rem 4rem !important; }

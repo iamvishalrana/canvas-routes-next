@@ -420,7 +420,7 @@ export default function Home() {
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a"}}>
 
       <SiteNav
-        ctaLabel={membershipLive ? 'Membership' : 'Join'}
+        ctaLabel={membershipLive ? 'Become a Member' : 'Join'}
         links={[
           { href:'#about',   label:'About Us', onClick: e => { e.preventDefault(); smoothScroll('about') } },
           { href:'#events',  label:'Events',   onClick: e => { e.preventDefault(); smoothScroll('events') } },
