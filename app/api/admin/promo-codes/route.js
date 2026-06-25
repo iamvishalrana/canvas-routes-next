@@ -24,10 +24,13 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { code, percentOff, amountOff, maxRedemptions, expiresAt } = body
+  const { code, percentOff, amountOff, maxRedemptions, expiresAt, appliesTo } = body
 
   if (!code?.trim()) return Response.json({ error: 'Code is required.' }, { status: 400 })
   if (!percentOff && !amountOff) return Response.json({ error: 'A discount value is required.' }, { status: 400 })
+
+  const VALID_TYPES = ['membership_routes', 'membership_inner_circle', 'road_trip_wtet']
+  const appliesToList = Array.isArray(appliesTo) ? appliesTo.filter(t => VALID_TYPES.includes(t)) : []
 
   try {
     const coupon = await stripe.coupons.create({
@@ -43,6 +46,7 @@ export async function POST(request) {
       max_redemptions: maxRedemptions || undefined,
       // Use end-of-day UTC so codes don't expire at midnight start-of-day
       expires_at: expiresAt ? Math.floor(new Date(expiresAt).getTime() / 1000) + 86399 : undefined,
+      metadata: appliesToList.length ? { applies_to: appliesToList.join(',') } : {},
     }, { expand: ['coupon'] })
 
     return Response.json(promoCode)

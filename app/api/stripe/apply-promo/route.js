@@ -109,6 +109,15 @@ export async function POST(request) {
       await releaseLock(lockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
+    // If the promo code has an applies_to restriction, verify the PI type is included
+    const appliesToRaw = promoCode.metadata?.applies_to
+    if (appliesToRaw) {
+      const allowed = appliesToRaw.split(',').map(s => s.trim())
+      if (!allowed.includes(pi.metadata?.type)) {
+        await releaseLock(lockKey)
+        return Response.json({ error: 'This promo code is not valid for this purchase.' }, { status: 400 })
+      }
+    }
     if (pi.metadata?.promo_code_id) {
       await releaseLock(lockKey)
       return Response.json({ error: 'A promo code has already been applied.' }, { status: 400 })

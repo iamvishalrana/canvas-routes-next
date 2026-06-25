@@ -31,7 +31,22 @@ function StatusChip({ active }) {
     : <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(0,0,0,0.12)', background: 'rgba(0,0,0,0.04)', color: '#999', whiteSpace: 'nowrap' }}>Inactive</span>
 }
 
-const EMPTY_FORM = { code: '', discountType: 'percent', discountValue: '', maxRedemptions: '', expiresAt: '' }
+const APPLIES_TO_OPTIONS = [
+  { value: 'membership_routes',       label: 'Membership — Routes' },
+  { value: 'membership_inner_circle', label: 'Membership — Inner Circle' },
+  { value: 'road_trip_wtet',          label: 'WTET Road Trip' },
+]
+
+function fmtAppliesTo(metadata) {
+  const raw = metadata?.applies_to
+  if (!raw) return 'All'
+  return raw.split(',').map(t => {
+    const opt = APPLIES_TO_OPTIONS.find(o => o.value === t.trim())
+    return opt ? opt.label : t.trim()
+  }).join(', ')
+}
+
+const EMPTY_FORM = { code: '', discountType: 'percent', discountValue: '', maxRedemptions: '', expiresAt: '', appliesTo: [] }
 
 export default function PromoCodesClient() {
   const [codes, setCodes]         = useState([])
@@ -100,6 +115,7 @@ export default function PromoCodesClient() {
         ...(form.discountType === 'percent' ? { percentOff: val } : { amountOff: val }),
         ...(form.maxRedemptions ? { maxRedemptions: parseInt(form.maxRedemptions, 10) } : {}),
         ...(form.expiresAt ? { expiresAt: form.expiresAt } : {}),
+        appliesTo: form.appliesTo,
       }
       const res = await fetch('/api/admin/promo-codes', {
         method: 'POST',
@@ -266,6 +282,24 @@ export default function PromoCodesClient() {
                 />
               </div>
             </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <L>Applies to (leave blank for all)</L>
+              <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                {APPLIES_TO_OPTIONS.map(opt => (
+                  <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '13px', color: '#555', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', userSelect: 'none' }}>
+                    <input
+                      type="checkbox"
+                      checked={form.appliesTo.includes(opt.value)}
+                      onChange={e => setField('appliesTo', e.target.checked
+                        ? [...form.appliesTo, opt.value]
+                        : form.appliesTo.filter(v => v !== opt.value)
+                      )}
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <PrimaryBtn type="submit" disabled={submitting}>
                 {submitting ? 'Creating…' : 'Create Code'}
@@ -311,8 +345,11 @@ export default function PromoCodesClient() {
                 <StatusChip active={c.active} />
               </div>
               <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>{fmtDiscount(c.coupon)}</div>
-              <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.6rem' }}>
+              <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.2rem' }}>
                 {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '0.6rem' }}>
+                Applies to: {fmtAppliesTo(c.metadata)}
               </div>
               {c.active && editing === c.id ? (
                 <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -394,6 +431,7 @@ export default function PromoCodesClient() {
               <tr>
                 <th style={TH}>Code</th>
                 <th style={TH}>Discount</th>
+                <th style={TH}>Applies To</th>
                 <th style={TH}>Redeemed</th>
                 <th style={TH}>Expires</th>
                 <th style={TH}>Created</th>
@@ -407,6 +445,7 @@ export default function PromoCodesClient() {
                 <tr style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}>{c.code}</td>
                   <td style={TD}>{fmtDiscount(c.coupon)}</td>
+                  <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata)}</td>
                   <td style={{ ...TD, color: '#555' }}>
                     {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}
                   </td>
@@ -459,7 +498,7 @@ export default function PromoCodesClient() {
                 </tr>
                 {usageOpen === c.id && (
                   <tr>
-                    <td colSpan={7} style={{ padding: '0 1rem 1rem', background: '#fafaf8', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
+                    <td colSpan={8} style={{ padding: '0 1rem 1rem', background: '#fafaf8', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
                       {!usageData[c.id] || usageData[c.id].length === 0 ? (
                         <div style={{ fontSize: '12px', color: '#ccc', padding: '0.5rem 0' }}>No redemptions recorded.</div>
                       ) : (
