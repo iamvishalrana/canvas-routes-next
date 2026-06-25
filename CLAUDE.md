@@ -171,6 +171,245 @@ doConfirm().catch(() => setTimeout(() => doConfirm().catch(() => {}), 4000))
 **13. Block payment if a promo code is typed but not applied**
 Both WTET and membership payment forms must check `promoInput.trim()` before `confirmPayment` and show an error if a code is entered but not applied. Do this before `setPaying(true)` so the button does not get stuck.
 
+## Event Registration Page Template
+
+The WTET page (`app/wtet/page.jsx`) is the established template for paid road-trip/event registration pages. Reuse its structure for every future event — only swap out the route name, date, hero image, stops, pricing, and copy.
+
+### Page structure (5 sections in order)
+
+```
+<PageLoader images={['/event-hero.png']} minMs={1500} />
+1. <SiteNav />
+2. HERO          — dark, full-bleed, staggered entrance animations
+3. STATS BAR     — #F5F1EC background, 6 quick-facts with Bebas numbers
+4. DETAILS       — #EDE8E1 background, pricing + description bullets + car eligibility
+5. ITINERARY     — dark overlay on background image, timeline stops + what's included
+6. FORM/PAYMENT  — #F5F1EC background, member/non-member selector, Stripe Elements
+<SiteFooter />
+```
+
+### Hero section pattern
+
+```jsx
+<section className="event-hero" style={{
+  backgroundColor:'#0F1E14',
+  padding:'clamp(140px,18vw,210px) 3rem 6rem',
+  textAlign:'center',
+  position:'relative',overflow:'hidden',
+  backgroundImage:"url('/event-hero.png')",
+  backgroundSize:'cover',backgroundPosition:'center 50%'
+}}>
+  {/* Dark overlay */}
+  <div className="event-hero-overlay" style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
+
+  {/* Top gold hairline */}
+  <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',
+    background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
+
+  <div style={{position:'relative',zIndex:2}}>
+    {/* Eyebrow — fade-in, delay 100ms */}
+    <div style={{fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',
+      color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem',
+      animation:'event-fade-in 0.7s ease both',animationDelay:'100ms'}}>Canvas Routes</div>
+
+    {/* Title — Cormorant, fade-up, delay 250ms */}
+    <h1 style={{fontFamily:'var(--font-cormorant),serif',
+      fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:'300',color:'#F5F1EC',
+      lineHeight:'1.05',letterSpacing:'-0.01em',
+      animation:'event-fade-up 0.8s ease both',animationDelay:'250ms'}}>
+      Event Name
+    </h1>
+
+    {/* Subtitle — italic Cormorant, fade-up, delay 450ms */}
+    <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.2rem,2.8vw,1.55rem)',
+      fontStyle:'italic',color:'rgba(245,241,236,0.82)',marginBottom:'1.2rem',
+      animation:'event-fade-up 0.7s ease both',animationDelay:'450ms'}}>
+      Route subtitle
+    </div>
+
+    {/* Date badge with periodic gold streak — fade-in, delay 600ms */}
+    <div className="event-date-badge" style={{display:'inline-block',
+      padding:'0.5rem 1.4rem',border:'1px solid rgba(197,168,130,0.7)',
+      background:'rgba(197,168,130,0.12)',fontSize:'11px',letterSpacing:'0.22em',
+      textTransform:'uppercase',color:'#F5F1EC',marginBottom:'2.5rem',
+      animation:'event-fade-in 0.6s ease both',animationDelay:'600ms'}}>
+      Day · Month Date, Year
+    </div>
+
+    {/* Gold divider line — fade-in, delay 700ms */}
+    <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',
+      margin:'0 auto 2.5rem',animation:'event-fade-in 0.5s ease both',animationDelay:'700ms'}} />
+
+    {/* Body copy — fade-up, delay 800ms */}
+    <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',
+      margin:'0 auto 3rem',lineHeight:'1.9',
+      animation:'event-fade-up 0.7s ease both',animationDelay:'800ms'}}>
+      One-line event pitch.
+    </p>
+
+    {/* Live countdown — fade-in, delay 950ms — hide when event date passes */}
+    {countdown && <div className="event-countdown" ...>...</div>}
+
+    {/* CTA — fade-up, delay 1100ms — one-time shimmer sweep on load */}
+    <div style={{animation:'event-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
+      <a href="#form" className="event-hero-cta"
+        style={{display:'inline-block',padding:'0.9rem 2.5rem',
+          background:'#F5F1EC',color:'#0F1E14',
+          fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',
+          fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
+        Secure your seat →
+      </a>
+    </div>
+  </div>
+
+  {/* Bottom gold hairline */}
+  <div style={{position:'absolute',bottom:0,left:0,right:0,height:'1px',
+    background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)',zIndex:2}} />
+</section>
+```
+
+### Animations (copy into the page's `<style>` block, prefix with event slug)
+
+```css
+/* Hero entrance */
+@keyframes event-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes event-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Date badge — periodic gold streak, repeats every 4.5s */
+@keyframes event-date-streak {
+  0%, 100% { left: -110%; opacity: 0; }
+  6%        { opacity: 1; }
+  20%       { left: 130%; opacity: 0; }
+  21%, 99%  { left: -110%; opacity: 0; }
+}
+.event-date-badge { position: relative; overflow: hidden; }
+.event-date-badge::after {
+  content: '';
+  position: absolute;
+  top: -20%; left: -110%;
+  width: 55%; height: 140%;
+  background: linear-gradient(105deg, transparent 15%, rgba(255,215,100,0.22) 50%, transparent 85%);
+  transform: skewX(-12deg);
+  animation: event-date-streak 4.5s ease-in-out 1.6s infinite;
+  pointer-events: none;
+}
+
+/* Hero CTA — one-time shimmer sweep on page load */
+@keyframes event-cta-shimmer {
+  0%   { left: -80%; opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { left: 130%; opacity: 0; }
+}
+.event-hero-cta { position: relative; overflow: hidden; }
+.event-hero-cta::after {
+  content: '';
+  position: absolute;
+  top: -10%; left: -80%;
+  width: 40%; height: 120%;
+  background: linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.28) 50%, transparent 90%);
+  transform: skewX(-10deg);
+  animation: event-cta-shimmer 0.9s cubic-bezier(0.4,0,0.2,1) 1.4s forwards;
+  pointer-events: none;
+}
+
+/* iOS zoom prevention */
+input, select, textarea { font-size: 16px !important; }
+```
+
+### Stats bar pattern (below hero)
+
+```jsx
+{/* Numbers use Bebas Neue, labels are 9px uppercase Inter */}
+{[
+  { num:'~210', unit:'km' },
+  { num:'70%',  unit:'backroads' },
+  { num:'4',    unit:'stops' },
+  { num:'15',   unit:'cars max' },
+  { num:'2',    unit:'per car' },
+].map(({ num, unit }, i, arr) => (
+  <>
+    <div key={unit} className="event-stat" style={{textAlign:'center',padding:'0 2rem'}}>
+      <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.4rem',
+        fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.04em'}}>{num}</div>
+      <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',
+        color:'#aaa',marginTop:'4px'}}>{unit}</div>
+    </div>
+    {i < arr.length - 1 && <div key={`d${i}`} className="stat-divider"
+      style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
+  </>
+))}
+```
+
+### Itinerary stops pattern (dark section)
+
+Each stop object: `{ label, venue, venueHref?, address, desc, pays }`.
+- `pays: true` → gold dot + "Included in the fee." appended in gold
+- `pays: false` → faded gold dot
+- `venueHref` → venue name is a link with external icon
+
+Wrap each stop in `<FadeUp delay={i * 80}>` for staggered scroll-in.
+
+### Countdown timer
+
+```jsx
+const [countdown, setCountdown] = useState(null)
+useEffect(() => {
+  const EVENT = new Date('2026-MM-DDTHH:00:00Z')
+  function tick() {
+    const diff = EVENT - new Date()
+    if (diff <= 0) { setCountdown(null); return }
+    const d = Math.floor(diff / 86400000)
+    const h = Math.floor((diff % 86400000) / 3600000)
+    const m = Math.floor((diff % 3600000) / 60000)
+    const s = Math.floor((diff % 60000) / 1000)
+    setCountdown({ d, h, m, s })
+  }
+  tick()
+  const id = setInterval(tick, 1000)
+  return () => clearInterval(id)
+}, [])
+```
+Numbers use `var(--font-bebas)` at `2.8rem`. Each cell is `72px` min-width with `0.5px solid rgba(197,168,130,0.15)` dividers. Disappears automatically when the event date passes.
+
+### Pricing display
+
+Prices always use Bebas Neue at `3rem` with a `0.5px solid rgba(0,0,0,0.1)` vertical divider between member and non-member tiers. Label above each price is `10px` uppercase Inter in `#c5a882` (gold) for members, `#888` for non-members.
+
+### Responsive breakpoints (add to each event page's `<style>`)
+
+```css
+@media (max-width: 768px) {
+  .event-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; }
+  .event-details { padding: 3rem 1.25rem !important; }
+  .event-itinerary { padding: 3.5rem 1.25rem 4.5rem !important; }
+  .event-form-section { padding: 2.5rem 1.25rem 4.5rem !important; }
+  .event-stats-bar { flex-wrap: wrap !important; padding: 1.25rem 0.5rem !important; }
+  .event-stats-bar .stat-divider { display: none !important; }
+  .event-stat { flex: 0 0 33.333% !important; padding: 0.75rem 0.25rem !important; }
+  .incl-grid { grid-template-columns: 1fr !important; }
+  .event-hero-cta { display: block !important; width: 100% !important; text-align: center !important; }
+  .event-stop { gap: 1rem !important; padding: 1.25rem 0 !important; }
+}
+@media (max-width: 480px) {
+  .event-stat { flex: 0 0 50% !important; }
+  .event-countdown-num { font-size: 1.8rem !important; }
+  .join-form-row { flex-direction: column !important; }
+  .wtet-dob-grid { grid-template-columns: 1fr 1fr !important; }
+  .wtet-dob-year { grid-column: 1 / -1 !important; }
+}
+```
+
+### Private itinerary page
+
+After registration, confirmed participants get a password-gated itinerary page at a separate route (e.g., `/whips-to-eastern-townships`). See that file for the full pattern — it includes: password gate with `?pw=` URL fallback, Google Maps integration, route stops list with tap-to-open-in-Maps, convoy rules accordion, and an About the Drive section. The password is stored in a `const PASSWORD = '...'` at the top of the file.
+
 ## Fonts & Design Tokens
 
 Three font variables set in `app/layout.jsx`:
