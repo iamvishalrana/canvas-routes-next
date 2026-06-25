@@ -140,10 +140,12 @@ export async function POST(request) {
       return Response.json({ error: 'Unsupported coupon type.' }, { status: 400 })
     }
 
+    const discountAmount = currentAmount - discountedAmount
+
     // Update the payment intent in-place and record the applied promo to prevent stacking
     await stripe.paymentIntents.update(paymentIntentId, {
       amount: discountedAmount,
-      metadata: { ...pi.metadata, promo_code_id: promoCode.id },
+      metadata: { ...pi.metadata, promo_code_id: promoCode.id, discount_amount: String(discountAmount) },
     })
     try { await releaseLock(lockKey) } catch {}
 

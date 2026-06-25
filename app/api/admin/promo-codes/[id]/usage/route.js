@@ -12,14 +12,14 @@ export async function GET(request, { params }) {
     // Fetch all succeeded PIs and filter by promo_code_id metadata
     const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
     const used = allPIs
-      .filter(pi => pi.status === 'succeeded' && pi.metadata?.promo_code_id === id)
+      .filter(pi => ['succeeded', 'requires_capture'].includes(pi.status) && pi.metadata?.promo_code_id === id)
       .map(pi => {
         const charge = pi.latest_charge
         return {
           name:     pi.metadata.name || '—',
           email:    pi.metadata.email?.toLowerCase().trim() || '',
           type:     pi.metadata.type || '',
-          amount:   pi.amount_received,
+          amount:   pi.status === 'requires_capture' ? pi.amount : pi.amount_received,
           discount: pi.metadata.discount_amount ? parseInt(pi.metadata.discount_amount, 10) : 0,
           date:     (charge && typeof charge === 'object' && charge.created)
             ? new Date(charge.created * 1000).toISOString()
