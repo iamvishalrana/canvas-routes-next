@@ -21,10 +21,11 @@ const STOPS = [
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
   function copy() {
+    if (!navigator?.clipboard?.writeText) return
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    })
+    }).catch(() => {})
   }
   return (
     <button onClick={copy} style={{ background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'block', marginTop: '3px' }}>
@@ -171,14 +172,14 @@ export default function EasternTownshipsPage() {
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
     if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
-    if (localStorage.getItem('eastern_auth') === '1') { setAuthed(true) }
+    try { if (localStorage.getItem('eastern_auth') === '1') { setAuthed(true) } } catch {}
     setChecked(true)
   }, [])
 
   function submit(e) {
     e.preventDefault()
     if (pw.trim().toLowerCase() === PASSWORD.toLowerCase()) {
-      localStorage.setItem('eastern_auth', '1')
+      try { localStorage.setItem('eastern_auth', '1') } catch {}
       setAuthed(true)
     } else {
       setErr(true)

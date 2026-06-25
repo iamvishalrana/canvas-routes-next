@@ -191,7 +191,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, confirmParams: {}, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/membership` }, redirect: 'if_required' })
       confirmError = result.error
     } catch (err) {
       setError('Payment could not be processed. Please try again.')
@@ -381,6 +381,35 @@ export default function MembershipContent() {
     if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'ViewContent', { content_name: 'Membership' })
   }, [])
 
+  // Handle Stripe 3DS redirect return — in-app browsers (Instagram/Facebook) may redirect
+  // out of the in-app browser for 3DS authentication; on return we restore and finalise.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const piId         = params.get('payment_intent')
+    const redirectStatus = params.get('redirect_status')
+    if (!piId || redirectStatus !== 'succeeded') return
+    window.history.replaceState({}, '', '/membership')
+    try {
+      const saved = localStorage.getItem('membership_form_pending')
+      localStorage.removeItem('membership_form_pending')
+      if (saved) {
+        const { form: savedForm, countryCode: savedCode } = JSON.parse(saved)
+        fetch('/api/membership-waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...savedForm,
+            phone: savedForm.phone ? `${savedCode} ${savedForm.phone}`.trim() : '',
+            termsAccepted: true,
+            paymentIntentId: piId,
+            _hp: '',
+          }),
+        }).catch(() => {})
+      }
+    } catch {}
+    setStatus('success')
+  }, [])
+
   const [form, setForm]                   = useState(INIT_FORM)
   const [errors, setErrors]               = useState({})
   const [focusedField, setFocusedField]   = useState(null)
@@ -469,6 +498,7 @@ export default function MembershipContent() {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')
       if (!data.clientSecret) throw new Error('Payment could not be initialised. Please try again.')
+      try { localStorage.setItem('membership_form_pending', JSON.stringify({ form, countryCode })) } catch {}
       setClientSecret(data.clientSecret)  // set before paymentStep so Elements renders with a valid secret
       setPaymentStep(true)
       setStatus(null)
@@ -1056,7 +1086,7 @@ export default function MembershipContent() {
                   style={{ accentColor: '#c5a882', width: '13px', height: '13px', flexShrink: 0, marginTop: '2px' }} />
                 <span style={{ fontSize: '12px', color: 'rgba(0,0,0,0.45)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.6 }}>
                   I have read and agree to the{' '}
-                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms &amp; Conditions</a>
+                  <a href="/terms" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms &amp; Conditions</a>
                 </span>
               </label>
 

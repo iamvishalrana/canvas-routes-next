@@ -103,7 +103,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/wtet` }, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/wtet?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError('Payment could not be processed. Please try again.')
@@ -304,10 +304,9 @@ export default function WtetPage() {
     if (!piId) return
     window.history.replaceState({}, '', '/wtet')
     if (redirectStatus === 'succeeded') {
-      // Restore member context saved to sessionStorage before the redirect
-      const savedMemberPi = sessionStorage.getItem('wtet_member_pi')
-      sessionStorage.removeItem('wtet_member_pi')
-      if (savedMemberPi === piId) {
+      // member_pi is encoded in the return_url so it survives in-app browser context switches
+      const memberPiParam = params.get('member_pi')
+      if (memberPiParam === piId) {
         wasMemberRef.current = true
         // Member confirmation email was never sent (redirect interrupted the normal flow) — send now
         fetch('/api/wtet-member-confirm', {
@@ -450,8 +449,6 @@ export default function WtetPage() {
         const data = await res.json().catch(() => ({}))
         if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
         wasMemberRef.current = true
-        // Persist PI ID so 3DS redirect can restore member state and send confirm email
-        sessionStorage.setItem('wtet_member_pi', data.clientSecret.split('_secret_')[0])
         setClientSecret(data.clientSecret)
         setStatus('payment')
         window.scrollTo({ top: 0, behavior: 'smooth' })
