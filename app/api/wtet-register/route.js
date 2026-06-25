@@ -76,7 +76,7 @@ export async function POST(request) {
   // Save to DB as pending before creating PI
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) try {
     const supabase = createAdminClient()
-    const { data: existing } = await supabase.from('applications').select('id, registrations').eq('email', normalEmail).maybeSingle()
+    const { data: existing } = await supabase.from('applications').select('id, registrations, stripe_payment_intent_id').eq('email', normalEmail).maybeSingle()
 
     const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
     const newReg = {
@@ -142,6 +142,11 @@ export async function POST(request) {
       automatic_payment_methods: { enabled: true },
       capture_method: 'manual',
     })
+
+    // Cancel the previous PI if the user is re-registering — prevents ghost holds on their card
+    if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
+      stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
+    }
 
     // Store PI ID immediately so the admin capture route can find this row
     // even if the payment_intent.requires_capture webhook hasn't fired yet.

@@ -394,6 +394,7 @@ export default function MembershipContent() {
       localStorage.removeItem('membership_form_pending')
       if (saved) {
         const { form: savedForm, countryCode: savedCode } = JSON.parse(saved)
+        purchasePriceRef.current = savedForm.tier === 'Inner Circle' ? 249 : 99
         fetch('/api/membership-waitlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -421,6 +422,15 @@ export default function MembershipContent() {
   const [countryCode, setCountryCode]     = useState('+1')
   const honeypotRef                       = useRef(null)
   const submittingRef                     = useRef(false)
+  const purchasePriceRef                  = useRef(null)
+
+  // Fire Purchase pixel event once on payment success
+  useEffect(() => {
+    if (status !== 'success' || !purchasePriceRef.current) return
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'Purchase', { value: purchasePriceRef.current, currency: 'CAD' })
+    }
+  }, [status])
 
   function set(field, val) {
     setForm(f => ({ ...f, [field]: val }))
@@ -499,6 +509,7 @@ export default function MembershipContent() {
       if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')
       if (!data.clientSecret) throw new Error('Payment could not be initialised. Please try again.')
       try { localStorage.setItem('membership_form_pending', JSON.stringify({ form, countryCode })) } catch {}
+      purchasePriceRef.current = form.tier === 'Inner Circle' ? 249 : 99
       setClientSecret(data.clientSecret)  // set before paymentStep so Elements renders with a valid secret
       setPaymentStep(true)
       setStatus(null)

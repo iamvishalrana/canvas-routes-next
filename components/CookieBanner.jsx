@@ -21,8 +21,14 @@ function loadGA() {
   document.head.appendChild(script)
 }
 
-function loadFbPixel() {
-  if (window.fbq || document.getElementById('fb-pixel-script')) return
+// Always initialise the pixel — use Facebook Consent Mode so PageView fires
+// for all visitors (needed for Meta ad attribution), but Meta uses limited/modelled
+// data until consent is granted.
+function initFbPixel(consentGranted) {
+  if (document.getElementById('fb-pixel-script')) {
+    if (consentGranted && window.fbq) window.fbq('consent', 'grant')
+    return
+  }
   const fbq = function() { fbq.callMethod ? fbq.callMethod.apply(fbq, arguments) : fbq.queue.push(arguments) }
   window.fbq = window._fbq = fbq
   fbq.push = fbq; fbq.loaded = true; fbq.version = '2.0'; fbq.queue = []
@@ -31,6 +37,7 @@ function loadFbPixel() {
   script.async = true
   script.src = 'https://connect.facebook.net/en_US/fbevents.js'
   document.head.appendChild(script)
+  if (!consentGranted) fbq('consent', 'revoke')
   fbq('init', '1499785301931870')
   fbq('track', 'PageView')
 }
@@ -53,11 +60,15 @@ export default function CookieBanner() {
     setConsentState(getConsent())
   }, [])
 
+  // Init pixel on mount for all visitors (consent mode handles data limiting)
+  useEffect(() => {
+    initFbPixel(getConsent() === 'accepted')
+  }, [])
+
   useEffect(() => {
     if (consent === 'accepted') {
       grantConsent()
       loadGA()
-      loadFbPixel()
     }
   }, [consent])
 
@@ -89,7 +100,8 @@ export default function CookieBanner() {
     setConsentState('accepted')
     grantConsent()
     loadGA()
-    loadFbPixel()
+    if (window.fbq) window.fbq('consent', 'grant')
+    else initFbPixel(true)
     window.dispatchEvent(new Event('cookieConsentChanged'))
   }
 

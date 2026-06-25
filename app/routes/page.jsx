@@ -154,6 +154,7 @@ export default function RoutesPage() {
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",minHeight:"100vh"}}>
       <PageLoader images={['/trem-trip.png']} minMs={1500} />
       <style>{`
+        input, select, textarea { font-size: 16px !important; }
         @media (max-width: 768px) {
           .routes-hero { padding: clamp(100px,14vw,160px) 1.25rem 4rem !important; }
           .routes-details { padding: 3.5rem 1.25rem !important; }
@@ -380,14 +381,14 @@ export default function RoutesPage() {
                 <div className="join-form-row" style={{marginBottom:"1rem"}}>
                   <div className="join-form-field">
                     <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                    <input id="field-name" type="text" placeholder="Your full name" value={form.name} maxLength={100}
+                    <input id="field-name" type="text" name="name" autoComplete="name" inputMode="text" placeholder="Your full name" value={form.name} maxLength={100}
                       onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')}
                       onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
                     {errors.name && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
                   </div>
                   <div className="join-form-field">
                     <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                    <input id="field-email" type="email" placeholder="Your email" value={form.email}
+                    <input id="field-email" type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={form.email}
                       onChange={e => updateForm('email', e.target.value)} style={inputStyle('email')}
                       onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} />
                     {errors.email && <span style={{fontSize:"11px",color:"#7B2032"}}>Valid email required</span>}
@@ -407,6 +408,7 @@ export default function RoutesPage() {
                       <div style={{display:"flex",alignItems:"center",...(errors.phone ? {border:"1px solid #7B2032",background:"rgba(123,32,50,0.04)"} : form.phone ? {border:"1px solid #3B6B2F",background:"rgba(59,107,47,0.05)"} : focusedField === 'phone' ? {border:"1px solid #c5a882",background:"transparent",boxShadow:"0 0 0 3px rgba(197,168,130,0.2)"} : {border:"1px solid rgba(0,0,0,0.2)",background:"transparent"}),transition:"border-color 0.2s, box-shadow 0.2s, background 0.2s"}}>
                         <div style={{position:"relative",flexShrink:0}}>
                           <select
+                            name="tel-country-code" autoComplete="off"
                             value={countryCode}
                             onChange={e => { setCountryCode(e.target.value); setForm(p => ({...p, phone:''})); if (errors.phone) setErrors(p => ({...p, phone: false})) }}
                             style={{padding:"0.9rem 1.8rem 0.9rem 0.75rem",border:"none",background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",outline:"none",cursor:"pointer",WebkitAppearance:"none",MozAppearance:"none",appearance:"none",minWidth:"60px"}}
@@ -418,7 +420,7 @@ export default function RoutesPage() {
                           <svg style={{position:"absolute",right:"4px",top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                           <div style={{position:"absolute",right:0,top:"20%",bottom:"20%",width:"1px",background:"rgba(0,0,0,0.1)"}} />
                         </div>
-                        <input id="field-phone" type="tel" placeholder={countryCode === '+1' ? "(514) 000-0000" : "Phone number"} value={form.phone}
+                        <input id="field-phone" type="tel" name="tel" autoComplete="tel-national" placeholder={countryCode === '+1' ? "(514) 000-0000" : "Phone number"} value={form.phone}
                           onChange={e => updateForm('phone', formatPhone(e.target.value))} style={{flex:1,padding:"0.9rem 1.2rem",border:"none",background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",outline:"none",color:"#1a1a1a",WebkitAppearance:"none",MozAppearance:"none",appearance:"none",minWidth:0}}
                           onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
                       </div>
@@ -433,7 +435,7 @@ export default function RoutesPage() {
                   <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
                   <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1.2fr",gap:"0.75rem"}}>
                     <div style={{position:"relative"}}>
-                      <select value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
+                      <select name="bday-month" autoComplete="bday-month" value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
                         style={{...inputStyle('dob_month'), cursor:"pointer", paddingRight:"2rem"}}>
                         <option value="">Month</option>
                         {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i) => (
@@ -443,7 +445,7 @@ export default function RoutesPage() {
                       <Chevron />
                     </div>
                     <div style={{position:"relative"}}>
-                      <select value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)}
+                      <select name="bday-day" autoComplete="bday-day" value={form.dob_day} onChange={e => updateForm('dob_day', e.target.value)}
                         style={{...inputStyle('dob_day'), cursor:"pointer", paddingRight:"2rem"}}>
                         <option value="">Day</option>
                         {Array.from({length:31},(_,i)=>i+1).map(d => (
@@ -453,7 +455,7 @@ export default function RoutesPage() {
                       <Chevron />
                     </div>
                     <div style={{position:"relative"}}>
-                      <select value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)}
+                      <select name="bday-year" autoComplete="bday-year" value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)}
                         style={{...inputStyle('dob_year'), cursor:"pointer", paddingRight:"2rem"}}>
                         <option value="">Year</option>
                         {Array.from({length:2015-1945+1},(_,i)=>2015-i).map(y => (
@@ -471,7 +473,7 @@ export default function RoutesPage() {
                   <div className="join-form-field">
                     <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
                     <div style={{position:"relative"}}>
-                      <select id="field-year" value={form.year} onChange={e => updateForm('year', e.target.value)}
+                      <select id="field-year" autoComplete="off" value={form.year} onChange={e => updateForm('year', e.target.value)}
                         style={{...inputStyle('year'), cursor:"pointer", paddingRight:"2rem"}}>
                         <option value="">Select year</option>
                         {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y=>(
@@ -485,7 +487,7 @@ export default function RoutesPage() {
                   <div className="join-form-field">
                     <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
                     <div style={{position:"relative"}}>
-                      <select id="field-carMake" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)}
+                      <select id="field-carMake" autoComplete="off" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)}
                         style={{...inputStyle('carMake'), cursor:"pointer", paddingRight:"2rem"}}>
                         <option value="">Select make</option>
                         {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
@@ -499,7 +501,7 @@ export default function RoutesPage() {
                 {/* Model */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
                   <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
-                  <input id="field-carModel" type="text" placeholder="e.g. 911 Carrera S" value={form.carModel} maxLength={100}
+                  <input id="field-carModel" type="text" name="car-model" autoComplete="off" placeholder="e.g. 911 Carrera S" value={form.carModel} maxLength={100}
                     onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
                   {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}

@@ -12,7 +12,7 @@ const NAV_LINKS = [
 
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
-  background: '#fff', fontSize: '14px', fontFamily: 'var(--font-inter), sans-serif',
+  background: '#fff', fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif',
   color: '#1a1a1a', outline: 'none', boxSizing: 'border-box',
 }
 
@@ -228,6 +228,7 @@ function WtetCheckinContent() {
                         </label>
                         <input
                           type="text"
+                          autoComplete={i === 0 ? 'name' : 'off'}
                           value={p.name}
                           onChange={e => updatePassenger(i, 'name', e.target.value)}
                           placeholder="Full name"
@@ -287,7 +288,9 @@ function WtetCheckinContent() {
                 WhatsApp number for group chat (optional)
               </label>
               <input
-                type="text"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
                 value={whatsapp}
                 onChange={e => setWhatsapp(e.target.value)}
                 placeholder="+1 514 555 0100"

@@ -269,6 +269,14 @@ export default function WtetPage() {
   const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
 
+  // Fire Purchase pixel event once on payment success
+  useEffect(() => {
+    if (status !== 'success') return
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'Purchase', { value: wasMemberRef.current ? 179 : 199, currency: 'CAD' })
+    }
+  }, [status])
+
   useEffect(() => {
     const EVENT = new Date('2026-07-05T12:00:00Z') // 8 AM EDT
     function tick() {
@@ -432,6 +440,8 @@ export default function WtetPage() {
 
     if (memberProfile) {
       // Logged-in member — immediate charge via member API
+      const memberController = new AbortController()
+      const memberTimeout = setTimeout(() => memberController.abort(), 30000)
       try {
         const res = await fetch('/api/wtet-member-register', {
           method: 'POST',
@@ -445,15 +455,18 @@ export default function WtetPage() {
             childrenAges:  form.childrenAges,
             more:          form.more,
           }),
+          signal: memberController.signal,
         })
+        clearTimeout(memberTimeout)
         const data = await res.json().catch(() => ({}))
         if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
         wasMemberRef.current = true
         setClientSecret(data.clientSecret)
         setStatus('payment')
         window.scrollTo({ top: 0, behavior: 'smooth' })
-      } catch {
-        setServerError('Something went wrong. Please try again.')
+      } catch (err) {
+        clearTimeout(memberTimeout)
+        setServerError(err?.name === 'AbortError' ? 'Request timed out. Please check your connection.' : 'Something went wrong. Please try again.')
         setStatus('error')
       }
       return

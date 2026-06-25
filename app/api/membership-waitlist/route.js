@@ -222,9 +222,14 @@ export async function POST(request) {
     const supabase = createAdminClient()
     const { data: existing } = await supabase
       .from('applications')
-      .select('registrations')
+      .select('registrations, stripe_payment_intent_id')
       .eq('email', normalEmail)
       .maybeSingle()
+
+    // Cancel the previous PI if the user is re-applying — prevents ghost holds on their card
+    if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== paymentIntentId && stripe) {
+      stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
+    }
 
     const membershipReg = { event: 'Canvas Routes Membership', tier, registered_at: new Date().toISOString(), attended: null }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== 'Canvas Routes Membership')
