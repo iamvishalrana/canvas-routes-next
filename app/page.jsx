@@ -917,7 +917,7 @@ export default function Home() {
             >
               <div
                 onClick={ev => ev.stopPropagation()}
-                style={{background:"#0F1E14",maxWidth:"420px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)",borderRadius:isMobile?"16px 16px 0 0":"0",maxHeight:isMobile?"90vh":"none",overflowY:isMobile?"auto":"visible",WebkitOverflowScrolling:"touch"}}
+                style={{background:"#0F1E14",maxWidth:"400px",width:"100%",position:"relative",fontFamily:"var(--font-inter),sans-serif",overflow:"hidden",border:"1px solid rgba(197,168,130,0.35)",borderRadius:isMobile?"16px 16px 0 0":"0",maxHeight:"88vh",overflowY:"auto",WebkitOverflowScrolling:"touch"}}
               >
                 {/* Close — sticky so it stays visible when the sheet scrolls on mobile */}
                 <div style={{position:"sticky",top:0,zIndex:10,display:"flex",justifyContent:"flex-end",padding:"0.5rem 0.6rem",background:"transparent",pointerEvents:"none"}}>
@@ -927,7 +927,7 @@ export default function Home() {
                 {/* Photo — pulled up behind the transparent sticky bar */}
                 {d.img && !pastModalImageFailed && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={d.img} alt={d.imgAlt||''} style={{width:"100%",height:"auto",display:"block",marginTop:"-42px"}} onError={() => setPastModalImageFailed(true)} />
+                  <img src={d.img} alt={d.imgAlt||''} style={{width:"100%",height:"200px",objectFit:"cover",objectPosition:"center 40%",display:"block",marginTop:"-42px"}} onError={() => setPastModalImageFailed(true)} />
                 )}
 
                 <div style={{padding:isMobile?"1.25rem 1.25rem calc(2rem + env(safe-area-inset-bottom))":"1.8rem 2rem 2rem"}}>
