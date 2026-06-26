@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../lib/sentry'
@@ -61,6 +62,11 @@ export async function POST(request, { params }) {
 
   const appId = appData?.id ?? (await admin.from('applications').select('id').eq('email', normalEmail).maybeSingle()).data?.id
 
+  if (!appId) {
+    captureException(new Error('registrant-add: could not resolve appId after upsert'), { context: 'registrant-add-no-appid', email: normalEmail, eventId: id })
+    return Response.json({ success: true })
+  }
+
   if (appId) {
     await admin.from('contacts').upsert(
       { application_id: appId },
@@ -106,8 +112,8 @@ export async function POST(request, { params }) {
       const isRoadTrip = ev.type === 'Road Trip'
       const textSignoff = isRoadTrip ? 'See you on the road' : 'See you there'
 
-      try {
-        await fetch('https://api.resend.com/emails', {
+      after(() =>
+        fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
           body: JSON.stringify({
@@ -119,9 +125,13 @@ export async function POST(request, { params }) {
             text: `Hey ${firstName},\n\nYou're invited to ${ev.name}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
           }),
         })
-      } catch (err) {
-        captureException(err, { context: 'registrant-auto-invite-email', email: normalEmail, eventId: id })
-      }
+        .then(res => {
+          if (!res.ok) res.json().catch(() => ({})).then(d =>
+            captureException(new Error(`Resend HTTP ${res.status}: ${d.message || ''}`), { context: 'registrant-auto-invite-email', email: normalEmail, eventId: id })
+          )
+        })
+        .catch(err => captureException(err, { context: 'registrant-auto-invite-email', email: normalEmail, eventId: id }))
+      )
     }
   }
 
