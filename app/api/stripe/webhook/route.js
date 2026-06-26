@@ -142,7 +142,8 @@ export async function POST(request) {
         break
       }
 
-      case 'payment_intent.requires_capture': {
+      case 'payment_intent.requires_capture':
+      case 'payment_intent.amount_capturable_updated': {
         // Hold authorized — fires for membership PIs and non-member WTET PIs (manual capture).
         // Member WTET PIs now use automatic capture and go straight to payment_intent.succeeded.
         const pi       = event.data.object
