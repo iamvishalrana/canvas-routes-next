@@ -88,6 +88,7 @@ export async function POST(request) {
     options: {
       data: { name },
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/members/reset-password`,
+      expiresIn: 604800, // 7 days
     },
   })
   if (inviteErr) return Response.json({ error: inviteErr.message }, { status: 400 })
