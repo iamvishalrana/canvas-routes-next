@@ -218,6 +218,32 @@ test('wtet register API validation works', async ({ request }) => {
   }
 })
 
+// Full integration — creates a real Stripe PI tagged as a health check.
+// PI uses capture_method: manual so it is never charged. Filter in Stripe by
+// metadata.source = health_check to find and cancel these periodically.
+test('wtet register API creates payment intent (full integration)', async ({ request }) => {
+  const res = await request.post('/api/wtet-register', {
+    data: {
+      name: 'Playwright Health Check',
+      email: 'health-check@playwright.canvasroutes.com',
+      year: '2020',
+      carMake: 'Health',
+      carModel: 'Check',
+      passengers: '1',
+      hasChildren: 'no',
+      source: 'Other',
+      isMember: false,
+      _health_check: true,
+    },
+  })
+  expect([200, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 200) {
+    const body = await res.json()
+    // clientSecret format: pi_xxx_secret_yyy
+    expect(body.clientSecret).toMatch(/^pi_.*_secret_/)
+  }
+})
+
 test('wtet member register API requires auth', async ({ request }) => {
   const res = await request.post('/api/wtet-member-register', { data: {} })
   expect([401, 429]).toContain(res.status())
@@ -227,6 +253,57 @@ test('wtet checkin page loads', async ({ page }) => {
   await page.goto('/wtet/checkin')
   // no token → page renders error state without crashing
   await expect(page.locator('text=Link not found')).toBeVisible({ timeout: 15000 })
+})
+
+test('wtet checkin API validation works', async ({ request }) => {
+  const res = await request.post('/api/wtet-checkin', { data: {} })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Missing token')
+  }
+})
+
+test('wtet checkin API rejects missing passengers', async ({ request }) => {
+  const res = await request.post('/api/wtet-checkin', {
+    data: { token: 'pi_fake_health_check', passengers_list: [] },
+  })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('At least one passenger (the driver) is required.')
+  }
+})
+
+// ─── Stripe Payment Intent (Membership) ──────────────────────────────────────
+
+test('create-payment-intent API validation works', async ({ request }) => {
+  const res = await request.post('/api/stripe/create-payment-intent', { data: {} })
+  expect([400, 429, 503]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Invalid payment type.')
+  }
+})
+
+// Full integration — creates a real Stripe PI tagged as a health check.
+// PI uses capture_method: manual (membership type) so it is never charged.
+// Filter in Stripe by metadata.source = health_check to cancel periodically.
+test('create-payment-intent API creates payment intent (full integration)', async ({ request }) => {
+  const res = await request.post('/api/stripe/create-payment-intent', {
+    data: {
+      type: 'membership_routes',
+      email: 'health-check@playwright.canvasroutes.com',
+      name: 'Playwright Health Check',
+      _health_check: true,
+    },
+  })
+  expect([200, 429, 503]).toContain(res.status())
+  if (res.status() === 200) {
+    const body = await res.json()
+    // clientSecret format: pi_xxx_secret_yyy
+    expect(body.clientSecret).toMatch(/^pi_.*_secret_/)
+  }
 })
 
 // ─── Members Portal ───────────────────────────────────────────────────────────

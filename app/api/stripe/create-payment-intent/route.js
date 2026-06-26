@@ -25,7 +25,7 @@ export async function POST(request) {
   // For membership PIs, accept optional form fields to store in metadata.
   // This ensures the webhook rescue path can write full application data
   // even if the client closes the tab before /api/membership-waitlist fires.
-  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source } = body
+  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source, _health_check } = body
 
   if (!type || !VALID_TYPES.includes(type)) {
     return Response.json({ error: 'Invalid payment type.' }, { status: 400 })
@@ -57,6 +57,10 @@ export async function POST(request) {
           car_make:  carMake  || '',
           car_model: carModel || '',
           source:    source   || '',
+        } : {}),
+        ...(_health_check ? {
+          source: 'health_check',
+          health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',
         } : {}),
       },
       description: buildDescription(type, eventName),

@@ -37,7 +37,7 @@ export async function POST(request) {
     } catch { /* allow through if settings table unavailable */ }
   }
 
-  const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, _hp } = body
+  const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, _hp, _health_check } = body
   if (_hp) return Response.json({ success: true, clientSecret: null })
 
   // Validate required fields
@@ -139,6 +139,10 @@ export async function POST(request) {
         has_children: hasChildren || '',
         children_ages: childrenAges || '',
         original_amount: String(amountCents),
+        ...(_health_check ? {
+          source: 'health_check',
+          health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',
+        } : {}),
       },
       description: `Canvas Routes — ${EVENT_NAME}`,
       automatic_payment_methods: { enabled: true },
