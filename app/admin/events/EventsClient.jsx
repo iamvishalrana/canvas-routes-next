@@ -202,6 +202,7 @@ export default function EventsClient() {
   const [addRegOpen, setAddRegOpen] = useState({})
   const [addRegName, setAddRegName] = useState({})
   const [addRegEmail, setAddRegEmail] = useState({})
+  const [addRegPayment, setAddRegPayment] = useState({})
   const [addingReg, setAddingReg] = useState({})
   const [addRegErr, setAddRegErr] = useState({})
   const [addRegSearch, setAddRegSearch] = useState({})
@@ -416,6 +417,7 @@ export default function EventsClient() {
   async function addRegistrant(eventId) {
     const name = (addRegName[eventId] || '').trim()
     const email = (addRegEmail[eventId] || '').trim()
+    const payment = addRegPayment[eventId] || 'none'
     if (!name || !email) return
     setAddingReg(p => ({ ...p, [eventId]: true }))
     setAddRegErr(p => ({ ...p, [eventId]: null }))
@@ -423,12 +425,13 @@ export default function EventsClient() {
       const res = await fetch(`/api/admin/events/${eventId}/registrants`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, payment }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setAddRegErr(p => ({ ...p, [eventId]: d.error || 'Failed.' })); return }
       setAddRegName(p => ({ ...p, [eventId]: '' }))
       setAddRegEmail(p => ({ ...p, [eventId]: '' }))
+      setAddRegPayment(p => ({ ...p, [eventId]: '' }))
       setAddRegOpen(p => ({ ...p, [eventId]: false }))
       setAddRegErr(p => ({ ...p, [eventId]: null }))
       // Force-reload the registrants panel (stays open, shows updated list)
@@ -928,6 +931,16 @@ export default function EventsClient() {
                                 onChange={e => setAddRegEmail(p => ({ ...p, [item.id]: e.target.value }))}
                                 style={{ flex: '1 1 180px', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
                               />
+                              <select
+                                value={addRegPayment[item.id] || 'none'}
+                                onChange={e => setAddRegPayment(p => ({ ...p, [item.id]: e.target.value }))}
+                                style={{ flex: '1 1 140px', padding: '0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+                              >
+                                <option value="none">No payment</option>
+                                <option value="cash">Cash</option>
+                                <option value="etransfer">E-Transfer</option>
+                                <option value="comped">Comped</option>
+                              </select>
                               <PrimaryBtn
                                 disabled={addingReg[item.id] || !addRegName[item.id]?.trim() || !addRegEmail[item.id]?.trim() || !(addRegEmail[item.id] || '').includes('@')}
                                 onClick={() => addRegistrant(item.id)}

@@ -23,10 +23,14 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
-  const { name, email } = await request.json().catch(() => ({}))
+  const { name, email, payment } = await request.json().catch(() => ({}))
   if (!name?.trim() || !email?.trim() || !email.includes('@')) {
     return Response.json({ error: 'Name and valid email are required.' }, { status: 400 })
   }
+  const VALID_PAYMENTS = ['none', 'cash', 'etransfer', 'comped']
+  const paymentMethod = VALID_PAYMENTS.includes(payment) ? payment : 'none'
+  const isPaid = paymentMethod === 'cash' || paymentMethod === 'etransfer'
+  const isFree = paymentMethod === 'comped'
 
   const admin = createAdminClient()
 
@@ -47,7 +51,7 @@ export async function POST(request, { params }) {
     .eq('email', normalEmail)
     .maybeSingle()
 
-  const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null, source: 'admin_manual' }
+  const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null, source: 'admin_manual', ...(paymentMethod !== 'none' ? { payment_method: paymentMethod } : {}) }
   const prevRegs = (existing?.registrations || []).filter(r => r.event !== ev.name)
 
   const { data: appData, error: appErr } = await admin.from('applications').upsert({
@@ -55,6 +59,8 @@ export async function POST(request, { params }) {
     name: trimmedName,
     registrations: [...prevRegs, newReg],
     source: existing?.source || 'Manual — Admin',
+    ...(isPaid ? { stripe_payment_status: 'paid', stripe_payment_type: `external_${paymentMethod}` } : {}),
+    ...(isFree ? { stripe_payment_status: 'free' } : {}),
     ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
   }, { onConflict: 'email' }).select('id').maybeSingle()
 
