@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import SiteNav from '../../../components/SiteNav'
+import SiteFooter from '../../../components/SiteFooter'
 
 const NAV_LINKS = [
   { href: '/',         label: 'Home' },
@@ -83,7 +84,8 @@ function WtetCheckinContent() {
     const errs = {}
     passengers.forEach((p, i) => {
       if (!p.name.trim()) errs[`p_${i}_name`] = true
-      if (!p.age.toString().trim()) errs[`p_${i}_age`] = true
+      const ageNum = parseInt(p.age)
+      if (!p.age.toString().trim() || isNaN(ageNum) || ageNum < 1 || ageNum > 120) errs[`p_${i}_age`] = true
     })
     setFieldErrors(errs)
     return Object.keys(errs).length === 0
@@ -347,6 +349,7 @@ export default function WtetCheckinPage() {
       }>
         <WtetCheckinContent />
       </Suspense>
+      <SiteFooter />
     </div>
   )
 }

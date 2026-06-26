@@ -40,9 +40,15 @@ export async function POST(request) {
   if (!Array.isArray(passengers_list) || passengers_list.length === 0) {
     return Response.json({ error: 'At least one passenger (the driver) is required.' }, { status: 400 })
   }
+  if (passengers_list.length > 10) {
+    return Response.json({ error: 'Too many passengers.' }, { status: 400 })
+  }
   for (const p of passengers_list) {
     if (!p.name?.trim()) return Response.json({ error: 'Please provide a name for each passenger.' }, { status: 400 })
-    if (!p.age?.toString().trim()) return Response.json({ error: 'Please provide an age for each passenger.' }, { status: 400 })
+    const ageNum = parseInt(p.age)
+    if (!p.age?.toString().trim() || isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
+      return Response.json({ error: 'Please provide a valid age (1–120) for each passenger.' }, { status: 400 })
+    }
   }
 
   const supabase = createAdminClient()

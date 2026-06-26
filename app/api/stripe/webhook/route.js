@@ -84,14 +84,26 @@ export async function POST(request) {
           const amountFormatted = `$${(amountPaid / 100).toFixed(2)} CAD`
           const firstName = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel = eventName || 'Canvas Routes Road Trip'
+          const isMember = pi.metadata?.is_member === 'yes'
           console.log(`Road trip payment confirmed: ${type} — ${normalEmail} — ${amountFormatted}`)
+
+          // Check if the admin panel already captured (it sets stripe_paid_at synchronously).
+          // If so, the capture route already sent the confirmation email — webhook should skip it
+          // to avoid duplicates. Stripe dashboard captures leave stripe_paid_at null at this point.
+          const { data: preUpdateApp } = await supabase.from('applications')
+            .select('stripe_paid_at')
+            .eq('stripe_payment_intent_id', pi.id)
+            .maybeSingle()
+          const adminPanelAlreadyCaptured = !!(preUpdateApp?.stripe_paid_at)
+
           // Write payment fields — update by PI ID so we don't clobber unrelated rows.
-          // Fallback to email if PI ID isn't in the DB (e.g. store step failed on registration).
+          // For member road trips, skip stripe_paid_at so wtet-member-confirm remains the
+          // sole setter — alreadyConfirmed guard in that route depends on this.
           const paymentFields = {
             stripe_payment_status: 'paid',
             stripe_amount_paid:    amountPaid,
             stripe_payment_type:   type,
-            stripe_paid_at:        new Date().toISOString(),
+            ...(isMember ? {} : { stripe_paid_at: new Date().toISOString() }),
           }
           const { data: byPiRows, error: rtDbErr } = await supabase.from('applications')
             .update(paymentFields)
@@ -107,11 +119,9 @@ export async function POST(request) {
             else captureMessage('road-trip-payment-db: used email fallback — PI ID was not in DB', { piId: pi.id, email: normalEmail })
           }
 
-          // Members get their confirmation email from /api/wtet-member-confirm and
-          // the capture routes. Webhook sends for non-members as a fallback in case
-          // capture happened via the Stripe dashboard (not the admin panel).
-          const isMember = pi.metadata?.is_member === 'yes'
-          if (!isMember && process.env.RESEND_API_KEY && normalEmail) {
+          // Non-member confirmation email — only when capture came from Stripe dashboard.
+          // Admin panel captures send this email themselves via the capture route.
+          if (!isMember && !adminPanelAlreadyCaptured && process.env.RESEND_API_KEY && normalEmail) {
             const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
             await Promise.all([
               fetch('https://api.resend.com/emails', {
@@ -205,8 +215,14 @@ export async function POST(request) {
           ])
         }
 
-        // Send membership hold emails if membership-waitlist didn't fire (tab-close rescue path)
+        // Send membership hold emails only if membership-waitlist didn't already run.
+        // membership-waitlist sets registrations with a 'Canvas Routes Membership' entry —
+        // if that entry exists the normal flow completed and we must not duplicate the emails.
         if (type?.startsWith('membership_') && process.env.RESEND_API_KEY) {
+          const { data: appRow } = await supabase.from('applications')
+            .select('registrations').eq('email', normalEmail).maybeSingle()
+          const waitlistRan = (appRow?.registrations || []).some(r => r.event === 'Canvas Routes Membership')
+          if (waitlistRan) break
           const firstName  = (name || '').trim().split(' ')[0] || 'there'
           const tierLabel  = type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
           const amountFmt  = `$${(amountHeld / 100).toFixed(2)} CAD`

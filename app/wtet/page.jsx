@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js/pure'
@@ -206,8 +206,9 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
               type="text"
               placeholder="Promo code"
               value={promoInput}
-              onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
+              onChange={e => { setPromoInput(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '')); setPromoError(null) }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyPromo() } }}
+              maxLength={32}
               style={{flex:1,padding:'0.75rem 1rem',border:'1px solid rgba(0,0,0,0.18)',background:'#fff',fontSize:'13px',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',outline:'none',letterSpacing:'0.06em'}}
             />
             <button type="button" onClick={applyPromo} disabled={promoApplying || !promoInput.trim()}
@@ -466,7 +467,12 @@ export default function WtetPage() {
         })
         clearTimeout(memberTimeout)
         const data = await res.json().catch(() => ({}))
-        if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
+        if (!res.ok) {
+          const msg = res.status === 401
+            ? 'Your session expired. Please log in again.'
+            : data.error || 'Something went wrong. Please try again.'
+          setServerError(msg); setStatus('error'); return
+        }
         wasMemberRef.current = true
         setClientSecret(data.clientSecret)
         setStatus('payment')
@@ -689,13 +695,13 @@ export default function WtetPage() {
             { num:'15',   unit:'cars max' },
             { num:'2',    unit:'per car' },
           ].map(({ num, unit }, i, arr) => (
-            <>
-              <div key={unit} className="wtet-stat" style={{textAlign:'center',padding:'0 2rem'}}>
+            <React.Fragment key={unit}>
+              <div className="wtet-stat" style={{textAlign:'center',padding:'0 2rem'}}>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.4rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.04em'}}>{num}</div>
                 <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#aaa',marginTop:'4px',fontFamily:'var(--font-inter),sans-serif'}}>{unit}</div>
               </div>
-              {i < arr.length - 1 && <div key={`d${i}`} className="stat-divider" style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
-            </>
+              {i < arr.length - 1 && <div className="stat-divider" style={{width:'1px',height:'32px',background:'rgba(0,0,0,0.1)',flexShrink:0}} />}
+            </React.Fragment>
           ))}
         </div>
       </div>
