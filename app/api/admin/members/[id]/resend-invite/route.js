@@ -118,7 +118,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
           <!-- Expiry note -->
           <tr>
             <td style="padding-bottom:40px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:rgba(245,241,236,0.3);">
-              The setup link above expires in 24 hours. Any questions? Reply here or reach us at <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.3);">info@canvasroutes.com</a>.
+              The setup link above expires in 7 days. Any questions? Reply here or reach us at <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.3);">info@canvasroutes.com</a>.
             </td>
           </tr>
 

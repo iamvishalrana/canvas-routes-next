@@ -50,7 +50,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
         </table>
 
         <p style="margin:0 0 0.5em;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.8;color:#666;">See you on the road.<br/><span style="color:#aaa;">Jerry</span></p>
-        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#bbb;">The setup link expires in 24 hours. Questions? Reply here or reach us at <a href="mailto:info@canvasroutes.com" style="color:#888;text-decoration:none;">info@canvasroutes.com</a>.</p>
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#bbb;">The setup link expires in 7 days. Questions? Reply here or reach us at <a href="mailto:info@canvasroutes.com" style="color:#888;text-decoration:none;">info@canvasroutes.com</a>.</p>
       </td></tr>
       <tr><td style="background:#0F1E14;padding:16px 40px;">
         <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);">&copy; 2026 Canvas Routes. Montreal, QC.</p>
