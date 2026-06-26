@@ -114,7 +114,7 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: 'What does a Canvas Routes membership include?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through November.' },
     },
   ],
 }

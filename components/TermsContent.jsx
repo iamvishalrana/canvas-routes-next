@@ -33,7 +33,7 @@ export default function TermsContent() {
           },
           {
             title: "Membership tiers",
-            body: "Canvas Routes offers two membership tiers per season. Routes Member is $99 CAD per season and includes access to Canvas Routes events, routes, and Cars & Coffee gatherings as described on the site. Inner Circle is $249 CAD per season and includes everything in Routes Member, with extended access through December and additional benefits as described on the site. The standard season runs June through November. Inner Circle membership extends through December. Pricing is subject to change for future seasons."
+            body: "Canvas Routes offers two membership tiers per season. Routes Member is $99 CAD per season and includes access to Canvas Routes events, routes, and Cars & Coffee gatherings as described on the site. Inner Circle is $249 CAD per season and includes everything in Routes Member, with extended access through November and additional benefits as described on the site. The standard season runs June through October. Inner Circle membership extends through November. Pricing is subject to change for future seasons."
           },
           {
             title: "Application & approval",

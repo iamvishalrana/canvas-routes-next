@@ -163,7 +163,7 @@ const SECTIONS = [
       },
       {
         q: 'What does membership include?',
-        a: 'Priority registration for all events and routes, preferred member pricing on every route, access to members-only events, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through December.',
+        a: 'Priority registration for all events and routes, preferred member pricing on every route, access to members-only events, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through November.',
       },
       {
         q: 'How much does membership cost?',

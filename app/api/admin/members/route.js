@@ -36,7 +36,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;border-left:3px solid #c5a882;margin-bottom:28px;">
           <tr><td style="padding:18px 20px;">
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Season</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;margin-bottom:14px;">June &mdash; November 2026</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;margin-bottom:14px;">June &mdash; ${tier === 'inner_circle' ? 'November' : 'October'} 2026</div>
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;border-top:1px solid rgba(0,0,0,0.06);padding-top:14px;">Your membership</div>
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;">${tierLabel}</div>
           </td></tr>

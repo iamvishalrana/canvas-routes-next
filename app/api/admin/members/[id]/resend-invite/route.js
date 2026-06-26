@@ -77,7 +77,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
                       <tr>
                         <td style="padding-bottom:16px;">
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c5a882;margin-bottom:4px;">Season</div>
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">June &mdash; November 2026</div>
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#F5F1EC;">June &mdash; ${tier === 'inner_circle' ? 'November' : 'October'} 2026</div>
                         </td>
                       </tr>
                       <!-- Membership row -->
