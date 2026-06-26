@@ -159,6 +159,21 @@ if (app.stripe_payment_status && !['pending', 'authorized'].includes(app.stripe_
 **11. `elements.update({ amount })` is only valid in deferred-intent mode**
 `elements.update()` only works when `<Elements>` is initialized with `mode: 'payment'` and NO `clientSecret`. If `clientSecret` is already set (confirmed-intent mode), `elements.update()` is silently ignored or errors. The membership flow uses `clientSecret` — do not call `elements.update()` there. The WTET flow uses `mode: 'payment'` — `elements.update()` is correct there.
 
+**14. In deferred-intent mode, `<Elements>` options must mirror the PI's `capture_method` exactly**
+When `<Elements>` is initialized with `mode: 'payment'` (no `clientSecret`), Stripe validates that the confirmed PI's `capture_method` matches what Elements was told to expect. If the PI uses `capture_method: 'manual'` but Elements was initialized without it (defaulting to `automatic`), `confirmPayment()` will throw: *"the provided capture_method (manual) does not match the expected capture method (automatic)."*
+
+Rules:
+- If the PI will use `capture_method: 'manual'` → set `capture_method: 'manual'` in Elements options.
+- If the PI will use automatic capture (no `capture_method` in the create call) → omit it from Elements options.
+- If a single `<Elements>` instance serves multiple user paths with different capture methods (e.g. WTET member vs non-member), make it conditional:
+```jsx
+// Non-members get a hold (manual); members are charged immediately (automatic)
+...(!memberProfile ? { capture_method: 'manual' } : {}),
+```
+This bug is silent until `confirmPayment()` fires — the form loads, Elements renders, and Apple Pay/Google Pay appear with no error. The mismatch is only caught at the final confirm step, which is why it survives earlier checks.
+
+**This does NOT apply to confirmed-intent mode** (where `clientSecret` is passed directly to `<Elements>`). In that mode Stripe reads all parameters from the existing PI — no options need to mirror the PI.
+
 **12. `confirmPayment` retry/confirm callbacks must check `res.ok`**
 `fetch().catch()` only fires on network-level errors (no connection, DNS failure). A 500 response resolves normally and bypasses `.catch()`. Any fire-and-forget confirmation call must explicitly check `res.ok`:
 ```js

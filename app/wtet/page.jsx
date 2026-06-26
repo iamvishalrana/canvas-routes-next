@@ -931,7 +931,9 @@ export default function WtetPage() {
                   mode: 'payment',
                   amount: price * 100,
                   currency: 'cad',
-                  capture_method: 'manual',
+                  // Members pay immediately (automatic capture); non-members get an auth hold.
+                  // capture_method must match the PI created by the respective API route.
+                  ...(!memberProfile ? { capture_method: 'manual' } : {}),
                   appearance: {
                     theme: 'stripe',
                     variables: {
