@@ -617,13 +617,14 @@ export default function EventsClient() {
           const { make, model } = parseCarMakeModel(c.car_model)
           // For paid road trip contacts, use the real Stripe payment status and amount
           const isRoadTripPayment = c.stripe_payment_type?.startsWith('road_trip_')
-          const paymentStatus = isRoadTripPayment ? (c.stripe_payment_status || 'registered') : null
+          const isTrackedPayment = isRoadTripPayment || c.stripe_payment_type?.startsWith('external_')
+          const paymentStatus = isTrackedPayment ? (c.stripe_payment_status || 'registered') : null
           return {
             name: c.name || '—',
             email: c.email || '—',
             type: 'Public',
             status: paymentStatus ?? (isConfirmed ? 'confirmed' : 'registered'),
-            amount: isRoadTripPayment ? (c.stripe_amount_paid || null) : null,
+            amount: isRoadTripPayment ? (c.stripe_amount_paid || null) : null,  // external payments have no stored amount
             registeredAt: reg?.registered_at || null,
             rsvpAnswers: rsvpToken?.answers || null,
             confirmedAt: rsvpToken?.confirmed_at || null,
