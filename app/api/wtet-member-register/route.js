@@ -70,8 +70,9 @@ export async function POST(request) {
   if (!carYear?.trim()) return Response.json({ error: 'Car year is required.' }, { status: 400 })
   if (!carMake?.trim()) return Response.json({ error: 'Car make is required.' }, { status: 400 })
   if (!carModel?.trim()) return Response.json({ error: 'Car model is required.' }, { status: 400 })
-  if (!passengers) return Response.json({ error: 'Number of passengers is required.' }, { status: 400 })
-  if (!hasChildren) return Response.json({ error: 'Please answer the children question.' }, { status: 400 })
+  const VALID_PASSENGERS = ['1', '2', '3', '4+']
+  if (!passengers || !VALID_PASSENGERS.includes(passengers)) return Response.json({ error: 'Number of passengers is required.' }, { status: 400 })
+  if (!hasChildren || !['yes', 'no'].includes(hasChildren)) return Response.json({ error: 'Please answer the children question.' }, { status: 400 })
   if (hasChildren === 'yes' && !childrenAges?.trim()) return Response.json({ error: 'Please provide the ages of children attending.' }, { status: 400 })
 
   // Get member name for emails

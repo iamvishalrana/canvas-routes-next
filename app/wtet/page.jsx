@@ -335,11 +335,16 @@ export default function WtetPage() {
       if (memberPiParam === piId) {
         wasMemberRef.current = true
         // Member confirmation email was never sent (redirect interrupted the normal flow) — send now
-        fetch('/api/wtet-member-confirm', {
+        const doConfirm3ds = () => fetch('/api/wtet-member-confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentIntentId: piId }),
-        }).catch(() => {})
+        }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
+        doConfirm3ds().catch(() => setTimeout(() =>
+          doConfirm3ds().catch(err =>
+            import('@sentry/nextjs').then(S => S.captureException(err, { tags: { context: 'wtet-member-confirm-3ds-redirect', piId } })).catch(() => {})
+          ), 4000
+        ))
       }
       if (piSecret) setClientSecret(piSecret)
       setStatus('success')

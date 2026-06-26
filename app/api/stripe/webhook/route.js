@@ -147,6 +147,10 @@ export async function POST(request) {
         // Hold authorized — fires for membership PIs and non-member WTET PIs (manual capture).
         // Member WTET PIs now use automatic capture and go straight to payment_intent.succeeded.
         const pi       = event.data.object
+        // amount_capturable_updated can fire for reasons other than initial authorization
+        // (e.g. promo code applied to an already-authorized PI). Only process when the PI
+        // is actually awaiting capture — prevents overwriting a paid status with authorized.
+        if (pi.status !== 'requires_capture') break
         const { type, email, name, event_name: piEventName } = pi.metadata
         if (!type?.startsWith('membership_') && type !== 'road_trip_wtet') break
         const amountHeld = pi.amount
@@ -236,6 +240,7 @@ export async function POST(request) {
                 to: normalEmail,
                 reply_to: 'info@canvasroutes.com',
                 subject: `Your Canvas Routes application is in, ${firstName}`,
+                html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#F5F1EC;font-family:Arial,Helvetica,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;"><tr><td align="center" style="padding:32px 16px 48px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;"><tr><td style="background:#0F1E14;padding:32px 40px 28px;"><img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:24px;opacity:0.92;" /><p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Canvas Routes &middot; ${tierLabel}</p><h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:300;line-height:1.2;color:#F5F1EC;">We've got you, ${firstName}.</h1></td></tr><tr><td style="background:#ffffff;padding:36px 40px 32px;"><p style="margin:0 0 1.4em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#444;">Your <strong style="color:#1a1a1a;font-weight:500;">${tierLabel}</strong> membership application has been received. Your card has been authorized for <strong style="color:#1a1a1a;font-weight:500;">${amountFmt}</strong> &mdash; it won&apos;t be charged until your application is reviewed and approved.</p><p style="margin:0 0 1.4em;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#666;">Spots are limited. We&apos;ll reach out before we open to the public.</p><p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#555;">&mdash; Jerry</p></td></tr><tr><td style="background:#0F1E14;padding:16px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);">&copy; 2026 Canvas Routes. Montreal, QC.</p></td></tr></table></td></tr></table></body></html>`,
                 text: `We've got you, ${firstName}.\n\nYour ${tierLabel} membership application has been received. Your card has been authorized for ${amountFmt} — it won't be charged until your application is reviewed and approved.\n\nSpots are limited. We'll reach out before we open to the public.\n\n© 2026 Canvas Routes. Montreal, QC.`,
               }),
             }).catch(err => captureException(err, { context: 'membership-hold-email-rescue', email: normalEmail })),
