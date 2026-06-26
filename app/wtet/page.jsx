@@ -931,6 +931,7 @@ export default function WtetPage() {
                   mode: 'payment',
                   amount: price * 100,
                   currency: 'cad',
+                  capture_method: 'manual',
                   appearance: {
                     theme: 'stripe',
                     variables: {
