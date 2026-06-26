@@ -139,6 +139,9 @@ export async function POST(request) {
         has_children: hasChildren || '',
         children_ages: childrenAges || '',
         original_amount: String(amountCents),
+        phone: phone || '',
+        dob: dob || '',
+        source: source || '',
         ...(_health_check ? {
           source: 'health_check',
           health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',

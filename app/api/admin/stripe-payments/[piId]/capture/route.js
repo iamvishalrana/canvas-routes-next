@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { stripe } from '../../../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
@@ -77,7 +78,7 @@ export async function POST(request, { params }) {
     const amount     = `$${(pi.amount / 100).toFixed(2)} CAD`
     const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${piId}`
 
-    await Promise.all([
+    after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -100,7 +101,7 @@ export async function POST(request, { params }) {
           text: `You captured the WTET payment for ${name}.\n\nEmail: ${email}\nAmount: ${amount}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${piId}`,
         }),
       }).catch(err => captureException(err, { context: 'admin-capture-admin-email', piId })),
-    ])
+    ]))
   }
 
   return Response.json({ ok: true })

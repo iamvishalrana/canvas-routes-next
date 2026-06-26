@@ -498,6 +498,7 @@ export default function WtetPage() {
       clearTimeout(timeout)
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setStatus('error'); return }
+      if (!data.clientSecret) { setServerError('Something went wrong. Please try again.'); setStatus('error'); return }
       wasMemberRef.current = false
       setClientSecret(data.clientSecret)
       setStatus('payment')
@@ -962,8 +963,11 @@ export default function WtetPage() {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ paymentIntentId: piId }),
                     }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
-                    // Retry once after 4s on any failure (network error OR non-ok response)
-                    confirm().catch(() => setTimeout(() => confirm().catch(() => {}), 4000))
+                    // Retry once after 4s on any failure (network error OR non-ok response).
+                    // Final failure captured to Sentry — payment succeeded but confirm email may not arrive.
+                    confirm().catch(() => setTimeout(() => confirm().catch(err => {
+                      if (typeof window !== 'undefined' && window.Sentry) window.Sentry.captureException(err, { tags: { context: 'wtet-member-confirm-client', piId } })
+                    }), 4000))
                   }}
                 />
               </Elements>

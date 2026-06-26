@@ -15,7 +15,7 @@ export async function POST(request) {
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim() || 'unknown'
-  if (await checkRateLimit(ip)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
+  if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request' }, { status: 400 }) }
@@ -51,12 +51,16 @@ export async function POST(request) {
 
   const admin = createAdminClient()
 
-  // Idempotency guard — if already confirmed (e.g. 3DS redirect called this twice), skip email
+  // Check if this exact PI was already processed by a prior confirm call.
+  // We do NOT guard on stripe_payment_status === 'paid' alone — the webhook sets that
+  // for members without sending an email, so guarding on it would silently drop the
+  // confirmation email whenever the webhook beats this route (common on fast connections).
   const { data: existingApp } = await admin.from('applications')
-    .select('stripe_payment_status')
+    .select('stripe_payment_intent_id, stripe_paid_at')
     .eq('email', normalEmail)
     .maybeSingle()
-  const alreadyConfirmed = existingApp?.stripe_payment_status === 'paid'
+  const alreadyConfirmed = existingApp?.stripe_payment_intent_id === pi.id
+    && existingApp?.stripe_paid_at != null
 
   const { error: confirmDbErr } = await admin.from('applications').update({
     stripe_payment_intent_id: pi.id,
