@@ -413,7 +413,7 @@ export default function MembershipContent() {
             _hp: '',
           }),
         }).then(r => { if (!r.ok) throw new Error(`membership-waitlist 3DS rescue HTTP ${r.status}`) })
-          .catch(err => { if (typeof window !== 'undefined' && window.Sentry) window.Sentry.captureException(err, { tags: { context: 'membership-3ds-rescue', piId } }) })
+          .catch(err => { import('@sentry/nextjs').then(S => S.captureException(err, { tags: { context: 'membership-3ds-rescue', piId } })).catch(() => {}) })
       }
     } catch {}
     setStatus('success')

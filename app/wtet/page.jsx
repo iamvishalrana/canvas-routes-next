@@ -158,7 +158,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
           <div>
             <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.3rem',fontFamily:'var(--font-inter),sans-serif'}}>Canvas Routes · July 5, 2026</div>
             <div style={{fontSize:'15px',color:'#1a1a1a',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>Whips to Eastern Townships</div>
-            <div style={{fontSize:'12px',color:'#999',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>{email}</div>
+            <div style={{fontSize:'12px',color:'#999',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif',wordBreak:'break-all'}}>{email}</div>
           </div>
           <div className="wtet-order-price" style={{textAlign:'right',flexShrink:0}}>
             {promoResult ? (
@@ -277,10 +277,20 @@ export default function WtetPage() {
   const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
 
-  // Fire Purchase pixel event once on payment success
+  // Meta Pixel — ViewContent on page load
   useEffect(() => {
-    if (status !== 'success') return
     if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'ViewContent', { content_name: 'WTET Registration', content_category: 'Road Trip', currency: 'CAD' })
+    }
+  }, [])
+
+  // Meta Pixel — InitiateCheckout when payment step opens, Purchase on success
+  useEffect(() => {
+    if (!window.fbq) return
+    if (status === 'payment') {
+      window.fbq('track', 'InitiateCheckout', { value: wasMemberRef.current ? 179 : 199, currency: 'CAD', num_items: 1 })
+    }
+    if (status === 'success') {
       window.fbq('track', 'Purchase', { value: wasMemberRef.current ? 179 : 199, currency: 'CAD' })
     }
   }, [status])
@@ -586,6 +596,7 @@ export default function WtetPage() {
           .wtet-details { padding: 3rem 1.25rem !important; }
           .wtet-itinerary  { padding: 3.5rem 1.25rem 4.5rem !important; }
           .wtet-form-section { padding: 2.5rem 1.25rem 4.5rem !important; }
+          .wtet-details-cta { display: block !important; text-align: center !important; }
 
           /* Stats */
           .wtet-stats-bar  { flex-wrap: wrap !important; gap: 0 !important; padding: 1.25rem 0.5rem !important; justify-content: center !important; }
@@ -748,6 +759,7 @@ export default function WtetPage() {
           </div>
 
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
+            className="wtet-details-cta"
             style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
             Register — from $179 →
           </a>
@@ -873,7 +885,7 @@ export default function WtetPage() {
             <div style={{textAlign:'center',padding:'5rem 0'}}>
               {wasMemberRef.current ? (
                 <>
-                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>You&apos;re in.</div>
+                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.7rem,6vw,2.2rem)',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>You&apos;re in.</div>
                   <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
                   <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
                     Your $179 payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{memberProfile?.email || form.email}</strong>.
@@ -884,7 +896,7 @@ export default function WtetPage() {
                 </>
               ) : (
                 <>
-                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>Authorization received.</div>
+                  <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.7rem,6vw,2.2rem)',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>Authorization received.</div>
                   <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
                   <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
                     Your ${price} hold is placed — nothing has been charged yet. We&apos;ll review your registration personally and be in touch at <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{form.email}</strong>.
@@ -929,7 +941,7 @@ export default function WtetPage() {
           {status === 'payment' && clientSecret && (
             <div>
               <div style={{textAlign:'center',marginBottom:'2.5rem'}}>
-                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Complete your payment</div>
+                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.8rem,6vw,2.4rem)',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Complete your payment</div>
                 <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 0'}} />
               </div>
               <Elements
@@ -972,7 +984,7 @@ export default function WtetPage() {
                     // Retry once after 4s on any failure (network error OR non-ok response).
                     // Final failure captured to Sentry — payment succeeded but confirm email may not arrive.
                     confirm().catch(() => setTimeout(() => confirm().catch(err => {
-                      if (typeof window !== 'undefined' && window.Sentry) window.Sentry.captureException(err, { tags: { context: 'wtet-member-confirm-client', piId } })
+                      import('@sentry/nextjs').then(S => S.captureException(err, { tags: { context: 'wtet-member-confirm-client', piId } })).catch(() => {})
                     }), 4000))
                   }}
                 />
@@ -988,7 +1000,7 @@ export default function WtetPage() {
                 <div style={{display:'inline-block',fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#7B5B2E',border:'0.5px solid rgba(123,91,46,0.35)',background:'rgba(123,91,46,0.06)',padding:'4px 14px',marginBottom:'1.5rem',fontFamily:'var(--font-inter),sans-serif'}}>
                   Limited to 15 cars
                 </div>
-                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.4rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Claim your seat at the wheel.</div>
+                <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.9rem,6vw,2.4rem)',fontWeight:'300',color:'#1a1a1a',marginBottom:'0.5rem'}}>Claim your seat at the wheel.</div>
                 <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 1.5rem'}} />
                 <p style={{fontSize:'14px',color:'#777',lineHeight:'1.8',maxWidth:'420px',margin:'0 auto',fontFamily:'var(--font-inter),sans-serif'}}>
                   {memberProfile
