@@ -48,7 +48,7 @@ export async function POST(request) {
       }
       await stripe.paymentIntents.update(paymentIntentId, {
         amount: canonicalAmount,
-        metadata: { ...pi.metadata, promo_code_id: '' },
+        metadata: { ...pi.metadata, promo_code_id: '', discount_amount: '' },
       })
       return Response.json({ success: true, originalAmount: canonicalAmount })
     } catch (err) {

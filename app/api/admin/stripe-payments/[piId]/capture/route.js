@@ -69,7 +69,28 @@ export async function POST(request, { params }) {
     .eq('stripe_payment_intent_id', piId)
   if (dbErr) captureException(dbErr, { context: 'admin-capture-db', piId })
 
-  // Send confirmation email to registrant — belt-and-suspenders alongside the webhook
+  // Send emails — WTET confirmation or membership approval notification
+  if (process.env.RESEND_API_KEY && pi.metadata?.type?.startsWith('membership_')) {
+    const email     = pi.metadata.email?.toLowerCase().trim() || app.email
+    const name      = pi.metadata.name || app.name || ''
+    const firstName = name.trim().split(' ')[0] || 'there'
+    const tierLabel = pi.metadata.type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
+    const amount    = `$${(pi.amount / 100).toFixed(2)} CAD`
+    after(() => Promise.allSettled([
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Canvas Routes <info@canvasroutes.com>',
+          to: email,
+          reply_to: 'info@canvasroutes.com',
+          subject: `Your Canvas Routes membership is approved, ${firstName}`,
+          text: `Hey ${firstName},\n\nYour ${tierLabel} membership application has been approved and your payment of ${amount} has been processed.\n\nWe're setting up your account now — you'll receive a separate email shortly with your login details and everything you need to get started.\n\nWelcome to Canvas Routes.\n\nJerry`,
+        }),
+      }).catch(err => captureException(err, { context: 'admin-capture-membership-email', piId })),
+    ]))
+  }
+
   if (process.env.RESEND_API_KEY && pi.metadata?.type === 'road_trip_wtet' && pi.metadata?.is_member !== 'yes') {
     const email      = pi.metadata.email?.toLowerCase().trim()
     const name       = pi.metadata.name || email?.split('@')[0] || 'there'

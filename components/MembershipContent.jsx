@@ -390,8 +390,12 @@ export default function MembershipContent() {
     const params = new URLSearchParams(window.location.search)
     const piId         = params.get('payment_intent')
     const redirectStatus = params.get('redirect_status')
-    if (!piId || redirectStatus !== 'succeeded') return
+    if (!piId) return
     window.history.replaceState({}, '', '/membership')
+    if (redirectStatus !== 'succeeded') {
+      setSubmitError('Your payment could not be completed. Please try again.')
+      return
+    }
     try {
       const saved = localStorage.getItem('membership_form_pending')
       localStorage.removeItem('membership_form_pending')
@@ -408,7 +412,8 @@ export default function MembershipContent() {
             paymentIntentId: piId,
             _hp: '',
           }),
-        }).catch(() => {})
+        }).then(r => { if (!r.ok) throw new Error(`membership-waitlist 3DS rescue HTTP ${r.status}`) })
+          .catch(err => { if (typeof window !== 'undefined' && window.Sentry) window.Sentry.captureException(err, { tags: { context: 'membership-3ds-rescue', piId } }) })
       }
     } catch {}
     setStatus('success')
@@ -1046,7 +1051,7 @@ export default function MembershipContent() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
                             <div style={{ fontSize: '14px', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.8)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Inner Circle</div>
-                            <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $70 route credit</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $50 route credit</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
                             <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>

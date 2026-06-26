@@ -204,6 +204,36 @@ export async function POST(request) {
             }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
           ])
         }
+
+        // Send membership hold emails if membership-waitlist didn't fire (tab-close rescue path)
+        if (type?.startsWith('membership_') && process.env.RESEND_API_KEY) {
+          const firstName  = (name || '').trim().split(' ')[0] || 'there'
+          const tierLabel  = type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
+          const amountFmt  = `$${(amountHeld / 100).toFixed(2)} CAD`
+          await Promise.all([
+            fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+              body: JSON.stringify({
+                from: 'Canvas Routes <info@canvasroutes.com>',
+                to: normalEmail,
+                reply_to: 'info@canvasroutes.com',
+                subject: `Your Canvas Routes application is in, ${firstName}`,
+                text: `We've got you, ${firstName}.\n\nYour ${tierLabel} membership application has been received. Your card has been authorized for ${amountFmt} — it won't be charged until your application is reviewed and approved.\n\nSpots are limited. We'll reach out before we open to the public.\n\n© 2026 Canvas Routes. Montreal, QC.`,
+              }),
+            }).catch(err => captureException(err, { context: 'membership-hold-email-rescue', email: normalEmail })),
+            fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+              body: JSON.stringify({
+                from: 'Canvas Routes <info@canvasroutes.com>',
+                to: 'info@canvasroutes.com',
+                subject: `Membership Application (webhook rescue) — ${tierLabel} — ${name || normalEmail}`,
+                text: `Membership application received via webhook rescue (tab was closed before membership-waitlist fired).\n\nTier: ${tierLabel}\nName: ${name || '—'}\nEmail: ${normalEmail}\nHold: ${amountFmt}\nPhone: ${pi.metadata?.phone || '—'}\nCar: ${pi.metadata?.car_model || '—'}\nSource: ${pi.metadata?.source || '—'}\nPI: ${pi.id}`,
+              }),
+            }).catch(err => captureException(err, { context: 'membership-hold-admin-email-rescue', email: normalEmail })),
+          ])
+        }
         break
       }
 
