@@ -622,7 +622,7 @@ export default function EventsClient() {
           return {
             name: c.name || '—',
             email: c.email || '—',
-            type: 'Public',
+            type: c.is_invited ? 'Member' : 'Public',
             status: paymentStatus ?? (isConfirmed ? 'confirmed' : 'registered'),
             amount: isRoadTripPayment ? (c.stripe_amount_paid || null) : null,  // external payments have no stored amount
             registeredAt: reg?.registered_at || null,
