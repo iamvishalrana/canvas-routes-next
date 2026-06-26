@@ -81,8 +81,8 @@ export async function POST(request) {
         subject: isResend ? `Reminder — your spot at ${eventName}` : `You're invited — ${eventName}`,
         html: buildInviteHtml(firstName, eventName, eventDate, eventLocation, rsvpUrl, expiresAt.toISOString(), isRoadTrip, isResend),
         text: isResend
-          ? `Hey ${firstName},\n\nJust a reminder — your invitation to ${eventName} is still open. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`
-          : `Hey ${firstName},\n\nYou're invited to ${eventName}. Confirm your spot here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
+          ? `Hey ${firstName},\n\nJust a reminder — your invitation to ${eventName} is still open. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`
+          : `Hey ${firstName},\n\nYou're invited to ${eventName}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
       }),
     })
     if (!res.ok) {

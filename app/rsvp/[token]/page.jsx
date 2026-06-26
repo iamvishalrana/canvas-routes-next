@@ -146,7 +146,7 @@ export default function RsvpPage() {
               <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>Canvas Routes</div>
               <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '1rem', lineHeight: 1.2 }}>You&apos;re already in.</h1>
               <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.8', marginBottom: '1.75rem' }}>
-                You&apos;ve already confirmed your spot{eventName ? ` for ${eventName}` : ''}. We&apos;ll be in touch with details closer to the date.
+                You&apos;ve already checked in{eventName ? ` for ${eventName}` : ''}. We&apos;ll be in touch with details closer to the date.
               </p>
               <a href="https://www.instagram.com/canvasroutes" style={{ display: 'inline-block', padding: '0.85rem 2rem', border: '0.5px solid rgba(0,0,0,0.2)', color: '#555', textDecoration: 'none', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }}>
                 Follow @canvasroutes →
@@ -195,14 +195,19 @@ export default function RsvpPage() {
                 Canvas Routes &middot; {isRoadTrip ? 'Road Trip' : 'Car Meet'} &middot; You&apos;re Invited
               </div>
               <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.1rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.6rem', lineHeight: 1.2 }}>
-                {firstName ? `Confirm your spot, ${firstName}.` : 'Confirm your spot.'}
+                {firstName ? `Check in, ${firstName}.` : 'Check in.'}
               </h1>
-              <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.8', marginBottom: '2rem' }}>
+              <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.8', marginBottom: '0.65rem' }}>
                 You&apos;ve been invited to <strong style={{ color: '#1a1a1a', fontWeight: '500' }}>{eventName}</strong>.{' '}
                 {isRoadTrip
-                  ? 'Answer two quick questions and your spot is locked in.'
+                  ? 'Two quick questions and your spot is locked in.'
                   : "A few quick questions and you're in."}
               </p>
+              {isRoadTrip && (
+                <p style={{ color: '#999', fontSize: '12px', lineHeight: '1.7', marginBottom: '2rem' }}>
+                  Helps us plan stops, catering, and the convoy around who&apos;s coming.
+                </p>
+              )}
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
@@ -324,7 +329,7 @@ export default function RsvpPage() {
                     fontFamily: 'var(--font-inter),sans-serif', transition: 'background 0.2s', borderRadius: 0,
                   }}
                 >
-                  {submitting ? 'Confirming…' : 'Confirm My Spot'}
+                  {submitting ? 'Checking in…' : 'Check In'}
                 </button>
 
                 {isDisabled && !submitting && (
