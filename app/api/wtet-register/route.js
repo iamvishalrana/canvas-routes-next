@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { captureException } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
@@ -63,6 +64,15 @@ export async function POST(request) {
   const normalEmail = email.toLowerCase().trim()
   const firstName = name.trim().split(' ')[0]
 
+  // Parse DOB string into separate columns immediately — don't rely on webhook to do this
+  let dob_month = null, dob_day = null, dob_year = null
+  if (dob) {
+    const [y, m, d] = dob.split('-').map(Number)
+    if (m >= 1 && m <= 12) dob_month = m
+    if (d >= 1 && d <= 31) dob_day = d
+    if (y && y > 1900) dob_year = y
+  }
+
   // Verify member status server-side — never trust isMember from the client body alone
   let verifiedMember = false
   if (isMember === true && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -103,6 +113,9 @@ export async function POST(request) {
       more: more || null,
       source: source || null,
       dob: dob || null,
+      dob_month: dob_month || null,
+      dob_day: dob_day || null,
+      dob_year: dob_year || null,
       registrations,
       stripe_payment_status: 'pending',
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
@@ -166,6 +179,24 @@ export async function POST(request) {
         .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_wtet' })
         .eq('email', normalEmail)
       if (piStoreErr) captureException(piStoreErr, { context: 'wtet-register-pi-store', email: normalEmail })
+    }
+
+    // Notify Jerry immediately when someone reaches the payment step — belt-and-suspenders
+    // against the webhook failing to fire. The webhook sends the full notification on
+    // requires_capture; this is a lightweight heads-up so new registrations are never missed.
+    if (process.env.RESEND_API_KEY && !_health_check) {
+      after(() =>
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Canvas Routes <info@canvasroutes.com>',
+            to: 'jerry@canvasroutes.com',
+            subject: `WTET Registration Started — ${name.trim()}`,
+            text: `${name.trim()} has started the WTET payment flow.\n\nEmail: ${normalEmail}\nAmount to hold: $${(amountCents / 100).toFixed(2)} CAD\nCar: ${fullCarModel}\nPassengers: ${passengers}\nChildren: ${hasChildren}\nSource: ${source}\nPhone: ${phone || '—'}\nPI: ${pi.id}\n\nThis email fires when the PI is created (before card authorization). A second email will follow when Stripe confirms the hold via webhook.`,
+          }),
+        }).catch(err => captureException(err, { context: 'wtet-register-admin-notify', email: normalEmail }))
+      )
     }
 
     return Response.json({ clientSecret: pi.client_secret })
