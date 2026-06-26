@@ -47,7 +47,7 @@ export async function POST(request, { params }) {
     .eq('email', normalEmail)
     .maybeSingle()
 
-  const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null }
+  const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null, source: 'admin_manual' }
   const prevRegs = (existing?.registrations || []).filter(r => r.event !== ev.name)
 
   const { data: appData, error: appErr } = await admin.from('applications').upsert({

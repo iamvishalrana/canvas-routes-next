@@ -594,12 +594,13 @@ export default function EventsClient() {
       })
       const contactRegs = (Array.isArray(contacts) ? contacts : [])
         .filter(c => {
-          const hasReg = (c.registrations || []).some(r => {
+          const matchedReg = (c.registrations || []).find(r => {
             const norm = normalizeEventName(r.event)
-            if (norm === eventName) return true
-            return evBase(norm) === evBase(eventName)
+            return norm === eventName || evBase(norm) === evBase(eventName)
           })
-          if (!hasReg) return false
+          if (!matchedReg) return false
+          // Admin-manually-added registrants bypass the payment filter — they have no Stripe hold
+          if (matchedReg.source === 'admin_manual') return true
           // For paid road trips, only show contacts whose Stripe payment is authorized or captured
           if (isPaidRoadTrip && c.stripe_payment_type?.startsWith('road_trip_')) {
             return ['authorized', 'paid'].includes(c.stripe_payment_status)
