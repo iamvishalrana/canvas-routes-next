@@ -134,8 +134,20 @@ Without this, admin double-clicks can issue duplicate charges/refunds.
 **7. Webhook must return 500 on handler crash — not 200**
 The final catch block in `app/api/stripe/webhook/route.js` must return `{ status: 500 }`. A 200 tells Stripe delivery was successful; Stripe won't retry. A 500 triggers exponential backoff retries for up to 72 hours. All handlers use `upsert` so retries are safe.
 
-**8. Emails in API routes must not block the response**
-Fire emails async — do not `await` Resend calls before returning the response. Use `Promise.allSettled([...])` without await, with per-call `.catch(() => captureException(...))`. Blocking on Resend can cause client timeouts and user re-submits even though the DB write already succeeded.
+**8. Emails in API routes must use `after()` — never fire-and-forget**
+Import `after` from `next/server` and wrap all Resend `fetch()` calls in it. Fire-and-forget (`Promise.allSettled` without `await`) gets killed mid-TLS-handshake when Vercel tears down the function after the response is sent — the email silently never arrives. `after()` keeps the function alive until the promise settles without blocking the response:
+```js
+import { after } from 'next/server'
+
+after(() => Promise.allSettled([
+  fetch('https://api.resend.com/emails', { ... })
+    .catch(err => captureException(err, { context: '...' })),
+  fetch('https://api.resend.com/emails', { ... })
+    .catch(err => captureException(err, { context: '...' })),
+]))
+return Response.json({ success: true })
+```
+Never `await` Resend calls directly before returning — Resend latency can cause client timeouts and duplicate submissions when the DB write already succeeded.
 
 **9. Dispute webhook must handle `warning_closed`**
 `charge.dispute.closed` has three terminal states: `won`, `lost`, and `warning_closed`. Only `lost` means funds were withdrawn. Use a three-way check:

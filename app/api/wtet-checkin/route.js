@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { captureException } from '../../../lib/sentry.js'
 
@@ -71,20 +72,20 @@ export async function POST(request) {
 
   if (updateErr) return Response.json({ error: 'Failed to save' }, { status: 500 })
 
-  // Notify Jerry so he can prep dietary requirements, add to WhatsApp group, etc.
+  // Notify Jerry — after() keeps the function alive until the fetch settles without blocking the response.
   if (process.env.RESEND_API_KEY) {
-    const passengerRows = cleanedPassengers.map((p, i) =>
-      `<tr><td style="padding:6px 12px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">${i === 0 ? 'Driver' : `Passenger ${i + 1}`}</td><td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${p.name}, age ${p.age}</td></tr>`
-    ).join('')
-
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-      body: JSON.stringify({
-        from: 'Canvas Routes <info@canvasroutes.com>',
-        to: 'jerry@canvasroutes.com',
-        subject: `WTET Check-in Completed — ${data.name || 'Registrant'}`,
-        html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif;">
+    after(() => {
+      const passengerRows = cleanedPassengers.map((p, i) =>
+        `<tr><td style="padding:6px 12px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">${i === 0 ? 'Driver' : `Passenger ${i + 1}`}</td><td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${p.name}, age ${p.age}</td></tr>`
+      ).join('')
+      return fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Canvas Routes <info@canvasroutes.com>',
+          to: 'jerry@canvasroutes.com',
+          subject: `WTET Check-in Completed — ${data.name || 'Registrant'}`,
+          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fff;">
   <tr><td align="center" style="padding:32px 16px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
@@ -103,8 +104,9 @@ export async function POST(request) {
   </td></tr>
 </table>
 </body></html>`,
-      }),
-    }).catch(err => captureException(err, { context: 'wtet-checkin-notify-jerry', token }))
+        }),
+      }).catch(err => captureException(err, { context: 'wtet-checkin-notify-jerry', token }))
+    })
   }
 
   return Response.json({ success: true })

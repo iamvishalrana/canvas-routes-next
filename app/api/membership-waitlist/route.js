@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
@@ -260,10 +261,9 @@ export async function POST(request) {
     captureException(e, { context: 'membership-waitlist-db-save', email: normalEmail, name: name?.trim(), tier, paymentIntentId })
   }
 
-  // Fire emails async — do not block the response on Resend latency.
-  // DB write above is the source of truth; email failures are logged to Sentry.
+  // Fire emails after response — after() keeps the function alive until both fetches settle.
   if (process.env.RESEND_API_KEY) {
-    Promise.allSettled([
+    after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -290,7 +290,7 @@ export async function POST(request) {
         }),
       }).then(r => { if (!r.ok) captureMessage(`Membership notify email failed — ${normalEmail}`, { status: r.status }) })
         .catch(err => captureException(err, { context: 'membership-notify-email', email: normalEmail })),
-    ])
+    ]))
   }
 
   return Response.json({ success: true })

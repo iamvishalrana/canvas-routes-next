@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { createClient } from '../../../lib/supabase/server'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
@@ -68,8 +69,8 @@ export async function POST(request) {
 
   if (!process.env.RESEND_API_KEY || alreadyConfirmed) return Response.json({ ok: true })
 
-  // Fire emails async — do not await (rule #8)
-  Promise.allSettled([
+  // Fire emails after response — after() keeps the function alive until both fetches settle.
+  after(() => Promise.allSettled([
     fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -92,7 +93,7 @@ export async function POST(request) {
         text: `Member payment confirmed for ${EVENT_NAME}.\n\nName: ${memberName}\nEmail: ${normalEmail}\nAmount: ${amount}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}`,
       }),
     }).catch(err => captureException(err, { context: 'wtet-member-confirm-admin-email', email: normalEmail })),
-  ])
+  ]))
 
   return Response.json({ ok: true })
 }
