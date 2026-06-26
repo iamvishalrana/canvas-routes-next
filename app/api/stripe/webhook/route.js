@@ -85,16 +85,27 @@ export async function POST(request) {
           const firstName = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel = eventName || 'Canvas Routes Road Trip'
           console.log(`Road trip payment confirmed: ${type} — ${normalEmail} — ${amountFormatted}`)
-          // Write payment fields — update by PI ID so we don't clobber unrelated rows
-          const { error: rtDbErr } = await supabase.from('applications')
-            .update({
-              stripe_payment_status: 'paid',
-              stripe_amount_paid:    amountPaid,
-              stripe_payment_type:   type,
-              stripe_paid_at:        new Date().toISOString(),
-            })
+          // Write payment fields — update by PI ID so we don't clobber unrelated rows.
+          // Fallback to email if PI ID isn't in the DB (e.g. store step failed on registration).
+          const paymentFields = {
+            stripe_payment_status: 'paid',
+            stripe_amount_paid:    amountPaid,
+            stripe_payment_type:   type,
+            stripe_paid_at:        new Date().toISOString(),
+          }
+          const { data: byPiRows, error: rtDbErr } = await supabase.from('applications')
+            .update(paymentFields)
             .eq('stripe_payment_intent_id', pi.id)
+            .select('id')
           if (rtDbErr) captureException(rtDbErr, { context: 'road-trip-payment-db', piId: pi.id })
+          if (!rtDbErr && (!byPiRows || byPiRows.length === 0) && normalEmail) {
+            // PI ID not found — fall back to email so the status is never silently lost
+            const { error: fbErr } = await supabase.from('applications')
+              .update({ ...paymentFields, stripe_payment_intent_id: pi.id })
+              .eq('email', normalEmail)
+            if (fbErr) captureException(fbErr, { context: 'road-trip-payment-db-email-fallback', piId: pi.id, email: normalEmail })
+            else captureMessage('road-trip-payment-db: used email fallback — PI ID was not in DB', { piId: pi.id, email: normalEmail })
+          }
 
           // Members get their confirmation email from /api/wtet-member-confirm and
           // the capture routes. Webhook sends for non-members as a fallback in case
