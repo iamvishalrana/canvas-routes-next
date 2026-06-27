@@ -7,14 +7,16 @@ import PageLoader from '../../components/PageLoader'
 const PASSWORD = 'eastern'
 
 const PARTICIPANTS = [
-  { name: 'Alex Boutin',        photo: '/WTET/Alex-Boutin.jpeg' },
-  { name: 'Fred Lefebvre',      photo: '/WTET/Fred-Lefebvre.jpeg' },
-  { name: 'Jean Philippe',      photo: '/WTET/Jean-Philippe.png' },
-  { name: 'Jerry',              photo: null },
-  { name: 'Louis Guindon',      photo: '/WTET/Louis-Guindon.png' },
-  { name: 'Louis Mauger',       photo: '/WTET/Louis-Mauger.jpg' },
-  { name: 'Tanya Ghingold',     photo: '/WTET/Tanya-Ghingold.png' },
-  { name: 'Yvon Maggi',         photo: '/WTET/Yvon-Maggi.png' },
+  { name: 'Alain Sahakian',        photo: null },
+  { name: 'Alex Boutin',           photo: '/WTET/Alex-Boutin.jpeg' },
+  { name: 'Fred Lefebvre',         photo: '/WTET/Fred-Lefebvre.jpeg' },
+  { name: 'Jean-Philippe Remon',   photo: '/WTET/Jean-Philippe.png' },
+  { name: 'Jerry',                 photo: null },
+  { name: 'Louis Guindon',         photo: '/WTET/Louis-Guindon.png' },
+  { name: 'Louis Philippe Mauger', photo: '/WTET/Louis-Mauger.jpg' },
+  { name: 'Michel Robert',         photo: null },
+  { name: 'Tanya Ghingold',        photo: '/WTET/Tanya-Ghingold.png' },
+  { name: 'Yvon Maggi',            photo: '/WTET/Yvon-Maggi.png' },
 ]
 
 const STOPS = [
