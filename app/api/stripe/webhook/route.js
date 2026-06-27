@@ -291,6 +291,7 @@ export async function POST(request) {
             .update({ stripe_payment_status: 'failed' })
             .eq('event_id', pi.metadata.event_id)
             .eq('member_id', pi.metadata.member_id)
+            .not('stripe_payment_status', 'eq', 'paid') // never clobber a confirmed payment
         } else {
           await supabase.from('applications')
             .update({ stripe_payment_status: 'failed' })

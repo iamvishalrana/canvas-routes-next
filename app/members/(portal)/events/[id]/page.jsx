@@ -215,7 +215,7 @@ export default async function EventDetailPage({ params }) {
         </div>
       )}
 
-      {!isPast && !ev.registration_url && ev.registration_enabled && !ev.registration_opens_at && (
+      {!isPast && !ev.registration_url && ev.registration_enabled !== false && !ev.registration_opens_at && (
         <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', padding: '1.25rem 1.75rem', background: 'rgba(197,168,130,0.04)', marginBottom: '2rem' }}>
           <span style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter)' }}>Registration Opening Soon</span>
         </div>

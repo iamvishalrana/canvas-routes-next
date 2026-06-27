@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry'
@@ -74,8 +75,7 @@ export async function POST(request, { params }) {
   if (process.env.RESEND_API_KEY) {
     const firstName = memberName.split(' ')[0] || 'there'
     const dateDisplay = ev.date_display || ev.date || null
-
-    await Promise.all([
+    after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -98,7 +98,7 @@ export async function POST(request, { params }) {
           text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${normalEmail}\nPayment: Free`,
         }),
       }).catch(err => captureException(err, { context: 'free-register-admin-email', eventId })),
-    ])
+    ]))
   }
 
   // Also write to applications + contacts so they appear in the admin event registrants panel

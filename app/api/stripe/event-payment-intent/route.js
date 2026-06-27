@@ -92,6 +92,18 @@ export async function POST(request) {
       description: `Canvas Routes — ${ev.name}`,
       automatic_payment_methods: { enabled: true },
     })
+    // Write pending row so: (a) double-click cancels old PI correctly, (b) cancel webhook is functional
+    const { error: pendingErr } = await admin.from('event_registrations').upsert({
+      event_id: eventId,
+      member_id: user.id,
+      email: user.email || '',
+      name: member.name || '',
+      stripe_payment_intent_id: pi.id,
+      stripe_payment_status: 'pending',
+      amount_paid: amount,
+    }, { onConflict: 'event_id,member_id' })
+    if (pendingErr) captureException(pendingErr, { context: 'event-payment-intent-pending-row', piId: pi.id })
+
     return Response.json({ clientSecret: pi.client_secret, amount })
   } catch (err) {
     captureException(err, { context: 'event-payment-intent', eventId })

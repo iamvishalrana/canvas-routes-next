@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { stripe } from '../../../../../../lib/stripe.js'
@@ -115,6 +116,15 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
   }
   if (rpcResult?.error) {
+    // Auto-refund if the card was already charged — prevents "contact us" dead-end when capacity fills mid-flow
+    if (!isFree && piId && stripe) {
+      try {
+        await stripe.refunds.create({ payment_intent: piId }, { idempotencyKey: `refund-cap-${piId}` })
+        return Response.json({ error: rpcResult.error, refunded: true }, { status: 400 })
+      } catch (refundErr) {
+        captureException(refundErr, { context: 'event-register-capacity-refund', piId })
+      }
+    }
     return Response.json({ error: rpcResult.error }, { status: 400 })
   }
 
@@ -124,8 +134,7 @@ export async function POST(request, { params }) {
     const amountLabel = isFree ? 'Free' : `$${(amountPaid / 100).toFixed(2)} CAD`
     const dateDisplay = ev.date_display || ev.date || null
 
-    // Fire emails async — do not await (rule #8)
-    Promise.allSettled([
+    after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -148,7 +157,7 @@ export async function POST(request, { params }) {
           text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${user.email}\nPayment: ${amountLabel}`,
         }),
       }).catch(err => captureException(err, { context: 'event-register-admin-email', eventId })),
-    ])
+    ]))
   }
 
   return Response.json({ success: true })

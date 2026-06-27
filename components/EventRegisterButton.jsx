@@ -111,7 +111,11 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
     const data = await res.json().catch(() => ({}))
     setPayingState(false)
     if (!res.ok) {
-      onPaySuccessRegFail?.(paymentIntent.id)
+      if (data.refunded) {
+        setError((data.error || 'This event is at capacity.') + ' Your payment has been refunded — nothing was charged.')
+      } else {
+        onPaySuccessRegFail?.(paymentIntent.id)
+      }
       return
     }
     onSuccess()
