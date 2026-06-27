@@ -248,7 +248,7 @@ export default function EasternTownshipsPage() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      <PageLoader images={['/june7-poster.jpg']} minMs={1500} />
+      <PageLoader images={['/wtet.png']} minMs={1500} />
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
@@ -257,7 +257,7 @@ export default function EasternTownshipsPage() {
       {/* Header */}
       <div style={{
         position: 'relative', padding: '3.5rem 1.25rem 3rem', textAlign: 'center',
-        backgroundImage: 'url(/june7-poster.jpg)', backgroundSize: 'cover', backgroundPosition: 'center',
+        backgroundImage: 'url(/wtet.png)', backgroundSize: 'cover', backgroundPosition: 'center',
         overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
