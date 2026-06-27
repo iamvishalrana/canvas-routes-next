@@ -7,16 +7,16 @@ import PageLoader from '../../components/PageLoader'
 const PASSWORD = 'eastern'
 
 const PARTICIPANTS = [
-  { name: 'Alain Sahakian',        photo: null },
-  { name: 'Alex Boutin',           photo: '/WTET/Alex-Boutin.jpeg' },
-  { name: 'Fred Lefebvre',         photo: '/WTET/Fred-Lefebvre.jpeg' },
-  { name: 'Jean-Philippe Remon',   photo: '/WTET/Jean-Philippe.png' },
-  { name: 'Jerry',                 photo: null },
-  { name: 'Louis Guindon',         photo: '/WTET/Louis-Guindon.png' },
-  { name: 'Louis Philippe Mauger', photo: '/WTET/Louis-Mauger.jpg' },
-  { name: 'Michel Robert',         photo: null },
-  { name: 'Tanya Ghingold',        photo: '/WTET/Tanya-Ghingold.png' },
-  { name: 'Yvon Maggi',            photo: '/WTET/Yvon-Maggi.png' },
+  { name: 'Alain Sahakian',        car: '2023 Toyota Supra',                          photo: null },
+  { name: 'Alex Boutin',           car: '2026 Audi RS6 Performance',                  photo: '/WTET/Alex-Boutin.jpeg' },
+  { name: 'Fred Lefebvre',         car: '2020 Audi RS3',                              photo: '/WTET/Fred-Lefebvre.jpeg' },
+  { name: 'Jean-Philippe Remon',   car: '2011 BMW 135i',                              photo: '/WTET/Jean-Philippe.png' },
+  { name: 'Jerry',                 car: null,                                         photo: null },
+  { name: 'Louis Guindon',         car: '2023 Genesis G70 3.3T',                      photo: '/WTET/Louis-Guindon.png' },
+  { name: 'Louis Philippe Mauger', car: '2020 BMW M2 Compétition',                   photo: '/WTET/Louis-Mauger.jpg' },
+  { name: 'Michel Robert',         car: '2008 Porsche Boxster',                       photo: null },
+  { name: 'Tanya Ghingold',        car: '2012 Porsche 718 Cayman S Black Edition',   photo: '/WTET/Tanya-Ghingold.png' },
+  { name: 'Yvon Maggi',            car: '2014 Porsche 911 Turbo S',                   photo: '/WTET/Yvon-Maggi.png' },
 ]
 
 const STOPS = [
@@ -334,17 +334,23 @@ export default function EasternTownshipsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
             {PARTICIPANTS.map(p => (
               <div key={p.name}>
-                <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {p.photo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  ) : (
+                {p.photo ? (
+                  <a href={p.photo} target="_blank" rel="noreferrer" style={{ display: 'block', aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.25s ease' }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    />
+                  </a>
+                ) : (
+                  <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
                       {p.name.split(' ').map(w => w[0]).join('')}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
+                {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
               </div>
             ))}
           </div>
