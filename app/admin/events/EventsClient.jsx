@@ -49,6 +49,57 @@ function RsvpAnswers({ answers }) {
   )
 }
 
+function exportRegistrants(eventName, registrants) {
+  const ARRIVAL = { opening: 'Arrives at opening', first_hour: 'Arrives within first hour', later: 'Arrives later' }
+  const esc = v => {
+    if (v == null || v === '') return ''
+    const s = String(v)
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const fmtDate = iso => {
+    if (!iso) return ''
+    try { return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) } catch { return '' }
+  }
+  const headers = [
+    'Name', 'Email', 'Type', 'Status', 'Paid', 'Car',
+    'Registered', 'RSVP Confirmed',
+    'Dietary', 'WhatsApp', 'Passengers / Guest', 'Car Colour', 'Mods', 'Arrival',
+    'Checkin Dietary', 'Checkin WhatsApp', 'Checkin Passengers', 'Checkin Completed',
+  ]
+  const rows = registrants.map(r => {
+    const a = r.rsvpAnswers || {}
+    const ci = r.wtetCheckin || {}
+    return [
+      r.name || '',
+      r.email || '',
+      r.type || '',
+      r.status || '',
+      r.amount ? `$${(r.amount / 100).toFixed(2)}` : '',
+      r.car || '',
+      fmtDate(r.registeredAt),
+      r.confirmedAt ? fmtDate(r.confirmedAt) : (r.status === 'confirmed' ? 'Yes' : ''),
+      a.dietary || '',
+      a.whatsapp != null ? (a.whatsapp ? 'Yes' : 'No') : '',
+      a.passengers != null ? (a.passengers <= 1 ? 'Solo' : `${a.passengers}`) : (a.bringing_guest != null ? (a.bringing_guest ? 'Yes' : 'No') : ''),
+      a.car_paint || '',
+      a.car_mods || '',
+      a.arrival ? (ARRIVAL[a.arrival] || a.arrival) : '',
+      ci.dietary || '',
+      ci.whatsapp || '',
+      (ci.passengers_list || []).map(p => `${p.name} (${p.age})`).join(', '),
+      fmtDate(ci.completed_at),
+    ]
+  })
+  const csv = [headers, ...rows].map(row => row.map(esc).join(',')).join('\r\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${eventName.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-registrants.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendInvite, declining, declineErr, onDecline, onUndecline }) {
   if (app.rsvp?.confirmed_at) {
     return <span style={{ fontSize: '10px', color: '#3B6B2F', letterSpacing: '0.06em' }}>✓ Confirmed</span>
@@ -866,6 +917,11 @@ export default function EventsClient() {
                             {(registrantsData[item.id] || []).length > 0 && (
                               <GhostBtn small onClick={() => { setRegEmailOpen(p => ({ ...p, [item.id]: !p[item.id] })); setRegEmailResult(p => ({ ...p, [item.id]: null })) }}>
                                 {regEmailOpen[item.id] ? 'Cancel' : 'Email All'}
+                              </GhostBtn>
+                            )}
+                            {(registrantsData[item.id] || []).length > 0 && (
+                              <GhostBtn small onClick={() => exportRegistrants(item.name, registrantsData[item.id])}>
+                                Export CSV
                               </GhostBtn>
                             )}
                           </div>
