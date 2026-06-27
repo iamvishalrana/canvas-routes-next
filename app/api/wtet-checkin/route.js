@@ -55,12 +55,13 @@ export async function POST(request) {
 
   const { data, error: lookupErr } = await supabase
     .from('applications')
-    .select('id, name, email')
+    .select('id, name, email, wtet_checkin')
     .eq('stripe_payment_intent_id', token)
     .in('stripe_payment_status', ['paid', 'authorized'])
     .maybeSingle()
 
   if (lookupErr || !data) return Response.json({ error: 'Not found' }, { status: 404 })
+  if (data.wtet_checkin) return Response.json({ error: 'Already completed.' }, { status: 400 })
 
   const cleanedPassengers = passengers_list.map(p => ({ name: p.name.trim(), age: p.age.toString().trim() }))
 

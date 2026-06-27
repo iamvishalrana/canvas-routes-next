@@ -6,6 +6,8 @@ import { captureException } from '../../../lib/sentry.js'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 const MEMBER_PRICE_CENTS = 17900 // $179 CAD
+// Must match wtet-register and public/settings
+const WTET_REGISTRATION_OPEN = new Date('2026-06-24T20:00:00Z')
 
 export async function GET() {
   // Returns member's existing WTET registration status
@@ -38,6 +40,16 @@ export async function POST(request) {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Check registration open — members respect the same gate as the public form
+  try {
+    const adminCheck = createAdminClient()
+    const { data: setting } = await adminCheck.from('settings').select('value').eq('key', 'event_registration_open').maybeSingle()
+    const autoOpen = new Date() >= WTET_REGISTRATION_OPEN
+    if (setting?.value === 'false' && !autoOpen) {
+      return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
+    }
+  } catch { /* allow through if settings table unavailable */ }
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')?.trim()
