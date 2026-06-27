@@ -49,55 +49,96 @@ function RsvpAnswers({ answers }) {
   )
 }
 
-function exportRegistrants(eventName, registrants) {
+function exportRegistrantsPdf(eventName, registrants) {
   const ARRIVAL = { opening: 'Arrives at opening', first_hour: 'Arrives within first hour', later: 'Arrives later' }
-  const esc = v => {
-    if (v == null || v === '') return ''
-    const s = String(v)
-    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-  }
   const fmtDate = iso => {
-    if (!iso) return ''
-    try { return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) } catch { return '' }
+    if (!iso) return '—'
+    try { return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) } catch { return '—' }
   }
-  const headers = [
-    'Name', 'Email', 'Type', 'Status', 'Paid', 'Car',
-    'Registered', 'RSVP Confirmed',
-    'Dietary', 'WhatsApp', 'Passengers / Guest', 'Car Colour', 'Mods', 'Arrival',
-    'Checkin Dietary', 'Checkin WhatsApp', 'Checkin Passengers', 'Checkin Completed',
+  const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  const cols = [
+    { label: 'Name',        w: '13%' },
+    { label: 'Email',       w: '16%' },
+    { label: 'Status',      w: '8%'  },
+    { label: 'Paid',        w: '6%'  },
+    { label: 'Car',         w: '13%' },
+    { label: 'Registered',  w: '9%'  },
+    { label: 'RSVP',        w: '9%'  },
+    { label: 'Dietary',     w: '9%'  },
+    { label: 'Pax / Guest', w: '7%'  },
+    { label: 'Arrival',     w: '10%' },
   ]
+
   const rows = registrants.map(r => {
     const a = r.rsvpAnswers || {}
-    const ci = r.wtetCheckin || {}
+    const pax = a.passengers != null
+      ? (a.passengers <= 1 ? 'Solo' : `${a.passengers}`)
+      : a.bringing_guest != null ? (a.bringing_guest ? 'Guest' : 'No guest') : '—'
     return [
-      r.name || '',
-      r.email || '',
-      r.type || '',
-      r.status || '',
-      r.amount ? `$${(r.amount / 100).toFixed(2)}` : '',
-      r.car || '',
+      r.name || '—',
+      r.email || '—',
+      r.status || '—',
+      r.amount ? `$${(r.amount / 100).toFixed(2)}` : '—',
+      r.car || '—',
       fmtDate(r.registeredAt),
-      r.confirmedAt ? fmtDate(r.confirmedAt) : (r.status === 'confirmed' ? 'Yes' : ''),
-      a.dietary || '',
-      a.whatsapp != null ? (a.whatsapp ? 'Yes' : 'No') : '',
-      a.passengers != null ? (a.passengers <= 1 ? 'Solo' : `${a.passengers}`) : (a.bringing_guest != null ? (a.bringing_guest ? 'Yes' : 'No') : ''),
-      a.car_paint || '',
-      a.car_mods || '',
-      a.arrival ? (ARRIVAL[a.arrival] || a.arrival) : '',
-      ci.dietary || '',
-      ci.whatsapp || '',
-      (ci.passengers_list || []).map(p => `${p.name} (${p.age})`).join(', '),
-      fmtDate(ci.completed_at),
+      r.confirmedAt ? fmtDate(r.confirmedAt) : (r.status === 'confirmed' ? 'Yes' : '—'),
+      a.dietary || '—',
+      pax,
+      a.arrival ? (ARRIVAL[a.arrival] || a.arrival) : '—',
     ]
   })
-  const csv = [headers, ...rows].map(row => row.map(esc).join(',')).join('\r\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${eventName.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-registrants.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+
+  // Checkin section (WTET only — only rendered if any registrant has wtetCheckin)
+  const hasCheckin = registrants.some(r => r.wtetCheckin?.completed_at)
+  const checkinRows = hasCheckin ? registrants.filter(r => r.wtetCheckin?.completed_at).map(r => {
+    const ci = r.wtetCheckin
+    const pax = (ci.passengers_list || []).map(p => `${p.name} (${p.age})`).join(', ') || '—'
+    return [r.name || '—', r.email || '—', ci.dietary || '—', ci.whatsapp || '—', pax, fmtDate(ci.completed_at)]
+  }) : []
+
+  const thStyle = 'padding:6px 8px;text-align:left;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#fff;background:#0F1E14;font-weight:600;white-space:nowrap;'
+  const tdStyle = 'padding:6px 8px;font-size:10px;color:#1a1a1a;border-bottom:1px solid #e8e4df;vertical-align:top;word-break:break-word;'
+  const tdAlt   = 'padding:6px 8px;font-size:10px;color:#1a1a1a;border-bottom:1px solid #e8e4df;background:#faf9f7;vertical-align:top;word-break:break-word;'
+
+  const mainTable = `
+    <table>
+      <colgroup>${cols.map(c => `<col style="width:${c.w}">`).join('')}</colgroup>
+      <thead><tr>${cols.map(c => `<th style="${thStyle}">${esc(c.label)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map((row, i) => `<tr>${row.map(cell => `<td style="${i % 2 ? tdAlt : tdStyle}">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>`
+
+  const checkinTable = hasCheckin ? `
+    <h2 style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin:28px 0 10px;font-weight:400;">Early Check-in Responses</h2>
+    <table>
+      <colgroup><col style="width:14%"><col style="width:18%"><col style="width:20%"><col style="width:14%"><col style="width:22%"><col style="width:12%"></colgroup>
+      <thead><tr>${['Name','Email','Dietary','WhatsApp','Passengers','Completed'].map(h => `<th style="${thStyle}">${h}</th>`).join('')}</tr></thead>
+      <tbody>${checkinRows.map((row, i) => `<tr>${row.map(cell => `<td style="${i % 2 ? tdAlt : tdStyle}">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>` : ''
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${esc(eventName)} — Registrants</title>
+<style>
+  @page { size: A4 landscape; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; margin: 0; background: #fff; color: #1a1a1a; }
+  h1 { font-size: 17px; font-weight: 400; margin: 0 0 4px; color: #0F1E14; }
+  .meta { font-size: 10px; color: #999; margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head><body>
+<h1>${esc(eventName)}</h1>
+<div class="meta">${registrants.length} registrant${registrants.length !== 1 ? 's' : ''} &nbsp;·&nbsp; Exported ${new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+${mainTable}
+${checkinTable}
+</body></html>`
+
+  const w = window.open('', '_blank')
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  w.print()
 }
 
 function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendInvite, declining, declineErr, onDecline, onUndecline }) {
@@ -920,8 +961,8 @@ export default function EventsClient() {
                               </GhostBtn>
                             )}
                             {(registrantsData[item.id] || []).length > 0 && (
-                              <GhostBtn small onClick={() => exportRegistrants(item.name, registrantsData[item.id])}>
-                                Export CSV
+                              <GhostBtn small onClick={() => exportRegistrantsPdf(item.name, registrantsData[item.id])}>
+                                Export PDF
                               </GhostBtn>
                             )}
                           </div>
