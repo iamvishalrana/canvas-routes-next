@@ -11,11 +11,8 @@ const PARTICIPANTS = [
   { name: 'Fred Lefebvre',      photo: '/WTET/Fred-Lefebvre.jpeg' },
   { name: 'Jean Philippe',      photo: '/WTET/Jean-Philippe.png' },
   { name: 'Jerry',              photo: null },
-  { name: 'Julien Fernandez',   photo: null },
   { name: 'Louis Guindon',      photo: '/WTET/Louis-Guindon.png' },
   { name: 'Louis Mauger',       photo: '/WTET/Louis-Mauger.jpg' },
-  { name: 'Marc-Sauve Antoine', photo: null },
-  { name: 'Nicholas Kong',      photo: null },
   { name: 'Tanya Ghingold',     photo: '/WTET/Tanya-Ghingold.png' },
   { name: 'Yvon Maggi',         photo: '/WTET/Yvon-Maggi.png' },
 ]
