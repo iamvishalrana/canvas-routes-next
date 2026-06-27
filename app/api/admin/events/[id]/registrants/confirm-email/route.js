@@ -77,11 +77,11 @@ export async function POST(request, { params }) {
         from: 'Canvas Routes <jerry@canvasroutes.com>',
         to: email.trim(),
         reply_to: 'jerry@canvasroutes.com',
-        subject: isResend ? `Reminder — your spot at ${ev.name}` : `You're invited — ${ev.name}`,
+        subject: isResend ? `Reminder — your spot at ${ev.name}` : `You're confirmed — ${ev.name}`,
         html: buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip, isResend),
         text: isResend
           ? `Hey ${firstName},\n\nJust a reminder — your invitation to ${ev.name} is still open. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\nSee you there,\nJerry`
-          : `Hey ${firstName},\n\nYou're invited to ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\nSee you there,\nJerry`,
+          : `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\nSee you there,\nJerry`,
       }),
     })
     if (!res.ok) {

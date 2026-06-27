@@ -126,9 +126,9 @@ export async function POST(request, { params }) {
             from: 'Canvas Routes <jerry@canvasroutes.com>',
             to: normalEmail,
             reply_to: 'jerry@canvasroutes.com',
-            subject: `You're invited — ${ev.name}`,
+            subject: `You're confirmed — ${ev.name}`,
             html: buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip),
-            text: `Hey ${firstName},\n\nYou're invited to ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
+            text: `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
           }),
         })
         .then(res => {
