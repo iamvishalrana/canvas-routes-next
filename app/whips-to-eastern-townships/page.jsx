@@ -7,13 +7,17 @@ import PageLoader from '../../components/PageLoader'
 const PASSWORD = 'eastern'
 
 const PARTICIPANTS = [
-  { name: 'Alex Boutin',    photo: '/WTET/Alex%20Boutin.jpeg' },
-  { name: 'Fred Lefebvre',  photo: '/WTET/Fred%20Lefebvre.jpeg' },
-  { name: 'Jean Philippe',  photo: '/WTET/Jean%20Philippe.png' },
-  { name: 'Louis Guindon',  photo: '/WTET/Louis%20Guindon.png' },
-  { name: 'Louis Mauger',   photo: '/WTET/Louis%20Mauger.jpg' },
-  { name: 'Tanya Ghingold', photo: '/WTET/Tanya%20Ghingold.png' },
-  { name: 'Yvon Maggi',     photo: '/WTET/Yvon%20Maggi.png' },
+  { name: 'Alex Boutin',        photo: '/WTET/Alex-Boutin.jpeg' },
+  { name: 'Fred Lefebvre',      photo: '/WTET/Fred-Lefebvre.jpeg' },
+  { name: 'Jean Philippe',      photo: '/WTET/Jean-Philippe.png' },
+  { name: 'Jerry',              photo: null },
+  { name: 'Julien Fernandez',   photo: null },
+  { name: 'Louis Guindon',      photo: '/WTET/Louis-Guindon.png' },
+  { name: 'Louis Mauger',       photo: '/WTET/Louis-Mauger.jpg' },
+  { name: 'Marc-Sauve Antoine', photo: null },
+  { name: 'Nicholas Kong',      photo: null },
+  { name: 'Tanya Ghingold',     photo: '/WTET/Tanya-Ghingold.png' },
+  { name: 'Yvon Maggi',         photo: '/WTET/Yvon-Maggi.png' },
 ]
 
 const STOPS = [
@@ -331,9 +335,15 @@ export default function EasternTownshipsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
             {PARTICIPANTS.map(p => (
               <div key={p.name}>
-                <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {p.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  ) : (
+                    <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
+                      {p.name.split(' ').map(w => w[0]).join('')}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
               </div>
