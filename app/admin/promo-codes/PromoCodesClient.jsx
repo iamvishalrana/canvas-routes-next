@@ -67,6 +67,9 @@ export default function PromoCodesClient() {
   const [usageOpen, setUsageOpen]       = useState(null)   // code id whose usage is expanded
   const [usageData, setUsageData]       = useState({})     // { [codeId]: array of usage rows }
   const [usageLoading, setUsageLoading] = useState(null)   // code id being fetched
+  const [showInactive, setShowInactive] = useState(false)
+  const [reactivating, setReactivating] = useState(null)
+  const [reactivateErr, setReactivateErr] = useState(null)
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -84,7 +87,8 @@ export default function PromoCodesClient() {
   useEffect(() => { load() }, [load])
   // no realtime table for promo codes
 
-  const activeCodes    = codes.filter(c => c.active).length
+  const activeList     = codes.filter(c => c.active)
+  const inactiveList   = codes.filter(c => !c.active)
   const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)
 
   // Auto-dismiss success banner after 5 seconds
@@ -136,12 +140,12 @@ export default function PromoCodesClient() {
   }
 
   async function handleDeactivate(id) {
-    setDeactivateConfirm(null)
     setDeactivating(id)
     setDeactivateErr(null)
     try {
       const res = await fetch(`/api/admin/promo-codes/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'deactivate' }) })
       if (res.ok) {
+        setDeactivateConfirm(null)
         setCodes(prev => prev.map(c => c.id === id ? { ...c, active: false } : c))
       } else {
         const data = await res.json().catch(() => ({}))
@@ -149,6 +153,21 @@ export default function PromoCodesClient() {
       }
     } catch { setDeactivateErr('Network error.') }
     setDeactivating(null)
+  }
+
+  async function handleReactivate(id) {
+    setReactivating(id)
+    setReactivateErr(null)
+    try {
+      const res = await fetch(`/api/admin/promo-codes/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reactivate' }) })
+      if (res.ok) {
+        setCodes(prev => prev.map(c => c.id === id ? { ...c, active: true } : c))
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setReactivateErr(data.error || 'Failed to reactivate.')
+      }
+    } catch { setReactivateErr('Network error.') }
+    setReactivating(null)
   }
 
   function startEdit(c) {
@@ -173,6 +192,7 @@ export default function PromoCodesClient() {
       if (!res.ok) { setEditErr(data.error || 'Failed to update.'); return }
       // Replace old code with new code in state
       setCodes(prev => prev.map(x => x.id === c.id ? { ...data.newCode, coupon: data.newCode.coupon } : x))
+      if (usageOpen === c.id) setUsageOpen(null)
       setEditing(null)
     } catch { setEditErr('Network error.') }
     finally { setEditSaving(false) }
@@ -316,11 +336,14 @@ export default function PromoCodesClient() {
       {deactivateErr && (
         <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{deactivateErr}</div>
       )}
+      {reactivateErr && (
+        <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{reactivateErr}</div>
+      )}
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {[
-          { label: 'Active Codes',      value: activeCodes,   color: '#3B6B2F' },
+          { label: 'Active Codes',      value: activeList.length,   color: '#3B6B2F' },
           { label: 'Total Redemptions', value: totalRedeemed, color: '#1a1a1a' },
           { label: 'Total Codes',       value: codes.length,  color: '#1a1a1a' },
         ].map(s => (
@@ -338,7 +361,7 @@ export default function PromoCodesClient() {
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No promo codes yet.</div>
       ) : isMobile ? (
         <div>
-          {codes.map(c => (
+          {activeList.map(c => (
             <div key={c.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -372,7 +395,7 @@ export default function PromoCodesClient() {
                     <GhostBtn small onClick={() => setEditing(null)}>Cancel</GhostBtn>
                   </div>
                 </div>
-              ) : c.active ? (
+              ) : (
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
                   <button
                     onClick={() => loadUsage(c.id)}
@@ -392,16 +415,6 @@ export default function PromoCodesClient() {
                     <DangerBtn small onClick={() => setDeactivateConfirm(c.id)}>Deactivate</DangerBtn>
                   )}
                 </div>
-              ) : (
-                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => loadUsage(c.id)}
-                    disabled={usageLoading === c.id}
-                    style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
-                  >
-                    {usageLoading === c.id ? '…' : 'Usage'}
-                  </button>
-                </div>
               )}
               {usageOpen === c.id && (
                 <div style={{ marginTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '0.75rem' }}>
@@ -409,8 +422,8 @@ export default function PromoCodesClient() {
                     <div style={{ fontSize: '12px', color: '#ccc' }}>No redemptions recorded.</div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {usageData[c.id].map((u, i) => (
-                        <div key={i} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: i < usageData[c.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                      {usageData[c.id].map((u, ui) => (
+                        <div key={ui} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: ui < usageData[c.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
                           <div style={{ fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a' }}>{u.name}</div>
                           <div style={{ fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</div>
                           <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -426,6 +439,68 @@ export default function PromoCodesClient() {
               )}
             </div>
           ))}
+
+          {/* ── Inactive codes (mobile) ─────────────────────────── */}
+          {inactiveList.length > 0 && (
+            <>
+              <button
+                onClick={() => setShowInactive(f => !f)}
+                style={{ width: '100%', padding: '0.75rem 1rem', background: '#fafaf8', border: '0.5px solid rgba(0,0,0,0.08)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#aaa', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
+              >
+                <span style={{ display: 'inline-block', width: '10px', textAlign: 'center', fontSize: '8px' }}>{showInactive ? '▲' : '▼'}</span>
+                {inactiveList.length} Inactive Code{inactiveList.length !== 1 ? 's' : ''}
+              </button>
+              {showInactive && inactiveList.map(c => (
+                <div key={c.id} style={{ background: '#fafaf8', border: '0.5px solid rgba(0,0,0,0.08)', padding: '1rem', marginBottom: '0.5rem', opacity: 0.75 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: '600', fontSize: '14px', letterSpacing: '0.04em' }}>{c.code}</span>
+                      <CopyBtn value={c.code} />
+                    </div>
+                    <StatusChip active={false} />
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>{fmtDiscount(c.coupon)}</div>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.2rem' }}>
+                    {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '0.6rem' }}>Applies to: {fmtAppliesTo(c.metadata)}</div>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      onClick={() => loadUsage(c.id)}
+                      disabled={usageLoading === c.id}
+                      style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                    >
+                      {usageLoading === c.id ? '…' : 'Usage'}
+                    </button>
+                    <GhostBtn small onClick={() => handleReactivate(c.id)} disabled={reactivating === c.id}>
+                      {reactivating === c.id ? 'Reactivating…' : 'Reactivate'}
+                    </GhostBtn>
+                  </div>
+                  {usageOpen === c.id && (
+                    <div style={{ marginTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '0.75rem' }}>
+                      {!usageData[c.id] || usageData[c.id].length === 0 ? (
+                        <div style={{ fontSize: '12px', color: '#ccc' }}>No redemptions recorded.</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {usageData[c.id].map((u, ui) => (
+                            <div key={ui} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: ui < usageData[c.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                              <div style={{ fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a' }}>{u.name}</div>
+                              <div style={{ fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</div>
+                              <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                <span style={{ color: '#3B6B2F' }}>Paid {fmtCents(u.amount)}</span>
+                                <span style={{ color: '#8A6535' }}>−{fmtCents(u.discount)}</span>
+                              </div>
+                              <div style={{ color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' }) : '—'}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
         </div>
       ) : (
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto' }}>
@@ -443,20 +518,18 @@ export default function PromoCodesClient() {
               </tr>
             </thead>
             <tbody>
-              {codes.map((c, i) => (
+              {activeList.map((c, i) => (
                 <React.Fragment key={c.id}>
                 <tr style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
                   <td style={TD}>{fmtDiscount(c.coupon)}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata)}</td>
-                  <td style={{ ...TD, color: '#555' }}>
-                    {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}
-                  </td>
+                  <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
-                  <td style={TD}><StatusChip active={c.active} /></td>
+                  <td style={TD}><StatusChip active={true} /></td>
                   <td style={{ ...TD, minWidth: editing === c.id ? '280px' : undefined }}>
-                    {c.active && editing === c.id ? (
+                    {editing === c.id ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <input style={{ width: '90px', padding: '0.35rem 0.5rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff' }} type="number" min="1" placeholder="Max uses" value={editForm.maxRedemptions} onChange={e => setEditForm(f => ({ ...f, maxRedemptions: e.target.value }))} />
@@ -468,7 +541,7 @@ export default function PromoCodesClient() {
                           <GhostBtn small onClick={() => setEditing(null)}>Cancel</GhostBtn>
                         </div>
                       </div>
-                    ) : c.active ? (
+                    ) : (
                       <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => loadUsage(c.id)}
@@ -488,14 +561,6 @@ export default function PromoCodesClient() {
                           <DangerBtn small onClick={() => setDeactivateConfirm(c.id)}>Deactivate</DangerBtn>
                         )}
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => loadUsage(c.id)}
-                        disabled={usageLoading === c.id}
-                        style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
-                      >
-                        {usageLoading === c.id ? '…' : 'Usage'}
-                      </button>
                     )}
                   </td>
                 </tr>
@@ -507,15 +572,11 @@ export default function PromoCodesClient() {
                       ) : (
                         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
                           <thead>
-                            <tr>
-                              {['Name', 'Email', 'Paid', 'Discount', 'Date'].map(h => (
-                                <th key={h} style={{ padding: '0.4rem 0.75rem', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>{h}</th>
-                              ))}
-                            </tr>
+                            <tr>{['Name', 'Email', 'Paid', 'Discount', 'Date'].map(h => <th key={h} style={{ padding: '0.4rem 0.75rem', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>{h}</th>)}</tr>
                           </thead>
                           <tbody>
-                            {usageData[c.id].map((u, i) => (
-                              <tr key={i}>
+                            {usageData[c.id].map((u, ui) => (
+                              <tr key={ui}>
                                 <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{u.name}</td>
                                 <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</td>
                                 <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>{fmtCents(u.amount)}</td>
@@ -532,6 +593,76 @@ export default function PromoCodesClient() {
                 </React.Fragment>
               ))}
             </tbody>
+
+            {/* ── Inactive codes (desktop) ────────────────────────── */}
+            {inactiveList.length > 0 && (
+              <tbody>
+                <tr>
+                  <td colSpan={8} style={{ padding: 0 }}>
+                    <button
+                      onClick={() => setShowInactive(f => !f)}
+                      style={{ width: '100%', padding: '0.6rem 1rem', background: '#fafaf8', border: 'none', borderTop: '0.5px solid rgba(0,0,0,0.07)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                    >
+                      <span style={{ fontSize: '8px' }}>{showInactive ? '▲' : '▼'}</span>
+                      {inactiveList.length} Inactive Code{inactiveList.length !== 1 ? 's' : ''}
+                    </button>
+                  </td>
+                </tr>
+                {showInactive && inactiveList.map((c, i) => (
+                  <React.Fragment key={c.id}>
+                  <tr style={{ background: i % 2 === 0 ? '#fafaf8' : '#f5f4f2', opacity: 0.75 }}>
+                    <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
+                    <td style={TD}>{fmtDiscount(c.coupon)}</td>
+                    <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata)}</td>
+                    <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
+                    <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
+                    <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
+                    <td style={TD}><StatusChip active={false} /></td>
+                    <td style={TD}>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                        <button
+                          onClick={() => loadUsage(c.id)}
+                          disabled={usageLoading === c.id}
+                          style={{ padding: '0.3rem 0.7rem', background: 'transparent', color: usageOpen === c.id ? '#1a1a1a' : '#888', border: `0.5px solid ${usageOpen === c.id ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}`, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: usageLoading === c.id ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                        >
+                          {usageLoading === c.id ? '…' : 'Usage'}
+                        </button>
+                        <GhostBtn small onClick={() => handleReactivate(c.id)} disabled={reactivating === c.id}>
+                          {reactivating === c.id ? 'Reactivating…' : 'Reactivate'}
+                        </GhostBtn>
+                      </div>
+                    </td>
+                  </tr>
+                  {usageOpen === c.id && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '0 1rem 1rem', background: '#f5f4f2', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
+                        {!usageData[c.id] || usageData[c.id].length === 0 ? (
+                          <div style={{ fontSize: '12px', color: '#ccc', padding: '0.5rem 0' }}>No redemptions recorded.</div>
+                        ) : (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
+                            <thead>
+                              <tr>{['Name', 'Email', 'Paid', 'Discount', 'Date'].map(h => <th key={h} style={{ padding: '0.4rem 0.75rem', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>{h}</th>)}</tr>
+                            </thead>
+                            <tbody>
+                              {usageData[c.id].map((u, ui) => (
+                                <tr key={ui}>
+                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{u.name}</td>
+                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</td>
+                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>{fmtCents(u.amount)}</td>
+                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>−{fmtCents(u.discount)}</td>
+                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' }) : '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            )}
           </table>
         </div>
       )}

@@ -34,6 +34,17 @@ export async function PATCH(request, { params }) {
     }
   }
 
+  // Reactivate
+  if (body.action === 'reactivate') {
+    try {
+      const updated = await stripe.promotionCodes.update(id, { active: true })
+      return Response.json(updated)
+    } catch (err) {
+      captureException(err, { context: 'promo-code-reactivate', id })
+      return Response.json({ error: err.message || 'Failed to reactivate.' }, { status: 500 })
+    }
+  }
+
   // Default: deactivate
   try {
     const updated = await stripe.promotionCodes.update(id, { active: false })
