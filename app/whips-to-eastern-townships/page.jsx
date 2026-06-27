@@ -6,6 +6,16 @@ import PageLoader from '../../components/PageLoader'
 
 const PASSWORD = 'eastern'
 
+const PARTICIPANTS = [
+  { name: 'Alex Boutin',    photo: '/WTET/Alex%20Boutin.jpeg' },
+  { name: 'Fred Lefebvre',  photo: '/WTET/Fred%20Lefebvre.jpeg' },
+  { name: 'Jean Philippe',  photo: '/WTET/Jean%20Philippe.png' },
+  { name: 'Louis Guindon',  photo: '/WTET/Louis%20Guindon.png' },
+  { name: 'Louis Mauger',   photo: '/WTET/Louis%20Mauger.jpg' },
+  { name: 'Tanya Ghingold', photo: '/WTET/Tanya%20Ghingold.png' },
+  { name: 'Yvon Maggi',     photo: '/WTET/Yvon%20Maggi.png' },
+]
+
 const STOPS = [
   { label: 'Quartier Dix 30 Parking', note: 'Meetup — TBD · Brossard', start: true, href: 'https://maps.app.goo.gl/QKzfxTBGnkmLvMCL6', lat: 45.4619, lng: -73.4632 },
   { label: 'Shell — Bromont Outlets', note: 'Bromont · Fuel up · regroup before the backroads', href: 'https://www.google.com/maps?q=45.3145,-72.6480', lat: 45.3145, lng: -72.6480 },
@@ -311,6 +321,24 @@ export default function EasternTownshipsPage() {
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: 0 }}>
             We end at Auberge &amp; Restaurant McGowan in Georgeville for lunch on the lake. The chef has worked in kitchens that held two Michelin stars — the standard follows. Then the drive home.
           </p>
+        </div>
+
+        {/* Who's Coming */}
+        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.5rem' }}>
+            Who&rsquo;s Coming &mdash; {PARTICIPANTS.length} Cars
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
+            {PARTICIPANTS.map(p => (
+              <div key={p.name}>
+                <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </div>
+                <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Convoy rules */}
