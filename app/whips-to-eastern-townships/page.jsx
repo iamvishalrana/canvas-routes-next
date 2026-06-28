@@ -80,19 +80,12 @@ function RouteMap({ stops }) {
           mapTypeControl: false,
           fullscreenControl: true,
           styles: [
-            { featureType: 'all',            elementType: 'all',             stylers: [{ invert_lightness: true }, { saturation: -100 }] },
-            { featureType: 'all',            elementType: 'labels.icon',     stylers: [{ visibility: 'off' }] },
-            { featureType: 'poi',            elementType: 'all',             stylers: [{ visibility: 'off' }] },
-            { featureType: 'transit',        elementType: 'all',             stylers: [{ visibility: 'off' }] },
-            { featureType: 'administrative', elementType: 'labels.text.fill',stylers: [{ color: '#aaaaaa' }] },
-            { featureType: 'administrative.neighborhood', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-            { featureType: 'landscape',      elementType: 'all',             stylers: [{ color: '#111111' }] },
-            { featureType: 'water',          elementType: 'all',             stylers: [{ color: '#1a2a33' }] },
-            { featureType: 'road',           elementType: 'geometry',        stylers: [{ color: '#333333' }] },
-            { featureType: 'road',           elementType: 'labels.text.fill',stylers: [{ color: '#888888' }] },
-            { featureType: 'road.highway',   elementType: 'geometry',        stylers: [{ color: '#555555' }] },
-            { featureType: 'road.highway',   elementType: 'labels.text.fill',stylers: [{ color: '#aaaaaa' }] },
-            { featureType: 'road.local',     elementType: 'labels',          stylers: [{ visibility: 'off' }] },
+            { featureType: 'poi',          elementType: 'labels',   stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit',                               stylers: [{ visibility: 'off' }] },
+            { featureType: 'road',         elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+            { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f5e9d6' }] },
+            { featureType: 'landscape',                             stylers: [{ color: '#f0ede8' }] },
+            { featureType: 'water',                                 stylers: [{ color: '#c8d8e8' }] },
           ],
         })
         map.fitBounds(bounds, 40)
@@ -102,8 +95,8 @@ function RouteMap({ stops }) {
           path: ROUTE_PATH,
           geodesic: true,
           strokeColor: '#0F1E14',
-          strokeOpacity: 0.85,
-          strokeWeight: 4,
+          strokeOpacity: 0.75,
+          strokeWeight: 3,
           map,
         })
 
@@ -172,12 +165,12 @@ function RouteMap({ stops }) {
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%', opacity: status === 'ready' ? 1 : 0 }} />
       {status === 'loading' && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111111' }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0ede8' }}>
           <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Loading map…</span>
         </div>
       )}
       {status === 'error' && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#111111', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0ede8', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
           <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Map unavailable</span>
           {errorMsg && <span style={{ fontSize: '10px', color: '#c0392b', maxWidth: '280px', lineHeight: '1.5' }}>{errorMsg}</span>}
         </div>
