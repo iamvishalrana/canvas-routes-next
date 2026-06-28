@@ -20,7 +20,7 @@ const PARTICIPANTS = [
 ]
 
 const MAP_MARKERS = [
-  { label: 'Shell — Brossard', note: 'Meetup · Departure', start: true, lat: 45.4619, lng: -73.4632 },
+  { label: 'Shell — Brossard', note: 'Meetup · Departure', start: true, lat: 45.4502, lng: -73.4440 },
   { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Winery experience', lat: 45.1255, lng: -72.8678 },
   { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', end: true, lat: 45.1569, lng: -72.0797 },
 ]
