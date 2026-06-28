@@ -4,6 +4,7 @@ import { stripe } from '../../../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry.js'
 import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
+import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 
 export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -118,8 +119,16 @@ export async function POST(request, { params }) {
         body: JSON.stringify({
           from: 'Canvas Routes <info@canvasroutes.com>',
           to: 'jerry@canvasroutes.com',
-          subject: `WTET Payment Captured — ${name}`,
-          text: `You captured the WTET payment for ${name}.\n\nEmail: ${email}\nAmount: ${amount}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${piId}`,
+          subject: `Payment Captured — ${name}`,
+          html: buildAdminNotifyHtml('Payment captured', [
+            ['Name',      `<strong>${name}</strong>`],
+            ['Email',     `<a href="mailto:${email}" style="color:#1a1a1a;">${email}</a>`],
+            ['Amount',    amount],
+            ['Car',       pi.metadata?.car_model || '—'],
+            ['Passengers',pi.metadata?.passengers || '—'],
+            ['Children',  pi.metadata?.has_children || '—'],
+            ['PI',        piId],
+          ]),
         }),
       }).catch(err => captureException(err, { context: 'admin-capture-admin-email', piId })),
     ]))

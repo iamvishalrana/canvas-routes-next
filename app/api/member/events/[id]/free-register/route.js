@@ -4,6 +4,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry'
 import { checkRateLimit } from '../../../../../../lib/rateLimit'
 import { buildEventConfirmHtml } from '../../../../../../lib/eventConfirmEmail'
+import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail'
 
 export async function POST(request, { params }) {
   const supabase = await createClient()
@@ -95,7 +96,12 @@ export async function POST(request, { params }) {
           from: 'Canvas Routes <info@canvasroutes.com>',
           to: 'info@canvasroutes.com',
           subject: `Event Registration — ${ev.name} — ${memberName}`,
-          text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${normalEmail}\nPayment: Free`,
+          html: buildAdminNotifyHtml('New event registration', [
+            ['Event',   `<strong>${ev.name}</strong>`],
+            ['Name',    `<strong>${memberName}</strong>`],
+            ['Email',   `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+            ['Payment', 'Free'],
+          ]),
         }),
       }).catch(err => captureException(err, { context: 'free-register-admin-email', eventId })),
     ]))

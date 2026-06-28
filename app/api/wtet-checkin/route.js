@@ -1,6 +1,7 @@
 import { after } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { captureException } from '../../../lib/sentry.js'
+import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 
 export const runtime = 'nodejs'
 
@@ -82,35 +83,20 @@ export async function POST(request) {
   // Notify Jerry — after() keeps the function alive until the fetch settles without blocking the response.
   if (process.env.RESEND_API_KEY) {
     after(() => {
-      const passengerRows = cleanedPassengers.map((p, i) =>
-        `<tr><td style="padding:6px 12px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">${i === 0 ? 'Driver' : `Passenger ${i + 1}`}</td><td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${p.name}, age ${p.age}</td></tr>`
-      ).join('')
       return fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
         body: JSON.stringify({
           from: 'Canvas Routes <info@canvasroutes.com>',
           to: 'jerry@canvasroutes.com',
-          subject: `WTET Check-in Completed — ${data.name || 'Registrant'}`,
-          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fff;">
-  <tr><td align="center" style="padding:32px 16px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
-      <tr><td style="padding-bottom:16px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;">WTET Early Check-in</td></tr>
-      <tr><td style="padding-bottom:24px;font-family:Arial,Helvetica,sans-serif;font-size:20px;color:#1a1a1a;font-weight:400;">${data.name || 'A registrant'} has completed their check-in.</td></tr>
-      <tr><td>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-          <tr><td style="padding:8px 12px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;width:160px;">Email</td><td style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${data.email || '—'}</td></tr>
-          <tr><td style="padding:8px 12px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">Dietary</td><td style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${dietary || 'None'}</td></tr>
-          <tr><td style="padding:8px 12px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888;">WhatsApp</td><td style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;">${whatsapp || 'Not provided'}</td></tr>
-        </table>
-        <div style="margin-top:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;">Passengers</div>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${passengerRows}</table>
-      </td></tr>
-    </table>
-  </td></tr>
-</table>
-</body></html>`,
+          subject: `Check-in Completed — ${data.name || 'Registrant'}`,
+          html: buildAdminNotifyHtml('Whips to Eastern Townships — Early check-in', [
+            ['Name',       `<strong>${data.name || '—'}</strong>`],
+            ['Email',      `<a href="mailto:${data.email}" style="color:#1a1a1a;">${data.email || '—'}</a>`],
+            ['Dietary',    dietary || 'None'],
+            ['WhatsApp',   whatsapp || 'Not provided'],
+            ['Passengers', cleanedPassengers.map((p, i) => `${i === 0 ? 'Driver' : `Passenger ${i + 1}`}: ${p.name}, age ${p.age}`).join('<br>')],
+          ]),
         }),
       }).catch(err => captureException(err, { context: 'wtet-checkin-notify-jerry', token }))
     })

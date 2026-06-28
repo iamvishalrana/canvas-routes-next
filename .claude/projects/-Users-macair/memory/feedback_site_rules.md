@@ -41,3 +41,11 @@ Never introduce `font-family: sans-serif`, `font-family: Arial`, `font-family: G
 
 **Why:** Ad-hoc font strings have created visual inconsistencies across pages.
 **How to apply:** Search for `font-family:` in any new code — if it's not a CSS variable, replace it.
+
+---
+
+**5. Meetup/Shell address is private**
+Never put the specific meetup address (Shell — 8700 Boul. Leduc or any street address) on the public registration page. Public page shows city only ("Brossard, QC") with a note that details are shared with confirmed registrants. Full address + Maps link belongs on the private itinerary page only.
+
+**Why:** Explicitly discussed — location details are a perk of being confirmed, not public information.
+**How to apply:** Public `/wtet` page → "Brossard, QC" only. Private `/whips-to-eastern-townships` → full address.

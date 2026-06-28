@@ -1,5 +1,6 @@
 import { checkRateLimit } from '../../../lib/rateLimit'
 import { captureException } from '../../../lib/sentry'
+import { buildAdminNotifyHtml } from '../../../lib/adminEmail'
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
@@ -21,8 +22,12 @@ export async function POST(request) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'info@canvasroutes.com',
         reply_to: email.trim(),
-        subject: `Website inquiry from ${name.trim()}`,
-        text: `Name: ${name.trim()}\nEmail: ${email.trim()}\n\nMessage:\n${message?.trim() || '(no message provided)'}`,
+        subject: `Website inquiry — ${name.trim()}`,
+        html: buildAdminNotifyHtml('Website inquiry', [
+          ['Name',    `<strong>${name.trim()}</strong>`],
+          ['Email',   `<a href="mailto:${email.trim()}" style="color:#1a1a1a;">${email.trim()}</a>`],
+          ['Message', message?.trim() || '(no message provided)'],
+        ]),
       }),
     })
     if (!r.ok) throw new Error(`Resend ${r.status}`)

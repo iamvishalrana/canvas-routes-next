@@ -3,6 +3,7 @@ import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { captureException } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
+import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 const MEMBER_PRICE_CENTS    = 17900 // $179 CAD
@@ -192,8 +193,18 @@ export async function POST(request) {
           body: JSON.stringify({
             from: 'Canvas Routes <info@canvasroutes.com>',
             to: 'jerry@canvasroutes.com',
-            subject: `WTET Registration Started — ${name.trim()}`,
-            text: `${name.trim()} has started the WTET payment flow.\n\nEmail: ${normalEmail}\nAmount to hold: $${(amountCents / 100).toFixed(2)} CAD\nCar: ${fullCarModel}\nPassengers: ${passengers}\nChildren: ${hasChildren}\nSource: ${source}\nPhone: ${phone || '—'}\nPI: ${pi.id}\n\nThis email fires when the PI is created (before card authorization). A second email will follow when Stripe confirms the hold via webhook.`,
+            subject: `Registration Started — ${name.trim()}`,
+            html: buildAdminNotifyHtml('Registration started — hold pending', [
+              ['Name',       `<strong>${name.trim()}</strong>`],
+              ['Email',      `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+              ['Amount',     `$${(amountCents / 100).toFixed(2)} CAD (hold)`],
+              ['Car',        fullCarModel],
+              ['Passengers', passengers],
+              ['Children',   hasChildren],
+              ['Source',     source],
+              ['Phone',      phone || '—'],
+              ['PI',         pi.id],
+            ]),
           }),
         }).catch(err => captureException(err, { context: 'wtet-register-admin-notify', email: normalEmail }))
       )

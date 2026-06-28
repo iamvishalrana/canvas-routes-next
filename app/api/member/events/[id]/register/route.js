@@ -5,6 +5,7 @@ import { stripe } from '../../../../../../lib/stripe.js'
 import { checkRateLimit } from '../../../../../../lib/rateLimit'
 import { captureException } from '../../../../../../lib/sentry'
 import { buildEventConfirmHtml } from '../../../../../../lib/eventConfirmEmail'
+import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail'
 
 export async function POST(request, { params }) {
   const supabase = await createClient()
@@ -154,7 +155,12 @@ export async function POST(request, { params }) {
           from: 'Canvas Routes <info@canvasroutes.com>',
           to: 'info@canvasroutes.com',
           subject: `Event Registration — ${ev.name} — ${memberName}`,
-          text: `New member registration\n\nEvent: ${ev.name}\nName: ${memberName}\nEmail: ${user.email}\nPayment: ${amountLabel}`,
+          html: buildAdminNotifyHtml('New event registration', [
+            ['Event',   `<strong>${ev.name}</strong>`],
+            ['Name',    `<strong>${memberName}</strong>`],
+            ['Email',   `<a href="mailto:${user.email}" style="color:#1a1a1a;">${user.email}</a>`],
+            ['Payment', amountLabel],
+          ]),
         }),
       }).catch(err => captureException(err, { context: 'event-register-admin-email', eventId })),
     ]))

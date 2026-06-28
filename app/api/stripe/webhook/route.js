@@ -2,6 +2,7 @@ import { stripe } from '../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../lib/supabase/admin.js'
 import { captureException, captureMessage } from '../../../../lib/sentry.js'
 import { buildWtetHoldHtml, buildWtetConfirmHtml } from '../../../../lib/wtetEmail.js'
+import { buildAdminNotifyHtml } from '../../../../lib/adminEmail.js'
 
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
@@ -213,8 +214,17 @@ export async function POST(request) {
               body: JSON.stringify({
                 from: 'Canvas Routes <info@canvasroutes.com>',
                 to: 'jerry@canvasroutes.com',
-                subject: `New WTET Registration (pending review) — ${name || normalEmail}`,
-                text: `New non-member registration for ${eventLabel} — awaiting your manual review and capture.\n\nName: ${name || '—'}\nEmail: ${normalEmail}\nHold: ${amountFmt}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}\n\nLog in to Stripe to capture or release this payment.`,
+                subject: `New Registration (pending review) — ${name || normalEmail}`,
+                html: buildAdminNotifyHtml('New registration — awaiting review', [
+                  ['Event',      eventLabel],
+                  ['Name',       `<strong>${name || '—'}</strong>`],
+                  ['Email',      `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+                  ['Hold',       amountFmt],
+                  ['Car',        pi.metadata?.car_model || '—'],
+                  ['Passengers', pi.metadata?.passengers || '—'],
+                  ['Children',   pi.metadata?.has_children || '—'],
+                  ['PI',         pi.id],
+                ]),
               }),
             }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
           ])
@@ -250,8 +260,17 @@ export async function POST(request) {
               body: JSON.stringify({
                 from: 'Canvas Routes <info@canvasroutes.com>',
                 to: 'info@canvasroutes.com',
-                subject: `Membership Application (webhook rescue) — ${tierLabel} — ${name || normalEmail}`,
-                text: `Membership application received via webhook rescue (tab was closed before membership-waitlist fired).\n\nTier: ${tierLabel}\nName: ${name || '—'}\nEmail: ${normalEmail}\nHold: ${amountFmt}\nPhone: ${pi.metadata?.phone || '—'}\nCar: ${pi.metadata?.car_model || '—'}\nSource: ${pi.metadata?.source || '—'}\nPI: ${pi.id}`,
+                subject: `Membership Application (rescue) — ${tierLabel} — ${name || normalEmail}`,
+                html: buildAdminNotifyHtml('Membership application — webhook rescue', [
+                  ['Tier',   tierLabel],
+                  ['Name',   `<strong>${name || '—'}</strong>`],
+                  ['Email',  `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+                  ['Hold',   amountFmt],
+                  ['Phone',  pi.metadata?.phone || '—'],
+                  ['Car',    pi.metadata?.car_model || '—'],
+                  ['Source', pi.metadata?.source || '—'],
+                  ['PI',     pi.id],
+                ]),
               }),
             }).catch(err => captureException(err, { context: 'membership-hold-admin-email-rescue', email: normalEmail })),
           ])

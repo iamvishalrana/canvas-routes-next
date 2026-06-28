@@ -5,6 +5,7 @@ import { stripe } from '../../../lib/stripe.js'
 import { captureException } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
+import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 
@@ -93,8 +94,17 @@ export async function POST(request) {
       body: JSON.stringify({
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'jerry@canvasroutes.com',
-        subject: `WTET Member Payment Confirmed — ${memberName}`,
-        text: `Member payment confirmed for ${EVENT_NAME}.\n\nName: ${memberName}\nEmail: ${normalEmail}\nAmount: ${amount}\nCar: ${pi.metadata?.car_model || '—'}\nPassengers: ${pi.metadata?.passengers || '—'}\nChildren: ${pi.metadata?.has_children || '—'}\nPI: ${pi.id}`,
+        subject: `Member Payment Confirmed — ${memberName}`,
+        html: buildAdminNotifyHtml('Member payment confirmed', [
+          ['Event',     EVENT_NAME],
+          ['Name',      `<strong>${memberName}</strong>`],
+          ['Email',     `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+          ['Amount',    amount],
+          ['Car',       pi.metadata?.car_model || '—'],
+          ['Passengers',pi.metadata?.passengers || '—'],
+          ['Children',  pi.metadata?.has_children || '—'],
+          ['PI',        pi.id],
+        ]),
       }),
     }).catch(err => captureException(err, { context: 'wtet-member-confirm-admin-email', email: normalEmail })),
   ]))
