@@ -741,17 +741,24 @@ export default function WtetPage() {
             </div>
             <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>2 people per car</div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
             {[
               'We take Autoroute 10 East, exit at Farnham, and head south through Dunham and Frelighsburg for a private winery experience at Vignoble Domaine du Brésée — Canvas Routes guests get a special price on any purchases at the winery.',
               'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the finest driver\'s roads in Quebec.',
-              'Lunch at Auberge & Restaurant McGowan in Georgeville — the chef has worked in kitchens that held two Michelin stars, and brings that standard to a setting overlooking Lac Memphrémagog. This is the close the day deserves.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
                 <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
                 <span style={{fontSize:'14px',color:'#555',lineHeight:'1.75'}}>{note}</span>
               </div>
             ))}
+          </div>
+
+          {/* Michelin highlight */}
+          <div style={{borderLeft:'2px solid #c5a882',padding:'1rem 1.25rem',background:'rgba(197,168,130,0.06)',marginBottom:'2.5rem'}}>
+            <div style={{fontSize:'9px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif',marginBottom:'0.5rem'}}>The Finish</div>
+            <p style={{margin:0,fontSize:'14px',color:'#444',lineHeight:'1.8',fontFamily:'var(--font-inter),sans-serif'}}>
+              Lunch at Auberge &amp; Restaurant McGowan in Georgeville — the chef has worked in kitchens that held two Michelin stars, and brings that standard to a setting overlooking Lac Memphrémagog. This is the close the day deserves.
+            </p>
           </div>
 
           {/* Car eligibility callout */}
