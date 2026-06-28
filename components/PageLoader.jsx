@@ -34,7 +34,7 @@ export default function PageLoader({ images = [], minMs = 1500 }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: '#0F1E14',
+      background: '#F5F1EC',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       opacity: out ? 0 : 1,
       pointerEvents: out ? 'none' : 'all',
@@ -50,7 +50,7 @@ export default function PageLoader({ images = [], minMs = 1500 }) {
       <div style={{
         marginTop: '2.5rem',
         width: '120px', height: '1px',
-        background: 'rgba(197,168,130,0.15)',
+        background: 'rgba(197,168,130,0.3)',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
