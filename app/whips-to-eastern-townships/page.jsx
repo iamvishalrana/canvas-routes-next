@@ -26,7 +26,7 @@ const MAP_MARKERS = [
 ]
 
 const STOPS = [
-  { label: 'Quartier Dix 30 Parking', note: 'Meetup — TBD · Brossard', start: true, href: 'https://maps.app.goo.gl/QKzfxTBGnkmLvMCL6', lat: 45.4619, lng: -73.4632 },
+  { label: 'Shell — 8700 Boul. Leduc', note: 'Meetup · Brossard', start: true, href: 'https://maps.app.goo.gl/Ye8mVsi15rwcgGWj7', lat: 45.4502, lng: -73.4440 },
   { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Private winery experience', href: 'https://maps.app.goo.gl/CcVDgmpEdRHK6c7L6', lat: 45.1477, lng: -72.6133 },
   { label: 'Sutton', note: 'Chemin des Cantons · Rolling through', href: 'https://www.google.com/maps?q=45.1038,-72.5544', lat: 45.1038, lng: -72.5544 },
   { label: 'Glen Sutton', note: 'Chemin des Cantons · Mountain roads', href: 'https://www.google.com/maps?q=45.0539,-72.5245', lat: 45.0539, lng: -72.5245 },
