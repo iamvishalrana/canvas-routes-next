@@ -309,7 +309,7 @@ export default function EasternTownshipsPage() {
               <CopyButton text="514-437-3437" />
             </div>
 
-            <div style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
+            <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 130px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Convoy App</div>
               <a
                 href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
@@ -319,6 +319,12 @@ export default function EasternTownshipsPage() {
                 Download Velox →
               </a>
               <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5' }}>Stay connected in real time · iOS only</div>
+            </div>
+
+            <div style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Photography</div>
+              <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>On-route coverage</div>
+              <div style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', lineHeight: '1.5' }}>Photos &amp; video captured throughout the day</div>
             </div>
 
           </div>
