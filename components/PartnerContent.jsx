@@ -178,7 +178,7 @@ export default function PartnerContent() {
 
   return (
     <div style={{ background: '#F5F1EC', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif' }}>
-      <PageLoader images={['/route-photo.jpg']} minMs={1500} />
+      <PageLoader images={['/route-photo.jpg']} minMs={2000} />
       <style>{`
         /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
         @media(max-width:768px){

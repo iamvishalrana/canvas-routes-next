@@ -154,7 +154,7 @@ export default function RoutesPage() {
 
   return (
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a",minHeight:"100vh"}}>
-      <PageLoader images={['/trem-trip.png', '/trem-trip.jpg']} minMs={1500} />
+      <PageLoader images={['/trem-trip.png', '/trem-trip.jpg']} minMs={2000} />
       <style>{`
         input, select, textarea { font-size: 16px !important; }
         @media (max-width: 768px) {

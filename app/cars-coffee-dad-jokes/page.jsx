@@ -124,7 +124,7 @@ export default function CCDPage() {
 
   return (
     <>
-      <PageLoader images={['/CCD.png']} minMs={1500} />
+      <PageLoader images={['/CCD.png']} minMs={2000} />
       <style>{`
         @media (max-width: 640px) {
           .ccd-submit-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem; background: #F5F1EC; border-top: 0.5px solid rgba(0,0,0,0.1); z-index: 50; }

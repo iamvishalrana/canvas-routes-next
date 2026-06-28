@@ -535,7 +535,7 @@ export default function WtetPage() {
 
   return (
     <div style={{background:'#F5F1EC',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',minHeight:'100vh'}}>
-      <PageLoader images={['/wtet.png']} minMs={1500} />
+      <PageLoader images={['/wtet.png']} minMs={2000} />
       <style>{`
         /* ── Hero entrance animations ── */
         @keyframes wtet-fade-up {

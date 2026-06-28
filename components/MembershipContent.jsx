@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import SiteFooter from './SiteFooter'
 import SiteNav from './SiteNav'
+import PageLoader from './PageLoader'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { User, Mail, Phone, Car, Share2, Calendar } from 'lucide-react'
@@ -541,6 +542,7 @@ export default function MembershipContent() {
 
   return (
     <div style={{ background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', minHeight: '100vh' }}>
+      <PageLoader images={['/membership-hero.jpeg']} minMs={2000} />
       <style>{`
         @media(max-width:720px){
           .mem-tiers      { grid-template-columns: 1fr !important; }

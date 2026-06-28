@@ -256,7 +256,7 @@ export default function EasternTownshipsPage() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      <PageLoader images={['/wtet.png']} minMs={1500} />
+      <PageLoader images={['/wtet.png']} minMs={2000} />
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }

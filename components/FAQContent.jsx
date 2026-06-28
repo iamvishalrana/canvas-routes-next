@@ -906,7 +906,7 @@ export default function FAQContent() {
 
   return (
     <div suppressHydrationWarning style={{ background: '#F5F1EC', minHeight: '100vh', fontFamily: 'var(--font-inter),sans-serif', position: 'relative' }}>
-      <PageLoader images={['/faq-page.jpeg']} minMs={1500} />
+      <PageLoader images={['/faq-page.jpeg']} minMs={2000} />
       <style>{`
         @keyframes faq-qfloat {
           0%   { opacity: 0;    transform: translateY(0);     }
