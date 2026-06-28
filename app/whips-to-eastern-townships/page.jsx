@@ -21,19 +21,19 @@ const PARTICIPANTS = [
 
 const MAP_MARKERS = [
   { label: 'Shell — Brossard', note: 'Meetup · Departure', start: true, lat: 45.4502, lng: -73.4440 },
-  { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Winery experience', lat: 45.1255, lng: -72.8678 },
-  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', end: true, lat: 45.1569, lng: -72.0797 },
+  { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Winery experience', lat: 45.1477, lng: -72.6133 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', end: true, lat: 45.1394, lng: -72.2554 },
 ]
 
 const STOPS = [
   { label: 'Quartier Dix 30 Parking', note: 'Meetup — TBD · Brossard', start: true, href: 'https://maps.app.goo.gl/QKzfxTBGnkmLvMCL6', lat: 45.4619, lng: -73.4632 },
-  { label: 'Vignoble Domaine du Brésée', note: 'Frelighsburg · Private winery experience', href: 'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', lat: 45.1255, lng: -72.8678 },
+  { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Private winery experience', href: 'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', lat: 45.1477, lng: -72.6133 },
   { label: 'Sutton', note: 'Chemin des Cantons · Rolling through', href: 'https://www.google.com/maps?q=45.1038,-72.5544', lat: 45.1038, lng: -72.5544 },
   { label: 'Glen Sutton', note: 'Chemin des Cantons · Mountain roads', href: 'https://www.google.com/maps?q=45.0539,-72.5245', lat: 45.0539, lng: -72.5245 },
   { label: 'Highwater', note: 'Chemin des Cantons · Near the border', href: 'https://www.google.com/maps?q=45.0053,-72.4400', lat: 45.0053, lng: -72.4400 },
   { label: 'Austin', note: 'Chemin des Cantons · Lake Memphrémagog area', href: 'https://www.google.com/maps?q=45.1863,-72.2440', lat: 45.1863, lng: -72.2440 },
   { label: 'Magog', note: 'Chemin des Cantons · Lake view', href: 'https://www.google.com/maps?q=45.2679,-72.1493', lat: 45.2679, lng: -72.1493 },
-  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Chef from Michelin-starred kitchens · Final destination', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1569, lng: -72.0797 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Chef from Michelin-starred kitchens · Final destination', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
 ]
 
 function CopyButton({ text }) {
