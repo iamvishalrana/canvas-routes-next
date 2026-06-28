@@ -827,7 +827,7 @@ export default function WtetPage() {
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
-              {['Winery experience at Vignoble Domaine du Brésée, Sutton','Lunch at Auberge & Restaurant McGowan, Georgeville — chef from Michelin-starred kitchens','Guided convoy with a lead car the entire route — per car, up to 2 people','On-route photography and video coverage','Access to the private route itinerary page'].map((item, i) => (
+              {['Winery experience at Vignoble Domaine du Brésée, Sutton','Lunch at Auberge & Restaurant McGowan, Georgeville — chef from Michelin-starred kitchens','Guided convoy with a lead car the entire route — per car, up to 2 people','Access to the private route itinerary page'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.7)',lineHeight:'1.65'}}>{item}</span>
