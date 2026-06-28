@@ -793,7 +793,7 @@ export default function WtetPage() {
           </FadeUp>
 
           {[
-            { label:'Meetup', venue:'Quartier Dix 30', address:'Brossard, QC', desc:'The group gathers in the Dix 30 parking lot. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
+            { label:'Meetup — 10:00 AM', venue:'Shell — 8700 Boul. Leduc', address:'Brossard, QC', desc:'The group gathers at the Shell on Boul. Leduc at 10:00 AM. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
             { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/CcVDgmpEdRHK6c7L6', address:'Sutton, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Cars on the grounds, a chance to take in the property. Canvas Routes guests get a special price on any purchases at the winery.', pays:true },
             { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton\'s forested switchbacks, and cuts deep into the Appalachian forest at Highwater. Quiet, undisturbed pavement with almost no traffic and nowhere to straighten it out — the kind of road most drivers never find. This is the heart of the day.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'Coming through Austin, the trees give way and the landscape opens. The road straightens and drops toward the valley floor, with Lake Memphrémagog spreading out below. A proper payoff — the kind of view that earns a slow roll-in.', pays:false },

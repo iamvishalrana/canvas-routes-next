@@ -20,13 +20,13 @@ const PARTICIPANTS = [
 ]
 
 const MAP_MARKERS = [
-  { label: 'Shell — Brossard', note: 'Meetup · Departure', start: true, lat: 45.4502, lng: -73.4440 },
+  { label: 'Shell — Brossard', note: '10:00 AM · Meetup & Departure', start: true, lat: 45.4502, lng: -73.4440 },
   { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Winery experience', lat: 45.1477, lng: -72.6133 },
   { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', end: true, lat: 45.1394, lng: -72.2554 },
 ]
 
 const STOPS = [
-  { label: 'Shell — 8700 Boul. Leduc', note: 'Meetup · Brossard', start: true, href: 'https://maps.app.goo.gl/Ye8mVsi15rwcgGWj7', lat: 45.4502, lng: -73.4440 },
+  { label: 'Shell — 8700 Boul. Leduc', note: '10:00 AM · Meetup · Brossard', start: true, href: 'https://maps.app.goo.gl/Ye8mVsi15rwcgGWj7', lat: 45.4502, lng: -73.4440 },
   { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Private winery experience', href: 'https://maps.app.goo.gl/CcVDgmpEdRHK6c7L6', lat: 45.1477, lng: -72.6133 },
   { label: 'Sutton', note: 'Chemin des Cantons · Rolling through', href: 'https://www.google.com/maps?q=45.1038,-72.5544', lat: 45.1038, lng: -72.5544 },
   { label: 'Glen Sutton', note: 'Chemin des Cantons · Mountain roads', href: 'https://www.google.com/maps?q=45.0539,-72.5245', lat: 45.0539, lng: -72.5245 },
@@ -290,7 +290,7 @@ export default function EasternTownshipsPage() {
 
             <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Meetup</div>
-              <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>Shell — 8700 Boul. Leduc</div>
+              <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>10:00 AM · Shell — 8700 Boul. Leduc</div>
               <div style={{ fontSize: '11px', color: '#bbb', marginTop: '3px' }}>Brossard, QC</div>
             </div>
 
