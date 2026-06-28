@@ -19,6 +19,12 @@ const PARTICIPANTS = [
   { name: 'Yvon Maggi',            car: '2014 Porsche 911 Turbo S',                   photo: '/WTET/Yvon-Maggi.png' },
 ]
 
+const MAP_MARKERS = [
+  { label: 'Shell — Brossard', note: 'Meetup · Departure', start: true, lat: 45.4619, lng: -73.4632 },
+  { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Winery experience', lat: 45.1255, lng: -72.8678 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', end: true, lat: 45.1569, lng: -72.0797 },
+]
+
 const STOPS = [
   { label: 'Quartier Dix 30 Parking', note: 'Meetup — TBD · Brossard', start: true, href: 'https://maps.app.goo.gl/QKzfxTBGnkmLvMCL6', lat: 45.4619, lng: -73.4632 },
   { label: 'Vignoble Domaine du Brésée', note: 'Frelighsburg · Private winery experience', href: 'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', lat: 45.1255, lng: -72.8678 },
@@ -440,7 +446,7 @@ export default function EasternTownshipsPage() {
         <div style={{ padding: '2rem 0' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Map</div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-            <RouteMap stops={STOPS} />
+            <RouteMap stops={MAP_MARKERS} />
           </div>
         </div>
 
