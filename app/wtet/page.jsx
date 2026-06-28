@@ -706,7 +706,7 @@ export default function WtetPage() {
           {[
             { num:'~210', unit:'km' },
             { num:'70%',  unit:'backroads' },
-            { num:'4',    unit:'stops' },
+            { num:'3',    unit:'stops' },
             { num:'1',    unit:'vineyard' },
             { num:'2',    unit:'michelin stars' },
             { num:'2',    unit:'per car' },
@@ -743,7 +743,7 @@ export default function WtetPage() {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {[
-              'We leave Montreal and head south through wine country to Sutton for a private winery experience at Vignoble Domaine du Brésée — Canvas Routes guests get a special price on any purchases at the winery.',
+              'We take Autoroute 10 East, exit at Farnham, and head south through Dunham and Frelighsburg for a private winery experience at Vignoble Domaine du Brésée — Canvas Routes guests get a special price on any purchases at the winery.',
               'From there we pick up Chemin des Cantons. The road climbs through the Sutton Mountains in tight, technical corners, narrows through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — pavement that almost nobody drives, through dense forest with zero traffic. Coming through Austin, the trees open and the valley reveals itself. One of the finest driver\'s roads in Quebec.',
               'Lunch at Auberge & Restaurant McGowan in Georgeville — the chef has worked in kitchens that held two Michelin stars, and brings that standard to a setting overlooking Lac Memphrémagog. This is the close the day deserves.',
             ].map((note, i) => (
@@ -787,7 +787,6 @@ export default function WtetPage() {
 
           {[
             { label:'Meetup', venue:'Quartier Dix 30', address:'Brossard, QC', desc:'The group gathers in the Dix 30 parking lot. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
-            { label:'Fuel Stop', venue:'Shell — Bromont Outlets', address:'Bromont, QC', desc:'Fill up before we head into the backroads. Last proper fuel stop before Chemin des Cantons.', pays:false },
             { label:'Winery Experience', venue:'Vignoble Domaine du Brésée', venueHref:'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', address:'Sutton, QC', desc:'A private winery experience at one of the Eastern Townships\' most celebrated vineyards. Cars on the grounds, a chance to take in the property. Canvas Routes guests get a special price on any purchases at the winery.', pays:true },
             { label:'Chemin des Cantons', venue:null, address:'Sutton → Glen Sutton → Highwater', desc:'The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton\'s forested switchbacks, and cuts deep into the Appalachian forest at Highwater. Quiet, undisturbed pavement with almost no traffic and nowhere to straighten it out — the kind of road most drivers never find. This is the heart of the day.', pays:false },
             { label:'Through the Ridge', venue:null, address:'Austin → Magog', desc:'Coming through Austin, the trees give way and the landscape opens. The road straightens and drops toward the valley floor, with Lake Memphrémagog spreading out below. A proper payoff — the kind of view that earns a slow roll-in.', pays:false },

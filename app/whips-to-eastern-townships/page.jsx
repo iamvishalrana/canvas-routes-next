@@ -21,8 +21,7 @@ const PARTICIPANTS = [
 
 const STOPS = [
   { label: 'Quartier Dix 30 Parking', note: 'Meetup — TBD · Brossard', start: true, href: 'https://maps.app.goo.gl/QKzfxTBGnkmLvMCL6', lat: 45.4619, lng: -73.4632 },
-  { label: 'Shell — Bromont Outlets', note: 'Bromont · Fuel up · regroup before the backroads', href: 'https://www.google.com/maps?q=45.3145,-72.6480', lat: 45.3145, lng: -72.6480 },
-  { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Private winery experience', href: 'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', lat: 45.1255, lng: -72.8678 },
+  { label: 'Vignoble Domaine du Brésée', note: 'Frelighsburg · Private winery experience', href: 'https://maps.app.goo.gl/NxphbdWfFfJpFfYr7', lat: 45.1255, lng: -72.8678 },
   { label: 'Sutton', note: 'Chemin des Cantons · Rolling through', href: 'https://www.google.com/maps?q=45.1038,-72.5544', lat: 45.1038, lng: -72.5544 },
   { label: 'Glen Sutton', note: 'Chemin des Cantons · Mountain roads', href: 'https://www.google.com/maps?q=45.0539,-72.5245', lat: 45.0539, lng: -72.5245 },
   { label: 'Highwater', note: 'Chemin des Cantons · Near the border', href: 'https://www.google.com/maps?q=45.0053,-72.4400', lat: 45.0053, lng: -72.4400 },
@@ -75,12 +74,20 @@ function RouteMap({ stops }) {
           mapTypeControl: false,
           fullscreenControl: true,
           styles: [
-            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-            { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-            { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f5e9d6' }] },
-            { featureType: 'landscape', stylers: [{ color: '#f0ede8' }] },
-            { featureType: 'water', stylers: [{ color: '#c8d8e8' }] },
+            { featureType: 'all',                        elementType: 'labels.icon',  stylers: [{ visibility: 'off' }] },
+            { featureType: 'poi',                        elementType: 'all',          stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit',                    elementType: 'all',          stylers: [{ visibility: 'off' }] },
+            { featureType: 'administrative.neighborhood',elementType: 'labels',       stylers: [{ visibility: 'off' }] },
+            { featureType: 'landscape.natural',          elementType: 'all',          stylers: [{ color: '#c8dab8' }] },
+            { featureType: 'landscape.natural.terrain',  elementType: 'all',          stylers: [{ color: '#bcd4aa' }] },
+            { featureType: 'landscape.man_made',         elementType: 'all',          stylers: [{ color: '#e5e0d8' }] },
+            { featureType: 'water',                      elementType: 'all',          stylers: [{ color: '#a4c4de' }] },
+            { featureType: 'road',                       elementType: 'geometry',     stylers: [{ color: '#f5f0e6' }] },
+            { featureType: 'road',                       elementType: 'geometry.stroke', stylers: [{ color: '#ddd5c4' }] },
+            { featureType: 'road.highway',               elementType: 'geometry',     stylers: [{ color: '#e8d8b8' }] },
+            { featureType: 'road.highway',               elementType: 'geometry.stroke', stylers: [{ color: '#ccb890' }] },
+            { featureType: 'road.local',                 elementType: 'labels',       stylers: [{ visibility: 'off' }] },
+            { featureType: 'road.arterial',              elementType: 'labels',       stylers: [{ visibility: 'simplified' }] },
           ],
         })
         map.fitBounds(bounds, 40)
@@ -90,8 +97,8 @@ function RouteMap({ stops }) {
           path: ROUTE_PATH,
           geodesic: true,
           strokeColor: '#0F1E14',
-          strokeOpacity: 0.75,
-          strokeWeight: 3,
+          strokeOpacity: 0.85,
+          strokeWeight: 4,
           map,
         })
 
@@ -316,7 +323,7 @@ export default function EasternTownshipsPage() {
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>The Drive</div>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
-            We leave Brossard, cross the bridge, and head east toward Bromont. After fuelling up at the Shell station by the outlets, we head south through Sutton wine country for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property. Canvas Routes guests get a special price on any purchases at the winery.
+            We leave Brossard and take Autoroute 10 East, exiting at Farnham. From there we head south on Route 233, winding through Dunham and down into Frelighsburg for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property. Canvas Routes guests get a special price on any purchases at the winery.
           </p>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
             From there we pick up Chemin des Cantons. The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — quiet, undisturbed pavement with almost no traffic. Coming through Austin, the trees open and Lake Memphrémagog spreads out below.
