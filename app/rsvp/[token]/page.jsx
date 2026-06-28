@@ -179,7 +179,7 @@ export default function RsvpPage() {
                   Make this a regular thing.
                 </h2>
                 <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.85', marginBottom: '1.5rem' }}>
-                  Canvas Routes membership gives you early access to events, exclusive road trips, and a community of people who take their cars seriously.
+                  Canvas Routes membership gives you early access to events, exclusive routes, and a community of people who take their cars seriously.
                 </p>
                 <a href="/membership" style={{ display: 'inline-block', padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', textDecoration: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '600', fontFamily: 'var(--font-inter),sans-serif' }}>
                   Apply for Membership →
@@ -192,7 +192,7 @@ export default function RsvpPage() {
             <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', padding: '2.5rem' }}>
               <div style={{ width: '28px', height: '2px', background: '#c5a882', marginBottom: '1.5rem' }} />
               <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.85rem' }}>
-                Canvas Routes &middot; {isRoadTrip ? 'Road Trip' : 'Car Meet'} &middot; You&apos;re Invited
+                Canvas Routes &middot; {isRoadTrip ? 'Route' : 'Car Meet'} &middot; You&apos;re Confirmed
               </div>
               <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2.1rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.6rem', lineHeight: 1.2 }}>
                 {firstName ? `Check in, ${firstName}.` : 'Check in.'}

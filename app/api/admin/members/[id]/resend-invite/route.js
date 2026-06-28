@@ -62,7 +62,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
           <!-- Second line -->
           <tr>
             <td style="padding-bottom:32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:rgba(245,241,236,0.65);">
-              This is going to be a good one. Road trips through the Laurentians and beyond, morning meets with the right crowd, and a season built around actually driving. We&apos;ll be in touch with everything you need before we hit the road.
+              This is going to be a good one. Routes through the Laurentians and beyond, morning meets with the right crowd, and a season built around actually driving. We&apos;ll be in touch with everything you need before we hit the road.
             </td>
           </tr>
 

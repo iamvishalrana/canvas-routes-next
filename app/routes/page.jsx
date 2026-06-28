@@ -348,7 +348,7 @@ export default function RoutesPage() {
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem"}}>Registration is now closed.</div>
               <div style={{width:"30px",height:"0.5px",background:"#c5a882",margin:"1.2rem auto"}} />
               <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.9",maxWidth:"420px",margin:"1.5rem auto"}}>
-                This route has been completed. All future Canvas Routes road trips will be exclusive to members.
+                This route has been completed. All future Canvas Routes routes will be exclusive to members.
               </p>
               <Link href="/membership" style={{display:"inline-block",marginTop:"1.5rem",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",border:"1px solid rgba(0,0,0,0.25)",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
                 Join Canvas Routes

@@ -29,7 +29,7 @@ const CATEGORIES = [
   },
   {
     name: 'Photography & Media',
-    body: 'Event coverage, road trip photography, videography and content creation. We document every drive — the right creative partnership amplifies both of us.',
+    body: 'Event coverage, route photography, videography and content creation. We document every drive — the right creative partnership amplifies both of us.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
@@ -84,8 +84,8 @@ const TRACKS = [
   {
     label: '02',
     heading: 'Route Partner',
-    body: 'Be woven into a Canvas Routes road trip — as a breakfast stop, destination, product supplied on the route, or named sponsor of the convoy itself. Every trip is photographed and documented. Your partnership lives long after the drive ends.',
-    points: ['Named presence on a curated road trip', 'Featured in route photography and media', 'Breakfast, lunch, or destination stop', 'Product placement throughout the day'],
+    body: 'Be woven into a Canvas Routes route — as a breakfast stop, destination, product supplied on the route, or named sponsor of the convoy itself. Every route is photographed and documented. Your partnership lives long after the drive ends.',
+    points: ['Named presence on a curated route', 'Featured in route photography and media', 'Breakfast, lunch, or destination stop', 'Product placement throughout the day'],
   },
   {
     label: '03',
@@ -103,8 +103,8 @@ const STEPS = [
 
 const PILLARS = [
   { stat: 'Invite-only', label: 'Every event is personally curated — no open registration, no walk-ins' },
-  { stat: 'Montreal', label: 'Based in Quebec, with road trips stretching across North America' },
-  { stat: 'All season', label: 'Events, road trips and content running from spring through fall' },
+  { stat: 'Montreal', label: 'Based in Quebec, with routes stretching across North America' },
+  { stat: 'All season', label: 'Events, routes and content running from spring through fall' },
   { stat: 'Community', label: 'People who chose their car with intention and stay fiercely loyal' },
 ]
 
@@ -242,7 +242,7 @@ export default function PartnerContent() {
           </div>
           <div style={{ paddingTop: '0.5rem' }}>
             <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.9', margin: '0 0 1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Canvas Routes is a Montreal-based automotive community organizing invite-only Cars & Coffee events, curated convoy road trips, and overnight adventures across Quebec and beyond. Every event is deliberately small and every registration personally reviewed.
+              Canvas Routes is a Montreal-based automotive community organizing invite-only Cars & Coffee events, curated convoy routes, and overnight adventures across Quebec and beyond. Every event is deliberately small and every registration personally reviewed.
             </p>
             <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.9', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>
               A Canvas Routes partnership puts your brand in front of that audience — not as an ad, but as part of the experience. The people who show up chose their car with intention. They are attentive, engaged, and loyal to brands that align with what they value.

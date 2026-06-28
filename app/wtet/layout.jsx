@@ -2,14 +2,14 @@ const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Whips+to+East
 
 export const metadata = {
   title: 'Whips to Eastern Townships — July 5, 2026',
-  description: 'A curated convoy road trip from Montreal through the Eastern Townships — July 5, 2026. Private winery experience at Vignoble Domaine du Brésée, Chemin des Cantons backroads through the Sutton Mountains, and lunch at Auberge & Restaurant McGowan in Georgeville with a chef from Michelin-starred kitchens. $179 members / $199.',
-  keywords: 'Eastern Townships road trip Montreal, road trip from Montreal 2026, Canvas Routes road trip, curated driving event Quebec, Lac Memphremagog drive, scenic drive Eastern Townships, convoy drive Quebec, car road trip Montreal, Quebec backroads driving, Chemin des Cantons, Frelighsburg winery drive, Georgeville restaurant',
+  description: 'A curated convoy route from Montreal through the Eastern Townships — July 5, 2026. Private winery experience at Vignoble Domaine du Brésée, Chemin des Cantons backroads through the Sutton Mountains, and lunch at Auberge & Restaurant McGowan in Georgeville with a chef from Michelin-starred kitchens. $179 members / $199.',
+  keywords: 'Eastern Townships route Montreal, route from Montreal 2026, Canvas Routes route, curated driving event Quebec, Lac Memphremagog drive, scenic drive Eastern Townships, convoy drive Quebec, car route Montreal, Quebec backroads driving, Chemin des Cantons, Frelighsburg winery drive, Georgeville restaurant',
   alternates: { canonical: 'https://canvasroutes.com/wtet' },
   openGraph: {
     title: 'Whips to Eastern Townships — July 5, 2026 | Canvas Routes',
     description: 'Curated convoy from Montreal through wine country to Lac Memphrémagog. Private winery stop, Chemin des Cantons backroads, lunch by a chef from Michelin-starred kitchens at Auberge McGowan. $179 members / $199.',
     url: 'https://canvasroutes.com/wtet',
-    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Whips to Eastern Townships — Canvas Routes Road Trip July 5 2026' }],
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Whips to Eastern Townships — Canvas Routes Route July 5 2026' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -22,7 +22,7 @@ export const metadata = {
 const eventSchema = {
   '@context': 'https://schema.org',
   '@type': 'Event',
-  name: 'Whips to Eastern Townships — Canvas Routes Road Trip',
+  name: 'Whips to Eastern Townships — Canvas Routes Route',
   startDate: '2026-07-05T08:00:00-04:00',
   endDate: '2026-07-05T20:00:00-04:00',
   eventStatus: 'https://schema.org/EventScheduled',

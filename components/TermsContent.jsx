@@ -49,7 +49,7 @@ export default function TermsContent() {
           },
           {
             title: "Route fees",
-            body: "Route participation fees vary by event and are stated on the individual event page. Payment is collected at the time of registration. Road trip fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any route due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
+            body: "Route participation fees vary by event and are stated on the individual event page. Payment is collected at the time of registration. Route fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any route due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
           },
           {
             title: "Member conduct",

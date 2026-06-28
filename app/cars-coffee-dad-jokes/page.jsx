@@ -230,7 +230,7 @@ export default function CCDPage() {
                   Canvas Routes Membership
                 </div>
                 <p style={{ fontSize:'13px', color:'#666', lineHeight:1.75, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1rem' }}>
-                  Road trips, invite-only meets, and partner perks — built for drivers who love the road.
+                  Curated routes, invite-only meets, and partner perks — built for drivers who love the road.
                 </p>
                 <p style={{ fontSize:'12px', color:'#666', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'340px', margin:'0 auto 1.25rem' }}>
                   As a thank-you for coming out, use code{' '}
