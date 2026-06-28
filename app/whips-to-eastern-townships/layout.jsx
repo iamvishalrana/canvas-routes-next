@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Whips to Eastern Townships — Private Itinerary',
-  description: 'Your route, stops, and itinerary for WTET · July 5, 2026 · Canvas Routes',
+  description: 'Your route, stops, and itinerary for Whips to Eastern Townships · July 5, 2026 · Canvas Routes',
   robots: { index: false, follow: false },
   openGraph: {
     title: 'Whips to Eastern Townships — July 5, 2026',

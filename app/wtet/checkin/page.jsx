@@ -191,7 +191,7 @@ function WtetCheckinContent() {
               Canvas Routes · July 5, 2026
             </div>
             <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.5rem', lineHeight: '1.2' }}>
-              WTET Early Check-in
+              Whips to Eastern Townships — Early Check-in
             </h1>
             <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1.25rem 0' }} />
             {firstName && (
