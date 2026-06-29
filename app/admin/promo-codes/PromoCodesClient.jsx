@@ -64,6 +64,7 @@ export default function PromoCodesClient() {
   const [editForm, setEditForm]         = useState({ maxRedemptions: '', expiresAt: '' })
   const [editSaving, setEditSaving]     = useState(false)
   const [editErr, setEditErr]           = useState(null)
+  const [editUnlimitedConfirm, setEditUnlimitedConfirm] = useState(false)
   const [usageOpen, setUsageOpen]       = useState(null)   // code id whose usage is expanded
   const [usageData, setUsageData]       = useState({})     // { [codeId]: array of usage rows }
   const [usageLoading, setUsageLoading] = useState(null)   // code id being fetched
@@ -177,11 +178,19 @@ export default function PromoCodesClient() {
       expiresAt: c.expires_at ? new Date(c.expires_at * 1000).toISOString().slice(0, 10) : '',
     })
     setEditErr(null)
+    setEditUnlimitedConfirm(false)
   }
 
   async function handleSaveEdit(c) {
+    // Warn before silently removing a redemption limit
+    if (!editForm.maxRedemptions && c.max_redemptions && !editUnlimitedConfirm) {
+      setEditErr(`Warning: clearing Max Uses will remove the ${c.max_redemptions}-use limit and make this code unlimited. Click Save again to confirm.`)
+      setEditUnlimitedConfirm(true)
+      return
+    }
     setEditSaving(true)
     setEditErr(null)
+    setEditUnlimitedConfirm(false)
     try {
       const res = await fetch(`/api/admin/promo-codes/${c.id}`, {
         method: 'PATCH',

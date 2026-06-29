@@ -165,11 +165,14 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
         setPromoApplied(null)
         setPromoError(null)
         // elements.update() not called — invalid in client-secret mode; PI restored server-side
+        return true
       } else {
         setPromoError('Could not remove code. Please try again.')
+        return false
       }
     } catch {
       setPromoError('Could not remove code. Please try again.')
+      return false
     } finally {
       setRemovingPromo(false)
     }
@@ -347,7 +350,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 
       <button type="button"
         disabled={paying || removingPromo}
-        onClick={async () => { if (promoApplied) await handleRemovePromo(); onBack() }}
+        onClick={async () => { if (promoApplied) { const ok = await handleRemovePromo(); if (!ok) return } onBack() }}
         style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.3)', fontSize: '11px', letterSpacing: '0.1em', cursor: paying || removingPromo ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem', transition: 'color 0.15s', opacity: paying || removingPromo ? 0.4 : 1 }}
         onMouseEnter={e => { if (!paying && !removingPromo) e.currentTarget.style.color = 'rgba(0,0,0,0.6)' }}
         onMouseLeave={e => e.currentTarget.style.color = 'rgba(0,0,0,0.3)'}>

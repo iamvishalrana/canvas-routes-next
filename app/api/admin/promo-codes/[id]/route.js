@@ -15,6 +15,15 @@ export async function PATCH(request, { params }) {
   if (body.action === 'edit') {
     try {
       const existing = await stripe.promotionCodes.retrieve(id, { expand: ['coupon'] })
+      // Guard: new max_redemptions must not be below times already redeemed
+      if (body.maxRedemptions) {
+        const newMax = parseInt(body.maxRedemptions, 10)
+        if (newMax < (existing.times_redeemed ?? 0)) {
+          return Response.json({
+            error: `Max uses cannot be less than the ${existing.times_redeemed} time${existing.times_redeemed !== 1 ? 's' : ''} this code has already been redeemed.`,
+          }, { status: 400 })
+        }
+      }
       // Create the new code FIRST — if this fails the old code is still active (no data loss)
       const newCode = await stripe.promotionCodes.create({
         coupon: existing.coupon.id,

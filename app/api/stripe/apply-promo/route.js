@@ -62,8 +62,14 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
+  // Acquire a global per-code lock FIRST to prevent two users simultaneously
+  // redeeming the last available use before Stripe deactivates the code.
+  const codeLockKey = `promo:code:${code.trim().toUpperCase()}`
+  const codeLocked = await acquireLock(codeLockKey, 10)
+  if (!codeLocked) return Response.json({ error: 'Another request is in progress. Please try again.' }, { status: 409 })
+
   try {
-    // Look up active promotion code in Stripe
+    // Look up active promotion code in Stripe (inside the code lock)
     const promoCodes = await stripe.promotionCodes.list({
       code: code.trim().toUpperCase(),
       active: true,
@@ -72,6 +78,7 @@ export async function POST(request) {
     })
 
     if (!promoCodes.data.length) {
+      await releaseLock(codeLockKey)
       return Response.json({ error: 'Invalid or expired promo code.' }, { status: 400 })
     }
 
@@ -79,16 +86,21 @@ export async function POST(request) {
     const coupon = promoCode.coupon
 
     if (!coupon || typeof coupon !== 'object') {
+      await releaseLock(codeLockKey)
       return Response.json({ error: 'Could not validate promo code. Please try again.' }, { status: 500 })
     }
     if (!coupon.valid) {
+      await releaseLock(codeLockKey)
       return Response.json({ error: 'This promo code is no longer valid.' }, { status: 400 })
     }
 
     // Acquire a per-PI lock to prevent concurrent apply calls stacking two discounts
     const lockKey = `promo:${paymentIntentId}`
     const locked = await acquireLock(lockKey, 10)
-    if (!locked) return Response.json({ error: 'Another request is in progress. Please try again.' }, { status: 409 })
+    if (!locked) {
+      await releaseLock(codeLockKey)
+      return Response.json({ error: 'Another request is in progress. Please try again.' }, { status: 409 })
+    }
 
     // Get current payment intent amount and guard against stacking
     let pi
@@ -148,6 +160,7 @@ export async function POST(request) {
       metadata: { ...pi.metadata, promo_code_id: promoCode.id, discount_amount: String(discountAmount) },
     })
     try { await releaseLock(lockKey) } catch {}
+    try { await releaseLock(codeLockKey) } catch {}
 
     return Response.json({
       discountedAmount,
@@ -158,6 +171,7 @@ export async function POST(request) {
     })
   } catch (err) {
     try { await releaseLock(`promo:${paymentIntentId}`) } catch {}
+    try { await releaseLock(codeLockKey) } catch {}
     captureException(err, { context: 'stripe-apply-promo', code, paymentIntentId })
     return Response.json({ error: 'Failed to apply promo code.' }, { status: 500 })
   }

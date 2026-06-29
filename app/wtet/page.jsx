@@ -83,8 +83,12 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
         const original = promoResult?.originalAmount ?? price * 100
         setPromoResult(null)
         if (elements) await elements.update({ amount: original })
+      } else {
+        setPromoError('Could not remove promo code. Please try again.')
       }
-    } catch {}
+    } catch {
+      setPromoError('Could not remove promo code. Please try again.')
+    }
   }
 
   async function handlePay(e) {
