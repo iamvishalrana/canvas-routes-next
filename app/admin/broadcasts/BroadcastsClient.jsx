@@ -44,6 +44,33 @@ const FONTS = [
 
 const SIZES = ['12px','13px','14px','15px','16px','18px','20px','24px','28px']
 
+const PRESET_TEMPLATES = [
+  {
+    id: 'preset_event_reminder',
+    name: 'Event Reminder',
+    subject: 'Reminder — [Event Name] this [Day]',
+    bodyHtml: '<p>Hey {{name}},</p><p>Just a quick reminder — <strong>[Event Name]</strong> is this <strong>[Day, Date]</strong>.</p><p>Meet at <strong>[Location]</strong> at <strong>[Time]</strong>. Reply to this email if anything comes up.</p><p>See you there.</p>',
+  },
+  {
+    id: 'preset_post_event',
+    name: 'Post-Event Thank You',
+    subject: 'Thanks for coming out',
+    bodyHtml: '<p>Hey {{name}},</p><p>Thanks for joining us — it was a great day.</p><p>Photos are going up on Instagram <a href="https://instagram.com/canvasroutes">@canvasroutes</a>. More events coming soon.</p><p>See you on the road.</p>',
+  },
+  {
+    id: 'preset_inner_circle',
+    name: 'Inner Circle — Early Access',
+    subject: 'Inner Circle — First look at [Event Name]',
+    bodyHtml: '<p>Hey {{name}},</p><p>As an Inner Circle member you get first access before we open to the rest of the community.</p><p><strong>[Event details — date, route, pricing, what\'s included.]</strong></p><p>Spots are limited. Reply to this email or register at the link below.</p>',
+  },
+  {
+    id: 'preset_confirmed',
+    name: 'Registration Confirmed',
+    subject: 'You\'re confirmed — [Event Name]',
+    bodyHtml: '<p>Hey {{name}},</p><p>You\'re confirmed for <strong>[Event Name]</strong>. Your payment has been captured.</p><p>Full details and the private itinerary will come closer to the date. Any questions, reply here.</p><p>See you on the road.</p>',
+  },
+]
+
 // ── Signature HTML (inside actual emails) ───────────────────────────────────
 const SIG_HTML = `
 <table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
@@ -343,6 +370,12 @@ export default function BroadcastsClient() {
   const [testSending, setTestSending]           = useState(false)
   const [testResult, setTestResult]             = useState(null)
   const [previewExpanded, setPreviewExpanded]   = useState(false)
+  const [savedTemplates, setSavedTemplates]     = useState([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [templateName, setTemplateName]         = useState('')
+  const [templateSaving, setTemplateSaving]     = useState(false)
+  const [templateSaveError, setTemplateSaveError] = useState(null)
   const sendingRef      = useRef(false)
   const tabRef          = useRef(tab)
   const draftRestoredRef = useRef(false)
@@ -408,6 +441,53 @@ export default function BroadcastsClient() {
   }, [])
 
   useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
+
+  const loadTemplates = useCallback(async () => {
+    setTemplatesLoading(true)
+    try {
+      const res = await fetch('/api/admin/broadcasts/templates')
+      if (res.ok) setSavedTemplates(await res.json())
+    } catch {}
+    setTemplatesLoading(false)
+  }, [])
+
+  useEffect(() => { if (tab === 'templates') loadTemplates() }, [tab, loadTemplates])
+
+  function useTemplate(t) {
+    setSubject(t.subject || '')
+    if (editor) {
+      if (t.bodyHtml) { editor.commands.setContent(t.bodyHtml); setBodyHtml(t.bodyHtml) }
+      else { editor.commands.clearContent(); setBodyHtml('') }
+    }
+    setResult(null); setError(null)
+    setTab('compose')
+  }
+
+  async function saveTemplate() {
+    if (!templateName.trim()) { setTemplateSaveError('Template name is required.'); return }
+    if (!subject.trim()) { setTemplateSaveError('Add a subject line before saving.'); return }
+    setTemplateSaving(true); setTemplateSaveError(null)
+    try {
+      const res = await fetch('/api/admin/broadcasts/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: templateName.trim(), subject: subject.trim(), bodyHtml }),
+      })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setTemplateSaveError(d.error || 'Failed to save.'); return }
+      setShowSaveTemplate(false); setTemplateName(''); setTemplateSaveError(null)
+    } catch { setTemplateSaveError('Network error.') }
+    setTemplateSaving(false)
+  }
+
+  async function deleteTemplate(id) {
+    if (!window.confirm('Delete this template?')) return
+    await fetch('/api/admin/broadcasts/templates', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setSavedTemplates(prev => prev.filter(t => t.id !== id))
+  }
 
   const onBroadcastChange = useCallback(() => {
     if (tabRef.current === 'history') loadHistory()
@@ -557,7 +637,7 @@ export default function BroadcastsClient() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', marginBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-        {[{ id: 'compose', label: 'Compose' }, { id: 'history', label: 'History' }].map(t => (
+        {[{ id: 'compose', label: 'Compose' }, { id: 'templates', label: 'Templates' }, { id: 'history', label: 'History' }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: '0.6rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
             fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -568,6 +648,74 @@ export default function BroadcastsClient() {
           }}>{t.label}</button>
         ))}
       </div>
+
+      {/* ── Templates ── */}
+      {tab === 'templates' && (
+        <div>
+          {/* Preset templates */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.85rem' }}>Starter templates</div>
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+              {PRESET_TEMPLATES.map((t, idx) => (
+                <div key={t.id} style={{ padding: '1rem 1.25rem', borderBottom: idx < PRESET_TEMPLATES.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '0.2rem' }}>{t.name}</div>
+                    <div style={{ fontSize: '12px', color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.subject}</div>
+                  </div>
+                  <button
+                    onClick={() => useTemplate(t)}
+                    style={{ flexShrink: 0, background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 12px', cursor: 'pointer', fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}
+                  >
+                    Use
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Saved templates */}
+          <div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.85rem' }}>Saved templates</div>
+            {templatesLoading ? (
+              <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+            ) : savedTemplates.length === 0 ? (
+              <div style={{ padding: '2rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>
+                No saved templates yet — compose an email and click <strong style={{ color: '#bbb', fontWeight: '500' }}>Save as template</strong> to save it here.
+              </div>
+            ) : (
+              <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                {savedTemplates.map((t, idx) => (
+                  <div key={t.id} style={{ padding: '1rem 1.25rem', borderBottom: idx < savedTemplates.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '0.2rem' }}>{t.name}</div>
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>{t.subject}</span>
+                        <span style={{ fontSize: '10px', color: '#ccc', flexShrink: 0 }}>
+                          {new Date(t.createdAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                      <button
+                        onClick={() => useTemplate(t)}
+                        style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 12px', cursor: 'pointer', fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                      >
+                        Use
+                      </button>
+                      <button
+                        onClick={() => deleteTemplate(t.id)}
+                        style={{ background: 'none', border: '0.5px solid rgba(123,32,50,0.2)', padding: '4px 10px', cursor: 'pointer', fontSize: '10px', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── History ── */}
       {tab === 'history' && (
@@ -823,6 +971,34 @@ export default function BroadcastsClient() {
                     )}
                   </div>
                 </div>
+
+                {/* Save as template */}
+                {!showSaveTemplate ? (
+                  <button
+                    onClick={() => { setShowSaveTemplate(true); setTemplateName('') }}
+                    style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '11px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase', textAlign: 'left' }}
+                  >
+                    + Save as template
+                  </button>
+                ) : (
+                  <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem 1.25rem' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem' }}>Save as template</div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input
+                        style={{ ...INP, flex: 1 }}
+                        value={templateName}
+                        onChange={e => { setTemplateName(e.target.value); setTemplateSaveError(null) }}
+                        placeholder="Template name…"
+                        maxLength={80}
+                        onKeyDown={e => e.key === 'Enter' && saveTemplate()}
+                        autoFocus
+                      />
+                      <GhostBtn onClick={saveTemplate} disabled={templateSaving} small>{templateSaving ? 'Saving…' : 'Save'}</GhostBtn>
+                      <GhostBtn onClick={() => { setShowSaveTemplate(false); setTemplateSaveError(null) }} disabled={templateSaving} small>Cancel</GhostBtn>
+                    </div>
+                    {templateSaveError && <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#7B2032' }}>{templateSaveError}</div>}
+                  </div>
+                )}
 
                 <Err msg={error} />
 
