@@ -28,7 +28,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
     { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false },
     { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
     { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
-    { label: 'Road Trip Revenue', value: fmt(roadTripRevenue), color: '#1a1a1a', big: false },
+    { label: 'Route Revenue', value: fmt(roadTripRevenue), color: '#1a1a1a', big: false },
     { label: 'Event Revenue', value: fmt(eventRevenue), color: '#1a1a1a', big: false },
   ]
 

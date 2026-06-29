@@ -71,7 +71,7 @@ export async function POST(request, { params }) {
   if (tokenRow.confirmed_at) return Response.json({ alreadyConfirmed: true, eventName: tokenRow.event_name })
 
   const event = await getEvent(supabase, tokenRow.event_name)
-  const isRoadTrip = event?.type === 'Road Trip'
+  const isRoadTrip = event?.type === 'Road Trip' || event?.type === 'Route'
 
   // Build answers based on event type
   const answers = isRoadTrip

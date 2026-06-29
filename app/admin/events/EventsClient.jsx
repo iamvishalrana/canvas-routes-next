@@ -199,7 +199,7 @@ function TabBar({ tabs, active, onChange }) {
 const FIELD_INFO = {
   name:                 'Shown on the event tile and popup on the homepage, and in the members events portal.',
   date:                 'The actual event date in YYYY-MM-DD format. Used for sorting, calendar invites, and auto-formatting the date when no Date Display is set.',
-  type:                 'Categorises the event. Also controls which RSVP questions members see on the confirm-your-spot page — Road Trip shows dietary / passengers / WhatsApp; all other types show guest / colour / mods / arrival time.',
+  type:                 'Categorises the event. Also controls which RSVP questions members see on the confirm-your-spot page — Route shows dietary / passengers / WhatsApp; all other types show guest / colour / mods / arrival time.',
   date_display:         'Optional free-text override for how the date appears to members. Useful for multi-day events (e.g. "June 7–8, 2026") or month-only ranges. Leave blank to auto-format the Date field.',
   location:             'Shown on the tile, popup, and used to generate an embedded map preview. Use the full venue name or address for the best map match.',
   description:          'Short teaser shown on the event tile and in the popup. 1–2 sentences is ideal.',
@@ -236,7 +236,7 @@ function InfoTip({ field }) {
   )
 }
 
-const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Road Trip', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '', registration_visibility: 'members' }
+const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Route', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '', registration_visibility: 'members' }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -661,7 +661,7 @@ export default function EventsClient() {
     setLoadingRegistrants(true)
     // Road trips with Stripe payment require an authorized or captured hold to count as registered.
     // Don't require eventPrice > 0 — WTET uses a public page with its own pricing, not member_price.
-    const isPaidRoadTrip = eventType === 'Road Trip'
+    const isPaidRoadTrip = eventType === 'Road Trip' || eventType === 'Route'
     try {
       const [regRes, cRes] = await Promise.all([
         fetch(`/api/admin/events/${eventId}/registrants`),

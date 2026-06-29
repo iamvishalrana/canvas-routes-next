@@ -122,7 +122,7 @@ export default function EventApplicationsClient() {
                       {!ev.date_display && ev.date && (
                         <span style={{ fontSize: '11px', color: '#888' }}>{new Date(ev.date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })}</span>
                       )}
-                      <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: ev.type === 'Road Trip' ? '#8A6535' : '#888', background: ev.type === 'Road Trip' ? 'rgba(197,168,130,0.1)' : 'rgba(0,0,0,0.04)', padding: '1px 7px', border: '0.5px solid rgba(0,0,0,0.08)' }}>
+                      <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: (ev.type === 'Route' || ev.type === 'Road Trip') ? '#8A6535' : '#888', background: (ev.type === 'Route' || ev.type === 'Road Trip') ? 'rgba(197,168,130,0.1)' : 'rgba(0,0,0,0.04)', padding: '1px 7px', border: '0.5px solid rgba(0,0,0,0.08)' }}>
                         {ev.type}
                       </span>
                     </div>

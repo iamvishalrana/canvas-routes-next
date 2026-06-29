@@ -9,9 +9,9 @@ export const metadata = { title: 'Revenue — Admin' }
 const TYPE_LABELS = {
   membership_routes:       'Routes Member',
   membership_inner_circle: 'Inner Circle',
-  road_trip_standard:      'Road Trip (Standard)',
-  road_trip_member:        'Road Trip (Member)',
-  road_trip_inner_circle:  'Road Trip (Inner Circle)',
+  road_trip_standard:      'Route (Standard)',
+  road_trip_member:        'Route (Member)',
+  road_trip_inner_circle:  'Route (Inner Circle)',
   road_trip_wtet:          'WTET — July 5, 2026',
   event_registration:      'Event Registration',
 }
