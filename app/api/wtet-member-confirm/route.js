@@ -52,27 +52,23 @@ export async function POST(request) {
 
   const admin = createAdminClient()
 
-  // Check if this exact PI was already processed by a prior confirm call.
-  // We do NOT guard on stripe_payment_status === 'paid' alone — the webhook sets that
-  // for members without sending an email, so guarding on it would silently drop the
-  // confirmation email whenever the webhook beats this route (common on fast connections).
-  const { data: existingApp } = await admin.from('applications')
-    .select('stripe_payment_intent_id, stripe_paid_at')
-    .eq('email', normalEmail)
-    .maybeSingle()
-  const alreadyConfirmed = existingApp?.stripe_payment_intent_id === pi.id
-    && existingApp?.stripe_paid_at != null
-
+  // Unconditionally update payment fields — safe to run multiple times.
   const { error: confirmDbErr } = await admin.from('applications').update({
     stripe_payment_intent_id: pi.id,
     stripe_payment_status: 'paid',
     stripe_amount_paid: pi.amount_received,
     stripe_payment_type: 'road_trip_wtet',
-    stripe_paid_at: new Date().toISOString(),
   }).eq('email', normalEmail)
   if (confirmDbErr) captureException(confirmDbErr, { context: 'wtet-member-confirm-db', piId: pi.id })
 
-  if (!process.env.RESEND_API_KEY || alreadyConfirmed) return Response.json({ ok: true })
+  // Atomic compare-and-swap: only set stripe_paid_at if not already set.
+  // Whichever concurrent call wins this update (normal flow vs 3DS redirect handler)
+  // is the one that sends emails — prevents duplicate confirmation emails.
+  const { data: claimedRows } = await admin.from('applications').update({
+    stripe_paid_at: new Date().toISOString(),
+  }).eq('email', normalEmail).is('stripe_paid_at', null).select('id')
+
+  if (!process.env.RESEND_API_KEY || !claimedRows?.length) return Response.json({ ok: true })
 
   // Fire emails after response — after() keeps the function alive until both fetches settle.
   after(() => Promise.allSettled([

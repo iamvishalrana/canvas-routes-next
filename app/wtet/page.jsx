@@ -273,7 +273,8 @@ export default function WtetPage() {
   const [closedMsg, setClosedMsg]     = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
   const [countdown, setCountdown]     = useState(null)
-  const [memberProfile, setMemberProfile] = useState(null) // set when a member is logged in
+  const [memberProfile, setMemberProfile] = useState(null)
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
 
@@ -374,6 +375,10 @@ export default function WtetPage() {
             ? m.car_model.replace(new RegExp(`^${(m.car_make || '').trim()}\\s*`, 'i'), '').trim()
             : f.carModel,
         }))
+        fetch('/api/wtet-member-register')
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { if (d?.alreadyRegistered) setAlreadyRegistered(true) })
+          .catch(() => {})
       })
       .catch(() => {})
   }, [])
@@ -1294,8 +1299,14 @@ export default function WtetPage() {
 
                 {(status==='error') && <div style={{fontSize:'12px',color:'#7B2032',marginBottom:'0.75rem'}}>{serverError}</div>}
 
-                <button type="submit" disabled={status==='loading'}
-                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:status==='loading'?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:status==='loading'?'rgba(15,30,20,0.45)':'#0F1E14',color:'#F5F1EC',border:'none',marginBottom:'1rem'}}>
+                {alreadyRegistered && memberProfile && (
+                  <div style={{padding:'0.85rem 1rem',background:'rgba(59,107,47,0.06)',border:'0.5px solid rgba(59,107,47,0.3)',marginBottom:'1rem',fontSize:'13px',color:'#3B6B2F',fontFamily:'var(--font-inter),sans-serif',lineHeight:'1.5'}}>
+                    You&apos;re already registered for this event. Check your email for confirmation details.
+                  </div>
+                )}
+
+                <button type="submit" disabled={status==='loading' || (alreadyRegistered && !!memberProfile)}
+                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'rgba(15,30,20,0.45)':'#0F1E14',color:'#F5F1EC',border:'none',marginBottom:'1rem',opacity:(alreadyRegistered&&!!memberProfile)?0.5:1}}>
                   {status==='loading' ? 'Setting up payment…' : memberProfile ? 'Secure your spot — $179' : form.isMember === 'no' ? `Continue to payment — $${price}` : 'Continue to payment'}
                 </button>
 
