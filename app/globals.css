@@ -277,13 +277,14 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 }
 
 .btn-waitlist {
-  color: #7B2032;
-  background: transparent;
-  border: 1px solid #7B2032;
+  color: #F5F1EC;
+  background: #0F1E14;
+  border: 1px solid #0F1E14;
   transition: background 0.2s, color 0.2s, transform 0.1s ease;
 }
 .btn-waitlist:hover {
-  background: #7B2032;
+  background: #1a3324;
+  border-color: #1a3324;
   color: #F5F1EC;
 }
 
