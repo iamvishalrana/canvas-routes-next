@@ -768,7 +768,7 @@ export default function MembershipContent() {
       {/* ── REGISTRATION ────────────────────────────────────────────── */}
       <section id="register" style={{ position: 'relative', padding: 'clamp(5rem,8vw,7rem) clamp(1.5rem,5vw,5rem)' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img src="/membership-form.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
+          <img src="/convoy.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.65) 0%, rgba(10,20,13,0.72) 100%)' }} />
         </div>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)', zIndex: 1 }} />
