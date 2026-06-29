@@ -159,6 +159,7 @@ export async function POST(request, { params }) {
             ['Event',   `<strong>${ev.name}</strong>`],
             ['Name',    `<strong>${memberName}</strong>`],
             ['Email',   `<a href="mailto:${user.email}" style="color:#1a1a1a;">${user.email}</a>`],
+            ['Tier',    member.tier || '—'],
             ['Payment', amountLabel],
           ]),
         }),
