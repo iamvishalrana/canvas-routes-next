@@ -220,6 +220,7 @@ export async function POST(request) {
   }
 
   // Save to DB first so data is never lost if email sending fails
+  let alreadyNotified = false
   try {
     const supabase = createAdminClient()
     const { data: existing } = await supabase
@@ -232,6 +233,11 @@ export async function POST(request) {
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== paymentIntentId && stripe) {
       stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
     }
+
+    // Dedup gate: if this PI's waitlist already ran (e.g. 3DS redirect + normal flow both fire),
+    // skip sending emails a second time. The upsert below is still safe to run (idempotent).
+    alreadyNotified = existing?.stripe_payment_intent_id === paymentIntentId
+      && (existing?.registrations || []).some(r => r.event === 'Canvas Routes Membership')
 
     const membershipReg = { event: 'Canvas Routes Membership', tier, registered_at: new Date().toISOString(), attended: null }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== 'Canvas Routes Membership')
@@ -263,7 +269,8 @@ export async function POST(request) {
   }
 
   // Fire emails after response — after() keeps the function alive until both fetches settle.
-  if (process.env.RESEND_API_KEY) {
+  // Skip if this PI's waitlist already ran (dedup gate set above).
+  if (process.env.RESEND_API_KEY && !alreadyNotified) {
     after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',

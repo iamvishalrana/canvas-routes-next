@@ -432,6 +432,7 @@ export default function MembershipContent() {
   const honeypotRef                       = useRef(null)
   const submittingRef                     = useRef(false)
   const purchasePriceRef                  = useRef(null)
+  const [alreadyApplied, setAlreadyApplied] = useState(false)
 
   // Fire Purchase pixel event once on payment success
   useEffect(() => {
@@ -510,6 +511,7 @@ export default function MembershipContent() {
     setStatus('loading'); setSubmitError(null)
     try {
       const type = form.tier === 'Inner Circle' ? 'membership_inner_circle' : 'membership_routes'
+      const previousPiId = clientSecret ? clientSecret.split('_secret_')[0] : null
       const res = await fetch('/api/stripe/create-payment-intent', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -518,6 +520,7 @@ export default function MembershipContent() {
           phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '',
           dob: form.dob_month && form.dob_day ? `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}` : '',
           year: form.year, carMake: form.carMake, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), source: form.source,
+          previousPiId,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -904,8 +907,18 @@ export default function MembershipContent() {
                   </label>
                   <input id="inp-email" type="email" name="email" value={form.email} placeholder="your@email.com" autoComplete="email" inputMode="email"
                     aria-invalid={errors.email ? 'true' : 'false'} aria-required="true"
-                    onChange={e => set('email', e.target.value)}
-                    onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
+                    onChange={e => { set('email', e.target.value); setAlreadyApplied(false) }}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={e => {
+                      setFocusedField(null)
+                      const val = e.target.value.trim()
+                      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                        fetch(`/api/public/membership-check?email=${encodeURIComponent(val)}`)
+                          .then(r => r.ok ? r.json() : null)
+                          .then(d => { if (d?.hasApplication) setAlreadyApplied(true) })
+                          .catch(() => {})
+                      }
+                    }}
                     style={inp('email')} />
                 </div>
                 <div id="mem-field-phone">
@@ -1116,6 +1129,12 @@ export default function MembershipContent() {
                   <a href="/terms" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms &amp; Conditions</a>
                 </span>
               </label>
+
+              {alreadyApplied && (
+                <div style={{ padding: '0.85rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', marginBottom: '1rem', fontSize: '13px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', lineHeight: '1.5' }}>
+                  It looks like you&apos;ve already submitted an application with this email. Continuing will update your existing application.
+                </div>
+              )}
 
               {submitError && <div style={{ fontSize: '12px', color: '#d06070', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{submitError}</div>}
 

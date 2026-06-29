@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { stripe } from '../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../lib/supabase/admin.js'
 import { captureException, captureMessage } from '../../../../lib/sentry.js'
@@ -193,7 +194,7 @@ export async function POST(request) {
           const firstName   = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel  = piEventName || 'Whips to Eastern Townships'
           const amountFmt   = `$${(amountHeld / 100).toFixed(2)} CAD`
-          await Promise.all([
+          after(() => Promise.allSettled([
             // Registrant hold email
             fetch('https://api.resend.com/emails', {
               method: 'POST',
@@ -232,7 +233,7 @@ export async function POST(request) {
                 ]),
               }),
             }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
-          ])
+          ]))
         }
 
         // Send membership hold emails only if membership-waitlist didn't already run.
@@ -246,7 +247,7 @@ export async function POST(request) {
           const firstName  = (name || '').trim().split(' ')[0] || 'there'
           const tierLabel  = type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
           const amountFmt  = `$${(amountHeld / 100).toFixed(2)} CAD`
-          await Promise.all([
+          after(() => Promise.allSettled([
             fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -280,7 +281,7 @@ export async function POST(request) {
                 ]),
               }),
             }).catch(err => captureException(err, { context: 'membership-hold-admin-email-rescue', email: normalEmail })),
-          ])
+          ]))
         }
         break
       }

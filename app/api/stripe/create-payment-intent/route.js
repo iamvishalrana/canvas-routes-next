@@ -25,7 +25,7 @@ export async function POST(request) {
   // For membership PIs, accept optional form fields to store in metadata.
   // This ensures the webhook rescue path can write full application data
   // even if the client closes the tab before /api/membership-waitlist fires.
-  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source, _health_check } = body
+  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source, previousPiId, _health_check } = body
 
   if (!type || !VALID_TYPES.includes(type)) {
     return Response.json({ error: 'Invalid payment type.' }, { status: 400 })
@@ -69,6 +69,11 @@ export async function POST(request) {
       // capture_method: 'manual' is fully compatible with Apple Pay.
       ...(isMembership ? { capture_method: 'manual' } : {}),
     })
+
+    // Cancel the old PI if the user went back and re-submitted (e.g. tier switch) — prevents ghost holds
+    if (previousPiId && previousPiId.startsWith('pi_') && previousPiId !== paymentIntent.id) {
+      stripe.paymentIntents.cancel(previousPiId).catch(() => {})
+    }
 
     return Response.json({ clientSecret: paymentIntent.client_secret })
   } catch (err) {
