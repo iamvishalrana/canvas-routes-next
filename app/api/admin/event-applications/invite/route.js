@@ -28,7 +28,7 @@ export async function POST(request) {
   ])
   if (!app) return Response.json({ error: 'Application not found.' }, { status: 404 })
 
-  const isRoadTrip = eventType === 'Road Trip'
+  const isRoadTrip = eventType === 'Road Trip' || eventType === 'Route'
 
   // Expire 7 days from now (or 48h before event if date is within 7 days)
   const now = new Date()

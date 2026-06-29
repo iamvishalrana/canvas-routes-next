@@ -30,7 +30,7 @@ export async function POST(request, { params }) {
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
   if (!app) return Response.json({ error: 'No application found for this email. Add them as a registrant first.' }, { status: 404 })
 
-  const isRoadTrip = ev.type === 'Road Trip'
+  const isRoadTrip = ev.type === 'Road Trip' || ev.type === 'Route'
   const now = new Date()
   let expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   if (ev.date) {

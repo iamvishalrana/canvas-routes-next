@@ -115,7 +115,7 @@ export async function POST(request, { params }) {
     } else if (!existingToken) {
       const firstName = trimmedName.split(' ')[0]
       const rsvpUrl = `${SITE}/rsvp/${tokenRow.token}`
-      const isRoadTrip = ev.type === 'Road Trip'
+      const isRoadTrip = ev.type === 'Road Trip' || ev.type === 'Route'
       const textSignoff = isRoadTrip ? 'See you on the road' : 'See you there'
 
       after(() =>
