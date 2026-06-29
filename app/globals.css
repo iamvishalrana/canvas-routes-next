@@ -99,15 +99,15 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   text-transform: uppercase;
   padding: 0.6rem 1.4rem;
   background: transparent;
-  border: 1px solid #0F1E14;
+  border: 1px solid #45643c;
   text-decoration: none;
-  color: #0F1E14;
+  color: #45643c;
   text-align: center;
   transition: background 0.2s, color 0.2s;
   position: relative;
   overflow: hidden;
 }
-.nav-join:hover { background: #0F1E14; color: #F5F1EC; }
+.nav-join:hover { background: #45643c; color: #F5F1EC; }
 .nav-join::after {
   content: '';
   position: absolute;
@@ -280,13 +280,13 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 }
 
 .btn-waitlist {
-  color: #0F1E14;
+  color: #45643c;
   background: transparent;
-  border: 1px solid #0F1E14;
+  border: 1px solid #45643c;
   transition: background 0.2s, color 0.2s, transform 0.1s ease;
 }
 .btn-waitlist:hover {
-  background: #0F1E14;
+  background: #45643c;
   color: #F5F1EC;
 }
 

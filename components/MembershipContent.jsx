@@ -301,7 +301,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
             />
             <button type="button" onClick={handleApplyPromo}
               disabled={applyingPromo || !promoInput.trim()}
-              style={{ padding: '0.65rem 1.1rem', background: promoInput.trim() ? '#0F1E14' : '#f5f5f3', border: `0.5px solid ${promoInput.trim() ? '#0F1E14' : 'rgba(0,0,0,0.15)'}`, color: promoInput.trim() ? '#fff' : '#aaa', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo ? 0.5 : 1, flexShrink: 0, fontWeight: '500', transition: 'all 0.15s', borderRadius: 0 }}>
+              style={{ padding: '0.65rem 1.1rem', background: promoInput.trim() ? '#45643c' : '#f5f5f3', border: `0.5px solid ${promoInput.trim() ? '#45643c' : 'rgba(0,0,0,0.15)'}`, color: promoInput.trim() ? '#fff' : '#aaa', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo ? 0.5 : 1, flexShrink: 0, fontWeight: '500', transition: 'all 0.15s', borderRadius: 0 }}>
               {applyingPromo ? '…' : 'Apply'}
             </button>
           </div>
@@ -323,7 +323,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 
       {/* Pay button */}
       <button type="submit" disabled={!stripe || paying}
-        style={{ width: '100%', padding: '1.05rem', background: paying ? '#2a4f20' : '#0F1E14', border: 'none', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'background 0.2s', marginBottom: '0.85rem' }}>
+        style={{ width: '100%', padding: '1.05rem', background: paying ? 'rgba(69,100,60,0.5)' : '#45643c', border: 'none', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'background 0.2s', marginBottom: '0.85rem' }}>
         {paying ? (
           <>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -632,7 +632,7 @@ export default function MembershipContent() {
               Canvas Routes is built around the drive — not the parking lot. Members get priority access to every Cars &amp; Coffee, every route, and every experience on the calendar from June through October.
             </p>
             <a href="#register" onClick={e => { e.preventDefault(); document.getElementById('register')?.scrollIntoView({ behavior: 'smooth' }) }}
-              style={{ display: 'inline-block', padding: '0.85rem 2rem', background: '#0F1E14', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+              style={{ display: 'inline-block', padding: '0.85rem 2rem', background: '#45643c', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
               Apply now →
             </a>
           </FadeUp>
@@ -1139,7 +1139,7 @@ export default function MembershipContent() {
               {submitError && <div style={{ fontSize: '12px', color: '#d06070', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{submitError}</div>}
 
               <button type="submit" disabled={status === 'loading'} style={{
-                width: '100%', padding: '1.1rem', background: '#0F1E14',
+                width: '100%', padding: '1.1rem', background: '#45643c',
                 border: 'none', color: '#c5a882',
                 fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
                 fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500',

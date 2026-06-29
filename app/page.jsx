@@ -563,7 +563,7 @@ export default function Home() {
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em",animation:"cr-fade-up 0.65s ease both",animationDelay:"680ms"}}>The Community. The Routes. The Canvas.</div>
         <div className="hero-buttons" style={{animation:"cr-fade-up 0.65s ease both",animationDelay:"820ms"}}>
           <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}><span className="join-label-desktop">Join</span><span className="join-label-mobile">Become a Member</span></Link>
-          <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #1a1a1a",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#1a1a1a",textDecoration:"none",background:"transparent"}}>About Us</a>
+          <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #7B2032",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",textDecoration:"none",background:"transparent"}}>About Us</a>
         </div>
         <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}
           aria-label="Scroll down"
