@@ -587,7 +587,7 @@ export default function ProfilePage() {
 
               <div style={{ display: 'flex', gap: '0.65rem', marginTop: '1.25rem' }}>
                 <button type="submit" disabled={saving}
-                  style={{ padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: saving ? 0.6 : 1 }}>
+                  style={{ padding: '0.9rem 2rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: saving ? 0.6 : 1 }}>
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
                 <button type="button" onClick={cancelEditing} disabled={saving}
@@ -601,7 +601,7 @@ export default function ProfilePage() {
 
         {/* ── Right: Password ── */}
         <div className="cr-anim-right">
-          <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff' }}>
+          <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff', boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03)' }}>
             <button
               type="button"
               className="pw-toggle"
@@ -651,7 +651,7 @@ export default function ProfilePage() {
                     </div>
                   )}
                   <button type="submit" disabled={savingPw}
-                    style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: savingPw ? 0.6 : 1 }}>
+                    style={{ padding: '0.85rem 1.75rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: savingPw ? 0.6 : 1 }}>
                     {savingPw ? 'Updating…' : 'Update Password'}
                   </button>
                 </form>

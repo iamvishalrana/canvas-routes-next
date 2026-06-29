@@ -153,10 +153,11 @@ export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames
       <style>{`
         .ev-card {
           transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03);
         }
         @media (hover: hover) {
           .ev-card:hover {
-            box-shadow: 0 6px 28px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.05);
             transform: translateY(-2px);
             border-color: rgba(197,168,130,0.35) !important;
           }

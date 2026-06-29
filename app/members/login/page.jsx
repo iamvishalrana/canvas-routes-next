@@ -149,7 +149,7 @@ export default function LoginPage() {
             )}
 
             <button type="submit" disabled={loading}
-              style={{ width: '100%', padding: '0.95rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+              style={{ width: '100%', padding: '0.95rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
@@ -174,7 +174,7 @@ export default function LoginPage() {
             </div>
             {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
             <button type="submit" disabled={loading}
-              style={{ width: '100%', padding: '0.95rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1 }}>
+              style={{ width: '100%', padding: '0.95rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1 }}>
               {loading ? 'Sending…' : 'Send Reset Link'}
             </button>
           </form>

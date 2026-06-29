@@ -190,7 +190,7 @@ export default async function DashboardPage() {
           animation: dash-scale-in 0.42s cubic-bezier(0.34,1.3,0.64,1) both;
           animation-delay: 0.06s;
         }
-        .dash-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.08); overflow: hidden; }
+        .dash-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.08); overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04); }
         .card-head {
           padding: 1.25rem 1.75rem;
           border-bottom: 0.5px solid rgba(0,0,0,0.06);

@@ -158,7 +158,7 @@ export default function ResetPasswordPage() {
 
               {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1rem' }}>{error}</div>}
               <button type="submit" disabled={loading}
-                style={{ width: '100%', padding: '0.9rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1 }}>
+                style={{ width: '100%', padding: '0.9rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1 }}>
                 {loading ? 'Setting password…' : 'Set Password'}
               </button>
             </form>
