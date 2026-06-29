@@ -7,7 +7,6 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import SiteFooter from '../components/SiteFooter'
 import FadeUp from '../components/FadeUp'
 import SiteNav from '../components/SiteNav'
-import PageLoader from '../components/PageLoader'
 import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -413,7 +412,6 @@ export default function Home() {
   return (
     <ErrorBoundary>
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a"}}>
-      <PageLoader images={['/route-photo.jpg']} minMs={2000} />
 
       <SiteNav
         ctaLabel={membershipLive ? 'Become a Member' : 'Join'}
