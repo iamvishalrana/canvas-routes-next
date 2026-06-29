@@ -620,12 +620,12 @@ export default function Home() {
                   Our car meets are where the community comes together — great cars, genuine conversation, and the kind of energy that doesn't need to be manufactured. First time or fifth time, the vibe is the same.
                 </p>
                 <div className="meets-cards-grid">
-                  <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1"}}>
+                  <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1",boxShadow:"0 3px 16px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04)"}}>
                     <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",marginBottom:"0.8rem"}}>Open Meets</div>
                     <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Everyone welcome</div>
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>No membership required — just show up. Meet people who get it, see what Canvas Routes is about, and find out why people keep coming back. The format changes, the energy doesn't.</p>
                   </div>
-                  <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1"}}>
+                  <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1",boxShadow:"0 3px 16px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04)"}}>
                     <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.8rem"}}>Private Meets</div>
                     <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Members only</div>
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, a tighter group, and a different kind of evening. Members are notified directly when one is announced — these don't get advertised.</p>

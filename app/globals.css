@@ -194,6 +194,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   justify-content: center;
   text-align: center;
   padding: 182px 2rem 6rem;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.07);
 }
 .hero-logo { width: 750px; max-width: 92vw; height: auto; display: block; margin: 0 auto 1.5rem; }
 .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 3rem; }
@@ -213,6 +214,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 14px 22px 56px rgba(0,0,0,0.14), 4px 6px 16px rgba(0,0,0,0.07);
 }
 
 .expand-btn {
@@ -266,7 +268,8 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 }
 
 .event-card {
-  transition: box-shadow 0.25s ease, background 0.25s ease;
+  transition: box-shadow 0.25s ease, background 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.07);
 }
 
 .btn-push {
@@ -304,7 +307,8 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 
 .event-card:hover {
   background: #DDD6CA !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(197, 168, 130, 0.15);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(197,168,130,0.2);
+  transform: translateY(-2px);
 }
 
 .contact-links {
@@ -321,10 +325,16 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   padding: 1.5rem 2rem;
   border: 0.5px solid rgba(0,0,0,0.15);
   background: #F5F1EC;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.2s;
   min-width: 240px;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
 }
-.contact-link:hover { border-color: #1a1a1a; background: #EDE8E1; }
+.contact-link:hover {
+  border-color: #1a1a1a;
+  background: #EDE8E1;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.05);
+  transform: translateY(-1px);
+}
 .contact-link-icon {
   width: 44px;
   height: 44px;
@@ -334,6 +344,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   justify-content: center;
   color: #7B2032;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .join-form {
