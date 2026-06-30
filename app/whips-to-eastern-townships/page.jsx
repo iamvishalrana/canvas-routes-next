@@ -249,10 +249,23 @@ export default function EasternTownshipsPage() {
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
-        .car-card { transition: box-shadow 0.2s ease, transform 0.2s ease; }
-        .car-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); }
+        .car-card { transition: box-shadow 0.2s ease, transform 0.2s ease; animation: car-nudge 3.5s ease-in-out infinite; }
+        .car-card:nth-child(2) { animation-delay: 0.4s; }
+        .car-card:nth-child(3) { animation-delay: 0.8s; }
+        .car-card:nth-child(4) { animation-delay: 1.2s; }
+        .car-card:nth-child(5) { animation-delay: 1.6s; }
+        .car-card:nth-child(6) { animation-delay: 2.0s; }
+        .car-card:nth-child(7) { animation-delay: 2.4s; }
+        .car-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); animation: none; }
         .car-card .car-img { transition: transform 0.3s ease; }
         .car-card:hover .car-img { transform: scale(1.04); }
+        @keyframes car-nudge {
+          0%, 85%, 100% { transform: translateY(0) rotate(0deg); }
+          88% { transform: translateY(-3px) rotate(-1deg); }
+          92% { transform: translateY(0) rotate(1deg); }
+          95% { transform: translateY(-2px) rotate(0deg); }
+          98% { transform: translateY(0); }
+        }
         @media (max-width: 480px) {
           .quick-info-item { border-right: none !important; margin-right: 0 !important; border-bottom: 0.5px solid rgba(0,0,0,0.08); padding-right: 0 !important; }
           .quick-info-item:last-child { border-bottom: none; }
@@ -423,12 +436,6 @@ export default function EasternTownshipsPage() {
             </ul>
           </div>
 
-          {/* Tap hint */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem' }}>
-            <span style={{ fontSize: '15px' }}>👆</span>
-            <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.04em' }}>Tap any car to learn more about the build</span>
-          </div>
-
           {/* Grouped car grids */}
           {[1, 2, 3].map(g => {
             const groupCars = PARTICIPANTS.filter(p => p.group === g)
@@ -530,7 +537,7 @@ export default function EasternTownshipsPage() {
                 'If you get separated, do not panic — proceed to the next stop on the route and wait.',
                 'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
                 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
-                'Fuel up at the Shell station in Bromont before heading into the backroads.',
+                'Fuel up at the Shell in Brossard before we depart — there are limited options once we hit the backroads.',
                 'Respect the roads and the communities we pass through.',
               ].map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
