@@ -53,7 +53,7 @@ export default function RsvpPage() {
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState(null)
 
-  const isRoadTrip = eventType === 'Road Trip'
+  const isRoadTrip = eventType === 'Road Trip' || eventType === 'Route'
 
   useEffect(() => {
     if (!token) return
