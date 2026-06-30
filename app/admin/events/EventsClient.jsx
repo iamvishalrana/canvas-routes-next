@@ -1136,7 +1136,7 @@ export default function EventsClient() {
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
                               const isPending = confirmEmailPending === indivKey
-                              const canSend = r.email && r.email !== '—' && r.status !== 'confirmed' && r.type !== 'Member'
+                              const canSend = r.email && r.email !== '—' && r.status !== 'confirmed'
                               const isDeletePending = deleteRegConfirm === indivKey
                               const isDeleting = !!deletingReg[indivKey]
                               const deleteErr = deleteRegErr[indivKey]
