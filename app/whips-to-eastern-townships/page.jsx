@@ -24,6 +24,8 @@ const STOPS = [
   { label: 'Auberge & Restaurant McGowan', note: 'Georgeville', tag: 'Lakeside Lunch', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
 ]
 
+const SECTION_LABEL = { fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', display: 'block', fontWeight: '400', fontStyle: 'normal' }
+
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
   function copy() {
@@ -180,12 +182,24 @@ export default function EasternTownshipsPage() {
 
   useEffect(() => {
     function onScroll() {
-      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 80
-      setAtBottom(nearBottom)
+      setAtBottom(window.innerHeight + window.scrollY >= document.body.scrollHeight - 80)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // Scroll-triggered reveal animations
+  useEffect(() => {
+    if (!authed) return
+    const els = document.querySelectorAll('.scroll-reveal')
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('revealed'); obs.unobserve(e.target) }
+      })
+    }, { threshold: 0.06 })
+    els.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [authed])
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
@@ -209,14 +223,17 @@ export default function EasternTownshipsPage() {
 
   if (!authed) {
     return (
-      <div style={{ minHeight: '100svh', display: 'flex', flexWrap: 'wrap', fontFamily: 'sans-serif' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexWrap: 'wrap', fontFamily: 'sans-serif' }}>
+        <style>{`
+          @media (max-width: 640px) { .pw-half { flex: 1 1 100% !important; min-height: 45vh !important; } }
+        `}</style>
         {/* Left — beige */}
         <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#F5F1EC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', textAlign: 'center', position: 'relative', boxSizing: 'border-box' }}>
           <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '0.5px', background: 'rgba(0,0,0,0.08)' }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '140px', marginBottom: '2.5rem', opacity: 0.88 }} />
-          <div style={{ color: '#0F1E14', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '22px', lineHeight: '1.25', marginBottom: '0.5rem' }}>Whips to Eastern Townships</div>
-          <div style={{ color: '#999', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase' }}>Sunday · July 5, 2026</div>
+          <h1 style={{ color: '#0F1E14', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '22px', lineHeight: '1.25', marginBottom: '0.5rem', fontWeight: '400' }}>Whips to Eastern Townships</h1>
+          <p style={{ color: '#999', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', margin: 0 }}>Sunday · July 5, 2026</p>
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.75rem' }}>
             {['Chemin des Cantons', 'Vineyard Stop', 'Lakeside Lunch'].map(tag => (
               <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', border: '0.5px solid rgba(0,0,0,0.12)', padding: '3px 10px' }}>{tag}</span>
@@ -227,7 +244,7 @@ export default function EasternTownshipsPage() {
         {/* Right — dark green */}
         <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', boxSizing: 'border-box' }}>
           <div style={{ width: '100%', maxWidth: '300px' }}>
-            <div style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center' }}>Participants only</div>
+            <p style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center', margin: '0 0 1.75rem' }}>Participants only</p>
             <form onSubmit={submit}>
               <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
                 <input
@@ -253,7 +270,7 @@ export default function EasternTownshipsPage() {
                   {showPw ? 'hide' : 'show'}
                 </button>
               </div>
-              {err && <div style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>Incorrect password — try again</div>}
+              {err && <p style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>Incorrect password — try again</p>}
               <button
                 type="submit"
                 style={{ width: '100%', padding: '0.9rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'sans-serif', fontWeight: '700' }}
@@ -283,6 +300,7 @@ export default function EasternTownshipsPage() {
           <path d="M1 1.5L8 8.5L15 1.5" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
+
       <style>{`
         /* Android/cross-browser base */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -292,6 +310,10 @@ export default function EasternTownshipsPage() {
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
 
+        /* Scroll-triggered reveal */
+        .scroll-reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
+
         /* Car card shake — triggers every ~10s */
         .car-card { transition: box-shadow 0.2s ease; animation: car-nudge 10s ease-in-out infinite; will-change: transform; }
         .car-card:nth-child(2) { animation-delay: 1.2s; }
@@ -300,7 +322,7 @@ export default function EasternTownshipsPage() {
         .car-card:nth-child(5) { animation-delay: 4.8s; }
         .car-card:nth-child(6) { animation-delay: 6.0s; }
         .car-card:nth-child(7) { animation-delay: 7.2s; }
-        .car-card:hover, .car-card:active { box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation-play-state: paused; }
+        .car-card:hover, .car-card:active { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; animation-play-state: paused; }
         .car-card .car-img { transition: transform 0.3s ease; will-change: transform; transform: translateZ(0); }
         .car-card:hover .car-img, .car-card:active .car-img { transform: translateZ(0) scale(1.04); }
         @keyframes car-nudge {
@@ -310,10 +332,6 @@ export default function EasternTownshipsPage() {
           96% { transform: translateY(-2px) rotate(-0.6deg); }
           98% { transform: translateY(0) rotate(0deg); }
         }
-
-        /* Section fade-in on load */
-        .fade-section { opacity: 0; transform: translateY(14px); animation: section-in 0.6s ease forwards; }
-        @keyframes section-in { to { opacity: 1; transform: translateY(0); } }
 
         /* Scroll indicator */
         .scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
@@ -334,47 +352,44 @@ export default function EasternTownshipsPage() {
       `}</style>
 
       {/* Header */}
-      <div style={{
+      <header style={{
         position: 'relative', padding: '3.5rem 1.25rem 3rem', textAlign: 'center',
         backgroundImage: 'url(/wtet.png)', backgroundSize: 'cover', backgroundPosition: 'center',
-        overflow: 'hidden',
+        overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
-          <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2' }}>Whips to Eastern Townships</div>
-          <div style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem' }}>Sunday · July 5, 2026</div>
+          <h1 style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Whips to Eastern Townships</h1>
+          <p style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>Sunday · July 5, 2026</p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
             {['Chemin des Cantons', 'Vineyard Stop', 'Lakeside Lunch'].map(tag => (
               <span key={tag} style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '4px 12px' }}>{tag}</span>
             ))}
           </div>
         </div>
-      </div>
+      </header>
 
-      <div style={{ maxWidth: '740px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
+      <main style={{ maxWidth: '740px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
 
         {/* Quick info */}
         <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Meetup</div>
-              <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>10:00 AM · Shell — 8700 Boul. Leduc</div>
-              <div style={{ fontSize: '11px', color: '#bbb', marginTop: '3px' }}>Brossard, QC</div>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
+              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>10:00 AM · Shell — 8700 Boul. Leduc</p>
+              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>Brossard, QC</p>
             </div>
-
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #7B2032' }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>Contact</div>
+              <h2 style={{ ...SECTION_LABEL, color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>Contact</h2>
               <a href="tel:5144373437" style={{ fontSize: '14px', color: '#7B2032', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
               </a>
               <CopyButton text="514-437-3437" />
             </div>
-
             <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Convoy App</div>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Convoy App</h2>
               <a
                 href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
                 target="_blank" rel="noreferrer"
@@ -382,18 +397,16 @@ export default function EasternTownshipsPage() {
               >
                 Download Velox →
               </a>
-              <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5' }}>Stay connected in real time · iOS only</div>
+              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>Stay connected in real time · iOS only</p>
             </div>
-
-
           </div>
         </div>
 
-        {/* Route stops */}
-        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.1s' }}>
+        {/* Itinerary */}
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Itinerary</div>
-            <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a stop to open in Maps</div>
+            <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Itinerary</h2>
+            <p style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', margin: 0 }}>Tap a stop to open in Maps</p>
           </div>
           {STOPS.map((stop, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: '1rem' }}>
@@ -409,7 +422,7 @@ export default function EasternTownshipsPage() {
                   <div style={{ width: '1px', flexGrow: 1, minHeight: '44px', background: 'rgba(0,0,0,0.1)', marginTop: '4px' }} />
                 )}
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, paddingBottom: stop.tag ? 0 : '10px' }}>
                 <a
                   href={stop.href}
                   target="_blank"
@@ -419,30 +432,29 @@ export default function EasternTownshipsPage() {
                     fontWeight: stop.start || stop.end ? '600' : '400',
                     lineHeight: '1.35', textDecoration: 'underline',
                     textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)',
-                    display: 'block', WebkitTapHighlightColor: 'rgba(0,0,0,0.05)',
+                    display: 'block',
                   }}
                 >
                   {stop.label}
                 </a>
-                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
+                <p style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: stop.tag ? '5px' : '10px' }}>
                   {stop.note}
-                </div>
+                </p>
                 {stop.tag && (
-                  <div style={{ display: 'inline-block', marginTop: '5px', marginBottom: '10px', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
+                  <div style={{ display: 'inline-block', marginBottom: '10px', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
                     {stop.tag}
                   </div>
                 )}
-                {!stop.tag && <div style={{ marginBottom: '10px' }} />}
               </div>
             </div>
           ))}
-        </div>
+        </section>
 
-        {/* About the drive */}
-        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.2s' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>The Drive</div>
+        {/* The Drive */}
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>The Drive</h2>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
-            We leave Brossard and take Autoroute 10 East, exiting at Farnham. From there we head south on Route 233, winding through Dunham and down into Frelighsburg for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property. Canvas Routes guests get a special price on any purchases at the winery.
+            We leave Brossard and take Autoroute 10 East, exiting at Farnham. From there we head south on Route 233, winding through Dunham and down into Frelighsburg for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property.
           </p>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
             From there we pick up Chemin des Cantons. The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — quiet, undisturbed pavement with almost no traffic. Coming through Austin, the trees open and Lake Memphrémagog spreads out below.
@@ -450,42 +462,41 @@ export default function EasternTownshipsPage() {
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: 0 }}>
             Auberge &amp; Restaurant McGowan in Georgeville is where the route closes — lunch on the lake. The chef has worked in kitchens that held two Michelin stars — the standard follows. From there, we&rsquo;ll take a call as a group on whether to take the backroads or the highway back to Montreal.
           </p>
-        </div>
+        </section>
 
         {/* Winery pricing */}
-        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.3s' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Winery Stop</div>
-          <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem' }}>Vignoble Domaine du Brésée · Sutton</div>
-            <div style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.2rem', color: '#F5F1EC', fontWeight: '400', lineHeight: '1.3', marginBottom: '0.75rem' }}>
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Winery Stop</h2>
+          <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem', boxShadow: '0 6px 24px rgba(0,0,0,0.22)' }}>
+            <p style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem', marginTop: 0 }}>Vignoble Domaine du Brésée · Sutton</p>
+            <p style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.2rem', color: '#F5F1EC', fontWeight: '400', lineHeight: '1.3', marginBottom: '0.75rem', marginTop: 0 }}>
               $10 off every 3 wine bottles
-            </div>
+            </p>
             <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
               Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines. Cash or card accepted on site.
             </p>
           </div>
-        </div>
+        </section>
 
         {/* Photography */}
-        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.4s' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Photography</div>
-          <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6' }}>On-route photos and video captured throughout the day.</div>
-        </div>
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Photography</h2>
+          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: 0 }}>On-route photos and video captured throughout the day.</p>
+        </section>
 
         {/* Who's Coming */}
-        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.5s' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>
             Who&rsquo;s Coming &mdash; {PARTICIPANTS.length + 1} Cars · 3 Groups + Media
-          </div>
+          </h2>
 
-          {/* Groups explanation */}
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: '0 0 1.25rem' }}>
             With 20 cars on the road, running as a single convoy isn&rsquo;t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We&rsquo;re splitting into three groups of 6&ndash;7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.
           </p>
 
           {/* Group rules */}
-          <div style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem 1.25rem', marginBottom: '2rem', borderLeft: '2px solid rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Group Rules</div>
+          <div style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem 1.25rem', marginBottom: '2rem', borderLeft: '2px solid rgba(0,0,0,0.08)', boxShadow: 'inset 0 1px 0 rgba(0,0,0,0.04)' }}>
+            <h3 style={{ ...SECTION_LABEL, marginBottom: '0.75rem' }}>Group Rules</h3>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {[
                 'Stay with your group for the entire drive — do not switch groups on route.',
@@ -496,7 +507,7 @@ export default function EasternTownshipsPage() {
                 'Group leads set the pace — follow the car directly in front of you and trust the flow.',
               ].map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#c5a882', fontSize: '10px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>—</span>
+                  <span aria-hidden="true" style={{ color: '#c5a882', fontSize: '10px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>—</span>
                   <span style={{ fontSize: '12px', color: '#555', lineHeight: '1.65' }}>{rule}</span>
                 </li>
               ))}
@@ -511,30 +522,32 @@ export default function EasternTownshipsPage() {
               <div key={g} style={{ marginBottom: '1.5rem' }}>
                 <button
                   onClick={() => setGroupsOpen(prev => prev.map((v, i) => i === idx ? !v : v))}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer', marginBottom: isOpen ? '1.25rem' : 0 }}
+                  aria-expanded={isOpen}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer', marginBottom: isOpen ? '0.75rem' : 0 }}
                 >
-                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', whiteSpace: 'nowrap' }}>
+                  <h3 style={{ ...SECTION_LABEL, whiteSpace: 'nowrap', margin: 0 }}>
                     Group {g} &mdash; {groupCars.length} Cars
-                  </div>
+                  </h3>
                   <div style={{ flex: 1, height: '0.5px', background: 'rgba(0,0,0,0.1)' }} />
-                  <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</div>
+                  <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
                 </button>
                 {isOpen && (
-                  <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', marginBottom: '1rem' }}>Tap a photo to learn more about the car</div>
+                  <p style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', margin: '0 0 1rem' }}>Tap a photo to learn more about the car</p>
                 )}
                 {isOpen && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
                     {groupCars.map(p => (
                       <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
                         className="car-card"
-                        style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                        aria-label={`${p.name} — ${p.car}`}
+                        style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 10px rgba(0,0,0,0.09)' }}>
                         <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
                           {p.photo ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.photo} alt={p.name} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            <img src={p.photo} alt={`${p.name}'s ${p.car}`} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                           ) : (
                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
+                              <span aria-hidden="true" style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
                                 {p.name.split(' ').map(w => w[0]).join('')}
                               </span>
                             </div>
@@ -542,10 +555,10 @@ export default function EasternTownshipsPage() {
                         </div>
                         <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
                           {p.lead && (
-                            <div style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '3px' }}>Group Lead</div>
+                            <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>Group Lead</p>
                           )}
-                          <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
-                          {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
+                          <p style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em', margin: 0 }}>{p.name}</p>
+                          {p.car && <p style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: 0 }}>{p.car}</p>}
                         </div>
                       </button>
                     ))}
@@ -558,37 +571,37 @@ export default function EasternTownshipsPage() {
           {/* Car modal */}
           {selectedCar && (
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${selectedCar.name} — ${selectedCar.car}`}
               onClick={() => setSelectedCar(null)}
               style={{ position: 'fixed', inset: 0, background: 'rgba(10,18,12,0.88)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
             >
               <div
                 onClick={e => e.stopPropagation()}
-                style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto' }}
+                style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
               >
-                {/* Close */}
-                <button onClick={() => setSelectedCar(null)}
+                <button
+                  onClick={() => setSelectedCar(null)}
+                  aria-label="Close"
                   style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', zIndex: 2, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', lineHeight: 1 }}>
                   ×
                 </button>
-
-                {/* Photo */}
                 {selectedCar.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={selectedCar.photo} alt={selectedCar.name} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+                  <img src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
                 ) : (
                   <div style={{ width: '100%', aspectRatio: '4/3', background: '#e8e4de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
+                    <span aria-hidden="true" style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
                       {selectedCar.name.split(' ').map(w => w[0]).join('')}
                     </span>
                   </div>
                 )}
-
-                {/* Info */}
                 <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
-                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem' }}>Canvas Routes · Whips to Eastern Townships 2026</div>
-                  <div style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem' }}>{selectedCar.name}</div>
+                  <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>Canvas Routes · Whips to Eastern Townships 2026</p>
+                  <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem', marginTop: 0 }}>{selectedCar.name}</h2>
                   {selectedCar.car && (
-                    <div style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em' }}>{selectedCar.car}</div>
+                    <p style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em', marginTop: 0 }}>{selectedCar.car}</p>
                   )}
                   {selectedCar.fact && (
                     <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: 0 }}>{selectedCar.fact}</p>
@@ -597,19 +610,20 @@ export default function EasternTownshipsPage() {
               </div>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Convoy rules */}
-        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        {/* Convoy Rules */}
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <button
             onClick={() => setRulesOpen(o => !o)}
+            aria-expanded={rulesOpen}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
           >
-            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999' }}>Convoy Rules</div>
-            <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? '▲ Close' : '▼ Read'}</div>
+            <h2 style={{ ...SECTION_LABEL, margin: 0 }}>Convoy Rules</h2>
+            <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? '▲ Close' : '▼ Read'}</span>
           </button>
           {rulesOpen && (
-            <ul style={{ margin: '1.25rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <ol style={{ margin: '1.25rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {[
                 'Follow the lead car at all times — do not overtake any car in the convoy.',
                 'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.',
@@ -622,23 +636,23 @@ export default function EasternTownshipsPage() {
                 'Give way to the media car at all times — it may move between groups to capture footage. Do not block or race it.',
               ].map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span aria-hidden="true" style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
                   <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
                 </li>
               ))}
-            </ul>
+            </ol>
           )}
-        </div>
+        </section>
 
         {/* Map */}
-        <div style={{ padding: '2rem 0' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Map</div>
-          <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <section className="scroll-reveal" style={{ padding: '2rem 0' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Map</h2>
+          <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
             <RouteMap stops={MAP_MARKERS} />
           </div>
-        </div>
+        </section>
 
-      </div>
+      </main>
       <SiteFooter />
     </div>
   )
