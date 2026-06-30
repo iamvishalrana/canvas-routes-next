@@ -44,6 +44,7 @@ export async function POST(request) {
     const adminCheck = createAdminClient()
     const { data: ev } = await adminCheck.from('events').select('registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
     if (ev && ev.registration_enabled === false) {
+
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
   } catch { /* allow through if events table unavailable */ }

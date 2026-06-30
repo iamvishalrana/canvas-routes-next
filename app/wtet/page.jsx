@@ -323,9 +323,9 @@ export default function WtetPage() {
       .then(r => r.ok ? r.json() : [])
       .then(events => {
         const ev = events.find(e => e.name?.toLowerCase().includes('eastern townships'))
-        if (ev && ev.registration_enabled === false) {
-          setRegOpen(false)
-          setMemberRegOpen(false)
+        if (ev) {
+          if (ev.registration_enabled === false) setMemberRegOpen(false)
+          if (ev.public_registration_enabled === false) setRegOpen(false)
         }
       })
       .catch(() => {})

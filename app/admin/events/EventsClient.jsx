@@ -265,6 +265,7 @@ export default function EventsClient() {
   // Registration toggle
   const [regToggleError, setRegToggleError] = useState({})
   const [regToggling, setRegToggling] = useState({})
+  const [publicRegToggling, setPublicRegToggling] = useState({})
 
   // Reorder
   const [moving, setMoving] = useState(false)
@@ -482,6 +483,24 @@ export default function EventsClient() {
       }
     } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
     finally { setRegToggling(p => ({ ...p, [id]: false })) }
+  }
+
+  async function setPublicRegEnabled(id, value) {
+    setRegToggleError(p => ({ ...p, [id]: null }))
+    setPublicRegToggling(p => ({ ...p, [id]: true }))
+    try {
+      const res = await fetch(`/api/admin/events/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_registration_enabled: value }),
+      })
+      if (res.ok) {
+        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, public_registration_enabled: value } : ev))
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update registration.' }))
+      }
+    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
+    finally { setPublicRegToggling(p => ({ ...p, [id]: false })) }
   }
 
   async function del(id) {
@@ -904,16 +923,29 @@ export default function EventsClient() {
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <ToggleSwitch
-                        checked={!!item.registration_enabled}
-                        onChange={v => setRegEnabled(item.id, v)}
-                        disabled={regToggling[item.id]}
-                        label="Registration enabled"
-                      />
-                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
-                        Reg
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ToggleSwitch
+                          checked={!!item.registration_enabled}
+                          onChange={v => setRegEnabled(item.id, v)}
+                          disabled={regToggling[item.id]}
+                          label="Member registration"
+                        />
+                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                          Members
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ToggleSwitch
+                          checked={item.public_registration_enabled !== false}
+                          onChange={v => setPublicRegEnabled(item.id, v)}
+                          disabled={publicRegToggling[item.id]}
+                          label="Public registration"
+                        />
+                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                          Public
+                        </span>
+                      </div>
                     </div>
                     {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
                     <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price })}>

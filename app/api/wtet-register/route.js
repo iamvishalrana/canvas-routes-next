@@ -26,8 +26,8 @@ export async function POST(request) {
   // Check registration open via events table (Reg toggle in admin Events section)
   try {
     const supabase = createAdminClient()
-    const { data: ev } = await supabase.from('events').select('registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
-    if (ev && ev.registration_enabled === false) {
+    const { data: ev } = await supabase.from('events').select('public_registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
+    if (ev && ev.public_registration_enabled === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
   } catch { /* allow through if events table unavailable */ }
