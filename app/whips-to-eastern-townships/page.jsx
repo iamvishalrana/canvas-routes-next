@@ -314,15 +314,17 @@ export default function EasternTownshipsPage() {
         .scroll-reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
 
-        /* Car card shake — triggers every ~10s */
-        .car-card { transition: box-shadow 0.2s ease; animation: car-nudge 10s ease-in-out infinite; }
-        .car-card:nth-child(2) { animation-delay: 1.2s; }
-        .car-card:nth-child(3) { animation-delay: 2.4s; }
-        .car-card:nth-child(4) { animation-delay: 3.6s; }
-        .car-card:nth-child(5) { animation-delay: 4.8s; }
-        .car-card:nth-child(6) { animation-delay: 6.0s; }
-        .car-card:nth-child(7) { animation-delay: 7.2s; }
-        .car-card:hover, .car-card:active { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; animation-play-state: paused; will-change: transform; }
+        /* Car card — shake on wrapper only, button/image never inside a changing compositing layer */
+        .car-wrap { animation: car-nudge 10s ease-in-out infinite; }
+        .car-wrap:nth-child(2) { animation-delay: 1.2s; }
+        .car-wrap:nth-child(3) { animation-delay: 2.4s; }
+        .car-wrap:nth-child(4) { animation-delay: 3.6s; }
+        .car-wrap:nth-child(5) { animation-delay: 4.8s; }
+        .car-wrap:nth-child(6) { animation-delay: 6.0s; }
+        .car-wrap:nth-child(7) { animation-delay: 7.2s; }
+        .car-wrap:hover, .car-wrap:focus-within { animation-play-state: paused; }
+        .car-card { transition: box-shadow 0.2s ease; }
+        .car-card:hover, .car-card:active { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; }
         .car-card .car-img { transition: transform 0.3s ease; }
         .car-card:hover .car-img, .car-card:active .car-img { transform: scale(1.04); }
         @keyframes car-nudge {
@@ -537,10 +539,11 @@ export default function EasternTownshipsPage() {
                 {isOpen && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
                     {groupCars.map(p => (
-                      <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
+                      <div key={p.name} className="car-wrap">
+                      <button type="button" onClick={() => setSelectedCar(p)}
                         className="car-card"
                         aria-label={`${p.name} — ${p.car}`}
-                        style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 10px rgba(0,0,0,0.09)' }}>
+                        style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 10px rgba(0,0,0,0.09)', width: '100%' }}>
                         <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
                           {p.photo ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -561,6 +564,7 @@ export default function EasternTownshipsPage() {
                           {p.car && <p style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: 0 }}>{p.car}</p>}
                         </div>
                       </button>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -632,7 +636,7 @@ export default function EasternTownshipsPage() {
             </button>
             {selectedCar.photo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+              <img src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} loading="eager" decoding="sync" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block', background: '#e8e4de' }} />
             ) : (
               <div style={{ width: '100%', aspectRatio: '4/3', background: '#e8e4de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span aria-hidden="true" style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
