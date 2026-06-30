@@ -21,18 +21,23 @@ export async function POST(request) {
   const { name, subject, bodyHtml } = await request.json().catch(() => ({}))
   if (!name?.trim()) return Response.json({ error: 'Name is required.' }, { status: 400 })
   if (!subject?.trim()) return Response.json({ error: 'Subject is required.' }, { status: 400 })
-  const supabase = createAdminClient()
-  const templates = await getTemplates(supabase)
-  const newTemplate = {
-    id: crypto.randomUUID(),
-    name: name.trim(),
-    subject: subject.trim(),
-    bodyHtml: bodyHtml || '',
-    createdAt: new Date().toISOString(),
+  try {
+    const supabase = createAdminClient()
+    const templates = await getTemplates(supabase)
+    const newTemplate = {
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      subject: subject.trim(),
+      bodyHtml: bodyHtml || '',
+      createdAt: new Date().toISOString(),
+    }
+    templates.push(newTemplate)
+    const { error } = await supabase.from('settings').upsert({ key: SETTINGS_KEY, value: JSON.stringify(templates) }, { onConflict: 'key' })
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json(newTemplate)
+  } catch (e) {
+    return Response.json({ error: 'Failed to save template.' }, { status: 500 })
   }
-  templates.push(newTemplate)
-  await supabase.from('settings').upsert({ key: SETTINGS_KEY, value: JSON.stringify(templates) }, { onConflict: 'key' })
-  return Response.json(newTemplate)
 }
 
 export async function DELETE(request) {
@@ -40,8 +45,13 @@ export async function DELETE(request) {
   if (authError) return authError
   const { id } = await request.json().catch(() => ({}))
   if (!id) return Response.json({ error: 'ID required.' }, { status: 400 })
-  const supabase = createAdminClient()
-  const templates = (await getTemplates(supabase)).filter(t => t.id !== id)
-  await supabase.from('settings').upsert({ key: SETTINGS_KEY, value: JSON.stringify(templates) }, { onConflict: 'key' })
-  return Response.json({ ok: true })
+  try {
+    const supabase = createAdminClient()
+    const templates = (await getTemplates(supabase)).filter(t => t.id !== id)
+    const { error } = await supabase.from('settings').upsert({ key: SETTINGS_KEY, value: JSON.stringify(templates) }, { onConflict: 'key' })
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json({ ok: true })
+  } catch (e) {
+    return Response.json({ error: 'Failed to delete template.' }, { status: 500 })
+  }
 }
