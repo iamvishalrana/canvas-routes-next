@@ -46,27 +46,27 @@ export default function PageLoader({ images = [], minMs = 1500 }) {
         alt="Canvas Routes"
         style={{ width: '200px', opacity: 0.92 }}
       />
-      {/* Golden streak line — fires once every 2 seconds */}
+      {/* Golden streak line */}
       <div style={{
         marginTop: '2.5rem',
-        width: '120px', height: '1px',
-        background: 'rgba(197,168,130,0.3)',
+        width: '160px', height: '1px',
+        background: 'rgba(197,168,130,0.25)',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute',
           top: '-1px', left: '-110%',
-          width: '55%', height: '3px',
-          background: 'linear-gradient(90deg, transparent 10%, #c5a882 50%, transparent 90%)',
-          animation: 'cr-loader-streak 2s ease-in-out infinite',
+          width: '60%', height: '3px',
+          background: 'linear-gradient(90deg, transparent 0%, #c5a882 40%, #e8d5b0 50%, #c5a882 60%, transparent 100%)',
+          animation: 'cr-loader-streak 3s ease-in-out infinite',
         }} />
       </div>
       <style>{`
         @keyframes cr-loader-streak {
-          0%, 100% { left: -110%; opacity: 0; }
-          5%        { opacity: 1; }
-          40%       { left: 130%; opacity: 0; }
-          41%, 99%  { left: -110%; opacity: 0; }
+          0%        { left: -110%; opacity: 0; }
+          8%        { opacity: 1; }
+          65%       { left: 130%; opacity: 0; }
+          66%, 100% { left: -110%; opacity: 0; }
         }
       `}</style>
     </div>
