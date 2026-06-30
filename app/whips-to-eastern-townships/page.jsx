@@ -462,7 +462,7 @@ export default function EasternTownshipsPage() {
               $10 off every 3 wine bottles
             </div>
             <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
-              Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines — worth taking a few bottles home. Cash or card accepted on site.
+              Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines. Cash or card accepted on site.
             </p>
           </div>
         </div>
