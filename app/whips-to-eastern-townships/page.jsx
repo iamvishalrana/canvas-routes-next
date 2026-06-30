@@ -387,7 +387,7 @@ export default function EasternTownshipsPage() {
 
                 {/* Info */}
                 <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
-                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem' }}>Canvas Routes · WTET 2026</div>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem' }}>Canvas Routes · Whips to Eastern Townships 2026</div>
                   <div style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem' }}>{selectedCar.name}</div>
                   {selectedCar.car && (
                     <div style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em' }}>{selectedCar.car}</div>
