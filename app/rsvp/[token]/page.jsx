@@ -252,6 +252,11 @@ export default function RsvpPage() {
                       </select>
                       <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
+                    {parseInt(passengers) > 2 && (
+                      <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', fontSize: '13px', color: '#8A6535', lineHeight: '1.6', fontFamily: 'var(--font-inter),sans-serif' }}>
+                        Additional passengers beyond 2 are subject to an extra charge. We&apos;ll reach out to confirm the details before anything is processed.
+                      </div>
+                    )}
                     {parseInt(passengers) > 1 && (
                       <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                         <div style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Passenger details</div>
