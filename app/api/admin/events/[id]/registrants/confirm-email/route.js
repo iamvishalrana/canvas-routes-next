@@ -28,7 +28,17 @@ export async function POST(request, { params }) {
   ])
 
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
-  if (!app) return Response.json({ error: 'No application found for this email. Add them as a registrant first.' }, { status: 404 })
+
+  // Auto-create application row for member-portal registrants who don't have one
+  let appId = app?.id
+  if (!appId) {
+    const { data: created } = await admin.from('applications').upsert(
+      { email: email.toLowerCase().trim(), name: name.trim() },
+      { onConflict: 'email', ignoreDuplicates: false }
+    ).select('id').maybeSingle()
+    appId = created?.id ?? (await admin.from('applications').select('id').eq('email', email.toLowerCase().trim()).maybeSingle()).data?.id
+    if (!appId) return Response.json({ error: 'Could not resolve application record.' }, { status: 500 })
+  }
 
   const isRoadTrip = ev.type === 'Road Trip' || ev.type === 'Route'
   const now = new Date()
@@ -44,7 +54,7 @@ export async function POST(request, { params }) {
   const { data: existingToken } = await admin
     .from('rsvp_tokens')
     .select('confirmed_at, answers')
-    .eq('application_id', app.id)
+    .eq('application_id', appId)
     .eq('event_name', ev.name)
     .maybeSingle()
 
@@ -62,7 +72,7 @@ export async function POST(request, { params }) {
     .single()
 
   if (tokenErr || !tokenRow) {
-    captureException(tokenErr, { context: 'admin-registrant-invite-token', appId: app.id, eventId: id })
+    captureException(tokenErr, { context: 'admin-registrant-invite-token', appId, eventId: id })
     return Response.json({ error: 'Failed to create invitation link.' }, { status: 500 })
   }
 

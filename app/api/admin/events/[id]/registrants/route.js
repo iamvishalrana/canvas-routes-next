@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
     .from('event_registrations')
     .select('id, email, name, stripe_payment_status, amount_paid, registered_at')
     .eq('event_id', id)
-    .in('stripe_payment_status', ['paid', 'free'])
+    .in('stripe_payment_status', ['paid', 'free', 'authorized'])
     .order('registered_at', { ascending: true })
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
   return Response.json(data || [])
@@ -54,13 +54,15 @@ export async function POST(request, { params }) {
   const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null, source: 'admin_manual', ...(paymentMethod !== 'none' ? { payment_method: paymentMethod } : {}) }
   const prevRegs = (existing?.registrations || []).filter(r => r.event !== ev.name)
 
+  // Only write payment fields when there's no existing real Stripe payment to preserve
+  const hasRealStripePayment = existing?.stripe_payment_type && !existing.stripe_payment_type.startsWith('external_')
   const { data: appData, error: appErr } = await admin.from('applications').upsert({
     email: normalEmail,
     name: trimmedName,
     registrations: [...prevRegs, newReg],
     source: existing?.source || 'Manual — Admin',
-    ...(isPaid ? { stripe_payment_status: 'paid', stripe_payment_type: `external_${paymentMethod}` } : {}),
-    ...(isFree ? { stripe_payment_status: 'free' } : {}),
+    ...(!hasRealStripePayment && isPaid ? { stripe_payment_status: 'paid', stripe_payment_type: `external_${paymentMethod}` } : {}),
+    ...(!hasRealStripePayment && isFree ? { stripe_payment_status: 'free' } : {}),
     ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
   }, { onConflict: 'email' }).select('id').maybeSingle()
 
@@ -153,13 +155,21 @@ export async function DELETE(request, { params }) {
   const admin = createAdminClient()
   const normalEmail = email.toLowerCase().trim()
 
-  // Remove from event_registrations (member-portal registrations)
-  const { error: regErr } = await admin
+  // Remove from event_registrations — try by email first, fall back to member_id via members table
+  const { error: regErr, count: regDelCount } = await admin
     .from('event_registrations')
-    .delete()
+    .delete({ count: 'exact' })
     .eq('event_id', eventId)
     .eq('email', normalEmail)
   if (regErr) captureException(regErr, { context: 'delete-registrant-event-reg', eventId, email: normalEmail })
+  if (!regErr && regDelCount === 0) {
+    // Email column may be null for auth members — resolve via members table
+    const { data: member } = await admin.from('members').select('id').eq('email', normalEmail).maybeSingle()
+    if (member?.id) {
+      const { error: midErr } = await admin.from('event_registrations').delete().eq('event_id', eventId).eq('member_id', member.id)
+      if (midErr) captureException(midErr, { context: 'delete-registrant-event-reg-by-memberid', eventId, email: normalEmail })
+    }
+  }
 
   // Remove event from applications.registrations array (covers both member and public registrants)
   const { data: ev } = await admin.from('events').select('name').eq('id', eventId).maybeSingle()

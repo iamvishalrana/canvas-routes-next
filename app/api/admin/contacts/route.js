@@ -28,7 +28,7 @@ export async function GET(request) {
   const [{ data: members }, { data: rsvpTokens }] = await Promise.all([
     supabase.from('members').select('email'),
     supabase.from('rsvp_tokens')
-      .select('application_id, event_name, confirmed_at, answers, expires_at, created_at')
+      .select('application_id, event_name, confirmed_at, declined_at, answers, expires_at, created_at')
       .in('application_id', appIds)
       .order('created_at', { ascending: false }),
   ])

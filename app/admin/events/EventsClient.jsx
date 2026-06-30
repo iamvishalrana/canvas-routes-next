@@ -392,6 +392,7 @@ export default function EventsClient() {
       capacity: item.capacity || '', member_price: item.member_price || null,
       priority_window_end: item.priority_window_end || '',
       registration_enabled: item.registration_enabled,
+      public_registration_enabled: item.public_registration_enabled,
       registration_visibility: item.registration_visibility || 'members',
     })
     setSaveError(null)
@@ -745,12 +746,23 @@ export default function EventsClient() {
             wtetCheckin: c.wtet_checkin || null,
           }
         })
-      const seen = new Set()
-      const combined = [...newRegs, ...contactRegs].filter(r => {
-        const k = (r.email || r.name || '').toLowerCase()
-        if (seen.has(k)) return false
-        seen.add(k); return true
+      // Merge: member-portal rows have payment data; contact rows have RSVP/checkin data.
+      // Build a map from contactRegs first, then merge RSVP fields into matching member-portal rows.
+      const contactByEmailMap = {}
+      for (const c of contactRegs) {
+        const k = (c.email || '').toLowerCase()
+        if (k) contactByEmailMap[k] = c
+      }
+      const mergedRegs = newRegs.map(r => {
+        const k = (r.email || '').toLowerCase()
+        const contact = contactByEmailMap[k]
+        if (contact) {
+          delete contactByEmailMap[k] // mark as merged so we don't add it again below
+          return { ...r, rsvpAnswers: contact.rsvpAnswers, confirmedAt: contact.confirmedAt, inviteSent: contact.inviteSent, wtetCheckin: contact.wtetCheckin, status: contact.confirmedAt ? 'confirmed' : r.status }
+        }
+        return r
       })
+      const combined = [...mergedRegs, ...Object.values(contactByEmailMap)]
       setRegistrantsData(prev => ({ ...prev, [eventId]: combined }))
     } catch {
       setRegistrantsData(prev => ({ ...prev, [eventId]: [] }))
