@@ -6,9 +6,18 @@ export const metadata = {
   keywords: 'Canvas Routes FAQ, car club Montreal, road trips from Montreal, cars and coffee Montreal, automotive community Montreal, Laurentians road trip, Eastern Townships drive, car meets Quebec, scenic drives Quebec',
   alternates: { canonical: 'https://canvasroutes.com/faq' },
   openGraph: {
+    type: 'website',
+    siteName: 'Canvas Routes',
     title: 'FAQ | Canvas Routes',
     description: "Frequently asked questions about Canvas Routes — Montreal's car community. Cars and Coffee, road trips, scenic drives and membership.",
     url: 'https://canvasroutes.com/faq',
+    images: [{ url: 'https://canvasroutes.com/faq-page.jpeg', width: 1200, height: 630, alt: 'Canvas Routes — Montreal Automotive Community' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FAQ | Canvas Routes',
+    description: "Frequently asked questions about Canvas Routes — Montreal's car community.",
+    images: ['https://canvasroutes.com/faq-page.jpeg'],
   },
 }
 

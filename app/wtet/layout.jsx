@@ -6,6 +6,8 @@ export const metadata = {
   keywords: 'Eastern Townships route Montreal, route from Montreal 2026, Canvas Routes route, curated driving event Quebec, Lac Memphremagog drive, scenic drive Eastern Townships, convoy drive Quebec, car route Montreal, Quebec backroads driving, Chemin des Cantons, Frelighsburg winery drive, Georgeville restaurant',
   alternates: { canonical: 'https://canvasroutes.com/wtet' },
   openGraph: {
+    type: 'website',
+    siteName: 'Canvas Routes',
     title: 'Whips to Eastern Townships — July 5, 2026 | Canvas Routes',
     description: 'Curated convoy from Montreal through wine country to Lac Memphrémagog. Private winery stop, Chemin des Cantons backroads, lunch by a chef from Michelin-starred kitchens at Auberge McGowan. $179 members / $199.',
     url: 'https://canvasroutes.com/wtet',
