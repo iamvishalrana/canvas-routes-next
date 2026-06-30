@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ROUTE_PATH } from './routePath'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
@@ -253,7 +253,10 @@ export default function EasternTownshipsPage() {
         .car-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); }
         .car-card .car-img { transition: transform 0.3s ease; }
         .car-card:hover .car-img { transform: scale(1.04); }
-        .section-card { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        @media (max-width: 480px) {
+          .quick-info-item { border-right: none !important; margin-right: 0 !important; border-bottom: 0.5px solid rgba(0,0,0,0.08); padding-right: 0 !important; }
+          .quick-info-item:last-child { border-bottom: none; }
+        }
       `}</style>
 
       {/* Header */}
@@ -282,13 +285,13 @@ export default function EasternTownshipsPage() {
         <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
 
-            <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
+            <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Meetup</div>
               <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4' }}>10:00 AM · Shell — 8700 Boul. Leduc</div>
               <div style={{ fontSize: '11px', color: '#bbb', marginTop: '3px' }}>Brossard, QC</div>
             </div>
 
-            <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #7B2032' }}>
+            <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #7B2032' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>Contact</div>
               <a href="tel:5144373437" style={{ fontSize: '14px', color: '#7B2032', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
@@ -296,7 +299,7 @@ export default function EasternTownshipsPage() {
               <CopyButton text="514-437-3437" />
             </div>
 
-            <div style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
+            <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Convoy App</div>
               <a
                 href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
@@ -319,7 +322,7 @@ export default function EasternTownshipsPage() {
             <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a stop to open in Maps</div>
           </div>
           {STOPS.map((stop, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '14px' }}>
                 <div style={{
                   width: stop.start || stop.end ? '10px' : '8px',
@@ -329,7 +332,7 @@ export default function EasternTownshipsPage() {
                   marginTop: '5px', flexShrink: 0,
                 }} />
                 {i < STOPS.length - 1 && (
-                  <div style={{ width: '1px', height: '36px', background: 'rgba(0,0,0,0.1)', marginTop: '4px' }} />
+                  <div style={{ width: '1px', flexGrow: 1, minHeight: '44px', background: 'rgba(0,0,0,0.1)', marginTop: '4px' }} />
                 )}
               </div>
               <div style={{ flex: 1 }}>
@@ -459,7 +462,7 @@ export default function EasternTownshipsPage() {
             >
               <div
                 onClick={e => e.stopPropagation()}
-                style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden' }}
+                style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto' }}
               >
                 {/* Close */}
                 <button onClick={() => setSelectedCar(null)}
