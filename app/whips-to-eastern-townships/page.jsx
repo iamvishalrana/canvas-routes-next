@@ -511,6 +511,9 @@ export default function EasternTownshipsPage() {
                   <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</div>
                 </button>
                 {isOpen && (
+                  <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', marginBottom: '1rem' }}>Tap a photo to learn more about the car</div>
+                )}
+                {isOpen && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
                     {groupCars.map(p => (
                       <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
