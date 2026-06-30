@@ -446,12 +446,12 @@ export default function EasternTownshipsPage() {
         {/* Who's Coming */}
         <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.5s' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>
-            Who&rsquo;s Coming &mdash; {PARTICIPANTS.length} Cars · 3 Groups
+            Who&rsquo;s Coming &mdash; {PARTICIPANTS.length + 1} Cars · 3 Groups + Media
           </div>
 
           {/* Groups explanation */}
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: '0 0 1.25rem' }}>
-            With {PARTICIPANTS.length} cars on the road, running as a single convoy isn&rsquo;t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We&rsquo;re splitting into three groups of 6&ndash;7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.
+            With 20 cars on the road, running as a single convoy isn&rsquo;t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We&rsquo;re splitting into three groups of 6&ndash;7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.
           </p>
 
           {/* Group rules */}
@@ -587,6 +587,7 @@ export default function EasternTownshipsPage() {
                 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
                 'Fuel up at the Shell in Brossard before we depart — there are limited options once we hit the backroads.',
                 'Respect the roads and the communities we pass through.',
+                'Give way to the media car at all times — it may move between groups to capture footage. Do not block or race it.',
               ].map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
                   <span style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
