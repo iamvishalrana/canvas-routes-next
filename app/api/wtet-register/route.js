@@ -157,6 +157,8 @@ export async function POST(request) {
         phone: phone || '',
         dob: dob || '',
         source: source || '',
+        instagram: instagram ? instagram.trim().replace(/^@+/, '') : '',
+        message: more || '',
         ...(_health_check ? {
           source: 'health_check',
           health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',

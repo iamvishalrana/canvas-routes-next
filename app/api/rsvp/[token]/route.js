@@ -60,7 +60,7 @@ export async function POST(request, { params }) {
   const supabase = createAdminClient()
   const { data: tokenRow } = await supabase
     .from('rsvp_tokens')
-    .select('id, event_name, expires_at, confirmed_at, application_id, applications(name, email)')
+    .select('id, event_name, expires_at, confirmed_at, application_id, applications(name, email, phone)')
     .eq('token', token)
     .single()
 
@@ -131,6 +131,7 @@ export async function POST(request, { params }) {
           ${row('Event', `<strong>${tokenRow.event_name}</strong>`)}
           ${row('Name', `<strong>${appName}</strong>`)}
           ${row('Email', `<a href="mailto:${appEmail}" style="color:#1a1a1a;">${appEmail}</a>`)}
+          ${row('Phone', tokenRow.applications?.phone || '')}
           ${isRoadTrip ? `
           ${row('Dietary', answers.dietary || 'None')}
           ${row('People in car', answers.passengers != null ? String(answers.passengers) : '')}
