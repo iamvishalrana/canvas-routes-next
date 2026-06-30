@@ -7,10 +7,10 @@ import PageLoader from '../../components/PageLoader'
 const PASSWORD = 'eastern'
 
 const PARTICIPANTS = [
-  { name: 'Alain Meunier',         car: null,                                         photo: '/WTET/Alain-Meunier.jpg' },
+  { name: 'Alain Meunier',         car: 'Chevrolet Corvette C7 Grand Sport Convertible', photo: '/WTET/Alain-Meunier.jpg' },
   { name: 'Alain Sahakian',        car: '2023 Toyota Supra',                          photo: '/WTET/Alain-Sahakian.jpeg' },
   { name: 'Alex Boutin',           car: '2026 Audi RS6 Performance',                  photo: '/WTET/Alex-Boutin.jpeg' },
-  { name: 'Bernard Attard',        car: null,                                         photo: '/WTET/Bernard-Attard.jpeg' },
+  { name: 'Bernard Attard',        car: '1970 Dodge Challenger',                      photo: '/WTET/Bernard-Attard.jpeg' },
   { name: 'Fred Lefebvre',         car: '2020 Audi RS3',                              photo: '/WTET/Fred-Lefebvre.jpeg' },
   { name: 'Jean-Philippe Remon',   car: '2011 BMW 135i',                              photo: '/WTET/Jean-Philippe.png' },
   { name: 'Jerry',                 car: null,                                         photo: null },
