@@ -315,16 +315,16 @@ export default function EasternTownshipsPage() {
         .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
 
         /* Car card shake — triggers every ~10s */
-        .car-card { transition: box-shadow 0.2s ease; animation: car-nudge 10s ease-in-out infinite; will-change: transform; }
+        .car-card { transition: box-shadow 0.2s ease; animation: car-nudge 10s ease-in-out infinite; }
         .car-card:nth-child(2) { animation-delay: 1.2s; }
         .car-card:nth-child(3) { animation-delay: 2.4s; }
         .car-card:nth-child(4) { animation-delay: 3.6s; }
         .car-card:nth-child(5) { animation-delay: 4.8s; }
         .car-card:nth-child(6) { animation-delay: 6.0s; }
         .car-card:nth-child(7) { animation-delay: 7.2s; }
-        .car-card:hover, .car-card:active { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; animation-play-state: paused; }
-        .car-card .car-img { transition: transform 0.3s ease; will-change: transform; transform: translateZ(0); }
-        .car-card:hover .car-img, .car-card:active .car-img { transform: translateZ(0) scale(1.04); }
+        .car-card:hover, .car-card:active { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; animation-play-state: paused; will-change: transform; }
+        .car-card .car-img { transition: transform 0.3s ease; }
+        .car-card:hover .car-img, .car-card:active .car-img { transform: scale(1.04); }
         @keyframes car-nudge {
           0%, 90%, 100% { transform: translateY(0) rotate(0deg); }
           92% { transform: translateY(-3px) rotate(-1.2deg); }
