@@ -21,7 +21,7 @@ const STOPS = [
   { label: 'Highwater', note: 'Chemin des Cantons · Near the border', href: 'https://www.google.com/maps?q=45.0053,-72.4400', lat: 45.0053, lng: -72.4400 },
   { label: 'Austin', note: 'Chemin des Cantons · Lake Memphrémagog area', href: 'https://www.google.com/maps?q=45.1863,-72.2440', lat: 45.1863, lng: -72.2440 },
   { label: 'Magog', note: 'Chemin des Cantons · Lake view', href: 'https://www.google.com/maps?q=45.2679,-72.1493', lat: 45.2679, lng: -72.1493 },
-  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville', tag: 'Lakeside Lunch · Final Destination', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville', tag: 'Lakeside Lunch', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
 ]
 
 function CopyButton({ text }) {
@@ -175,6 +175,17 @@ export default function EasternTownshipsPage() {
   const [checked, setChecked] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [selectedCar, setSelectedCar] = useState(null)
+  const [groupsOpen, setGroupsOpen] = useState([true, true, true])
+  const [atBottom, setAtBottom] = useState(false)
+
+  useEffect(() => {
+    function onScroll() {
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 80
+      setAtBottom(nearBottom)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
@@ -246,26 +257,47 @@ export default function EasternTownshipsPage() {
   return (
     <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
       <PageLoader images={['/wtet.png']} minMs={2000} />
+
+      {/* Scroll indicator */}
+      <div className="scroll-indicator" style={{ opacity: atBottom ? 0 : 1 }}>
+        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.3)', writingMode: 'vertical-rl' }}>scroll</span>
+        <svg className="scroll-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginTop: '4px' }}>
+          <path d="M2 4.5L7 9.5L12 4.5" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
-        .car-card { transition: box-shadow 0.2s ease, transform 0.2s ease; animation: car-nudge 3.5s ease-in-out infinite; }
-        .car-card:nth-child(2) { animation-delay: 0.4s; }
-        .car-card:nth-child(3) { animation-delay: 0.8s; }
-        .car-card:nth-child(4) { animation-delay: 1.2s; }
-        .car-card:nth-child(5) { animation-delay: 1.6s; }
-        .car-card:nth-child(6) { animation-delay: 2.0s; }
-        .car-card:nth-child(7) { animation-delay: 2.4s; }
-        .car-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); animation: none; }
-        .car-card .car-img { transition: transform 0.3s ease; }
-        .car-card:hover .car-img { transform: scale(1.04); }
+
+        /* Car card shake — triggers every ~10s */
+        .car-card { transition: box-shadow 0.2s ease; animation: car-nudge 10s ease-in-out infinite; }
+        .car-card:nth-child(2) { animation-delay: 1.2s; }
+        .car-card:nth-child(3) { animation-delay: 2.4s; }
+        .car-card:nth-child(4) { animation-delay: 3.6s; }
+        .car-card:nth-child(5) { animation-delay: 4.8s; }
+        .car-card:nth-child(6) { animation-delay: 6.0s; }
+        .car-card:nth-child(7) { animation-delay: 7.2s; }
+        .car-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: none; }
+        .car-card .car-img { transition: transform 0.3s ease; will-change: transform; transform: translateZ(0); }
+        .car-card:hover .car-img { transform: translateZ(0) scale(1.04); }
         @keyframes car-nudge {
-          0%, 85%, 100% { transform: translateY(0) rotate(0deg); }
-          88% { transform: translateY(-3px) rotate(-1deg); }
-          92% { transform: translateY(0) rotate(1deg); }
-          95% { transform: translateY(-2px) rotate(0deg); }
-          98% { transform: translateY(0); }
+          0%, 90%, 100% { transform: translateY(0) rotate(0deg); }
+          92% { transform: translateY(-3px) rotate(-1.2deg); }
+          94% { transform: translateY(1px) rotate(1deg); }
+          96% { transform: translateY(-2px) rotate(-0.6deg); }
+          98% { transform: translateY(0) rotate(0deg); }
         }
+
+        /* Section fade-in on load */
+        .fade-section { opacity: 0; transform: translateY(14px); animation: section-in 0.6s ease forwards; }
+        @keyframes section-in { to { opacity: 1; transform: translateY(0); } }
+
+        /* Scroll indicator */
+        .scroll-indicator { position: fixed; right: 1.1rem; bottom: 2rem; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: opacity 0.4s ease; pointer-events: none; z-index: 50; }
+        @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+        .scroll-chevron { animation: bounce-down 1.4s ease-in-out infinite; }
+
+        /* Mobile quick info stacking */
         @media (max-width: 480px) {
           .quick-info-item { border-right: none !important; margin-right: 0 !important; border-bottom: 0.5px solid rgba(0,0,0,0.08); padding-right: 0 !important; }
           .quick-info-item:last-child { border-bottom: none; }
@@ -329,7 +361,7 @@ export default function EasternTownshipsPage() {
         </div>
 
         {/* Route stops */}
-        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.1s' }}>
           <div style={{ marginBottom: '1.5rem' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Itinerary</div>
             <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a stop to open in Maps</div>
@@ -378,7 +410,7 @@ export default function EasternTownshipsPage() {
         </div>
 
         {/* About the drive */}
-        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.2s' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>The Drive</div>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
             We leave Brossard and take Autoroute 10 East, exiting at Farnham. From there we head south on Route 233, winding through Dunham and down into Frelighsburg for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property. Canvas Routes guests get a special price on any purchases at the winery.
@@ -392,7 +424,7 @@ export default function EasternTownshipsPage() {
         </div>
 
         {/* Winery pricing */}
-        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.3s' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Winery Stop</div>
           <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem' }}>Vignoble Domaine du Brésée · Sutton</div>
@@ -400,19 +432,19 @@ export default function EasternTownshipsPage() {
               $10 off every 3 bottles
             </div>
             <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
-              Canvas Routes participants get an exclusive discount on bottle purchases at the winery. Buy any 3 bottles and take $10 off. Cash or card accepted on site.
+              Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Cash or card accepted on site.
             </p>
           </div>
         </div>
 
         {/* Photography */}
-        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.4s' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Photography</div>
           <div style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6' }}>On-route photos and video captured throughout the day.</div>
         </div>
 
         {/* Who's Coming */}
-        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <div className="fade-section" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', animationDelay: '0.5s' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>
             Who&rsquo;s Coming &mdash; {PARTICIPANTS.length} Cars · 3 Groups
           </div>
@@ -443,40 +475,47 @@ export default function EasternTownshipsPage() {
           </div>
 
           {/* Grouped car grids */}
-          {[1, 2, 3].map(g => {
+          {[1, 2, 3].map((g, idx) => {
             const groupCars = PARTICIPANTS.filter(p => p.group === g)
+            const isOpen = groupsOpen[idx]
             return (
-              <div key={g} style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div key={g} style={{ marginBottom: '1.5rem' }}>
+                <button
+                  onClick={() => setGroupsOpen(prev => prev.map((v, i) => i === idx ? !v : v))}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer', marginBottom: isOpen ? '1.25rem' : 0 }}
+                >
                   <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', whiteSpace: 'nowrap' }}>
                     Group {g} &mdash; {groupCars.length} Cars
                   </div>
                   <div style={{ flex: 1, height: '0.5px', background: 'rgba(0,0,0,0.1)' }} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
-                  {groupCars.map(p => (
-                    <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
-                      className="car-card"
-                      style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                      <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
-                        {p.photo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.photo} alt={p.name} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
-                              {p.name.split(' ').map(w => w[0]).join('')}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
-                        <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
-                        {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                  <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</div>
+                </button>
+                {isOpen && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
+                    {groupCars.map(p => (
+                      <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
+                        className="car-card"
+                        style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                        <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
+                          {p.photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.photo} alt={p.name} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
+                                {p.name.split(' ').map(w => w[0]).join('')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
+                          <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
+                          {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}
