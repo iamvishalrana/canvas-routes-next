@@ -211,7 +211,7 @@ export default function EasternTownshipsPage() {
     return (
       <div style={{ minHeight: '100svh', display: 'flex', flexWrap: 'wrap', fontFamily: 'sans-serif' }}>
         {/* Left — beige */}
-        <div style={{ flex: '1 1 50%', minHeight: '50vh', background: '#F5F1EC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', textAlign: 'center', position: 'relative', boxSizing: 'border-box' }}>
+        <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#F5F1EC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', textAlign: 'center', position: 'relative', boxSizing: 'border-box' }}>
           <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '0.5px', background: 'rgba(0,0,0,0.08)' }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/Logo.png" alt="Canvas Routes" style={{ width: '140px', marginBottom: '2.5rem', opacity: 0.88 }} />
@@ -225,7 +225,7 @@ export default function EasternTownshipsPage() {
         </div>
 
         {/* Right — dark green */}
-        <div style={{ flex: '1 1 50%', minHeight: '50vh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', boxSizing: 'border-box' }}>
+        <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', boxSizing: 'border-box' }}>
           <div style={{ width: '100%', maxWidth: '300px' }}>
             <div style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center' }}>Participants only</div>
             <form onSubmit={submit}>
@@ -285,6 +285,11 @@ export default function EasternTownshipsPage() {
         </svg>
       </button>
       <style>{`
+        /* Android/cross-browser base */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        button, a { touch-action: manipulation; }
+        input { -webkit-appearance: none; appearance: none; border-radius: 0; }
+
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
 
@@ -296,9 +301,9 @@ export default function EasternTownshipsPage() {
         .car-card:nth-child(5) { animation-delay: 4.8s; }
         .car-card:nth-child(6) { animation-delay: 6.0s; }
         .car-card:nth-child(7) { animation-delay: 7.2s; }
-        .car-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: none; }
+        .car-card:hover, .car-card:active { box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: none; }
         .car-card .car-img { transition: transform 0.3s ease; will-change: transform; transform: translateZ(0); }
-        .car-card:hover .car-img { transform: translateZ(0) scale(1.04); }
+        .car-card:hover .car-img, .car-card:active .car-img { transform: translateZ(0) scale(1.04); }
         @keyframes car-nudge {
           0%, 90%, 100% { transform: translateY(0) rotate(0deg); }
           92% { transform: translateY(-3px) rotate(-1.2deg); }
@@ -321,6 +326,11 @@ export default function EasternTownshipsPage() {
         @media (max-width: 480px) {
           .quick-info-item { border-right: none !important; margin-right: 0 !important; border-bottom: 0.5px solid rgba(0,0,0,0.08); padding-right: 0 !important; }
           .quick-info-item:last-child { border-bottom: none; }
+        }
+
+        /* Password page — stack halves on mobile */
+        @media (max-width: 640px) {
+          .pw-half { flex: 1 1 100% !important; min-height: 45vh !important; }
         }
       `}</style>
 
@@ -514,7 +524,7 @@ export default function EasternTownshipsPage() {
                   <div style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', marginBottom: '1rem' }}>Tap a photo to learn more about the car</div>
                 )}
                 {isOpen && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
                     {groupCars.map(p => (
                       <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
                         className="car-card"
