@@ -14,14 +14,14 @@ const MAP_MARKERS = [
 ]
 
 const STOPS = [
-  { label: 'Shell — 8700 Boul. Leduc', note: '10:00 AM · Meetup · Brossard', start: true, href: 'https://maps.app.goo.gl/Ye8mVsi15rwcgGWj7', lat: 45.4502, lng: -73.4440 },
-  { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Private winery experience', href: 'https://maps.app.goo.gl/CcVDgmpEdRHK6c7L6', lat: 45.1477, lng: -72.6133 },
+  { label: 'Shell — 8700 Boul. Leduc', note: '10:00 AM · Brossard', tag: 'Meetup & Departure', start: true, href: 'https://maps.app.goo.gl/Ye8mVsi15rwcgGWj7', lat: 45.4502, lng: -73.4440 },
+  { label: 'Vignoble Domaine du Brésée', note: 'Sutton', tag: 'Private Winery Experience', href: 'https://maps.app.goo.gl/CcVDgmpEdRHK6c7L6', lat: 45.1477, lng: -72.6133 },
   { label: 'Sutton', note: 'Chemin des Cantons · Rolling through', href: 'https://www.google.com/maps?q=45.1038,-72.5544', lat: 45.1038, lng: -72.5544 },
   { label: 'Glen Sutton', note: 'Chemin des Cantons · Mountain roads', href: 'https://www.google.com/maps?q=45.0539,-72.5245', lat: 45.0539, lng: -72.5245 },
   { label: 'Highwater', note: 'Chemin des Cantons · Near the border', href: 'https://www.google.com/maps?q=45.0053,-72.4400', lat: 45.0053, lng: -72.4400 },
   { label: 'Austin', note: 'Chemin des Cantons · Lake Memphrémagog area', href: 'https://www.google.com/maps?q=45.1863,-72.2440', lat: 45.1863, lng: -72.2440 },
   { label: 'Magog', note: 'Chemin des Cantons · Lake view', href: 'https://www.google.com/maps?q=45.2679,-72.1493', lat: 45.2679, lng: -72.1493 },
-  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Chef from Michelin-starred kitchens · Final destination', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville', tag: 'Lakeside Lunch · Final Destination', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
 ]
 
 function CopyButton({ text }) {
@@ -363,9 +363,15 @@ export default function EasternTownshipsPage() {
                 >
                   {stop.label}
                 </a>
-                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '10px' }}>
+                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
                   {stop.note}
                 </div>
+                {stop.tag && (
+                  <div style={{ display: 'inline-block', marginTop: '5px', marginBottom: '10px', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
+                    {stop.tag}
+                  </div>
+                )}
+                {!stop.tag && <div style={{ marginBottom: '10px' }} />}
               </div>
             </div>
           ))}
