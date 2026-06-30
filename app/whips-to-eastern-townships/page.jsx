@@ -317,7 +317,7 @@ export default function EasternTownshipsPage() {
             From there we pick up Chemin des Cantons. The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — quiet, undisturbed pavement with almost no traffic. Coming through Austin, the trees open and Lake Memphrémagog spreads out below.
           </p>
           <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: 0 }}>
-            We end at Auberge &amp; Restaurant McGowan in Georgeville for lunch on the lake. The chef has worked in kitchens that held two Michelin stars — the standard follows. From there, we&rsquo;ll take a call as a group on whether to take the backroads or the highway back to Montreal.
+            Auberge &amp; Restaurant McGowan in Georgeville is where the route closes — lunch on the lake. The chef has worked in kitchens that held two Michelin stars — the standard follows. From there, we&rsquo;ll take a call as a group on whether to take the backroads or the highway back to Montreal.
           </p>
         </div>
 
