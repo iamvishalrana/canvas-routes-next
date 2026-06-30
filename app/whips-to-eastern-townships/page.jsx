@@ -372,6 +372,20 @@ export default function EasternTownshipsPage() {
           </p>
         </div>
 
+        {/* Winery pricing */}
+        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Winery Stop</div>
+          <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem' }}>Vignoble Domaine du Brésée · Sutton</div>
+            <div style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.2rem', color: '#F5F1EC', fontWeight: '400', lineHeight: '1.3', marginBottom: '0.75rem' }}>
+              $10 off every 3 bottles
+            </div>
+            <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
+              Canvas Routes participants get an exclusive discount on bottle purchases at the winery. Buy any 3 bottles and take $10 off. Cash or card accepted on site.
+            </p>
+          </div>
+        </div>
+
         {/* Photography */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Photography</div>
