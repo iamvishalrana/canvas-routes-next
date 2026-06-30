@@ -8,8 +8,6 @@ import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 const MEMBER_PRICE_CENTS    = 17900 // $179 CAD
 const NONMEMBER_PRICE_CENTS = 19900 // $199 CAD
-// Must match the override in app/api/public/settings/route.js
-const WTET_REGISTRATION_OPEN = new Date('2026-06-24T20:00:00Z') // live now
 
 export async function POST(request) {
   if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
@@ -30,10 +28,7 @@ export async function POST(request) {
     try {
       const supabase = createAdminClient()
       const { data: setting } = await supabase.from('settings').select('value').eq('key', 'event_registration_open').maybeSingle()
-      // Apply the same time-based override as public/settings — once the launch
-      // time passes, the DB value is irrelevant and registration is always open.
-      const autoOpen = new Date() >= WTET_REGISTRATION_OPEN
-      if (setting?.value === 'false' && !autoOpen) {
+      if (setting?.value === 'false') {
         return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
       }
     } catch { /* allow through if settings table unavailable */ }
