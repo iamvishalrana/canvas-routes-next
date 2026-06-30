@@ -426,7 +426,7 @@ export default function EasternTownshipsPage() {
                 'No racing between groups. If you catch the group ahead, hold your position and maintain the gap.',
                 'Do not race or push within the group either — this is a scenic drive, not a track day.',
                 'If your group gets split, pull over safely at the nearest stop and wait to regroup.',
-                'Group leads set the pace — follow their lead, not the car directly in front of you.',
+                'Group leads set the pace — follow the car directly in front of you and trust the flow.',
               ].map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                   <span style={{ color: '#c5a882', fontSize: '10px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>—</span>
