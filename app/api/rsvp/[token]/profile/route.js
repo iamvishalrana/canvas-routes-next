@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../../lib/rateLimit'
+import { findWtetPhoto } from '../../../../../lib/wtetParticipants'
 
 export async function GET(request, { params }) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
@@ -21,9 +22,9 @@ export async function GET(request, { params }) {
   const app = tokenRow.applications
   const email = app?.email?.toLowerCase() || ''
 
-  // Check member status and get car photo
+  // Check member status and resolve car photo
   let isMember = false
-  let carPhotoUrl = null
+  let carPhotoUrl = findWtetPhoto(app?.name || '')  // WTET participant photo takes priority
   if (email) {
     const { data: member } = await supabase
       .from('members')
@@ -32,7 +33,7 @@ export async function GET(request, { params }) {
       .maybeSingle()
     if (member) {
       isMember = true
-      carPhotoUrl = member.car_photo_url || null
+      if (!carPhotoUrl) carPhotoUrl = member.car_photo_url || null
     }
   }
 
