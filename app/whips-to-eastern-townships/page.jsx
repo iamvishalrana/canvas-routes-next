@@ -259,12 +259,17 @@ export default function EasternTownshipsPage() {
       <PageLoader images={['/wtet.png']} minMs={2000} />
 
       {/* Scroll indicator */}
-      <div className="scroll-indicator" style={{ opacity: atBottom ? 0 : 1 }}>
-        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.3)', writingMode: 'vertical-rl' }}>scroll</span>
-        <svg className="scroll-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginTop: '4px' }}>
-          <path d="M2 4.5L7 9.5L12 4.5" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <button
+        className="scroll-btn"
+        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto' }}
+        onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
+        aria-label="Scroll down"
+      >
+        <span style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', fontFamily: 'sans-serif' }}>scroll</span>
+        <svg className="scroll-chevron" width="16" height="10" viewBox="0 0 16 10" fill="none">
+          <path d="M1 1.5L8 8.5L15 1.5" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-      </div>
+      </button>
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
@@ -293,9 +298,10 @@ export default function EasternTownshipsPage() {
         @keyframes section-in { to { opacity: 1; transform: translateY(0); } }
 
         /* Scroll indicator */
-        .scroll-indicator { position: fixed; right: 1.1rem; bottom: 2rem; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: opacity 0.4s ease; pointer-events: none; z-index: 50; }
-        @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
-        .scroll-chevron { animation: bounce-down 1.4s ease-in-out infinite; }
+        .scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
+        .scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
+        @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+        .scroll-chevron { animation: bounce-down 1.6s ease-in-out infinite; }
 
         /* Mobile quick info stacking */
         @media (max-width: 480px) {
