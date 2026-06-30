@@ -372,33 +372,73 @@ export default function EasternTownshipsPage() {
 
         {/* Who's Coming */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1.5rem' }}>
-            Who&rsquo;s Coming &mdash; {PARTICIPANTS.length} Cars
+          <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>
+            Who&rsquo;s Coming &mdash; {PARTICIPANTS.length} Cars · 3 Groups
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
-            {PARTICIPANTS.map(p => (
-              <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
-                <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', position: 'relative' }}>
-                  {p.photo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.3s ease' }}
-                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
-                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                    />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
-                        {p.name.split(' ').map(w => w[0]).join('')}
-                      </span>
-                    </div>
-                  )}
+
+          {/* Groups explanation */}
+          <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: '0 0 1.25rem' }}>
+            With {PARTICIPANTS.length} cars on the road, running as a single convoy isn&rsquo;t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We&rsquo;re splitting into three groups of 6&ndash;7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.
+          </p>
+
+          {/* Group rules */}
+          <div style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem 1.25rem', marginBottom: '2rem', borderLeft: '2px solid rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Group Rules</div>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                'Stay with your group for the entire drive — do not switch groups on route.',
+                'Depart in group order. Wait for the group ahead to fully clear before your group moves.',
+                'No racing between groups. If you catch the group ahead, hold your position and maintain the gap.',
+                'Do not race or push within the group either — this is a scenic drive, not a track day.',
+                'If your group gets split, pull over safely at the nearest stop and wait to regroup.',
+                'Group leads set the pace — follow their lead, not the car directly in front of you.',
+              ].map((rule, i) => (
+                <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                  <span style={{ color: '#c5a882', fontSize: '10px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>—</span>
+                  <span style={{ fontSize: '12px', color: '#555', lineHeight: '1.65' }}>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Grouped car grids */}
+          {[1, 2, 3].map(g => {
+            const groupCars = PARTICIPANTS.filter(p => p.group === g)
+            return (
+              <div key={g} style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', whiteSpace: 'nowrap' }}>
+                    Group {g} &mdash; {groupCars.length} Cars
+                  </div>
+                  <div style={{ flex: 1, height: '0.5px', background: 'rgba(0,0,0,0.1)' }} />
                 </div>
-                <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
-                {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
-              </button>
-            ))}
-          </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
+                  {groupCars.map(p => (
+                    <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                      <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', position: 'relative' }}>
+                        {p.photo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.3s ease' }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                          />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
+                              {p.name.split(' ').map(w => w[0]).join('')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
+                      {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
 
           {/* Car modal */}
           {selectedCar && (
