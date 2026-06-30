@@ -209,46 +209,60 @@ export default function EasternTownshipsPage() {
 
   if (!authed) {
     return (
-      <div style={{ minHeight: '100svh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', boxSizing: 'border-box' }}>
-        <div style={{ textAlign: 'center', maxWidth: '320px', width: '100%' }}>
+      <div style={{ minHeight: '100svh', display: 'flex', flexWrap: 'wrap', fontFamily: 'sans-serif' }}>
+        {/* Left — beige */}
+        <div style={{ flex: '1 1 50%', minHeight: '50vh', background: '#F5F1EC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', textAlign: 'center', position: 'relative', boxSizing: 'border-box' }}>
+          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '0.5px', background: 'rgba(0,0,0,0.08)' }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '180px', marginBottom: '2.5rem' }} />
-          <div style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '22px', marginBottom: '0.4rem' }}>Whips to Eastern Townships</div>
-          <div style={{ color: 'rgba(245,241,236,0.4)', fontFamily: 'sans-serif', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '2.5rem' }}>July 5, 2026</div>
-          <form onSubmit={submit}>
-            <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-              <input
-                value={pw}
-                onChange={e => { setPw(e.target.value); setErr(false) }}
-                placeholder="Password"
-                type={showPw ? 'text' : 'password'}
-                autoComplete="off"
-                style={{
-                  display: 'block', width: '100%', padding: '0.9rem 2.75rem 0.9rem 1rem',
-                  background: 'rgba(255,255,255,0.07)',
-                  border: `0.5px solid ${err ? '#7B2032' : 'rgba(255,255,255,0.18)'}`,
-                  color: '#F5F1EC', fontSize: '16px', outline: 'none',
-                  fontFamily: 'Georgia, serif',
-                  textAlign: 'center', letterSpacing: '0.12em', boxSizing: 'border-box',
-                  WebkitAppearance: 'none', borderRadius: '0',
-                }}
-              />
+          <img src="/Logo.png" alt="Canvas Routes" style={{ width: '140px', marginBottom: '2.5rem', opacity: 0.88 }} />
+          <div style={{ color: '#0F1E14', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '22px', lineHeight: '1.25', marginBottom: '0.5rem' }}>Whips to Eastern Townships</div>
+          <div style={{ color: '#999', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase' }}>Sunday · July 5, 2026</div>
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.75rem' }}>
+            {['Chemin des Cantons', 'Vineyard Stop', 'Lakeside Lunch'].map(tag => (
+              <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', border: '0.5px solid rgba(0,0,0,0.12)', padding: '3px 10px' }}>{tag}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Right — dark green */}
+        <div style={{ flex: '1 1 50%', minHeight: '50vh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', boxSizing: 'border-box' }}>
+          <div style={{ width: '100%', maxWidth: '300px' }}>
+            <div style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center' }}>Participants only</div>
+            <form onSubmit={submit}>
+              <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+                <input
+                  value={pw}
+                  onChange={e => { setPw(e.target.value); setErr(false) }}
+                  placeholder="Password"
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="off"
+                  style={{
+                    display: 'block', width: '100%', padding: '0.9rem 2.75rem 0.9rem 1rem',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: `0.5px solid ${err ? '#7B2032' : 'rgba(255,255,255,0.14)'}`,
+                    color: '#F5F1EC', fontSize: '16px', outline: 'none',
+                    fontFamily: 'Georgia, serif',
+                    textAlign: 'center', letterSpacing: '0.12em', boxSizing: 'border-box',
+                    WebkitAppearance: 'none', borderRadius: '0',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(v => !v)}
+                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,241,236,0.35)', fontSize: '11px', letterSpacing: '0.06em', fontFamily: 'sans-serif' }}
+                >
+                  {showPw ? 'hide' : 'show'}
+                </button>
+              </div>
+              {err && <div style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>Incorrect password — try again</div>}
               <button
-                type="button"
-                onClick={() => setShowPw(v => !v)}
-                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,241,236,0.4)', fontSize: '11px', letterSpacing: '0.06em', fontFamily: 'sans-serif' }}
+                type="submit"
+                style={{ width: '100%', padding: '0.9rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'sans-serif', fontWeight: '700' }}
               >
-                {showPw ? 'hide' : 'show'}
+                Enter
               </button>
-            </div>
-            {err && <div style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>Incorrect password — try again</div>}
-            <button
-              type="submit"
-              style={{ width: '100%', padding: '0.9rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'sans-serif', fontWeight: '700' }}
-            >
-              Enter
-            </button>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     )
