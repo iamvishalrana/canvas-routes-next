@@ -23,16 +23,14 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  // Check registration open setting
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    try {
-      const supabase = createAdminClient()
-      const { data: setting } = await supabase.from('settings').select('value').eq('key', 'event_registration_open').maybeSingle()
-      if (setting?.value === 'false') {
-        return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
-      }
-    } catch { /* allow through if settings table unavailable */ }
-  }
+  // Check registration open via events table (Reg toggle in admin Events section)
+  try {
+    const supabase = createAdminClient()
+    const { data: ev } = await supabase.from('events').select('registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
+    if (ev && ev.registration_enabled === false) {
+      return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
+    }
+  } catch { /* allow through if events table unavailable */ }
 
   const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, _hp, _health_check } = body
   if (_hp) return Response.json({ success: true, clientSecret: null })

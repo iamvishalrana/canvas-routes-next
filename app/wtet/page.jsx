@@ -318,12 +318,15 @@ export default function WtetPage() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/public/settings')
-      .then(r => r.json())
-      .then(s => {
-        if (s.event_registration_open === 'false') setRegOpen(false)
-        if (s.event_member_registration_open === 'false') setMemberRegOpen(false)
-        if (s.event_closed_message) setClosedMsg(s.event_closed_message)
+    // Read registration status from the events table (toggled via admin Events → Reg toggle)
+    fetch('/api/public/events')
+      .then(r => r.ok ? r.json() : [])
+      .then(events => {
+        const ev = events.find(e => e.name?.toLowerCase().includes('eastern townships'))
+        if (ev && ev.registration_enabled === false) {
+          setRegOpen(false)
+          setMemberRegOpen(false)
+        }
       })
       .catch(() => {})
   }, [])

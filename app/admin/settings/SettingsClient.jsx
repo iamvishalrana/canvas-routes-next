@@ -186,24 +186,14 @@ export default function SettingsClient() {
         <SavedIndicator k="membership_closed_message" />
 
         <ToggleSetting
-          label="Public Registration Open"
-          description="Controls registration for non-members on the event page (e.g. WTET $199 rate). Toggle off to close public spots."
+          label="Event Registration Open"
+          description="When off, the standalone event registration form is hidden and the page shows a closed notice. Reuse this for each new one-off event page."
           value={boolVal('event_registration_open', true)}
           saving={saving.event_registration_open}
           onChange={v => !loadError && saveSetting('event_registration_open', v ? 'true' : 'false')}
         />
         {errors.event_registration_open && <Err msg={errors.event_registration_open} />}
         <SavedIndicator k="event_registration_open" />
-
-        <ToggleSetting
-          label="Member Registration Open"
-          description="Controls registration for logged-in Canvas Routes members (e.g. WTET $179 member rate). Toggle off to close member spots independently."
-          value={boolVal('event_member_registration_open', true)}
-          saving={saving.event_member_registration_open}
-          onChange={v => !loadError && saveSetting('event_member_registration_open', v ? 'true' : 'false')}
-        />
-        {errors.event_member_registration_open && <Err msg={errors.event_member_registration_open} />}
-        <SavedIndicator k="event_member_registration_open" />
 
         <div style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
           <TextSetting

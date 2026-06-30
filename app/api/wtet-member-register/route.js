@@ -42,11 +42,11 @@ export async function POST(request) {
   // Check registration open — members respect the same gate as the public form
   try {
     const adminCheck = createAdminClient()
-    const { data: setting } = await adminCheck.from('settings').select('value').eq('key', 'event_member_registration_open').maybeSingle()
-    if (setting?.value === 'false') {
+    const { data: ev } = await adminCheck.from('events').select('registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
+    if (ev && ev.registration_enabled === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
-  } catch { /* allow through if settings table unavailable */ }
+  } catch { /* allow through if events table unavailable */ }
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')?.trim()
