@@ -476,7 +476,7 @@ export default function EasternTownshipsPage() {
 
           {/* Grouped car grids */}
           {[1, 2, 3].map((g, idx) => {
-            const groupCars = PARTICIPANTS.filter(p => p.group === g)
+            const groupCars = PARTICIPANTS.filter(p => p.group === g).sort((a, b) => (b.lead ? 1 : 0) - (a.lead ? 1 : 0))
             const isOpen = groupsOpen[idx]
             return (
               <div key={g} style={{ marginBottom: '1.5rem' }}>
@@ -509,6 +509,9 @@ export default function EasternTownshipsPage() {
                           )}
                         </div>
                         <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
+                          {p.lead && (
+                            <div style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '3px' }}>Group Lead</div>
+                          )}
                           <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
                           {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
                         </div>
