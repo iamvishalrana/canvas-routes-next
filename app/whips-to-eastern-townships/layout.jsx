@@ -9,7 +9,7 @@ export const metadata = {
     title: 'Whips to Eastern Townships — July 5, 2026',
     description: 'Your route and itinerary for the Canvas Routes drive through the Eastern Townships. 20 cars · 3 groups · Chemin des Cantons.',
     images: [{
-      url: 'https://canvasroutes.com/wtet.png',
+      url: 'https://canvasroutes.com/wtet-og.jpg',
       width: 1200,
       height: 630,
       alt: 'Whips to Eastern Townships — Canvas Routes',
@@ -19,7 +19,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Whips to Eastern Townships — July 5, 2026',
     description: 'Your route and itinerary for the Canvas Routes drive through the Eastern Townships.',
-    images: ['https://canvasroutes.com/wtet.png'],
+    images: ['https://canvasroutes.com/wtet-og.jpg'],
   },
 }
 
