@@ -144,10 +144,7 @@ export default function Home() {
   // WTET popup — shown once per session after launch time; sessionStorage prevents it
   // re-appearing on every reload once the user has dismissed it
   useEffect(() => {
-    const WTET_OPEN = new Date('2026-06-24T20:00:00Z')
-    if (new Date() >= WTET_OPEN && !sessionStorage.getItem('wtet_popup_seen')) {
-      setShowWtetPopup(true)
-    }
+    // WTET popup disabled — event complete
   }, [])
 
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
