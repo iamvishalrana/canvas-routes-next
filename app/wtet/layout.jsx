@@ -54,6 +54,15 @@ const eventSchema = {
 export default function WtetLayout({ children }) {
   return (
     <>
+      {/* Polyfill for Facebook in-app browser: window.webkit.messageHandlers is partially
+          implemented and throws when Stripe.js tries to init Apple Pay native handlers. */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        try {
+          if (window.webkit && !window.webkit.messageHandlers) {
+            window.webkit.messageHandlers = new Proxy({}, { get: function() { return { postMessage: function() {} } } });
+          }
+        } catch(e) {}
+      `}} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchema) }}
