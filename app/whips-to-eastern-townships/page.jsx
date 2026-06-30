@@ -307,6 +307,49 @@ export default function EasternTownshipsPage() {
           </div>
         </div>
 
+        {/* Route stops */}
+        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Itinerary</div>
+            <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a stop to open in Maps</div>
+          </div>
+          {STOPS.map((stop, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '14px' }}>
+                <div style={{
+                  width: stop.start || stop.end ? '10px' : '8px',
+                  height: stop.start || stop.end ? '10px' : '8px',
+                  borderRadius: stop.start || stop.end ? '0' : '50%',
+                  background: stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : 'rgba(0,0,0,0.22)',
+                  marginTop: '5px', flexShrink: 0,
+                }} />
+                {i < STOPS.length - 1 && (
+                  <div style={{ width: '1px', height: '36px', background: 'rgba(0,0,0,0.1)', marginTop: '4px' }} />
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <a
+                  href={stop.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontSize: '15px', color: '#1a1a1a',
+                    fontWeight: stop.start || stop.end ? '600' : '400',
+                    lineHeight: '1.35', textDecoration: 'underline',
+                    textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)',
+                    display: 'block', WebkitTapHighlightColor: 'rgba(0,0,0,0.05)',
+                  }}
+                >
+                  {stop.label}
+                </a>
+                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '10px' }}>
+                  {stop.note}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* About the drive */}
         <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>The Drive</div>
@@ -429,49 +472,6 @@ export default function EasternTownshipsPage() {
               ))}
             </ul>
           )}
-        </div>
-
-        {/* Route stops */}
-        <div style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '5px' }}>Route</div>
-            <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Tap a stop to open in Maps</div>
-          </div>
-          {STOPS.map((stop, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '14px' }}>
-                <div style={{
-                  width: stop.start || stop.end ? '10px' : '8px',
-                  height: stop.start || stop.end ? '10px' : '8px',
-                  borderRadius: stop.start || stop.end ? '0' : '50%',
-                  background: stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : 'rgba(0,0,0,0.22)',
-                  marginTop: '5px', flexShrink: 0,
-                }} />
-                {i < STOPS.length - 1 && (
-                  <div style={{ width: '1px', height: '36px', background: 'rgba(0,0,0,0.1)', marginTop: '4px' }} />
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                <a
-                  href={stop.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    fontSize: '15px', color: '#1a1a1a',
-                    fontWeight: stop.start || stop.end ? '600' : '400',
-                    lineHeight: '1.35', textDecoration: 'underline',
-                    textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)',
-                    display: 'block', WebkitTapHighlightColor: 'rgba(0,0,0,0.05)',
-                  }}
-                >
-                  {stop.label}
-                </a>
-                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '10px' }}>
-                  {stop.note}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
 
         {/* Map */}
