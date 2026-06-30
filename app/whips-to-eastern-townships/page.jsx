@@ -269,7 +269,7 @@ export default function EasternTownshipsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      <PageLoader images={['/wtet.png']} minMs={2000} />
+      <PageLoader images={['/wtet.png', ...PARTICIPANTS.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
 
       {/* Scroll indicator */}
       <button
