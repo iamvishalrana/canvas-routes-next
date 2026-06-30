@@ -249,6 +249,11 @@ export default function EasternTownshipsPage() {
       <style>{`
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
+        .car-card { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+        .car-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); }
+        .car-card .car-img { transition: transform 0.3s ease; }
+        .car-card:hover .car-img { transform: scale(1.04); }
+        .section-card { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
       `}</style>
 
       {/* Header */}
@@ -401,6 +406,12 @@ export default function EasternTownshipsPage() {
             </ul>
           </div>
 
+          {/* Tap hint */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem' }}>
+            <span style={{ fontSize: '15px' }}>👆</span>
+            <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.04em' }}>Tap any car to learn more about the build</span>
+          </div>
+
           {/* Grouped car grids */}
           {[1, 2, 3].map(g => {
             const groupCars = PARTICIPANTS.filter(p => p.group === g)
@@ -415,14 +426,12 @@ export default function EasternTownshipsPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
                   {groupCars.map(p => (
                     <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
-                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
-                      <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', position: 'relative' }}>
+                      className="car-card"
+                      style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                      <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
                         {p.photo ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.3s ease' }}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                          />
+                          <img src={p.photo} alt={p.name} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
@@ -431,8 +440,10 @@ export default function EasternTownshipsPage() {
                           </div>
                         )}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
-                      {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
+                      <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
+                        <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
+                        {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
+                      </div>
                     </button>
                   ))}
                 </div>
