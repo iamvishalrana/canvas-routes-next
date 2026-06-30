@@ -449,10 +449,10 @@ export default function EasternTownshipsPage() {
           <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem' }}>Vignoble Domaine du Brésée · Sutton</div>
             <div style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.2rem', color: '#F5F1EC', fontWeight: '400', lineHeight: '1.3', marginBottom: '0.75rem' }}>
-              $10 off every 3 bottles
+              $10 off every 3 wine bottles
             </div>
             <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
-              Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Cash or card accepted on site.
+              Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines — worth taking a few bottles home. Cash or card accepted on site.
             </p>
           </div>
         </div>
