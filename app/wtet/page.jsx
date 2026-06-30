@@ -274,6 +274,7 @@ export default function WtetPage() {
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
   const [regOpen, setRegOpen]         = useState(true)
+  const [memberRegOpen, setMemberRegOpen] = useState(true)
   const [closedMsg, setClosedMsg]     = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
   const [countdown, setCountdown]     = useState(null)
@@ -321,6 +322,7 @@ export default function WtetPage() {
       .then(r => r.json())
       .then(s => {
         if (s.event_registration_open === 'false') setRegOpen(false)
+        if (s.event_member_registration_open === 'false') setMemberRegOpen(false)
         if (s.event_closed_message) setClosedMsg(s.event_closed_message)
       })
       .catch(() => {})
@@ -540,7 +542,8 @@ export default function WtetPage() {
     }
   }
 
-  const showForm = regOpen && status !== 'success' && status !== 'payment'
+  const effectiveRegOpen = memberProfile ? memberRegOpen : regOpen
+  const showForm = effectiveRegOpen && status !== 'success' && status !== 'payment'
 
   return (
     <div style={{background:'#F5F1EC',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',minHeight:'100vh'}}>
@@ -869,7 +872,7 @@ export default function WtetPage() {
               <div style={{height:'0.5px',background:'rgba(197,168,130,0.1)'}} />
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>Registration</div>
-                <div style={{fontSize:'11px',letterSpacing:'0.06em',textTransform:'uppercase',color:regOpen?'#c5a882':'rgba(197,168,130,0.5)'}}>{regOpen ? 'Open — scroll down' : 'Closed'}</div>
+                <div style={{fontSize:'11px',letterSpacing:'0.06em',textTransform:'uppercase',color:effectiveRegOpen?'#c5a882':'rgba(197,168,130,0.5)'}}>{effectiveRegOpen ? 'Open — scroll down' : 'Closed'}</div>
               </div>
             </div>
           </div>
@@ -887,7 +890,7 @@ export default function WtetPage() {
         <div style={{maxWidth:'560px',margin:'0 auto'}}>
 
           {/* CLOSED */}
-          {!regOpen && status !== 'success' && (
+          {!effectiveRegOpen && status !== 'success' && (
             <div style={{textAlign:'center',padding:'5rem 0'}}>
               <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>
                 {closedMsg || 'Registration is now closed.'}

@@ -42,7 +42,7 @@ export async function POST(request) {
   // Check registration open — members respect the same gate as the public form
   try {
     const adminCheck = createAdminClient()
-    const { data: setting } = await adminCheck.from('settings').select('value').eq('key', 'event_registration_open').maybeSingle()
+    const { data: setting } = await adminCheck.from('settings').select('value').eq('key', 'event_member_registration_open').maybeSingle()
     if (setting?.value === 'false') {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }

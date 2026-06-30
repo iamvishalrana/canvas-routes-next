@@ -27,6 +27,7 @@ export async function PATCH(request) {
     'membership_open',
     'membership_closed_message',
     'event_registration_open',
+    'event_member_registration_open',
     'event_closed_message',
     'notify_email',
     'founder_promo_code',
