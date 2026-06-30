@@ -174,6 +174,7 @@ export default function EasternTownshipsPage() {
   const [err, setErr] = useState(false)
   const [checked, setChecked] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
+  const [selectedCar, setSelectedCar] = useState(null)
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
@@ -333,27 +334,71 @@ export default function EasternTownshipsPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem' }}>
             {PARTICIPANTS.map(p => (
-              <div key={p.name}>
-                {p.photo ? (
-                  <a href={p.photo} target="_blank" rel="noreferrer" style={{ display: 'block', aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.25s ease' }}
-                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+              <button key={p.name} type="button" onClick={() => setSelectedCar(p)}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', position: 'relative' }}>
+                  {p.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.3s ease' }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
                       onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                     />
-                  </a>
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
+                        {p.name.split(' ').map(w => w[0]).join('')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
+                {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
+              </button>
+            ))}
+          </div>
+
+          {/* Car modal */}
+          {selectedCar && (
+            <div
+              onClick={() => setSelectedCar(null)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(10,18,12,0.88)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+            >
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden' }}
+              >
+                {/* Close */}
+                <button onClick={() => setSelectedCar(null)}
+                  style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', zIndex: 2, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', lineHeight: 1 }}>
+                  ×
+                </button>
+
+                {/* Photo */}
+                {selectedCar.photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={selectedCar.photo} alt={selectedCar.name} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
                 ) : (
-                  <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', marginBottom: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
-                      {p.name.split(' ').map(w => w[0]).join('')}
+                  <div style={{ width: '100%', aspectRatio: '4/3', background: '#e8e4de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
+                      {selectedCar.name.split(' ').map(w => w[0]).join('')}
                     </span>
                   </div>
                 )}
-                <div style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{p.name}</div>
-                {p.car && <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{p.car}</div>}
+
+                {/* Info */}
+                <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem' }}>Canvas Routes · WTET 2026</div>
+                  <div style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem' }}>{selectedCar.name}</div>
+                  {selectedCar.car && (
+                    <div style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em' }}>{selectedCar.car}</div>
+                  )}
+                  {selectedCar.fact && (
+                    <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: 0 }}>{selectedCar.fact}</p>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Convoy rules */}
