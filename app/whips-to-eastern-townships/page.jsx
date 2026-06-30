@@ -242,8 +242,7 @@ export default function EasternTownshipsPage() {
                     border: `0.5px solid ${err ? '#7B2032' : 'rgba(255,255,255,0.14)'}`,
                     color: '#F5F1EC', fontSize: '16px', outline: 'none',
                     fontFamily: 'Georgia, serif',
-                    textAlign: 'center', letterSpacing: '0.12em', boxSizing: 'border-box',
-                    WebkitAppearance: 'none', borderRadius: '0',
+                    textAlign: 'center', letterSpacing: '0.12em',
                   }}
                 />
                 <button
@@ -269,7 +268,7 @@ export default function EasternTownshipsPage() {
   }
 
   return (
-    <div style={{ minHeight: '100svh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
+    <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
       <PageLoader images={['/wtet.png']} minMs={2000} />
 
       {/* Scroll indicator */}
@@ -294,14 +293,14 @@ export default function EasternTownshipsPage() {
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
 
         /* Car card shake — triggers every ~10s */
-        .car-card { transition: box-shadow 0.2s ease; animation: car-nudge 10s ease-in-out infinite; }
+        .car-card { transition: box-shadow 0.2s ease; animation: car-nudge 10s ease-in-out infinite; will-change: transform; }
         .car-card:nth-child(2) { animation-delay: 1.2s; }
         .car-card:nth-child(3) { animation-delay: 2.4s; }
         .car-card:nth-child(4) { animation-delay: 3.6s; }
         .car-card:nth-child(5) { animation-delay: 4.8s; }
         .car-card:nth-child(6) { animation-delay: 6.0s; }
         .car-card:nth-child(7) { animation-delay: 7.2s; }
-        .car-card:hover, .car-card:active { box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: none; }
+        .car-card:hover, .car-card:active { box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation-play-state: paused; }
         .car-card .car-img { transition: transform 0.3s ease; will-change: transform; transform: translateZ(0); }
         .car-card:hover .car-img, .car-card:active .car-img { transform: translateZ(0) scale(1.04); }
         @keyframes car-nudge {
