@@ -114,6 +114,8 @@ export async function POST(request, { params }) {
   // Notify admin + send final invite to registrant
   const appName  = tokenRow.applications?.name  || 'Someone'
   const appEmail = tokenRow.applications?.email || ''
+  const isMember = appEmail ? !!(await supabase.from('members').select('id').eq('email', appEmail.toLowerCase()).maybeSingle()).data : false
+  const profileUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'}/rsvp/${token}/profile`
   if (process.env.RESEND_API_KEY) {
     const row = (label, value) => value != null && value !== ''
       ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
@@ -173,6 +175,8 @@ export async function POST(request, { params }) {
           amountPaid: 0,
           eventId: event?.id || null,
           date: event?.date || null,
+          isMember,
+          profileUrl,
         })
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
