@@ -568,48 +568,6 @@ export default function EasternTownshipsPage() {
             )
           })}
 
-          {/* Car modal */}
-          {selectedCar && (
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label={`${selectedCar.name} — ${selectedCar.car}`}
-              onClick={() => setSelectedCar(null)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(10,18,12,0.88)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
-            >
-              <div
-                onClick={e => e.stopPropagation()}
-                style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
-              >
-                <button
-                  onClick={() => setSelectedCar(null)}
-                  aria-label="Close"
-                  style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', zIndex: 2, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', lineHeight: 1 }}>
-                  ×
-                </button>
-                {selectedCar.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
-                ) : (
-                  <div style={{ width: '100%', aspectRatio: '4/3', background: '#e8e4de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span aria-hidden="true" style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
-                      {selectedCar.name.split(' ').map(w => w[0]).join('')}
-                    </span>
-                  </div>
-                )}
-                <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
-                  <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>Canvas Routes · Whips to Eastern Townships 2026</p>
-                  <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem', marginTop: 0 }}>{selectedCar.name}</h2>
-                  {selectedCar.car && (
-                    <p style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em', marginTop: 0 }}>{selectedCar.car}</p>
-                  )}
-                  {selectedCar.fact && (
-                    <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: 0 }}>{selectedCar.fact}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </section>
 
         {/* Convoy Rules */}
@@ -653,6 +611,48 @@ export default function EasternTownshipsPage() {
         </section>
 
       </main>
+      {/* Car modal — must live outside <main> so CSS transforms on scroll-reveal sections don't break position:fixed */}
+      {selectedCar && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${selectedCar.name} — ${selectedCar.car}`}
+          onClick={() => setSelectedCar(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(10,18,12,0.88)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+          >
+            <button
+              onClick={() => setSelectedCar(null)}
+              aria-label="Close"
+              style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', zIndex: 2, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', lineHeight: 1 }}>
+              ×
+            </button>
+            {selectedCar.photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <div style={{ width: '100%', aspectRatio: '4/3', background: '#e8e4de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span aria-hidden="true" style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
+                  {selectedCar.name.split(' ').map(w => w[0]).join('')}
+                </span>
+              </div>
+            )}
+            <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
+              <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>Canvas Routes · Whips to Eastern Townships 2026</p>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem', marginTop: 0 }}>{selectedCar.name}</h2>
+              {selectedCar.car && (
+                <p style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em', marginTop: 0 }}>{selectedCar.car}</p>
+              )}
+              {selectedCar.fact && (
+                <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: 0 }}>{selectedCar.fact}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <SiteFooter />
     </div>
   )
