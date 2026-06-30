@@ -76,9 +76,10 @@ export async function POST(request, { params }) {
   // Build answers based on event type
   const answers = isRoadTrip
     ? {
-        dietary:    (body.dietary || '').trim() || null,
-        passengers: body.passengers ?? null,
-        whatsapp:   body.whatsapp ?? null,
+        dietary:           (body.dietary || '').trim() || null,
+        passengers:        body.passengers ?? null,
+        whatsapp:          body.whatsapp ?? null,
+        passenger_details: Array.isArray(body.passenger_details) ? body.passenger_details.filter(p => p.name?.trim() || p.age?.trim()) : [],
       }
     : {
         bringing_guest: body.bringing_guest ?? null,

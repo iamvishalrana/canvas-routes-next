@@ -43,9 +43,10 @@ export default function RsvpPage() {
   const [eventName, setEventName]         = useState('')
   const [eventType, setEventType]         = useState(null)
   const [applicantName, setApplicantName] = useState('')
-  const [dietary, setDietary]     = useState('')
+  const [dietary, setDietary]       = useState('')
   const [passengers, setPassengers] = useState('1')
-  const [whatsapp, setWhatsapp]   = useState(null)
+  const [passengerDetails, setPassengerDetails] = useState([])
+  const [whatsapp, setWhatsapp]     = useState(null)
   const [bringingGuest, setBringingGuest] = useState(null)
   const [carMods, setCarMods]     = useState('')
   const [carPaint, setCarPaint]   = useState('')
@@ -75,7 +76,7 @@ export default function RsvpPage() {
     e.preventDefault()
     setSubmitting(true); setErr(null)
     const body = isRoadTrip
-      ? { dietary, passengers: parseInt(passengers) || 1, whatsapp }
+      ? { dietary, passengers: parseInt(passengers) || 1, whatsapp, passenger_details: passengerDetails.filter(p => p.name.trim() || p.age.trim()) }
       : { bringing_guest: bringingGuest, car_mods: carMods.trim() || null, car_paint: carPaint.trim() || null, arrival: arrival || null }
     try {
       const res = await fetch(`/api/rsvp/${token}`, {
@@ -235,7 +236,13 @@ export default function RsvpPage() {
                       <select
                         id="rsvp-passengers"
                         value={passengers}
-                        onChange={e => setPassengers(e.target.value)}
+                        onChange={e => {
+                          const val = e.target.value
+                          setPassengers(val)
+                          const count = parseInt(val) || 1
+                          const slots = Math.max(0, count - 1)
+                          setPassengerDetails(prev => Array.from({ length: slots }, (_, i) => prev[i] || { name: '', age: '' }))
+                        }}
                         style={{ ...INP, cursor: 'pointer', paddingRight: '2rem' }}
                       >
                         <option value="1">1 — just me</option>
@@ -245,6 +252,39 @@ export default function RsvpPage() {
                       </select>
                       <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
+                    {parseInt(passengers) > 1 && (
+                      <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        <div style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Passenger details</div>
+                        {passengerDetails.map((p, i) => (
+                          <div key={i} style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input
+                              type="text"
+                              value={p.name}
+                              onChange={e => setPassengerDetails(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                              placeholder={`Passenger ${i + 1} name`}
+                              maxLength={60}
+                              style={{ ...INP, flex: 2 }}
+                            />
+                            <input
+                              type="text"
+                              value={p.age}
+                              onChange={e => setPassengerDetails(prev => prev.map((x, j) => j === i ? { ...x, age: e.target.value } : x))}
+                              placeholder="Age"
+                              maxLength={10}
+                              style={{ ...INP, flex: 1 }}
+                            />
+                          </div>
+                        ))}
+                        {passengers === '4' && (
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {passengerDetails.length > 3
+                              ? <button type="button" onClick={() => setPassengerDetails(prev => prev.slice(0, -1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: '0.4rem 0' }}>− Remove</button>
+                              : <button type="button" onClick={() => setPassengerDetails(prev => [...prev, { name: '', age: '' }])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#45643c', fontFamily: 'var(--font-inter),sans-serif', padding: '0.4rem 0' }}>+ Add another passenger</button>
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div style={LABEL}>Can we add you to a WhatsApp group with all participants?</div>
