@@ -5,11 +5,12 @@ export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
 
-  const [{ data: events }, { data: apps }, { data: tokens }, { data: members }] = await Promise.all([
+  const [{ data: events }, { data: apps }, { data: tokens }, { data: members }, { data: eventRegs }] = await Promise.all([
     supabase.from('events').select('id, name, date, date_display, location, type, capacity').order('date', { ascending: true }),
     supabase.from('applications').select('id, name, email, phone, car_year, car_model, car_paint, source, registrations, is_member, stripe_payment_status, stripe_payment_type, stripe_amount_paid, created_at'),
     supabase.from('rsvp_tokens').select('application_id, event_name, confirmed_at, answers, expires_at, token, created_at'),
     supabase.from('members').select('email, tier'),
+    supabase.from('event_registrations').select('event_id, email').in('stripe_payment_status', ['paid', 'free', 'authorized']),
   ])
 
   if (!events) return Response.json({ error: 'Failed to load events' }, { status: 500 })
@@ -25,6 +26,16 @@ export async function GET() {
     tokensByEvent[t.event_name].push(t)
   }
 
+  // Build a lookup: event_id → Set of registrant emails from the member-portal registration flow.
+  // These registrants never get a matching entry in applications.registrations, so they must be
+  // counted separately or "Applied" undercounts events that use member-portal registration (e.g. WTET).
+  const regEmailsByEvent = {}
+  for (const r of (eventRegs || [])) {
+    if (!r.email) continue
+    if (!regEmailsByEvent[r.event_id]) regEmailsByEvent[r.event_id] = new Set()
+    regEmailsByEvent[r.event_id].add(r.email.toLowerCase())
+  }
+
   // For each event, find applications that registered for it (match by event name)
   const result = (events || []).map(ev => {
     const evName = ev.name?.trim().toLowerCase()
@@ -35,6 +46,9 @@ export async function GET() {
         return rName === evName || rName.split(/\s[—–]\s/)[0].trim() === evBase
       })
     )
+    const evAppEmails = new Set(evApps.map(a => a.email?.toLowerCase()).filter(Boolean))
+    const evRegEmails = regEmailsByEvent[ev.id] || new Set()
+    const totalApplicants = new Set([...evAppEmails, ...evRegEmails]).size
 
     // Attach RSVP status per application
     const evTokens = tokensByEvent[ev.name] || []
@@ -53,7 +67,7 @@ export async function GET() {
     return {
       ...ev,
       applications: appsWithRsvp,
-      total_applications: evApps.length,
+      total_applications: totalApplicants,
       invited_count: invitedCount,
       confirmed_count: confirmedCount,
     }
