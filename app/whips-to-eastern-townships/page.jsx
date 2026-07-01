@@ -455,15 +455,21 @@ export default function EasternTownshipsPage() {
         {/* The Drive */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>The Drive</h2>
-          <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
-            We leave Brossard and take Autoroute 10 East, exiting at Farnham. From there we head south on Route 233, winding through Dunham and down into Frelighsburg for a private winery experience at Vignoble Domaine du Brésée — cars on the grounds, a chance to take in the property.
-          </p>
-          <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: '0 0 0.75rem' }}>
-            From there we pick up Chemin des Cantons. The road climbs into the Sutton Mountains in tight, technical corners, tightens through Glen Sutton, and cuts deep into the Appalachian forest at Highwater — quiet, undisturbed pavement with almost no traffic. Coming through Austin, the trees open and Lake Memphrémagog spreads out below.
-          </p>
-          <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.8', margin: 0 }}>
-            Auberge &amp; Restaurant McGowan in Georgeville is where the route closes — lunch on the lake. The chef has worked in kitchens that held two Michelin stars — the standard follows. From there, we&rsquo;ll take a call as a group on whether to take the backroads or the highway back to Montreal.
-          </p>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[
+              { emoji: '🛣️', text: 'We roll out of Brossard on Autoroute 10 East, exit at Farnham, and head south — windows down, convoy forming.' },
+              { emoji: '🍷', text: 'First stop is Vignoble Domaine du Brésée in Frelighsburg. Cars on the grounds, a private winery experience, and an exclusive $10 off every 3 bottles for our group.' },
+              { emoji: '⛰️', text: 'Then we hit Chemin des Cantons — tight corners through the Sutton Mountains, deep into the forest at Glen Sutton and Highwater. Some of the best pavement in Quebec with almost no traffic. This is the part everyone talks about.' },
+              { emoji: '🏔️', text: 'Coming through Austin, the trees open and Lake Memphrémagog appears below. Take it in — it\'s earned.' },
+              { emoji: '🍽️', text: 'We finish at Auberge & Restaurant McGowan in Georgeville for lunch on the lake. The chef comes from Michelin-starred kitchens — the food matches the drive.' },
+              { emoji: '🏁', text: 'After lunch, the group decides together — backroads home or straight back on the highway. Either way, a good day.' },
+            ].map(({ emoji, text }, i) => (
+              <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>{emoji}</span>
+                <span style={{ fontSize: '14px', color: '#444', lineHeight: '1.75' }}>{text}</span>
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* Winery pricing */}
