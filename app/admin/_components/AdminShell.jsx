@@ -45,6 +45,7 @@ const SECTIONS = [
   {
     id: 'system', label: 'System',
     items: [
+      { href: '/admin/links',        label: 'Link Library' },
       { href: '/admin/settings',     label: 'Settings'     },
       { href: '/admin/activity-log', label: 'Activity Log' },
       { href: '/admin/tools',        label: 'Tools'        },

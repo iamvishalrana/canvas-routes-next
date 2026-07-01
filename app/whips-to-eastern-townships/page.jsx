@@ -95,6 +95,21 @@ const T = {
   },
 }
 
+function ModalImage({ src, alt }) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#e8e4de', flexShrink: 0 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src} alt={alt}
+        loading="eager" decoding="sync"
+        onLoad={() => setLoaded(true)}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease' }}
+      />
+    </div>
+  )
+}
+
 function CopyButton({ text, copyLabel, copiedLabel }) {
   const [copied, setCopied] = useState(false)
   function copy() {
@@ -697,8 +712,7 @@ export default function EasternTownshipsPage() {
               ×
             </button>
             {selectedCar.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} loading="eager" decoding="sync" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block', background: '#e8e4de' }} />
+              <ModalImage key={selectedCar.photo} src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} />
             ) : (
               <div style={{ width: '100%', aspectRatio: '4/3', background: '#e8e4de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span aria-hidden="true" style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
