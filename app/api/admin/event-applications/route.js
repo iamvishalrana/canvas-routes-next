@@ -10,7 +10,7 @@ export async function GET() {
     supabase.from('applications').select('id, name, email, phone, car_year, car_model, car_paint, source, registrations, is_member, stripe_payment_status, stripe_payment_type, stripe_amount_paid, created_at'),
     supabase.from('rsvp_tokens').select('application_id, event_name, confirmed_at, answers, expires_at, token, created_at'),
     supabase.from('members').select('email, tier'),
-    supabase.from('event_registrations').select('event_id, email').in('stripe_payment_status', ['paid', 'free', 'authorized']),
+    supabase.from('event_registrations').select('event_id, email, stripe_payment_status').in('stripe_payment_status', ['paid', 'free', 'authorized']),
   ])
 
   if (!events) return Response.json({ error: 'Failed to load events' }, { status: 500 })
@@ -29,12 +29,23 @@ export async function GET() {
   // Build a lookup: event_id → Set of registrant emails from the member-portal registration flow.
   // These registrants never get a matching entry in applications.registrations, so they must be
   // counted separately or "Applied" undercounts events that use member-portal registration (e.g. WTET).
+  // Also track which of those are actually paid, for the Confirmed count below.
   const regEmailsByEvent = {}
+  const paidRegEmailsByEvent = {}
   for (const r of (eventRegs || [])) {
     if (!r.email) continue
+    const email = r.email.toLowerCase()
     if (!regEmailsByEvent[r.event_id]) regEmailsByEvent[r.event_id] = new Set()
-    regEmailsByEvent[r.event_id].add(r.email.toLowerCase())
+    regEmailsByEvent[r.event_id].add(email)
+    if (r.stripe_payment_status === 'paid') {
+      if (!paidRegEmailsByEvent[r.event_id]) paidRegEmailsByEvent[r.event_id] = new Set()
+      paidRegEmailsByEvent[r.event_id].add(email)
+    }
   }
+
+  // Build a lookup: application id → email, to resolve emails for rsvp_tokens (which key by application_id)
+  const appEmailById = {}
+  for (const a of (apps || [])) if (a.email) appEmailById[a.id] = a.email.toLowerCase()
 
   // For each event, find applications that registered for it (match by event name)
   const result = (events || []).map(ev => {
@@ -61,7 +72,19 @@ export async function GET() {
       member_tier: tierByEmail[a.email?.toLowerCase()] || null,
     }))
 
-    const confirmedCount = evTokens.filter(t => t.confirmed_at).length
+    // Confirmed = RSVP'd via the confirm-your-spot flow, OR already paid — a completed
+    // payment secures the spot outright regardless of whether the RSVP form was filled in.
+    const confirmedKeys = new Set()
+    for (const t of evTokens) {
+      if (!t.confirmed_at) continue
+      confirmedKeys.add(appEmailById[t.application_id] || `token:${t.application_id}`)
+    }
+    for (const a of evApps) {
+      if (a.stripe_payment_status === 'paid' && a.email) confirmedKeys.add(a.email.toLowerCase())
+    }
+    for (const email of (paidRegEmailsByEvent[ev.id] || [])) confirmedKeys.add(email)
+
+    const confirmedCount = confirmedKeys.size
     const invitedCount   = evTokens.length
 
     return {
