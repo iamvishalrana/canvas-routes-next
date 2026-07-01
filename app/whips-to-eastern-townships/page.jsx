@@ -26,7 +26,76 @@ const STOPS = [
 
 const SECTION_LABEL = { fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', display: 'block', fontWeight: '400', fontStyle: 'normal' }
 
-function CopyButton({ text }) {
+const T = {
+  en: {
+    date: 'Sunday · July 5, 2026',
+    headerTags: ['Chemin des Cantons', 'Vineyard Stop', 'Lakeside Lunch'],
+    meetup: 'Meetup', meetupDetail: '10:00 AM · Shell — 8700 Boul. Leduc', meetupSub: 'Brossard, QC',
+    contact: 'Contact',
+    appLabel: 'Convoy App', appLink: 'Download Velox →', appSub: 'Stay connected in real time · iOS only',
+    itineraryLabel: 'Itinerary', itineraryHint: 'Tap a stop to open in Maps',
+    stopNotes: ['10:00 AM · Brossard', 'Sutton', 'Chemin des Cantons · Rolling through', 'Chemin des Cantons · Mountain roads', 'Chemin des Cantons · Near the border', 'Chemin des Cantons · Lake Memphrémagog area', 'Chemin des Cantons · Lake view', 'Georgeville'],
+    stopTags: ['Meetup & Departure', 'Private Winery Experience', null, null, null, null, null, 'Lakeside Lunch'],
+    driveLabel: 'The Drive',
+    driveBullets: [
+      { emoji: '🛣️', text: 'We roll out of Brossard on Autoroute 10 East, exit at Farnham, and head south — windows down, convoy forming.' },
+      { emoji: '🍷', text: 'First stop is Vignoble Domaine du Brésée in Frelighsburg. Cars on the grounds, a private winery experience, and an exclusive $10 off every 3 bottles for our group.' },
+      { emoji: '⛰️', text: 'Then we hit Chemin des Cantons — tight corners through the Sutton Mountains, deep into the forest at Glen Sutton and Highwater. Some of the best pavement in Quebec with almost no traffic. This is the part everyone talks about.' },
+      { emoji: '🏔️', text: 'Coming through Austin, the trees open and Lake Memphrémagog appears below. Take it in — it\'s earned.' },
+      { emoji: '🍽️', text: 'We finish at Auberge & Restaurant McGowan in Georgeville for lunch on the lake. The chef comes from Michelin-starred kitchens — the food matches the drive.' },
+      { emoji: '🏁', text: 'After lunch, the group decides together — backroads home or straight back on the highway. Either way, a good day.' },
+    ],
+    wineryLabel: 'Winery Stop', wineryVenue: 'Vignoble Domaine du Brésée · Sutton',
+    wineryHeadline: '$10 off every 3 wine bottles',
+    wineryBody: 'Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines. Cash or card accepted on site.',
+    photoLabel: 'Photography', photoBody: 'On-route photos and video captured throughout the day.',
+    whoLabel: n => `Who's Coming — ${n} Cars · 3 Groups + Media`,
+    groupsExplain: 'With 20 cars on the road, running as a single convoy isn\'t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We\'re splitting into three groups of 6–7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.',
+    groupRulesLabel: 'Group Rules',
+    groupRules: ['Stay with your group for the entire drive — do not switch groups on route.', 'Depart in group order. Wait for the group ahead to fully clear before your group moves.', 'No racing between groups. If you catch the group ahead, hold your position and maintain the gap.', 'Do not race or push within the group either — this is a scenic drive, not a track day.', 'If your group gets split, pull over safely at the nearest stop and wait to regroup.', 'Group leads set the pace — follow the car directly in front of you and trust the flow.'],
+    tapHint: 'Tap a photo to learn more about the car',
+    groupLabel: (g, n) => `Group ${g} — ${n} Cars`, groupLead: 'Group Lead',
+    convoyLabel: 'Convoy Rules', convoyRead: '▼ Read', convoyClose: '▲ Close',
+    convoyRules: ['Follow the lead car at all times — do not overtake any car in the convoy.', 'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.', 'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.', 'If you get separated, do not panic — proceed to the next stop on the route and wait.', 'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.', 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.', 'Fuel up at the Shell in Brossard before we depart — there are limited options once we hit the backroads.', 'Respect the roads and the communities we pass through.', 'Give way to the media car at all times — it may move between groups to capture footage. Do not block or race it.'],
+    mapLabel: 'Map', modalBrand: 'Canvas Routes · Whips to Eastern Townships 2026',
+    scrollText: 'scroll', participantsOnly: 'Participants only', incorrectPw: 'Incorrect password — try again', enterBtn: 'Enter', copyBtn: 'Copy number', copied: '✓ Copied',
+  },
+  fr: {
+    date: 'Dimanche · 5 juillet 2026',
+    headerTags: ['Chemin des Cantons', 'Arrêt au vignoble', 'Déjeuner au lac'],
+    meetup: 'Rendez-vous', meetupDetail: '10h00 · Shell — 8700 Boul. Leduc', meetupSub: 'Brossard, QC',
+    contact: 'Contact',
+    appLabel: 'App Convoi', appLink: 'Télécharger Velox →', appSub: 'Restez connectés en temps réel · iOS seulement',
+    itineraryLabel: 'Itinéraire', itineraryHint: 'Appuyez sur un arrêt pour ouvrir dans Maps',
+    stopNotes: ['10h00 · Brossard', 'Sutton', 'Chemin des Cantons · En transit', 'Chemin des Cantons · Routes de montagne', 'Chemin des Cantons · Près de la frontière', 'Chemin des Cantons · Région du lac Memphrémagog', 'Chemin des Cantons · Vue sur le lac', 'Georgeville'],
+    stopTags: ['Rassemblement & Départ', 'Expérience vignoble privée', null, null, null, null, null, 'Déjeuner au bord du lac'],
+    driveLabel: 'La Route',
+    driveBullets: [
+      { emoji: '🛣️', text: 'On quitte Brossard par l\'Autoroute 10 Est, on sort à Farnham et on met le cap au sud — vitres baissées, le convoi se forme.' },
+      { emoji: '🍷', text: 'Premier arrêt au Vignoble Domaine du Brésée à Frelighsburg. Voitures sur les lieux, expérience vignoble privée, et un rabais exclusif de 10 $ pour tout achat de 3 bouteilles.' },
+      { emoji: '⛰️', text: 'On s\'engage ensuite sur le Chemin des Cantons — virages serrés dans les montagnes de Sutton, au cœur de la forêt à Glen Sutton et Highwater. Du bitume parmi les meilleurs au Québec, avec quasi zéro circulation. C\'est la partie dont tout le monde parle.' },
+      { emoji: '🏔️', text: 'En approchant d\'Austin, la forêt s\'ouvre et le lac Memphrémagog apparaît en contrebas. Profitez-en — vous l\'avez mérité.' },
+      { emoji: '🍽️', text: 'On termine à l\'Auberge & Restaurant McGowan à Georgeville pour le déjeuner au bord du lac. Le chef vient de cuisines étoilées Michelin — la bouffe est à la hauteur du trajet.' },
+      { emoji: '🏁', text: 'Après le repas, le groupe décide ensemble — retour par les chemins de campagne ou directement par l\'autoroute. Dans tous les cas, une belle journée.' },
+    ],
+    wineryLabel: 'Arrêt au Vignoble', wineryVenue: 'Vignoble Domaine du Brésée · Sutton',
+    wineryHeadline: '10 $ de rabais pour 3 bouteilles de vin',
+    wineryBody: 'Les participants Canvas Routes bénéficient d\'un rabais exclusif sur les achats de bouteilles de vin au vignoble. Achetez 3 bouteilles et obtenez 10 $ de rabais. Le Vignoble Domaine du Brésée a remporté de nombreux prix pour ses vins. Paiement comptant ou par carte accepté sur place.',
+    photoLabel: 'Photographie', photoBody: 'Photos et vidéos captées tout au long de la journée sur la route.',
+    whoLabel: n => `Qui vient — ${n} voitures · 3 groupes + Média`,
+    groupsExplain: 'Avec 20 voitures sur la route, rouler en un seul convoi n\'est ni sécuritaire ni pratique — ça crée des écarts aux feux, met de la pression sur la circulation et rend impossible de garder tout le monde ensemble dans les sections serrées. On se divise en trois groupes de 6 à 7, avec 5 minutes d\'écart entre chaque départ. Chaque groupe forme son propre convoi avec une voiture de tête désignée.',
+    groupRulesLabel: 'Règles des groupes',
+    groupRules: ['Restez avec votre groupe pour toute la durée du trajet — pas de changement de groupe en route.', 'Départ dans l\'ordre des groupes. Attendez que le groupe précédent soit complètement parti avant de bouger.', 'Pas de course entre les groupes. Si vous rattrapez le groupe devant, maintenez votre position et gardez la distance.', 'Pas de course non plus à l\'intérieur du groupe — c\'est une balade, pas une journée sur circuit.', 'Si votre groupe se sépare, arrêtez-vous en sécurité au prochain arrêt et attendez de vous regrouper.', 'Les chefs de groupe donnent le rythme — suivez la voiture directement devant vous et faites confiance au flux.'],
+    tapHint: 'Appuyez sur une photo pour en savoir plus sur la voiture',
+    groupLabel: (g, n) => `Groupe ${g} — ${n} voitures`, groupLead: 'Chef de groupe',
+    convoyLabel: 'Règles du convoi', convoyRead: '▼ Lire', convoyClose: '▲ Fermer',
+    convoyRules: ['Suivez toujours la voiture de tête — ne dépassez aucune voiture dans le convoi.', 'Maintenez une distance de sécurité. Restez assez proche pour garder le groupe ensemble, sans être si proche que vous ne pouvez pas réagir.', 'Respectez le code de la route. Les limites de vitesse, les signaux et les panneaux s\'appliquent peu importe le rythme du groupe.', 'Si vous vous retrouvez séparé, ne paniquez pas — rendez-vous au prochain arrêt de l\'itinéraire et attendez.', 'Ne faites pas la course et ne conduisez pas de manière agressive. C\'est une balade, pas une journée sur circuit.', 'Si vous devez vous arrêter d\'urgence, allumez immédiatement vos feux de détresse. La voiture derrière relayera le signal.', 'Faites le plein au Shell de Brossard avant le départ — les options sont limitées sur les routes secondaires.', 'Respectez les routes et les communautés que vous traversez.', 'Cédez toujours la place à la voiture média — elle peut se déplacer entre les groupes pour filmer. Ne la bloquez pas.'],
+    mapLabel: 'Carte', modalBrand: 'Canvas Routes · Whips to Eastern Townships 2026',
+    scrollText: 'défiler', participantsOnly: 'Participants seulement', incorrectPw: 'Mot de passe incorrect — réessayez', enterBtn: 'Entrer', copyBtn: 'Copier le numéro', copied: '✓ Copié',
+  },
+}
+
+function CopyButton({ text, copyLabel, copiedLabel }) {
   const [copied, setCopied] = useState(false)
   function copy() {
     if (!navigator?.clipboard?.writeText) return
@@ -37,7 +106,7 @@ function CopyButton({ text }) {
   }
   return (
     <button onClick={copy} style={{ background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'block', marginTop: '3px' }}>
-      {copied ? '✓ Copied' : 'Copy number'}
+      {copied ? copiedLabel : copyLabel}
     </button>
   )
 }
@@ -179,6 +248,8 @@ export default function EasternTownshipsPage() {
   const [selectedCar, setSelectedCar] = useState(null)
   const [groupsOpen, setGroupsOpen] = useState([true, true, true])
   const [atBottom, setAtBottom] = useState(false)
+  const [lang, setLang] = useState('en')
+  const t = T[lang]
 
   useEffect(() => {
     function onScroll() {
@@ -244,7 +315,7 @@ export default function EasternTownshipsPage() {
         {/* Right — dark green */}
         <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', boxSizing: 'border-box' }}>
           <div style={{ width: '100%', maxWidth: '300px' }}>
-            <p style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center', margin: '0 0 1.75rem' }}>Participants only</p>
+            <p style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center', margin: '0 0 1.75rem' }}>{t.participantsOnly}</p>
             <form onSubmit={submit}>
               <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
                 <input
@@ -270,12 +341,12 @@ export default function EasternTownshipsPage() {
                   {showPw ? 'hide' : 'show'}
                 </button>
               </div>
-              {err && <p style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>Incorrect password — try again</p>}
+              {err && <p style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>{t.incorrectPw}</p>}
               <button
                 type="submit"
                 style={{ width: '100%', padding: '0.9rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'sans-serif', fontWeight: '700' }}
               >
-                Enter
+                {t.enterBtn}
               </button>
             </form>
           </div>
@@ -288,6 +359,15 @@ export default function EasternTownshipsPage() {
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
       <PageLoader images={['/wtet.png', ...PARTICIPANTS.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
 
+      {/* Language toggle */}
+      <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+        {['en', 'fr'].map(l => (
+          <button key={l} onClick={() => setLang(l)} style={{ padding: '0.45rem 0.75rem', background: lang === l ? '#c5a882' : 'none', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(197,168,130,0.55)', fontWeight: lang === l ? '700' : '400', fontFamily: 'sans-serif', transition: 'all 0.15s ease' }}>
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       {/* Scroll indicator */}
       <button
         className="scroll-btn"
@@ -295,7 +375,7 @@ export default function EasternTownshipsPage() {
         onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
         aria-label="Scroll down"
       >
-        <span style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', fontFamily: 'sans-serif' }}>scroll</span>
+        <span style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', fontFamily: 'sans-serif' }}>{t.scrollText}</span>
         <svg className="scroll-chevron" width="16" height="10" viewBox="0 0 16 10" fill="none">
           <path d="M1 1.5L8 8.5L15 1.5" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -364,9 +444,9 @@ export default function EasternTownshipsPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
           <h1 style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Whips to Eastern Townships</h1>
-          <p style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>Sunday · July 5, 2026</p>
+          <p style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>{t.date}</p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
-            {['Chemin des Cantons', 'Vineyard Stop', 'Lakeside Lunch'].map(tag => (
+            {t.headerTags.map(tag => (
               <span key={tag} style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '4px 12px' }}>{tag}</span>
             ))}
           </div>
@@ -379,27 +459,27 @@ export default function EasternTownshipsPage() {
         <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
-              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>10:00 AM · Shell — 8700 Boul. Leduc</p>
-              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>Brossard, QC</p>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.meetup}</h2>
+              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>{t.meetupDetail}</p>
+              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>{t.meetupSub}</p>
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #7B2032' }}>
-              <h2 style={{ ...SECTION_LABEL, color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>Contact</h2>
+              <h2 style={{ ...SECTION_LABEL, color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>{t.contact}</h2>
               <a href="tel:5144373437" style={{ fontSize: '14px', color: '#7B2032', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
               </a>
-              <CopyButton text="514-437-3437" />
+              <CopyButton text="514-437-3437" copyLabel={t.copyBtn} copiedLabel={t.copied} />
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Convoy App</h2>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.appLabel}</h2>
               <a
                 href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
                 target="_blank" rel="noreferrer"
                 style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', display: 'block', fontWeight: '700' }}
               >
-                Download Velox →
+                {t.appLink}
               </a>
-              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>Stay connected in real time · iOS only</p>
+              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>{t.appSub}</p>
             </div>
           </div>
         </div>
@@ -407,8 +487,8 @@ export default function EasternTownshipsPage() {
         {/* Itinerary */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ marginBottom: '1.5rem' }}>
-            <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Itinerary</h2>
-            <p style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', margin: 0 }}>Tap a stop to open in Maps</p>
+            <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.itineraryLabel}</h2>
+            <p style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', margin: 0 }}>{t.itineraryHint}</p>
           </div>
           {STOPS.map((stop, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: '1rem' }}>
@@ -439,12 +519,12 @@ export default function EasternTownshipsPage() {
                 >
                   {stop.label}
                 </a>
-                <p style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: stop.tag ? '5px' : '10px' }}>
-                  {stop.note}
+                <p style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: t.stopTags[i] ? '5px' : '10px' }}>
+                  {t.stopNotes[i]}
                 </p>
-                {stop.tag && (
+                {t.stopTags[i] && (
                   <div style={{ display: 'inline-block', marginBottom: '10px', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
-                    {stop.tag}
+                    {t.stopTags[i]}
                   </div>
                 )}
               </div>
@@ -454,16 +534,9 @@ export default function EasternTownshipsPage() {
 
         {/* The Drive */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>The Drive</h2>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>{t.driveLabel}</h2>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {[
-              { emoji: '🛣️', text: 'We roll out of Brossard on Autoroute 10 East, exit at Farnham, and head south — windows down, convoy forming.' },
-              { emoji: '🍷', text: 'First stop is Vignoble Domaine du Brésée in Frelighsburg. Cars on the grounds, a private winery experience, and an exclusive $10 off every 3 bottles for our group.' },
-              { emoji: '⛰️', text: 'Then we hit Chemin des Cantons — tight corners through the Sutton Mountains, deep into the forest at Glen Sutton and Highwater. Some of the best pavement in Quebec with almost no traffic. This is the part everyone talks about.' },
-              { emoji: '🏔️', text: 'Coming through Austin, the trees open and Lake Memphrémagog appears below. Take it in — it\'s earned.' },
-              { emoji: '🍽️', text: 'We finish at Auberge & Restaurant McGowan in Georgeville for lunch on the lake. The chef comes from Michelin-starred kitchens — the food matches the drive.' },
-              { emoji: '🏁', text: 'After lunch, the group decides together — backroads home or straight back on the highway. Either way, a good day.' },
-            ].map(({ emoji, text }, i) => (
+            {t.driveBullets.map(({ emoji, text }, i) => (
               <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>{emoji}</span>
                 <span style={{ fontSize: '14px', color: '#444', lineHeight: '1.75' }}>{text}</span>
@@ -474,46 +547,39 @@ export default function EasternTownshipsPage() {
 
         {/* Winery pricing */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Winery Stop</h2>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>{t.wineryLabel}</h2>
           <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem', boxShadow: '0 6px 24px rgba(0,0,0,0.22)' }}>
-            <p style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem', marginTop: 0 }}>Vignoble Domaine du Brésée · Sutton</p>
+            <p style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem', marginTop: 0 }}>{t.wineryVenue}</p>
             <p style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.2rem', color: '#F5F1EC', fontWeight: '400', lineHeight: '1.3', marginBottom: '0.75rem', marginTop: 0 }}>
-              $10 off every 3 wine bottles
+              {t.wineryHeadline}
             </p>
             <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
-              Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines. Cash or card accepted on site.
+              {t.wineryBody}
             </p>
           </div>
         </section>
 
         {/* Photography */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Photography</h2>
-          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: 0 }}>On-route photos and video captured throughout the day.</p>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.photoLabel}</h2>
+          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: 0 }}>{t.photoBody}</p>
         </section>
 
         {/* Who's Coming */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>
-            Who&rsquo;s Coming &mdash; {PARTICIPANTS.length + 1} Cars · 3 Groups + Media
+            {t.whoLabel(PARTICIPANTS.length + 1)}
           </h2>
 
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: '0 0 1.25rem' }}>
-            With 20 cars on the road, running as a single convoy isn&rsquo;t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We&rsquo;re splitting into three groups of 6&ndash;7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.
+            {t.groupsExplain}
           </p>
 
           {/* Group rules */}
           <div style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem 1.25rem', marginBottom: '2rem', borderLeft: '2px solid rgba(0,0,0,0.08)', boxShadow: 'inset 0 1px 0 rgba(0,0,0,0.04)' }}>
-            <h3 style={{ ...SECTION_LABEL, marginBottom: '0.75rem' }}>Group Rules</h3>
+            <h3 style={{ ...SECTION_LABEL, marginBottom: '0.75rem' }}>{t.groupRulesLabel}</h3>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[
-                'Stay with your group for the entire drive — do not switch groups on route.',
-                'Depart in group order. Wait for the group ahead to fully clear before your group moves.',
-                'No racing between groups. If you catch the group ahead, hold your position and maintain the gap.',
-                'Do not race or push within the group either — this is a scenic drive, not a track day.',
-                'If your group gets split, pull over safely at the nearest stop and wait to regroup.',
-                'Group leads set the pace — follow the car directly in front of you and trust the flow.',
-              ].map((rule, i) => (
+              {t.groupRules.map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                   <span aria-hidden="true" style={{ color: '#c5a882', fontSize: '10px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>—</span>
                   <span style={{ fontSize: '12px', color: '#555', lineHeight: '1.65' }}>{rule}</span>
@@ -534,13 +600,13 @@ export default function EasternTownshipsPage() {
                   style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer', marginBottom: isOpen ? '0.75rem' : 0 }}
                 >
                   <h3 style={{ ...SECTION_LABEL, whiteSpace: 'nowrap', margin: 0 }}>
-                    Group {g} &mdash; {groupCars.length} Cars
+                    {t.groupLabel(g, groupCars.length)}
                   </h3>
                   <div style={{ flex: 1, height: '0.5px', background: 'rgba(0,0,0,0.1)' }} />
                   <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
                 </button>
                 {isOpen && (
-                  <p style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', margin: '0 0 1rem' }}>Tap a photo to learn more about the car</p>
+                  <p style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', margin: '0 0 1rem' }}>{t.tapHint}</p>
                 )}
                 {isOpen && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
@@ -564,7 +630,7 @@ export default function EasternTownshipsPage() {
                         </div>
                         <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
                           {p.lead && (
-                            <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>Group Lead</p>
+                            <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>{t.groupLead}</p>
                           )}
                           <p style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em', margin: 0 }}>{p.name}</p>
                           {p.car && <p style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: 0 }}>{p.car}</p>}
@@ -587,22 +653,12 @@ export default function EasternTownshipsPage() {
             aria-expanded={rulesOpen}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
           >
-            <h2 style={{ ...SECTION_LABEL, margin: 0 }}>Convoy Rules</h2>
-            <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? '▲ Close' : '▼ Read'}</span>
+            <h2 style={{ ...SECTION_LABEL, margin: 0 }}>{t.convoyLabel}</h2>
+            <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? t.convoyClose : t.convoyRead}</span>
           </button>
           {rulesOpen && (
             <ol style={{ margin: '1.25rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {[
-                'Follow the lead car at all times — do not overtake any car in the convoy.',
-                'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.',
-                'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.',
-                'If you get separated, do not panic — proceed to the next stop on the route and wait.',
-                'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
-                'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
-                'Fuel up at the Shell in Brossard before we depart — there are limited options once we hit the backroads.',
-                'Respect the roads and the communities we pass through.',
-                'Give way to the media car at all times — it may move between groups to capture footage. Do not block or race it.',
-              ].map((rule, i) => (
+              {t.convoyRules.map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
                   <span aria-hidden="true" style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
                   <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
@@ -614,7 +670,7 @@ export default function EasternTownshipsPage() {
 
         {/* Map */}
         <section className="scroll-reveal" style={{ padding: '2rem 0' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Map</h2>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>{t.mapLabel}</h2>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
             <RouteMap stops={MAP_MARKERS} />
           </div>
@@ -651,7 +707,7 @@ export default function EasternTownshipsPage() {
               </div>
             )}
             <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
-              <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>Canvas Routes · Whips to Eastern Townships 2026</p>
+              <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>{t.modalBrand}</p>
               <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem', marginTop: 0 }}>{selectedCar.name}</h2>
               {selectedCar.car && (
                 <p style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em', marginTop: 0 }}>{selectedCar.car}</p>
