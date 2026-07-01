@@ -49,7 +49,9 @@ export async function GET(request) {
     is_invited: memberEmails.has(((appMap[c.application_id] || {}).email || '').toLowerCase()),
     rsvp_history: rsvpByApp[c.application_id] || [],
   }))
-  return Response.json(result)
+  // Short client-side cache so quickly flipping between admin tabs doesn't always
+  // cold-refetch the full table — realtime sync still pushes updates within the window.
+  return Response.json(result, { headers: { 'Cache-Control': 'private, max-age=15' } })
 }
 
 export async function POST(request) {

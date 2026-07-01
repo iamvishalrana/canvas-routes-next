@@ -1,17 +1,15 @@
 import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
-import { requireAdmin } from '../../../lib/supabase/authCheck'
 import PaymentsClient from './PaymentsClient'
 
-export const dynamic = 'force-dynamic'
+// Auth is already enforced by middleware.js — no need to re-check here.
+// This page's own data (up to 2000 Stripe payment intents, paginated over multiple
+// API calls) is expensive to recompute — cache it for a minute instead of refetching
+// on every navigation. Real-time changes still show up within the revalidate window.
+export const revalidate = 60
 export const metadata = { title: 'Payments — Admin' }
 
 export default async function PaymentsPage() {
-  if (!await requireAdmin()) {
-    const { redirect } = await import('next/navigation')
-    redirect('/admin')
-  }
-
   const records = []
 
   // Fetch from Stripe

@@ -1,11 +1,8 @@
-import { requireAdmin } from '../../../lib/supabase/authCheck'
-import { redirect } from 'next/navigation'
 import SettingsClient from './SettingsClient'
 
 export const metadata = { title: 'Settings' }
 
-export default async function SettingsPage() {
-  const admin = await requireAdmin()
-  if (!admin) redirect('/members/login')
+// Auth is already enforced by middleware.js for every /admin/:path* request — no need to re-check here.
+export default function SettingsPage() {
   return <SettingsClient />
 }

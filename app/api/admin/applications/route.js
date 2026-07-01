@@ -29,5 +29,7 @@ export async function GET(request) {
     is_member: memberEmails.has(a.email?.toLowerCase()),
     is_contact: contactAppIds.has(a.id),
   }))
-  return Response.json(apps)
+  // Short client-side cache so quickly flipping between admin tabs doesn't always
+  // cold-refetch the full table — realtime sync still pushes updates within the window.
+  return Response.json(apps, { headers: { 'Cache-Control': 'private, max-age=15' } })
 }

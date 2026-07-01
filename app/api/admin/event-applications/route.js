@@ -96,5 +96,7 @@ export async function GET() {
     }
   })
 
-  return Response.json(result)
+  // Short client-side cache so quickly flipping between admin tabs doesn't always
+  // cold-refetch — realtime sync still pushes updates within the window.
+  return Response.json(result, { headers: { 'Cache-Control': 'private, max-age=15' } })
 }

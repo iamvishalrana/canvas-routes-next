@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation'
-import { requireAdmin } from '../../lib/supabase/authCheck'
 import AdminShell from './_components/AdminShell'
 
 export const metadata = {
@@ -12,8 +10,10 @@ export const metadata = {
   },
 }
 
-export default async function AdminLayout({ children }) {
-  const admin = await requireAdmin()
-  if (!admin) redirect('/members/login')
+// Auth is already fully enforced by middleware.js for every /admin/:path* request
+// (redirects unauthenticated/non-admin users before this layout ever renders).
+// Re-checking here would mean a second Supabase Auth network round-trip on every
+// single admin navigation — this layout can trust middleware and skip it.
+export default function AdminLayout({ children }) {
   return <AdminShell>{children}</AdminShell>
 }

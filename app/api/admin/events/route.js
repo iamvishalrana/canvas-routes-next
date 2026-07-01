@@ -9,7 +9,9 @@ export async function GET(request) {
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('events').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('date', { ascending: true })
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
-  return Response.json(data)
+  // Short client-side cache so quickly flipping between admin tabs doesn't always
+  // cold-refetch — realtime sync still pushes updates within the window.
+  return Response.json(data, { headers: { 'Cache-Control': 'private, max-age=15' } })
 }
 
 export async function POST(request) {

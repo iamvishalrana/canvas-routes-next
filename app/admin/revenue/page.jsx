@@ -1,9 +1,11 @@
 import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
-import { requireAdmin } from '../../../lib/supabase/authCheck'
 import RevenueClient from './RevenueClient'
 
-export const dynamic = 'force-dynamic'
+// Auth is already enforced by middleware.js — no need to re-check here.
+// This page recomputes revenue totals from up to 2000 Stripe payment intents on every
+// render — cache it for a minute instead of refetching on every navigation.
+export const revalidate = 60
 export const metadata = { title: 'Revenue — Admin' }
 
 const TYPE_LABELS = {
@@ -17,11 +19,6 @@ const TYPE_LABELS = {
 }
 
 export default async function RevenuePage() {
-  if (!await requireAdmin()) {
-    const { redirect } = await import('next/navigation')
-    redirect('/admin')
-  }
-
   let rows = []
 
   if (stripe) {
