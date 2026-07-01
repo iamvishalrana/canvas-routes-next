@@ -13,17 +13,15 @@ async function saveLinks(supabase, links) {
   if (error) throw new Error(error.message)
 }
 
-export async function GET(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
+export async function GET() {
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
   return Response.json(await getLinks(supabase))
 }
 
 export async function POST(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
-  const { name, url, password, eventDate, notes } = await request.json().catch(() => ({}))
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const { name, url, password, eventDate, notes, type } = await request.json().catch(() => ({}))
   if (!name?.trim()) return Response.json({ error: 'Name is required.' }, { status: 400 })
   if (!url?.trim()) return Response.json({ error: 'URL is required.' }, { status: 400 })
   try {
@@ -36,6 +34,7 @@ export async function POST(request) {
       password: password?.trim() || '',
       eventDate: eventDate || null,
       notes: notes?.trim() || '',
+      type: type || 'Itinerary',
       archived: false,
       createdAt: new Date().toISOString(),
     }
@@ -48,8 +47,7 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id, ...updates } = await request.json().catch(() => ({}))
   if (!id) return Response.json({ error: 'ID required.' }, { status: 400 })
   try {
@@ -66,8 +64,7 @@ export async function PATCH(request) {
 }
 
 export async function DELETE(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await request.json().catch(() => ({}))
   if (!id) return Response.json({ error: 'ID required.' }, { status: 400 })
   try {
