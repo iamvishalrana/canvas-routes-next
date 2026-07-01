@@ -48,6 +48,7 @@ const T = {
     wineryLabel: 'Winery Stop', wineryVenue: 'Vignoble Domaine du Brésée · Sutton',
     wineryHeadline: '$10 off every 3 wine bottles',
     wineryBody: 'Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines. Cash or card accepted on site.',
+    parkingLabel: 'Parking', parkingBody: 'Follow the marked route to lots P1–P3 near the boutique — the vineyard\'s official parking map.',
     photoLabel: 'Photography', photoBody: 'On-route photos and video captured throughout the day.',
     whoLabel: n => `Who's Coming — ${n} Cars · 3 Groups + Media`,
     groupsExplain: 'With 20 cars on the road, running as a single convoy isn\'t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We\'re splitting into three groups of 6–7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.',
@@ -81,6 +82,7 @@ const T = {
     wineryLabel: 'Arrêt au Vignoble', wineryVenue: 'Vignoble Domaine du Brésée · Sutton',
     wineryHeadline: '10 $ de rabais pour 3 bouteilles de vin',
     wineryBody: 'Les participants Canvas Routes bénéficient d\'un rabais exclusif sur les achats de bouteilles de vin au vignoble. Achetez 3 bouteilles et obtenez 10 $ de rabais. Le Vignoble Domaine du Brésée a remporté de nombreux prix pour ses vins. Paiement comptant ou par carte accepté sur place.',
+    parkingLabel: 'Stationnement', parkingBody: 'Suivez le trajet indiqué jusqu\'aux stationnements P1 à P3 près de la boutique — la carte officielle du vignoble.',
     photoLabel: 'Photographie', photoBody: 'Photos et vidéos captées tout au long de la journée sur la route.',
     whoLabel: n => `Qui vient — ${n} voitures · 3 groupes + Média`,
     groupsExplain: 'Avec 20 voitures sur la route, rouler en un seul convoi n\'est ni sécuritaire ni pratique — ça crée des écarts aux feux, met de la pression sur la circulation et rend impossible de garder tout le monde ensemble dans les sections serrées. On se divise en trois groupes de 6 à 7, avec 5 minutes d\'écart entre chaque départ. Chaque groupe forme son propre convoi avec une voiture de tête désignée.',
@@ -570,6 +572,20 @@ export default function EasternTownshipsPage() {
             </p>
             <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
               {t.wineryBody}
+            </p>
+          </div>
+
+          {/* Parking guidance */}
+          <div style={{ marginTop: '1.25rem' }}>
+            <p style={{ ...SECTION_LABEL, marginBottom: '0.6rem' }}>{t.parkingLabel}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/WTET/Vignoble-Parking.jpg"
+              alt={t.parkingLabel}
+              style={{ width: '100%', display: 'block', border: '0.5px solid rgba(0,0,0,0.1)' }}
+            />
+            <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: '0.6rem 0 0' }}>
+              {t.parkingBody}
             </p>
           </div>
         </section>
