@@ -61,7 +61,7 @@ export async function POST(request, { params }) {
   const { data: tokenRow, error: tokenErr } = await admin
     .from('rsvp_tokens')
     .upsert({
-      application_id: app.id,
+      application_id: appId,
       event_name: ev.name,
       expires_at: expiresAt.toISOString(),
       confirmed_at: existingToken?.confirmed_at ?? null,
