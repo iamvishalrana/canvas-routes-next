@@ -27,6 +27,7 @@ export async function PATCH(request, { params }) {
     if ('dob_day' in body) memberSync.dob_day = body.dob_day ?? null
     if ('dob_year' in body) memberSync.dob_year = body.dob_year ?? null
     if ('notes' in body) memberSync.notes = body.notes || null
+    if ('admin_notes' in body) memberSync.admin_notes = body.admin_notes || null
     if ('car_year' in body) memberSync.car_year = body.car_year || null
     if ('car_make' in body) memberSync.car_make = body.car_make || null
     if ('car_model' in body) memberSync.car_model = body.car_model || null
@@ -37,6 +38,16 @@ export async function PATCH(request, { params }) {
         const { error: syncErr } = await supabase.from('members').update(memberSync).eq('id', mem.id)
         if (syncErr) captureMessage('Application→member field sync failed', { error: syncErr.message, appId: id, memberId: mem.id })
       }
+    }
+  }
+
+  // Sync quick note → contacts.notes (contacts has its own notes column;
+  // without this leg the Contacts screen shows a stale note)
+  if ('notes' in body) {
+    const { data: contact } = await supabase.from('contacts').select('id').eq('application_id', id).maybeSingle()
+    if (contact?.id) {
+      const { error: contactNoteErr } = await supabase.from('contacts').update({ notes: body.notes || null }).eq('id', contact.id)
+      if (contactNoteErr) captureMessage('Application→contact note sync failed', { error: contactNoteErr.message, appId: id, contactId: contact.id })
     }
   }
 

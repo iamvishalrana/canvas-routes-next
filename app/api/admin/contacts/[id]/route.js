@@ -27,12 +27,15 @@ export async function PATCH(request, { params }) {
     if (contactErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? contactErr.message : 'Database error' }, { status: 500 })
   }
 
-  // Update applications table via application_id; also resolve email for member sync
+  // Update applications table via application_id; also resolve email for member sync.
+  // A quick-note edit must reach applications.notes too, so resolve the linked
+  // application whenever notes changed — not only for appUpdate fields.
   let appEmail = email?.toLowerCase().trim()
-  if (Object.keys(appUpdate).length > 0) {
+  if (Object.keys(appUpdate).length > 0 || 'notes' in contactUpdate) {
     const { data: contact, error: lookupErr } = await supabase.from('contacts').select('application_id').eq('id', id).single()
     if (lookupErr || !contact?.application_id) return Response.json({ error: 'Contact not found' }, { status: 404 })
-    const { error: appErr } = await supabase.from('applications').update(appUpdate).eq('id', contact.application_id)
+    const fullAppUpdate = { ...appUpdate, ...('notes' in contactUpdate ? { notes: contactUpdate.notes ?? null } : {}) }
+    const { error: appErr } = await supabase.from('applications').update(fullAppUpdate).eq('id', contact.application_id)
     if (appErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? appErr.message : 'Database error' }, { status: 500 })
 
     // Resolve email for member sync if the client didn't supply it
@@ -42,9 +45,10 @@ export async function PATCH(request, { params }) {
     }
   }
 
-  // Sync to members table: notes (when explicitly provided), plus name/phone/instagram on profile edits
+  // Sync to members table: notes/admin_notes (when explicitly provided), plus name/phone/instagram on profile edits
   const memberSync = {}
   if (appEmail && 'notes' in contactUpdate) memberSync.notes = contactUpdate.notes ?? null
+  if ('admin_notes' in appUpdate) memberSync.admin_notes = appUpdate.admin_notes ?? null
   if ('name' in appUpdate) memberSync.name = appUpdate.name
   if ('phone' in appUpdate) memberSync.phone = appUpdate.phone
   if ('instagram' in appUpdate) memberSync.instagram = appUpdate.instagram

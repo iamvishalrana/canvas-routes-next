@@ -51,7 +51,7 @@ export async function POST(request, { params }) {
   // reads it, and without it a manual re-add overwrites a real Stripe payment
   // with external_cash/comped status.
   const { data: existing } = await admin.from('applications')
-    .select('id, registrations, source, stripe_payment_type')
+    .select('id, registrations, source, stripe_payment_type, notes')
     .eq('email', normalEmail)
     .maybeSingle()
 
@@ -81,8 +81,10 @@ export async function POST(request, { params }) {
   }
 
   if (appId) {
+    // ignoreDuplicates: only newly inserted contact rows get the seeded note;
+    // existing contacts keep their own (already-synced) notes
     const { error: contactErr } = await admin.from('contacts').upsert(
-      { application_id: appId },
+      { application_id: appId, notes: existing?.notes ?? null },
       { onConflict: 'application_id', ignoreDuplicates: true }
     )
     if (contactErr) captureException(new Error(contactErr.message), { context: 'registrant-add-contact-upsert', appId, eventId: id })

@@ -55,6 +55,8 @@ export async function PATCH(request, { params }) {
     if ('dob_month' in body) appSync.dob_month = body.dob_month ?? null
     if ('dob_day' in body) appSync.dob_day = body.dob_day ?? null
     if ('dob_year' in body) appSync.dob_year = body.dob_year ?? null
+    if ('notes' in body) appSync.notes = body.notes ?? null
+    if ('admin_notes' in body) appSync.admin_notes = body.admin_notes ?? null
     if ('cars' in body || 'car_year' in body || 'car_make' in body || 'car_model' in body) {
       const primary = (body.cars || [])[0] || {}
       if (primary.year || body.car_year) appSync.car_year = primary.year || body.car_year || null

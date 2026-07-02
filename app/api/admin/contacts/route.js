@@ -61,9 +61,12 @@ export async function POST(request) {
   const body = await request.json()
   const supabase = createAdminClient()
 
-  // Existing flow: link an existing application to contacts
+  // Existing flow: link an existing application to contacts.
+  // Seed contacts.notes from the application's quick note so the Contacts
+  // screen doesn't show an empty note for someone who already has one.
   if (body.application_id) {
-    const { error } = await supabase.from('contacts').insert({ application_id: body.application_id })
+    const { data: appRow } = await supabase.from('applications').select('notes').eq('id', body.application_id).maybeSingle()
+    const { error } = await supabase.from('contacts').insert({ application_id: body.application_id, notes: appRow?.notes ?? null })
     if (error) return Response.json({ error: error.message }, { status: 500 })
     return Response.json({ success: true })
   }
