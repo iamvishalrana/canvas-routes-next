@@ -75,6 +75,19 @@ export async function GET() {
   return Response.json(data || [])
 }
 
+export async function DELETE(request) {
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const { id } = await request.json().catch(() => ({}))
+  if (!id) return Response.json({ error: 'ID required.' }, { status: 400 })
+  const supabase = createAdminClient()
+  const { error } = await supabase.from('broadcasts').delete().eq('id', id)
+  if (error) {
+    captureMessage('Broadcast history delete failed', { error: error.message, id })
+    return Response.json({ error: error.message }, { status: 500 })
+  }
+  return Response.json({ ok: true })
+}
+
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'

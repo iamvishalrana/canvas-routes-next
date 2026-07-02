@@ -7,7 +7,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
-import { sel, L, PrimaryBtn, GhostBtn, Err } from '../_components/shared'
+import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog } from '../_components/shared'
 
 const MAX_RECIPIENTS = 2000
 const DRAFT_KEY = 'bc_draft'
@@ -364,6 +364,13 @@ export default function BroadcastsClient() {
   const [historyLoading, setHistoryLoading]     = useState(false)
   const [historyError, setHistoryError]         = useState(null)
   const [expandedHistoryId, setExpandedHistoryId] = useState(null)     // 3. history expand
+  const [historySearch, setHistorySearch]       = useState('')
+  const [historyAudience, setHistoryAudience]   = useState('all')
+  const [historySort, setHistorySort]           = useState('newest')
+  const [expandedMonths, setExpandedMonths]     = useState(() => new Set()) // collapsed by default
+  const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null)
+  const [deletingHistory, setDeletingHistory]   = useState(false)
+  const [historyActionErr, setHistoryActionErr] = useState(null)
   const [recipientCount, setRecipientCount]     = useState(null)
   const [countLoading, setCountLoading]         = useState(false)
   const [testEmail, setTestEmail]               = useState('')
@@ -444,6 +451,35 @@ export default function BroadcastsClient() {
   }, [])
 
   useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
+
+  async function deleteHistory(id) {
+    setDeletingHistory(true)
+    setHistoryActionErr(null)
+    try {
+      const res = await fetch('/api/admin/broadcasts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setHistoryActionErr(d.error || 'Failed to delete.'); return }
+      setHistory(prev => prev.filter(h => h.id !== id))
+      if (expandedHistoryId === id) setExpandedHistoryId(null)
+      setDeleteHistoryConfirm(null)
+    } catch {
+      setHistoryActionErr('Network error — entry not deleted.')
+    } finally {
+      setDeletingHistory(false)
+    }
+  }
+
+  function toggleMonth(key) {
+    setExpandedMonths(prev => {
+      const n = new Set(prev)
+      if (n.has(key)) n.delete(key); else n.add(key)
+      return n
+    })
+  }
 
   const loadTemplates = useCallback(async () => {
     setTemplatesLoading(true)
@@ -599,6 +635,28 @@ export default function BroadcastsClient() {
     setTab('compose')
   }
 
+  // Filter → sort → group by send month
+  const filteredHistory = history
+    .filter(h => historyAudience === 'all' || h.audience === historyAudience)
+    .filter(h => !historySearch.trim() || (h.subject || '').toLowerCase().includes(historySearch.trim().toLowerCase()))
+  const sortedHistory = [...filteredHistory].sort((a, b) => {
+    if (historySort === 'oldest')      return new Date(a.sent_at) - new Date(b.sent_at)
+    if (historySort === 'most_sent')   return (b.sent_count || 0) - (a.sent_count || 0)
+    if (historySort === 'most_failed') return (b.failed_count || 0) - (a.failed_count || 0)
+    return new Date(b.sent_at) - new Date(a.sent_at)
+  })
+  const monthsMap = new Map()
+  for (const h of sortedHistory) {
+    const d = new Date(h.sent_at)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    if (!monthsMap.has(key)) monthsMap.set(key, { key, label: d.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' }), rows: [] })
+    monthsMap.get(key).rows.push(h)
+  }
+  const historyMonths = [...monthsMap.values()].sort((a, b) =>
+    historySort === 'oldest' ? a.key.localeCompare(b.key) : b.key.localeCompare(a.key))
+  // Searching with everything collapsed would hide all matches — open while searching
+  const forceMonthsOpen = !!historySearch.trim()
+
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       <style>{`
@@ -725,92 +783,135 @@ export default function BroadcastsClient() {
       {/* ── History ── */}
       {tab === 'history' && (
         <div>
+          {/* Filter + sort toolbar */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <input
+              value={historySearch}
+              onChange={e => setHistorySearch(e.target.value)}
+              placeholder="Search subject…"
+              style={{ ...INP, flex: '1 1 180px', maxWidth: '260px', padding: '0.45rem 0.65rem', fontSize: '12px' }}
+            />
+            <select style={{ ...TSEL, height: '30px', padding: '2px 8px' }} value={historyAudience} onChange={e => setHistoryAudience(e.target.value)}>
+              <option value="all">All audiences</option>
+              {AUDIENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <select style={{ ...TSEL, height: '30px', padding: '2px 8px' }} value={historySort} onChange={e => setHistorySort(e.target.value)}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="most_sent">Most sent</option>
+              <option value="most_failed">Most failed</option>
+            </select>
+            <span style={{ fontSize: '11px', color: '#aaa', marginLeft: 'auto' }}>
+              {filteredHistory.length} broadcast{filteredHistory.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {historyActionErr && (
+            <div style={{ padding: '0.6rem 1rem', fontSize: '12px', color: '#7B2032', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.2)', marginBottom: '1rem' }}>{historyActionErr}</div>
+          )}
           {historyLoading ? (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
           ) : historyError ? (
             <div style={{ padding: '1rem', fontSize: '13px', color: '#7B2032', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{historyError}</div>
-          ) : history.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No broadcasts sent yet.</div>
+          ) : historyMonths.length === 0 ? (
+            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
+              {history.length === 0 ? 'No broadcasts sent yet.' : 'No broadcasts match the current filters.'}
+            </div>
           ) : (
-            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-              {history.map((h, idx) => (
-                <div key={h.id}>
-                  {/* 2 & 3: history row with re-use + expand */}
-                  <div
-                    className="bc-history-row"
-                    style={{ padding: '1.1rem 1.5rem', borderBottom: (expandedHistoryId === h.id || idx < history.length - 1) ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', cursor: 'default' }}
-                  >
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.25rem' }}>{h.subject}</div>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '1px 7px', border: '0.5px solid rgba(197,168,130,0.4)', background: 'rgba(197,168,130,0.07)', color: '#8A6535' }}>
-                          {h.audience === 'specific_emails'
-                            ? `${h.specific_emails?.length ?? 0} emails`
-                            : AUDIENCE_LABELS[h.audience] || h.audience}
-                        </span>
-                        {h.audience === 'specific_emails' && h.specific_emails?.length > 0 && (
-                          <span style={{ fontSize: '11px', color: '#bbb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '260px' }}>
-                            {h.specific_emails.slice(0, 2).join(', ')}{h.specific_emails.length > 2 ? ` +${h.specific_emails.length - 2} more` : ''}
-                          </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {historyMonths.map(({ key, label, rows }) => {
+                const open = forceMonthsOpen || expandedMonths.has(key)
+                const monthSent = rows.reduce((sum, h) => sum + (h.sent_count || 0), 0)
+                return (
+                  <div key={key} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                    {/* Month header */}
+                    <button
+                      onClick={() => toggleMonth(key)}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1rem', background: open ? 'rgba(0,0,0,0.015)' : 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}
+                    >
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+                      <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.02em' }}>{label}</span>
+                      <span style={{ fontSize: '10px', color: '#bbb' }}>{rows.length} broadcast{rows.length !== 1 ? 's' : ''}</span>
+                      <span style={{ fontSize: '10px', color: '#3B6B2F', marginLeft: 'auto' }}>{monthSent} sent</span>
+                    </button>
+                    {/* Rows */}
+                    {open && rows.map((h, idx) => (
+                      <div key={h.id} className="admin-panel-enter">
+                        <div
+                          className="bc-history-row"
+                          style={{ padding: '0.5rem 1rem 0.5rem 2rem', borderTop: '0.5px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}
+                        >
+                          <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>{h.subject}</span>
+                            <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '1px 6px', border: '0.5px solid rgba(197,168,130,0.4)', background: 'rgba(197,168,130,0.07)', color: '#8A6535', whiteSpace: 'nowrap' }}>
+                              {h.audience === 'specific_emails'
+                                ? `${h.specific_emails?.length ?? 0} emails`
+                                : AUDIENCE_LABELS[h.audience] || h.audience}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                            <span style={{ fontSize: '10px', color: '#bbb' }}>
+                              {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                            </span>
+                            <span style={{ fontSize: '11px', fontWeight: '500', color: '#3B6B2F' }}>{h.sent_count}✓</span>
+                            {h.failed_count > 0 && <span style={{ fontSize: '11px', fontWeight: '500', color: '#7B2032' }}>{h.failed_count}✗</span>}
+                            {(h.body_html || h.failed_recipients?.length > 0) && (
+                              <button
+                                onClick={() => setExpandedHistoryId(expandedHistoryId === h.id ? null : h.id)}
+                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: h.failed_count > 0 ? '#7B2032' : '#888', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                              >
+                                {expandedHistoryId === h.id ? 'Hide' : h.failed_count > 0 ? 'Details' : 'Preview'}
+                              </button>
+                            )}
+                            <button
+                              className="bc-reuse-btn"
+                              onClick={() => reuseHistory(h)}
+                              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: '#555', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                            >
+                              Re-use
+                            </button>
+                            <button
+                              onClick={() => setDeleteHistoryConfirm(h)}
+                              title="Delete from history"
+                              style={{ background: 'none', border: '0.5px solid rgba(123,32,50,0.25)', padding: '2px 7px', cursor: 'pointer', color: '#7B2032', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                        {expandedHistoryId === h.id && (
+                          <div style={{ padding: '1rem 1.25rem 1rem 2rem', background: '#fafaf9', borderTop: '0.5px solid rgba(0,0,0,0.05)' }}>
+                            {h.audience === 'specific_emails' && h.specific_emails?.length > 0 && (
+                              <div style={{ fontSize: '11px', color: '#999', marginBottom: (h.failed_recipients?.length > 0 || h.body_html) ? '0.75rem' : 0, wordBreak: 'break-word' }}>
+                                To: {h.specific_emails.join(', ')}
+                              </div>
+                            )}
+                            {h.failed_recipients?.length > 0 && (
+                              <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.75rem 0.9rem', background: 'rgba(123,32,50,0.04)', border: '0.5px solid rgba(123,32,50,0.18)' }}>
+                                <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  {h.failed_recipients.length} failed recipient{h.failed_recipients.length !== 1 ? 's' : ''}
+                                </div>
+                                {h.failed_recipients.map((f, fi) => (
+                                  <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < h.failed_recipients.length - 1 ? '0.35rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>
+                                    <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{f.name || f.email}</span>
+                                    {f.name && <span style={{ color: '#999' }}> · {f.email}</span>}
+                                    {f.reason && <span style={{ color: '#7B2032' }}> — {f.reason}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {h.body_html && (
+                              <div
+                                style={{ fontSize: '13px', lineHeight: '1.7', color: '#444', fontFamily: 'Arial,sans-serif' }}
+                                dangerouslySetInnerHTML={{ __html: h.body_html }}
+                              />
+                            )}
+                          </div>
                         )}
                       </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.2rem' }}>
-                          {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </div>
-                        <div style={{ fontSize: '12px', fontWeight: '500' }}>
-                          <span style={{ color: '#3B6B2F' }}>{h.sent_count} sent</span>
-                          {h.failed_count > 0 && <span style={{ color: '#7B2032', marginLeft: '0.5rem' }}>{h.failed_count} failed</span>}
-                        </div>
-                      </div>
-                      {/* 3. expand body toggle */}
-                      {(h.body_html || h.failed_recipients?.length > 0) && (
-                        <button
-                          onClick={() => setExpandedHistoryId(expandedHistoryId === h.id ? null : h.id)}
-                          style={{ background: h.failed_count > 0 ? 'rgba(123,32,50,0.05)' : 'none', border: h.failed_count > 0 ? '0.5px solid rgba(123,32,50,0.25)' : '0.5px solid rgba(0,0,0,0.12)', padding: '3px 8px', cursor: 'pointer', color: h.failed_count > 0 ? '#7B2032' : '#888', fontSize: '10px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
-                        >
-                          {expandedHistoryId === h.id ? 'Hide' : h.failed_count > 0 ? 'Details' : 'Preview'}
-                        </button>
-                      )}
-                      {/* 2. re-use button */}
-                      <button
-                        className="bc-reuse-btn"
-                        onClick={() => reuseHistory(h)}
-                        style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '3px 8px', cursor: 'pointer', color: '#555', fontSize: '10px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
-                      >
-                        Re-use
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                  {/* 3. expanded details: failed recipients + body preview */}
-                  {expandedHistoryId === h.id && (
-                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: idx < history.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', background: '#fafaf9' }}>
-                      {h.failed_recipients?.length > 0 && (
-                        <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.85rem 1rem', background: 'rgba(123,32,50,0.04)', border: '0.5px solid rgba(123,32,50,0.18)' }}>
-                          <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                            {h.failed_recipients.length} failed recipient{h.failed_recipients.length !== 1 ? 's' : ''}
-                          </div>
-                          {h.failed_recipients.map((f, fi) => (
-                            <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < h.failed_recipients.length - 1 ? '0.4rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>
-                              <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{f.name || f.email}</span>
-                              {f.name && <span style={{ color: '#999' }}> · {f.email}</span>}
-                              {f.reason && <span style={{ color: '#7B2032' }}> — {f.reason}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {h.body_html && (
-                        <div
-                          style={{ fontSize: '14px', lineHeight: '1.75', color: '#444', fontFamily: 'Arial,sans-serif' }}
-                          dangerouslySetInnerHTML={{ __html: h.body_html }}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -1060,6 +1161,19 @@ export default function BroadcastsClient() {
             </div>
           )}
         </>
+      )}
+
+      {deleteHistoryConfirm && (
+        <ConfirmDialog
+          title="Delete this broadcast from history?"
+          message="This only removes the history entry — the emails were already sent. This cannot be undone."
+          details={<><strong>{deleteHistoryConfirm.subject}</strong><br />{new Date(deleteHistoryConfirm.sent_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })} · {deleteHistoryConfirm.sent_count} sent</>}
+          confirmLabel="Yes, delete"
+          danger
+          busy={deletingHistory}
+          onConfirm={() => deleteHistory(deleteHistoryConfirm.id)}
+          onCancel={() => setDeleteHistoryConfirm(null)}
+        />
       )}
     </div>
   )
