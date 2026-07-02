@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { captureMessage } from '../../../../../lib/sentry.js'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -51,7 +52,8 @@ export async function DELETE(request, { params }) {
 
   // Delete orphaned rsvp_tokens (no FK cascade since rsvp_tokens has no event_id column)
   if (ev?.name) {
-    await supabase.from('rsvp_tokens').delete().eq('event_name', ev.name)
+    const { error: tokenErr } = await supabase.from('rsvp_tokens').delete().eq('event_name', ev.name)
+    if (tokenErr) captureMessage('Orphaned rsvp_tokens after event delete', { error: tokenErr.message, eventName: ev.name })
   }
 
   return Response.json({ success: true })

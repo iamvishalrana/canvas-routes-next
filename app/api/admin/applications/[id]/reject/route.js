@@ -26,7 +26,11 @@ export async function POST(request, { params }) {
   try {
     if (app.stripe_payment_status === 'authorized') {
       // Cancel the hold — no charge to the customer
-      await stripe.paymentIntents.cancel(app.stripe_payment_intent_id)
+      await stripe.paymentIntents.cancel(
+        app.stripe_payment_intent_id,
+        {},
+        { idempotencyKey: `reject-cancel-${app.stripe_payment_intent_id}` }
+      )
     } else {
       // Already captured — issue a full refund
       await stripe.refunds.create(
@@ -35,9 +39,14 @@ export async function POST(request, { params }) {
       )
     }
 
-    await supabase.from('applications').update({
+    // Money already moved — a failed status write here must not look like success
+    const { error: updateErr } = await supabase.from('applications').update({
       stripe_payment_status: 'rejected',
     }).eq('id', id).in('stripe_payment_status', ['authorized', 'paid'])
+    if (updateErr) {
+      captureException(new Error(updateErr.message), { context: 'admin-reject-status-update', appId: id })
+      return Response.json({ error: `Payment was ${app.stripe_payment_status === 'authorized' ? 'cancelled' : 'refunded'} on Stripe, but the status could not be updated: ${updateErr.message}` }, { status: 500 })
+    }
 
     return Response.json({ ok: true })
   } catch (err) {

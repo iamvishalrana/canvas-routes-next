@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { parseCarMakeModel, GhostBtn, DangerBtn, PrimaryBtn, Err } from '../_components/shared'
+import { parseCarMakeModel, GhostBtn, DangerBtn, PrimaryBtn, Err, ConfirmDialog } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 
 function PaymentChip({ status, amount }) {
@@ -38,6 +38,7 @@ export default function EventApplicationsClient() {
   const [inviting, setInviting] = useState({})   // { [appId-eventName]: true }
   const [inviteErr, setInviteErr] = useState({})
   const [inviteDone, setInviteDone] = useState({})
+  const [inviteConfirm, setInviteConfirm] = useState(null) // { app, ev } awaiting yes/no
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -197,7 +198,7 @@ export default function EventApplicationsClient() {
                                   {app.rsvp?.answers && <RsvpAnswers answers={app.rsvp.answers} />}
                                   {!isPaidRegistrant && (
                                     <div style={{ marginTop: '0.65rem' }}>
-                                      <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} isInvited={isInvited} isConfirmed={isConfirmed} />
+                                      <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={(app2, ev2) => setInviteConfirm({ app: app2, ev: ev2, isInvited })} isInvited={isInvited} isConfirmed={isConfirmed} />
                                     </div>
                                   )}
                                 </div>
@@ -221,7 +222,7 @@ export default function EventApplicationsClient() {
                                   </div>
                                   <div>
                                     {!isPaidRegistrant && (
-                                      <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} isInvited={isInvited} isConfirmed={isConfirmed} />
+                                      <InviteActions app={app} ev={ev} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={(app2, ev2) => setInviteConfirm({ app: app2, ev: ev2, isInvited })} isInvited={isInvited} isConfirmed={isConfirmed} />
                                     )}
                                   </div>
                                 </div>
@@ -237,6 +238,18 @@ export default function EventApplicationsClient() {
             )
           })}
         </div>
+      )}
+
+      {inviteConfirm && (
+        <ConfirmDialog
+          title={inviteConfirm.isInvited ? 'Re-send this invite?' : 'Send RSVP invite?'}
+          message="The invite email goes out immediately."
+          details={<><strong>{inviteConfirm.app.name || '—'}</strong> · {inviteConfirm.app.email}<br />Event: <strong>{inviteConfirm.ev.name}</strong></>}
+          confirmLabel={inviteConfirm.isInvited ? 'Yes, re-send' : 'Yes, send invite'}
+          busy={!!inviting[`${inviteConfirm.app.id}-${inviteConfirm.ev.name}`]}
+          onConfirm={async () => { const { app, ev } = inviteConfirm; await sendInvite(app, ev); setInviteConfirm(null) }}
+          onCancel={() => setInviteConfirm(null)}
+        />
       )}
     </div>
   )

@@ -22,10 +22,11 @@ function AppAdminNotes({ appId, initialNotes, onSaved }) {
       <AdminNotesPanel
         initialNotes={initialNotes}
         onSave={async (json) => {
-          await fetch(`/api/admin/applications/${appId}`, {
+          const res = await fetch(`/api/admin/applications/${appId}`, {
             method: 'PATCH', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ admin_notes: json }),
           })
+          if (!res.ok) throw new Error('Failed to save notes')
           onSaved?.(json)
         }}
       />
@@ -83,6 +84,7 @@ export default function ContactsClient() {
   const [savingNew, setSavingNew] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
+  const [noteSaveError, setNoteSaveError] = useState(null)
   const [removeContactConfirm, setRemoveContactConfirm] = useState(null)
   const [removeContactError, setRemoveContactError] = useState(null)
   const [deleteSelectedConfirm, setDeleteSelectedConfirm] = useState(false)
@@ -268,10 +270,12 @@ export default function ContactsClient() {
     } else {
       newRegs = [...existing, { event: eventName, registered_at: null, attended: value }]
     }
-    const res = await fetch(`/api/admin/applications/${contact.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
-    })
-    if (res.ok) setContacts(prev => prev.map(c => c.contact_id === contactId ? { ...c, registrations: newRegs } : c))
+    try {
+      const res = await fetch(`/api/admin/applications/${contact.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrations: newRegs }),
+      })
+      if (res.ok) setContacts(prev => prev.map(c => c.contact_id === contactId ? { ...c, registrations: newRegs } : c))
+    } catch {} // no optimistic update to roll back — UI simply doesn't change
   }
 
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -300,13 +304,19 @@ export default function ContactsClient() {
 
   async function saveNote(contactId, value, email) {
     const trimmed = value.trim()
+    setNoteSaveError(null)
     try {
       const res = await fetch(`/api/admin/contacts/${contactId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: trimmed || null, email: email || undefined }),
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setNoteSaveError(d.error || 'Failed to save note.')
+        return
+      }
     } catch {
+      setNoteSaveError('Network error — note not saved.')
       return
     }
     setContacts(prev => prev.map(x => x.contact_id === contactId ? { ...x, notes: trimmed || null } : x))
@@ -796,6 +806,7 @@ export default function ContactsClient() {
                               <GhostBtn small onClick={() => saveNote(c.contact_id, noteValue, c.email)}>Save</GhostBtn>
                               <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
                             </div>
+                            <Err msg={noteSaveError} />
                           </div>
                         ) : (
                           <div onClick={() => { setEditingNote(c.contact_id); setNoteValue(c.notes || '') }}

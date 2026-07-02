@@ -310,10 +310,18 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
 
   async function deleteMember(m) {
     setDeleteMemberError(null)
-    const res = await fetch(`/api/admin/members/${m.id}`, { method: 'DELETE' })
-    if (!res.ok) { const d = await res.json(); setDeleteMemberError(d.error || 'Failed to delete.'); return }
-    setDeleteMemberConfirm(null)
-    router.refresh()
+    try {
+      const res = await fetch(`/api/admin/members/${m.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setDeleteMemberError(d.error || 'Failed to delete.')
+        return
+      }
+      setDeleteMemberConfirm(null)
+      router.refresh()
+    } catch {
+      setDeleteMemberError('Network error — member not deleted.')
+    }
   }
 
   async function resendInvite(m) {

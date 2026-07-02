@@ -618,13 +618,75 @@ section[id] {
   opacity: 0;
   animation: adminFadeIn 0.3s ease-out 0.55s forwards;
 }
+
+/* Modal / confirm dialog */
+@keyframes adminOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes adminModalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.admin-modal-overlay {
+  animation: adminOverlayIn 0.18s ease-out forwards;
+}
+.admin-modal-enter {
+  animation: adminModalIn 0.22s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+/* Staggered card entrance (stat cards, panels) */
+.admin-card-enter {
+  opacity: 0;
+  animation: adminFadeIn 0.35s ease-out forwards;
+}
+.admin-card-enter:nth-child(1) { animation-delay: 0.03s; }
+.admin-card-enter:nth-child(2) { animation-delay: 0.08s; }
+.admin-card-enter:nth-child(3) { animation-delay: 0.13s; }
+.admin-card-enter:nth-child(4) { animation-delay: 0.18s; }
+.admin-card-enter:nth-child(5) { animation-delay: 0.23s; }
+.admin-card-enter:nth-child(6) { animation-delay: 0.28s; }
+.admin-card-enter:nth-child(7) { animation-delay: 0.33s; }
+.admin-card-enter:nth-child(8) { animation-delay: 0.38s; }
+
+/* Button micro-interactions */
+.admin-btn {
+  transition: opacity 0.15s ease, transform 0.12s ease, background 0.15s ease,
+              color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.admin-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(15, 30, 20, 0.12);
+}
+.admin-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Success check pop (banners, confirmations) */
+@keyframes adminPopIn {
+  0%   { opacity: 0; transform: scale(0.6); }
+  70%  { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.admin-pop-in {
+  display: inline-block;
+  animation: adminPopIn 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .admin-page-enter, .admin-nav-item, .admin-panel-enter,
   .admin-row-enter, .admin-sidebar-desktop, .admin-sidebar-logo,
   .admin-section-header, .admin-nav-item.admin-nav-link-active,
-  .admin-sidebar-footer {
+  .admin-sidebar-footer, .admin-modal-overlay, .admin-modal-enter,
+  .admin-card-enter, .admin-pop-in {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+  .admin-btn, .admin-btn:hover:not(:disabled) {
+    transition: none;
+    transform: none;
+    box-shadow: none;
   }
 }

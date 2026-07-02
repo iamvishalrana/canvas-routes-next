@@ -9,15 +9,13 @@ async function getTemplates(supabase) {
 }
 
 export async function GET(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
   return Response.json(await getTemplates(supabase))
 }
 
 export async function POST(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { name, subject, bodyHtml } = await request.json().catch(() => ({}))
   if (!name?.trim()) return Response.json({ error: 'Name is required.' }, { status: 400 })
   if (!subject?.trim()) return Response.json({ error: 'Subject is required.' }, { status: 400 })
@@ -41,8 +39,7 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  const authError = await requireAdmin(request)
-  if (authError) return authError
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await request.json().catch(() => ({}))
   if (!id) return Response.json({ error: 'ID required.' }, { status: 400 })
   try {

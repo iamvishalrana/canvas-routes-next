@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { checkRateLimit } from '../../../../lib/rateLimit'
+import { captureMessage } from '../../../../lib/sentry'
 
 const MAX_RECIPIENTS = 2000
 const RESEND_BATCH_SIZE = 100 // Resend /emails/batch max per call
@@ -62,11 +63,15 @@ function buildEmail({ from, recipient, subject, html, unsubPageUrl, unsubApiUrl 
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('broadcasts')
     .select('id, subject, body_html, audience, specific_emails, sent_count, failed_count, failed_recipients, sent_at')
     .order('sent_at', { ascending: false })
     .limit(100)
+  if (error) {
+    captureMessage('Broadcast history read failed', { error: error.message })
+    return Response.json({ error: `Could not load history: ${error.message}` }, { status: 500 })
+  }
   return Response.json(data || [])
 }
 
@@ -164,16 +169,19 @@ export async function POST(request) {
     recipients = recipients.filter(r => !excludeSet.has(r.email.toLowerCase()))
   }
 
-  // Filter out anyone who has unsubscribed
-  try {
-    const { data: unsubs } = await supabase
-      .from('unsubscribed_emails')
-      .select('email')
-    if (unsubs?.length) {
-      const unsubSet = new Set(unsubs.map(u => u.email.toLowerCase()))
-      recipients = recipients.filter(r => !unsubSet.has(r.email.toLowerCase()))
-    }
-  } catch {}
+  // Filter out anyone who has unsubscribed. Fail closed: if the list can't be
+  // read we must not risk emailing people who opted out — abort before sending.
+  const { data: unsubs, error: unsubErr } = await supabase
+    .from('unsubscribed_emails')
+    .select('email')
+  if (unsubErr) {
+    captureMessage('Broadcast blocked — unsubscribe list unreadable', { error: unsubErr.message })
+    return Response.json({ error: `Could not check the unsubscribe list (${unsubErr.message}). Broadcast not sent.` }, { status: 500 })
+  }
+  if (unsubs?.length) {
+    const unsubSet = new Set(unsubs.map(u => u.email.toLowerCase()))
+    recipients = recipients.filter(r => !unsubSet.has(r.email.toLowerCase()))
+  }
 
   const totalRecipients = recipients.length
   const truncated = totalRecipients > MAX_RECIPIENTS
@@ -213,18 +221,26 @@ export async function POST(request) {
     }
   }
 
-  // Save to broadcast history using normalized emails, not the raw client input
-  try {
-    await supabase.from('broadcasts').insert({
-      subject: subject.trim(),
-      body_html: body_html || null,
-      audience,
-      specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
-      sent_count: sent,
-      failed_count: failed,
-      failed_recipients: failedRecipients.length > 0 ? failedRecipients : null,
-    })
-  } catch {} // don't fail the response if history write fails
+  // Save to broadcast history using normalized emails, not the raw client input.
+  // supabase-js returns errors instead of throwing — check `error` explicitly,
+  // otherwise a failed insert (missing grants, missing column) is invisible.
+  const { error: historyError } = await supabase.from('broadcasts').insert({
+    subject: subject.trim(),
+    body_html: body_html || null,
+    audience,
+    specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
+    sent_count: sent,
+    failed_count: failed,
+    failed_recipients: failedRecipients.length > 0 ? failedRecipients : null,
+  })
+  if (historyError) {
+    captureMessage('Broadcast history insert failed', { error: historyError.message, audience, sent, failed })
+  }
 
-  return Response.json({ sent, failed, truncated, totalRecipients })
+  // Emails already went out — report the history failure but don't fail the response
+  return Response.json({
+    sent, failed, truncated, totalRecipients,
+    historySaved: !historyError,
+    ...(historyError ? { historyError: historyError.message } : {}),
+  })
 }

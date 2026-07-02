@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { captureMessage } from '../../../../../lib/sentry.js'
 import { EVENT_ATTENDANCE_KEYS, normalizeEventName } from '../../../../../lib/eventMeta.js'
 
 export async function PATCH(request, { params }) {
@@ -32,7 +33,10 @@ export async function PATCH(request, { params }) {
     if ('car_paint' in body) memberSync.car_paint = body.car_paint || null
     if (Object.keys(memberSync).length > 0) {
       const { data: mem } = await supabase.from('members').select('id').eq('email', app.email.toLowerCase()).maybeSingle()
-      if (mem) await supabase.from('members').update(memberSync).eq('id', mem.id)
+      if (mem) {
+        const { error: syncErr } = await supabase.from('members').update(memberSync).eq('id', mem.id)
+        if (syncErr) captureMessage('Application→member field sync failed', { error: syncErr.message, appId: id, memberId: mem.id })
+      }
     }
   }
 
@@ -45,7 +49,8 @@ export async function PATCH(request, { params }) {
         const key = EVENT_ATTENDANCE_KEYS[normalizeEventName(reg.event)]
         if (key) attendance[key] = reg.attended ?? null
       }
-      await supabase.from('members').update({ event_attendance: attendance }).eq('id', member.id)
+      const { error: attErr } = await supabase.from('members').update({ event_attendance: attendance }).eq('id', member.id)
+      if (attErr) captureMessage('Application→member attendance sync failed', { error: attErr.message, appId: id, memberId: member.id })
     }
   }
 

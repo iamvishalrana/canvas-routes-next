@@ -36,12 +36,14 @@ export async function POST(request, { params }) {
       { idempotencyKey: `refund-${piId}` }
     )
 
-    // Best-effort DB sync — ignore errors
-    await supabase
+    // DB sync — supabase returns errors instead of throwing, so .catch() never
+    // fires; check the returned error. The webhook rescue will also flip the
+    // status, so report to Sentry but don't fail the refund response.
+    const { error: syncErr } = await supabase
       .from('applications')
       .update({ stripe_payment_status: 'refunded', stripe_amount_refunded: refund.amount })
       .eq('stripe_payment_intent_id', piId)
-      .catch(() => {})
+    if (syncErr) captureException(new Error(syncErr.message), { context: 'admin-stripe-refund-db-sync', piId })
 
     return Response.json({ refund_id: refund.id })
   } catch (err) {

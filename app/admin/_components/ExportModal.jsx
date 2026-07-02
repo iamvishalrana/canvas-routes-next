@@ -32,8 +32,8 @@ export function ExportModal({ isOpen, onClose, filename, title, headers, rows })
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />
-      <div style={{ position: 'relative', background: '#fff', width: '100%', maxWidth: '420px', margin: '1rem', border: '0.5px solid rgba(0,0,0,0.12)', boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+      <div className="admin-modal-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />
+      <div className="admin-modal-enter" style={{ position: 'relative', background: '#fff', width: '100%', maxWidth: '420px', margin: '1rem', border: '0.5px solid rgba(0,0,0,0.12)', boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>Export {title}</div>

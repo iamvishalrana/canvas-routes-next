@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../lib/supabase/admin'
 import Link from 'next/link'
+import StatNumber from './StatNumber'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dashboard — Admin' }
@@ -68,7 +69,7 @@ export default async function DashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {stats.map((s, i) => (
           <Link key={s.label} href={s.href} style={{ ...CARD, padding: '1.25rem 1.5rem', textDecoration: 'none', display: 'block', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: `${i * 0.09}s` }}>
-            <div style={{ fontSize: '2.2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{s.value}</div>
+            <div style={{ fontSize: '2.2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}><StatNumber value={s.value} /></div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.label}</div>
           </Link>
         ))}

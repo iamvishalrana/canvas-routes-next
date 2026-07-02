@@ -42,6 +42,7 @@ export default function ExpensesClient() {
   const [uploadingFile, setUploadingFile] = useState(false)
   const [receiptName, setReceiptName]   = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [deleteErr, setDeleteErr] = useState(null)
   const [deleting, setDeleting]         = useState(null)
   const [openGroups, setOpenGroups]     = useState({})
   const [filterEvent, setFilterEvent]   = useState('all')
@@ -177,11 +178,21 @@ export default function ExpensesClient() {
 
   async function handleDelete(expense) {
     setDeleting(expense.id)
+    setDeleteErr(null)
     try {
       const res = await fetch(`/api/admin/expenses/${expense.id}`, { method: 'DELETE' })
-      if (res.ok) setExpenses(prev => prev.filter(e => e.id !== expense.id))
-    } catch {}
-    setDeleting(null); setDeleteConfirm(null)
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setDeleteErr(d.error || 'Failed to delete expense.')
+        setDeleting(null)
+        return
+      }
+      setExpenses(prev => prev.filter(e => e.id !== expense.id))
+      setDeleteConfirm(null)
+    } catch {
+      setDeleteErr('Network error — expense not deleted.')
+    }
+    setDeleting(null)
   }
 
   function exportCSV() {
@@ -527,7 +538,8 @@ export default function ExpensesClient() {
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.5rem 1.1rem', background: 'rgba(123,32,50,0.03)', borderTop: '0.5px solid rgba(123,32,50,0.08)' }}>
                               <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this expense?</span>
                               <DangerBtn small onClick={() => handleDelete(expense)} disabled={isDeletingThis}>{isDeletingThis ? '…' : 'Delete'}</DangerBtn>
-                              <GhostBtn small onClick={() => setDeleteConfirm(null)}>Cancel</GhostBtn>
+                              <GhostBtn small onClick={() => { setDeleteConfirm(null); setDeleteErr(null) }}>Cancel</GhostBtn>
+                              {deleteErr && <span style={{ fontSize: '11px', color: '#7B2032' }}>{deleteErr}</span>}
                             </div>
                           )}
                         </div>

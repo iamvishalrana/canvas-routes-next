@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   EVENT_TYPES, normalizeEventName,
   parseCarMakeModel,
-  inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch,
+  inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog,
 } from '../_components/shared'
 
 // ── RSVP helpers (previously in EventApplicationsClient) ──────────────────────
@@ -322,6 +322,12 @@ export default function EventsClient() {
   // Decline actions
   const [declining, setDeclining] = useState({})
   const [declineErr, setDeclineErr] = useState({})
+
+  // Yes/no gates before anything is emailed to participants
+  const [inviteConfirm, setInviteConfirm] = useState(null)     // { app, ev }
+  const [declineConfirm, setDeclineConfirm] = useState(null)   // { appId, appName, eventName }
+  const [addRegConfirm, setAddRegConfirm] = useState(null)     // eventId
+  const [regEmailConfirm, setRegEmailConfirm] = useState(null) // eventId
 
   const [isNarrow, setIsNarrow] = useState(false)
   useEffect(() => {
@@ -1085,7 +1091,7 @@ export default function EventsClient() {
                               </select>
                               <PrimaryBtn
                                 disabled={addingReg[item.id] || !addRegName[item.id]?.trim() || !addRegEmail[item.id]?.trim() || !(addRegEmail[item.id] || '').includes('@')}
-                                onClick={() => addRegistrant(item.id)}
+                                onClick={() => setAddRegConfirm(item.id)}
                               >
                                 {addingReg[item.id] ? 'Adding…' : 'Add'}
                               </PrimaryBtn>
@@ -1117,7 +1123,7 @@ export default function EventsClient() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                               <PrimaryBtn
                                 disabled={sendingRegEmail[item.id] || !regEmailSubject[item.id]?.trim() || !regEmailBody[item.id]?.trim()}
-                                onClick={() => sendEmailToRegistrants(item.id)}
+                                onClick={() => setRegEmailConfirm(item.id)}
                               >
                                 {sendingRegEmail[item.id]
                                   ? 'Sending…'
@@ -1421,7 +1427,7 @@ export default function EventsClient() {
                                       </div>
                                       {app.rsvp?.answers && <RsvpAnswers answers={app.rsvp.answers} />}
                                       <div style={{ marginTop: '0.65rem' }}>
-                                        <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} declining={declining} declineErr={declineErr} onDecline={declineApplication} onUndecline={undeclineApplication} />
+                                        <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={(app2, ev2) => setInviteConfirm({ app: app2, ev: ev2 })} declining={declining} declineErr={declineErr} onDecline={(appId, eventName) => setDeclineConfirm({ appId, appName: app.name, eventName })} onUndecline={undeclineApplication} />
                                       </div>
                                     </div>
                                   ) : (
@@ -1438,7 +1444,7 @@ export default function EventsClient() {
                                           : <span style={{ fontSize: '10px', color: '#bbb' }}>—</span>}
                                       </div>
                                       <StatusChip rsvp={app.rsvp} />
-                                      <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={sendInvite} declining={declining} declineErr={declineErr} onDecline={declineApplication} onUndecline={undeclineApplication} />
+                                      <InviteActions app={app} ev={item} keyStr={key} inviting={inviting} inviteErr={inviteErr} inviteDone={inviteDone} sendInvite={(app2, ev2) => setInviteConfirm({ app: app2, ev: ev2 })} declining={declining} declineErr={declineErr} onDecline={(appId, eventName) => setDeclineConfirm({ appId, appName: app.name, eventName })} onUndecline={undeclineApplication} />
                                     </div>
                                   )}
                                 </div>
@@ -1456,6 +1462,53 @@ export default function EventsClient() {
             )
           })}
         </div>
+      )}
+
+      {/* Yes/no gates — every one of these sends email to participants */}
+      {inviteConfirm && (
+        <ConfirmDialog
+          title={inviteConfirm.app.rsvp ? 'Re-send this invite?' : 'Approve and send invite?'}
+          message="An RSVP invite email goes out immediately."
+          details={<><strong>{inviteConfirm.app.name || '—'}</strong> · {inviteConfirm.app.email}<br />Event: <strong>{inviteConfirm.ev.name}</strong></>}
+          confirmLabel={inviteConfirm.app.rsvp ? 'Yes, re-send' : 'Yes, send invite'}
+          busy={!!inviting[`${inviteConfirm.app.id}-${inviteConfirm.ev.name}`]}
+          onConfirm={async () => { const { app, ev } = inviteConfirm; await sendInvite(app, ev); setInviteConfirm(null) }}
+          onCancel={() => setInviteConfirm(null)}
+        />
+      )}
+      {declineConfirm && (
+        <ConfirmDialog
+          title="Decline this application?"
+          message="You can undo this later with Undo Decline."
+          details={<><strong>{declineConfirm.appName || '—'}</strong><br />Event: <strong>{declineConfirm.eventName}</strong></>}
+          confirmLabel="Yes, decline"
+          danger
+          busy={!!declining[`${declineConfirm.appId}-${declineConfirm.eventName}`]}
+          onConfirm={async () => { const { appId, eventName } = declineConfirm; await declineApplication(appId, eventName); setDeclineConfirm(null) }}
+          onCancel={() => setDeclineConfirm(null)}
+        />
+      )}
+      {addRegConfirm && (
+        <ConfirmDialog
+          title="Add registrant and send invite?"
+          message="Adding a registrant automatically emails them a Confirm-My-Spot invite."
+          details={<><strong>{(addRegName[addRegConfirm] || '').trim() || '—'}</strong> · {(addRegEmail[addRegConfirm] || '').trim()}<br />Payment: <strong>{addRegPayment[addRegConfirm] || 'none'}</strong></>}
+          confirmLabel="Yes, add & email"
+          busy={!!addingReg[addRegConfirm]}
+          onConfirm={async () => { const id = addRegConfirm; await addRegistrant(id); setAddRegConfirm(null) }}
+          onCancel={() => setAddRegConfirm(null)}
+        />
+      )}
+      {regEmailConfirm && (
+        <ConfirmDialog
+          title={`Email ${[...new Set((registrantsData[regEmailConfirm] || []).map(r => r.email).filter(e => e && e !== '—'))].length} registrant${[...new Set((registrantsData[regEmailConfirm] || []).map(r => r.email).filter(e => e && e !== '—'))].length !== 1 ? 's' : ''}?`}
+          message="This sends to every registrant of the event and cannot be unsent."
+          details={<>Subject: <strong>{(regEmailSubject[regEmailConfirm] || '').trim() || '—'}</strong></>}
+          confirmLabel="Yes, send to all"
+          busy={!!sendingRegEmail[regEmailConfirm]}
+          onConfirm={async () => { const id = regEmailConfirm; await sendEmailToRegistrants(id); setRegEmailConfirm(null) }}
+          onCancel={() => setRegEmailConfirm(null)}
+        />
       )}
     </div>
   )

@@ -76,10 +76,11 @@ export async function POST(request, { params }) {
   }
 
   if (appId) {
-    await admin.from('contacts').upsert(
+    const { error: contactErr } = await admin.from('contacts').upsert(
       { application_id: appId },
       { onConflict: 'application_id', ignoreDuplicates: true }
     )
+    if (contactErr) captureException(new Error(contactErr.message), { context: 'registrant-add-contact-upsert', appId, eventId: id })
   }
 
   // Auto-send the Confirm My Spot invite email
@@ -179,7 +180,11 @@ export async function DELETE(request, { params }) {
       const evBase = s => (s || '').trim().toLowerCase().split(/\s[—–]\s/)[0].trim()
       const updated = app.registrations.filter(r => evBase(r.event) !== evBase(ev.name))
       if (updated.length !== app.registrations.length) {
-        await admin.from('applications').update({ registrations: updated }).eq('id', app.id)
+        const { error: appUpdErr } = await admin.from('applications').update({ registrations: updated }).eq('id', app.id)
+        if (appUpdErr) {
+          captureException(new Error(appUpdErr.message), { context: 'delete-registrant-app-registrations', appId: app.id, eventId })
+          return Response.json({ error: `Registrant removed from the event, but their application record could not be updated: ${appUpdErr.message}` }, { status: 500 })
+        }
       }
     }
   }

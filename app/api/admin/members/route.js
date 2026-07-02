@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { captureException, captureMessage } from '../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
@@ -113,11 +114,12 @@ export async function POST(request) {
     return Response.json({ error: insertErr.message }, { status: 500 })
   }
 
-  // Fire invite email async — do not block the response (rule #8)
+  // Invite email in after() — rule #8: bare fire-and-forget gets killed when
+  // Vercel tears the function down after the response; after() keeps it alive.
   if (process.env.RESEND_API_KEY) {
     const firstName = (name || email).trim().split(' ')[0]
     const actionLink = invited.properties?.action_link ?? ''
-    fetch('https://api.resend.com/emails', {
+    after(() => fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
@@ -133,7 +135,7 @@ export async function POST(request) {
       }),
     }).then(res => {
       if (!res.ok) res.text().then(t => captureMessage(`Member invite email failed — ${email}`, { response: t })).catch(() => {})
-    }).catch(err => captureException(err, { context: 'member-invite-email-network', email }))
+    }).catch(err => captureException(err, { context: 'member-invite-email-network', email })))
   }
 
   return Response.json({ success: true })

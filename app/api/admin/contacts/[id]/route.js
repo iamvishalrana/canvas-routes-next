@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { captureMessage } from '../../../../../lib/sentry.js'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -50,7 +51,10 @@ export async function PATCH(request, { params }) {
 
   if (Object.keys(memberSync).length > 0 && appEmail) {
     const { data: mem } = await supabase.from('members').select('id').eq('email', appEmail).maybeSingle()
-    if (mem) await supabase.from('members').update(memberSync).eq('id', mem.id)
+    if (mem) {
+      const { error: syncErr } = await supabase.from('members').update(memberSync).eq('id', mem.id)
+      if (syncErr) captureMessage('Contact→member field sync failed', { error: syncErr.message, contactId: id, memberId: mem.id })
+    }
   }
 
   return Response.json({ success: true })

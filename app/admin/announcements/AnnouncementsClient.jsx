@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch } from '../_components/shared'
+import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 
 function buildAnnouncementEmail(title, content) {
@@ -125,6 +125,7 @@ export default function AnnouncementsClient() {
   // Email send state
   const [emailingId, setEmailingId] = useState(null)      // announcement being emailed
   const [emailAudience, setEmailAudience] = useState('all_active_members')
+  const [emailConfirm, setEmailConfirm] = useState(null)  // announcement awaiting yes/no before mass send
   const [emailSending, setEmailSending] = useState(false)
   const [emailResult, setEmailResult] = useState({})      // { [id]: { sent, failed } | 'error' }
 
@@ -386,7 +387,7 @@ export default function AnnouncementsClient() {
                           </select>
                           <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                         </div>
-                        <PrimaryBtn onClick={() => sendEmail(item)} disabled={emailSending}>
+                        <PrimaryBtn onClick={() => setEmailConfirm(item)} disabled={emailSending}>
                           {emailSending ? 'Sending…' : 'Send'}
                         </PrimaryBtn>
                         <GhostBtn small onClick={() => setEmailingId(null)}>Cancel</GhostBtn>
@@ -409,6 +410,18 @@ export default function AnnouncementsClient() {
             </div>
           ))}
         </div>
+      )}
+
+      {emailConfirm && (
+        <ConfirmDialog
+          title="Send this announcement as email?"
+          message="Everyone in the selected audience receives it immediately. It cannot be unsent."
+          details={<>Subject: <strong>{emailConfirm.title}</strong><br />Audience: <strong>{AUDIENCE_OPTIONS.find(o => o.value === emailAudience)?.label || emailAudience}</strong></>}
+          confirmLabel="Yes, send email"
+          busy={emailSending}
+          onConfirm={async () => { const item = emailConfirm; await sendEmail(item); setEmailConfirm(null) }}
+          onCancel={() => setEmailConfirm(null)}
+        />
       )}
     </div>
   )

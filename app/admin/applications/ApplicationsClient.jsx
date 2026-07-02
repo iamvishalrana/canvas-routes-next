@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
-  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle,
+  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 
@@ -90,6 +90,10 @@ export default function ApplicationsClient() {
   const [emailGenerating, setEmailGenerating] = useState(false)
   const [emailResult, setEmailResult] = useState(null) // { id, success, error }
   const [emailPreviewExpanded, setEmailPreviewExpanded] = useState(false)
+  const [captureConfirm, setCaptureConfirm] = useState(null)       // app awaiting capture yes/no
+  const [inviteTierConfirm, setInviteTierConfirm] = useState(null) // { app, tier } awaiting yes/no
+  const [sendEmailConfirm, setSendEmailConfirm] = useState(null)   // app awaiting composer-send yes/no
+  const [noteSaveError, setNoteSaveError] = useState(null)
   const generateAbortRef = useRef(null)
 
   const loadApps = useCallback(() => {
@@ -360,13 +364,22 @@ export default function ApplicationsClient() {
 
   async function saveNote(appId, value) {
     const trimmed = value.trim()
-    const res = await fetch(`/api/admin/applications/${appId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: trimmed || null }),
-    })
-    if (!res.ok) return
-    setApps(prev => prev.map(x => x.id === appId ? { ...x, notes: trimmed || null } : x))
-    setEditingNote(null)
+    setNoteSaveError(null)
+    try {
+      const res = await fetch(`/api/admin/applications/${appId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: trimmed || null }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setNoteSaveError(d.error || 'Failed to save note.')
+        return
+      }
+      setApps(prev => prev.map(x => x.id === appId ? { ...x, notes: trimmed || null } : x))
+      setEditingNote(null)
+    } catch {
+      setNoteSaveError('Network error — note not saved.')
+    }
   }
 
   const filtered = apps
@@ -589,7 +602,7 @@ export default function ApplicationsClient() {
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                           <div style={{ display: 'flex', gap: '0.3rem' }}>
-                            <button onClick={() => handleCapture(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>Capture</button>
+                            <button onClick={() => setCaptureConfirm(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>Capture</button>
                             <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 7px', cursor: 'pointer', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif' }}>Reject</button>
                           </div>
                           {captureErr[a.id] && <span style={{ fontSize: '10px', color: '#7B2032' }}>{captureErr[a.id]}</span>}
@@ -602,11 +615,11 @@ export default function ApplicationsClient() {
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
                     ) : appTierPick === a.id ? (
                       <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                        <button onClick={() => sendInvite(a, 'routes_member')}
+                        <button onClick={() => setInviteTierConfirm({ app: a, tier: 'routes_member' })}
                           style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
                           Routes
                         </button>
-                        <button onClick={() => sendInvite(a, 'inner_circle')}
+                        <button onClick={() => setInviteTierConfirm({ app: a, tier: 'inner_circle' })}
                           style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
                           Inner Circle
                         </button>
@@ -849,8 +862,9 @@ export default function ApplicationsClient() {
                             placeholder="e.g. Referred by Jerry" />
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <GhostBtn small onClick={() => saveNote(a.id, noteValue)}>Save</GhostBtn>
-                            <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
+                            <GhostBtn small onClick={() => { setEditingNote(null); setNoteSaveError(null) }}>Cancel</GhostBtn>
                           </div>
+                          <Err msg={noteSaveError} />
                         </div>
                       ) : (
                         <div onClick={() => { setEditingNote(a.id); setNoteValue(a.notes || '') }}
@@ -949,7 +963,7 @@ export default function ApplicationsClient() {
                               </div>
                               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                 <PrimaryBtn
-                                  onClick={() => sendEmail(a.id)}
+                                  onClick={() => setSendEmailConfirm(a)}
                                   disabled={emailSending || !emailSubject.trim() || !emailBody.trim()}
                                 >
                                   {emailSending ? 'Sending…' : 'Send'}
@@ -980,6 +994,41 @@ export default function ApplicationsClient() {
           ))}
         </div>
         </div>
+      )}
+
+      {/* Yes/no gates for money + email actions */}
+      {captureConfirm && (
+        <ConfirmDialog
+          title="Capture this payment?"
+          message={`This charges the card hold for ${captureConfirm.name || captureConfirm.email} and emails them a confirmation. It cannot be undone — only refunded.`}
+          details={<><strong>{captureConfirm.name || '—'}</strong> · {captureConfirm.email}</>}
+          confirmLabel="Yes, capture"
+          busy={capturing === captureConfirm.id}
+          onConfirm={async () => { const a = captureConfirm; await handleCapture(a); setCaptureConfirm(null) }}
+          onCancel={() => setCaptureConfirm(null)}
+        />
+      )}
+      {inviteTierConfirm && (
+        <ConfirmDialog
+          title="Send membership invite?"
+          message={`This creates a member account and immediately emails an invite to set up their portal.`}
+          details={<><strong>{inviteTierConfirm.app.name || '—'}</strong> · {inviteTierConfirm.app.email}<br />Tier: <strong>{inviteTierConfirm.tier === 'inner_circle' ? 'Inner Circle' : 'Canvas Routes Member'}</strong></>}
+          confirmLabel="Yes, send invite"
+          busy={inviting === inviteTierConfirm.app.id}
+          onConfirm={async () => { const { app, tier } = inviteTierConfirm; await sendInvite(app, tier); setInviteTierConfirm(null) }}
+          onCancel={() => setInviteTierConfirm(null)}
+        />
+      )}
+      {sendEmailConfirm && (
+        <ConfirmDialog
+          title="Send this email?"
+          message="The email goes out immediately and cannot be unsent."
+          details={<>To: <strong>{sendEmailConfirm.email}</strong><br />Subject: {emailSubject || '—'}</>}
+          confirmLabel="Yes, send"
+          busy={emailSending}
+          onConfirm={async () => { const a = sendEmailConfirm; await sendEmail(a.id); setSendEmailConfirm(null) }}
+          onCancel={() => setSendEmailConfirm(null)}
+        />
       )}
     </div>
   )

@@ -59,9 +59,9 @@ export default function LinksClient() {
 
   useEffect(() => {
     fetch('/api/admin/links')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
       .then(d => { setLinks(Array.isArray(d) ? d : []); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(() => { setError('Failed to load links.'); setLoading(false) })
   }, [])
 
   async function handleAdd(e) {

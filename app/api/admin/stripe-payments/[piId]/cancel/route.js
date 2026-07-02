@@ -21,7 +21,7 @@ export async function POST(request, { params }) {
   if (app.stripe_payment_status === 'refunded') return Response.json({ error: 'Payment has already been refunded.' }, { status: 400 })
 
   try {
-    await stripe.paymentIntents.cancel(piId)
+    await stripe.paymentIntents.cancel(piId, {}, { idempotencyKey: `cancel-${piId}` })
   } catch (err) {
     captureException(err, { context: 'admin-cancel-stripe', piId })
     return Response.json({ error: err.message || 'Cancel failed.' }, { status: 500 })

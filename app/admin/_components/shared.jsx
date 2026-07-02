@@ -74,7 +74,7 @@ export function SelectWrap({ value, onChange, options }) {
 
 export function PrimaryBtn({ onClick, disabled, type = 'button', children }) {
   return (
-    <button type={type} onClick={onClick} disabled={disabled}
+    <button type={type} onClick={onClick} disabled={disabled} className="admin-btn"
       style={{ padding: '0.65rem 1.4rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
       {children}
     </button>
@@ -83,7 +83,7 @@ export function PrimaryBtn({ onClick, disabled, type = 'button', children }) {
 
 export function GhostBtn({ onClick, small, disabled, children }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled}
+    <button type="button" onClick={onClick} disabled={disabled} className="admin-btn"
       style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
       {children}
     </button>
@@ -92,11 +92,72 @@ export function GhostBtn({ onClick, small, disabled, children }) {
 
 export function DangerBtn({ onClick, small, disabled, children }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled}
+    <button type="button" onClick={onClick} disabled={disabled} className="admin-btn"
       style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.35)', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
       {children}
     </button>
   )
+}
+
+// ── Confirm dialog — yes/no gate for sends, deletes, and money actions ─────────
+// Usage: {confirm && <ConfirmDialog title="Send invite?" message="…" onConfirm={…} onCancel={() => setConfirm(null)} />}
+
+export function ConfirmDialog({ title, message, details, confirmLabel = 'Yes, continue', cancelLabel = 'Cancel', danger, busy, onConfirm, onCancel }) {
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape' && !busy) onCancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [busy, onCancel])
+
+  return (
+    <div className="admin-modal-overlay" onClick={() => { if (!busy) onCancel() }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,30,20,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+      <div className="admin-modal-enter" role="alertdialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}
+        style={{ background: '#fff', width: '100%', maxWidth: '440px', border: '0.5px solid rgba(0,0,0,0.12)', borderTop: `2px solid ${danger ? '#7B2032' : '#45643c'}`, boxShadow: '0 12px 40px rgba(15,30,20,0.25)' }}>
+        <div style={{ padding: '1.4rem 1.5rem 1.25rem' }}>
+          <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: message ? '0.5rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>{title}</div>
+          {message && <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65' }}>{message}</div>}
+          {details && (
+            <div style={{ marginTop: '0.85rem', padding: '0.75rem 0.9rem', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.07)', fontSize: '12px', color: '#444', lineHeight: '1.7' }}>
+              {details}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', padding: '0 1.5rem 1.4rem' }}>
+          <GhostBtn onClick={onCancel} disabled={busy}>{cancelLabel}</GhostBtn>
+          <button type="button" onClick={onConfirm} disabled={busy} className="admin-btn"
+            style={{ padding: '0.65rem 1.4rem', background: danger ? '#7B2032' : '#45643c', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: busy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: busy ? 0.6 : 1 }}>
+            {busy ? 'Working…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Animated count-up for stat numbers ─────────────────────────────────────────
+
+export function CountUp({ value, duration = 700, format }) {
+  const [display, setDisplay] = useState(0)
+  useEffect(() => {
+    const target = Number(value)
+    if (!Number.isFinite(target)) { setDisplay(value); return }
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setDisplay(target); return
+    }
+    let raf
+    const start = performance.now()
+    function tick(now) {
+      const t = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplay(target * eased)
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value, duration])
+  const n = Number.isFinite(Number(display)) ? display : value
+  return <>{format ? format(n) : Math.round(n).toLocaleString()}</>
 }
 
 export function ToggleSwitch({ checked, onChange, disabled, label }) {

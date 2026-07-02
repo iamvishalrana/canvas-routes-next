@@ -433,7 +433,10 @@ export default function BroadcastsClient() {
     try {
       const res = await fetch('/api/admin/broadcasts')
       if (res.ok) setHistory(await res.json())
-      else setHistoryError('Failed to load broadcast history.')
+      else {
+        const d = await res.json().catch(() => ({}))
+        setHistoryError(d.error || 'Failed to load broadcast history.')
+      }
     } catch {
       setHistoryError('Network error.')
     }
@@ -617,11 +620,13 @@ export default function BroadcastsClient() {
           background: rgba(0,0,0,0.55);
           display: flex; align-items: center; justify-content: center;
           padding: 2rem;
+          animation: adminOverlayIn 0.18s ease-out;
         }
         .bc-preview-modal {
           background: #fff; width: 100%; max-width: 760px;
           max-height: 90vh; display: flex; flex-direction: column;
           border: 0.5px solid rgba(0,0,0,0.15);
+          animation: adminModalIn 0.22s cubic-bezier(0.2,0.8,0.3,1);
         }
         .bc-history-row:hover { background: rgba(0,0,0,0.018) !important; }
         .bc-reuse-btn { opacity: 0.5; transition: opacity 0.1s; }
@@ -823,11 +828,12 @@ export default function BroadcastsClient() {
           {/* Success banner */}
           {result && (
             <div style={{ background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.3)', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#3B6B2F', marginBottom: (result.failed > 0 || result.truncated) ? '0.35rem' : 0 }}>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#3B6B2F', marginBottom: (result.failed > 0 || result.truncated || result.historySaved === false) ? '0.35rem' : 0 }}>
                 ✓ Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.
               </div>
               {result.failed > 0 && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.25rem' }}>{result.failed} failed to deliver.</div>}
               {result.truncated && <div style={{ fontSize: '12px', color: '#8A6535', marginTop: '0.25rem' }}>⚠ List capped at {MAX_RECIPIENTS} — {result.totalRecipients - MAX_RECIPIENTS} recipients not reached.</div>}
+              {result.historySaved === false && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.25rem' }}>⚠ Emails were sent, but this broadcast could not be saved to History{result.historyError ? ` — ${result.historyError}` : ''}.</div>}
               <button onClick={() => setResult(null)} style={{ marginTop: '0.75rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '0.35rem 0.85rem', cursor: 'pointer', fontSize: '10px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 Compose another
               </button>
