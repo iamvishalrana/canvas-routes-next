@@ -297,6 +297,7 @@ export default function EventsClient() {
   const [addRegEmail, setAddRegEmail] = useState({})
   const [addRegPayment, setAddRegPayment] = useState({})
   const [addingReg, setAddingReg] = useState({})
+  const [regSort, setRegSort] = useState({}) // per-event registrant sort
   const [addRegErr, setAddRegErr] = useState({})
   const [addRegSearch, setAddRegSearch] = useState({})
   const [addRegShowDrop, setAddRegShowDrop] = useState({})
@@ -709,6 +710,7 @@ export default function EventsClient() {
           type: 'Member',
           status: r.stripe_payment_status,
           amount: r.amount_paid,
+          registeredAt: r.registered_at || null,
           car: [contact.car_year, make, model].filter(Boolean).join(' ') || null,
           href: `/admin/members?q=${encodeURIComponent(email)}`,
         }
@@ -796,6 +798,23 @@ export default function EventsClient() {
     } finally {
       setInviting(p => ({ ...p, [key]: false }))
     }
+  }
+
+  function sortedRegistrants(eventId) {
+    const rows = registrantsData[eventId] || []
+    const sort = regSort[eventId] || 'default'
+    if (sort === 'default') return rows
+    const byName = (a, b) => (a.name || '').localeCompare(b.name || '')
+    const time = r => r.registeredAt ? new Date(r.registeredAt).getTime() : 0
+    const sorted = [...rows]
+    if (sort === 'name_az')            sorted.sort(byName)
+    else if (sort === 'name_za')       sorted.sort((a, b) => byName(b, a))
+    else if (sort === 'newest')        sorted.sort((a, b) => time(b) - time(a))
+    else if (sort === 'oldest')        sorted.sort((a, b) => time(a) - time(b))
+    else if (sort === 'status')        sorted.sort((a, b) => (a.status || '').localeCompare(b.status || '') || byName(a, b))
+    else if (sort === 'amount')        sorted.sort((a, b) => (b.amount || 0) - (a.amount || 0))
+    else if (sort === 'members_first') sorted.sort((a, b) => ((a.type === 'Member' ? 0 : 1) - (b.type === 'Member' ? 0 : 1)) || byName(a, b))
+    return sorted
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -1002,6 +1021,22 @@ export default function EventsClient() {
                             {regEmailResult[item.id]?.sent != null && !regEmailOpen[item.id] && (
                               <span style={{ fontSize: '11px', color: '#3B6B2F' }}>Sent to {regEmailResult[item.id].sent}{regEmailResult[item.id].failed > 0 ? `, ${regEmailResult[item.id].failed} failed` : ''}.</span>
                             )}
+                            {(registrantsData[item.id] || []).length > 1 && (
+                              <select
+                                value={regSort[item.id] || 'default'}
+                                onChange={e => setRegSort(p => ({ ...p, [item.id]: e.target.value }))}
+                                style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '10px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif', padding: '4px 6px', cursor: 'pointer', color: '#555', outline: 'none', height: '26px', appearance: 'none', WebkitAppearance: 'none' }}
+                              >
+                                <option value="default">Sort: Registration order</option>
+                                <option value="name_az">Name A–Z</option>
+                                <option value="name_za">Name Z–A</option>
+                                <option value="newest">Newest first</option>
+                                <option value="oldest">Oldest first</option>
+                                <option value="status">Status</option>
+                                <option value="amount">Amount paid</option>
+                                <option value="members_first">Members first</option>
+                              </select>
+                            )}
                             <GhostBtn small onClick={() => { setAddRegOpen(p => ({ ...p, [item.id]: !p[item.id] })); setAddRegErr(p => ({ ...p, [item.id]: null })); setAddRegSearch(p => ({ ...p, [item.id]: '' })); ensureContactsLoaded() }}>
                               {addRegOpen[item.id] ? 'Cancel' : '+ Add'}
                             </GhostBtn>
@@ -1011,7 +1046,7 @@ export default function EventsClient() {
                               </GhostBtn>
                             )}
                             {(registrantsData[item.id] || []).length > 0 && (
-                              <GhostBtn small onClick={() => exportRegistrantsPdf(item.name, registrantsData[item.id])}>
+                              <GhostBtn small onClick={() => exportRegistrantsPdf(item.name, sortedRegistrants(item.id))}>
                                 Export PDF
                               </GhostBtn>
                             )}
@@ -1149,7 +1184,7 @@ export default function EventsClient() {
                                 ))}
                               </div>
                             )}
-                            {registrantsData[item.id].map((r, ri) => {
+                            {sortedRegistrants(item.id).map((r, ri) => {
                               const indivKey = `${item.id}::${r.email}`
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
