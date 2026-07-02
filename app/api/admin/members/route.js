@@ -1,5 +1,6 @@
 import { after } from 'next/server'
 import { captureException, captureMessage } from '../../../../lib/sentry.js'
+import { attendanceKey } from '../../../../lib/eventMeta.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { checkRateLimit } from '../../../../lib/rateLimit'
@@ -112,6 +113,26 @@ export async function POST(request) {
   if (insertErr) {
     await supabase.auth.admin.deleteUser(invited.user.id).catch(() => {})
     return Response.json({ error: insertErr.message }, { status: 500 })
+  }
+
+  // Carry the person's event history from their application into the new
+  // member row — otherwise attendance shown on Applications/Contacts never
+  // appears on the Members screen for freshly invited members.
+  try {
+    const { data: app } = await supabase.from('applications')
+      .select('registrations').eq('email', memberData.email).maybeSingle()
+    if (app?.registrations?.length) {
+      const event_attendance = {}
+      for (const reg of app.registrations) {
+        if (reg?.event) event_attendance[attendanceKey(reg.event)] = reg.attended ?? null
+      }
+      if (Object.keys(event_attendance).length > 0) {
+        const { error: attErr } = await supabase.from('members').update({ event_attendance }).eq('id', invited.user.id)
+        if (attErr) captureMessage('Member create: attendance backfill failed', { error: attErr.message, email: memberData.email })
+      }
+    }
+  } catch (err) {
+    captureException(err, { context: 'member-create-attendance-backfill', email: memberData.email })
   }
 
   // Invite email in after() — rule #8: bare fire-and-forget gets killed when

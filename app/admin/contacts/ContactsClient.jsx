@@ -154,7 +154,9 @@ export default function ContactsClient() {
   }, [])
 
   useEffect(() => { loadContacts() }, [loadContacts])
-  useRealtimeSync(['contacts', 'members'], loadContacts)
+  // Contacts rows render application fields (car, registrations, rsvp_history) —
+  // subscribe to those tables too or edits made elsewhere never live-refresh here
+  useRealtimeSync(['contacts', 'members', 'applications', 'rsvp_tokens'], loadContacts)
 
   async function removeContact(contactId) {
     setRemoveContactError(null)

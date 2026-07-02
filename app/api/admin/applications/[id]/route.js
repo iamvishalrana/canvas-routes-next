@@ -1,7 +1,7 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { captureMessage } from '../../../../../lib/sentry.js'
-import { EVENT_ATTENDANCE_KEYS, normalizeEventName } from '../../../../../lib/eventMeta.js'
+import { attendanceKey } from '../../../../../lib/eventMeta.js'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -46,8 +46,8 @@ export async function PATCH(request, { params }) {
     if (member) {
       const attendance = { ...(member.event_attendance || {}) }
       for (const reg of (body.registrations || [])) {
-        const key = EVENT_ATTENDANCE_KEYS[normalizeEventName(reg.event)]
-        if (key) attendance[key] = reg.attended ?? null
+        if (!reg.event) continue
+        attendance[attendanceKey(reg.event)] = reg.attended ?? null
       }
       const { error: attErr } = await supabase.from('members').update({ event_attendance: attendance }).eq('id', member.id)
       if (attErr) captureMessage('Application→member attendance sync failed', { error: attErr.message, appId: id, memberId: member.id })

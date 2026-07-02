@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../lib/sentry'
 import { buildInviteHtml } from '../../../../../../lib/inviteEmail'
+import { normalizeEventName, attendanceKey } from '../../../../../../lib/eventMeta.js'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
 
@@ -45,14 +46,18 @@ export async function POST(request, { params }) {
   const normalEmail = email.toLowerCase().trim()
   const trimmedName = name.trim()
 
-  // Upsert into applications — add this event to their registrations array
+  // Upsert into applications — add this event to their registrations array.
+  // stripe_payment_type must be selected: the hasRealStripePayment guard below
+  // reads it, and without it a manual re-add overwrites a real Stripe payment
+  // with external_cash/comped status.
   const { data: existing } = await admin.from('applications')
-    .select('id, registrations, source')
+    .select('id, registrations, source, stripe_payment_type')
     .eq('email', normalEmail)
     .maybeSingle()
 
   const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null, source: 'admin_manual', ...(paymentMethod !== 'none' ? { payment_method: paymentMethod } : {}) }
-  const prevRegs = (existing?.registrations || []).filter(r => r.event !== ev.name)
+  // Dedupe by normalized name — renamed/aliased events must not produce duplicates
+  const prevRegs = (existing?.registrations || []).filter(r => normalizeEventName(r.event) !== normalizeEventName(ev.name))
 
   // Only write payment fields when there's no existing real Stripe payment to preserve
   const hasRealStripePayment = existing?.stripe_payment_type && !existing.stripe_payment_type.startsWith('external_')
@@ -81,6 +86,22 @@ export async function POST(request, { params }) {
       { onConflict: 'application_id', ignoreDuplicates: true }
     )
     if (contactErr) captureException(new Error(contactErr.message), { context: 'registrant-add-contact-upsert', appId, eventId: id })
+  }
+
+  // If this email belongs to a member, mirror the registration into
+  // event_registrations — the member portal checks that table by member_id,
+  // and without this row the member is shown as unregistered and can pay again.
+  const { data: memberRow } = await admin.from('members').select('id').eq('email', normalEmail).maybeSingle()
+  if (memberRow?.id) {
+    const { error: evRegErr } = await admin.from('event_registrations').upsert({
+      event_id: id,
+      member_id: memberRow.id,
+      email: normalEmail,
+      name: trimmedName,
+      stripe_payment_status: isPaid ? 'paid' : 'free',
+      amount_paid: null,
+    }, { onConflict: 'event_id,member_id' })
+    if (evRegErr) captureException(new Error(evRegErr.message), { context: 'registrant-add-event-registrations-mirror', appId, eventId: id })
   }
 
   // Auto-send the Confirm My Spot invite email
@@ -175,9 +196,11 @@ export async function DELETE(request, { params }) {
   // Remove event from applications.registrations array (covers both member and public registrants)
   const { data: ev } = await admin.from('events').select('name').eq('id', eventId).maybeSingle()
   if (ev?.name) {
+    // Normalize through the alias map first — registrations stored under a
+    // pre-rename event name must still match (e.g. the GP event rename)
+    const evBase = s => (normalizeEventName(s) || '').trim().toLowerCase().split(/\s[—–]\s/)[0].trim()
     const { data: app } = await admin.from('applications').select('id, registrations').eq('email', normalEmail).maybeSingle()
     if (app?.registrations?.length) {
-      const evBase = s => (s || '').trim().toLowerCase().split(/\s[—–]\s/)[0].trim()
       const updated = app.registrations.filter(r => evBase(r.event) !== evBase(ev.name))
       if (updated.length !== app.registrations.length) {
         const { error: appUpdErr } = await admin.from('applications').update({ registrations: updated }).eq('id', app.id)
@@ -185,6 +208,27 @@ export async function DELETE(request, { params }) {
           captureException(new Error(appUpdErr.message), { context: 'delete-registrant-app-registrations', appId: app.id, eventId })
           return Response.json({ error: `Registrant removed from the event, but their application record could not be updated: ${appUpdErr.message}` }, { status: 500 })
         }
+      }
+    }
+
+    // Revoke the RSVP token — otherwise the removed registrant's old
+    // "confirm my spot" link still works and re-confirms them
+    if (app?.id) {
+      const { error: tokenDelErr } = await admin.from('rsvp_tokens')
+        .delete().eq('application_id', app.id).eq('event_name', ev.name)
+      if (tokenDelErr) captureException(new Error(tokenDelErr.message), { context: 'delete-registrant-rsvp-token', appId: app.id, eventId })
+    }
+
+    // Clear the member's attendance entry for this event so the Members
+    // screen doesn't keep a stale attended/no-show mark
+    const { data: memberRow } = await admin.from('members').select('id, event_attendance').eq('email', normalEmail).maybeSingle()
+    if (memberRow?.event_attendance) {
+      const key = attendanceKey(ev.name)
+      if (key in memberRow.event_attendance) {
+        const nextAttendance = { ...memberRow.event_attendance }
+        delete nextAttendance[key]
+        const { error: attDelErr } = await admin.from('members').update({ event_attendance: nextAttendance }).eq('id', memberRow.id)
+        if (attDelErr) captureException(new Error(attDelErr.message), { context: 'delete-registrant-member-attendance', memberId: memberRow.id, eventId })
       }
     }
   }

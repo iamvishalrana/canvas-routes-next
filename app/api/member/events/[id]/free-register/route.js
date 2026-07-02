@@ -135,11 +135,14 @@ export async function POST(request, { params }) {
       ...(existingApp ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' }).select('id').single()
 
-    if (!appErr && appData?.id) {
-      await admin.from('contacts').upsert(
+    if (appErr) {
+      captureException(new Error(appErr.message), { context: 'free-register-applications-upsert', eventId })
+    } else if (appData?.id) {
+      const { error: contactErr } = await admin.from('contacts').upsert(
         { application_id: appData.id },
         { onConflict: 'application_id', ignoreDuplicates: true }
       )
+      if (contactErr) captureException(new Error(contactErr.message), { context: 'free-register-contacts-upsert', eventId })
     }
   } catch (e) {
     captureException(e, { context: 'free-register-applications', eventId })

@@ -14,7 +14,7 @@ import { ExportButton } from '../_components/ExportModal'
 
 // ─── Member Expanded Panel ────────────────────────────────────────────────────
 
-function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, noteValue, setEditingNote, setNoteValue, onSaveNote, noteErr }) {
+function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingNote, noteValue, setEditingNote, setNoteValue, onSaveNote, noteErr }) {
 
   const initials = (m.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const memberSinceRaw = m.created_at || m.password_set_at
@@ -22,10 +22,10 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
   const cars = m.cars?.length > 0 ? m.cars : (m.car_year || m.car_make || m.car_model ? [{ year: m.car_year, make: m.car_make, model: m.car_model, license_plate: '' }] : [])
   const validCars = cars.filter(c => c.year || c.make || c.model)
   const today = new Date(); today.setHours(0, 0, 0, 0)
-  const pastEvents = CANONICAL_EVENTS.filter(ev => new Date(ev.date) <= today)
+  const pastEvents = events.filter(ev => new Date(ev.date) <= today)
   const attendedCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === true).length
   const noShowCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === false).length
-  const upcomingCount = CANONICAL_EVENTS.filter(ev => new Date(ev.date) > today).length
+  const upcomingCount = events.filter(ev => new Date(ev.date) > today).length
   const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}${m.dob_year ? `, ${m.dob_year}` : ''}` : null
 
   const sep = { borderBottom: '0.5px solid rgba(0,0,0,0.06)' }
@@ -135,7 +135,7 @@ function MemberExpandedPanel({ m, onToggleAttendance, isMobile, editingNote, not
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {CANONICAL_EVENTS.map(ev => {
+          {events.map(ev => {
             const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
             const attended = m.event_attendance?.[key]
             const isPast = new Date(ev.date) <= today
@@ -201,6 +201,22 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   const router = useRouter()
   const searchParams = useSearchParams()
   const [members, setMembers] = useState(initialMembers)
+  // Live events list for the attendance panel — CANONICAL_EVENTS is a frozen
+  // snapshot of spring 2026; events created since then must appear too.
+  const [eventsList, setEventsList] = useState(CANONICAL_EVENTS)
+  useEffect(() => {
+    fetch('/api/admin/events')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!Array.isArray(d) || d.length === 0) return
+        const evs = d.filter(e => e.name && e.date).map(e => ({ name: e.name, date: e.date }))
+        const names = new Set(evs.map(e => e.name))
+        for (const c of CANONICAL_EVENTS) if (!names.has(c.name)) evs.push(c)
+        evs.sort((a, b) => new Date(a.date) - new Date(b.date))
+        setEventsList(evs)
+      })
+      .catch(() => {})
+  }, [])
   const [isMobile, setIsMobile] = useState(false)
 
   // Detect mobile client-side
@@ -897,7 +913,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
 
                   {expanded === m.id && (
                     <div className="admin-panel-enter">
-                      <MemberExpandedPanel m={m} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile}
+                      <MemberExpandedPanel m={m} events={eventsList} onToggleAttendance={toggleMemberAttendance} isMobile={isMobile}
                         editingNote={editingNote} noteValue={noteValue} setEditingNote={setEditingNote} setNoteValue={setNoteValue} onSaveNote={saveMemberNote} noteErr={noteErr} />
                     </div>
                   )}

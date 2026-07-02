@@ -73,16 +73,33 @@ export async function POST(request) {
   if (!name?.trim() || !email?.trim()) return Response.json({ error: 'Name and email are required.' }, { status: 400 })
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Invalid email address.' }, { status: 400 })
 
-  const { data: app, error: appErr } = await supabase.from('applications').upsert({
-    email: email.toLowerCase().trim(),
-    name: name.trim(),
-    phone: phone?.trim() || null,
-    car_year: car_year?.trim() || null,
-    car_model: car_model?.trim() || null,
-    registrations: [],
-  }, { onConflict: 'email' }).select('id').single()
+  // Never upsert registrations here — an upsert with registrations: [] would
+  // wipe the event history of an existing applicant with the same email.
+  const normalEmail = email.toLowerCase().trim()
+  const { data: existingApp, error: lookupErr } = await supabase.from('applications')
+    .select('id').eq('email', normalEmail).maybeSingle()
+  if (lookupErr) return Response.json({ error: lookupErr.message }, { status: 500 })
 
-  if (appErr) return Response.json({ error: appErr.message }, { status: 500 })
+  let app = existingApp
+  if (existingApp) {
+    const update = { name: name.trim() }
+    if (phone?.trim()) update.phone = phone.trim()
+    if (car_year?.trim()) update.car_year = car_year.trim()
+    if (car_model?.trim()) update.car_model = car_model.trim()
+    const { error: updErr } = await supabase.from('applications').update(update).eq('id', existingApp.id)
+    if (updErr) return Response.json({ error: updErr.message }, { status: 500 })
+  } else {
+    const { data: inserted, error: appErr } = await supabase.from('applications').insert({
+      email: normalEmail,
+      name: name.trim(),
+      phone: phone?.trim() || null,
+      car_year: car_year?.trim() || null,
+      car_model: car_model?.trim() || null,
+      registrations: [],
+    }).select('id').single()
+    if (appErr) return Response.json({ error: appErr.message }, { status: 500 })
+    app = inserted
+  }
 
   const { error: contactErr } = await supabase.from('contacts')
     .upsert({ application_id: app.id }, { onConflict: 'application_id', ignoreDuplicates: true })

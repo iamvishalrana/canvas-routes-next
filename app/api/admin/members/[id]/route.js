@@ -1,6 +1,6 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
-import { ATTENDANCE_KEY_TO_EVENT, normalizeEventName } from '../../../../../lib/eventMeta.js'
+import { attendanceKey, attendanceKeyToEventName, normalizeEventName } from '../../../../../lib/eventMeta.js'
 import { captureException } from '../../../../../lib/sentry.js'
 
 export async function PATCH(request, { params }) {
@@ -70,6 +70,13 @@ export async function PATCH(request, { params }) {
       if (appSyncErr) captureException(appSyncErr, { context: 'member-patch-sync-to-applications', email: oldEmail || memberEmail })
     }
 
+    // If email changed, event_registrations rows keyed by the old email must
+    // follow too — they join to the registrants list by email, not by FK
+    if (newEmail && oldEmail && newEmail !== oldEmail) {
+      const { error: regEmailErr } = await supabase.from('event_registrations').update({ email: newEmail }).eq('email', oldEmail)
+      if (regEmailErr) captureException(regEmailErr, { context: 'member-patch-sync-event-registrations-email', oldEmail })
+    }
+
     // Sync event_attendance → applications.registrations[].attended
     if ('event_attendance' in body) {
       const newAttendance = body.event_attendance || {}
@@ -77,11 +84,11 @@ export async function PATCH(request, { params }) {
       if (app) {
         const regs = [...(app.registrations || [])]
         let changed = false
-        // Update existing registration entries that map to a key in event_attendance
+        // Update existing registration entries — attendanceKey() is total, so
+        // every event syncs, not just the four legacy short-key events
         const updatedRegs = regs.map(reg => {
-          const canonName = normalizeEventName(reg.event)
-          const key = Object.keys(ATTENDANCE_KEY_TO_EVENT).find(k => ATTENDANCE_KEY_TO_EVENT[k] === canonName)
-          if (key && key in newAttendance && newAttendance[key] !== reg.attended) {
+          const key = attendanceKey(reg.event)
+          if (key in newAttendance && newAttendance[key] !== reg.attended) {
             changed = true
             return { ...reg, attended: newAttendance[key] }
           }
@@ -90,8 +97,7 @@ export async function PATCH(request, { params }) {
         // Create placeholder entries for keys not yet in registrations (non-null values only)
         for (const [key, attended] of Object.entries(newAttendance)) {
           if (attended === null) continue
-          const eventName = ATTENDANCE_KEY_TO_EVENT[key]
-          if (!eventName) continue
+          const eventName = attendanceKeyToEventName(key)
           const exists = updatedRegs.some(r => normalizeEventName(r.event) === eventName)
           if (!exists) { updatedRegs.push({ event: eventName, registered_at: null, attended }); changed = true }
         }

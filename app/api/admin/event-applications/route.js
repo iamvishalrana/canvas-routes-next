@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { normalizeEventName } from '../../../../lib/eventMeta.js'
 
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -19,11 +20,13 @@ export async function GET() {
   const tierByEmail = {}
   for (const m of (members || [])) if (m.email) tierByEmail[m.email.toLowerCase()] = m.tier
 
-  // Build a lookup: event_name → array of rsvp tokens
+  // Build a lookup: event_name → array of rsvp tokens. Key by the NORMALIZED
+  // name — tokens created before an event rename otherwise silently detach.
   const tokensByEvent = {}
   for (const t of (tokens || [])) {
-    if (!tokensByEvent[t.event_name]) tokensByEvent[t.event_name] = []
-    tokensByEvent[t.event_name].push(t)
+    const key = normalizeEventName(t.event_name)
+    if (!tokensByEvent[key]) tokensByEvent[key] = []
+    tokensByEvent[key].push(t)
   }
 
   // Build a lookup: event_id → Set of registrant emails from the member-portal registration flow.
@@ -49,11 +52,11 @@ export async function GET() {
 
   // For each event, find applications that registered for it (match by event name)
   const result = (events || []).map(ev => {
-    const evName = ev.name?.trim().toLowerCase()
+    const evName = normalizeEventName(ev.name)?.trim().toLowerCase()
     const evBase = evName.split(/\s[—–]\s/)[0].trim()
     const evApps = (apps || []).filter(a =>
       (a.registrations || []).some(r => {
-        const rName = r.event?.trim().toLowerCase() || ''
+        const rName = normalizeEventName(r.event)?.trim().toLowerCase() || ''
         return rName === evName || rName.split(/\s[—–]\s/)[0].trim() === evBase
       })
     )
@@ -62,7 +65,7 @@ export async function GET() {
     const totalApplicants = new Set([...evAppEmails, ...evRegEmails]).size
 
     // Attach RSVP status per application
-    const evTokens = tokensByEvent[ev.name] || []
+    const evTokens = tokensByEvent[normalizeEventName(ev.name)] || []
     const tokenByApp = {}
     for (const t of evTokens) tokenByApp[t.application_id] = t
 

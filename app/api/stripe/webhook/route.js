@@ -54,7 +54,9 @@ export async function POST(request) {
             captureMessage('Event registration webhook: member row not found', { piId: pi.id, member_id })
             break
           }
-          await supabase.from('event_registrations').upsert({
+          // onConflict takes COLUMNS, not the constraint name — the old value
+          // ('uq_event_reg_event_member') made webhook retries fail silently
+          const { error: regUpErr } = await supabase.from('event_registrations').upsert({
             event_id,
             member_id,
             email: normalEmail,
@@ -62,7 +64,34 @@ export async function POST(request) {
             stripe_payment_intent_id: pi.id,
             stripe_payment_status: 'paid',
             amount_paid: amountPaid,
-          }, { onConflict: 'uq_event_reg_event_member' })
+          }, { onConflict: 'event_id,member_id' })
+          if (regUpErr) throw new Error(`event_registrations upsert failed: ${regUpErr.message}`) // outer catch → 500 → Stripe retries
+
+          // Mirror into applications.registrations + contacts so the event shows
+          // on the person's profile in Contacts/Applications (free-register
+          // already does this; paid registrations must too)
+          const { data: evRow } = await supabase.from('events').select('name').eq('id', event_id).maybeSingle()
+          const evName = evRow?.name || eventName
+          if (evName) {
+            const { data: existingApp } = await supabase.from('applications')
+              .select('id, registrations').eq('email', normalEmail).maybeSingle()
+            const newReg = { event: evName, registered_at: new Date().toISOString(), attended: null, source: 'member_portal' }
+            const prevRegs = (existingApp?.registrations || []).filter(r => r.event !== evName)
+            const { data: appData, error: appSyncErr } = await supabase.from('applications').upsert({
+              email: normalEmail,
+              ...(name ? { name } : {}),
+              registrations: [...prevRegs, newReg],
+            }, { onConflict: 'email' }).select('id').maybeSingle()
+            if (appSyncErr) {
+              captureException(new Error(appSyncErr.message), { context: 'webhook-event-reg-app-sync', piId: pi.id })
+            } else if (appData?.id) {
+              const { error: contactSyncErr } = await supabase.from('contacts').upsert(
+                { application_id: appData.id },
+                { onConflict: 'application_id', ignoreDuplicates: true }
+              )
+              if (contactSyncErr) captureException(new Error(contactSyncErr.message), { context: 'webhook-event-reg-contact-sync', piId: pi.id })
+            }
+          }
           console.log(`Event registration confirmed: ${event_id} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
         } else if (type?.startsWith('membership_')) {
           // Membership payment captured — update application row
