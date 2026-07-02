@@ -5,6 +5,7 @@ import Link from 'next/link'
 import EventRegisterButton from '../../../../../components/EventRegisterButton'
 import EventFreeRegister from '../../../../../components/EventFreeRegister'
 import LocationMap from '../../../../../components/LocationMap'
+import AddToCalendar from '../../../../../components/AddToCalendar'
 
 const OUR_DOMAIN = 'canvasroutes.com'
 function isInternalUrl(url) {
@@ -113,6 +114,7 @@ export default async function EventDetailPage({ params }) {
               {ev.location}
             </div>
           )}
+          {!isPast && <AddToCalendar name={ev.name} date={ev.date} location={ev.location} description={ev.description} />}
         </div>
       </header>
 

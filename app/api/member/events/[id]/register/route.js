@@ -34,14 +34,14 @@ export async function POST(request, { params }) {
 
   if (!member) return Response.json({ error: 'Member record not found.' }, { status: 404 })
 
+  // Gate model (must match event-payment-intent + the UI): nobody before
+  // registration_opens_at; Inner Circle only until priority_window_end; then all.
   const now = new Date()
   if (ev.registration_opens_at && now < new Date(ev.registration_opens_at)) {
-    if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
-      return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
-    }
-    if (!ev.priority_window_end || member.tier !== 'inner_circle') {
-      return Response.json({ error: 'Registration is not open yet.' }, { status: 400 })
-    }
+    return Response.json({ error: 'Registration is not open yet.' }, { status: 400 })
+  }
+  if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
+    return Response.json({ error: 'Registration is currently open to Inner Circle members only.' }, { status: 403 })
   }
   if (ev.registration_closes_at && now > new Date(ev.registration_closes_at)) {
     return Response.json({ error: 'Registration has closed for this event.' }, { status: 400 })
@@ -54,6 +54,9 @@ export async function POST(request, { params }) {
     // If the webhook already wrote 'paid' for this exact PI before this API call landed,
     // treat it as a successful idempotent registration rather than an error.
     if (existing.stripe_payment_status === 'paid' && paymentIntentId && existing.stripe_payment_intent_id === paymentIntentId) {
+      // Webhook completed the registration first — still claim + send the
+      // confirmation email if nobody has yet
+      await claimAndSendEmails({ admin, ev, eventId, user, member, isFree: false, amountPaid: existing.amount_paid ?? ev.member_price ?? 0 })
       return Response.json({ success: true })
     }
     return Response.json({ error: 'You are already registered for this event.' }, { status: 400 })
@@ -105,7 +108,7 @@ export async function POST(request, { params }) {
   const { data: rpcResult, error: regError } = await admin.rpc('register_for_event', {
     p_event_id:                 eventId,
     p_member_id:                user.id,
-    p_email:                    user.email || '',
+    p_email:                    (user.email || '').toLowerCase().trim(),
     p_name:                     member.name || '',
     p_stripe_payment_intent_id: piId,
     p_stripe_payment_status:    isFree ? 'free' : 'paid',
@@ -129,43 +132,66 @@ export async function POST(request, { params }) {
     return Response.json({ error: rpcResult.error }, { status: 400 })
   }
 
-  if (process.env.RESEND_API_KEY) {
-    const memberName = member.name?.trim() || user.email.split('@')[0]
-    const firstName = memberName.split(' ')[0] || 'there'
-    const amountLabel = isFree ? 'Free' : `$${(amountPaid / 100).toFixed(2)} CAD`
-    const dateDisplay = ev.date_display || ev.date || null
-
-    after(() => Promise.allSettled([
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: 'Canvas Routes <jerry@canvasroutes.com>',
-          to: user.email,
-          reply_to: 'jerry@canvasroutes.com',
-          subject: `You're registered — ${ev.name}`,
-          html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid, eventId, date: ev.date || null }),
-          text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}${!isFree ? `. Payment: ${amountLabel}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
-        }),
-      }).catch(err => captureException(err, { context: 'event-register-member-email', eventId })),
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: 'Canvas Routes <info@canvasroutes.com>',
-          to: 'info@canvasroutes.com',
-          subject: `Event Registration — ${ev.name} — ${memberName}`,
-          html: buildAdminNotifyHtml('New event registration', [
-            ['Event',   `<strong>${ev.name}</strong>`],
-            ['Name',    `<strong>${memberName}</strong>`],
-            ['Email',   `<a href="mailto:${user.email}" style="color:#1a1a1a;">${user.email}</a>`],
-            ['Tier',    member.tier || '—'],
-            ['Payment', amountLabel],
-          ]),
-        }),
-      }).catch(err => captureException(err, { context: 'event-register-admin-email', eventId })),
-    ]))
-  }
+  await claimAndSendEmails({ admin, ev, eventId, user, member, isFree, amountPaid })
 
   return Response.json({ success: true })
+}
+
+// Atomic email claim: the webhook can also complete this registration (3DS
+// redirects skip the client's register call), so both paths attempt a
+// conditional UPDATE on confirmation_email_sent_at — only the winner sends.
+async function claimAndSendEmails({ admin, ev, eventId, user, member, isFree, amountPaid }) {
+  if (!process.env.RESEND_API_KEY) return
+
+  let shouldSend = true
+  const { data: claimRows, error: claimErr } = await admin
+    .from('event_registrations')
+    .update({ confirmation_email_sent_at: new Date().toISOString() })
+    .eq('event_id', eventId)
+    .eq('member_id', user.id)
+    .is('confirmation_email_sent_at', null)
+    .select('id')
+  if (claimErr) {
+    // Column missing (migration not yet run) — fall back to always sending
+    captureException(new Error(claimErr.message), { context: 'event-register-email-claim', eventId })
+  } else {
+    shouldSend = (claimRows || []).length > 0
+  }
+  if (!shouldSend) return
+
+  const memberName = member.name?.trim() || user.email.split('@')[0]
+  const firstName = memberName.split(' ')[0] || 'there'
+  const amountLabel = isFree ? 'Free' : `$${(amountPaid / 100).toFixed(2)} CAD`
+  const dateDisplay = ev.date_display || ev.date || null
+
+  after(() => Promise.allSettled([
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <jerry@canvasroutes.com>',
+        to: (user.email || '').toLowerCase().trim(),
+        reply_to: 'jerry@canvasroutes.com',
+        subject: `You're registered — ${ev.name}`,
+        html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid, eventId, date: ev.date || null }),
+        text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}${!isFree ? `. Payment: ${amountLabel}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
+      }),
+    }).catch(err => captureException(err, { context: 'event-register-member-email', eventId })),
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Canvas Routes <info@canvasroutes.com>',
+        to: 'info@canvasroutes.com',
+        subject: `Event Registration — ${ev.name} — ${memberName}`,
+        html: buildAdminNotifyHtml('New event registration', [
+          ['Event',   `<strong>${ev.name}</strong>`],
+          ['Name',    `<strong>${memberName}</strong>`],
+          ['Email',   `<a href="mailto:${user.email}" style="color:#1a1a1a;">${user.email}</a>`],
+          ['Tier',    member.tier || '—'],
+          ['Payment', amountLabel],
+        ]),
+      }),
+    }).catch(err => captureException(err, { context: 'event-register-admin-email', eventId })),
+  ]))
 }

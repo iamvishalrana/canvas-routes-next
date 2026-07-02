@@ -27,14 +27,14 @@ export async function POST(request, { params }) {
   if (!member) return Response.json({ error: 'Member profile not found.' }, { status: 404 })
   if (ev.registration_enabled === false) return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
 
+  // Gate model (must match event-payment-intent + the UI): nobody before
+  // registration_opens_at; Inner Circle only until priority_window_end; then all.
   const now = new Date()
   if (ev.registration_opens_at && now < new Date(ev.registration_opens_at)) {
-    if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
-      return Response.json({ error: 'Registration is not yet open for your membership tier.' }, { status: 403 })
-    }
-    if (!ev.priority_window_end || member.tier !== 'inner_circle') {
-      return Response.json({ error: 'Registration is not open yet.' }, { status: 400 })
-    }
+    return Response.json({ error: 'Registration is not open yet.' }, { status: 400 })
+  }
+  if (ev.priority_window_end && now < new Date(ev.priority_window_end) && member.tier !== 'inner_circle') {
+    return Response.json({ error: 'Registration is currently open to Inner Circle members only.' }, { status: 403 })
   }
   if (ev.registration_closes_at && now > new Date(ev.registration_closes_at)) {
     return Response.json({ error: 'Registration has closed for this event.' }, { status: 400 })
@@ -73,7 +73,19 @@ export async function POST(request, { params }) {
     return Response.json({ error: rpcResult.error }, { status: 400 })
   }
 
-  if (process.env.RESEND_API_KEY) {
+  // Atomic claim — only one caller sends the confirmation email
+  let shouldSendEmails = true
+  const { data: claimRows, error: claimErr } = await admin
+    .from('event_registrations')
+    .update({ confirmation_email_sent_at: new Date().toISOString() })
+    .eq('event_id', eventId)
+    .eq('member_id', user.id)
+    .is('confirmation_email_sent_at', null)
+    .select('id')
+  if (claimErr) captureException(new Error(claimErr.message), { context: 'free-register-email-claim', eventId })
+  else shouldSendEmails = (claimRows || []).length > 0
+
+  if (process.env.RESEND_API_KEY && shouldSendEmails) {
     const firstName = memberName.split(' ')[0] || 'there'
     const dateDisplay = ev.date_display || ev.date || null
     after(() => Promise.allSettled([

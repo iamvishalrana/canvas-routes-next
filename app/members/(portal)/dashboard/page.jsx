@@ -3,7 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
-import { ATTENDANCE_KEY_TO_EVENT, normalizeEventName as resolveEventName } from '../../../../lib/eventMeta.js'
+import { attendanceKeyToEventName, normalizeEventName as resolveEventName } from '../../../../lib/eventMeta.js'
 import FadeUp from '../../../../components/FadeUp'
 import CountUp from '../../../../components/CountUp'
 
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
 
   const memberAttended = Object.entries(member?.event_attendance || {})
     .filter(([, v]) => v === true)
-    .map(([key]) => ({ event: ATTENDANCE_KEY_TO_EVENT[key] || key }))
+    .map(([key]) => ({ event: attendanceKeyToEventName(key) }))
 
   // Union both sources; deduplicate by resolved event name
   const appAttendedNames = new Set(appAttended.map(r => r.event))
@@ -130,6 +130,16 @@ export default async function DashboardPage() {
     }
     const d = new Date(s)
     return isNaN(d) ? null : d
+  }
+
+  // Profile completeness nudge — only counts fields a member can fill themselves
+  const missingProfileFields = []
+  if (member) {
+    if (!member.phone) missingProfileFields.push('phone number')
+    if (!member.instagram) missingProfileFields.push('Instagram')
+    if (!member.dob_month) missingProfileFields.push('date of birth')
+    if (!carList.length) missingProfileFields.push('car details')
+    if (!carPhotoUrl) missingProfileFields.push('car photo')
   }
 
   const upcomingEvents = (events || []).filter(ev => {
@@ -273,6 +283,22 @@ export default async function DashboardPage() {
           )}
         </div>
       </header>
+
+      {missingProfileFields.length > 0 && (
+        <FadeUp>
+          <Link href="/members/profile" style={{ textDecoration: 'none', display: 'block', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem', background: 'rgba(197,168,130,0.06)', border: '0.5px solid rgba(197,168,130,0.3)', borderLeft: '2px solid #c5a882', flexWrap: 'wrap' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span style={{ fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, flex: 1, minWidth: '200px' }}>
+                Complete your profile — add your {missingProfileFields.slice(0, 3).join(', ')}{missingProfileFields.length > 3 ? ` and ${missingProfileFields.length - 3} more` : ''}.
+              </span>
+              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', whiteSpace: 'nowrap' }}>
+                Update →
+              </span>
+            </div>
+          </Link>
+        </FadeUp>
+      )}
 
       <div className="portal-grid">
 

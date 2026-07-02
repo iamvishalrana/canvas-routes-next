@@ -4,6 +4,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin.js'
 import { captureException, captureMessage } from '../../../../lib/sentry.js'
 import { buildWtetHoldHtml, buildWtetConfirmHtml } from '../../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../../lib/adminEmail.js'
+import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail.js'
 
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
@@ -70,7 +71,7 @@ export async function POST(request) {
           // Mirror into applications.registrations + contacts so the event shows
           // on the person's profile in Contacts/Applications (free-register
           // already does this; paid registrations must too)
-          const { data: evRow } = await supabase.from('events').select('name').eq('id', event_id).maybeSingle()
+          const { data: evRow } = await supabase.from('events').select('name, date, date_display, location').eq('id', event_id).maybeSingle()
           const evName = evRow?.name || eventName
           if (evName) {
             const { data: existingApp } = await supabase.from('applications')
@@ -90,6 +91,58 @@ export async function POST(request) {
                 { onConflict: 'application_id', ignoreDuplicates: true }
               )
               if (contactSyncErr) captureException(new Error(contactSyncErr.message), { context: 'webhook-event-reg-contact-sync', piId: pi.id })
+            }
+          }
+          // Send the confirmation email if nobody has yet — 3DS redirects skip
+          // the client's register call entirely, leaving the webhook as the only
+          // path that can notify the member. Atomic claim prevents duplicates
+          // when the register route also lands.
+          if (process.env.RESEND_API_KEY && evRow?.name) {
+            const { data: claimRows, error: claimErr } = await supabase
+              .from('event_registrations')
+              .update({ confirmation_email_sent_at: new Date().toISOString() })
+              .eq('event_id', event_id)
+              .eq('member_id', member_id)
+              .is('confirmation_email_sent_at', null)
+              .select('id')
+            if (claimErr) {
+              // Column missing (migration pending) — the register route still sends; skip here
+              captureMessage('webhook event-reg email claim failed', { error: claimErr.message, piId: pi.id })
+            } else if ((claimRows || []).length > 0) {
+              const { data: memberRow } = await supabase.from('members').select('name, tier').eq('id', member_id).maybeSingle()
+              const memberName = memberRow?.name?.trim() || name || normalEmail.split('@')[0]
+              const firstName = memberName.split(' ')[0] || 'there'
+              const dateDisplay = evRow.date_display || evRow.date || null
+              after(() => Promise.allSettled([
+                fetch('https://api.resend.com/emails', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                  body: JSON.stringify({
+                    from: 'Canvas Routes <jerry@canvasroutes.com>',
+                    to: normalEmail,
+                    reply_to: 'jerry@canvasroutes.com',
+                    subject: `You're registered — ${evRow.name}`,
+                    html: buildEventConfirmHtml({ firstName, eventName: evRow.name, dateDisplay, location: evRow.location || null, isFree: false, amountPaid, eventId: event_id, date: evRow.date || null }),
+                    text: `Hey ${firstName},\n\nYou're registered for ${evRow.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${evRow.location ? ` at ${evRow.location}` : ''}. Payment: $${(amountPaid / 100).toFixed(2)} CAD.\n\nSee you there,\nJerry\nCanvas Routes`,
+                  }),
+                }).catch(err => captureException(err, { context: 'webhook-event-reg-member-email', piId: pi.id })),
+                fetch('https://api.resend.com/emails', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                  body: JSON.stringify({
+                    from: 'Canvas Routes <info@canvasroutes.com>',
+                    to: 'info@canvasroutes.com',
+                    subject: `Event Registration — ${evRow.name} — ${memberName}`,
+                    html: buildAdminNotifyHtml('New event registration (webhook)', [
+                      ['Event',   `<strong>${evRow.name}</strong>`],
+                      ['Name',    `<strong>${memberName}</strong>`],
+                      ['Email',   `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+                      ['Tier',    memberRow?.tier || '—'],
+                      ['Payment', `$${(amountPaid / 100).toFixed(2)} CAD`],
+                    ]),
+                  }),
+                }).catch(err => captureException(err, { context: 'webhook-event-reg-admin-email', piId: pi.id })),
+              ]))
             }
           }
           console.log(`Event registration confirmed: ${event_id} — ${normalEmail} — $${(amountPaid / 100).toFixed(2)} CAD`)
