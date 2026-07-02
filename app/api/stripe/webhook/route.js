@@ -215,6 +215,11 @@ export async function POST(request) {
           stripe_amount_paid:       amountHeld,
           stripe_payment_type:      type,
         }, { onConflict: 'email', ignoreDuplicates: false })
+          .then(({ error }) => {
+            // This upsert IS the rescue path — if it fails, throw so the outer
+            // catch returns 500 and Stripe retries for up to 72h
+            if (error) throw new Error(`requires_capture rescue upsert failed: ${error.message}`)
+          })
 
         console.log(`Payment authorized (held): ${type} — ${normalEmail} — $${(amountHeld / 100).toFixed(2)} CAD`)
 
@@ -323,16 +328,20 @@ export async function POST(request) {
         const supabase = createAdminClient()
         if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
           // Cancelled event PI — clear the pending row so the member can re-register
-          await supabase.from('event_registrations')
+          const { error: cancelErr } = await supabase.from('event_registrations')
             .update({ stripe_payment_status: 'failed' })
             .eq('event_id', pi.metadata.event_id)
             .eq('member_id', pi.metadata.member_id)
             .eq('stripe_payment_status', 'pending')
+          if (cancelErr) throw new Error(`canceled webhook event_registrations update failed: ${cancelErr.message}`)
         } else if (email) {
-          // Membership/road trip hold released (admin reject)
-          await supabase.from('applications')
+          // Membership/road trip hold released (admin reject). Only downgrade
+          // live holds — never clobber a terminal status (paid/refunded/...)
+          const { error: cancelErr } = await supabase.from('applications')
             .update({ stripe_payment_status: 'rejected' })
             .eq('stripe_payment_intent_id', pi.id)
+            .in('stripe_payment_status', ['pending', 'authorized'])
+          if (cancelErr) throw new Error(`canceled webhook applications update failed: ${cancelErr.message}`)
         }
         break
       }
@@ -345,15 +354,18 @@ export async function POST(request) {
         captureMessage(`Stripe payment failed — ${email}`, { error: errMsg, piId: pi.id })
         const supabase = createAdminClient()
         if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
-          await supabase.from('event_registrations')
+          const { error: failErr } = await supabase.from('event_registrations')
             .update({ stripe_payment_status: 'failed' })
             .eq('event_id', pi.metadata.event_id)
             .eq('member_id', pi.metadata.member_id)
             .not('stripe_payment_status', 'eq', 'paid') // never clobber a confirmed payment
+          if (failErr) throw new Error(`payment_failed webhook event_registrations update failed: ${failErr.message}`)
         } else {
-          await supabase.from('applications')
+          const { error: failErr } = await supabase.from('applications')
             .update({ stripe_payment_status: 'failed' })
             .eq('stripe_payment_intent_id', pi.id)
+            .not('stripe_payment_status', 'in', '(paid,refunded,partially_refunded)') // failed retry must not clobber a completed payment
+          if (failErr) throw new Error(`payment_failed webhook applications update failed: ${failErr.message}`)
         }
         break
       }
@@ -369,18 +381,21 @@ export async function POST(request) {
               const pi = await stripe.paymentIntents.retrieve(charge.payment_intent)
               const supabase = createAdminClient()
               if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
-                await supabase.from('event_registrations')
+                const { error: dispErr } = await supabase.from('event_registrations')
                   .update({ stripe_payment_status: 'disputed' })
                   .eq('event_id', pi.metadata.event_id)
                   .eq('member_id', pi.metadata.member_id)
+                if (dispErr) throw new Error(`dispute webhook event_registrations update failed: ${dispErr.message}`)
               } else {
-                await supabase.from('applications')
+                const { error: dispErr } = await supabase.from('applications')
                   .update({ stripe_payment_status: 'disputed' })
                   .eq('stripe_payment_intent_id', charge.payment_intent)
+                if (dispErr) throw new Error(`dispute webhook applications update failed: ${dispErr.message}`)
               }
             }
           } catch (err) {
             captureException(err, { context: 'dispute-webhook', chargeId })
+            throw err // propagate → 500 → Stripe retries
           }
         }
         break
@@ -399,18 +414,21 @@ export async function POST(request) {
               const pi = await stripe.paymentIntents.retrieve(charge.payment_intent)
               const supabase = createAdminClient()
               if (pi.metadata?.type === 'event_registration' && pi.metadata?.event_id && pi.metadata?.member_id) {
-                await supabase.from('event_registrations')
+                const { error: dispErr } = await supabase.from('event_registrations')
                   .update({ stripe_payment_status: newStatus })
                   .eq('event_id', pi.metadata.event_id)
                   .eq('member_id', pi.metadata.member_id)
+                if (dispErr) throw new Error(`dispute-closed webhook event_registrations update failed: ${dispErr.message}`)
               } else {
-                await supabase.from('applications')
+                const { error: dispErr } = await supabase.from('applications')
                   .update({ stripe_payment_status: newStatus })
                   .eq('stripe_payment_intent_id', charge.payment_intent)
+                if (dispErr) throw new Error(`dispute-closed webhook applications update failed: ${dispErr.message}`)
               }
             }
           } catch (err) {
             captureException(err, { context: 'dispute-closed-webhook', chargeId })
+            throw err // propagate → 500 → Stripe retries
           }
         }
         break
@@ -423,14 +441,16 @@ export async function POST(request) {
         if (!piId) break
         const status = charge.refunded ? 'refunded' : 'partially_refunded'
         const supabase = createAdminClient()
-        await Promise.all([
+        const [appRes, regRes] = await Promise.all([
           supabase.from('applications')
             .update({ stripe_payment_status: status, stripe_amount_refunded: charge.amount_refunded })
             .eq('stripe_payment_intent_id', piId),
           supabase.from('event_registrations')
             .update({ stripe_payment_status: 'refunded' })
             .eq('stripe_payment_intent_id', piId),
-        ]).catch(err => captureException(err, { context: 'charge-refunded-webhook', piId }))
+        ])
+        if (appRes.error) throw new Error(`refund webhook applications update failed: ${appRes.error.message}`)
+        if (regRes.error) throw new Error(`refund webhook event_registrations update failed: ${regRes.error.message}`)
         console.log(`Refund recorded: ${piId} — status ${status}`)
         break
       }

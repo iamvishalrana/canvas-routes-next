@@ -5,13 +5,16 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { PRICES } from '../../../lib/prices.js'
 
+const TIER_TYPE_MAP = { 'Routes Member': 'membership_routes', 'Inner Circle': 'membership_inner_circle' }
+
 function h(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-function confirmHtml(firstName, tier) {
+function confirmHtml(rawFirstName, tier) {
+  const firstName = h(rawFirstName)
   const tierLabel = tier === 'Inner Circle' ? 'Inner Circle' : 'Routes Member'
   const step = (num, title, body) => `
     <tr><td style="padding-bottom:18px;">
@@ -189,7 +192,7 @@ export async function POST(request) {
   if (phone && phone.length > 30) return Response.json({ error: 'Phone too long.' }, { status: 400 })
   if (more && more.length > 500) return Response.json({ error: 'Message too long.' }, { status: 400 })
 
-  const firstName = h(name.trim().split(' ')[0])
+  const firstName = name.trim().split(' ')[0]  // raw — escape only inside HTML
   const fullCar = [carMake, carModel].filter(Boolean).join(' ')
   const normalEmail = email.toLowerCase().trim()
 
@@ -197,7 +200,6 @@ export async function POST(request) {
   if (paymentIntentId && stripe) {
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
-      const TIER_TYPE_MAP = { 'Routes Member': 'membership_routes', 'Inner Circle': 'membership_inner_circle' }
       const expectedType = TIER_TYPE_MAP[tier]
       const piEmail = pi.metadata?.email?.toLowerCase().trim()
       if (
@@ -219,31 +221,28 @@ export async function POST(request) {
     }
   }
 
-  // Save to DB first so data is never lost if email sending fails
+  // Save to DB first so data is never lost if email sending fails.
+  // supabase-js returns errors instead of throwing — every result is checked.
   let alreadyNotified = false
   try {
     const supabase = createAdminClient()
-    const { data: existing } = await supabase
+    const { data: existing, error: existingErr } = await supabase
       .from('applications')
       .select('registrations, stripe_payment_intent_id')
       .eq('email', normalEmail)
       .maybeSingle()
+    if (existingErr) captureMessage('membership-waitlist: existing-row read failed', { error: existingErr.message, email: normalEmail })
 
     // Cancel the previous PI if the user is re-applying — prevents ghost holds on their card
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== paymentIntentId && stripe) {
       stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
     }
 
-    // Dedup gate: if this PI's waitlist already ran (e.g. 3DS redirect + normal flow both fire),
-    // skip sending emails a second time. The upsert below is still safe to run (idempotent).
-    alreadyNotified = existing?.stripe_payment_intent_id === paymentIntentId
-      && (existing?.registrations || []).some(r => r.event === 'Canvas Routes Membership')
-
     const membershipReg = { event: 'Canvas Routes Membership', tier, registered_at: new Date().toISOString(), attended: null }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== 'Canvas Routes Membership')
     const registrations = [...prevRegs, membershipReg]
 
-    await supabase.from('applications').upsert({
+    const { error: upsertErr } = await supabase.from('applications').upsert({
       email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),
@@ -259,10 +258,37 @@ export async function POST(request) {
       referred_by: referredBy?.trim() || null,
       registrations,
       stripe_payment_status: 'pending',
+      stripe_payment_type: TIER_TYPE_MAP[tier] || null,
       // Store PI ID immediately so admin can act even if the webhook is delayed
       ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' })
+    if (upsertErr) {
+      // Data survives in PI metadata; the webhook requires_capture rescue will
+      // recreate the row. Report loudly but don't fail — the hold is already placed.
+      captureMessage('membership-waitlist: application upsert failed', { error: upsertErr.message, email: normalEmail, tier, paymentIntentId })
+    }
+
+    // Atomic dedup gate — exactly one caller per PI claims the notification.
+    // Handles 3DS-redirect + normal flow both firing, including concurrently:
+    // the conditional UPDATE is serialized by the row lock, so the second
+    // caller matches zero rows and skips the emails.
+    if (paymentIntentId && !upsertErr) {
+      const { data: claimed, error: gateErr } = await supabase
+        .from('applications')
+        .update({ waitlist_notified_pi: paymentIntentId })
+        .eq('email', normalEmail)
+        .or(`waitlist_notified_pi.is.null,waitlist_notified_pi.neq.${paymentIntentId}`)
+        .select('id')
+      if (gateErr) {
+        // Column missing or query failed — fall back to the non-atomic check
+        captureMessage('membership-waitlist: dedup gate failed, using fallback', { error: gateErr.message, email: normalEmail })
+        alreadyNotified = existing?.stripe_payment_intent_id === paymentIntentId
+          && (existing?.registrations || []).some(r => r.event === 'Canvas Routes Membership')
+      } else {
+        alreadyNotified = (claimed || []).length === 0
+      }
+    }
   } catch (e) {
     console.error('Failed to store membership application:', e.message)
     captureException(e, { context: 'membership-waitlist-db-save', email: normalEmail, name: name?.trim(), tier, paymentIntentId })
@@ -277,7 +303,7 @@ export async function POST(request) {
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'Canvas Routes <info@canvasroutes.com>',
-          to: email,
+          to: normalEmail,
           reply_to: 'info@canvasroutes.com',
           subject: `Your Canvas Routes application is in, ${firstName}`,
           html: confirmHtml(firstName, tier),
