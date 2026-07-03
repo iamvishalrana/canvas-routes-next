@@ -31,7 +31,9 @@ export default function WtetWaiverSection({ waiverText, identifier, waiver, carY
   function updatePassenger(i, field, val) {
     setPassengers(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: val } : p))
   }
-  function addPassenger() { setPassengers(prev => [...prev, emptyPassenger()]) }
+  // The signer plus this list is the whole car — cap at 1 extra passenger so
+  // total occupants can't exceed 2, matching the Trip Details/Lunch cap.
+  function addPassenger() { setPassengers(prev => prev.length >= 1 ? prev : [...prev, emptyPassenger()]) }
   function removePassenger(i) { setPassengers(prev => prev.filter((_, idx) => idx !== i)) }
 
   async function submit(e) {
@@ -137,7 +139,11 @@ export default function WtetWaiverSection({ waiverText, identifier, waiver, carY
                   <button type="button" onClick={() => removePassenger(i)} style={{ background: 'none', border: 'none', color: '#bbb', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>×</button>
                 </div>
               ))}
-              <button type="button" onClick={addPassenger} style={{ alignSelf: 'flex-start', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.4rem 0.85rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer' }}>{t.addPassengerBtn}</button>
+              {passengers.length >= 1 ? (
+                <p style={{ fontSize: '12px', color: '#8A6535', margin: '0.25rem 0 0', lineHeight: '1.6' }}>{t.maxPassengersNote}</p>
+              ) : (
+                <button type="button" onClick={addPassenger} style={{ alignSelf: 'flex-start', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.4rem 0.85rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer' }}>{t.addPassengerBtn}</button>
+              )}
             </div>
           )}
         </div>

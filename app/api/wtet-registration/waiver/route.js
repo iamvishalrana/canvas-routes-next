@@ -34,9 +34,13 @@ export async function POST(request) {
   const cleanPassengers = Array.isArray(passengers)
     ? passengers
         .filter(p => p?.name?.trim())
-        .slice(0, 10)
         .map(p => ({ name: p.name.trim().slice(0, 100), age: p.age?.toString().trim().slice(0, 3) || null }))
     : []
+  // Signer + this list is the whole car — cap at 1 extra passenger so total
+  // occupants can't exceed 2, matching the Trip Details/Lunch cap.
+  if (cleanPassengers.length > 1) {
+    return Response.json({ error: 'Maximum 2 people per car. Email jerry@canvasroutes.com if you need to bring more than 2.' }, { status: 400 })
+  }
 
   const admin = createAdminClient()
 
