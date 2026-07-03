@@ -9,6 +9,7 @@ import WtetLunchSection from '../../../components/WtetLunchSection'
 import { WTET_WAIVER_TEXT, WTET_WAIVER_TEXT_FR } from '../../../lib/wtetRegistrationContent'
 import { WTET_CHECKIN_T } from '../../../lib/wtetCheckinI18n'
 import { captureException } from '../../../lib/sentry'
+import { normalizeEmail } from '../../../lib/normalizeEmail'
 
 const NAV_LINKS = [
   { href: '/',         label: 'Home' },
@@ -212,7 +213,7 @@ function WtetCheckinContent() {
   async function verify(e, emailOverride) {
     e?.preventDefault()
     setError(null)
-    const targetEmail = (emailOverride ?? email).trim()
+    const targetEmail = normalizeEmail(emailOverride ?? email)
     if (!targetEmail || !targetEmail.includes('@')) { setError(t.invalidEmailError); return }
     setStatus('loading')
     try {

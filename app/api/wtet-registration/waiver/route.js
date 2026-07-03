@@ -5,6 +5,7 @@ import { captureException } from '../../../../lib/sentry'
 import { isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 import { notifyIfWtetComplete } from '../../../../lib/wtetCompleteNotify'
+import { normalizeEmail } from '../../../../lib/normalizeEmail'
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -21,7 +22,7 @@ export async function POST(request) {
   } = body || {}
   const waiverLang = lang === 'fr' ? 'fr' : 'en'
 
-  const normalEmail = (email || '').toLowerCase().trim()
+  const normalEmail = normalizeEmail(email)
   if (!token && (!normalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail))) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }

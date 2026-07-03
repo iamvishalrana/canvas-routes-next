@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch, isWtetEventName } from '../../../lib/wtetRegistrationContent.js'
+import { normalizeEmail } from '../../../lib/normalizeEmail.js'
 import { normalizeEventName } from '../../../lib/eventMeta.js'
 
 export const runtime = 'nodejs'
@@ -50,7 +51,7 @@ export async function POST(request) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }) }
 
   const { token, dietary, whatsapp, passengers_list } = body || {}
-  const normalEmail = (body?.email || '').toLowerCase().trim()
+  const normalEmail = normalizeEmail(body?.email)
   if (!token && !normalEmail) return Response.json({ error: 'Missing token' }, { status: 400 })
 
   // Validate passengers_list

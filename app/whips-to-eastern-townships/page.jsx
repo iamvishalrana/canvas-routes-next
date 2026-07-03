@@ -5,6 +5,7 @@ import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
 import { WTET_PARTICIPANTS as PARTICIPANTS } from '../../lib/wtetParticipants'
 import { captureException } from '../../lib/sentry'
+import { normalizeEmail } from '../../lib/normalizeEmail'
 
 const PASSWORD = 'eastern'
 
@@ -317,8 +318,8 @@ export default function EasternTownshipsPage() {
   async function submit(e, emailOverride) {
     e?.preventDefault()
     setErrMsg(null)
-    const entered = (emailOverride ?? email).trim()
-    if (entered.toLowerCase() === PASSWORD.toLowerCase()) {
+    const entered = normalizeEmail(emailOverride ?? email)
+    if (entered === PASSWORD.toLowerCase()) {
       setAuthed(true)
       return
     }

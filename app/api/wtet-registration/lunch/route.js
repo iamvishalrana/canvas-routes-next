@@ -5,6 +5,7 @@ import { captureException } from '../../../../lib/sentry'
 import { WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 import { notifyIfWtetComplete } from '../../../../lib/wtetCompleteNotify'
+import { normalizeEmail } from '../../../../lib/normalizeEmail'
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -13,7 +14,7 @@ export async function POST(request) {
 
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
-  const email = (body?.email || '').toLowerCase().trim()
+  const email = normalizeEmail(body?.email)
   const token = body?.token
   const dishIds = body?.dishIds
   if (!token && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {

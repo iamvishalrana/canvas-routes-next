@@ -6,6 +6,7 @@ import { buildInviteHtml } from '../../../../../../lib/inviteEmail'
 import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
 import { isWtetEventName } from '../../../../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName, attendanceKey } from '../../../../../../lib/eventMeta.js'
+import { normalizeEmail } from '../../../../../../lib/normalizeEmail.js'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
 
@@ -45,7 +46,7 @@ export async function POST(request, { params }) {
   if (evErr) return Response.json({ error: evErr.message }, { status: 500 })
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
 
-  const normalEmail = email.toLowerCase().trim()
+  const normalEmail = normalizeEmail(email)
   const trimmedName = name.trim()
 
   // Upsert into applications — add this event to their registrations array.
@@ -195,7 +196,7 @@ export async function DELETE(request, { params }) {
   if (!email?.trim()) return Response.json({ error: 'Email required.' }, { status: 400 })
 
   const admin = createAdminClient()
-  const normalEmail = email.toLowerCase().trim()
+  const normalEmail = normalizeEmail(email)
 
   // Remove from event_registrations — try by email first, fall back to member_id via members table
   const { error: regErr, count: regDelCount } = await admin
