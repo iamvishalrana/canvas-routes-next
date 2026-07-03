@@ -114,34 +114,49 @@ function buildHtml(bodyHtml) {
   <meta name="color-scheme" content="light">
   <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 </head>
-<body style="margin:0;padding:0;background:#ffffff;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<body style="margin:0;padding:0;background-color:#F5F1EC;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
+  <tr><td align="center" style="padding:32px 16px 48px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
 
-    <!-- Body -->
-    <tr>
-      <td style="padding:40px 40px 24px;">
-        <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.75;color:#444;">${processed}</div>
-      </td>
-    </tr>
+      <!-- Header -->
+      <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
+        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:20px;opacity:0.92;" />
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
+      </td></tr>
 
-    <!-- Signature -->
-    <tr>
-      <td style="padding:0 40px 20px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-          <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#ebebeb;"> </td></tr>
-        </table>
-        ${SIG_HTML}
-      </td>
-    </tr>
+      <!-- Body -->
+      <tr>
+        <td style="background:#ffffff;padding:36px 40px 8px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.75;color:#444;">${processed}</div>
+        </td>
+      </tr>
 
-    <!-- Unsubscribe — replaced per-recipient by broadcasts route.js -->
-    <tr>
-      <td style="padding:0 40px 28px;">
-        <!-- UNSUBSCRIBE_FOOTER -->
-      </td>
-    </tr>
+      <!-- Signature -->
+      <tr>
+        <td style="background:#ffffff;padding:0 40px 8px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#ebebeb;"> </td></tr>
+          </table>
+          ${SIG_HTML}
+        </td>
+      </tr>
 
-  </table>
+      <!-- Unsubscribe — replaced per-recipient by broadcasts route.js -->
+      <tr>
+        <td style="background:#ffffff;padding:0 40px 32px;">
+          <!-- UNSUBSCRIBE_FOOTER -->
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr><td style="background:#0F1E14;padding:16px 40px;">
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);">&copy; 2026 Canvas Routes. Montreal, QC. &nbsp;&middot;&nbsp; <a href="https://canvasroutes.com" style="color:rgba(197,168,130,0.4);text-decoration:none;">canvasroutes.com</a></p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
 </body>
 </html>`
 }
