@@ -76,7 +76,7 @@ const SIG_HTML = `
 <table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
   <tr>
     <td style="vertical-align:middle;padding-right:14px;">
-      <img src="https://canvasroutes.com/canvas_routes_refined.png" width="60" height="40" border="0" style="display:block;" alt="Canvas Routes"/>
+      <img src="https://canvasroutes.com/canvas_routes_refined.png" width="78" height="52" border="0" style="display:block;" alt="Canvas Routes"/>
     </td>
     <td style="vertical-align:middle;padding-left:14px;border-left:1px solid #e8e8e8;">
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Jerry</div>
@@ -225,7 +225,7 @@ function Signature() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/canvas_routes_refined.png" width="60" style={{ display: 'block', marginRight: '14px', flexShrink: 0 }} alt="Canvas Routes" />
+      <img src="/canvas_routes_refined.png" width="78" style={{ display: 'block', marginRight: '14px', flexShrink: 0 }} alt="Canvas Routes" />
       <div style={{ paddingLeft: '14px', borderLeft: '1px solid #e8e8e8' }}>
         <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '2px' }}>Jerry</div>
         <div style={{ fontSize: '11px', color: '#888', marginBottom: '4px' }}>Founder, Canvas Routes</div>
