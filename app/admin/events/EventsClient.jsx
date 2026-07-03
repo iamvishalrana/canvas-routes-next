@@ -95,12 +95,18 @@ function exportRegistrantsPdf(eventName, registrants) {
     ]
   })
 
-  // Checkin section (WTET only — only rendered if any registrant has wtetCheckin)
-  const hasCheckin = registrants.some(r => r.wtetCheckin?.completed_at)
-  const checkinRows = hasCheckin ? registrants.filter(r => r.wtetCheckin?.completed_at).map(r => {
-    const ci = r.wtetCheckin
+  // Checkin section (WTET only — includes anyone with trip details, a signed
+  // waiver, or a lunch pick, not just those who completed all three, so a
+  // waiver signed without trip details (or vice versa) is never left out.
+  const hasCheckin = registrants.some(r => r.wtetCheckin?.completed_at || r.wtetWaiver || r.wtetLunch?.length > 0)
+  const checkinRows = hasCheckin ? registrants.filter(r => r.wtetCheckin?.completed_at || r.wtetWaiver || r.wtetLunch?.length > 0).map(r => {
+    const ci = r.wtetCheckin || {}
     const pax = (ci.passengers_list || []).map(p => `${p.name} (${p.age})`).join(', ') || '—'
-    return [r.name || '—', r.email || '—', ci.dietary || '—', ci.whatsapp || '—', pax, fmtDate(ci.completed_at)]
+    const waiverStr = r.wtetWaiver ? `Signed by ${r.wtetWaiver.full_name} — ${fmtDate(r.wtetWaiver.signed_at)}` : 'Not signed'
+    const lunchStr = r.wtetLunch?.length > 0
+      ? r.wtetLunch.map(entry => `${entry.name ? `${entry.name}: ` : ''}${entry.dish_name}`).join(', ')
+      : 'Not selected'
+    return [r.name || '—', r.email || '—', ci.dietary || '—', ci.whatsapp || '—', pax, waiverStr, lunchStr, ci.completed_at ? fmtDate(ci.completed_at) : '—']
   }) : []
 
   const thStyle = 'padding:6px 8px;text-align:left;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#fff;background:#0F1E14;font-weight:600;white-space:nowrap;'
@@ -117,8 +123,8 @@ function exportRegistrantsPdf(eventName, registrants) {
   const checkinTable = hasCheckin ? `
     <h2 style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin:28px 0 10px;font-weight:400;">Early Check-in Responses</h2>
     <table>
-      <colgroup><col style="width:14%"><col style="width:18%"><col style="width:20%"><col style="width:14%"><col style="width:22%"><col style="width:12%"></colgroup>
-      <thead><tr>${['Name','Email','Dietary','WhatsApp','Passengers','Completed'].map(h => `<th style="${thStyle}">${h}</th>`).join('')}</tr></thead>
+      <colgroup><col style="width:11%"><col style="width:14%"><col style="width:11%"><col style="width:10%"><col style="width:16%"><col style="width:16%"><col style="width:14%"><col style="width:8%"></colgroup>
+      <thead><tr>${['Name','Email','Dietary','WhatsApp','Passengers','Waiver','Lunch','Completed'].map(h => `<th style="${thStyle}">${h}</th>`).join('')}</tr></thead>
       <tbody>${checkinRows.map((row, i) => `<tr>${row.map(cell => `<td style="${i % 2 ? tdAlt : tdStyle}">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
     </table>` : ''
 
@@ -1354,7 +1360,7 @@ export default function EventsClient() {
                                     </>
                                   )}
                                   {showWtetReg && (() => {
-                                    const doneCount = [!!r.wtetWaiver, !!r.wtetLunch, !!r.wtetCheckin].filter(Boolean).length
+                                    const doneCount = [!!r.wtetWaiver, r.wtetLunch?.length > 0, !!r.wtetCheckin].filter(Boolean).length
                                     const bothDone = doneCount === 3
                                     const anyDone = doneCount > 0
                                     const color = bothDone ? '#3B6B2F' : anyDone ? '#8A6535' : '#7B2032'
@@ -1390,8 +1396,10 @@ export default function EventsClient() {
                                             </div>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Lunch </span>
-                                              {r.wtetLunch ? (
-                                                <span style={{ color: '#3B6B2F' }}>{r.wtetLunch.dish_name}</span>
+                                              {r.wtetLunch?.length > 0 ? (
+                                                <span style={{ color: '#3B6B2F' }}>
+                                                  {r.wtetLunch.map((entry, i) => `${entry.name ? `${entry.name}: ` : ''}${entry.dish_name}`).join(' · ')}
+                                                </span>
                                               ) : <span style={{ color: '#7B2032' }}>Not selected</span>}
                                             </div>
                                           </div>

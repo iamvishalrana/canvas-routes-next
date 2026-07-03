@@ -2,7 +2,7 @@ import { after } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { captureException } from '../../../lib/sentry.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
-import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../lib/wtetRegistrationContent.js'
+import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch } from '../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName } from '../../../lib/eventMeta.js'
 
 export const runtime = 'nodejs'
@@ -40,7 +40,7 @@ export async function GET(request) {
     carModel:         data.car_model || '',
     eventName:        WTET_EVENT_NAME,
     waiver:           data.wtet_waiver || null,
-    lunch:            data.wtet_lunch || null,
+    lunch:            normalizeWtetLunch(data.wtet_lunch),
     lunchOptions:     WTET_LUNCH_OPTIONS,
     lunchCutoff:      cutoff,
     lunchLocked:      new Date() > new Date(cutoff),

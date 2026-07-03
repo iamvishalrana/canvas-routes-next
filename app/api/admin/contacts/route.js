@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { checkRateLimit } from '../../../../lib/rateLimit'
+import { normalizeWtetLunch } from '../../../../lib/wtetRegistrationContent'
 
 export async function GET(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -48,6 +49,7 @@ export async function GET(request) {
     notes: c.notes || null,
     is_invited: memberEmails.has(((appMap[c.application_id] || {}).email || '').toLowerCase()),
     rsvp_history: rsvpByApp[c.application_id] || [],
+    wtet_lunch: normalizeWtetLunch(appMap[c.application_id]?.wtet_lunch),
   }))
   // Short client-side cache so quickly flipping between admin tabs doesn't always
   // cold-refetch the full table — realtime sync still pushes updates within the window.
