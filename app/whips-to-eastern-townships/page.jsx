@@ -9,13 +9,13 @@ import { captureException } from '../../lib/sentry'
 const PASSWORD = 'eastern'
 
 const MAP_MARKERS = [
-  { label: 'Shell — Brossard', note: '10:00 AM · Meetup & Departure', start: true, lat: 45.4502, lng: -73.4440 },
+  { label: 'Shell — Brossard', note: '10:30 AM · Meetup & Departure', start: true, lat: 45.4502, lng: -73.4440 },
   { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Winery experience', lat: 45.1477, lng: -72.6133 },
   { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', end: true, lat: 45.1394, lng: -72.2554 },
 ]
 
 const STOPS = [
-  { label: 'Shell — 8700 Boul. Leduc', note: '10:00 AM · Brossard', tag: 'Meetup & Departure', start: true, href: 'https://maps.app.goo.gl/Ye8mVsi15rwcgGWj7', lat: 45.4502, lng: -73.4440 },
+  { label: 'Shell — 8700 Boul. Leduc', note: '10:30 AM · Brossard', tag: 'Meetup & Departure', start: true, href: 'https://maps.app.goo.gl/Ye8mVsi15rwcgGWj7', lat: 45.4502, lng: -73.4440 },
   { label: 'Vignoble Domaine du Brésée', note: 'Sutton', tag: 'Private Winery Experience', href: 'https://maps.app.goo.gl/CcVDgmpEdRHK6c7L6', lat: 45.1477, lng: -72.6133 },
   { label: 'Sutton', note: 'Chemin des Cantons · Rolling through', href: 'https://www.google.com/maps?q=45.1038,-72.5544', lat: 45.1038, lng: -72.5544 },
   { label: 'Glen Sutton', note: 'Chemin des Cantons · Mountain roads', href: 'https://www.google.com/maps?q=45.0539,-72.5245', lat: 45.0539, lng: -72.5245 },
@@ -31,11 +31,11 @@ const T = {
   en: {
     date: 'Sunday · July 5, 2026',
     headerTags: ['Chemin des Cantons', 'Vineyard Stop', 'Lakeside Lunch'],
-    meetup: 'Meetup', meetupDetail: '10:00 AM · Shell — 8700 Boul. Leduc', meetupSub: 'Brossard, QC',
+    meetup: 'Meetup', meetupDetail: '10:30 AM · Shell — 8700 Boul. Leduc', meetupSub: 'Brossard, QC',
     contact: 'Contact',
     appLabel: 'Convoy App', appLink: 'Download Velox →', appSub: 'Stay connected in real time · iOS only',
     itineraryLabel: 'Itinerary', itineraryHint: 'Tap a stop to open in Maps',
-    stopNotes: ['10:00 AM · Brossard', 'Sutton', 'Chemin des Cantons · Rolling through', 'Chemin des Cantons · Mountain roads', 'Chemin des Cantons · Near the border', 'Chemin des Cantons · Lake Memphrémagog area', 'Chemin des Cantons · Lake view', 'Georgeville'],
+    stopNotes: ['10:30 AM · Brossard', 'Sutton', 'Chemin des Cantons · Rolling through', 'Chemin des Cantons · Mountain roads', 'Chemin des Cantons · Near the border', 'Chemin des Cantons · Lake Memphrémagog area', 'Chemin des Cantons · Lake view', 'Georgeville'],
     stopTags: ['Meetup & Departure', 'Private Winery Experience', null, null, null, null, null, 'Lakeside Lunch'],
     driveLabel: 'The Drive',
     driveBullets: [
@@ -68,11 +68,11 @@ const T = {
   fr: {
     date: 'Dimanche · 5 juillet 2026',
     headerTags: ['Chemin des Cantons', 'Arrêt au vignoble', 'Déjeuner au lac'],
-    meetup: 'Rendez-vous', meetupDetail: '10h00 · Shell — 8700 Boul. Leduc', meetupSub: 'Brossard, QC',
+    meetup: 'Rendez-vous', meetupDetail: '10h30 · Shell — 8700 Boul. Leduc', meetupSub: 'Brossard, QC',
     contact: 'Contact',
     appLabel: 'App Convoi', appLink: 'Télécharger Velox →', appSub: 'Restez connectés en temps réel · iOS seulement',
     itineraryLabel: 'Itinéraire', itineraryHint: 'Appuyez sur un arrêt pour ouvrir dans Maps',
-    stopNotes: ['10h00 · Brossard', 'Sutton', 'Chemin des Cantons · En transit', 'Chemin des Cantons · Routes de montagne', 'Chemin des Cantons · Près de la frontière', 'Chemin des Cantons · Région du lac Memphrémagog', 'Chemin des Cantons · Vue sur le lac', 'Georgeville'],
+    stopNotes: ['10h30 · Brossard', 'Sutton', 'Chemin des Cantons · En transit', 'Chemin des Cantons · Routes de montagne', 'Chemin des Cantons · Près de la frontière', 'Chemin des Cantons · Région du lac Memphrémagog', 'Chemin des Cantons · Vue sur le lac', 'Georgeville'],
     stopTags: ['Rassemblement & Départ', 'Expérience vignoble privée', null, null, null, null, null, 'Déjeuner au bord du lac'],
     driveLabel: 'La Route',
     driveBullets: [
