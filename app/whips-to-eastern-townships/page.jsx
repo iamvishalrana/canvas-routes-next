@@ -59,7 +59,9 @@ const T = {
     convoyLabel: 'Convoy Rules', convoyRead: '▼ Read', convoyClose: '▲ Close',
     convoyRules: ['Follow the lead car at all times — do not overtake any car in the convoy.', 'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.', 'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.', 'If you get separated, do not panic — proceed to the next stop on the route and wait.', 'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.', 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.', 'Fuel up at the Shell in Brossard before we depart — there are limited options once we hit the backroads.', 'Respect the roads and the communities we pass through.', 'Give way to the media car at all times — it may move between groups to capture footage. Do not block or race it.'],
     mapLabel: 'Map', modalBrand: 'Canvas Routes · Whips to Eastern Townships 2026',
-    scrollText: 'scroll', participantsOnly: 'Participants only', incorrectPw: 'Incorrect password — try again', enterBtn: 'Enter', copyBtn: 'Copy number', copied: '✓ Copied',
+    scrollText: 'scroll', participantsOnly: 'Participants only', enterBtn: 'Continue', checkingBtn: 'Checking…', copyBtn: 'Copy number', copied: '✓ Copied',
+    emailPlaceholder: 'Your email', gateBody: 'Enter the email you registered with.',
+    notFoundError: "We couldn't find a registration matching that email.", invalidEmailError: 'Please enter a valid email address.', genericError: 'Something went wrong — please try again.',
     checkinReminder: 'Complete your trip details, liability waiver, and lunch selection', checkinCta: 'Complete Check-In →',
   },
   fr: {
@@ -94,7 +96,9 @@ const T = {
     convoyLabel: 'Règles du convoi', convoyRead: '▼ Lire', convoyClose: '▲ Fermer',
     convoyRules: ['Suivez toujours la voiture de tête — ne dépassez aucune voiture dans le convoi.', 'Maintenez une distance de sécurité. Restez assez proche pour garder le groupe ensemble, sans être si proche que vous ne pouvez pas réagir.', 'Respectez le code de la route. Les limites de vitesse, les signaux et les panneaux s\'appliquent peu importe le rythme du groupe.', 'Si vous vous retrouvez séparé, ne paniquez pas — rendez-vous au prochain arrêt de l\'itinéraire et attendez.', 'Ne faites pas la course et ne conduisez pas de manière agressive. C\'est une balade, pas une journée sur circuit.', 'Si vous devez vous arrêter d\'urgence, allumez immédiatement vos feux de détresse. La voiture derrière relayera le signal.', 'Faites le plein au Shell de Brossard avant le départ — les options sont limitées sur les routes secondaires.', 'Respectez les routes et les communautés que vous traversez.', 'Cédez toujours la place à la voiture média — elle peut se déplacer entre les groupes pour filmer. Ne la bloquez pas.'],
     mapLabel: 'Carte', modalBrand: 'Canvas Routes · Whips to Eastern Townships 2026',
-    scrollText: 'défiler', participantsOnly: 'Participants seulement', incorrectPw: 'Mot de passe incorrect — réessayez', enterBtn: 'Entrer', copyBtn: 'Copier le numéro', copied: '✓ Copié',
+    scrollText: 'défiler', participantsOnly: 'Participants seulement', enterBtn: 'Continuer', checkingBtn: 'Vérification…', copyBtn: 'Copier le numéro', copied: '✓ Copié',
+    emailPlaceholder: 'Votre courriel', gateBody: 'Entrez le courriel utilisé lors de votre inscription.',
+    notFoundError: "Nous n'avons trouvé aucune inscription correspondant à ce courriel.", invalidEmailError: 'Veuillez entrer une adresse courriel valide.', genericError: 'Une erreur est survenue — veuillez réessayer.',
     checkinReminder: 'Complétez vos détails de voyage, votre décharge de responsabilité et votre choix de repas', checkinCta: 'Compléter le Check-In →',
   },
 }
@@ -259,9 +263,10 @@ function RouteMap({ stops }) {
 
 export default function EasternTownshipsPage() {
   const [authed, setAuthed] = useState(false)
-  const [pw, setPw] = useState('')
-  const [showPw, setShowPw] = useState(false)
-  const [err, setErr] = useState(false)
+  const [email, setEmail] = useState('')
+  const [verifiedEmail, setVerifiedEmail] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [errMsg, setErrMsg] = useState(null)
   const [checked, setChecked] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [selectedCar, setSelectedCar] = useState(null)
@@ -293,19 +298,45 @@ export default function EasternTownshipsPage() {
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
-    if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
-    try { if (localStorage.getItem('eastern_auth') === '1') { setAuthed(true) } } catch {}
+    if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true) }
     setChecked(true)
   }, [])
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    if (pw.trim().toLowerCase() === PASSWORD.toLowerCase()) {
-      try { localStorage.setItem('eastern_auth', '1') } catch {}
+    setErrMsg(null)
+    const entered = email.trim()
+    if (entered.toLowerCase() === PASSWORD.toLowerCase()) {
       setAuthed(true)
-    } else {
-      setErr(true)
-      setPw('')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+      setErrMsg(t.invalidEmailError)
+      return
+    }
+    setChecking(true)
+    try {
+      const res = await fetch('/api/wtet-registration/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: entered }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setErrMsg(res.status === 404 ? t.notFoundError : t.genericError)
+        setChecking(false)
+        return
+      }
+      const allDone = !!data.alreadyCompleted && !!data.waiver && (!!data.lunch || !!data.lunchLocked)
+      if (allDone) {
+        setVerifiedEmail(entered)
+        setAuthed(true)
+      } else {
+        window.location.href = `/wtet/checkin?email=${encodeURIComponent(entered)}`
+      }
+    } catch {
+      setErrMsg(t.genericError)
+      setChecking(false)
     }
   }
 
@@ -335,37 +366,33 @@ export default function EasternTownshipsPage() {
         <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', boxSizing: 'border-box' }}>
           <div style={{ width: '100%', maxWidth: '300px' }}>
             <p style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center', margin: '0 0 1.75rem' }}>{t.participantsOnly}</p>
+            <p style={{ color: 'rgba(245,241,236,0.5)', fontSize: '11px', lineHeight: '1.6', marginBottom: '1.25rem', textAlign: 'center' }}>{t.gateBody}</p>
             <form onSubmit={submit}>
               <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
                 <input
-                  value={pw}
-                  onChange={e => { setPw(e.target.value); setErr(false) }}
-                  placeholder="Password"
-                  type={showPw ? 'text' : 'password'}
-                  autoComplete="off"
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); setErrMsg(null) }}
+                  placeholder={t.emailPlaceholder}
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
                   style={{
-                    display: 'block', width: '100%', padding: '0.9rem 2.75rem 0.9rem 1rem',
+                    display: 'block', width: '100%', padding: '0.9rem 1rem',
                     background: 'rgba(255,255,255,0.05)',
-                    border: `0.5px solid ${err ? '#7B2032' : 'rgba(255,255,255,0.14)'}`,
+                    border: `0.5px solid ${errMsg ? '#7B2032' : 'rgba(255,255,255,0.14)'}`,
                     color: '#F5F1EC', fontSize: '16px', outline: 'none',
                     fontFamily: 'Georgia, serif',
-                    textAlign: 'center', letterSpacing: '0.12em',
+                    textAlign: 'center', letterSpacing: '0.02em',
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(v => !v)}
-                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,241,236,0.35)', fontSize: '11px', letterSpacing: '0.06em', fontFamily: 'sans-serif' }}
-                >
-                  {showPw ? 'hide' : 'show'}
-                </button>
               </div>
-              {err && <p style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>{t.incorrectPw}</p>}
+              {errMsg && <p style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>{errMsg}</p>}
               <button
                 type="submit"
-                style={{ width: '100%', padding: '0.9rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'sans-serif', fontWeight: '700' }}
+                disabled={checking}
+                style={{ width: '100%', padding: '0.9rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: checking ? 'wait' : 'pointer', fontFamily: 'sans-serif', fontWeight: '700', opacity: checking ? 0.7 : 1 }}
               >
-                {t.enterBtn}
+                {checking ? t.checkingBtn : t.enterBtn}
               </button>
             </form>
           </div>
@@ -390,7 +417,7 @@ export default function EasternTownshipsPage() {
       {/* Check-in reminder — always visible so participants don't forget the waiver/lunch/trip details */}
       <div style={{ position: 'sticky', top: 0, zIndex: 90, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: '0.65rem 3.5rem 0.65rem 1rem' }}>
         <a
-          href="/wtet/checkin"
+          href={verifiedEmail ? `/wtet/checkin?email=${encodeURIComponent(verifiedEmail)}` : '/wtet/checkin'}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
             flexWrap: 'wrap', textDecoration: 'none', textAlign: 'center',

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import SiteNav from '../../../components/SiteNav'
 import SiteFooter from '../../../components/SiteFooter'
@@ -202,16 +202,17 @@ function WtetCheckinContent() {
 
   // Always require the participant to confirm their email — a token in the
   // URL (from the emailed link) is used as an extra cross-check, never a bypass.
-  async function verify(e) {
-    e.preventDefault()
+  async function verify(e, emailOverride) {
+    e?.preventDefault()
     setError(null)
-    if (!email.trim() || !email.includes('@')) { setError(t.invalidEmailError); return }
+    const targetEmail = (emailOverride ?? email).trim()
+    if (!targetEmail || !targetEmail.includes('@')) { setError(t.invalidEmailError); return }
     setStatus('loading')
     try {
       const res = await fetch('/api/wtet-registration/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), ...(token ? { token } : {}) }),
+        body: JSON.stringify({ email: targetEmail, ...(token ? { token } : {}) }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setError(d.error || t.genericError); setStatus('gate'); return }
@@ -222,6 +223,18 @@ function WtetCheckinContent() {
       setStatus('gate')
     }
   }
+
+  // Prefill + auto-submit when arriving with ?email= (handoff from the itinerary
+  // gate) so the participant doesn't have to retype what they just entered.
+  const autoSubmitted = useRef(false)
+  useEffect(() => {
+    const prefillEmail = searchParams.get('email')
+    if (autoSubmitted.current || !prefillEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefillEmail)) return
+    autoSubmitted.current = true
+    setEmail(prefillEmail)
+    verify(null, prefillEmail)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const identifier = token ? { token } : { email: data?.email }
   const firstName = data?.name?.trim().split(' ')[0] || ''
