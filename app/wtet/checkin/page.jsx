@@ -20,6 +20,7 @@ const inp = {
   background: '#fff', fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif',
   color: '#1a1a1a', outline: 'none', boxSizing: 'border-box',
 }
+const label = { display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }
 
 function passengerLabel(i) {
   return i === 0 ? 'Driver' : `Passenger ${i + 1}`
@@ -32,11 +33,9 @@ function parsePassengerCount(str) {
   return isNaN(n) ? 1 : Math.max(1, n)
 }
 
-// Trip Details — passengers/dietary/WhatsApp. Uses the token directly (no
-// shared component — this data model is specific to this page).
-function TripDetailsSection({ token, alreadyCompleted, initialPassengerCount, onSaved }) {
+// Trip Details — passengers/dietary/WhatsApp.
+function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCount, onSaved }) {
   const [editing, setEditing] = useState(!alreadyCompleted)
-  const [passengerCount] = useState(initialPassengerCount)
   const [dietary, setDietary] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
   const [passengers, setPassengers] = useState(() => Array.from({ length: initialPassengerCount }, emptyPassenger))
@@ -75,7 +74,7 @@ function TripDetailsSection({ token, alreadyCompleted, initialPassengerCount, on
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token,
+          ...identifier,
           dietary:         dietary.trim() || null,
           whatsapp:        whatsapp.trim() || null,
           passengers_list: passengers,
@@ -184,48 +183,71 @@ function TripDetailsSection({ token, alreadyCompleted, initialPassengerCount, on
 
 function WtetCheckinContent() {
   const searchParams = useSearchParams()
-  const token = searchParams.get('t')
+  const token = searchParams.get('t') || null
 
-  const [loadState, setLoadState] = useState('loading')
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState('gate') // gate | loading | found
+  const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
-  useEffect(() => {
-    if (!token) { setLoadState('not_found'); return }
-    fetch(`/api/wtet-checkin?t=${encodeURIComponent(token)}`)
-      .then(r => r.ok ? r.json() : Promise.reject(r.status))
-      .then(d => {
-        setData(d)
-        setLoadState('ready')
+  // Always require the participant to confirm their email — a token in the
+  // URL (from the emailed link) is used as an extra cross-check, never a bypass.
+  async function verify(e) {
+    e.preventDefault()
+    setError(null)
+    if (!email.trim() || !email.includes('@')) { setError('Please enter a valid email address.'); return }
+    setStatus('loading')
+    try {
+      const res = await fetch('/api/wtet-registration/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), ...(token ? { token } : {}) }),
       })
-      .catch(() => setLoadState('not_found'))
-  }, [token])
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setError(d.error || 'Something went wrong.'); setStatus('gate'); return }
+      setData(d)
+      setStatus('found')
+    } catch {
+      setError('Network error — please try again.')
+      setStatus('gate')
+    }
+  }
 
+  const identifier = token ? { token } : { email: data?.email }
   const firstName = data?.name?.trim().split(' ')[0] || ''
   const allDone = data && !!data.alreadyCompleted && !!data.waiver && !!data.lunch
 
   return (
     <main style={{ maxWidth: '620px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
 
-      {loadState === 'loading' && (
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div style={{ fontSize: '13px', color: '#bbb', letterSpacing: '0.08em' }}>Loading…</div>
-        </div>
-      )}
-
-      {loadState === 'not_found' && (
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '0 auto 2rem' }} />
-          <div style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '1rem' }}>
-            Link not found.
+      {(status === 'gate' || status === 'loading') && (
+        <>
+          <div style={{ marginBottom: '2.5rem' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
+              Canvas Routes · Whips to Eastern Townships
+            </div>
+            <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.5rem', lineHeight: '1.2' }}>
+              Confirm Your Email
+            </h1>
+            <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1.25rem 0' }} />
+            <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.8', margin: 0 }}>
+              Enter the email you registered with to view and complete your trip details, liability waiver, and lunch selection for July 5.
+            </p>
           </div>
-          <p style={{ fontSize: '14px', color: '#888', lineHeight: '1.8', maxWidth: '380px', margin: '0 auto' }}>
-            This check-in link doesn't match any registration. If you think this is a mistake, reply to your confirmation email or contact{' '}
-            <a href="mailto:jerry@canvasroutes.com" style={{ color: '#7B5B2E', textDecoration: 'underline', textUnderlineOffset: '2px' }}>jerry@canvasroutes.com</a>.
-          </p>
-        </div>
+          <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '380px' }}>
+            <div>
+              <label style={label}>Email</label>
+              <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inp} />
+            </div>
+            {error && <div style={{ fontSize: '13px', color: '#7B2032', padding: '0.7rem 0.9rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{error}</div>}
+            <button type="submit" disabled={status === 'loading'} style={{ alignSelf: 'flex-start', padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+              {status === 'loading' ? 'Verifying…' : 'Continue'}
+            </button>
+          </form>
+        </>
       )}
 
-      {loadState === 'ready' && data && (
+      {status === 'found' && data && (
         <>
           <div style={{ marginBottom: '2.5rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
@@ -247,7 +269,7 @@ function WtetCheckinContent() {
           </div>
 
           <TripDetailsSection
-            token={token}
+            identifier={identifier}
             alreadyCompleted={data.alreadyCompleted}
             initialPassengerCount={parsePassengerCount(data.passengers)}
             onSaved={() => setData(prev => ({ ...prev, alreadyCompleted: true }))}
@@ -255,7 +277,7 @@ function WtetCheckinContent() {
 
           <WtetWaiverSection
             waiverText={WTET_WAIVER_TEXT}
-            identifier={{ token }}
+            identifier={identifier}
             waiver={data.waiver}
             carYear={data.carYear}
             carMake={data.carMake}
@@ -264,7 +286,7 @@ function WtetCheckinContent() {
           />
 
           <WtetLunchSection
-            identifier={{ token }}
+            identifier={identifier}
             lunch={data.lunch}
             lunchOptions={data.lunchOptions}
             lunchCutoff={data.lunchCutoff}

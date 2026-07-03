@@ -13,18 +13,24 @@ export async function POST(request) {
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = (body?.email || '').toLowerCase().trim()
+  const token = body?.token
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
 
   const admin = createAdminClient()
+  let appQuery = admin.from('applications')
+    .select('id, name, email, passengers, car_year, car_make, car_model, stripe_payment_status, stripe_payment_type, wtet_checkin, wtet_waiver, wtet_lunch')
+    .eq('email', email)
+    .eq('stripe_payment_type', 'road_trip_wtet')
+    .in('stripe_payment_status', ['paid', 'authorized'])
+  // If a token was carried from the emailed check-in link, require it to match
+  // too — the typed email must belong to that exact registration, not just any
+  // WTET registration sharing the same address.
+  if (token) appQuery = appQuery.eq('stripe_payment_intent_id', token)
+
   const [{ data: app, error: appErr }, { data: cutoffSetting }] = await Promise.all([
-    admin.from('applications')
-      .select('id, name, email, car_year, car_make, car_model, stripe_payment_status, stripe_payment_type, wtet_waiver, wtet_lunch')
-      .eq('email', email)
-      .eq('stripe_payment_type', 'road_trip_wtet')
-      .in('stripe_payment_status', ['paid', 'authorized'])
-      .maybeSingle(),
+    appQuery.maybeSingle(),
     admin.from('settings').select('value').eq('key', 'wtet_lunch_cutoff').maybeSingle(),
   ])
 
@@ -33,7 +39,9 @@ export async function POST(request) {
     return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
   if (!app) {
-    return Response.json({ error: "We couldn't find a Whips to Eastern Townships registration matching that email." }, { status: 404 })
+    return Response.json({ error: token
+      ? "That email doesn't match this check-in link. Please use the email you registered with."
+      : "We couldn't find a Whips to Eastern Townships registration matching that email." }, { status: 404 })
   }
 
   const cutoff = cutoffSetting?.value || WTET_LUNCH_DEFAULT_CUTOFF
@@ -42,6 +50,8 @@ export async function POST(request) {
   return Response.json({
     name: app.name || '',
     email: app.email,
+    passengers: app.passengers || '1',
+    alreadyCompleted: !!app.wtet_checkin,
     carYear: app.car_year || '',
     carMake: app.car_make || '',
     carModel: app.car_model || '',

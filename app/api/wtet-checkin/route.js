@@ -46,13 +46,14 @@ export async function GET(request) {
   })
 }
 
-// POST body: { token, dietary, whatsapp, passengers_list }
+// POST body: { token?, email?, dietary, whatsapp, passengers_list } — needs one of token/email
 export async function POST(request) {
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }) }
 
   const { token, dietary, whatsapp, passengers_list } = body || {}
-  if (!token) return Response.json({ error: 'Missing token' }, { status: 400 })
+  const normalEmail = (body?.email || '').toLowerCase().trim()
+  if (!token && !normalEmail) return Response.json({ error: 'Missing token' }, { status: 400 })
 
   // Validate passengers_list
   if (!Array.isArray(passengers_list) || passengers_list.length === 0) {
@@ -71,12 +72,10 @@ export async function POST(request) {
 
   const supabase = createAdminClient()
 
-  const { data, error: lookupErr } = await supabase
-    .from('applications')
-    .select('id, name, email, wtet_checkin')
-    .eq('stripe_payment_intent_id', token)
+  let appQuery = supabase.from('applications').select('id, name, email, wtet_checkin')
     .in('stripe_payment_status', ['paid', 'authorized'])
-    .maybeSingle()
+  appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', normalEmail).eq('stripe_payment_type', 'road_trip_wtet')
+  const { data, error: lookupErr } = await appQuery.maybeSingle()
 
   if (lookupErr || !data) return Response.json({ error: 'Not found' }, { status: 404 })
   if (data.wtet_checkin) return Response.json({ error: 'Already completed.' }, { status: 400 })

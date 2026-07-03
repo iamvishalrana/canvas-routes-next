@@ -8,6 +8,7 @@ import {
   inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog,
 } from '../_components/shared'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
+import WaiverViewerModal from '../_components/WaiverViewerModal'
 
 function isWtetRegEvent(eventName) {
   return eventName === WTET_EVENT_NAME || (eventName || '').toLowerCase().includes('eastern townships')
@@ -303,6 +304,7 @@ export default function EventsClient() {
   const [addRegPayment, setAddRegPayment] = useState({})
   const [addingReg, setAddingReg] = useState({})
   const [regSort, setRegSort] = useState({}) // per-event registrant sort
+  const [viewingWaiver, setViewingWaiver] = useState(null) // { name, email, waiver }
   const [addRegErr, setAddRegErr] = useState({})
   const [addRegSearch, setAddRegSearch] = useState({})
   const [addRegShowDrop, setAddRegShowDrop] = useState({})
@@ -1352,8 +1354,9 @@ export default function EventsClient() {
                                     </>
                                   )}
                                   {showWtetReg && (() => {
-                                    const bothDone = !!r.wtetWaiver && !!r.wtetLunch
-                                    const anyDone = !!r.wtetWaiver || !!r.wtetLunch
+                                    const doneCount = [!!r.wtetWaiver, !!r.wtetLunch, !!r.wtetCheckin].filter(Boolean).length
+                                    const bothDone = doneCount === 3
+                                    const anyDone = doneCount > 0
                                     const color = bothDone ? '#3B6B2F' : anyDone ? '#8A6535' : '#7B2032'
                                     const wtetKey = `wtetreg_${indivKey}`
                                     return (
@@ -1364,17 +1367,25 @@ export default function EventsClient() {
                                         >
                                           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" style={{ transform: rsvpExpanded[wtetKey] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
                                           <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color, fontFamily: 'var(--font-inter)' }}>
-                                            {bothDone ? '✓ Check In Complete' : anyDone ? '◐ Check In Partial' : '✗ Not Checked In'}
+                                            {bothDone ? '✓ Check In Complete' : anyDone ? `◐ Check In ${doneCount}/3` : '✗ Not Checked In'}
                                           </span>
                                         </button>
                                         {rsvpExpanded[wtetKey] && (
                                           <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: bothDone ? 'rgba(59,107,47,0.03)' : 'rgba(123,32,50,0.02)', borderBottom: !isLastTableRow ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
+                                              <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Trip Details </span>
+                                              {r.wtetCheckin ? <span style={{ color: '#3B6B2F' }}>Complete</span> : <span style={{ color: '#7B2032' }}>Not submitted</span>}
+                                            </div>
+                                            <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Waiver </span>
                                               {r.wtetWaiver ? (
-                                                <span style={{ color: '#3B6B2F' }}>
-                                                  Signed by {r.wtetWaiver.full_name} — {new Date(r.wtetWaiver.signed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
-                                                </span>
+                                                <>
+                                                  <span style={{ color: '#3B6B2F' }}>
+                                                    Signed by {r.wtetWaiver.full_name} — {new Date(r.wtetWaiver.signed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                                                  </span>
+                                                  {' · '}
+                                                  <button onClick={e => { e.stopPropagation(); setViewingWaiver({ name: r.name, email: r.email, waiver: r.wtetWaiver }) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '10px', fontFamily: 'var(--font-inter)' }}>View full waiver</button>
+                                                </>
                                               ) : <span style={{ color: '#7B2032' }}>Not signed</span>}
                                             </div>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
@@ -1594,6 +1605,14 @@ export default function EventsClient() {
           busy={!!sendingRegEmail[regEmailConfirm]}
           onConfirm={async () => { const id = regEmailConfirm; await sendEmailToRegistrants(id); setRegEmailConfirm(null) }}
           onCancel={() => setRegEmailConfirm(null)}
+        />
+      )}
+      {viewingWaiver && (
+        <WaiverViewerModal
+          name={viewingWaiver.name}
+          email={viewingWaiver.email}
+          waiver={viewingWaiver.waiver}
+          onClose={() => setViewingWaiver(null)}
         />
       )}
     </div>

@@ -8,7 +8,7 @@ export async function GET() {
 
   const [{ data: apps, error }, { data: cutoffSetting }] = await Promise.all([
     supabase.from('applications')
-      .select('id, name, email, phone, car_year, car_make, car_model, stripe_payment_status, wtet_waiver, wtet_lunch, created_at')
+      .select('id, name, email, phone, car_year, car_make, car_model, stripe_payment_status, wtet_checkin, wtet_waiver, wtet_lunch, created_at')
       .eq('stripe_payment_type', 'road_trip_wtet')
       .in('stripe_payment_status', ['paid', 'authorized'])
       .order('name', { ascending: true }),

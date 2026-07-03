@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { GhostBtn, Err } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
+import WaiverViewerModal from '../_components/WaiverViewerModal'
 
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
@@ -33,6 +34,7 @@ export default function WtetClient() {
   const [filter, setFilter] = useState('all') // all | waiver_missing | lunch_missing
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState(null)
+  const [viewingWaiver, setViewingWaiver] = useState(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -80,12 +82,16 @@ export default function WtetClient() {
   const filtered = participants.filter(p => {
     if (filter === 'waiver_missing' && p.wtet_waiver) return false
     if (filter === 'lunch_missing' && p.wtet_lunch) return false
+    if (filter === 'trip_missing' && p.wtet_checkin) return false
+    if (filter === 'incomplete' && p.wtet_waiver && p.wtet_lunch && p.wtet_checkin) return false
     if (search && !((p.name || '').toLowerCase().includes(search.toLowerCase()) || (p.email || '').toLowerCase().includes(search.toLowerCase()))) return false
     return true
   })
 
   const waiverCount = participants.filter(p => p.wtet_waiver).length
   const lunchCount = participants.filter(p => p.wtet_lunch).length
+  const tripCount = participants.filter(p => p.wtet_checkin).length
+  const fullyDoneCount = participants.filter(p => p.wtet_waiver && p.wtet_lunch && p.wtet_checkin).length
   const total = participants.length
 
   return (
@@ -103,6 +109,14 @@ export default function WtetClient() {
         <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
           <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{total}</div>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Total participants</div>
+        </div>
+        <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: fullyDoneCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1 }}>{fullyDoneCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Fully checked in</div>
+        </div>
+        <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: tripCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1 }}>{tripCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Trip details</div>
         </div>
         <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
           <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: waiverCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1 }}>{waiverCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
@@ -145,6 +159,8 @@ export default function WtetClient() {
         />
         {[
           { id: 'all', label: 'All' },
+          { id: 'incomplete', label: 'Anything missing' },
+          { id: 'trip_missing', label: 'Trip details missing' },
           { id: 'waiver_missing', label: 'Waiver missing' },
           { id: 'lunch_missing', label: 'Lunch missing' },
         ].map(f => (
@@ -180,11 +196,27 @@ export default function WtetClient() {
                   <div style={{ fontSize: '12px', color: '#888', flex: '0 0 auto', minWidth: '120px' }}>
                     {[p.car_year, p.car_make, p.car_model].filter(Boolean).join(' ') || '—'}
                   </div>
+                  <Pill done={!!p.wtet_checkin} doneLabel="Trip ✓" pendingLabel="Trip missing" />
                   <Pill done={!!p.wtet_waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />
                   <Pill done={!!p.wtet_lunch} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />
                 </div>
                 {isOpen && (
                   <div className="admin-panel-enter" style={{ padding: '1rem 1.25rem 1.25rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+                    <div>
+                      <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Trip Details</div>
+                      {p.wtet_checkin ? (
+                        <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
+                          {p.wtet_checkin.passengers_list?.length > 0 && (
+                            <>Passengers: {p.wtet_checkin.passengers_list.map(pp => `${pp.name} (${pp.age || '—'})`).join(', ')}<br /></>
+                          )}
+                          {p.wtet_checkin.dietary && <>Dietary: {p.wtet_checkin.dietary}<br /></>}
+                          {p.wtet_checkin.whatsapp && <>WhatsApp: {p.wtet_checkin.whatsapp}<br /></>}
+                          <span style={{ color: '#aaa' }}>Submitted {new Date(p.wtet_checkin.completed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '12px', color: '#bbb' }}>Not submitted yet.</div>
+                      )}
+                    </div>
                     <div>
                       <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Waiver</div>
                       {p.wtet_waiver ? (
@@ -196,6 +228,8 @@ export default function WtetClient() {
                           {p.wtet_waiver.passengers?.length > 0 && (
                             <><br />Passengers: {p.wtet_waiver.passengers.map(pp => `${pp.name} (${pp.age || '—'})`).join(', ')}</>
                           )}
+                          <br />
+                          <button onClick={() => setViewingWaiver({ name: p.name, email: p.email, waiver: p.wtet_waiver })} style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>View full waiver</button>
                         </div>
                       ) : (
                         <div style={{ fontSize: '12px', color: '#bbb' }}>Not signed yet.</div>
@@ -218,6 +252,14 @@ export default function WtetClient() {
             )
           })}
         </div>
+      )}
+      {viewingWaiver && (
+        <WaiverViewerModal
+          name={viewingWaiver.name}
+          email={viewingWaiver.email}
+          waiver={viewingWaiver.waiver}
+          onClose={() => setViewingWaiver(null)}
+        />
       )}
     </div>
   )

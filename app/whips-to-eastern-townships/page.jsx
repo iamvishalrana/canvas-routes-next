@@ -60,6 +60,7 @@ const T = {
     convoyRules: ['Follow the lead car at all times — do not overtake any car in the convoy.', 'Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can\'t react.', 'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.', 'If you get separated, do not panic — proceed to the next stop on the route and wait.', 'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.', 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.', 'Fuel up at the Shell in Brossard before we depart — there are limited options once we hit the backroads.', 'Respect the roads and the communities we pass through.', 'Give way to the media car at all times — it may move between groups to capture footage. Do not block or race it.'],
     mapLabel: 'Map', modalBrand: 'Canvas Routes · Whips to Eastern Townships 2026',
     scrollText: 'scroll', participantsOnly: 'Participants only', incorrectPw: 'Incorrect password — try again', enterBtn: 'Enter', copyBtn: 'Copy number', copied: '✓ Copied',
+    checkinReminder: 'Complete your trip details, liability waiver, and lunch selection', checkinCta: 'Complete Check-In →',
   },
   fr: {
     date: 'Dimanche · 5 juillet 2026',
@@ -94,6 +95,7 @@ const T = {
     convoyRules: ['Suivez toujours la voiture de tête — ne dépassez aucune voiture dans le convoi.', 'Maintenez une distance de sécurité. Restez assez proche pour garder le groupe ensemble, sans être si proche que vous ne pouvez pas réagir.', 'Respectez le code de la route. Les limites de vitesse, les signaux et les panneaux s\'appliquent peu importe le rythme du groupe.', 'Si vous vous retrouvez séparé, ne paniquez pas — rendez-vous au prochain arrêt de l\'itinéraire et attendez.', 'Ne faites pas la course et ne conduisez pas de manière agressive. C\'est une balade, pas une journée sur circuit.', 'Si vous devez vous arrêter d\'urgence, allumez immédiatement vos feux de détresse. La voiture derrière relayera le signal.', 'Faites le plein au Shell de Brossard avant le départ — les options sont limitées sur les routes secondaires.', 'Respectez les routes et les communautés que vous traversez.', 'Cédez toujours la place à la voiture média — elle peut se déplacer entre les groupes pour filmer. Ne la bloquez pas.'],
     mapLabel: 'Carte', modalBrand: 'Canvas Routes · Whips to Eastern Townships 2026',
     scrollText: 'défiler', participantsOnly: 'Participants seulement', incorrectPw: 'Mot de passe incorrect — réessayez', enterBtn: 'Entrer', copyBtn: 'Copier le numéro', copied: '✓ Copié',
+    checkinReminder: 'Complétez vos détails de voyage, votre décharge de responsabilité et votre choix de repas', checkinCta: 'Compléter le Check-In →',
   },
 }
 
@@ -383,6 +385,22 @@ export default function EasternTownshipsPage() {
             {l.toUpperCase()}
           </button>
         ))}
+      </div>
+
+      {/* Check-in reminder — always visible so participants don't forget the waiver/lunch/trip details */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 90, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: '0.65rem 3.5rem 0.65rem 1rem' }}>
+        <a
+          href="/wtet/checkin"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+            flexWrap: 'wrap', textDecoration: 'none', textAlign: 'center',
+            fontFamily: 'sans-serif', fontSize: '11px', letterSpacing: '0.02em',
+            color: 'rgba(245,241,236,0.85)',
+          }}
+        >
+          <span>{t.checkinReminder}</span>
+          <span style={{ color: '#c5a882', fontWeight: '600', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.checkinCta}</span>
+        </a>
       </div>
 
       {/* Scroll indicator */}
