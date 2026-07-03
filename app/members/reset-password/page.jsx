@@ -82,7 +82,7 @@ export default function ResetPasswordPage() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0F1E14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0F1E14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 2rem calc(2rem + env(safe-area-inset-bottom))', fontFamily: 'var(--font-inter),sans-serif' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)' }} />
 
       <Link href="/" style={{ marginBottom: '3rem', display: 'block' }}>
