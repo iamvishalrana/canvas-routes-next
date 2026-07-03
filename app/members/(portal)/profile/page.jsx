@@ -84,6 +84,10 @@ export default function ProfilePage() {
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoError, setPhotoError] = useState(null)
   const fileInputRef = useRef(null)
+  const [avatarUrl, setAvatarUrl] = useState(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState(null)
+  const avatarInputRef = useRef(null)
 
   useEffect(() => { document.title = 'Your Profile — Canvas Routes' }, [])
 
@@ -124,6 +128,7 @@ export default function ProfilePage() {
           savedForm.current = f
           savedCars.current = c
           if (member?.car_photo_url) setCarPhotoUrl(member.car_photo_url)
+          if (member?.profile_photo_url) setAvatarUrl(member.profile_photo_url)
           if (member?.tier) setTier(member.tier)
           if (member?.membership_number) setMembershipNumber(member.membership_number)
         }
@@ -227,6 +232,26 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleAvatarUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (avatarInputRef.current) avatarInputRef.current.value = ''
+    setAvatarUploading(true); setAvatarError(null)
+    try {
+      const fd = new FormData()
+      fd.append('photo', file)
+      fd.append('kind', 'avatar')
+      const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok) setAvatarUrl(data.url)
+      else setAvatarError(data.error || 'Upload failed.')
+    } catch {
+      setAvatarError('Upload failed. Please check your connection.')
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -259,7 +284,7 @@ export default function ProfilePage() {
   const validCarsList = cars.filter(c => c.year || c.make || c.model)
   const completeness = [
     !!form.name, !!form.phone, !!form.instagram,
-    !!(form.dob_month && form.dob_day), validCarsList.length > 0, !!carPhotoUrl,
+    !!(form.dob_month && form.dob_day), validCarsList.length > 0, !!carPhotoUrl, !!avatarUrl,
   ]
   const completeCount = completeness.filter(Boolean).length
   const completePct = Math.round((completeCount / completeness.length) * 100)
@@ -388,14 +413,29 @@ export default function ProfilePage() {
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          {/* Glowing avatar */}
-          <div className="cr-hero-avatar" style={{
-            width: '92px', height: '92px', borderRadius: '50%', margin: '0 auto 1.1rem',
-            background: isInnerCircle ? 'linear-gradient(135deg, #c5a882, #8A6535)' : 'linear-gradient(135deg, #2c4133, #16261b)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.04em' }}>{initials}</span>
+          {/* Glowing avatar — profile photo when set, initials otherwise */}
+          <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+          <div style={{ position: 'relative', width: '92px', margin: '0 auto 1.1rem' }}>
+            <div className="cr-hero-avatar" style={{
+              width: '92px', height: '92px', borderRadius: '50%', overflow: 'hidden',
+              background: avatarUrl ? '#16261b' : (isInnerCircle ? 'linear-gradient(135deg, #c5a882, #8A6535)' : 'linear-gradient(135deg, #2c4133, #16261b)'),
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              opacity: avatarUploading ? 0.6 : 1, transition: 'opacity 0.2s',
+            }}>
+              {avatarUrl
+                ? <img src={avatarUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.04em' }}>{initials}</span>}
+            </div>
+            <button
+              type="button"
+              onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+              aria-label={avatarUrl ? 'Change profile photo' : 'Add profile photo'}
+              style={{ position: 'absolute', bottom: '-2px', right: '-6px', width: '32px', height: '32px', borderRadius: '50%', background: '#16261b', border: '1.5px solid rgba(197,168,130,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: avatarUploading ? 'wait' : 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.4)', zIndex: 2 }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
           </div>
+          {avatarError && <div style={{ fontSize: '11px', color: '#d06070', marginBottom: '0.6rem', fontFamily: 'var(--font-inter), sans-serif' }}>{avatarError}</div>}
 
           {/* Name */}
           <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, letterSpacing: '-0.01em', marginBottom: '0.85rem' }}>

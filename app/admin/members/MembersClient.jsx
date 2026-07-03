@@ -11,6 +11,7 @@ import {
   AdminNotesPanel, Pagination, AttendanceToggle,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
+import MemberProfilePreview from '../../../components/MemberProfilePreview'
 
 // ─── Member Expanded Panel ────────────────────────────────────────────────────
 
@@ -249,6 +250,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   const [actionError, setActionError] = useState(null)
   const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [expanded, setExpanded] = useState(null)
+  const [previewMember, setPreviewMember] = useState(null) // member whose portal profile card is being previewed
   const [selected, setSelected] = useState(new Set())
   const [sort, setSort] = useState('newest')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -772,7 +774,15 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
               ) : (
                 <>
                   {isMobile ? (
-                    <div style={{ padding: '0.9rem 1rem', cursor: 'pointer' }} onClick={() => setExpanded(expanded === m.id ? null : m.id)}>
+                    <div style={{ padding: '0.9rem 1rem', cursor: 'pointer', position: 'relative' }} onClick={() => setExpanded(expanded === m.id ? null : m.id)}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setPreviewMember(m) }}
+                        title="Preview member profile card"
+                        aria-label="Preview member profile card"
+                        style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', width: '30px', height: '30px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', cursor: 'pointer', padding: 0, zIndex: 2 }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7 17c1.2-2 3-3 5-3s3.8 1 5 3"/></svg>
+                      </button>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.35rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', minWidth: 0 }}>
                           <div onClick={e => e.stopPropagation()}>
@@ -904,7 +914,16 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                         </div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.4rem' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => setPreviewMember(m)}
+                        title="Preview member profile card"
+                        aria-label="Preview member profile card"
+                        className="admin-btn"
+                        style={{ width: '26px', height: '26px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7 17c1.2-2 3-3 5-3s3.8 1 5 3"/></svg>
+                      </button>
                       <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
                       <DangerBtn onClick={() => { setDeleteMemberConfirm(m.id); setDeleteMemberError(null) }} small>Delete</DangerBtn>
                     </div>
@@ -938,6 +957,25 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
             pageSize={pageSize}
             onPageChange={n => router.push(`?page=${n}`)}
           />
+        </div>
+      )}
+
+      {/* Portal profile-card preview — exactly what the member sees */}
+      {previewMember && (
+        <div
+          className="admin-modal-overlay"
+          onClick={() => setPreviewMember(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,30,20,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1.25rem', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+        >
+          <div className="admin-modal-enter" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '400px', margin: 'auto 0', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Portal profile preview
+              </span>
+              <button onClick={() => setPreviewMember(null)} aria-label="Close preview" style={{ background: 'rgba(245,241,236,0.12)', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#F5F1EC', fontSize: '16px', lineHeight: 1 }}>×</button>
+            </div>
+            <MemberProfilePreview member={previewMember} />
+          </div>
         </div>
       )}
     </div>

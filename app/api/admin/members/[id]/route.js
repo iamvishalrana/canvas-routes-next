@@ -134,7 +134,7 @@ export async function DELETE(request, { params }) {
   const supabase = createAdminClient()
 
   // Fetch email and photo URL before any deletion
-  const { data: member } = await supabase.from('members').select('email, car_photo_url').eq('id', id).maybeSingle()
+  const { data: member } = await supabase.from('members').select('email, car_photo_url, profile_photo_url').eq('id', id).maybeSingle()
 
   // Delete auth user — cascade-deletes the members row via FK
   const { error } = await supabase.auth.admin.deleteUser(id)
@@ -142,9 +142,11 @@ export async function DELETE(request, { params }) {
 
   // Delete profile photo from storage
   const photoFilename = member?.car_photo_url?.split('/').pop()?.split('?')[0]
-  const photoPaths = photoFilename
-    ? [photoFilename]
-    : [`${id}.jpg`, `${id}.jpeg`, `${id}.png`, `${id}.webp`]
+  const avatarFilename = member?.profile_photo_url?.split('/').pop()?.split('?')[0]
+  const photoPaths = [
+    ...(photoFilename ? [photoFilename] : [`${id}.jpg`, `${id}.jpeg`, `${id}.png`, `${id}.webp`]),
+    ...(avatarFilename ? [avatarFilename] : [`${id}-avatar.jpg`, `${id}-avatar.jpeg`, `${id}-avatar.png`, `${id}-avatar.webp`]),
+  ]
   try { await supabase.storage.from('member-photos').remove(photoPaths) } catch {}
 
   // Delete application row by email — cascades to contacts

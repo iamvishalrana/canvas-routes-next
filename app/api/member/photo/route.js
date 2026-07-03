@@ -8,6 +8,7 @@ export async function POST(request) {
 
   const formData = await request.formData()
   const file = formData.get('photo')
+  const kind = formData.get('kind') === 'avatar' ? 'avatar' : 'car'
   if (!file || typeof file === 'string') return Response.json({ error: 'No file provided' }, { status: 400 })
   if (file.size > 8 * 1024 * 1024) return Response.json({ error: 'File must be under 8 MB' }, { status: 400 })
   if (!file.type.startsWith('image/')) return Response.json({ error: 'File must be an image' }, { status: 400 })
@@ -26,7 +27,7 @@ export async function POST(request) {
   }
 
   const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
-  const path = `${user.id}.${ext}`
+  const path = kind === 'avatar' ? `${user.id}-avatar.${ext}` : `${user.id}.${ext}`
 
   const admin = createAdminClient()
 
@@ -41,12 +42,14 @@ export async function POST(request) {
 
   const { data: { publicUrl } } = admin.storage.from('member-photos').getPublicUrl(path)
 
-  // Save URL to member record
-  const { error: updateErr } = await admin.from('members').update({ car_photo_url: publicUrl }).eq('id', user.id)
+  // Save URL to member record — cache-bust so a replaced photo shows immediately
+  const bustedUrl = `${publicUrl}?v=${Date.now()}`
+  const column = kind === 'avatar' ? 'profile_photo_url' : 'car_photo_url'
+  const { error: updateErr } = await admin.from('members').update({ [column]: bustedUrl }).eq('id', user.id)
   if (updateErr) {
     console.error('Failed to persist car photo URL:', updateErr.message)
     return Response.json({ error: 'Photo uploaded but could not be saved to your profile. Please try again.' }, { status: 500 })
   }
 
-  return Response.json({ url: publicUrl })
+  return Response.json({ url: bustedUrl })
 }

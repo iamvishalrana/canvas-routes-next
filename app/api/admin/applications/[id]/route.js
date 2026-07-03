@@ -82,10 +82,14 @@ export async function DELETE(request, { params }) {
 
   // Clean up linked member (no FK between applications and members — must be explicit)
   if (app?.email) {
-    const { data: mem } = await supabase.from('members').select('id, car_photo_url').eq('email', app.email.toLowerCase().trim()).maybeSingle()
+    const { data: mem } = await supabase.from('members').select('id, car_photo_url, profile_photo_url').eq('email', app.email.toLowerCase().trim()).maybeSingle()
     if (mem) {
       const photoFilename = mem.car_photo_url?.split('/').pop()?.split('?')[0]
-      const photoPaths = photoFilename ? [photoFilename] : [`${mem.id}.jpg`, `${mem.id}.jpeg`, `${mem.id}.png`, `${mem.id}.webp`]
+      const avatarFilename = mem.profile_photo_url?.split('/').pop()?.split('?')[0]
+      const photoPaths = [
+        ...(photoFilename ? [photoFilename] : [`${mem.id}.jpg`, `${mem.id}.jpeg`, `${mem.id}.png`, `${mem.id}.webp`]),
+        ...(avatarFilename ? [avatarFilename] : [`${mem.id}-avatar.jpg`, `${mem.id}-avatar.jpeg`, `${mem.id}-avatar.png`, `${mem.id}-avatar.webp`]),
+      ]
       try { await supabase.storage.from('member-photos').remove(photoPaths) } catch {}
       try { await supabase.auth.admin.deleteUser(mem.id) } catch {}
     }
