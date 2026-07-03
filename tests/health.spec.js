@@ -251,8 +251,8 @@ test('wtet member register API requires auth', async ({ request }) => {
 
 test('wtet checkin page loads', async ({ page }) => {
   await page.goto('/wtet/checkin')
-  // no token → page renders error state without crashing
-  await expect(page.locator('text=Link not found')).toBeVisible({ timeout: 15000 })
+  // no token/email → page renders the email-confirmation gate without crashing
+  await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 15000 })
 })
 
 test('wtet checkin API validation works', async ({ request }) => {
