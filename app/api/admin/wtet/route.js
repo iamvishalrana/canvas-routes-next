@@ -1,6 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
-import { WTET_EVENT_NAME, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../../lib/wtetRegistrationContent'
+import { WTET_EVENT_NAME, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 
 export async function GET() {
@@ -18,11 +18,13 @@ export async function GET() {
   // Real Stripe registrations are gated on payment status; admin-manually-added
   // registrants (cash/e-transfer/comped at the door) have no Stripe hold, so they
   // count as long as an admin added them as a registrant for this event.
-  const participants = (apps || []).filter(a => {
-    const isStripeWtet = a.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(a.stripe_payment_status)
-    const isManualWtet = (a.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
-    return isStripeWtet || isManualWtet
-  })
+  const participants = (apps || [])
+    .filter(a => {
+      const isStripeWtet = a.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(a.stripe_payment_status)
+      const isManualWtet = (a.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
+      return isStripeWtet || isManualWtet
+    })
+    .map(a => ({ ...a, wtet_lunch: normalizeWtetLunch(a.wtet_lunch) }))
 
   return Response.json({
     participants,

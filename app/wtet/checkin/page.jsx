@@ -39,7 +39,9 @@ function emptyPassenger() { return { name: '', age: '' } }
 
 function parsePassengerCount(str) {
   const n = parseInt(str)
-  return isNaN(n) ? 1 : Math.max(1, n)
+  // Cap at 2 (driver + 1 passenger) even if the registration form claimed more —
+  // the check-in cap applies regardless of what was selected at signup.
+  return isNaN(n) ? 1 : Math.min(2, Math.max(1, n))
 }
 
 // Trip Details — passengers/dietary/WhatsApp.
@@ -57,7 +59,7 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
     setPassengers(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: val } : p))
     setFieldErrors(prev => { const n = { ...prev }; delete n[`p_${i}_${field}`]; return n })
   }
-  function addPassenger() { setPassengers(prev => [...prev, emptyPassenger()]) }
+  function addPassenger() { setPassengers(prev => prev.length >= 2 ? prev : [...prev, emptyPassenger()]) }
   function removePassenger(i) {
     if (passengers.length <= 1) return
     setPassengers(prev => prev.filter((_, idx) => idx !== i))
@@ -95,7 +97,7 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
         setSubmitError(d.error || t.genericError)
         return
       }
-      onSaved()
+      onSaved(passengers)
       setEditing(false)
     } catch {
       setSubmitError(t.networkError)
@@ -153,10 +155,14 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
               </div>
             ))}
           </div>
-          <button type="button" onClick={addPassenger}
-            style={{ marginTop: '0.65rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.2)', padding: '0.5rem 1rem', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
-            {t.addPassengerBtn}
-          </button>
+          {passengers.length >= 2 ? (
+            <p style={{ fontSize: '12px', color: '#8A6535', margin: '0.65rem 0 0', lineHeight: '1.6' }}>{t.maxPassengersNote}</p>
+          ) : (
+            <button type="button" onClick={addPassenger}
+              style={{ marginTop: '0.65rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.2)', padding: '0.5rem 1rem', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
+              {t.addPassengerBtn}
+            </button>
+          )}
           <p style={{ fontSize: '12px', color: '#bbb', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.passengersHint}</p>
         </div>
 
@@ -238,7 +244,8 @@ function WtetCheckinContent() {
 
   const identifier = token ? { token } : { email: data?.email }
   const firstName = data?.name?.trim().split(' ')[0] || ''
-  const allDone = data && !!data.alreadyCompleted && !!data.waiver && !!data.lunch
+  const passengersList = data?.passengersList || []
+  const allDone = data && !!data.alreadyCompleted && !!data.waiver && data.lunch?.length > 0 && data.lunch.length === passengersList.length
   const waiverText = lang === 'fr' ? WTET_WAIVER_TEXT_FR : WTET_WAIVER_TEXT
 
   return (
@@ -295,7 +302,7 @@ function WtetCheckinContent() {
               alreadyCompleted={data.alreadyCompleted}
               initialPassengerCount={parsePassengerCount(data.passengers)}
               lang={lang}
-              onSaved={() => setData(prev => ({ ...prev, alreadyCompleted: true }))}
+              onSaved={savedPassengers => setData(prev => ({ ...prev, alreadyCompleted: true, passengersList: savedPassengers }))}
             />
 
             <WtetWaiverSection
@@ -310,11 +317,14 @@ function WtetCheckinContent() {
             />
 
             <WtetLunchSection
+              key={passengersList.length}
               identifier={identifier}
               lunch={data.lunch}
               lunchOptions={data.lunchOptions}
               lunchCutoff={data.lunchCutoff}
               lunchLocked={data.lunchLocked}
+              passengersList={passengersList}
+              tripDone={!!data.alreadyCompleted}
               lang={lang}
               onSaved={lunch => setData(prev => ({ ...prev, lunch }))}
             />

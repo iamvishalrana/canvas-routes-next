@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { captureException } from '../../../lib/sentry.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../lib/wtetRegistrationContent.js'
+import { normalizeEventName } from '../../../lib/eventMeta.js'
 
 export const runtime = 'nodejs'
 
@@ -59,8 +60,8 @@ export async function POST(request) {
   if (!Array.isArray(passengers_list) || passengers_list.length === 0) {
     return Response.json({ error: 'At least one passenger (the driver) is required.' }, { status: 400 })
   }
-  if (passengers_list.length > 10) {
-    return Response.json({ error: 'Too many passengers.' }, { status: 400 })
+  if (passengers_list.length > 2) {
+    return Response.json({ error: 'Maximum 2 people per car. Email jerry@canvasroutes.com if you need to bring more than 2.' }, { status: 400 })
   }
   for (const p of passengers_list) {
     if (!p.name?.trim()) return Response.json({ error: 'Please provide a name for each passenger.' }, { status: 400 })
@@ -72,12 +73,16 @@ export async function POST(request) {
 
   const supabase = createAdminClient()
 
-  let appQuery = supabase.from('applications').select('id, name, email, wtet_checkin')
-    .in('stripe_payment_status', ['paid', 'authorized'])
-  appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', normalEmail).eq('stripe_payment_type', 'road_trip_wtet')
+  let appQuery = supabase.from('applications').select('id, name, email, wtet_checkin, stripe_payment_type, stripe_payment_status, registrations')
+  appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', normalEmail)
   const { data, error: lookupErr } = await appQuery.maybeSingle()
 
-  if (lookupErr || !data) return Response.json({ error: 'Not found' }, { status: 404 })
+  // Real Stripe registrations are gated on payment status; admin-manually-added
+  // registrants (cash/e-transfer/comped) have no Stripe hold, so they're valid
+  // as long as an admin added them as a registrant for this event.
+  const isStripeWtet = data?.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(data?.stripe_payment_status)
+  const isManualWtet = (data?.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
+  if (lookupErr || !data || (!isStripeWtet && !isManualWtet)) return Response.json({ error: 'Not found' }, { status: 404 })
   if (data.wtet_checkin) return Response.json({ error: 'Already completed.' }, { status: 400 })
 
   const cleanedPassengers = passengers_list.map(p => ({ name: p.name.trim(), age: p.age.toString().trim() }))
@@ -92,7 +97,7 @@ export async function POST(request) {
         completed_at:    new Date().toISOString(),
       },
     })
-    .eq('stripe_payment_intent_id', token)
+    .eq('id', data.id)
 
   if (updateErr) return Response.json({ error: 'Failed to save' }, { status: 500 })
 

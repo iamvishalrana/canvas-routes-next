@@ -327,7 +327,8 @@ export default function EasternTownshipsPage() {
         setChecking(false)
         return
       }
-      const allDone = !!data.alreadyCompleted && !!data.waiver && (!!data.lunch || !!data.lunchLocked)
+      const lunchDone = data.lunch?.length > 0 && data.lunch.length === (data.passengersList?.length || 0)
+      const allDone = !!data.alreadyCompleted && !!data.waiver && (lunchDone || !!data.lunchLocked)
       if (allDone) {
         setVerifiedEmail(entered)
         setAuthed(true)

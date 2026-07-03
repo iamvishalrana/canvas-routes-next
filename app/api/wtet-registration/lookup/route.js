@@ -1,7 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
-import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../../lib/wtetRegistrationContent'
+import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 
 // Email-only lookup, no code/link sent. Rate-limited per IP to slow down
@@ -58,12 +58,13 @@ export async function POST(request) {
     email: app.email,
     passengers: app.passengers || '1',
     alreadyCompleted: !!app.wtet_checkin,
+    passengersList: app.wtet_checkin?.passengers_list || [],
     carYear: app.car_year || '',
     carMake: app.car_make || '',
     carModel: app.car_model || '',
     eventName: WTET_EVENT_NAME,
     waiver: app.wtet_waiver || null,
-    lunch: app.wtet_lunch || null,
+    lunch: normalizeWtetLunch(app.wtet_lunch),
     lunchOptions: WTET_LUNCH_OPTIONS,
     lunchCutoff: cutoff,
     lunchLocked,

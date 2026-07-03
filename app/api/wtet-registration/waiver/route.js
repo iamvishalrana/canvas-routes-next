@@ -1,6 +1,8 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
+import { WTET_EVENT_NAME } from '../../../../lib/wtetRegistrationContent'
+import { normalizeEventName } from '../../../../lib/eventMeta'
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -40,9 +42,7 @@ export async function POST(request) {
 
   // Token (from the emailed check-in link) takes priority when present —
   // both identifiers resolve to the same applications row.
-  let appQuery = admin.from('applications').select('id, wtet_waiver')
-    .eq('stripe_payment_type', 'road_trip_wtet')
-    .in('stripe_payment_status', ['paid', 'authorized'])
+  let appQuery = admin.from('applications').select('id, wtet_waiver, stripe_payment_type, stripe_payment_status, registrations')
   appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', normalEmail)
   const { data: app, error: lookupErr } = await appQuery.maybeSingle()
 
@@ -50,7 +50,12 @@ export async function POST(request) {
     captureException(lookupErr, { context: 'wtet-waiver-lookup', email: normalEmail, hasToken: !!token })
     return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
-  if (!app) return Response.json({ error: 'No matching registration found.' }, { status: 404 })
+  // Real Stripe registrations are gated on payment status; admin-manually-added
+  // registrants (cash/e-transfer/comped) have no Stripe hold, so they're valid
+  // as long as an admin added them as a registrant for this event.
+  const isStripeWtet = app?.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(app?.stripe_payment_status)
+  const isManualWtet = (app?.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
+  if (!app || (!isStripeWtet && !isManualWtet)) return Response.json({ error: 'No matching registration found.' }, { status: 404 })
 
   // Legal document — immutable once signed. Reject a second submission
   // instead of silently overwriting a prior signature.

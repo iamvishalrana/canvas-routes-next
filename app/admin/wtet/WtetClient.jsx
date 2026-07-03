@@ -81,17 +81,17 @@ export default function WtetClient() {
 
   const filtered = participants.filter(p => {
     if (filter === 'waiver_missing' && p.wtet_waiver) return false
-    if (filter === 'lunch_missing' && p.wtet_lunch) return false
+    if (filter === 'lunch_missing' && p.wtet_lunch?.length > 0) return false
     if (filter === 'trip_missing' && p.wtet_checkin) return false
-    if (filter === 'incomplete' && p.wtet_waiver && p.wtet_lunch && p.wtet_checkin) return false
+    if (filter === 'incomplete' && p.wtet_waiver && p.wtet_lunch?.length > 0 && p.wtet_checkin) return false
     if (search && !((p.name || '').toLowerCase().includes(search.toLowerCase()) || (p.email || '').toLowerCase().includes(search.toLowerCase()))) return false
     return true
   })
 
   const waiverCount = participants.filter(p => p.wtet_waiver).length
-  const lunchCount = participants.filter(p => p.wtet_lunch).length
+  const lunchCount = participants.filter(p => p.wtet_lunch?.length > 0).length
   const tripCount = participants.filter(p => p.wtet_checkin).length
-  const fullyDoneCount = participants.filter(p => p.wtet_waiver && p.wtet_lunch && p.wtet_checkin).length
+  const fullyDoneCount = participants.filter(p => p.wtet_waiver && p.wtet_lunch?.length > 0 && p.wtet_checkin).length
   const total = participants.length
 
   return (
@@ -198,7 +198,7 @@ export default function WtetClient() {
                   </div>
                   <Pill done={!!p.wtet_checkin} doneLabel="Trip ✓" pendingLabel="Trip missing" />
                   <Pill done={!!p.wtet_waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />
-                  <Pill done={!!p.wtet_lunch} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />
+                  <Pill done={p.wtet_lunch?.length > 0} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />
                 </div>
                 {isOpen && (
                   <div className="admin-panel-enter" style={{ padding: '1rem 1.25rem 1.25rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
@@ -237,10 +237,14 @@ export default function WtetClient() {
                     </div>
                     <div>
                       <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Lunch</div>
-                      {p.wtet_lunch ? (
+                      {p.wtet_lunch?.length > 0 ? (
                         <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
-                          {p.wtet_lunch.dish_name}<br />
-                          <span style={{ color: '#aaa' }}>Selected {new Date(p.wtet_lunch.selected_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                          {p.wtet_lunch.map((entry, i) => (
+                            <div key={i}>
+                              {entry.name ? `${entry.name}: ` : ''}{entry.dish_name}
+                            </div>
+                          ))}
+                          <span style={{ color: '#aaa' }}>Selected {new Date(p.wtet_lunch[0].selected_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                         </div>
                       ) : (
                         <div style={{ fontSize: '12px', color: '#bbb' }}>Not selected yet.</div>
