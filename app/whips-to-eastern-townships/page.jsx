@@ -4,6 +4,7 @@ import { ROUTE_PATH } from './routePath'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
 import { WTET_PARTICIPANTS as PARTICIPANTS } from '../../lib/wtetParticipants'
+import { captureException } from '../../lib/sentry'
 
 const PASSWORD = 'eastern'
 
@@ -323,7 +324,15 @@ export default function EasternTownshipsPage() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setErrMsg(res.status === 404 ? t.notFoundError : t.genericError)
+        if (res.status === 404) {
+          setErrMsg(t.notFoundError)
+        } else {
+          // Surface the server's actual message (e.g. rate limit) instead of
+          // hiding it behind a generic error — makes real causes visible
+          // instead of every non-404 failure looking identical.
+          setErrMsg(data.error || t.genericError)
+          captureException(new Error(`wtet-itinerary-gate lookup failed: HTTP ${res.status}`), { context: 'wtet-itinerary-gate-lookup', status: res.status, serverError: data.error })
+        }
         setChecking(false)
         return
       }
@@ -335,7 +344,8 @@ export default function EasternTownshipsPage() {
       } else {
         window.location.href = `/wtet/checkin?email=${encodeURIComponent(entered)}`
       }
-    } catch {
+    } catch (err) {
+      captureException(err, { context: 'wtet-itinerary-gate-lookup-network' })
       setErrMsg(t.genericError)
       setChecking(false)
     }

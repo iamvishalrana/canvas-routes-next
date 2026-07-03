@@ -8,6 +8,7 @@ import WtetWaiverSection from '../../../components/WtetWaiverSection'
 import WtetLunchSection from '../../../components/WtetLunchSection'
 import { WTET_WAIVER_TEXT, WTET_WAIVER_TEXT_FR } from '../../../lib/wtetRegistrationContent'
 import { WTET_CHECKIN_T } from '../../../lib/wtetCheckinI18n'
+import { captureException } from '../../../lib/sentry'
 
 const NAV_LINKS = [
   { href: '/',         label: 'Home' },
@@ -221,10 +222,16 @@ function WtetCheckinContent() {
         body: JSON.stringify({ email: targetEmail, ...(token ? { token } : {}) }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) { setError(d.error || t.genericError); setStatus('gate'); return }
+      if (!res.ok) {
+        if (res.status !== 404) captureException(new Error(`wtet-checkin lookup failed: HTTP ${res.status}`), { context: 'wtet-checkin-lookup', status: res.status, serverError: d.error })
+        setError(d.error || t.genericError)
+        setStatus('gate')
+        return
+      }
       setData(d)
       setStatus('found')
-    } catch {
+    } catch (err) {
+      captureException(err, { context: 'wtet-checkin-lookup-network' })
       setError(t.networkError)
       setStatus('gate')
     }
