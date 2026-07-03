@@ -1,0 +1,55 @@
+import { createAdminClient } from '../../../../lib/supabase/admin'
+import { checkRateLimit } from '../../../../lib/rateLimit'
+import { captureException } from '../../../../lib/sentry'
+import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../../lib/wtetRegistrationContent'
+
+// Email-only lookup, no code/link sent. Rate-limited per IP to slow down
+// enumeration — accepted tradeoff for a low-stakes single-event lookup.
+export async function POST(request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  if (await checkRateLimit(ip, 15, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
+
+  let body
+  try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
+  const email = (body?.email || '').toLowerCase().trim()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+  const [{ data: app, error: appErr }, { data: cutoffSetting }] = await Promise.all([
+    admin.from('applications')
+      .select('id, name, email, car_year, car_make, car_model, stripe_payment_status, stripe_payment_type, wtet_waiver, wtet_lunch')
+      .eq('email', email)
+      .eq('stripe_payment_type', 'road_trip_wtet')
+      .in('stripe_payment_status', ['paid', 'authorized'])
+      .maybeSingle(),
+    admin.from('settings').select('value').eq('key', 'wtet_lunch_cutoff').maybeSingle(),
+  ])
+
+  if (appErr) {
+    captureException(appErr, { context: 'wtet-registration-lookup', email })
+    return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
+  }
+  if (!app) {
+    return Response.json({ error: "We couldn't find a Whips to Eastern Townships registration matching that email." }, { status: 404 })
+  }
+
+  const cutoff = cutoffSetting?.value || WTET_LUNCH_DEFAULT_CUTOFF
+  const lunchLocked = new Date() > new Date(cutoff)
+
+  return Response.json({
+    name: app.name || '',
+    email: app.email,
+    carYear: app.car_year || '',
+    carMake: app.car_make || '',
+    carModel: app.car_model || '',
+    eventName: WTET_EVENT_NAME,
+    waiver: app.wtet_waiver || null,
+    lunch: app.wtet_lunch || null,
+    lunchOptions: WTET_LUNCH_OPTIONS,
+    lunchCutoff: cutoff,
+    lunchLocked,
+  })
+}
