@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
-import { WTET_LUNCH_DEFAULT_CUTOFF } from '../../../../lib/wtetRegistrationContent'
+import { WTET_EVENT_NAME, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../../lib/wtetRegistrationContent'
+import { normalizeEventName } from '../../../../lib/eventMeta'
 
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -8,16 +9,23 @@ export async function GET() {
 
   const [{ data: apps, error }, { data: cutoffSetting }] = await Promise.all([
     supabase.from('applications')
-      .select('id, name, email, phone, car_year, car_make, car_model, stripe_payment_status, wtet_checkin, wtet_waiver, wtet_lunch, created_at')
-      .eq('stripe_payment_type', 'road_trip_wtet')
-      .in('stripe_payment_status', ['paid', 'authorized'])
+      .select('id, name, email, phone, car_year, car_make, car_model, stripe_payment_status, stripe_payment_type, registrations, wtet_checkin, wtet_waiver, wtet_lunch, created_at')
       .order('name', { ascending: true }),
     supabase.from('settings').select('value').eq('key', 'wtet_lunch_cutoff').maybeSingle(),
   ])
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
+  // Real Stripe registrations are gated on payment status; admin-manually-added
+  // registrants (cash/e-transfer/comped at the door) have no Stripe hold, so they
+  // count as long as an admin added them as a registrant for this event.
+  const participants = (apps || []).filter(a => {
+    const isStripeWtet = a.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(a.stripe_payment_status)
+    const isManualWtet = (a.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
+    return isStripeWtet || isManualWtet
+  })
+
   return Response.json({
-    participants: apps || [],
+    participants,
     lunchCutoff: cutoffSetting?.value || WTET_LUNCH_DEFAULT_CUTOFF,
   })
 }
