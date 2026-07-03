@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dashboard — Admin' }
 
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
-const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }
+const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03)' }
 
 export default async function DashboardPage() {
   const supabase = createAdminClient()
@@ -61,15 +61,15 @@ export default async function DashboardPage() {
   return (
     <div style={PAGE_STYLE}>
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem', fontFamily: 'var(--font-inter),sans-serif' }}>Canvas Routes</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>Dashboard</h1>
+        <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>Canvas Routes</div>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Dashboard</h1>
       </div>
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {stats.map((s, i) => (
-          <Link key={s.label} href={s.href} style={{ ...CARD, padding: '1.25rem 1.5rem', textDecoration: 'none', display: 'block', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: `${i * 0.09}s` }}>
-            <div style={{ fontSize: '2.2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}><StatNumber value={s.value} /></div>
+          <Link key={s.label} href={s.href} className="admin-card-lift" style={{ ...CARD, padding: '1.25rem 1.5rem', textDecoration: 'none', display: 'block', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: `${i * 0.09}s` }}>
+            <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.5rem', fontWeight: '300', color: s.color, lineHeight: 1 }}><StatNumber value={s.value} /></div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>{s.label}</div>
           </Link>
         ))}

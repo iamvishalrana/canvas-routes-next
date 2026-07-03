@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { inp, L, Err } from '../_components/shared'
 
 const SECTION_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
-const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }
+const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }
 const SECTION_LABEL = { fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }
 
 function ToggleSetting({ label, description, value, onChange, saving }) {
@@ -154,7 +154,7 @@ export default function SettingsClient() {
   return (
     <div style={SECTION_STYLE}>
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem', fontFamily: 'var(--font-inter),sans-serif' }}>Admin</div>
+        <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>Admin</div>
         <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>Settings</h1>
       </div>
 

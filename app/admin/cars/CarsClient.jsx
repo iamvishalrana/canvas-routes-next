@@ -139,8 +139,8 @@ export default function CarsClient() {
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Cars</h1>
+        <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Cars</h1>
       </div>
       {loading ? (
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
@@ -150,7 +150,7 @@ export default function CarsClient() {
             {totalBrands} brand{totalBrands !== 1 ? 's' : ''} represented
           </div>
           {sortedBrands.map(brand => (
-            <div key={brand} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', marginBottom: '1rem' }}>
+            <div key={brand} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', marginBottom: '1rem' }}>
               <div style={{ padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.02em' }}>{brand}</div>
                 <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{brandGroups[brand].length} car{brandGroups[brand].length !== 1 ? 's' : ''}</div>
@@ -227,7 +227,7 @@ export default function CarsClient() {
           ))}
 
           {unassigned.length > 0 && (
-            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', marginBottom: '1rem' }}>
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', marginBottom: '1rem' }}>
               <div style={{ padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ fontSize: '13px', fontWeight: '500', color: '#bbb', letterSpacing: '0.02em' }}>Unassigned</div>
                 <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{unassigned.length} member{unassigned.length !== 1 ? 's' : ''}</div>

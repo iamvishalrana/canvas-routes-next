@@ -276,7 +276,7 @@ const TBTN = (active) => ({
 })
 
 const TSEL = {
-  background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)',
+  background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
   fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif',
   padding: '2px 4px', cursor: 'pointer', color: '#555',
   outline: 'none', height: '24px', appearance: 'none', WebkitAppearance: 'none',
@@ -286,7 +286,7 @@ const INP = {
   width: '100%', boxSizing: 'border-box', padding: '0.6rem 0.75rem',
   border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '13px',
   fontFamily: 'var(--font-inter),sans-serif', outline: 'none',
-  background: '#fff', color: '#1a1a1a', borderRadius: 0,
+  background: '#fff', color: '#1a1a1a', borderRadius: '10px',
 }
 
 // ── 7. Toolbar with {{name}} insert button ───────────────────────────────────
@@ -694,8 +694,8 @@ export default function BroadcastsClient() {
 
       {/* Page header */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Broadcasts</h1>
+        <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Broadcasts</h1>
       </div>
 
       {/* Tabs */}
@@ -718,7 +718,7 @@ export default function BroadcastsClient() {
           {/* Preset templates */}
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.85rem' }}>Starter templates</div>
-            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
               {PRESET_TEMPLATES.map((t, idx) => (
                 <div key={t.id} style={{ padding: '1rem 1.25rem', borderBottom: idx < PRESET_TEMPLATES.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
                   <div style={{ minWidth: 0 }}>
@@ -742,11 +742,11 @@ export default function BroadcastsClient() {
             {templatesLoading ? (
               <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
             ) : savedTemplates.length === 0 ? (
-              <div style={{ padding: '2rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>
+              <div style={{ padding: '2rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', fontSize: '13px', color: '#ccc', textAlign: 'center' }}>
                 No saved templates yet — compose an email and click <strong style={{ color: '#bbb', fontWeight: '500' }}>Save as template</strong> to save it here.
               </div>
             ) : (
-              <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+              <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                 {savedTemplates.map((t, idx) => (
                   <div key={t.id} style={{ padding: '1rem 1.25rem', borderBottom: idx < savedTemplates.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
                     <div style={{ minWidth: 0 }}>
@@ -822,7 +822,7 @@ export default function BroadcastsClient() {
                 const open = forceMonthsOpen || expandedMonths.has(key)
                 const monthSent = rows.reduce((sum, h) => sum + (h.sent_count || 0), 0)
                 return (
-                  <div key={key} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                  <div key={key} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                     {/* Month header */}
                     <button
                       onClick={() => toggleMonth(key)}
@@ -948,7 +948,7 @@ export default function BroadcastsClient() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                 {/* From */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>From</div>
                   </div>
@@ -964,7 +964,7 @@ export default function BroadcastsClient() {
                 </div>
 
                 {/* Audience */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Audience</div>
                   </div>
@@ -1025,7 +1025,7 @@ export default function BroadcastsClient() {
                 </div>
 
                 {/* Subject + Body */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Message</div>
                   </div>
@@ -1059,7 +1059,7 @@ export default function BroadcastsClient() {
                 </div>
 
                 {/* Test send */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)' }}>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>Send a test</div>
                   </div>
@@ -1088,7 +1088,7 @@ export default function BroadcastsClient() {
                     + Save as template
                   </button>
                 ) : (
-                  <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem 1.25rem' }}>
+                  <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem' }}>Save as template</div>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <input
@@ -1111,7 +1111,7 @@ export default function BroadcastsClient() {
 
                 {/* Send / Confirm */}
                 {showConfirm ? (
-                  <div style={{ padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderLeft: '2px solid #7B2032' }}>
+                  <div style={{ padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', borderLeft: '2px solid #7B2032' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.85rem', lineHeight: '1.5' }}>
                       Send to <strong>{audienceLabel}</strong>?<br />
                       <span style={{ fontSize: '11px', color: '#888' }}>This cannot be undone.</span>

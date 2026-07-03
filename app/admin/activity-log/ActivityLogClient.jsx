@@ -106,8 +106,8 @@ export default function ActivityLogClient({ logs }) {
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Activity Log</h1>
+        <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Activity Log</h1>
       </div>
       {/* Note banner */}
       <div style={{ marginBottom: '1.5rem', padding: '0.85rem 1.1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
@@ -126,7 +126,7 @@ export default function ActivityLogClient({ logs }) {
           { label: 'Today', value: todayCount, color: '#3B6B2F' },
           { label: 'This week', value: weekCount, color: '#8A6535' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.25rem 1.4rem' }}>
+          <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.4rem' }}>
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>{s.label}</div>
           </div>
@@ -166,7 +166,7 @@ export default function ActivityLogClient({ logs }) {
 
       {/* Log entries */}
       {filtered.length === 0 ? (
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', padding: '4rem 2rem', textAlign: 'center' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '4rem 2rem', textAlign: 'center' }}>
           <div style={{ fontSize: '13px', color: '#bbb', lineHeight: '1.7', maxWidth: '380px', margin: '0 auto' }}>
             {search || entityTypeFilter !== 'all'
               ? 'No entries match your filters.'
@@ -177,7 +177,7 @@ export default function ActivityLogClient({ logs }) {
       ) : isMobile ? (
         <div>
           {filtered.map((log, idx) => (
-            <div key={log.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', padding: '0.85rem 1rem', marginBottom: '0.4rem' }}>
+            <div key={log.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '0.85rem 1rem', marginBottom: '0.4rem' }}>
               <div style={{ fontFamily: 'monospace', fontWeight: '500', fontSize: '12px', color: '#1a1a1a', marginBottom: '0.3rem' }}>{log.action}</div>
               {(log.entity_type || log.entity_name) && (
                 <div style={{ fontSize: '12px', color: '#555', marginBottom: '0.25rem' }}>
@@ -193,7 +193,7 @@ export default function ActivityLogClient({ logs }) {
           ))}
         </div>
       ) : (
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff' }}>
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.4fr 1.4fr 1.6fr 1.4fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
             {['Action', 'Entity', 'Admin', 'Metadata', 'Date / Time'].map(h => (
               <div key={h} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>

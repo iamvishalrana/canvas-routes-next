@@ -109,12 +109,12 @@ export default function ToolsClient() {
   return (
     <div style={{ padding: 'clamp(1.25rem,4vw,2.5rem)', maxWidth: '680px' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', marginBottom: '0.35rem' }}>Admin</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', margin: 0 }}>Tools</h1>
+        <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Tools</h1>
       </div>
 
       {/* Instagram Token */}
-      <div style={{ padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.1)', background: '#fff', marginBottom: '1rem' }}>
+      <div style={{ padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', marginBottom: '1rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Instagram Token</div>
 
         {/* Set new token (use when current token is dead/expired) */}
