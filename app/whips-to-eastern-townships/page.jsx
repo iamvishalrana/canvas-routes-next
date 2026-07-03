@@ -711,7 +711,7 @@ export default function EasternTownshipsPage() {
         {/* Who's Coming */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>
-            {t.whoLabel(PARTICIPANTS.length + 1)}
+            {t.whoLabel(PARTICIPANTS.length)}
           </h2>
 
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: '0 0 1.25rem' }}>
