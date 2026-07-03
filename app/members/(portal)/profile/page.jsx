@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import CountUp from '../../../../components/CountUp'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -48,59 +49,6 @@ function SectionDivider({ children, extra }) {
   )
 }
 
-function PhotoSection({ carPhotoUrl, photoUploading, photoError, fileInputRef, onUpload }) {
-  return (
-    <div style={{ marginTop: '1.75rem' }}>
-      <SectionDivider>Car Photo</SectionDivider>
-      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onUpload} />
-      <style>{`
-        @keyframes ring-pulse {
-          0%   { box-shadow: 0 0 0 0 rgba(197,168,130,0.55); }
-          70%  { box-shadow: 0 0 0 7px rgba(197,168,130,0); }
-          100% { box-shadow: 0 0 0 0 rgba(197,168,130,0); }
-        }
-      `}</style>
-      {carPhotoUrl ? (
-        <div style={{ position: 'relative', lineHeight: 0, marginBottom: '0.85rem', animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}>
-          <img src={carPhotoUrl} alt="Your car" style={{ width: '100%', maxHeight: '230px', objectFit: 'cover', display: 'block' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,30,20,0.45) 0%, transparent 55%)', pointerEvents: 'none' }} />
-        </div>
-      ) : (
-        <div
-          className="photo-empty"
-          onClick={() => !photoUploading && fileInputRef.current?.click()}
-          style={{
-            marginBottom: '0.85rem', height: '150px',
-            border: '0.5px dashed rgba(197,168,130,0.28)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(197,168,130,0.02)', cursor: 'pointer',
-            transition: 'border-color 0.15s, background 0.15s', gap: '0.65rem',
-            animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none',
-          }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
-            <rect x="11" y="13" width="10" height="8" rx="2"/>
-            <circle cx="7.5" cy="17.5" r="1.5"/>
-            <circle cx="17.5" cy="17.5" r="1.5"/>
-          </svg>
-          <span style={{ fontSize: '12px', color: '#ccc', letterSpacing: '0.04em', fontFamily: 'var(--font-inter), sans-serif' }}>No photo yet — tap to upload</span>
-        </div>
-      )}
-      {photoError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.65rem' }}>{photoError}</div>}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={photoUploading}
-          style={{ padding: '0.75rem 1.5rem', background: 'none', color: '#555', border: '0.5px solid rgba(0,0,0,0.18)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: photoUploading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: photoUploading ? 0.6 : 1 }}>
-          {photoUploading ? 'Uploading…' : carPhotoUrl ? 'Change Photo' : 'Upload Photo'}
-        </button>
-        <span style={{ fontSize: '11px', color: '#ccc' }}>Max 8 MB</span>
-      </div>
-    </div>
-  )
-}
-
 export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -115,6 +63,9 @@ export default function ProfilePage() {
   const savedCars = useRef(null)
 
   const [tier, setTier] = useState(null)
+  const [stats, setStats] = useState(null)
+  const [membershipNumber, setMembershipNumber] = useState(null)
+  const editAnchorRef = useRef(null)
 
   const [pwOpen, setPwOpen] = useState(false)
   const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
@@ -174,7 +125,9 @@ export default function ProfilePage() {
           savedCars.current = c
           if (member?.car_photo_url) setCarPhotoUrl(member.car_photo_url)
           if (member?.tier) setTier(member.tier)
+          if (member?.membership_number) setMembershipNumber(member.membership_number)
         }
+        if (data.stats) setStats(data.stats)
       })
       .catch(() => setError('Could not load your profile. Please refresh.'))
   }, [])
@@ -194,6 +147,7 @@ export default function ProfilePage() {
     savedForm.current = { ...form }
     savedCars.current = cars.map(c => ({ ...c }))
     setEditing(true); setSaved(false); setError(null)
+    setTimeout(() => editAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
   }
 
   function cancelEditing() {
@@ -301,6 +255,21 @@ export default function ProfilePage() {
   const initials = displayName.trim().split(/\s+/).map(w => w[0] || '').filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
   const isInnerCircle = tier === 'inner_circle'
 
+  // Profile completeness — drives the hero progress bar
+  const validCarsList = cars.filter(c => c.year || c.make || c.model)
+  const completeness = [
+    !!form.name, !!form.phone, !!form.instagram,
+    !!(form.dob_month && form.dob_day), validCarsList.length > 0, !!carPhotoUrl,
+  ]
+  const completeCount = completeness.filter(Boolean).length
+  const completePct = Math.round((completeCount / completeness.length) * 100)
+  const primaryCar = validCarsList[0] || null
+  const extraCars = validCarsList.slice(1)
+  const memberSinceStr = stats?.memberSince
+    ? new Date(stats.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : null
+  const igHandle = (form.instagram || '').replace(/^@/, '').trim()
+
   return (
     <div>
       <style>{`
@@ -353,48 +322,251 @@ export default function ProfilePage() {
           filter: brightness(1.08);
           transition: filter 0.2s;
         }
+
+        /* ── Hero / garage / stats cards ── */
+        @keyframes ring-pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(197,168,130,0.55); }
+          70%  { box-shadow: 0 0 0 7px rgba(197,168,130,0); }
+          100% { box-shadow: 0 0 0 0 rgba(197,168,130,0); }
+        }
+        @keyframes cr-glow-pulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(15,30,20,1), 0 0 0 4.5px rgba(197,168,130,0.9), 0 0 24px rgba(197,168,130,0.35); }
+          50%      { box-shadow: 0 0 0 3px rgba(15,30,20,1), 0 0 0 4.5px rgba(197,168,130,0.9), 0 0 38px rgba(197,168,130,0.6); }
+        }
+        @keyframes cr-bar-grow {
+          from { width: 0; }
+        }
+        @keyframes cr-shimmer-sweep {
+          from { left: -75%; }
+          to   { left: 130%; }
+        }
+        .cr-hero-card    { animation: cr-fade-up 0.45s ease both; }
+        .cr-garage-card  { animation: cr-fade-up 0.45s ease both; animation-delay: 0.1s; }
+        .cr-stats-card   { animation: cr-fade-up 0.45s ease both; animation-delay: 0.18s; }
+        .cr-hero-avatar  {
+          animation: cr-scale-in 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both, cr-glow-pulse 3.6s ease-in-out 0.7s infinite;
+        }
+        .cr-progress-fill { animation: cr-bar-grow 1.1s cubic-bezier(0.23,1,0.32,1) 0.5s both; }
+        .cr-garage-photo img { transition: transform 0.45s cubic-bezier(0.23,1,0.32,1); }
+        @media (hover: hover) {
+          .cr-garage-photo:hover img { transform: scale(1.025); }
+          .cr-hero-pill:hover { background: rgba(245,241,236,0.14) !important; }
+          .cr-hero-editbtn:hover { border-color: rgba(197,168,130,0.6) !important; color: #c5a882 !important; }
+        }
+        .cr-stat-tile { transition: transform 0.15s ease, border-color 0.2s ease; }
+        .cr-stat-tile:active { transform: scale(0.98); }
+        @media (prefers-reduced-motion: reduce) {
+          .cr-hero-card, .cr-garage-card, .cr-stats-card, .cr-hero-avatar,
+          .cr-progress-fill, .cr-anim-avatar, .cr-anim-header, .cr-anim-section,
+          .cr-anim-right, .cr-garage-photo img {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
       `}</style>
 
-      {/* ── Header ── */}
-      <div style={{ marginBottom: '3rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
-          <div className="cr-anim-avatar" style={{
-            width: '54px', height: '54px', borderRadius: '50%', flexShrink: 0,
-            background: isInnerCircle
-              ? 'linear-gradient(135deg, #c5a882, #a8885f)'
-              : 'linear-gradient(135deg, #243328, #0F1E14)',
+      {/* ── Hero card ── */}
+      <div className="cr-hero-card" style={{ background: '#0F1E14', borderRadius: '20px', border: '0.5px solid rgba(197,168,130,0.18)', padding: isMobile ? '1.5rem 1.25rem 1.75rem' : '2rem 2rem 2.25rem', position: 'relative', overflow: 'hidden', marginBottom: '1rem', boxShadow: '0 8px 32px rgba(15,30,20,0.18)' }}>
+        {/* Gold hairline top */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(197,168,130,0.5), transparent)' }} />
+
+        {/* Season chip + edit button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <span style={{ fontSize: '8px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter), sans-serif', padding: '0.35rem 0.85rem', border: '0.5px solid rgba(197,168,130,0.25)', borderRadius: '99px' }}>
+            Season 2026
+          </span>
+          <button
+            type="button"
+            className="cr-hero-editbtn"
+            onClick={startEditing}
+            aria-label="Edit profile"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: '0.5px solid rgba(245,241,236,0.2)', borderRadius: '99px', padding: '0.45rem 1rem', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter), sans-serif', transition: 'border-color 0.2s, color 0.2s' }}
+          >
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+            Edit
+          </button>
+        </div>
+
+        <div style={{ textAlign: 'center' }}>
+          {/* Glowing avatar */}
+          <div className="cr-hero-avatar" style={{
+            width: '92px', height: '92px', borderRadius: '50%', margin: '0 auto 1.1rem',
+            background: isInnerCircle ? 'linear-gradient(135deg, #c5a882, #8A6535)' : 'linear-gradient(135deg, #2c4133, #16261b)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: isInnerCircle ? '0 3px 14px rgba(197,168,130,0.28)' : '0 3px 14px rgba(15,30,20,0.22)',
-            marginTop: '3px', cursor: 'default',
           }}>
-            <span style={{ fontSize: '16px', color: '#fff', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '400', letterSpacing: '0.05em' }}>{initials}</span>
+            <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.04em' }}>{initials}</span>
           </div>
 
-          <div className="cr-anim-header" style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.34em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-              Canvas Routes &mdash; Season 2026
-            </div>
-            <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.01em' }}>
-              {form.name || (user?.email ? user.email.split('@')[0] : 'Your Profile')}
-            </div>
-            {user?.email && (
-              <div style={{ fontSize: '12px', color: '#bbb', letterSpacing: '0.03em', marginBottom: '0.6rem' }}>{user.email}</div>
+          {/* Name */}
+          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, letterSpacing: '-0.01em', marginBottom: '0.85rem' }}>
+            {displayName || 'Your Profile'}
+          </div>
+
+          {/* Instagram pill */}
+          {igHandle ? (
+            <a
+              href={`https://instagram.com/${igHandle}`}
+              target="_blank"
+              rel="noreferrer"
+              className="cr-hero-pill"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(245,241,236,0.08)', borderRadius: '99px', padding: '0.5rem 1.2rem', fontSize: '11px', color: 'rgba(245,241,236,0.85)', fontFamily: 'var(--font-inter), sans-serif', textDecoration: 'none', letterSpacing: '0.03em', marginBottom: '1.35rem', transition: 'background 0.2s' }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              @{igHandle}
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={startEditing}
+              className="cr-hero-pill"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(245,241,236,0.06)', border: 'none', borderRadius: '99px', padding: '0.5rem 1.2rem', fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', cursor: 'pointer', letterSpacing: '0.03em', marginBottom: '1.35rem', transition: 'background 0.2s' }}
+            >
+              + Add Instagram
+            </button>
+          )}
+
+          {/* Tier row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8L12 2z"/></svg>
+            <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500' }}>
+              {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
+            </span>
+            {membershipNumber && (
+              <>
+                <span style={{ color: 'rgba(245,241,236,0.25)' }}>·</span>
+                <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', fontFamily: 'var(--font-inter), sans-serif' }}>
+                  No. {String(membershipNumber).padStart(3, '0')}
+                </span>
+              </>
             )}
-            {tier && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center',
-                fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
-                padding: '0.28rem 0.9rem',
-                border: isInnerCircle ? '0.5px solid rgba(197,168,130,0.5)' : '0.5px solid rgba(197,168,130,0.25)',
-                background: isInnerCircle ? 'rgba(197,168,130,0.09)' : 'transparent',
-                color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif',
-              }}>
-                {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
-              </span>
-            )}
+          </div>
+
+          {/* Profile completeness bar */}
+          <div style={{ maxWidth: '420px', margin: '0 auto' }}>
+            <div style={{ height: '5px', borderRadius: '99px', background: 'rgba(245,241,236,0.1)', overflow: 'hidden' }}>
+              <div className="cr-progress-fill" style={{ width: `${completePct}%`, height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg, #8A6535, #c5a882)', boxShadow: '0 0 12px rgba(197,168,130,0.5)' }} />
+            </div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.12em', color: completePct === 100 ? '#c5a882' : 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '0.6rem', textTransform: 'uppercase' }}>
+              {completePct === 100 ? 'Profile complete' : `Profile ${completeCount} / ${completeness.length} complete`}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ── My Garage card ── */}
+      <div className="cr-garage-card" style={{ background: '#0F1E14', borderRadius: '20px', border: '0.5px solid rgba(197,168,130,0.18)', padding: isMobile ? '1.35rem 1.25rem' : '1.75rem', marginBottom: '1rem', boxShadow: '0 8px 32px rgba(15,30,20,0.18)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.1rem' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.45rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.01em' }}>My Garage</div>
+          <button type="button" onClick={startEditing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            Edit
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+
+        {carPhotoUrl ? (
+          <div className="cr-garage-photo" style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', lineHeight: 0 }}>
+            <img src={carPhotoUrl} alt={primaryCar ? [primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).join(' ') : 'Your car'} style={{ width: '100%', aspectRatio: '16 / 10', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,18,12,0.82) 0%, rgba(10,18,12,0.15) 45%, transparent 65%)', pointerEvents: 'none' }} />
+            {/* Featured chip */}
+            <div style={{ position: 'absolute', top: '0.85rem', left: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(10,18,12,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', borderRadius: '99px', padding: '0.35rem 0.85rem' }}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="#c5a882" stroke="#c5a882" strokeWidth="1"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8L12 2z"/></svg>
+              <span style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.9)', fontFamily: 'var(--font-inter), sans-serif' }}>Featured</span>
+            </div>
+            {/* Change photo */}
+            <button
+              type="button"
+              onClick={() => !photoUploading && fileInputRef.current?.click()}
+              aria-label="Change car photo"
+              style={{ position: 'absolute', bottom: '0.85rem', right: '0.85rem', width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(10,18,12,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', border: '0.5px solid rgba(197,168,130,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploading ? 'wait' : 'pointer', animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+            {/* Car name overlay */}
+            {primaryCar && (
+              <div style={{ position: 'absolute', bottom: '0.95rem', left: '1.1rem', right: '4rem', lineHeight: 1.2 }}>
+                <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.3rem, 4.5vw, 1.8rem)', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.01em', textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}>
+                  {primaryCar.model || primaryCar.make}
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.65)', fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.04em', marginTop: '0.2rem' }}>
+                  {[primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).join(' ')}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div
+            className="photo-empty"
+            onClick={() => !photoUploading && fileInputRef.current?.click()}
+            style={{ borderRadius: '14px', height: '170px', border: '0.5px dashed rgba(197,168,130,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.04)', cursor: 'pointer', gap: '0.65rem', animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}
+          >
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.55)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
+              <rect x="11" y="13" width="10" height="8" rx="2"/>
+              <circle cx="7.5" cy="17.5" r="1.5"/>
+              <circle cx="17.5" cy="17.5" r="1.5"/>
+            </svg>
+            <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.45)', letterSpacing: '0.04em', fontFamily: 'var(--font-inter), sans-serif' }}>
+              {photoUploading ? 'Uploading…' : primaryCar ? `Add a photo of your ${primaryCar.model || primaryCar.make}` : 'No photo yet — tap to upload'}
+            </span>
+          </div>
+        )}
+        {photoError && <div style={{ fontSize: '12px', color: '#d06070', marginTop: '0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>{photoError}</div>}
+
+        {/* Additional cars */}
+        {extraCars.length > 0 && (
+          <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+            {extraCars.map((car, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '10px', background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
+                  <rect x="11" y="13" width="10" height="8" rx="2"/>
+                  <circle cx="7.5" cy="17.5" r="1.5"/>
+                  <circle cx="17.5" cy="17.5" r="1.5"/>
+                </svg>
+                <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.8)', fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.02em' }}>
+                  {[car.year, car.make, car.model].filter(Boolean).join(' ')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Season Stats card ── */}
+      <div className="cr-stats-card" style={{ background: '#0F1E14', borderRadius: '20px', border: '0.5px solid rgba(197,168,130,0.18)', padding: isMobile ? '1.35rem 1.25rem' : '1.75rem', marginBottom: '3rem', boxShadow: '0 8px 32px rgba(15,30,20,0.18)' }}>
+        <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.45rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.01em', marginBottom: '1.1rem' }}>Season Stats</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          {[
+            {
+              icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
+              value: stats ? stats.attended : null, label: 'Events attended',
+            },
+            {
+              icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 15 11 17 15 13"/></svg>,
+              value: stats ? stats.registered : null, label: 'Registrations',
+            },
+          ].map(tile => (
+            <div key={tile.label} className="cr-stat-tile" style={{ background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)', borderRadius: '14px', padding: '1.1rem 1.2rem' }}>
+              <div style={{ marginBottom: '0.6rem' }}>{tile.icon}</div>
+              <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.9rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1 }}>
+                {tile.value === null ? '—' : <CountUp to={tile.value} />}
+              </div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '0.4rem' }}>{tile.label}</div>
+            </div>
+          ))}
+          <div className="cr-stat-tile" style={{ gridColumn: '1 / -1', background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)', borderRadius: '14px', padding: '1rem 1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', fontFamily: 'var(--font-inter), sans-serif' }}>Member since</span>
+            </div>
+            <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.2rem', fontWeight: '400', color: '#F5F1EC' }}>{memberSinceStr || '—'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div ref={editAnchorRef} style={{ scrollMarginTop: '84px' }} />
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '2.5rem' : '4rem', alignItems: 'start' }}>
 
@@ -433,46 +605,6 @@ export default function ProfilePage() {
                   <div style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.01em' }}>{row.value}</div>
                 </div>
               ) : null)}
-
-              {hasCar && (
-                <>
-                  <SectionDivider>Your Cars</SectionDivider>
-                  {cars.filter(c => c.year || c.make || c.model || c.license_plate).map((car, i) => (
-                    <div key={i} className="car-view-card" style={{
-                      animationName: 'cr-fade-up', animationDuration: '0.32s', animationFillMode: 'both', animationTimingFunction: 'ease',
-                      animationDelay: `${0.42 + i * 0.07}s`,
-                      display: 'flex', alignItems: 'center', gap: '0.9rem',
-                      padding: '0.9rem 1rem', marginBottom: '0.5rem',
-                      border: '0.5px solid rgba(0,0,0,0.08)',
-                      background: 'rgba(197,168,130,0.025)',
-                      transition: 'border-color 0.15s',
-                    }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                        <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
-                        <rect x="11" y="13" width="10" height="8" rx="2"/>
-                        <circle cx="7.5" cy="17.5" r="1.5"/>
-                        <circle cx="17.5" cy="17.5" r="1.5"/>
-                      </svg>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '13px', color: '#1a1a1a', letterSpacing: '0.02em' }}>
-                          {[car.year, car.make, car.model].filter(Boolean).map((p, pi) => (
-                            <span key={pi}>
-                              {pi > 0 && <span style={{ color: '#c5a882', margin: '0 0.3rem', fontSize: '9px' }}>·</span>}
-                              {p}
-                            </span>
-                          ))}
-                        </div>
-                        {car.license_plate && (
-                          <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginTop: '0.15rem' }}>{car.license_plate}</div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {/* Car photo in view mode */}
-              <PhotoSection carPhotoUrl={carPhotoUrl} photoUploading={photoUploading} photoError={photoError} fileInputRef={fileInputRef} onUpload={handlePhotoUpload} />
 
               {!form.name && !form.phone && !dobDisplay && !hasCar && (
                 <div style={{ fontSize: '13px', color: '#bbb', paddingTop: '0.5rem', lineHeight: 1.75 }}>
@@ -580,8 +712,6 @@ export default function ProfilePage() {
                 </button>
               )}
 
-              {/* Car photo in edit mode */}
-              <PhotoSection carPhotoUrl={carPhotoUrl} photoUploading={photoUploading} photoError={photoError} fileInputRef={fileInputRef} onUpload={handlePhotoUpload} />
 
               {error && <div style={{ fontSize: '12px', color: '#7B2032', margin: '0.75rem 0' }}>{error}</div>}
 
