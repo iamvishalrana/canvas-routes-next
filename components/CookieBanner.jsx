@@ -50,11 +50,18 @@ function denyConsent() {
   if (typeof window.gtag === 'function') window.gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied' })
 }
 
+// Pages where the banner never shows — kept as prefixes checked together so
+// there's a single source of truth instead of scattered early-returns.
+const HIDDEN_PATH_PREFIXES = ['/verify', '/members', '/admin', '/wtet/checkin']
+
 export default function CookieBanner() {
   const pathname = usePathname()
   const [consent, setConsentState] = useState('loading')
-  if (pathname?.startsWith('/verify')) return null
   const bannerRef = useRef(null)
+  // Computed after all hooks run (never an early return before a hook call) —
+  // hooks must execute in the same order every render, and this value can
+  // change on client-side navigation between pages without a remount.
+  const hiddenByPath = HIDDEN_PATH_PREFIXES.some(p => pathname?.startsWith(p))
 
   useEffect(() => {
     setConsentState(getConsent())
@@ -83,8 +90,7 @@ export default function CookieBanner() {
   }, [])
 
   // Push body down by the banner height so the footer is never covered
-  const isHidden = consent === 'loading' || consent !== null
-    || pathname.startsWith('/members') || pathname.startsWith('/admin')
+  const isHidden = consent === 'loading' || consent !== null || hiddenByPath
   useEffect(() => {
     if (isHidden) { document.body.style.paddingBottom = ''; return }
     function sync() {
@@ -113,7 +119,7 @@ export default function CookieBanner() {
   }
 
   if (consent === 'loading' || consent !== null) return null
-  if (pathname.startsWith('/members') || pathname.startsWith('/admin')) return null
+  if (hiddenByPath) return null
 
   return (
     <div ref={bannerRef} className="cookie-banner">

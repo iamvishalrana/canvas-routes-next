@@ -255,6 +255,31 @@ function WtetCheckinContent() {
   const allDone = data && !!data.alreadyCompleted && !!data.waiver && data.lunch?.length > 0 && data.lunch.length === passengersList.length
   const waiverText = lang === 'fr' ? WTET_WAIVER_TEXT_FR : WTET_WAIVER_TEXT
 
+  // Auto-redirect to the itinerary once the last remaining step is actually
+  // submitted — not just because they arrived on an already-complete link
+  // (they might be back to review or change their lunch selection). Each
+  // section's onSaved sets this ref right before updating state; only that
+  // triggers the countdown below.
+  const justActedRef = useRef(false)
+  const [redirectCountdown, setRedirectCountdown] = useState(null)
+
+  useEffect(() => {
+    if (allDone && justActedRef.current && redirectCountdown === null) {
+      justActedRef.current = false
+      setRedirectCountdown(3)
+    }
+  }, [allDone, redirectCountdown])
+
+  useEffect(() => {
+    if (redirectCountdown === null) return
+    if (redirectCountdown === 0) {
+      window.location.href = `/whips-to-eastern-townships?email=${encodeURIComponent(data.email)}`
+      return
+    }
+    const id = setTimeout(() => setRedirectCountdown(c => c - 1), 1000)
+    return () => clearTimeout(id)
+  }, [redirectCountdown, data?.email])
+
   return (
     <>
       <LangToggle lang={lang} setLang={setLang} />
@@ -309,7 +334,7 @@ function WtetCheckinContent() {
               alreadyCompleted={data.alreadyCompleted}
               initialPassengerCount={parsePassengerCount(data.passengers)}
               lang={lang}
-              onSaved={savedPassengers => setData(prev => ({ ...prev, alreadyCompleted: true, passengersList: savedPassengers }))}
+              onSaved={savedPassengers => { justActedRef.current = true; setData(prev => ({ ...prev, alreadyCompleted: true, passengersList: savedPassengers })) }}
             />
 
             <WtetWaiverSection
@@ -320,7 +345,7 @@ function WtetCheckinContent() {
               carMake={data.carMake}
               carModel={data.carModel}
               lang={lang}
-              onSaved={waiver => setData(prev => ({ ...prev, waiver }))}
+              onSaved={waiver => { justActedRef.current = true; setData(prev => ({ ...prev, waiver })) }}
             />
 
             <WtetLunchSection
@@ -333,11 +358,13 @@ function WtetCheckinContent() {
               passengersList={passengersList}
               tripDone={!!data.alreadyCompleted}
               lang={lang}
-              onSaved={lunch => setData(prev => ({ ...prev, lunch }))}
+              onSaved={lunch => { justActedRef.current = true; setData(prev => ({ ...prev, lunch })) }}
             />
 
             <div style={{ padding: '2.5rem 0 0', textAlign: 'center' }}>
-              {allDone ? (
+              {redirectCountdown !== null ? (
+                <p style={{ fontSize: '14px', color: '#3B6B2F', margin: 0 }}>{t.redirectingIn(redirectCountdown)}</p>
+              ) : allDone ? (
                 <a
                   href={`/whips-to-eastern-townships?email=${encodeURIComponent(data.email)}`}
                   style={{ display: 'inline-block', padding: '0.95rem 2.25rem', background: '#0F1E14', color: '#F5F1EC', textDecoration: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif' }}
