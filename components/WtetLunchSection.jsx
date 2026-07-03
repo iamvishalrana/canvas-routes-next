@@ -100,13 +100,14 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
   return (
     <SectionCard title={t.lunchTitle} done={false} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
       <LunchNote t={t} />
-      <p style={{ fontSize: '12px', color: '#999', marginBottom: '1.1rem' }}>{t.chooseOneUntil(cutoffStr)}</p>
+      <p style={{ fontSize: '12px', color: '#999', marginBottom: '0.35rem' }}>{t.chooseOneUntil(cutoffStr)}</p>
+      <p style={{ fontSize: '12px', color: '#8A6535', fontWeight: '500', marginBottom: '1.25rem' }}>{t.lunchAllRequired}</p>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
           {passengersList.map((p, i) => (
             <div key={i} style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: '#fdfcfb', padding: '1.1rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.85rem' }}>
-                {t.lunchForPerson(p.name || (i === 0 ? t.driverLabel : t.passengerLabel(i + 1)), i === 0)}
+                {t.lunchForPerson(p.name || (i === 0 ? t.driverLabel : t.passengerLabel(i + 1)), i === 0)} <span style={{ color: '#7B2032' }}>*</span>
               </div>
               <div style={{ display: 'grid', gap: '0.6rem' }}>
                 {lunchOptions.map(dish => (

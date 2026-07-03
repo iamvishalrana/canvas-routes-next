@@ -258,7 +258,7 @@ function WtetCheckinContent() {
   return (
     <>
       <LangToggle lang={lang} setLang={setLang} />
-      <main style={{ maxWidth: '620px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
+      <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
 
         {(status === 'gate' || status === 'loading') && (
           <>
@@ -335,6 +335,19 @@ function WtetCheckinContent() {
               lang={lang}
               onSaved={lunch => setData(prev => ({ ...prev, lunch }))}
             />
+
+            <div style={{ padding: '2.5rem 0 0', textAlign: 'center' }}>
+              {allDone ? (
+                <a
+                  href={`/whips-to-eastern-townships?email=${encodeURIComponent(data.email)}`}
+                  style={{ display: 'inline-block', padding: '0.95rem 2.25rem', background: '#0F1E14', color: '#F5F1EC', textDecoration: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif' }}
+                >
+                  {t.viewItineraryBtn}
+                </a>
+              ) : (
+                <p style={{ fontSize: '12px', color: '#bbb', margin: 0 }}>{t.viewItineraryLocked}</p>
+              )}
+            </div>
           </>
         )}
       </main>

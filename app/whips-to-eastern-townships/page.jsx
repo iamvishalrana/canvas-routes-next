@@ -298,15 +298,26 @@ export default function EasternTownshipsPage() {
   }, [authed])
 
   useEffect(() => {
-    const urlPw = new URLSearchParams(window.location.search).get('pw')
+    const params = new URLSearchParams(window.location.search)
+    const urlPw = params.get('pw')
     if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true) }
     setChecked(true)
+
+    // Handoff from /wtet/checkin's "View Itinerary" link once check-in is
+    // fully complete — re-verify automatically so they don't have to retype
+    // the email they just used.
+    const urlEmail = params.get('email')
+    if (!authed && urlEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(urlEmail)) {
+      setEmail(urlEmail)
+      submit(null, urlEmail)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function submit(e) {
-    e.preventDefault()
+  async function submit(e, emailOverride) {
+    e?.preventDefault()
     setErrMsg(null)
-    const entered = email.trim()
+    const entered = (emailOverride ?? email).trim()
     if (entered.toLowerCase() === PASSWORD.toLowerCase()) {
       setAuthed(true)
       return

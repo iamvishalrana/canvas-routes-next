@@ -20,14 +20,18 @@ export function WtetStatusPill({ done, doneLabel, pendingLabel }) {
   )
 }
 
+// Renders each check-in section as part of the page itself — a labeled
+// section with a hairline divider below it — rather than a boxed card, so
+// the whole check-in flow reads as one continuous page instead of stacked
+// containers.
 export default function WtetSectionCard({ title, done, doneLabel, pendingLabel, children }) {
   return (
-    <div style={{ border: `0.5px solid ${done ? 'rgba(59,107,47,0.25)' : 'rgba(197,168,130,0.35)'}`, background: '#fff', marginBottom: '1.5rem' }}>
-      <div style={{ padding: '1.1rem 1.4rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', fontFamily: 'var(--font-inter), sans-serif' }}>{title}</div>
+    <section style={{ padding: '2.5rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', margin: 0, fontFamily: 'var(--font-inter), sans-serif' }}>{title}</h2>
         <WtetStatusPill done={done} doneLabel={doneLabel} pendingLabel={pendingLabel} />
       </div>
-      <div style={{ padding: '1.4rem' }}>{children}</div>
-    </div>
+      {children}
+    </section>
   )
 }
