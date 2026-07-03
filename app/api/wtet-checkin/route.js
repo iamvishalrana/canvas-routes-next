@@ -75,11 +75,14 @@ export async function POST(request) {
   appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', normalEmail)
   const { data, error: lookupErr } = await appQuery.maybeSingle()
 
-  // Real Stripe registrations are gated on payment status; admin-manually-added
-  // registrants (cash/e-transfer/comped) have no Stripe hold, so they're valid
-  // as long as an admin added them as a registrant for this event.
+  // Real Stripe registrations are gated on payment status; anyone else with a
+  // registrations[] entry for this event (admin-manually added, member-portal
+  // payment, or an older RSVP-confirmed invite that predates the admin_manual
+  // source tag) is valid as long as they're registered for this event at all —
+  // don't require a specific `source` value, since historical entries don't
+  // all have one.
   const isStripeWtet = data?.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(data?.stripe_payment_status)
-  const isManualWtet = (data?.registrations || []).some(r => r.source === 'admin_manual' && isWtetEventName(normalizeEventName(r.event)))
+  const isManualWtet = (data?.registrations || []).some(r => isWtetEventName(normalizeEventName(r.event)))
   if (lookupErr || !data || (!isStripeWtet && !isManualWtet)) return Response.json({ error: 'Not found' }, { status: 404 })
   if (data.wtet_checkin) return Response.json({ error: 'Already completed.' }, { status: 400 })
 

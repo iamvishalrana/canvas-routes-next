@@ -25,7 +25,7 @@ export async function GET(request) {
     const app = (data || []).find(a => a.email === email)
     if (!app) return { email, found: false }
     const isStripeWtet = app.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(app.stripe_payment_status)
-    const isManualWtet = (app.registrations || []).some(r => r.source === 'admin_manual' && isWtetEventName(normalizeEventName(r.event)))
+    const isManualWtet = (app.registrations || []).some(r => isWtetEventName(normalizeEventName(r.event)))
     return {
       email,
       found: true,
