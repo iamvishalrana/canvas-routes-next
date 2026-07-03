@@ -345,58 +345,103 @@ export default function EasternTownshipsPage() {
 
   if (!authed) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexWrap: 'wrap', fontFamily: 'sans-serif' }}>
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
+        backgroundColor: '#0F1E14',
+        backgroundImage: 'url(/wtet.png)', backgroundSize: 'cover', backgroundPosition: 'center 40%',
+        fontFamily: 'sans-serif', padding: 'clamp(2rem,6vw,4rem) 1.25rem',
+      }}>
         <style>{`
-          @media (max-width: 640px) { .pw-half { flex: 1 1 100% !important; min-height: 45vh !important; } }
+          * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+          input { -webkit-appearance: none; appearance: none; border-radius: 0; }
+          @keyframes gate-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes gate-fade-in { from { opacity: 0; } to { opacity: 1; } }
+          .gate-eyebrow { animation: gate-fade-in 0.7s ease both; animation-delay: 100ms; }
+          .gate-logo    { animation: gate-fade-in 0.7s ease both; animation-delay: 200ms; }
+          .gate-title   { animation: gate-fade-up 0.8s ease both; animation-delay: 320ms; }
+          .gate-date    { animation: gate-fade-in 0.6s ease both; animation-delay: 480ms; }
+          .gate-tags    { animation: gate-fade-in 0.6s ease both; animation-delay: 600ms; }
+          .gate-divider { animation: gate-fade-in 0.5s ease both; animation-delay: 700ms; }
+          .gate-body    { animation: gate-fade-up 0.7s ease both; animation-delay: 800ms; }
+          .gate-form    { animation: gate-fade-up 0.7s ease both; animation-delay: 950ms; }
+          .gate-input:focus { border-color: rgba(197,168,130,0.65) !important; background: rgba(255,255,255,0.08) !important; }
+          .gate-submit-btn:active { transform: scale(0.99); }
+          @media (max-width: 480px) {
+            .gate-card { padding: 2.25rem 1.5rem !important; }
+          }
         `}</style>
-        {/* Left — beige */}
-        <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#F5F1EC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', textAlign: 'center', position: 'relative', boxSizing: 'border-box' }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '0.5px', background: 'rgba(0,0,0,0.08)' }} />
+
+        {/* Dark overlay for legibility over the background photo */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(6,14,9,0.87) 0%, rgba(15,30,20,0.93) 55%, rgba(10,20,13,0.97) 100%)' }} />
+
+        {/* Gold hairlines top/bottom */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)' }} />
+
+        <div className="gate-card" style={{
+          position: 'relative', zIndex: 1, width: '100%', maxWidth: '420px', textAlign: 'center',
+          padding: '3rem 2.5rem', background: 'rgba(255,255,255,0.03)',
+          border: '0.5px solid rgba(197,168,130,0.22)',
+        }}>
+          <div className="gate-eyebrow" style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.65)', marginBottom: '1.5rem' }}>
+            Canvas Routes
+          </div>
+
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '140px', marginBottom: '2.5rem', opacity: 0.88 }} />
-          <h1 style={{ color: '#0F1E14', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '22px', lineHeight: '1.25', marginBottom: '0.5rem', fontWeight: '400' }}>Whips to Eastern Townships</h1>
-          <p style={{ color: '#999', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', margin: 0 }}>Sunday · July 5, 2026</p>
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.75rem' }}>
-            {['Chemin des Cantons', 'Vineyard Stop', 'Lakeside Lunch'].map(tag => (
-              <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', border: '0.5px solid rgba(0,0,0,0.12)', padding: '3px 10px' }}>{tag}</span>
+          <img src="/white-outline.png" alt="Canvas Routes" className="gate-logo" style={{ width: '120px', margin: '0 auto 1.75rem', display: 'block', opacity: 0.92 }} />
+
+          <h1 className="gate-title" style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#F5F1EC', fontSize: 'clamp(1.5rem,5.5vw,2.1rem)', fontWeight: '400', lineHeight: '1.2', margin: '0 0 0.85rem' }}>
+            Whips to Eastern Townships
+          </h1>
+
+          <div className="gate-date" style={{ display: 'inline-block', padding: '0.4rem 1.1rem', border: '1px solid rgba(197,168,130,0.5)', background: 'rgba(197,168,130,0.09)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#F5F1EC', marginBottom: '1.5rem' }}>
+            {t.date}
+          </div>
+
+          <div className="gate-tags" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.75rem' }}>
+            {t.headerTags.map(tag => (
+              <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', border: '0.5px solid rgba(197,168,130,0.25)', padding: '3px 9px' }}>{tag}</span>
             ))}
           </div>
-        </div>
 
-        {/* Right — dark green */}
-        <div className="pw-half" style={{ flex: '1 1 50%', minHeight: '50vh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2.5rem', boxSizing: 'border-box' }}>
-          <div style={{ width: '100%', maxWidth: '300px' }}>
-            <p style={{ color: 'rgba(197,168,130,0.6)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: '1.75rem', textAlign: 'center', margin: '0 0 1.75rem' }}>{t.participantsOnly}</p>
-            <p style={{ color: 'rgba(245,241,236,0.5)', fontSize: '11px', lineHeight: '1.6', marginBottom: '1.25rem', textAlign: 'center' }}>{t.gateBody}</p>
-            <form onSubmit={submit}>
-              <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-                <input
-                  value={email}
-                  onChange={e => { setEmail(e.target.value); setErrMsg(null) }}
-                  placeholder={t.emailPlaceholder}
-                  type="text"
-                  inputMode="email"
-                  autoComplete="email"
-                  style={{
-                    display: 'block', width: '100%', padding: '0.9rem 1rem',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: `0.5px solid ${errMsg ? '#7B2032' : 'rgba(255,255,255,0.14)'}`,
-                    color: '#F5F1EC', fontSize: '16px', outline: 'none',
-                    fontFamily: 'Georgia, serif',
-                    textAlign: 'center', letterSpacing: '0.02em',
-                  }}
-                />
-              </div>
-              {errMsg && <p style={{ color: '#c5a882', fontSize: '11px', letterSpacing: '0.08em', marginBottom: '0.75rem', textAlign: 'center' }}>{errMsg}</p>}
-              <button
-                type="submit"
-                disabled={checking}
-                style={{ width: '100%', padding: '0.9rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: checking ? 'wait' : 'pointer', fontFamily: 'sans-serif', fontWeight: '700', opacity: checking ? 0.7 : 1 }}
-              >
-                {checking ? t.checkingBtn : t.enterBtn}
-              </button>
-            </form>
+          <div className="gate-divider" style={{ width: '34px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.75rem' }} />
+
+          <div className="gate-body">
+            <p style={{ color: 'rgba(197,168,130,0.65)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', margin: '0 0 0.85rem' }}>{t.participantsOnly}</p>
+            <p style={{ color: 'rgba(245,241,236,0.55)', fontSize: '12.5px', lineHeight: '1.7', margin: '0 0 1.75rem' }}>{t.gateBody}</p>
           </div>
+
+          <form onSubmit={submit} className="gate-form">
+            <div style={{ marginBottom: '0.85rem' }}>
+              <input
+                className="gate-input"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setErrMsg(null) }}
+                placeholder={t.emailPlaceholder}
+                type="text"
+                inputMode="email"
+                autoComplete="email"
+                style={{
+                  display: 'block', width: '100%', padding: '0.95rem 1rem',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: `0.5px solid ${errMsg ? '#c0526a' : 'rgba(255,255,255,0.16)'}`,
+                  color: '#F5F1EC', fontSize: '16px', outline: 'none',
+                  fontFamily: 'Georgia, serif', textAlign: 'center', letterSpacing: '0.02em',
+                  transition: 'border-color 0.2s ease, background 0.2s ease',
+                }}
+              />
+            </div>
+            {errMsg && <p style={{ color: '#e2919f', fontSize: '11px', letterSpacing: '0.04em', lineHeight: '1.6', marginBottom: '0.85rem' }}>{errMsg}</p>}
+            <button
+              type="submit"
+              disabled={checking}
+              className="gate-submit-btn"
+              style={{ width: '100%', padding: '0.95rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: checking ? 'wait' : 'pointer', fontFamily: 'sans-serif', fontWeight: '700', opacity: checking ? 0.7 : 1, transition: 'opacity 0.2s ease' }}
+            >
+              {checking ? t.checkingBtn : t.enterBtn}
+            </button>
+          </form>
         </div>
       </div>
     )
