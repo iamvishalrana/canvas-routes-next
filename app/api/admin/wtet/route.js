@@ -1,6 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
-import { WTET_EVENT_NAME, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch } from '../../../../lib/wtetRegistrationContent'
+import { WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch, isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 
 export async function GET() {
@@ -21,7 +21,7 @@ export async function GET() {
   const participants = (apps || [])
     .filter(a => {
       const isStripeWtet = a.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(a.stripe_payment_status)
-      const isManualWtet = (a.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
+      const isManualWtet = (a.registrations || []).some(r => r.source === 'admin_manual' && isWtetEventName(normalizeEventName(r.event)))
       return isStripeWtet || isManualWtet
     })
     .map(a => ({ ...a, wtet_lunch: normalizeWtetLunch(a.wtet_lunch) }))

@@ -1,7 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
-import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../../lib/wtetRegistrationContent'
+import { WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 
 export async function POST(request) {
@@ -41,7 +41,7 @@ export async function POST(request) {
   // registrants (cash/e-transfer/comped) have no Stripe hold, so they're valid
   // as long as an admin added them as a registrant for this event.
   const isStripeWtet = app?.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(app?.stripe_payment_status)
-  const isManualWtet = (app?.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
+  const isManualWtet = (app?.registrations || []).some(r => r.source === 'admin_manual' && isWtetEventName(normalizeEventName(r.event)))
   if (!app || (!isStripeWtet && !isManualWtet)) return Response.json({ error: 'No matching registration found.' }, { status: 404 })
 
   const passengersList = app.wtet_checkin?.passengers_list

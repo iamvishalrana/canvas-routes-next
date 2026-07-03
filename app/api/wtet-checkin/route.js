@@ -2,7 +2,7 @@ import { after } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { captureException } from '../../../lib/sentry.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
-import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch } from '../../../lib/wtetRegistrationContent.js'
+import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch, isWtetEventName } from '../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName } from '../../../lib/eventMeta.js'
 
 export const runtime = 'nodejs'
@@ -81,7 +81,7 @@ export async function POST(request) {
   // registrants (cash/e-transfer/comped) have no Stripe hold, so they're valid
   // as long as an admin added them as a registrant for this event.
   const isStripeWtet = data?.stripe_payment_type === 'road_trip_wtet' && ['paid', 'authorized'].includes(data?.stripe_payment_status)
-  const isManualWtet = (data?.registrations || []).some(r => r.source === 'admin_manual' && normalizeEventName(r.event) === WTET_EVENT_NAME)
+  const isManualWtet = (data?.registrations || []).some(r => r.source === 'admin_manual' && isWtetEventName(normalizeEventName(r.event)))
   if (lookupErr || !data || (!isStripeWtet && !isManualWtet)) return Response.json({ error: 'Not found' }, { status: 404 })
   if (data.wtet_checkin) return Response.json({ error: 'Already completed.' }, { status: 400 })
 
