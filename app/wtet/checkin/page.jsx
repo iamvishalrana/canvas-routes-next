@@ -124,13 +124,13 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {passengers.map((p, i) => (
-              <div key={i} style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fafaf8', padding: '1rem 1.1rem' }}>
+              <div key={i} className="wtetci-card" style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fafaf8', padding: '1rem 1.1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: i === 0 ? '#c5a882' : '#aaa' }}>
                     {i === 0 ? t.driverLabel : t.passengerLabel(i + 1)}
                   </span>
                   {i > 0 && (
-                    <button type="button" onClick={() => removePassenger(i)}
+                    <button type="button" onClick={() => removePassenger(i)} className="wtetci-btn-ghost"
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#bbb', padding: '0 2px', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1 }}>
                       {t.removeBtn}
                     </button>
@@ -139,17 +139,17 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '0.6rem' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>{t.fullNameLabel}</label>
-                    <input type="text" autoComplete={i === 0 ? 'name' : 'off'} value={p.name} onChange={e => updatePassenger(i, 'name', e.target.value)} placeholder={t.fullNameLabel.replace(' *', '')}
+                    <input type="text" autoComplete={i === 0 ? 'name' : 'off'} className="wtetci-input" value={p.name} onChange={e => updatePassenger(i, 'name', e.target.value)} placeholder={t.fullNameLabel.replace(' *', '')}
                       style={{ ...inp, border: `1px solid ${fieldErrors[`p_${i}_name`] ? 'rgba(208,96,112,0.7)' : 'rgba(0,0,0,0.14)'}` }} />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>{t.ageLabel}</label>
-                    <input type="number" min="1" max="120" value={p.age} onChange={e => updatePassenger(i, 'age', e.target.value)} placeholder="—"
+                    <input type="number" min="1" max="120" className="wtetci-input" value={p.age} onChange={e => updatePassenger(i, 'age', e.target.value)} placeholder="—"
                       style={{ ...inp, border: `1px solid ${fieldErrors[`p_${i}_age`] ? 'rgba(208,96,112,0.7)' : 'rgba(0,0,0,0.14)'}` }} />
                   </div>
                 </div>
                 {(fieldErrors[`p_${i}_name`] || fieldErrors[`p_${i}_age`]) && (
-                  <div style={{ fontSize: '11px', color: '#d06070', marginTop: '0.4rem' }}>
+                  <div className="wtetci-fade-in" style={{ fontSize: '11px', color: '#d06070', marginTop: '0.4rem' }}>
                     {fieldErrors[`p_${i}_name`] && fieldErrors[`p_${i}_age`] ? t.passengerErrBoth : fieldErrors[`p_${i}_name`] ? t.passengerErrName : t.passengerErrAge}
                   </div>
                 )}
@@ -159,7 +159,7 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
           {passengers.length >= 2 ? (
             <p style={{ fontSize: '12px', color: '#8A6535', margin: '0.65rem 0 0', lineHeight: '1.6' }}>{t.maxPassengersNote}</p>
           ) : (
-            <button type="button" onClick={addPassenger}
+            <button type="button" onClick={addPassenger} className="wtetci-btn-ghost"
               style={{ marginTop: '0.65rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.2)', padding: '0.5rem 1rem', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
               {t.addPassengerBtn}
             </button>
@@ -169,25 +169,25 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
 
         <div>
           <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>{t.dietaryLabel}</label>
-          <input type="text" value={dietary} onChange={e => setDietary(e.target.value)} placeholder={t.dietaryPlaceholder} style={inp} />
+          <input type="text" className="wtetci-input" value={dietary} onChange={e => setDietary(e.target.value)} placeholder={t.dietaryPlaceholder} style={inp} />
         </div>
 
         <div>
           <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>{t.whatsappLabel}</label>
-          <input type="tel" autoComplete="tel" inputMode="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder={t.whatsappPlaceholder} style={inp} />
+          <input type="tel" autoComplete="tel" inputMode="tel" className="wtetci-input" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder={t.whatsappPlaceholder} style={inp} />
           <p style={{ fontSize: '12px', color: '#aaa', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.whatsappHint}</p>
         </div>
 
-        <div style={{ padding: '1rem 1.1rem', background: 'rgba(197,168,130,0.07)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
+        <div className="wtetci-card" style={{ padding: '1rem 1.1rem', background: 'rgba(197,168,130,0.07)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
           <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>{t.carPhotoLabel}</div>
           <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.75', margin: 0 }}>
             {t.carPhotoPre} <a href="mailto:jerry@canvasroutes.com" style={{ color: '#7B5B2E', textDecoration: 'none', fontWeight: '500' }}>jerry@canvasroutes.com</a> {t.carPhotoPost}
           </p>
         </div>
 
-        {submitError && <div style={{ fontSize: '13px', color: '#7B2032', padding: '0.75rem 1rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{submitError}</div>}
+        {submitError && <div className="wtetci-fade-in" style={{ fontSize: '13px', color: '#7B2032', padding: '0.75rem 1rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{submitError}</div>}
 
-        <button type="submit" disabled={submitting}
+        <button type="submit" disabled={submitting} className="wtetci-btn-primary"
           style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1, alignSelf: 'flex-start' }}>
           {submitting ? t.savingBtn : t.saveTripBtn}
         </button>
@@ -286,7 +286,7 @@ function WtetCheckinContent() {
       <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
 
         {(status === 'gate' || status === 'loading') && (
-          <>
+          <div className="wtetci-fade-up">
             <div style={{ marginBottom: '2.5rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
                 {t.eyebrow}
@@ -302,19 +302,19 @@ function WtetCheckinContent() {
             <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '380px' }}>
               <div>
                 <label style={label}>{t.emailLabel}</label>
-                <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPlaceholder} style={inp} />
+                <input type="email" autoComplete="email" className="wtetci-input" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPlaceholder} style={inp} />
               </div>
-              {error && <div style={{ fontSize: '13px', color: '#7B2032', padding: '0.7rem 0.9rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{error}</div>}
-              <button type="submit" disabled={status === 'loading'} style={{ alignSelf: 'flex-start', padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+              {error && <div className="wtetci-fade-in" style={{ fontSize: '13px', color: '#7B2032', padding: '0.7rem 0.9rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{error}</div>}
+              <button type="submit" disabled={status === 'loading'} className="wtetci-btn-primary wtetci-cta" style={{ alignSelf: 'flex-start', padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
                 {status === 'loading' ? t.verifyingBtn : t.continueBtn}
               </button>
             </form>
-          </>
+          </div>
         )}
 
         {status === 'found' && data && (
           <>
-            <div style={{ marginBottom: '2.5rem' }}>
+            <div className="wtetci-fade-up" style={{ marginBottom: '2.5rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
                 {t.dashEyebrow}
               </div>
@@ -361,12 +361,13 @@ function WtetCheckinContent() {
               onSaved={lunch => { justActedRef.current = true; setData(prev => ({ ...prev, lunch })) }}
             />
 
-            <div style={{ padding: '2.5rem 0 0', textAlign: 'center' }}>
+            <div className="wtetci-fade-up" style={{ padding: '2.5rem 0 0', textAlign: 'center', animationDelay: '270ms' }}>
               {redirectCountdown !== null ? (
-                <p style={{ fontSize: '14px', color: '#3B6B2F', margin: 0 }}>{t.redirectingIn(redirectCountdown)}</p>
+                <p key={redirectCountdown} className="wtetci-fade-in" style={{ fontSize: '14px', color: '#3B6B2F', margin: 0 }}>{t.redirectingIn(redirectCountdown)}</p>
               ) : allDone ? (
                 <a
                   href={`/whips-to-eastern-townships?email=${encodeURIComponent(data.email)}`}
+                  className="wtetci-btn-primary wtetci-cta"
                   style={{ display: 'inline-block', padding: '0.95rem 2.25rem', background: '#0F1E14', color: '#F5F1EC', textDecoration: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif' }}
                 >
                   {t.viewItineraryBtn}
@@ -394,6 +395,54 @@ export default function WtetCheckinPage() {
         <WtetCheckinContent />
       </Suspense>
       <SiteFooter />
+      <style>{`
+        @keyframes wtetci-fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wtetci-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes wtetci-pop { 0% { transform: scale(0.9); opacity: 0.6; } 60% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes wtetci-shimmer { 0% { left: -80%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: 130%; opacity: 0; } }
+
+        .wtetci-fade-up { animation: wtetci-fade-up 0.55s ease both; }
+        .wtetci-fade-in { animation: wtetci-fade-in 0.35s ease both; }
+
+        /* Solid primary buttons — Continue, Save, Sign, View Itinerary */
+        .wtetci-btn-primary { box-shadow: 0 2px 6px rgba(15,30,20,0.22); transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .wtetci-btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 6px rgba(15,30,20,0.22); }
+
+        /* Outlined/text buttons — Add passenger, Remove, Cancel, Change selection */
+        .wtetci-btn-ghost { transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease; }
+
+        /* Text inputs — soft focus ring instead of the removed default outline */
+        .wtetci-input { transition: box-shadow 0.15s ease, border-color 0.15s ease; }
+        .wtetci-input:focus { border-color: rgba(197,168,130,0.75) !important; box-shadow: 0 0 0 3px rgba(197,168,130,0.18); }
+
+        /* Passenger cards, car photo note, waiver text box */
+        .wtetci-card { transition: box-shadow 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+
+        /* Per-person lunch dish rows */
+        .wtetci-dish { transition: box-shadow 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .wtetci-dish-selected { box-shadow: 0 4px 14px rgba(197,168,130,0.28) !important; }
+
+        /* Status pill pop-in when a section flips to done */
+        .wtetci-pill-pop { animation: wtetci-pop 0.45s ease; }
+
+        /* One-time shimmer sweep on primary CTAs */
+        .wtetci-cta { position: relative; overflow: hidden; }
+        .wtetci-cta::after {
+          content: ''; position: absolute; top: -10%; left: -80%; width: 40%; height: 120%;
+          background: linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.28) 50%, transparent 90%);
+          transform: skewX(-10deg);
+          animation: wtetci-shimmer 1s cubic-bezier(0.4,0,0.2,1) 0.6s forwards;
+          pointer-events: none;
+        }
+
+        /* Hover lift only on devices that actually hover — avoids sticky hover state on iOS/Android tap */
+        @media (hover: hover) {
+          .wtetci-btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15,30,20,0.28); }
+          .wtetci-btn-ghost:hover:not(:disabled) { box-shadow: 0 3px 10px rgba(0,0,0,0.08); transform: translateY(-1px); border-color: rgba(0,0,0,0.3); }
+          .wtetci-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+          .wtetci-dish:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.07); }
+        }
+      `}</style>
     </div>
   )
 }
