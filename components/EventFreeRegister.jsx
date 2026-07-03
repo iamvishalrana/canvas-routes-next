@@ -21,6 +21,7 @@ function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCanc
         background: '#F5F1EC', maxWidth: '400px', width: '100%',
         padding: '2rem 2rem 1.75rem',
         boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+        maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
       }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.75rem' }}>
           Confirm Registration
@@ -83,6 +84,7 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
         padding: '2.5rem 2rem 2rem',
         boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
         textAlign: 'center',
+        maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
       }}>
         <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: '1.5px solid rgba(197,168,130,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -113,7 +113,7 @@ export function ConfirmDialog({ title, message, details, confirmLabel = 'Yes, co
     <div className="admin-modal-overlay" onClick={() => { if (!busy) onCancel() }}
       style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,30,20,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
       <div className="admin-modal-enter" role="alertdialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}
-        style={{ background: '#fff', width: '100%', maxWidth: '440px', border: '0.5px solid rgba(0,0,0,0.12)', borderTop: `2px solid ${danger ? '#7B2032' : '#45643c'}`, boxShadow: '0 12px 40px rgba(15,30,20,0.25)' }}>
+        style={{ background: '#fff', width: '100%', maxWidth: '440px', border: '0.5px solid rgba(0,0,0,0.12)', borderTop: `2px solid ${danger ? '#7B2032' : '#45643c'}`, boxShadow: '0 12px 40px rgba(15,30,20,0.25)', maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ padding: '1.4rem 1.5rem 1.25rem' }}>
           <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: message ? '0.5rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>{title}</div>
           {message && <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65' }}>{message}</div>}

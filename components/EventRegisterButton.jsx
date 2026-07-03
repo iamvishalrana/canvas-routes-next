@@ -32,6 +32,7 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
         padding: '2.5rem 2rem 2rem',
         boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
         textAlign: 'center',
+        maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
       }}>
         {/* Checkmark */}
         <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
