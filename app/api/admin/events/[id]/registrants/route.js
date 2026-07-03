@@ -3,6 +3,8 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../lib/sentry'
 import { buildInviteHtml } from '../../../../../../lib/inviteEmail'
+import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
+import { isWtetEventName } from '../../../../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName, attendanceKey } from '../../../../../../lib/eventMeta.js'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
@@ -140,22 +142,38 @@ export async function POST(request, { params }) {
       captureException(tokenErr, { context: 'registrant-auto-invite-token', appId, eventId: id })
     } else if (!existingToken) {
       const firstName = trimmedName.split(' ')[0]
-      const rsvpUrl = `${SITE}/rsvp/${tokenRow.token}`
-      const isRoadTrip = ev.type === 'Road Trip' || ev.type === 'Route'
-      const textSignoff = isRoadTrip ? 'See you on the road' : 'See you there'
+      const isWtet = isWtetEventName(normalizeEventName(ev.name))
+
+      let subject, html, text
+      if (isWtet) {
+        // WTET has its own full check-in flow (trip details, liability waiver,
+        // lunch selection) — manually-added registrants must land there, not
+        // on the generic RSVP form below, which only asks a couple of quick
+        // questions and never leads them to the waiver or real lunch menu
+        // they still need to complete. This link never redirects to the
+        // itinerary page on its own — that stays a separate, later step.
+        const checkinUrl = `${SITE}/wtet/checkin?email=${encodeURIComponent(normalEmail)}`
+        const paymentLabel = paymentMethod === 'cash' ? 'Cash'
+          : paymentMethod === 'etransfer' ? 'E-Transfer'
+          : paymentMethod === 'comped' ? 'Complimentary'
+          : 'No Charge'
+        subject = `You're confirmed — ${ev.name}`
+        html = buildWtetConfirmHtml(firstName, paymentLabel, checkinUrl, ev.name)
+        text = `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Complete your trip details, liability waiver, and lunch selection here:\n${checkinUrl}\n\nSee you on the road,\nJerry`
+      } else {
+        const rsvpUrl = `${SITE}/rsvp/${tokenRow.token}`
+        const isRoadTrip = ev.type === 'Road Trip' || ev.type === 'Route'
+        const textSignoff = isRoadTrip ? 'See you on the road' : 'See you there'
+        subject = `You're confirmed — ${ev.name}`
+        html = buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip)
+        text = `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`
+      }
 
       after(() =>
         fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-          body: JSON.stringify({
-            from: 'Canvas Routes <jerry@canvasroutes.com>',
-            to: normalEmail,
-            reply_to: 'jerry@canvasroutes.com',
-            subject: `You're confirmed — ${ev.name}`,
-            html: buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip),
-            text: `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`,
-          }),
+          body: JSON.stringify({ from: 'Canvas Routes <jerry@canvasroutes.com>', to: normalEmail, reply_to: 'jerry@canvasroutes.com', subject, html, text }),
         })
         .then(res => {
           if (!res.ok) res.json().catch(() => ({})).then(d =>
