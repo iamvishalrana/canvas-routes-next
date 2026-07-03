@@ -1,21 +1,23 @@
 'use client'
 import { useState } from 'react'
 import SectionCard from './WtetSectionCard'
+import { WTET_CHECKIN_T, wtetDateLocale } from '../lib/wtetCheckinI18n'
 
 // identifier: { email } or { token }
-export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunchCutoff, lunchLocked, onSaved }) {
+export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunchCutoff, lunchLocked, lang = 'en', onSaved }) {
+  const t = WTET_CHECKIN_T[lang] || WTET_CHECKIN_T.en
   const [dishId, setDishId] = useState(lunch?.dish_id || '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [editing, setEditing] = useState(!lunch)
 
   const cutoffDate = new Date(lunchCutoff)
-  const cutoffStr = cutoffDate.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  const cutoffStr = cutoffDate.toLocaleDateString(wtetDateLocale(lang), { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
   async function submit(e) {
     e.preventDefault()
     setError(null)
-    if (!dishId) { setError('Please select a dish.'); return }
+    if (!dishId) { setError(t.lunchErrDish); return }
     setSubmitting(true)
     try {
       const res = await fetch('/api/wtet-registration/lunch', {
@@ -24,11 +26,11 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
         body: JSON.stringify({ ...identifier, dishId }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) { setError(d.error || 'Something went wrong.'); return }
+      if (!res.ok) { setError(d.error || t.genericError); return }
       onSaved(d.lunch)
       setEditing(false)
     } catch {
-      setError('Network error — please try again.')
+      setError(t.networkError)
     } finally {
       setSubmitting(false)
     }
@@ -36,15 +38,15 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
 
   if (lunch && !editing) {
     return (
-      <SectionCard title="Lunch Preference — Auberge McGowan" done doneLabel="Selected" pendingLabel="Outstanding">
+      <SectionCard title={t.lunchTitle} done doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
         <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>
-          <div style={{ marginBottom: '0.5rem' }}>You've selected <strong style={{ color: '#1a1a1a' }}>{lunch.dish_name}</strong>.</div>
+          <div style={{ marginBottom: '0.5rem' }}>{t.lunchSelectedPre} <strong style={{ color: '#1a1a1a' }}>{lunch.dish_name}</strong>{t.lunchSelectedPost}</div>
           {lunchLocked ? (
-            <div style={{ fontSize: '12px', color: '#aaa' }}>Selections are now locked. Contact jerry@canvasroutes.com if you need to make a change.</div>
+            <div style={{ fontSize: '12px', color: '#aaa' }}>{t.lunchLockedNote}</div>
           ) : (
             <>
-              <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '0.75rem' }}>You can change your selection until {cutoffStr}.</div>
-              <button onClick={() => setEditing(true)} style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.5rem 1.1rem', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#666', cursor: 'pointer' }}>Change selection</button>
+              <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '0.75rem' }}>{t.lunchChangeUntil(cutoffStr)}</div>
+              <button onClick={() => setEditing(true)} style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.5rem 1.1rem', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#666', cursor: 'pointer' }}>{t.changeSelectionBtn}</button>
             </>
           )}
         </div>
@@ -54,18 +56,18 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
 
   if (lunchLocked && !lunch) {
     return (
-      <SectionCard title="Lunch Preference — Auberge McGowan" done={false} doneLabel="Selected" pendingLabel="Deadline passed">
+      <SectionCard title={t.lunchTitle} done={false} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchDeadlinePassedLabel}>
         <div style={{ fontSize: '13px', color: '#7B2032', lineHeight: 1.8 }}>
-          The deadline to select a lunch dish ({cutoffStr}) has passed. Contact{' '}
-          <a href="mailto:jerry@canvasroutes.com" style={{ color: '#7B2032', textDecoration: 'underline' }}>jerry@canvasroutes.com</a> if you haven't chosen yet.
+          {t.lunchDeadlinePassedBody(cutoffStr)}{' '}
+          <a href="mailto:jerry@canvasroutes.com" style={{ color: '#7B2032', textDecoration: 'underline' }}>jerry@canvasroutes.com</a> {t.lunchDeadlinePassedBody2}
         </div>
       </SectionCard>
     )
   }
 
   return (
-    <SectionCard title="Lunch Preference — Auberge McGowan" done={false} doneLabel="Selected" pendingLabel="Not selected">
-      <p style={{ fontSize: '12px', color: '#999', marginBottom: '1.1rem' }}>Choose one. You can change this until {cutoffStr}.</p>
+    <SectionCard title={t.lunchTitle} done={false} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
+      <p style={{ fontSize: '12px', color: '#999', marginBottom: '1.1rem' }}>{t.chooseOneUntil(cutoffStr)}</p>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {lunchOptions.map(dish => (
           <label key={dish.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', padding: '0.9rem 1rem', border: `0.5px solid ${dishId === dish.id ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.1)'}`, background: dishId === dish.id ? 'rgba(197,168,130,0.06)' : '#fff', cursor: 'pointer' }}>
@@ -79,10 +81,10 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
         {error && <div style={{ fontSize: '13px', color: '#7B2032', padding: '0.7rem 0.9rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{error}</div>}
         <div style={{ display: 'flex', gap: '0.6rem' }}>
           <button type="submit" disabled={submitting} style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
-            {submitting ? 'Saving…' : 'Save Selection'}
+            {submitting ? t.savingBtn : t.saveSelectionBtn}
           </button>
           {lunch && (
-            <button type="button" onClick={() => { setEditing(false); setError(null) }} style={{ padding: '0.85rem 1.5rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}>Cancel</button>
+            <button type="button" onClick={() => { setEditing(false); setError(null) }} style={{ padding: '0.85rem 1.5rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', cursor: 'pointer' }}>{t.cancelBtn}</button>
           )}
         </div>
       </form>

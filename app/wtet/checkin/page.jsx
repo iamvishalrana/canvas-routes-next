@@ -6,7 +6,8 @@ import SiteFooter from '../../../components/SiteFooter'
 import WtetSectionCard from '../../../components/WtetSectionCard'
 import WtetWaiverSection from '../../../components/WtetWaiverSection'
 import WtetLunchSection from '../../../components/WtetLunchSection'
-import { WTET_WAIVER_TEXT } from '../../../lib/wtetRegistrationContent'
+import { WTET_WAIVER_TEXT, WTET_WAIVER_TEXT_FR } from '../../../lib/wtetRegistrationContent'
+import { WTET_CHECKIN_T } from '../../../lib/wtetCheckinI18n'
 
 const NAV_LINKS = [
   { href: '/',         label: 'Home' },
@@ -22,8 +23,16 @@ const inp = {
 }
 const label = { display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }
 
-function passengerLabel(i) {
-  return i === 0 ? 'Driver' : `Passenger ${i + 1}`
+function LangToggle({ lang, setLang }) {
+  return (
+    <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+      {['en', 'fr'].map(l => (
+        <button key={l} onClick={() => setLang(l)} style={{ padding: '0.45rem 0.75rem', background: lang === l ? '#c5a882' : 'none', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(197,168,130,0.55)', fontWeight: lang === l ? '700' : '400', fontFamily: 'sans-serif', transition: 'all 0.15s ease' }}>
+          {l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function emptyPassenger() { return { name: '', age: '' } }
@@ -34,7 +43,8 @@ function parsePassengerCount(str) {
 }
 
 // Trip Details — passengers/dietary/WhatsApp.
-function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCount, onSaved }) {
+function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCount, lang, onSaved }) {
+  const t = WTET_CHECKIN_T[lang]
   const [editing, setEditing] = useState(!alreadyCompleted)
   const [dietary, setDietary] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -82,13 +92,13 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
-        setSubmitError(d.error || 'Something went wrong. Please try again.')
+        setSubmitError(d.error || t.genericError)
         return
       }
       onSaved()
       setEditing(false)
     } catch {
-      setSubmitError('Network error — please try again.')
+      setSubmitError(t.networkError)
     } finally {
       setSubmitting(false)
     }
@@ -96,50 +106,48 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
 
   if (!editing) {
     return (
-      <WtetSectionCard title="Trip Details" done doneLabel="Complete" pendingLabel="Outstanding">
-        <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>
-          Passengers, dietary needs, and WhatsApp number on file. Contact jerry@canvasroutes.com if anything's changed.
-        </div>
+      <WtetSectionCard title={t.tripTitle} done doneLabel={t.tripDoneLabel} pendingLabel={t.tripPendingLabel}>
+        <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>{t.tripDoneMsg}</div>
       </WtetSectionCard>
     )
   }
 
   return (
-    <WtetSectionCard title="Trip Details" done={false} doneLabel="Complete" pendingLabel="Not submitted">
+    <WtetSectionCard title={t.tripTitle} done={false} doneLabel={t.tripDoneLabel} pendingLabel={t.tripPendingLabel}>
       <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         <div>
           <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.1rem' }}>
-            Passengers — including driver
+            {t.passengersHeader}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {passengers.map((p, i) => (
               <div key={i} style={{ border: '0.5px solid rgba(0,0,0,0.1)', background: '#fafaf8', padding: '1rem 1.1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: i === 0 ? '#c5a882' : '#aaa' }}>
-                    {passengerLabel(i)}
+                    {i === 0 ? t.driverLabel : t.passengerLabel(i + 1)}
                   </span>
                   {i > 0 && (
                     <button type="button" onClick={() => removePassenger(i)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#bbb', padding: '0 2px', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1 }}>
-                      Remove
+                      {t.removeBtn}
                     </button>
                   )}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '0.6rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Full name *</label>
-                    <input type="text" autoComplete={i === 0 ? 'name' : 'off'} value={p.name} onChange={e => updatePassenger(i, 'name', e.target.value)} placeholder="Full name"
+                    <label style={{ display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>{t.fullNameLabel}</label>
+                    <input type="text" autoComplete={i === 0 ? 'name' : 'off'} value={p.name} onChange={e => updatePassenger(i, 'name', e.target.value)} placeholder={t.fullNameLabel.replace(' *', '')}
                       style={{ ...inp, border: `1px solid ${fieldErrors[`p_${i}_name`] ? 'rgba(208,96,112,0.7)' : 'rgba(0,0,0,0.14)'}` }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Age *</label>
+                    <label style={{ display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>{t.ageLabel}</label>
                     <input type="number" min="1" max="120" value={p.age} onChange={e => updatePassenger(i, 'age', e.target.value)} placeholder="—"
                       style={{ ...inp, border: `1px solid ${fieldErrors[`p_${i}_age`] ? 'rgba(208,96,112,0.7)' : 'rgba(0,0,0,0.14)'}` }} />
                   </div>
                 </div>
                 {(fieldErrors[`p_${i}_name`] || fieldErrors[`p_${i}_age`]) && (
                   <div style={{ fontSize: '11px', color: '#d06070', marginTop: '0.4rem' }}>
-                    {fieldErrors[`p_${i}_name`] && fieldErrors[`p_${i}_age`] ? 'Name and age are required.' : fieldErrors[`p_${i}_name`] ? 'Name is required.' : 'Age is required.'}
+                    {fieldErrors[`p_${i}_name`] && fieldErrors[`p_${i}_age`] ? t.passengerErrBoth : fieldErrors[`p_${i}_name`] ? t.passengerErrName : t.passengerErrAge}
                   </div>
                 )}
               </div>
@@ -147,26 +155,26 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
           </div>
           <button type="button" onClick={addPassenger}
             style={{ marginTop: '0.65rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.2)', padding: '0.5rem 1rem', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
-            + Add passenger
+            {t.addPassengerBtn}
           </button>
-          <p style={{ fontSize: '12px', color: '#bbb', margin: '0.5rem 0 0', lineHeight: '1.6' }}>Include everyone in the car — driver first, then any passengers.</p>
+          <p style={{ fontSize: '12px', color: '#bbb', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.passengersHint}</p>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>Any dietary allergies or restrictions?</label>
-          <input type="text" value={dietary} onChange={e => setDietary(e.target.value)} placeholder="e.g. nut allergy, vegetarian… or leave blank" style={inp} />
+          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>{t.dietaryLabel}</label>
+          <input type="text" value={dietary} onChange={e => setDietary(e.target.value)} placeholder={t.dietaryPlaceholder} style={inp} />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>WhatsApp number for group chat (optional)</label>
-          <input type="tel" autoComplete="tel" inputMode="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+1 514 555 0100" style={inp} />
-          <p style={{ fontSize: '12px', color: '#aaa', margin: '0.5rem 0 0', lineHeight: '1.6' }}>We'll add you to the Canvas Routes WhatsApp group for this trip.</p>
+          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>{t.whatsappLabel}</label>
+          <input type="tel" autoComplete="tel" inputMode="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder={t.whatsappPlaceholder} style={inp} />
+          <p style={{ fontSize: '12px', color: '#aaa', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.whatsappHint}</p>
         </div>
 
         <div style={{ padding: '1rem 1.1rem', background: 'rgba(197,168,130,0.07)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
-          <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Car photo</div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>{t.carPhotoLabel}</div>
           <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.75', margin: 0 }}>
-            Text a photo of your car to <a href="mailto:jerry@canvasroutes.com" style={{ color: '#7B5B2E', textDecoration: 'none', fontWeight: '500' }}>jerry@canvasroutes.com</a> so we can feature it. You can skip this if you've attended a previous Canvas Routes event.
+            {t.carPhotoPre} <a href="mailto:jerry@canvasroutes.com" style={{ color: '#7B5B2E', textDecoration: 'none', fontWeight: '500' }}>jerry@canvasroutes.com</a> {t.carPhotoPost}
           </p>
         </div>
 
@@ -174,7 +182,7 @@ function TripDetailsSection({ identifier, alreadyCompleted, initialPassengerCoun
 
         <button type="submit" disabled={submitting}
           style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1, alignSelf: 'flex-start' }}>
-          {submitting ? 'Saving…' : 'Save Trip Details'}
+          {submitting ? t.savingBtn : t.saveTripBtn}
         </button>
       </form>
     </WtetSectionCard>
@@ -185,6 +193,8 @@ function WtetCheckinContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get('t') || null
 
+  const [lang, setLang] = useState('en')
+  const t = WTET_CHECKIN_T[lang]
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState('gate') // gate | loading | found
   const [error, setError] = useState(null)
@@ -195,7 +205,7 @@ function WtetCheckinContent() {
   async function verify(e) {
     e.preventDefault()
     setError(null)
-    if (!email.trim() || !email.includes('@')) { setError('Please enter a valid email address.'); return }
+    if (!email.trim() || !email.includes('@')) { setError(t.invalidEmailError); return }
     setStatus('loading')
     try {
       const res = await fetch('/api/wtet-registration/lookup', {
@@ -204,11 +214,11 @@ function WtetCheckinContent() {
         body: JSON.stringify({ email: email.trim(), ...(token ? { token } : {}) }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) { setError(d.error || 'Something went wrong.'); setStatus('gate'); return }
+      if (!res.ok) { setError(d.error || t.genericError); setStatus('gate'); return }
       setData(d)
       setStatus('found')
     } catch {
-      setError('Network error — please try again.')
+      setError(t.networkError)
       setStatus('gate')
     }
   }
@@ -216,86 +226,89 @@ function WtetCheckinContent() {
   const identifier = token ? { token } : { email: data?.email }
   const firstName = data?.name?.trim().split(' ')[0] || ''
   const allDone = data && !!data.alreadyCompleted && !!data.waiver && !!data.lunch
+  const waiverText = lang === 'fr' ? WTET_WAIVER_TEXT_FR : WTET_WAIVER_TEXT
 
   return (
-    <main style={{ maxWidth: '620px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
+    <>
+      <LangToggle lang={lang} setLang={setLang} />
+      <main style={{ maxWidth: '620px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
 
-      {(status === 'gate' || status === 'loading') && (
-        <>
-          <div style={{ marginBottom: '2.5rem' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
-              Canvas Routes · Whips to Eastern Townships
-            </div>
-            <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.5rem', lineHeight: '1.2' }}>
-              Confirm Your Email
-            </h1>
-            <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1.25rem 0' }} />
-            <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.8', margin: 0 }}>
-              Enter the email you registered with to view and complete your trip details, liability waiver, and lunch selection for July 5.
-            </p>
-          </div>
-          <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '380px' }}>
-            <div>
-              <label style={label}>Email</label>
-              <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inp} />
-            </div>
-            {error && <div style={{ fontSize: '13px', color: '#7B2032', padding: '0.7rem 0.9rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{error}</div>}
-            <button type="submit" disabled={status === 'loading'} style={{ alignSelf: 'flex-start', padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
-              {status === 'loading' ? 'Verifying…' : 'Continue'}
-            </button>
-          </form>
-        </>
-      )}
-
-      {status === 'found' && data && (
-        <>
-          <div style={{ marginBottom: '2.5rem' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
-              Canvas Routes · July 5, 2026
-            </div>
-            <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.5rem', lineHeight: '1.2' }}>
-              {firstName ? `Hi ${firstName}` : 'Whips to Eastern Townships'}
-            </h1>
-            <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1.25rem 0' }} />
-            {allDone ? (
-              <p style={{ fontSize: '14px', color: '#3B6B2F', lineHeight: '1.8', margin: 0 }}>
-                You're all set — trip details, waiver, and lunch are complete. See you on July 5.
-              </p>
-            ) : (
+        {(status === 'gate' || status === 'loading') && (
+          <>
+            <div style={{ marginBottom: '2.5rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
+                {t.eyebrow}
+              </div>
+              <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.5rem', lineHeight: '1.2' }}>
+                {t.gateTitle}
+              </h1>
+              <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1.25rem 0' }} />
               <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.8', margin: 0 }}>
-                Please complete the item(s) below marked outstanding before the event.
+                {t.gateBody}
               </p>
-            )}
-          </div>
+            </div>
+            <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '380px' }}>
+              <div>
+                <label style={label}>{t.emailLabel}</label>
+                <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPlaceholder} style={inp} />
+              </div>
+              {error && <div style={{ fontSize: '13px', color: '#7B2032', padding: '0.7rem 0.9rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{error}</div>}
+              <button type="submit" disabled={status === 'loading'} style={{ alignSelf: 'flex-start', padding: '0.9rem 2rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+                {status === 'loading' ? t.verifyingBtn : t.continueBtn}
+              </button>
+            </form>
+          </>
+        )}
 
-          <TripDetailsSection
-            identifier={identifier}
-            alreadyCompleted={data.alreadyCompleted}
-            initialPassengerCount={parsePassengerCount(data.passengers)}
-            onSaved={() => setData(prev => ({ ...prev, alreadyCompleted: true }))}
-          />
+        {status === 'found' && data && (
+          <>
+            <div style={{ marginBottom: '2.5rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem' }}>
+                {t.dashEyebrow}
+              </div>
+              <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: '2.2rem', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.5rem', lineHeight: '1.2' }}>
+                {firstName ? t.hiName(firstName) : t.defaultTitle}
+              </h1>
+              <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1.25rem 0' }} />
+              {allDone ? (
+                <p style={{ fontSize: '14px', color: '#3B6B2F', lineHeight: '1.8', margin: 0 }}>{t.allDoneMsgFull}</p>
+              ) : (
+                <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.8', margin: 0 }}>{t.incompleteMsg}</p>
+              )}
+            </div>
 
-          <WtetWaiverSection
-            waiverText={WTET_WAIVER_TEXT}
-            identifier={identifier}
-            waiver={data.waiver}
-            carYear={data.carYear}
-            carMake={data.carMake}
-            carModel={data.carModel}
-            onSaved={waiver => setData(prev => ({ ...prev, waiver }))}
-          />
+            <TripDetailsSection
+              identifier={identifier}
+              alreadyCompleted={data.alreadyCompleted}
+              initialPassengerCount={parsePassengerCount(data.passengers)}
+              lang={lang}
+              onSaved={() => setData(prev => ({ ...prev, alreadyCompleted: true }))}
+            />
 
-          <WtetLunchSection
-            identifier={identifier}
-            lunch={data.lunch}
-            lunchOptions={data.lunchOptions}
-            lunchCutoff={data.lunchCutoff}
-            lunchLocked={data.lunchLocked}
-            onSaved={lunch => setData(prev => ({ ...prev, lunch }))}
-          />
-        </>
-      )}
-    </main>
+            <WtetWaiverSection
+              waiverText={waiverText}
+              identifier={identifier}
+              waiver={data.waiver}
+              carYear={data.carYear}
+              carMake={data.carMake}
+              carModel={data.carModel}
+              lang={lang}
+              onSaved={waiver => setData(prev => ({ ...prev, waiver }))}
+            />
+
+            <WtetLunchSection
+              identifier={identifier}
+              lunch={data.lunch}
+              lunchOptions={data.lunchOptions}
+              lunchCutoff={data.lunchCutoff}
+              lunchLocked={data.lunchLocked}
+              lang={lang}
+              onSaved={lunch => setData(prev => ({ ...prev, lunch }))}
+            />
+          </>
+        )}
+      </main>
+    </>
   )
 }
 

@@ -1,11 +1,12 @@
 'use client'
-import { WTET_WAIVER_TEXT } from '../../../lib/wtetRegistrationContent'
+import { WTET_WAIVER_TEXT, WTET_WAIVER_TEXT_FR } from '../../../lib/wtetRegistrationContent'
 
 function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 function printWaiver(name, email, waiver) {
+  const waiverText = waiver.lang === 'fr' ? WTET_WAIVER_TEXT_FR : WTET_WAIVER_TEXT
   const vehicle = [waiver.vehicle?.year, waiver.vehicle?.make, waiver.vehicle?.model].filter(Boolean).join(' ') || '—'
   const passengersHtml = waiver.passengers?.length
     ? waiver.passengers.map(p => `<div>${esc(p.name)}${p.age ? `, age ${esc(p.age)}` : ''}</div>`).join('')
@@ -27,7 +28,7 @@ function printWaiver(name, email, waiver) {
 </style></head><body>
 <h1>Whips to Eastern Townships — Signed Liability Waiver</h1>
 <div class="meta">${esc(name)} &middot; ${esc(email)} &middot; Signed ${signedAt}</div>
-<div class="waiver-body">${esc(WTET_WAIVER_TEXT)}</div>
+<div class="waiver-body">${esc(waiverText)}</div>
 <div class="sig-block">
   <div class="sig-label">Signature</div>
   <div class="sig-name">${esc(waiver.full_name)}</div>
@@ -51,6 +52,7 @@ function printWaiver(name, email, waiver) {
 }
 
 export default function WaiverViewerModal({ name, email, waiver, onClose }) {
+  const waiverText = waiver.lang === 'fr' ? WTET_WAIVER_TEXT_FR : WTET_WAIVER_TEXT
   const vehicle = [waiver.vehicle?.year, waiver.vehicle?.make, waiver.vehicle?.model].filter(Boolean).join(' ') || '—'
   const signedAt = new Date(waiver.signed_at).toLocaleString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
@@ -102,9 +104,14 @@ export default function WaiverViewerModal({ name, email, waiver, onClose }) {
             )}
           </div>
 
-          <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Full Waiver Text</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Full Waiver Text</div>
+            <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '99px', padding: '1px 8px' }}>
+              Signed in {waiver.lang === 'fr' ? 'French' : 'English'}
+            </span>
+          </div>
           <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.75, whiteSpace: 'pre-wrap', fontFamily: 'Georgia, serif', maxHeight: '340px', overflowY: 'auto', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', padding: '1rem 1.1rem', background: '#fafaf9' }}>
-            {WTET_WAIVER_TEXT}
+            {waiverText}
           </div>
         </div>
       </div>

@@ -11,10 +11,11 @@ export async function POST(request) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
 
   const {
-    email, token, fullName, agreed,
+    email, token, fullName, agreed, lang,
     vehicleYear, vehicleMake, vehicleModel,
     passengers, emergencyContactName, emergencyContactPhone,
   } = body || {}
+  const waiverLang = lang === 'fr' ? 'fr' : 'en'
 
   const normalEmail = (email || '').toLowerCase().trim()
   if (!token && (!normalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail))) {
@@ -57,6 +58,7 @@ export async function POST(request) {
 
   const waiverRecord = {
     full_name: fullName.trim(),
+    lang: waiverLang,
     agreed: true,
     vehicle: {
       year: vehicleYear?.trim() || null,
