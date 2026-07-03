@@ -11,8 +11,9 @@ export async function POST(request) {
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = (body?.email || '').toLowerCase().trim()
+  const token = body?.token
   const dishId = body?.dishId
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!token && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   const dish = WTET_LUNCH_OPTIONS.find(d => d.id === dishId)
@@ -20,17 +21,17 @@ export async function POST(request) {
 
   const admin = createAdminClient()
 
+  let appQuery = admin.from('applications').select('id')
+    .eq('stripe_payment_type', 'road_trip_wtet')
+    .in('stripe_payment_status', ['paid', 'authorized'])
+  appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', email)
+
   const [{ data: app, error: lookupErr }, { data: cutoffSetting }] = await Promise.all([
-    admin.from('applications')
-      .select('id')
-      .eq('email', email)
-      .eq('stripe_payment_type', 'road_trip_wtet')
-      .in('stripe_payment_status', ['paid', 'authorized'])
-      .maybeSingle(),
+    appQuery.maybeSingle(),
     admin.from('settings').select('value').eq('key', 'wtet_lunch_cutoff').maybeSingle(),
   ])
   if (lookupErr) {
-    captureException(lookupErr, { context: 'wtet-lunch-lookup', email })
+    captureException(lookupErr, { context: 'wtet-lunch-lookup', email, hasToken: !!token })
     return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
   if (!app) return Response.json({ error: 'No matching registration found.' }, { status: 404 })
@@ -45,7 +46,7 @@ export async function POST(request) {
     .update({ wtet_lunch: lunchRecord })
     .eq('id', app.id)
   if (updateErr) {
-    captureException(updateErr, { context: 'wtet-lunch-save', email })
+    captureException(updateErr, { context: 'wtet-lunch-save', email, hasToken: !!token })
     return Response.json({ error: 'Failed to save. Please try again.' }, { status: 500 })
   }
 

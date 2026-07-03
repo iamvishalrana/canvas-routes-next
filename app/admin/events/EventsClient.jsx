@@ -7,6 +7,11 @@ import {
   parseCarMakeModel,
   inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog,
 } from '../_components/shared'
+import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
+
+function isWtetRegEvent(eventName) {
+  return eventName === WTET_EVENT_NAME || (eventName || '').toLowerCase().includes('eastern townships')
+}
 
 // ── RSVP helpers (previously in EventApplicationsClient) ──────────────────────
 
@@ -752,6 +757,8 @@ export default function EventsClient() {
             car: [c.car_year, make, model].filter(Boolean).join(' ') || null,
             href: `/admin/contacts?q=${encodeURIComponent(c.email || c.name || '')}`,
             wtetCheckin: c.wtet_checkin || null,
+            wtetWaiver: c.wtet_waiver || null,
+            wtetLunch: c.wtet_lunch || null,
           }
         })
       // Merge: member-portal rows have payment data; contact rows have RSVP/checkin data.
@@ -766,7 +773,7 @@ export default function EventsClient() {
         const contact = contactByEmailMap[k]
         if (contact) {
           delete contactByEmailMap[k] // mark as merged so we don't add it again below
-          return { ...r, rsvpAnswers: contact.rsvpAnswers, confirmedAt: contact.confirmedAt, inviteSent: contact.inviteSent, wtetCheckin: contact.wtetCheckin, status: contact.confirmedAt ? 'confirmed' : r.status }
+          return { ...r, rsvpAnswers: contact.rsvpAnswers, confirmedAt: contact.confirmedAt, inviteSent: contact.inviteSent, wtetCheckin: contact.wtetCheckin, wtetWaiver: contact.wtetWaiver, wtetLunch: contact.wtetLunch, status: contact.confirmedAt ? 'confirmed' : r.status }
         }
         return r
       })
@@ -1193,6 +1200,13 @@ export default function EventsClient() {
                               const isDeletePending = deleteRegConfirm === indivKey
                               const isDeleting = !!deletingReg[indivKey]
                               const deleteErr = deleteRegErr[indivKey]
+                              // Sub-section visibility + which one renders last (for border-bottom sequencing)
+                              const hasRsvp = r.rsvpAnswers && Object.values(r.rsvpAnswers).some(v => v != null && v !== '')
+                              const hasOldCheckin = !!r.wtetCheckin
+                              const showWtetReg = isWtetRegEvent(item.name)
+                              const isLastTableRow = ri === registrantsData[item.id].length - 1
+                              const rsvpIsLastBlock = hasRsvp && !hasOldCheckin && !showWtetReg
+                              const oldCheckinIsLastBlock = hasOldCheckin && !showWtetReg
                               return (
                                 <div key={ri}>
                                   <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 140px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
@@ -1273,17 +1287,17 @@ export default function EventsClient() {
                                       </>
                                     )}
                                   </div>
-                                  {r.rsvpAnswers && Object.values(r.rsvpAnswers).some(v => v != null && v !== '') && (
+                                  {hasRsvp && (
                                     <>
                                       <button
                                         onClick={() => setRsvpExpanded(p => ({ ...p, [indivKey]: !p[indivKey] }))}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[indivKey] && !r.wtetCheckin && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[indivKey] && !(rsvpIsLastBlock && isLastTableRow)) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
                                       >
                                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" style={{ transform: rsvpExpanded[indivKey] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
                                         <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter)' }}>RSVP Answers</span>
                                       </button>
                                       {rsvpExpanded[indivKey] && (
-                                        <div style={{ padding: '0.4rem 0.85rem 0.65rem', background: '#fafaf9', borderBottom: (!r.wtetCheckin && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                                        <div style={{ padding: '0.4rem 0.85rem 0.65rem', background: '#fafaf9', borderBottom: !(rsvpIsLastBlock && isLastTableRow) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                                           {Object.entries(r.rsvpAnswers).filter(([, v]) => v != null && v !== '').map(([k, v]) => (
                                             <span key={k} style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>{k.replace(/_/g, ' ')}</span>
@@ -1295,17 +1309,17 @@ export default function EventsClient() {
                                       )}
                                     </>
                                   )}
-                                  {r.wtetCheckin && (
+                                  {hasOldCheckin && (
                                     <>
                                       <button
                                         onClick={() => setRsvpExpanded(p => ({ ...p, [`checkin_${indivKey}`]: !p[`checkin_${indivKey}`] }))}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[`checkin_${indivKey}`] && ri < registrantsData[item.id].length - 1) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[`checkin_${indivKey}`] && !(oldCheckinIsLastBlock && isLastTableRow)) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
                                       >
                                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" style={{ transform: rsvpExpanded[`checkin_${indivKey}`] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
-                                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', fontFamily: 'var(--font-inter)' }}>✓ Check-in Complete</span>
+                                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', fontFamily: 'var(--font-inter)' }}>✓ Trip Details</span>
                                       </button>
                                       {rsvpExpanded[`checkin_${indivKey}`] && (
-                                        <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: 'rgba(59,107,47,0.03)', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                                        <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: 'rgba(59,107,47,0.03)', borderBottom: !(oldCheckinIsLastBlock && isLastTableRow) ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
                                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: r.wtetCheckin.passengers_list?.length ? '0.6rem' : 0 }}>
                                             {r.wtetCheckin.dietary && (
                                               <span style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-inter)' }}>
@@ -1337,6 +1351,43 @@ export default function EventsClient() {
                                       )}
                                     </>
                                   )}
+                                  {showWtetReg && (() => {
+                                    const bothDone = !!r.wtetWaiver && !!r.wtetLunch
+                                    const anyDone = !!r.wtetWaiver || !!r.wtetLunch
+                                    const color = bothDone ? '#3B6B2F' : anyDone ? '#8A6535' : '#7B2032'
+                                    const wtetKey = `wtetreg_${indivKey}`
+                                    return (
+                                      <>
+                                        <button
+                                          onClick={() => setRsvpExpanded(p => ({ ...p, [wtetKey]: !p[wtetKey] }))}
+                                          style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', padding: '0.3rem 0.85rem', background: 'none', border: 'none', borderBottom: (!rsvpExpanded[wtetKey] && !isLastTableRow) ? '0.5px solid rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                                        >
+                                          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" style={{ transform: rsvpExpanded[wtetKey] ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                                          <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color, fontFamily: 'var(--font-inter)' }}>
+                                            {bothDone ? '✓ Check In Complete' : anyDone ? '◐ Check In Partial' : '✗ Not Checked In'}
+                                          </span>
+                                        </button>
+                                        {rsvpExpanded[wtetKey] && (
+                                          <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: bothDone ? 'rgba(59,107,47,0.03)' : 'rgba(123,32,50,0.02)', borderBottom: !isLastTableRow ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
+                                              <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Waiver </span>
+                                              {r.wtetWaiver ? (
+                                                <span style={{ color: '#3B6B2F' }}>
+                                                  Signed by {r.wtetWaiver.full_name} — {new Date(r.wtetWaiver.signed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                                                </span>
+                                              ) : <span style={{ color: '#7B2032' }}>Not signed</span>}
+                                            </div>
+                                            <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
+                                              <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Lunch </span>
+                                              {r.wtetLunch ? (
+                                                <span style={{ color: '#3B6B2F' }}>{r.wtetLunch.dish_name}</span>
+                                              ) : <span style={{ color: '#7B2032' }}>Not selected</span>}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    )
+                                  })()}
                                 </div>
                               )
                             })}

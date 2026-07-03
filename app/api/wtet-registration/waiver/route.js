@@ -11,13 +11,13 @@ export async function POST(request) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
 
   const {
-    email, fullName, agreed,
+    email, token, fullName, agreed,
     vehicleYear, vehicleMake, vehicleModel,
     passengers, emergencyContactName, emergencyContactPhone,
   } = body || {}
 
   const normalEmail = (email || '').toLowerCase().trim()
-  if (!normalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail)) {
+  if (!token && (!normalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail))) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (agreed !== true) return Response.json({ error: 'You must agree to the waiver terms.' }, { status: 400 })
@@ -37,15 +37,16 @@ export async function POST(request) {
 
   const admin = createAdminClient()
 
-  const { data: app, error: lookupErr } = await admin.from('applications')
-    .select('id, wtet_waiver')
-    .eq('email', normalEmail)
+  // Token (from the emailed check-in link) takes priority when present —
+  // both identifiers resolve to the same applications row.
+  let appQuery = admin.from('applications').select('id, wtet_waiver')
     .eq('stripe_payment_type', 'road_trip_wtet')
     .in('stripe_payment_status', ['paid', 'authorized'])
-    .maybeSingle()
+  appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', normalEmail)
+  const { data: app, error: lookupErr } = await appQuery.maybeSingle()
 
   if (lookupErr) {
-    captureException(lookupErr, { context: 'wtet-waiver-lookup', email: normalEmail })
+    captureException(lookupErr, { context: 'wtet-waiver-lookup', email: normalEmail, hasToken: !!token })
     return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
   if (!app) return Response.json({ error: 'No matching registration found.' }, { status: 404 })
@@ -78,7 +79,7 @@ export async function POST(request) {
     .is('wtet_waiver', null)
     .select('id')
   if (updateErr) {
-    captureException(updateErr, { context: 'wtet-waiver-save', email: normalEmail })
+    captureException(updateErr, { context: 'wtet-waiver-save', email: normalEmail, hasToken: !!token })
     return Response.json({ error: 'Failed to save. Please try again.' }, { status: 500 })
   }
   if (!updated?.length) return Response.json({ error: 'This waiver has already been signed and cannot be edited.' }, { status: 400 })

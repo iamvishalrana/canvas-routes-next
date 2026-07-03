@@ -2,30 +2,47 @@ import { after } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { captureException } from '../../../lib/sentry.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
+import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF } from '../../../lib/wtetRegistrationContent.js'
 
 export const runtime = 'nodejs'
 
-// GET ?t=pi_xxx — look up application by stripe_payment_intent_id
+// GET ?t=pi_xxx — look up application by stripe_payment_intent_id. This is the
+// same token already emailed in the "Complete Early Check-in" button, so it now
+// also carries the waiver + lunch sections — one link, one page, all three items.
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('t')
   if (!token) return Response.json({ error: 'Missing token' }, { status: 400 })
 
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('applications')
-    .select('name, email, passengers, wtet_checkin, stripe_payment_status')
-    .eq('stripe_payment_intent_id', token)
-    .in('stripe_payment_status', ['paid', 'authorized'])
-    .maybeSingle()
+  const [{ data, error }, { data: cutoffSetting }] = await Promise.all([
+    supabase
+      .from('applications')
+      .select('name, email, passengers, car_year, car_make, car_model, wtet_checkin, wtet_waiver, wtet_lunch, stripe_payment_status')
+      .eq('stripe_payment_intent_id', token)
+      .in('stripe_payment_status', ['paid', 'authorized'])
+      .maybeSingle(),
+    supabase.from('settings').select('value').eq('key', 'wtet_lunch_cutoff').maybeSingle(),
+  ])
 
   if (error || !data) return Response.json({ error: 'Not found' }, { status: 404 })
+
+  const cutoff = cutoffSetting?.value || WTET_LUNCH_DEFAULT_CUTOFF
 
   return Response.json({
     name:             data.name,
     email:            data.email,
     passengers:       data.passengers || '1',
     alreadyCompleted: !!data.wtet_checkin,
+    carYear:          data.car_year || '',
+    carMake:          data.car_make || '',
+    carModel:         data.car_model || '',
+    eventName:        WTET_EVENT_NAME,
+    waiver:           data.wtet_waiver || null,
+    lunch:            data.wtet_lunch || null,
+    lunchOptions:     WTET_LUNCH_OPTIONS,
+    lunchCutoff:      cutoff,
+    lunchLocked:      new Date() > new Date(cutoff),
   })
 }
 
