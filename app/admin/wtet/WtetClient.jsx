@@ -207,7 +207,9 @@ export default function WtetClient() {
                       {p.wtet_checkin ? (
                         <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                           {p.wtet_checkin.passengers_list?.length > 0 && (
-                            <>Passengers: {p.wtet_checkin.passengers_list.map(pp => `${pp.name} (${pp.age || '—'})`).join(', ')}<br /></>
+                            <>{p.wtet_checkin.passengers_list.map((pp, i) => (
+                              <span key={i}>{i === 0 ? 'Driver' : `Passenger ${i + 1}`}: {pp.name}, age {pp.age || '—'}<br /></span>
+                            ))}</>
                           )}
                           {p.wtet_checkin.dietary && <>Dietary: {p.wtet_checkin.dietary}<br /></>}
                           {p.wtet_checkin.whatsapp && <>WhatsApp: {p.wtet_checkin.whatsapp}<br /></>}
@@ -241,7 +243,7 @@ export default function WtetClient() {
                         <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                           {p.wtet_lunch.map((entry, i) => (
                             <div key={i}>
-                              {entry.name ? `${entry.name}: ` : ''}{entry.dish_name}
+                              {entry.name || (i === 0 ? 'Driver' : `Passenger ${i + 1}`)}: {entry.dish_name}
                             </div>
                           ))}
                           <span style={{ color: '#aaa' }}>Selected {new Date(p.wtet_lunch[0].selected_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>

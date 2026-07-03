@@ -1,7 +1,4 @@
-import { after } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
-import { captureException } from '../../../lib/sentry.js'
-import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch, isWtetEventName } from '../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName } from '../../../lib/eventMeta.js'
 
@@ -101,27 +98,10 @@ export async function POST(request) {
 
   if (updateErr) return Response.json({ error: 'Failed to save' }, { status: 500 })
 
-  // Notify Jerry — after() keeps the function alive until the fetch settles without blocking the response.
-  if (process.env.RESEND_API_KEY) {
-    after(() => {
-      return fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: 'Canvas Routes <info@canvasroutes.com>',
-          to: 'jerry@canvasroutes.com',
-          subject: `Check-in Completed — ${data.name || 'Registrant'}`,
-          html: buildAdminNotifyHtml('Whips to Eastern Townships — Early check-in', [
-            ['Name',       `<strong>${data.name || '—'}</strong>`],
-            ['Email',      `<a href="mailto:${data.email}" style="color:#1a1a1a;">${data.email || '—'}</a>`],
-            ['Dietary',    dietary || 'None'],
-            ['WhatsApp',   whatsapp || 'Not provided'],
-            ['Passengers', cleanedPassengers.map((p, i) => `${i === 0 ? 'Driver' : `Passenger ${i + 1}`}: ${p.name}, age ${p.age}`).join('<br>')],
-          ]),
-        }),
-      }).catch(err => captureException(err, { context: 'wtet-checkin-notify-jerry', token }))
-    })
-  }
+  // Trip Details can never be the last of the three steps — Lunch requires it
+  // to already exist, so completeness (and the one consolidated notify email
+  // with everything including food choices) is only ever decided from the
+  // Waiver and Lunch routes.
 
   return Response.json({ success: true })
 }

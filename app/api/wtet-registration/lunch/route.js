@@ -1,8 +1,10 @@
+import { after } from 'next/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
 import { WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
+import { notifyIfWtetComplete } from '../../../../lib/wtetCompleteNotify'
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -26,7 +28,7 @@ export async function POST(request) {
 
   const admin = createAdminClient()
 
-  let appQuery = admin.from('applications').select('id, wtet_checkin, stripe_payment_type, stripe_payment_status, registrations')
+  let appQuery = admin.from('applications').select('id, wtet_checkin, wtet_waiver, wtet_lunch, stripe_payment_type, stripe_payment_status, registrations')
   appQuery = token ? appQuery.eq('stripe_payment_intent_id', token) : appQuery.eq('email', email)
 
   const [{ data: app, error: lookupErr }, { data: cutoffSetting }] = await Promise.all([
@@ -63,12 +65,21 @@ export async function POST(request) {
     return { name: p.name, dish_id: dish.id, dish_name: dish.name, selected_at: now }
   })
 
+  // Capture before the update — lunch is the only one of the three steps that
+  // can be re-saved (changing a selection before the cutoff), so this is the
+  // only way to tell "just completed for the first time" from "edited again."
+  const isFirstLunchSave = !app.wtet_lunch || (Array.isArray(app.wtet_lunch) ? app.wtet_lunch.length === 0 : false)
+
   const { error: updateErr } = await admin.from('applications')
     .update({ wtet_lunch: lunchRecord })
     .eq('id', app.id)
   if (updateErr) {
     captureException(updateErr, { context: 'wtet-lunch-save', email, hasToken: !!token })
     return Response.json({ error: 'Failed to save. Please try again.' }, { status: 500 })
+  }
+
+  if (isFirstLunchSave) {
+    after(() => notifyIfWtetComplete(admin, app.id).catch(err => captureException(err, { context: 'wtet-lunch-complete-notify' })))
   }
 
   return Response.json({ success: true, lunch: lunchRecord })

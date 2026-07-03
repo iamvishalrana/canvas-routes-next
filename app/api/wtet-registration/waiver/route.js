@@ -1,8 +1,10 @@
+import { after } from 'next/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
 import { isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
+import { notifyIfWtetComplete } from '../../../../lib/wtetCompleteNotify'
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -94,6 +96,10 @@ export async function POST(request) {
     return Response.json({ error: 'Failed to save. Please try again.' }, { status: 500 })
   }
   if (!updated?.length) return Response.json({ error: 'This waiver has already been signed and cannot be edited.' }, { status: 400 })
+
+  // Waiver can only be signed once (guarded above), so this can only ever
+  // fire the consolidated notify a single time for this application.
+  after(() => notifyIfWtetComplete(admin, app.id).catch(err => captureException(err, { context: 'wtet-waiver-complete-notify' })))
 
   return Response.json({ success: true, waiver: waiverRecord })
 }
