@@ -7,6 +7,7 @@ function LunchNote({ t }) {
   return (
     <div style={{ fontSize: '11.5px', color: '#999', lineHeight: 1.75, marginBottom: '1.25rem' }}>
       <p style={{ margin: 0 }}>{t.lunchWhyNote}</p>
+      <p style={{ margin: '0.5rem 0 0' }}>{t.lunchCuratedNote}</p>
       <p style={{ margin: '0.5rem 0 0' }}>{t.lunchDrinksNote}</p>
     </div>
   )
