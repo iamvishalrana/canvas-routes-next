@@ -30,7 +30,7 @@ function inp(focused, filled, error) {
 
 const base = {
   width: '100%', boxSizing: 'border-box', padding: '0.85rem 1rem',
-  fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif',
+  fontSize: '15px', fontFamily: 'var(--font-inter), sans-serif',
   color: '#1a1a1a', outline: 'none', borderRadius: 0, transition: 'border-color 0.15s, box-shadow 0.15s',
   appearance: 'none', WebkitAppearance: 'none',
 }
@@ -350,7 +350,7 @@ export default function CCDPage() {
                       <select
                         value={countryCode} onChange={e => setCountryCode(e.target.value)}
                         onFocus={() => setFocused('cc')} onBlur={() => setFocused(null)}
-                        style={{ ...base, ...inp(focused==='cc', true, false), paddingRight:'1.2rem', fontSize:'16px', cursor:'pointer' }}
+                        style={{ ...base, ...inp(focused==='cc', true, false), paddingRight:'1.2rem', fontSize:'15px', cursor:'pointer' }}
                       >
                         {COUNTRY_CODES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>

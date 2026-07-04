@@ -7,7 +7,7 @@ import Image from 'next/image'
 const INP = {
   width: '100%', boxSizing: 'border-box', padding: '0.75rem 1rem',
   background: '#fff', border: '0.5px solid rgba(0,0,0,0.18)',
-  color: '#1a1a1a', fontSize: '16px', fontFamily: 'var(--font-inter),sans-serif',
+  color: '#1a1a1a', fontSize: '15px', fontFamily: 'var(--font-inter),sans-serif',
   outline: 'none', borderRadius: 0, appearance: 'none', WebkitAppearance: 'none',
   transition: 'border-color 0.15s',
 }

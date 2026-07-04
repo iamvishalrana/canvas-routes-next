@@ -343,7 +343,7 @@ export default function DrivePage() {
                 display: 'block', width: '100%', padding: '0.9rem 2.75rem 0.9rem 1rem',
                 background: 'rgba(255,255,255,0.07)',
                 border: `0.5px solid ${err ? '#7B2032' : 'rgba(255,255,255,0.18)'}`,
-                color: '#F5F1EC', fontSize: '16px', outline: 'none',
+                color: '#F5F1EC', fontSize: '15px', outline: 'none',
                 fontFamily: 'Georgia, serif',
                 textAlign: 'center', letterSpacing: '0.12em', boxSizing: 'border-box',
                 WebkitAppearance: 'none', borderRadius: '0',

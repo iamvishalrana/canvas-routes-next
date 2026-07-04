@@ -5,7 +5,7 @@ import { WTET_CHECKIN_T, wtetDateLocale } from '../lib/wtetCheckinI18n'
 
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
-  background: '#fff', fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif',
+  background: '#fff', fontSize: '15px', fontFamily: 'var(--font-inter), sans-serif',
   color: '#1a1a1a', outline: 'none', boxSizing: 'border-box',
 }
 const label = { display: 'block', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }

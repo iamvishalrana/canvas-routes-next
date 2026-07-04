@@ -300,7 +300,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
               onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
               placeholder="Promo code"
-              style={{ flex: 1, padding: '0.65rem 0.85rem', fontSize: '16px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: '#fff', border: `0.5px solid ${promoError ? 'rgba(208,96,112,0.6)' : 'rgba(0,0,0,0.15)'}`, borderRight: 'none', WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0, letterSpacing: '0.1em' }}
+              style={{ flex: 1, padding: '0.65rem 0.85rem', fontSize: '15px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', background: '#fff', border: `0.5px solid ${promoError ? 'rgba(208,96,112,0.6)' : 'rgba(0,0,0,0.15)'}`, borderRight: 'none', WebkitAppearance: 'none', boxSizing: 'border-box', borderRadius: 0, letterSpacing: '0.1em' }}
             />
             <button type="button" onClick={handleApplyPromo}
               disabled={applyingPromo || !promoInput.trim()}
@@ -469,7 +469,7 @@ export default function MembershipContent() {
   }
 
   function inp(field) {
-    const base = { width:'100%', padding:'0.6rem 0', fontSize:'16px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
+    const base = { width:'100%', padding:'0.6rem 0', fontSize:'15px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
     if (errors[field]) return { ...base, borderBottom:'1px solid rgba(208,96,112,0.8)' }
     if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(15,30,20,0.6)' }
     if (form[field]) return { ...base, borderBottom:'1px solid rgba(15,30,20,0.35)' }
@@ -941,7 +941,7 @@ export default function MembershipContent() {
                       aria-invalid={errors.phone ? 'true' : 'false'} aria-required="true"
                       onChange={e => set('phone', formatPhone(e.target.value, countryCode))}
                       onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
-                      style={{ flex: 1, padding: '0.6rem 0', fontSize: '16px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', boxSizing: 'border-box' }} />
+                      style={{ flex: 1, padding: '0.6rem 0', fontSize: '15px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                 </div>
               </div>

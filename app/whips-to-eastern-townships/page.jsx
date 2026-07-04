@@ -448,7 +448,7 @@ export default function EasternTownshipsPage() {
                   display: 'block', width: '100%', padding: '0.95rem 1rem',
                   background: 'rgba(255,255,255,0.05)',
                   border: `0.5px solid ${errMsg ? '#c0526a' : 'rgba(255,255,255,0.16)'}`,
-                  color: '#F5F1EC', fontSize: '16px', outline: 'none',
+                  color: '#F5F1EC', fontSize: '15px', outline: 'none',
                   fontFamily: 'Georgia, serif', textAlign: 'center', letterSpacing: '0.02em',
                   transition: 'border-color 0.2s ease, background 0.2s ease',
                 }}
