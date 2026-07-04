@@ -101,6 +101,41 @@ export function DangerBtn({ onClick, small, disabled, children }) {
   )
 }
 
+// ── Kebab menu — collapses a row of actions into a single ⋮ button, for mobile ─
+// items: [{ label, onClick, danger, disabled }]. Closes on outside click / Escape.
+
+export function KebabMenu({ items }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e) { if (!e.target.closest('[data-kebab-root]')) setOpen(false) }
+    function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('click', onDocClick)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('click', onDocClick); window.removeEventListener('keydown', onKey) }
+  }, [open])
+
+  return (
+    <div data-kebab-root style={{ position: 'relative', display: 'inline-block' }}>
+      <button type="button" onClick={() => setOpen(p => !p)} aria-label="More actions"
+        style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(0,0,0,0.06)' : 'transparent', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '8px', cursor: 'pointer', padding: 0 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" color="#555"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: '34px', right: 0, zIndex: 20, minWidth: '160px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
+          {items.filter(Boolean).map((it, i) => (
+            <button key={i} type="button" disabled={it.disabled}
+              onClick={() => { setOpen(false); it.onClick() }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.65rem 0.9rem', background: 'none', border: 'none', borderBottom: i < items.filter(Boolean).length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: it.danger ? '#7B2032' : '#333', cursor: it.disabled ? 'not-allowed' : 'pointer', opacity: it.disabled ? 0.4 : 1, fontFamily: 'var(--font-inter),sans-serif' }}>
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Confirm dialog — yes/no gate for sends, deletes, and money actions ─────────
 // Usage: {confirm && <ConfirmDialog title="Send invite?" message="…" onConfirm={…} onCancel={() => setConfirm(null)} />}
 
