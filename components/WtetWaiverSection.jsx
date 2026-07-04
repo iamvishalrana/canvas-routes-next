@@ -42,6 +42,13 @@ export default function WtetWaiverSection({ waiverText, identifier, waiver, carY
     if (!agreed) { setError(t.waiverErrAgree); return }
     if (!fullName.trim()) { setError(t.waiverErrName); return }
     if (!emergencyName.trim() || !emergencyPhone.trim()) { setError(t.waiverErrEmergency); return }
+    if (hasPassengers) {
+      for (const p of passengers) {
+        if (!p.name.trim()) { setError(t.passengerErrName); return }
+        const ageNum = parseInt(p.age)
+        if (!p.age.toString().trim() || isNaN(ageNum) || ageNum < 1 || ageNum > 120) { setError(t.passengerErrAge); return }
+      }
+    }
     setSubmitting(true)
     try {
       const res = await fetch('/api/wtet-registration/waiver', {
@@ -136,7 +143,7 @@ export default function WtetWaiverSection({ waiverText, identifier, waiver, carY
               {passengers.map((p, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 24px', gap: '0.5rem', alignItems: 'center' }}>
                   <input type="text" className="wtetci-input" value={p.name} onChange={e => updatePassenger(i, 'name', e.target.value)} placeholder={t.passengerNamePlaceholder} style={inp} />
-                  <input type="number" min="0" max="120" className="wtetci-input" value={p.age} onChange={e => updatePassenger(i, 'age', e.target.value)} placeholder={t.agePlaceholder} style={inp} />
+                  <input type="number" min="1" max="120" className="wtetci-input" value={p.age} onChange={e => updatePassenger(i, 'age', e.target.value)} placeholder={t.agePlaceholder} style={inp} />
                   <button type="button" onClick={() => removePassenger(i)} className="wtetci-btn-ghost" style={{ background: 'none', border: 'none', color: '#bbb', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>×</button>
                 </div>
               ))}

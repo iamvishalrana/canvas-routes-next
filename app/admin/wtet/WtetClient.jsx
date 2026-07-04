@@ -58,6 +58,18 @@ export default function WtetClient() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
+  async function resetWaiver(id, name) {
+    if (!window.confirm(`Reset the signed waiver for ${name || 'this participant'}? They will need to sign it again from the check-in page.`)) return
+    try {
+      const res = await fetch('/api/admin/wtet/reset-waiver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) load()
+    } catch {}
+  }
+
   async function saveCutoff() {
     if (!cutoffInput) return
     setSavingCutoff(true); setCutoffError(null); setCutoffSaved(false)
@@ -231,7 +243,8 @@ export default function WtetClient() {
                             <><br />Passengers: {p.wtet_waiver.passengers.map(pp => `${pp.name} (${pp.age || '—'})`).join(', ')}</>
                           )}
                           <br />
-                          <button onClick={() => setViewingWaiver({ name: p.name, email: p.email, waiver: p.wtet_waiver })} style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>View full waiver</button>
+                          <button onClick={() => setViewingWaiver({ name: p.name, email: p.email, waiver: p.wtet_waiver })} style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', marginRight: '1rem', cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>View full waiver</button>
+                          <button onClick={() => resetWaiver(p.id, p.name)} style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', cursor: 'pointer', color: '#7B2032', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>Reset waiver</button>
                         </div>
                       ) : (
                         <div style={{ fontSize: '12px', color: '#bbb' }}>Not signed yet.</div>

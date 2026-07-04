@@ -34,16 +34,19 @@ export async function POST(request) {
     return Response.json({ error: 'A valid emergency contact phone number is required.' }, { status: 400 })
   }
 
-  const cleanPassengers = Array.isArray(passengers)
-    ? passengers
-        .filter(p => p?.name?.trim())
-        .map(p => ({ name: p.name.trim().slice(0, 100), age: p.age?.toString().trim().slice(0, 3) || null }))
-    : []
+  const rawPassengers = Array.isArray(passengers) ? passengers.filter(p => p?.name?.trim()) : []
   // Signer + this list is the whole car — cap at 1 extra passenger so total
   // occupants can't exceed 2, matching the Trip Details/Lunch cap.
-  if (cleanPassengers.length > 1) {
+  if (rawPassengers.length > 1) {
     return Response.json({ error: 'Maximum 2 people per car. Email jerry@canvasroutes.com if you need to bring more than 2.' }, { status: 400 })
   }
+  for (const p of rawPassengers) {
+    const ageNum = parseInt(p.age)
+    if (!p.age?.toString().trim() || isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
+      return Response.json({ error: 'Please provide a valid age (1–120) for each passenger.' }, { status: 400 })
+    }
+  }
+  const cleanPassengers = rawPassengers.map(p => ({ name: p.name.trim().slice(0, 100), age: p.age.toString().trim().slice(0, 3) }))
 
   const admin = createAdminClient()
 
