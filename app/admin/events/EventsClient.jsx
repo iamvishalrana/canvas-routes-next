@@ -8,6 +8,7 @@ import {
   inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog,
 } from '../_components/shared'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
 
 function isWtetRegEvent(eventName) {
@@ -59,7 +60,7 @@ function exportRegistrantsPdf(eventName, registrants) {
   const ARRIVAL = { opening: 'Arrives at opening', first_hour: 'Arrives within first hour', later: 'Arrives later' }
   const fmtDate = iso => {
     if (!iso) return '—'
-    try { return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) } catch { return '—' }
+    try { return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) } catch { return '—' }
   }
   const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -141,7 +142,7 @@ function exportRegistrantsPdf(eventName, registrants) {
 </style>
 </head><body>
 <h1>${esc(eventName)}</h1>
-<div class="meta">${registrants.length} registrant${registrants.length !== 1 ? 's' : ''} &nbsp;·&nbsp; Exported ${new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+<div class="meta">${registrants.length} registrant${registrants.length !== 1 ? 's' : ''} &nbsp;·&nbsp; Exported ${new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: MONTREAL_TZ })}</div>
 ${mainTable}
 ${checkinTable}
 </body></html>`
@@ -940,7 +941,7 @@ export default function EventsClient() {
                         const opens = new Date(item.registration_opens_at)
                         const closes = item.registration_closes_at ? new Date(item.registration_closes_at) : null
                         const isOpen = now >= opens && (!closes || now <= closes)
-                        const label = isOpen ? 'Reg Open' : now < opens ? `Opens ${opens.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Reg Closed'
+                        const label = isOpen ? 'Reg Open' : now < opens ? `Opens ${opens.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })}` : 'Reg Closed'
                         return <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: isOpen ? '#3B6B2F' : '#888', border: `0.5px solid ${isOpen ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '2px 7px', background: isOpen ? 'rgba(59,107,47,0.04)' : 'transparent' }}>{label}{item.member_price ? ` · $${(item.member_price / 100).toFixed(2)}` : ''}{item.capacity ? ` · ${item.capacity} spots` : ''}</span>
                       })()}
                     </div>
@@ -1267,7 +1268,7 @@ export default function EventsClient() {
                                         <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#c5a882' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : r.status || '—'}</div>
-                                        <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</div>
+                                        <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                           {canSend && !result?.sent && (
                                             isPending
@@ -1387,7 +1388,7 @@ export default function EventsClient() {
                                               {r.wtetWaiver ? (
                                                 <>
                                                   <span style={{ color: '#3B6B2F' }}>
-                                                    Signed by {r.wtetWaiver.full_name} — {new Date(r.wtetWaiver.signed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                                                    Signed by {r.wtetWaiver.full_name} — {new Date(r.wtetWaiver.signed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })}
                                                   </span>
                                                   {' · '}
                                                   <button onClick={e => { e.stopPropagation(); setViewingWaiver({ name: r.name, email: r.email, waiver: r.wtetWaiver }) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '10px', fontFamily: 'var(--font-inter)' }}>View full waiver</button>

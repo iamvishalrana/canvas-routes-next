@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
 import { attendanceKeyToEventName, normalizeEventName as resolveEventName } from '../../../../lib/eventMeta.js'
+import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 import FadeUp from '../../../../components/FadeUp'
 import CountUp from '../../../../components/CountUp'
 
@@ -100,7 +101,7 @@ export default async function DashboardPage() {
   ]
 
   const memberSince = member?.created_at
-    ? new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    ? new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: MONTREAL_TZ })
     : null
 
   const dobParts = []
@@ -321,7 +322,7 @@ export default async function DashboardPage() {
                         <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '0.45rem', lineHeight: 1.4, letterSpacing: '0.01em' }}>{a.title}</div>
                         <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>{a.content}</div>
                         <div style={{ fontSize: '8.5px', color: '#ccc', marginTop: '0.75rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'var(--font-inter), sans-serif' }}>
-                          {new Date(a.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                          {new Date(a.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
                         </div>
                       </div>
                     </div>

@@ -1,14 +1,15 @@
 'use client'
 import { useState, useMemo, useEffect } from 'react'
 import { inp, sel } from '../_components/shared'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const ENTITY_TYPES = ['member', 'application', 'contact', 'announcement', 'event']
 
 function fmtDate(iso) {
   if (!iso) return '—'
   const d = new Date(iso)
-  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: MONTREAL_TZ }).toLowerCase()
   return `${date} · ${time}`
 }
 

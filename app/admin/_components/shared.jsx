@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { EVENT_ATTENDANCE_KEYS, EVENT_NAME_ALIASES, normalizeEventName as _normalizeEventName } from '../../../lib/eventMeta.js'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -275,7 +276,7 @@ export function AdminNotesPanel({ initialNotes, onSave }) {
   }
 
   function fmt(iso) {
-    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
   }
 
   return (

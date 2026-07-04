@@ -1,4 +1,5 @@
 'use client'
+import { MONTREAL_TZ } from '../lib/mtlTime'
 
 // Presentational replica of the members-portal profile hero + garage + stats,
 // rendered from a raw members row. Used by the admin Members tab to preview
@@ -25,7 +26,7 @@ export default function MemberProfilePreview({ member }) {
 
   const attended = Object.values(m.event_attendance || {}).filter(v => v === true).length
   const memberSinceStr = (m.created_at || m.join_date)
-    ? new Date(m.created_at || m.join_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    ? new Date(m.created_at || m.join_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: MONTREAL_TZ })
     : null
 
   const cardBase = { background: '#0F1E14', borderRadius: '20px', border: '0.5px solid rgba(197,168,130,0.18)' }

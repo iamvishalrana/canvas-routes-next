@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 function buildAnnouncementEmail(title, content) {
   // Escape HTML entities to prevent injection
@@ -347,7 +348,7 @@ export default function AnnouncementsClient() {
                       </div>
                       <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65', whiteSpace: 'pre-wrap' }}>{item.content}</div>
                       <div style={{ fontSize: '11px', color: '#ccc', marginTop: '0.5rem' }}>
-                        {new Date(item.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {new Date(item.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>

@@ -7,6 +7,7 @@ import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
 import { isWtetEventName } from '../../../../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName, attendanceKey } from '../../../../../../lib/eventMeta.js'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail.js'
+import { MONTREAL_TZ } from '../../../../../../lib/mtlTime'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
 
@@ -167,7 +168,7 @@ export async function POST(request, { params }) {
         const textSignoff = isRoadTrip ? 'See you on the road' : 'See you there'
         subject = `You're confirmed — ${ev.name}`
         html = buildInviteHtml(firstName, ev.name, ev.date, ev.location, rsvpUrl, expiresAt.toISOString(), isRoadTrip)
-        text = `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}.\n\n${textSignoff},\nJerry`
+        text = `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Check in here:\n${rsvpUrl}\n\nThis link expires ${expiresAt.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', timeZone: MONTREAL_TZ })}.\n\n${textSignoff},\nJerry`
       }
 
       after(() =>

@@ -1,4 +1,5 @@
 // All exports use dynamic imports so libraries are only loaded on demand.
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob)
@@ -37,7 +38,7 @@ export async function downloadPDF(filename, title, headers, rows) {
   doc.text(title, 14, 18)
   doc.setFontSize(9)
   doc.setTextColor(150)
-  doc.text(`Exported ${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`, 14, 25)
+  doc.text(`Exported ${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}`, 14, 25)
   autoTable(doc, {
     head: [headers],
     body: rows,
@@ -78,7 +79,7 @@ export async function downloadDOCX(filename, title, headers, rows) {
       children: [
         new Paragraph({ text: title, heading: HeadingLevel.HEADING_1 }),
         new Paragraph({
-          children: [new TextRun({ text: `Exported ${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`, color: '999999', size: 18 })],
+          children: [new TextRun({ text: `Exported ${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}`, color: '999999', size: 18 })],
         }),
         new Paragraph({ text: '' }),
         new Table({

@@ -12,6 +12,7 @@ import {
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import MemberProfilePreview from '../../../components/MemberProfilePreview'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 // ─── Member Expanded Panel ────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
 
   const initials = (m.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const memberSinceRaw = m.created_at || m.password_set_at
-  const memberSinceStr = memberSinceRaw ? new Date(memberSinceRaw).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null
+  const memberSinceStr = memberSinceRaw ? new Date(memberSinceRaw).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: MONTREAL_TZ }) : null
   const cars = m.cars?.length > 0 ? m.cars : (m.car_year || m.car_make || m.car_model ? [{ year: m.car_year, make: m.car_make, model: m.car_model, license_plate: '' }] : [])
   const validCars = cars.filter(c => c.year || c.make || c.model)
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -85,7 +86,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
           {(m.join_date || m.created_at) && (
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '12px', color: '#999' }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-              Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+              Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
             </span>
           )}
         </div>
@@ -439,7 +440,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       Instagram: m.instagram ? `@${m.instagram}` : '',
       Car: [m.cars?.[0]?.year || m.car_year, m.cars?.[0]?.make || m.car_make, m.cars?.[0]?.model || m.car_model].filter(Boolean).join(' '),
       'Car Paint': m.cars?.[0]?.paint || '',
-      'Password Set': m.password_set_at ? new Date(m.password_set_at).toLocaleDateString('en-CA') : '',
+      'Password Set': m.password_set_at ? new Date(m.password_set_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
     }))
     const headers = Object.keys(rows[0] || {})
     const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(','))].join('\n')
@@ -555,7 +556,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
               m.car_year || m.cars?.[0]?.year || '', m.car_make || m.cars?.[0]?.make || '',
               m.car_model || m.cars?.[0]?.model || '',
               m.dob_month ? `${m.dob_month}/${m.dob_day}${m.dob_year ? `/${m.dob_year}` : ''}` : '',
-              m.instagram || '', m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA') : '',
+              m.instagram || '', m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
             ])}
             style={{ fontSize: '10px', padding: '4px 10px', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)' }}
           />
@@ -584,7 +585,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                 m.car_year || m.cars?.[0]?.year || '', m.car_make || m.cars?.[0]?.make || '',
                 m.car_model || m.cars?.[0]?.model || '',
                 m.dob_month ? `${m.dob_month}/${m.dob_day}${m.dob_year ? `/${m.dob_year}` : ''}` : '',
-                m.instagram || '', m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA') : '',
+                m.instagram || '', m.created_at ? new Date(m.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
               ])}
             />
           )}
@@ -813,7 +814,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                         </span>
                         {(m.cars?.[0]?.paint) && <span style={{ fontSize: '11px', color: '#c5a882' }}>{m.cars[0].paint}</span>}
                         <span style={{ fontSize: '11px', color: m.password_set_at ? '#3B6B2F' : '#bbb' }}>
-                          {m.password_set_at ? `✓ ${new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : 'Awaiting'}
+                          {m.password_set_at ? `✓ ${new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })}` : 'Awaiting'}
                         </span>
                         {!m.password_set_at && (() => {
                           const rs = resendStatus[m.id]
@@ -835,7 +836,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                         })()}
                         {(m.join_date || m.created_at) && (
                           <span style={{ fontSize: '11px', color: '#bbb' }}>
-                            Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
                           </span>
                         )}
                       </div>
@@ -879,13 +880,13 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                       {m.cars?.[0]?.paint && <div style={{ fontSize: '11px', color: '#c5a882', marginTop: '1px' }}>{m.cars[0].paint}</div>}
                     </div>
                     <div style={{ fontSize: '11px', color: '#bbb' }}>
-                      {(m.join_date || m.created_at) ? new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      {(m.join_date || m.created_at) ? new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}
                     </div>
                     <div>
                       {m.password_set_at ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          <span style={{ fontSize: '11px', color: '#3B6B2F' }}>{new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                          <span style={{ fontSize: '11px', color: '#3B6B2F' }}>{new Date(m.password_set_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })}</span>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>

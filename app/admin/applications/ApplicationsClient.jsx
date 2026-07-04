@@ -8,6 +8,7 @@ import {
   inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 // ─── InfoCell — defined at module level to avoid remount on every render ────────
 
@@ -406,7 +407,7 @@ export default function ApplicationsClient() {
       'Car Model': a.car_model || '',
       'Car Paint': a.car_paint || '',
       Source: a.source || '',
-      Applied: a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA') : '',
+      Applied: a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
       Status: a.is_member ? 'Invited / Member' : 'Pending',
       Registrations: (a.registrations || []).map(r => r.event || '').filter(Boolean).join('; '),
     }))
@@ -466,7 +467,7 @@ export default function ApplicationsClient() {
               a.name || '', a.email || '', a.phone || '',
               a.car_year || '', a.car_model || '', a.car_paint || '',
               a.source || '', a.stripe_payment_status || '',
-              a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA') : '',
+              a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
             ])}
             style={{ padding: '4px 10px', fontSize: '10px' }}
           />
@@ -495,7 +496,7 @@ export default function ApplicationsClient() {
                 a.source || '',
                 a.stripe_payment_status || '',
                 a.stripe_amount_paid ? `$${(a.stripe_amount_paid / 100).toFixed(2)}` : '',
-                a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA') : '',
+                a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
               ])}
             />
           )}
@@ -667,7 +668,7 @@ export default function ApplicationsClient() {
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>{(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
                         {a.car_paint && <span style={{ fontSize: '11px', color: isGreyed ? '#ccc' : '#c5a882' }}>{a.car_paint}</span>}
-                        <span style={{ fontSize: '11px', color: '#bbb' }}>{a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—'}</span>
+                        <span style={{ fontSize: '11px', color: '#bbb' }}>{a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</span>
                       </div>
                     </div>
                   )
@@ -704,7 +705,7 @@ export default function ApplicationsClient() {
                     {a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
                   </div>
                   <div style={{ fontSize: '11px', color: '#bbb' }}>
-                    {a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                    {a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}
                   </div>
                   {inviteCell}
                 </div>
@@ -794,7 +795,7 @@ export default function ApplicationsClient() {
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
                         <InfoCell label="DOB" value={a.dob_month ? `${MONTHS_SHORT[a.dob_month - 1]} ${a.dob_day}${a.dob_year ? `, ${a.dob_year}` : ''}` : null} />
                         <InfoCell label="How they heard" value={a.source} />
-                        <InfoCell label="Applied" value={a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'} />
+                        <InfoCell label="Applied" value={a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'} />
                         <InfoCell label="Payment" value={a.stripe_payment_status || null} />
                         <InfoCell label="Amount Paid" value={a.stripe_amount_paid ? `$${(a.stripe_amount_paid / 100).toFixed(2)} CAD` : null} />
                         {a.promo_code_used && <InfoCell label="Promo Code" value={a.promo_code_used} />}
@@ -831,7 +832,7 @@ export default function ApplicationsClient() {
                             <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
                             {reg?.registered_at && (
                               <span style={{ fontSize: '11px', color: '#bbb' }}>
-                                {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
                               </span>
                             )}
                             {isNA ? (

@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { captureMessage } from '../../../../lib/sentry'
+import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 
 async function sendAlert(subject, body) {
   await fetch('https://api.resend.com/emails', {
@@ -51,7 +52,7 @@ async function checkToken() {
     if (daysLeft < 14) {
       await sendAlert(
         `⚠️ Canvas Routes — Instagram token expires in ${daysLeft} days`,
-        `Your Instagram token expires on ${new Date(expiryRow.value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.\n\nGo to canvasroutes.com/admin → Tools → Instagram Token → click "Extend Current Token" to renew it for another 60 days.`
+        `Your Instagram token expires on ${new Date(expiryRow.value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}.\n\nGo to canvasroutes.com/admin → Tools → Instagram Token → click "Extend Current Token" to renew it for another 60 days.`
       )
       return { status: 'expiring_soon', daysLeft }
     }

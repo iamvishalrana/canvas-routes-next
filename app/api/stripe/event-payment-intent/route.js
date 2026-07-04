@@ -3,6 +3,7 @@ import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
+import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 
 export async function POST(request) {
   if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
@@ -44,7 +45,7 @@ export async function POST(request) {
     const windowEnd = new Date(ev.priority_window_end)
     if (new Date() < windowEnd && !isInnerCircle) {
       return Response.json({
-        error: `Priority registration is open to Inner Circle until ${windowEnd.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.`,
+        error: `Priority registration is open to Inner Circle until ${windowEnd.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })}.`,
         priorityWindowEnd: ev.priority_window_end,
       }, { status: 403 })
     }

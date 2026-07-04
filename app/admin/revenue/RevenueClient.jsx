@@ -1,6 +1,7 @@
 'use client'
 
 import { ExportButton } from '../_components/ExportModal'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }
@@ -14,7 +15,7 @@ function fmt(amount) {
 
 function fmtDate(iso) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })
+  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
 }
 
 export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType = [], byMonth = [], recentPayments = [], payments = [] }) {
@@ -50,7 +51,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
               p.email || '',
               p.type || '',
               (p.amount ?? 0).toFixed(2),
-              p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) : '',
+              p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
             ])}
           />
         </div>

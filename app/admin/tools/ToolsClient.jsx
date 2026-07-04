@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { GhostBtn } from '../_components/shared'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 export default function ToolsClient() {
   const [hcStatus, setHcStatus] = useState(null) // null | 'loading' | 'ok' | 'error'
@@ -146,7 +147,7 @@ export default function ToolsClient() {
                   ? `✓ System User token saved — never expires. Gallery should reappear within a minute.`
                   : setTokenResult.warning
                   ? `⚠ Gallery restored — but: ${setTokenResult.warning}`
-                  : `Token saved — valid for ${setTokenResult.daysLeft} days until ${new Date(setTokenResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Gallery should reappear within a minute.`
+                  : `Token saved — valid for ${setTokenResult.daysLeft} days until ${new Date(setTokenResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}. Gallery should reappear within a minute.`
               }
             </div>
           )}
@@ -163,7 +164,7 @@ export default function ToolsClient() {
           <div style={{ marginTop: '0.75rem', fontSize: '12px', color: igResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
             {igResult.error
               ? `Error: ${igResult.error}`
-              : `Token refreshed — valid for ${igResult.daysLeft} days (until ${new Date(igResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}). Stored in Supabase automatically.`
+              : `Token refreshed — valid for ${igResult.daysLeft} days (until ${new Date(igResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}). Stored in Supabase automatically.`
             }
           </div>
         )}

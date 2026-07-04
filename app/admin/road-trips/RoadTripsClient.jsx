@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, CopyBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD    = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
@@ -12,7 +13,7 @@ const TD      = { padding: '0.75rem 1rem', fontSize: '13px', color: '#1a1a1a', b
 
 function fmtDate(iso) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
 }
 
 function AttendedChip({ value }) {
@@ -49,7 +50,7 @@ function isRoadTripReg(eventName, roadTripFragments) {
 
 function fmtDateTime(iso) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: MONTREAL_TZ })
 }
 
 export default function RoadTripsClient() {
@@ -198,7 +199,7 @@ export default function RoadTripsClient() {
                   reg.event || '',
                   app.passengers || '',
                   app.has_children === 'yes' ? 'Yes' : 'No',
-                  reg.registered_at ? new Date(reg.registered_at).toLocaleDateString('en-CA') : '',
+                  reg.registered_at ? new Date(reg.registered_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
                   reg.attended === true ? 'Attended' : reg.attended === false ? 'No-show' : '',
                 ])}
               />

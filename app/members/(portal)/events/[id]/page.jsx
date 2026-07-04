@@ -6,6 +6,7 @@ import EventRegisterButton from '../../../../../components/EventRegisterButton'
 import EventFreeRegister from '../../../../../components/EventFreeRegister'
 import LocationMap from '../../../../../components/LocationMap'
 import AddToCalendar from '../../../../../components/AddToCalendar'
+import { MONTREAL_TZ } from '../../../../../lib/mtlTime'
 
 const OUR_DOMAIN = 'canvasroutes.com'
 function isInternalUrl(url) {
@@ -198,11 +199,11 @@ export default async function EventDetailPage({ params }) {
             <div style={{ marginBottom: '1.25rem', padding: '0.75rem 1rem', background: isInnerCircle ? 'rgba(197,168,130,0.06)' : 'rgba(0,0,0,0.03)', border: `0.5px solid ${isInnerCircle ? 'rgba(197,168,130,0.3)' : 'rgba(0,0,0,0.1)'}` }}>
               {isInnerCircle ? (
                 <p style={{ fontSize: '12px', color: '#8A6535', lineHeight: 1.6, margin: 0, fontFamily: 'var(--font-inter)' }}>
-                  You have priority access as an Inner Circle member. Registration opens to all members on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
+                  You have priority access as an Inner Circle member. Registration opens to all members on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })}.
                 </p>
               ) : (
                 <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.6, margin: 0, fontFamily: 'var(--font-inter)' }}>
-                  Registration opens on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
+                  Registration opens on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })}.
                 </p>
               )}
             </div>

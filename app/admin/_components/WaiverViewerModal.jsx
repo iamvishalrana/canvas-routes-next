@@ -1,5 +1,6 @@
 'use client'
 import { WTET_WAIVER_TEXT, WTET_WAIVER_TEXT_FR } from '../../../lib/wtetRegistrationContent'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -11,7 +12,7 @@ function printWaiver(name, email, waiver) {
   const passengersHtml = waiver.passengers?.length
     ? waiver.passengers.map(p => `<div>${esc(p.name)}${p.age ? `, age ${esc(p.age)}` : ''}</div>`).join('')
     : '<div>None declared</div>'
-  const signedAt = new Date(waiver.signed_at).toLocaleString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  const signedAt = new Date(waiver.signed_at).toLocaleString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
 
   const html = `<!DOCTYPE html><html><head><title>Signed Waiver — ${esc(waiver.full_name)}</title>
 <style>
@@ -54,7 +55,7 @@ function printWaiver(name, email, waiver) {
 export default function WaiverViewerModal({ name, email, waiver, onClose }) {
   const waiverText = waiver.lang === 'fr' ? WTET_WAIVER_TEXT_FR : WTET_WAIVER_TEXT
   const vehicle = [waiver.vehicle?.year, waiver.vehicle?.make, waiver.vehicle?.model].filter(Boolean).join(' ') || '—'
-  const signedAt = new Date(waiver.signed_at).toLocaleString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  const signedAt = new Date(waiver.signed_at).toLocaleString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
 
   return (
     <div

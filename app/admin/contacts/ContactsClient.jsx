@@ -9,6 +9,7 @@ import {
   GhostBtn, PrimaryBtn, DangerBtn, Err, AttendanceToggle,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 // ─── App sources (shared with Applications tab) ───────────────────────────────
 
@@ -293,7 +294,7 @@ export default function ContactsClient() {
       'Car Paint': c.car_paint || '',
       DOB: c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? ` ${c.dob_year}` : ''}` : '',
       Source: c.source || '',
-      Applied: c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA') : '',
+      Applied: c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
     }))
     const headers = Object.keys(rows[0] || {})
     const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(','))].join('\n')
@@ -437,7 +438,7 @@ export default function ContactsClient() {
                 [c.car_year, c.car_model].filter(Boolean).join(' '),
                 c.source || '',
                 c.notes || '',
-                c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA') : '',
+                c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
               ])}
               style={{ padding: '4px 10px', fontSize: '10px' }}
             />
@@ -604,7 +605,7 @@ export default function ContactsClient() {
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', color: '#888' }}>{(() => { const {make,model} = parseCarMakeModel(c.car_model); return [c.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
                     {c.car_paint && <span style={{ fontSize: '11px', color: '#c5a882' }}>{c.car_paint}</span>}
-                    {c.created_at && <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+                    {c.created_at && <span style={{ fontSize: '11px', color: '#bbb' }}>{new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}</span>}
                   </div>
                 </div>
               ) : (
@@ -635,7 +636,7 @@ export default function ContactsClient() {
                   {c.dob_month ? `${MONTHS_SHORT[c.dob_month - 1]} ${c.dob_day}${c.dob_year ? `, ${c.dob_year}` : ''}` : <span style={{ color: '#ddd' }}>—</span>}
                 </div>
                 <div style={{ fontSize: '11px', color: '#bbb' }}>
-                  {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                  {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}
                 </div>
                 <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
@@ -786,7 +787,7 @@ export default function ContactsClient() {
                         </div>
                         <div>
                           <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Applied</div>
-                          <div style={{ fontSize: '13px', color: '#444' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</div>
+                          <div style={{ fontSize: '13px', color: '#444' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
                         </div>
                       </div>
                       {c.more && (
@@ -844,7 +845,7 @@ export default function ContactsClient() {
                             <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
                             {reg?.registered_at && (
                               <span style={{ fontSize: '11px', color: '#bbb' }}>
-                                {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
                               </span>
                             )}
                             {isNA ? (
@@ -908,8 +909,8 @@ export default function ContactsClient() {
                                 </div>
                               )}
                               <div style={{ fontSize: '10px', color: '#bbb' }}>
-                                Invited {new Date(rsvp.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                {isConfirmed && ` · Confirmed ${new Date(rsvp.confirmed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                                Invited {new Date(rsvp.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
+                                {isConfirmed && ` · Confirmed ${new Date(rsvp.confirmed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}`}
                               </div>
                             </div>
                           )

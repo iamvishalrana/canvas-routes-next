@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import CountUp from '../../../../components/CountUp'
+import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -291,7 +292,7 @@ export default function ProfilePage() {
   const primaryCar = validCarsList[0] || null
   const extraCars = validCarsList.slice(1)
   const memberSinceStr = stats?.memberSince
-    ? new Date(stats.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    ? new Date(stats.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: MONTREAL_TZ })
     : null
   const igHandle = (form.instagram || '').replace(/^@/, '').trim()
 

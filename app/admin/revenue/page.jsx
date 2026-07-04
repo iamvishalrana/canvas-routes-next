@@ -1,5 +1,6 @@
 import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import RevenueClient from './RevenueClient'
 
 // Auth is already enforced by middleware.js — no need to re-check here.
@@ -84,12 +85,15 @@ export default async function RevenuePage() {
     key, label: TYPE_LABELS[key] || key, count: val.count, revenue: val.revenue,
   }))
 
-  // Monthly breakdown (net of refunds)
+  // Monthly breakdown (net of refunds) — group by Montreal calendar month, not
+  // the server's UTC month, or a late-evening Montreal payment near midnight
+  // gets bucketed into the wrong month.
+  const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: MONTREAL_TZ })
   const byMonthMap = {}
   for (const r of rows) {
     if (!r.stripe_paid_at) continue
-    const d = new Date(r.stripe_paid_at)
-    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const parts = monthKeyFormatter.formatToParts(new Date(r.stripe_paid_at))
+    const ym = `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}`
     if (!byMonthMap[ym]) byMonthMap[ym] = { count: 0, revenue: 0 }
     byMonthMap[ym].count += 1
     byMonthMap[ym].revenue += ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100
@@ -98,7 +102,9 @@ export default async function RevenuePage() {
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([ym, val]) => {
       const [year, month] = ym.split('-')
-      const label = new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
+      // Anchor at UTC noon on the 1st and format in UTC so this pure y-m label
+      // can't be shifted back a day/month by any timezone reinterpretation.
+      const label = new Date(Date.UTC(Number(year), Number(month) - 1, 1, 12)).toLocaleDateString('en-CA', { month: 'long', year: 'numeric', timeZone: 'UTC' })
       return { ym, label, count: val.count, revenue: val.revenue }
     })
 

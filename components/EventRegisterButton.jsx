@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { MONTREAL_TZ } from '../lib/mtlTime'
 
 let _stripePromise = null
 function getStripe() {
@@ -214,8 +215,8 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   }
 
   if (regNotYetOpen && !regOpen) {
-    const dateStr = opensAt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
-    const timeStr = opensAt.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
+    const dateStr = opensAt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })
+    const timeStr = opensAt.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
     return (
       <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.3)', padding: compact ? '2px 8px' : '0.45rem 1rem', background: 'rgba(197,168,130,0.04)' }}>
         Opens {dateStr} at {timeStr}
@@ -225,8 +226,8 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
 
   if (inPriorityWindow && !isInnerCircle) {
     const windowEnd = new Date(event.priority_window_end)
-    const dateStr = windowEnd.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
-    const timeStr = windowEnd.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
+    const dateStr = windowEnd.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })
+    const timeStr = windowEnd.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
     return (
       <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.3)', padding: compact ? '2px 8px' : '0.45rem 1rem', background: 'rgba(197,168,130,0.04)' }}>
         Opens {dateStr} at {timeStr}
