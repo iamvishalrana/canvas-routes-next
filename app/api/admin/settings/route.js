@@ -33,6 +33,7 @@ export async function PATCH(request) {
     'admin_banner',
     'homepage_banner',
     'event_page_url',
+    'wtet_awards_open',
   ]
   if (!ALLOWED_KEYS.includes(key)) return Response.json({ error: 'Unknown setting key.' }, { status: 400 })
 

@@ -23,9 +23,10 @@ const SECTIONS = [
   {
     id: 'events', label: 'Events',
     items: [
-      { href: '/admin/events',     label: 'Events'  },
-      { href: '/admin/road-trips', label: 'Routes'  },
-      { href: '/admin/wtet',       label: 'WTET — Waiver & Lunch' },
+      { href: '/admin/events',      label: 'Events'  },
+      { href: '/admin/road-trips',  label: 'Routes'  },
+      { href: '/admin/wtet',        label: 'WTET — Waiver & Lunch' },
+      { href: '/admin/wtet-awards', label: 'WTET — Route Awards' },
     ],
   },
   {
