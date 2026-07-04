@@ -12,7 +12,8 @@ const PASSWORD = 'eastern'
 const MAP_MARKERS = [
   { label: 'Shell — Brossard', note: '10:30 AM · Meetup & Departure', start: true, lat: 45.4502, lng: -73.4440 },
   { label: 'Vignoble Domaine du Brésée', note: 'Sutton · Winery experience', lat: 45.1477, lng: -72.6133 },
-  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', end: true, lat: 45.1394, lng: -72.2554 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville · Final destination', lat: 45.1394, lng: -72.2554 },
+  { label: '6845 Boul. Taschereau — Brossard', note: 'See off point', end: true, lat: 45.468877, lng: -73.4671954 },
 ]
 
 const STOPS = [
@@ -23,7 +24,8 @@ const STOPS = [
   { label: 'Highwater', note: 'Chemin des Cantons · Near the border', href: 'https://www.google.com/maps?q=45.0053,-72.4400', lat: 45.0053, lng: -72.4400 },
   { label: 'Austin', note: 'Chemin des Cantons · Lake Memphrémagog area', href: 'https://www.google.com/maps?q=45.1863,-72.2440', lat: 45.1863, lng: -72.2440 },
   { label: 'Magog', note: 'Chemin des Cantons · Lake view', href: 'https://www.google.com/maps?q=45.2679,-72.1493', lat: 45.2679, lng: -72.1493 },
-  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville', tag: 'Lakeside Lunch', end: true, href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
+  { label: 'Auberge & Restaurant McGowan', note: 'Georgeville', tag: 'Lakeside Lunch', href: 'https://maps.app.goo.gl/fsWhM2GNVLoG55ar9', lat: 45.1394, lng: -72.2554 },
+  { label: '6845 Boul. Taschereau', note: 'Brossard', tag: 'See Off Point', end: true, href: 'https://www.google.com/maps/search/?api=1&query=6845+Boulevard+Taschereau,+Brossard,+QC+J4Z+1A7', lat: 45.468877, lng: -73.4671954 },
 ]
 
 const SECTION_LABEL = { fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', display: 'block', fontWeight: '400', fontStyle: 'normal' }
@@ -36,8 +38,8 @@ const T = {
     contact: 'Contact',
     appLabel: 'Convoy App', appLink: 'Download Velox →', appSub: 'Stay connected in real time · iOS only',
     itineraryLabel: 'Itinerary', itineraryHint: 'Tap a stop to open in Maps',
-    stopNotes: ['10:30 AM · Brossard', 'Sutton', 'Chemin des Cantons · Rolling through', 'Chemin des Cantons · Mountain roads', 'Chemin des Cantons · Near the border', 'Chemin des Cantons · Lake Memphrémagog area', 'Chemin des Cantons · Lake view', 'Georgeville'],
-    stopTags: ['Meetup & Departure', 'Private Winery Experience', null, null, null, null, null, 'Lakeside Lunch'],
+    stopNotes: ['10:30 AM · Brossard', 'Sutton', 'Chemin des Cantons · Rolling through', 'Chemin des Cantons · Mountain roads', 'Chemin des Cantons · Near the border', 'Chemin des Cantons · Lake Memphrémagog area', 'Chemin des Cantons · Lake view', 'Georgeville', 'Brossard'],
+    stopTags: ['Meetup & Departure', 'Private Winery Experience', null, null, null, null, null, 'Lakeside Lunch', 'See Off Point'],
     driveLabel: 'The Drive',
     driveBullets: [
       { emoji: '🛣️', text: 'We roll out of Brossard on Autoroute 10 East, exit at Farnham, and head south — windows down, convoy forming.' },
@@ -77,8 +79,8 @@ const T = {
     contact: 'Contact',
     appLabel: 'App Convoi', appLink: 'Télécharger Velox →', appSub: 'Restez connectés en temps réel · iOS seulement',
     itineraryLabel: 'Itinéraire', itineraryHint: 'Appuyez sur un arrêt pour ouvrir dans Maps',
-    stopNotes: ['10h30 · Brossard', 'Sutton', 'Chemin des Cantons · En transit', 'Chemin des Cantons · Routes de montagne', 'Chemin des Cantons · Près de la frontière', 'Chemin des Cantons · Région du lac Memphrémagog', 'Chemin des Cantons · Vue sur le lac', 'Georgeville'],
-    stopTags: ['Rassemblement & Départ', 'Expérience vignoble privée', null, null, null, null, null, 'Déjeuner au bord du lac'],
+    stopNotes: ['10h30 · Brossard', 'Sutton', 'Chemin des Cantons · En transit', 'Chemin des Cantons · Routes de montagne', 'Chemin des Cantons · Près de la frontière', 'Chemin des Cantons · Région du lac Memphrémagog', 'Chemin des Cantons · Vue sur le lac', 'Georgeville', 'Brossard'],
+    stopTags: ['Rassemblement & Départ', 'Expérience vignoble privée', null, null, null, null, null, 'Déjeuner au bord du lac', 'Point de ralliement final'],
     driveLabel: 'La Route',
     driveBullets: [
       { emoji: '🛣️', text: 'On quitte Brossard par l\'Autoroute 10 Est, on sort à Farnham et on met le cap au sud — vitres baissées, le convoi se forme.' },
@@ -742,8 +744,9 @@ export default function EasternTownshipsPage() {
           <a
             href="https://www.instagram.com/revpix.media?igsh=bjl3MHN5NDN0eXZ5"
             target="_blank" rel="noreferrer"
-            style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '700', display: 'inline-block' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '700' }}
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F1E14" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
             {t.photoHandle}
           </a>
         </section>
