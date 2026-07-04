@@ -8,7 +8,7 @@ const T = {
   en: {
     eyebrow: 'Whips to Eastern Townships',
     title: 'Route Awards',
-    subtitle: "Cast your vote — winners get 50%, 25%, and 15% off the next route. You can't vote for yourself, and Jerry's disqualified — he's just here to hand out the prizes.",
+    subtitle: "Cast your vote for the route's best. You can't vote for yourself, and Jerry's disqualified — he's just here to hand out the prizes.",
     emailLabel: 'Your email', emailPlaceholder: 'you@email.com',
     gateBody: 'Enter the email you registered with.',
     enterBtn: 'Continue', checkingBtn: 'Checking…',
@@ -24,7 +24,7 @@ const T = {
   fr: {
     eyebrow: 'Whips to Eastern Townships',
     title: 'Prix de la Route',
-    subtitle: "Votez — les gagnants reçoivent 50 %, 25 % et 15 % de rabais sur la prochaine route. Vous ne pouvez pas voter pour vous-même, et Jerry est disqualifié — il est seulement ici pour remettre les prix.",
+    subtitle: "Votez pour les meilleurs de la route. Vous ne pouvez pas voter pour vous-même, et Jerry est disqualifié — il est seulement ici pour remettre les prix.",
     emailLabel: 'Votre courriel', emailPlaceholder: 'vous@courriel.com',
     gateBody: 'Entrez le courriel utilisé lors de votre inscription.',
     enterBtn: 'Continuer', checkingBtn: 'Vérification…',
