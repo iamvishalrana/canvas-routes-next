@@ -154,7 +154,7 @@ export default function WtetClient() {
           {cutoffSaved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
           {lunchCutoff && (
             <span style={{ fontSize: '11px', color: '#bbb' }}>
-              Current: {new Date(lunchCutoff).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              Current: {new Date(lunchCutoff).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}
             </span>
           )}
         </div>
@@ -225,7 +225,7 @@ export default function WtetClient() {
                           )}
                           {p.wtet_checkin.dietary && <>Dietary: {p.wtet_checkin.dietary}<br /></>}
                           {p.wtet_checkin.whatsapp && <>WhatsApp: {p.wtet_checkin.whatsapp}<br /></>}
-                          <span style={{ color: '#aaa' }}>Submitted {new Date(p.wtet_checkin.completed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                          <span style={{ color: '#aaa' }}>Submitted {new Date(p.wtet_checkin.completed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>
                         </div>
                       ) : (
                         <div style={{ fontSize: '12px', color: '#bbb' }}>Not submitted yet.</div>
@@ -236,7 +236,7 @@ export default function WtetClient() {
                       {p.wtet_waiver ? (
                         <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                           Signed by <strong>{p.wtet_waiver.full_name}</strong><br />
-                          {new Date(p.wtet_waiver.signed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} · IP {p.wtet_waiver.ip_address}<br />
+                          {new Date(p.wtet_waiver.signed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })} · IP {p.wtet_waiver.ip_address}<br />
                           Vehicle: {[p.wtet_waiver.vehicle?.year, p.wtet_waiver.vehicle?.make, p.wtet_waiver.vehicle?.model].filter(Boolean).join(' ') || '—'}<br />
                           Emergency contact: {p.wtet_waiver.emergency_contact?.name} · {p.wtet_waiver.emergency_contact?.phone}
                           {p.wtet_waiver.passengers?.length > 0 && (
@@ -259,7 +259,7 @@ export default function WtetClient() {
                               {entry.name || (i === 0 ? 'Driver' : `Passenger ${i + 1}`)}: {entry.dish_name}
                             </div>
                           ))}
-                          <span style={{ color: '#aaa' }}>Selected {new Date(p.wtet_lunch[0].selected_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                          <span style={{ color: '#aaa' }}>Selected {new Date(p.wtet_lunch[0].selected_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>
                         </div>
                       ) : (
                         <div style={{ fontSize: '12px', color: '#bbb' }}>Not selected yet.</div>

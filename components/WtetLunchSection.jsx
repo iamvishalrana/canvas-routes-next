@@ -28,7 +28,7 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
   const [editing, setEditing] = useState(!isDone)
 
   const cutoffDate = new Date(lunchCutoff)
-  const cutoffStr = cutoffDate.toLocaleDateString(wtetDateLocale(lang), { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  const cutoffStr = cutoffDate.toLocaleDateString(wtetDateLocale(lang), { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })
 
   function setChoice(i, dishId) {
     setDishChoices(prev => prev.map((d, idx) => idx === i ? dishId : d))

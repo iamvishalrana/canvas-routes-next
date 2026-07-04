@@ -83,7 +83,7 @@ export default function WtetWaiverSection({ waiverText, identifier, waiver, carY
             {waiver.full_name}
           </div>
           <div style={{ marginBottom: '0.5rem' }}>
-            {t.signedByOn} {new Date(waiver.signed_at).toLocaleDateString(wtetDateLocale(lang), { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}.
+            {t.signedByOn} {new Date(waiver.signed_at).toLocaleDateString(wtetDateLocale(lang), { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}.
           </div>
           <div style={{ fontSize: '12px', color: '#aaa' }}>{t.waiverLockedNote}</div>
         </div>
