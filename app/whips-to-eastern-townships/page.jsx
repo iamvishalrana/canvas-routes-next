@@ -50,8 +50,12 @@ const T = {
     wineryLabel: 'Winery Stop', wineryVenue: 'Vignoble Domaine du Brésée · Sutton',
     wineryHeadline: '$10 off every 3 wine bottles',
     wineryBody: 'Canvas Routes participants get an exclusive discount on wine bottle purchases at the winery. Buy any 3 wine bottles and take $10 off. Vignoble Domaine du Brésée has earned numerous awards for their wines. Cash or card accepted on site.',
-    parkingLabel: 'Parking', parkingBody: 'Follow the marked route to lots P1–P3 near the boutique — the vineyard\'s official parking map.',
-    photoLabel: 'Photography', photoBody: 'On-route photos and video captured throughout the day.',
+    parkingSectionLabel: 'Parking', parkingRead: '▼ View map', parkingClose: '▲ Close',
+    meetupParkingLabel: 'Meet Up Point — Shell, Brossard',
+    meetupParkingBody: 'Map of the meetup and departure parking at the Shell, 8700 Boul. Leduc, Brossard.',
+    vignobleParkingLabel: 'Vignoble Domaine du Brésée',
+    vignobleParkingBody: 'Follow the marked route to lots P1–P3 near the boutique — the vineyard\'s official parking map.',
+    photoLabel: 'Photography', photoBody: 'Revpix Media is capturing photos and video throughout the day — give them a follow:', photoHandle: '@revpix.media →',
     whoLabel: n => `Who's Coming — ${n} Cars · 3 Groups + Media`,
     groupsExplain: 'With 20 cars on the road, running as a single convoy isn\'t safe or practical — it creates gaps at lights, puts strain on slower traffic, and makes it impossible to keep everyone together on tight sections. We\'re splitting into three groups of 6–7, departing 5 minutes apart. Each group runs as its own self-contained convoy with a designated lead car.',
     groupRulesLabel: 'Group Rules',
@@ -87,8 +91,12 @@ const T = {
     wineryLabel: 'Arrêt au Vignoble', wineryVenue: 'Vignoble Domaine du Brésée · Sutton',
     wineryHeadline: '10 $ de rabais pour 3 bouteilles de vin',
     wineryBody: 'Les participants Canvas Routes bénéficient d\'un rabais exclusif sur les achats de bouteilles de vin au vignoble. Achetez 3 bouteilles et obtenez 10 $ de rabais. Le Vignoble Domaine du Brésée a remporté de nombreux prix pour ses vins. Paiement comptant ou par carte accepté sur place.',
-    parkingLabel: 'Stationnement', parkingBody: 'Suivez le trajet indiqué jusqu\'aux stationnements P1 à P3 près de la boutique — la carte officielle du vignoble.',
-    photoLabel: 'Photographie', photoBody: 'Photos et vidéos captées tout au long de la journée sur la route.',
+    parkingSectionLabel: 'Stationnement', parkingRead: '▼ Voir la carte', parkingClose: '▲ Fermer',
+    meetupParkingLabel: 'Point de rendez-vous — Shell, Brossard',
+    meetupParkingBody: 'Carte du stationnement pour le rendez-vous et le départ au Shell, 8700 Boul. Leduc, Brossard.',
+    vignobleParkingLabel: 'Vignoble Domaine du Brésée',
+    vignobleParkingBody: 'Suivez le trajet indiqué jusqu\'aux stationnements P1 à P3 près de la boutique — la carte officielle du vignoble.',
+    photoLabel: 'Photographie', photoBody: 'Revpix Media capture photos et vidéos tout au long de la journée — suivez-les :', photoHandle: '@revpix.media →',
     whoLabel: n => `Qui vient — ${n} voitures · 3 groupes + Média`,
     groupsExplain: 'Avec 20 voitures sur la route, rouler en un seul convoi n\'est ni sécuritaire ni pratique — ça crée des écarts aux feux, met de la pression sur la circulation et rend impossible de garder tout le monde ensemble dans les sections serrées. On se divise en trois groupes de 6 à 7, avec 5 minutes d\'écart entre chaque départ. Chaque groupe forme son propre convoi avec une voiture de tête désignée.',
     groupRulesLabel: 'Règles des groupes',
@@ -273,6 +281,7 @@ export default function EasternTownshipsPage() {
   const [rulesOpen, setRulesOpen] = useState(false)
   const [selectedCar, setSelectedCar] = useState(null)
   const [groupsOpen, setGroupsOpen] = useState([true, true, true])
+  const [parkingOpen, setParkingOpen] = useState([false, false])
   const [atBottom, setAtBottom] = useState(false)
   const [lang, setLang] = useState('en')
   const t = T[lang]
@@ -688,25 +697,55 @@ export default function EasternTownshipsPage() {
             </p>
           </div>
 
-          {/* Parking guidance */}
-          <div style={{ marginTop: '1.25rem' }}>
-            <p style={{ ...SECTION_LABEL, marginBottom: '0.6rem' }}>{t.parkingLabel}</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/WTET/Vignoble-Parking.jpg"
-              alt={t.parkingLabel}
-              style={{ width: '100%', display: 'block', border: '0.5px solid rgba(0,0,0,0.1)' }}
-            />
-            <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: '0.6rem 0 0' }}>
-              {t.parkingBody}
-            </p>
-          </div>
+        </section>
+
+        {/* Parking */}
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>{t.parkingSectionLabel}</h2>
+          {[
+            { label: t.meetupParkingLabel, body: t.meetupParkingBody, img: '/WTET/Brossard.png' },
+            { label: t.vignobleParkingLabel, body: t.vignobleParkingBody, img: '/WTET/Vignoble-Parking.jpg' },
+          ].map((item, idx) => {
+            const isOpen = parkingOpen[idx]
+            return (
+              <div key={idx}>
+                <button
+                  onClick={() => setParkingOpen(p => p.map((v, i) => i === idx ? !v : v))}
+                  aria-expanded={isOpen}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: '0.6rem 0', cursor: 'pointer', textAlign: 'left', borderTop: idx > 0 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}
+                >
+                  <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{item.label}</span>
+                  <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em', flexShrink: 0, marginLeft: '0.75rem' }}>{isOpen ? t.parkingClose : t.parkingRead}</span>
+                </button>
+                {isOpen && (
+                  <div style={{ padding: '0.5rem 0 1rem' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.img}
+                      alt={item.label}
+                      style={{ width: '100%', display: 'block', border: '0.5px solid rgba(0,0,0,0.1)' }}
+                    />
+                    <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: '0.6rem 0 0' }}>
+                      {item.body}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </section>
 
         {/* Photography */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.photoLabel}</h2>
-          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: 0 }}>{t.photoBody}</p>
+          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: '0 0 0.6rem' }}>{t.photoBody}</p>
+          <a
+            href="https://www.instagram.com/revpix.media?igsh=bjl3MHN5NDN0eXZ5"
+            target="_blank" rel="noreferrer"
+            style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '700', display: 'inline-block' }}
+          >
+            {t.photoHandle}
+          </a>
         </section>
 
         {/* Who's Coming */}
