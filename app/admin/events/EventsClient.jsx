@@ -1420,7 +1420,16 @@ export default function EventsClient() {
                                           <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: bothDone ? 'rgba(59,107,47,0.03)' : 'rgba(123,32,50,0.02)', borderBottom: !isLastTableRow ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Trip Details </span>
-                                              {r.wtetCheckin ? <span style={{ color: '#3B6B2F' }}>Complete</span> : <span style={{ color: '#7B2032' }}>Not submitted</span>}
+                                              {r.wtetCheckin ? (
+                                                <span style={{ color: '#3B6B2F' }}>
+                                                  Complete
+                                                  {' — '}Dietary: {r.wtetCheckin.dietary || 'None'}
+                                                  {' · '}WhatsApp: {r.wtetCheckin.whatsapp || 'Not provided'}
+                                                  {r.wtetCheckin.passengers_list?.length > 0 && (
+                                                    <>{' · '}{r.wtetCheckin.passengers_list.map((p, pi) => `${pi === 0 ? 'Driver' : `P${pi + 1}`}: ${p.name}, ${p.age}`).join(' · ')}</>
+                                                  )}
+                                                </span>
+                                              ) : <span style={{ color: '#7B2032' }}>Not submitted</span>}
                                             </div>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Waiver </span>
