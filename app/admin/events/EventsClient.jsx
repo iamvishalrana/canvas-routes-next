@@ -1424,12 +1424,17 @@ export default function EventsClient() {
                                                 <span style={{ color: '#3B6B2F' }}>
                                                   Complete
                                                   {' — '}Dietary: {r.wtetCheckin.dietary || 'None'}
-                                                  {' · '}WhatsApp: {r.wtetCheckin.whatsapp || 'Not provided'}
                                                   {r.wtetCheckin.passengers_list?.length > 0 && (
                                                     <>{' · '}{r.wtetCheckin.passengers_list.map((p, pi) => `${pi === 0 ? 'Driver' : `P${pi + 1}`}: ${p.name}, ${p.age}`).join(' · ')}</>
                                                   )}
                                                 </span>
                                               ) : <span style={{ color: '#7B2032' }}>Not submitted</span>}
+                                            </div>
+                                            <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
+                                              <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>WhatsApp </span>
+                                              {r.wtetCheckin?.whatsapp ? (
+                                                <span style={{ color: '#3B6B2F' }}>{r.wtetCheckin.whatsapp}</span>
+                                              ) : <span style={{ color: '#7B2032' }}>Not provided</span>}
                                             </div>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Waiver </span>
