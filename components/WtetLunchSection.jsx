@@ -67,7 +67,6 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
   if (isDone && !editing) {
     return (
       <SectionCard title={t.lunchTitle} done delay={180} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
-        <LunchNote t={t} />
         <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>
           {lunch.map((entry, i) => (
             <div key={i} style={{ marginBottom: '0.35rem' }}>
