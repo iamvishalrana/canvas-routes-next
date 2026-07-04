@@ -8,7 +8,7 @@ import {
   parseCarMakeModel,
   inp, sel,
   L, Badge, CopyBtn, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
-  AdminNotesPanel, Pagination, AttendanceToggle,
+  AdminNotesPanel, Pagination, AttendanceToggle, KebabMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import MemberProfilePreview from '../../../components/MemberProfilePreview'
@@ -776,14 +776,6 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                 <>
                   {isMobile ? (
                     <div style={{ padding: '0.9rem 1rem', cursor: 'pointer', position: 'relative' }} onClick={() => setExpanded(expanded === m.id ? null : m.id)}>
-                      <button
-                        onClick={e => { e.stopPropagation(); setPreviewMember(m) }}
-                        title="Preview member profile card"
-                        aria-label="Preview member profile card"
-                        style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', width: '30px', height: '30px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', cursor: 'pointer', padding: 0, zIndex: 2 }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7 17c1.2-2 3-3 5-3s3.8 1 5 3"/></svg>
-                      </button>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.35rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', minWidth: 0 }}>
                           <div onClick={e => e.stopPropagation()}>
@@ -799,9 +791,12 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                           </div>
                           <Badge status={m.membership_status} />
                         </div>
-                        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                          <GhostBtn onClick={() => startEdit(m)} small>Edit</GhostBtn>
-                          <DangerBtn onClick={() => { setDeleteMemberConfirm(m.id); setDeleteMemberError(null) }} small>Del</DangerBtn>
+                        <div style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                          <KebabMenu items={[
+                            { label: 'Preview', onClick: () => setPreviewMember(m) },
+                            { label: 'Edit', onClick: () => startEdit(m) },
+                            { label: 'Delete', danger: true, onClick: () => { setDeleteMemberConfirm(m.id); setDeleteMemberError(null) } },
+                          ]} />
                         </div>
                       </div>
                       <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.25rem' }}>{m.email}</div>

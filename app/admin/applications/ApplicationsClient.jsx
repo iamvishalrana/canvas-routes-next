@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
-  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog,
+  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -886,26 +886,41 @@ export default function ApplicationsClient() {
                     <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         {!a.is_contact ? (
+                          !isMobile && (
                           <div>
                             <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
                               {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
                             </GhostBtn>
                             {addContactError[a.id] && <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.25rem' }}>{addContactError[a.id]}</div>}
                           </div>
+                          )
                         ) : (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
-                        )}
-                        <GhostBtn small onClick={() => emailComposerId === a.id ? setEmailComposerId(null) : openEmailComposer(a)}>
-                          {emailComposerId === a.id ? 'Cancel Email' : '✉ Send Email'}
-                        </GhostBtn>
-                        {!seenAppIds.has(a.id) && (
-                          <GhostBtn small onClick={() => { markSeen(a.id); setExpanded(null) }}>Mark as Seen</GhostBtn>
                         )}
                         {seenAppIds.has(a.id) && !a.is_contact && !a.is_member && (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Reviewed</span>
                         )}
-                        <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
-                        <DangerBtn small onClick={() => setDeleteAppConfirm(a.id)}>Delete</DangerBtn>
+                        {isMobile ? (
+                          <KebabMenu items={[
+                            !a.is_contact && { label: addingContact.has(a.id) ? '…' : 'Add to Contacts', onClick: () => addToContact(a.id), disabled: addingContact.has(a.id) },
+                            { label: emailComposerId === a.id ? 'Cancel Email' : 'Send Email', onClick: () => emailComposerId === a.id ? setEmailComposerId(null) : openEmailComposer(a) },
+                            !seenAppIds.has(a.id) && { label: 'Mark as Seen', onClick: () => { markSeen(a.id); setExpanded(null) } },
+                            { label: 'Edit', onClick: () => startEditApp(a) },
+                            { label: 'Delete', danger: true, onClick: () => setDeleteAppConfirm(a.id) },
+                          ]} />
+                        ) : (
+                          <>
+                            <GhostBtn small onClick={() => emailComposerId === a.id ? setEmailComposerId(null) : openEmailComposer(a)}>
+                              {emailComposerId === a.id ? 'Cancel Email' : '✉ Send Email'}
+                            </GhostBtn>
+                            {!seenAppIds.has(a.id) && (
+                              <GhostBtn small onClick={() => { markSeen(a.id); setExpanded(null) }}>Mark as Seen</GhostBtn>
+                            )}
+                            <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
+                            <DangerBtn small onClick={() => setDeleteAppConfirm(a.id)}>Delete</DangerBtn>
+                          </>
+                        )}
+                        {isMobile && addContactError[a.id] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{addContactError[a.id]}</div>}
                       </div>
                       {deleteAppConfirm === a.id && (
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
