@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import GlobalSearch from './GlobalSearch'
+import PullToRefresh from './PullToRefresh'
 
 const SECTIONS = [
   {
@@ -321,12 +322,22 @@ function AdminBanner() {
 
 export default function AdminShell({ children }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => { setIsOpen(false) }, [pathname])
 
+  // Pull-to-refresh: bump refreshKey to remount the current page's client
+  // component (re-runs its data-fetching useEffect) and ask the router to
+  // re-fetch any server-rendered data too, in case a future admin page uses it.
+  const handleRefresh = useCallback(() => {
+    router.refresh()
+    setRefreshKey(k => k + 1)
+  }, [router])
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <div className="admin-shell" style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3', fontFamily: 'var(--font-inter),sans-serif' }}>
 
       <button
         className="admin-hamburger"
@@ -389,9 +400,11 @@ export default function AdminShell({ children }) {
 
       <main className="admin-main" style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
         <AdminBanner />
-        <div key={pathname} className="admin-page-enter">
-          {children}
-        </div>
+        <PullToRefresh onRefresh={handleRefresh}>
+          <div key={`${pathname}:${refreshKey}`} className="admin-page-enter">
+            {children}
+          </div>
+        </PullToRefresh>
       </main>
     </div>
   )

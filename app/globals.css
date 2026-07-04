@@ -521,6 +521,13 @@ section[id] {
   .admin-main { padding-top: 3.75rem; }
 }
 
+/* Remove the gray tap-highlight flash on standalone-app buttons/links — the
+   browser chrome cue makes sense on a website, but reads as a bug on a
+   home-screen app that's supposed to feel native. */
+.admin-shell button, .admin-shell a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* iOS home screen PWA — safe areas for notch / Dynamic Island / home indicator */
 @media (display-mode: standalone) {
   .admin-hamburger {
@@ -548,6 +555,12 @@ section[id] {
 
 /* Prevent iOS landscape-rotation font inflation */
 html { -webkit-text-size-adjust: 100%; }
+
+/* Admin pull-to-refresh spinner */
+@keyframes admin-ptr-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
 /* Admin animations */
 @keyframes adminFadeIn {
