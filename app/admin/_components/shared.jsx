@@ -118,8 +118,8 @@ export function KebabMenu({ items }) {
   return (
     <div data-kebab-root style={{ position: 'relative', display: 'inline-block' }}>
       <button type="button" onClick={() => setOpen(p => !p)} aria-label="More actions"
-        style={{ width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(0,0,0,0.06)' : 'transparent', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '10px', cursor: 'pointer', padding: 0, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" color="#555"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+        style={{ width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(197,168,130,0.18)' : 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '10px', cursor: 'pointer', padding: 0, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" color="#8A6535"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       </button>
       {open && (
         <div style={{ position: 'absolute', top: '48px', right: 0, zIndex: 20, minWidth: '180px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '12px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>

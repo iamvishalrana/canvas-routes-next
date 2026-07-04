@@ -967,8 +967,16 @@ export default function EventsClient() {
                   </div>
 
                   {/* Action buttons */}
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
-                    {!isMobile && (
+                  {isMobile ? (
+                    <KebabMenu items={[
+                      { label: 'Move up', onClick: () => moveEvent(item.id, 'up'), disabled: displayIdx === 0 || isPast || moving },
+                      { label: 'Move down', onClick: () => moveEvent(item.id, 'down'), disabled: displayIdx >= nonPastCount - 1 || isPast || moving },
+                      { label: showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`, onClick: () => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price }) },
+                      { label: isEditing ? 'Close' : 'Edit', onClick: () => isEditing ? setEditing(null) : openEdit(item) },
+                      { label: 'Delete', danger: true, onClick: () => setDeleteEventConfirm(item.id) },
+                    ]} />
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
                       <div style={{ display: 'flex', gap: '0.2rem' }}>
                         <button onClick={() => moveEvent(item.id, 'up')} disabled={displayIdx === 0 || isPast || moving} title="Move up" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', cursor: displayIdx === 0 || isPast || moving ? 'not-allowed' : 'pointer', opacity: displayIdx === 0 || isPast || moving ? 0.3 : 1, padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -977,53 +985,70 @@ export default function EventsClient() {
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </button>
                       </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <ToggleSwitch
-                          checked={!!item.registration_enabled}
-                          onChange={v => setRegEnabled(item.id, v)}
-                          disabled={regToggling[item.id]}
-                          label="Member registration"
-                        />
-                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
-                          Members
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <ToggleSwitch
+                            checked={!!item.registration_enabled}
+                            onChange={v => setRegEnabled(item.id, v)}
+                            disabled={regToggling[item.id]}
+                            label="Member registration"
+                          />
+                          <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                            Members
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <ToggleSwitch
+                            checked={item.public_registration_enabled !== false}
+                            onChange={v => setPublicRegEnabled(item.id, v)}
+                            disabled={publicRegToggling[item.id]}
+                            label="Public registration"
+                          />
+                          <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                            Public
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <ToggleSwitch
-                          checked={item.public_registration_enabled !== false}
-                          onChange={v => setPublicRegEnabled(item.id, v)}
-                          disabled={publicRegToggling[item.id]}
-                          label="Public registration"
-                        />
-                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
-                          Public
-                        </span>
-                      </div>
+                      {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
+                      <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price })}>
+                        {showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`}
+                      </GhostBtn>
+                      <GhostBtn small onClick={() => isEditing ? setEditing(null) : openEdit(item)}>
+                        {isEditing ? 'Close' : 'Edit'}
+                      </GhostBtn>
+                      <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
+                    </div>
+                  )}
+                </div>
+
+                {/* Registration toggles — own row on mobile so they don't wrap awkwardly next to the kebab */}
+                {isMobile && (
+                  <div style={{ padding: '0 1.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ToggleSwitch
+                        checked={!!item.registration_enabled}
+                        onChange={v => setRegEnabled(item.id, v)}
+                        disabled={regToggling[item.id]}
+                        label="Member registration"
+                      />
+                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                        Members
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ToggleSwitch
+                        checked={item.public_registration_enabled !== false}
+                        onChange={v => setPublicRegEnabled(item.id, v)}
+                        disabled={publicRegToggling[item.id]}
+                        label="Public registration"
+                      />
+                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                        Public
+                      </span>
                     </div>
                     {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
-                    {isMobile ? (
-                      <KebabMenu items={[
-                        { label: 'Move up', onClick: () => moveEvent(item.id, 'up'), disabled: displayIdx === 0 || isPast || moving },
-                        { label: 'Move down', onClick: () => moveEvent(item.id, 'down'), disabled: displayIdx >= nonPastCount - 1 || isPast || moving },
-                        { label: showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`, onClick: () => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price }) },
-                        { label: isEditing ? 'Close' : 'Edit', onClick: () => isEditing ? setEditing(null) : openEdit(item) },
-                        { label: 'Delete', danger: true, onClick: () => setDeleteEventConfirm(item.id) },
-                      ]} />
-                    ) : (
-                      <>
-                        <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price })}>
-                          {showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`}
-                        </GhostBtn>
-                        <GhostBtn small onClick={() => isEditing ? setEditing(null) : openEdit(item)}>
-                          {isEditing ? 'Close' : 'Edit'}
-                        </GhostBtn>
-                        <DangerBtn small onClick={() => setDeleteEventConfirm(item.id)}>Delete</DangerBtn>
-                      </>
-                    )}
                   </div>
-                </div>
+                )}
 
                 {/* Delete confirm */}
                 {deleteEventConfirm === item.id && (
