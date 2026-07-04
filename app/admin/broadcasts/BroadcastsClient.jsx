@@ -663,8 +663,11 @@ export default function BroadcastsClient() {
   const monthsMap = new Map()
   for (const h of sortedHistory) {
     const d = new Date(h.sent_at)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    if (!monthsMap.has(key)) monthsMap.set(key, { key, label: d.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' }), rows: [] })
+    // Group by Montreal calendar month, not the server's UTC month — a
+    // broadcast sent late evening in Montreal can already be past midnight UTC.
+    const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: 'America/Toronto' }).formatToParts(d)
+    const key = `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}`
+    if (!monthsMap.has(key)) monthsMap.set(key, { key, label: d.toLocaleDateString('en-CA', { month: 'long', year: 'numeric', timeZone: 'America/Toronto' }), rows: [] })
     monthsMap.get(key).rows.push(h)
   }
   const historyMonths = [...monthsMap.values()].sort((a, b) =>
@@ -769,7 +772,7 @@ export default function BroadcastsClient() {
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                         <span style={{ fontSize: '12px', color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>{t.subject}</span>
                         <span style={{ fontSize: '10px', color: '#ccc', flexShrink: 0 }}>
-                          {new Date(t.createdAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {new Date(t.createdAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })}
                         </span>
                       </div>
                     </div>
@@ -865,7 +868,7 @@ export default function BroadcastsClient() {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
                             <span style={{ fontSize: '10px', color: '#bbb' }}>
-                              {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                              {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto' })}
                             </span>
                             <span style={{ fontSize: '11px', fontWeight: '500', color: '#3B6B2F' }}>{h.sent_count}✓</span>
                             {h.failed_count > 0 && <span style={{ fontSize: '11px', fontWeight: '500', color: '#7B2032' }}>{h.failed_count}✗</span>}
@@ -1182,7 +1185,7 @@ export default function BroadcastsClient() {
         <ConfirmDialog
           title="Delete this broadcast from history?"
           message="This only removes the history entry — the emails were already sent. This cannot be undone."
-          details={<><strong>{deleteHistoryConfirm.subject}</strong><br />{new Date(deleteHistoryConfirm.sent_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })} · {deleteHistoryConfirm.sent_count} sent</>}
+          details={<><strong>{deleteHistoryConfirm.subject}</strong><br />{new Date(deleteHistoryConfirm.sent_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })} · {deleteHistoryConfirm.sent_count} sent</>}
           confirmLabel="Yes, delete"
           danger
           busy={deletingHistory}

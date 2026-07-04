@@ -13,7 +13,7 @@ function fmt(cents) {
 
 function fmtDate(iso) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })
 }
 
 const STATUS_COLORS = {
@@ -331,7 +331,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
             r.stripe_payment_status || '',
             r.stripe_payment_type || '',
             r.stripe_payment_intent_id || '',
-            r.stripe_paid_at ? new Date(r.stripe_paid_at).toLocaleDateString('en-CA') : '',
+            r.stripe_paid_at ? new Date(r.stripe_paid_at).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) : '',
           ])}
         />
       </div>

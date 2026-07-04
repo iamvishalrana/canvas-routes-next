@@ -731,7 +731,7 @@ export default function Home() {
                       const closes = e.registration_closes_at ? new Date(e.registration_closes_at) : null
                       const isOpen = now >= opens && (!closes || now <= closes)
                       if (isOpen) return <Link href={e.registration_url || "/members/events"} style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",border:"0.5px solid rgba(59,107,47,0.35)",padding:"3px 10px",display:"inline-block",background:"rgba(59,107,47,0.06)",textDecoration:"none"}}>Register →</Link>
-                      if (now < opens) return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Registration opens {opens.toLocaleDateString('en-CA', {month:'short',day:'numeric'})}</div>
+                      if (now < opens) return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Registration opens {opens.toLocaleDateString('en-CA', {month:'short',day:'numeric',timeZone:'America/Toronto'})}</div>
                       return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#999",paddingBottom:"2px",display:"inline-block"}}>Registration Closed</div>
                     })()
                   : (e.registration_url && !e.photo_url)

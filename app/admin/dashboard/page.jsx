@@ -91,7 +91,7 @@ export default async function DashboardPage() {
                 <div style={{ fontSize: '10px', color: r.type === 'Member' ? '#3B6B2F' : '#8A6535', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>{r.type}{r.tier ? ` · ${r.tier === 'inner_circle' ? 'Inner Circle' : 'Routes'}` : ''}</div>
               </div>
               <div style={{ fontSize: '11px', color: '#bbb', flexShrink: 0, fontFamily: 'var(--font-inter),sans-serif' }}>
-                {new Date(r.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {new Date(r.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })}
               </div>
             </div>
           ))}
