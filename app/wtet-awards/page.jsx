@@ -136,13 +136,17 @@ export default function WtetAwardsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter), sans-serif' }}>
       <PageLoader images={PRELOAD_IMAGES} minMs={1200} />
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: 'clamp(2.5rem,8vw,4.5rem) 1.25rem 4rem' }}>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-          <button onClick={() => setLang(l => l === 'en' ? 'fr' : 'en')} style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.3rem 0.75rem', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#555', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
-            {lang === 'en' ? 'Français' : 'English'}
+      {/* Language toggle */}
+      <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+        {['en', 'fr'].map(l => (
+          <button key={l} onClick={() => setLang(l)} style={{ padding: '0.45rem 0.75rem', background: lang === l ? '#c5a882' : 'none', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(197,168,130,0.55)', fontWeight: lang === l ? '700' : '400', fontFamily: 'sans-serif', transition: 'all 0.15s ease' }}>
+            {l.toUpperCase()}
           </button>
-        </div>
+        ))}
+      </div>
+
+      <div style={{ maxWidth: '560px', margin: '0 auto', padding: 'clamp(2.5rem,8vw,4.5rem) 1.25rem 4rem' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '190px', margin: '0 auto 1.5rem', display: 'block', opacity: 0.94 }} />
