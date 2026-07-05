@@ -1,8 +1,13 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
+import PageLoader from '../../components/PageLoader'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 import { captureException } from '../../lib/sentry'
 import { WTET_AWARD_CATEGORIES } from '../../lib/wtetAwardsContent'
+import { WTET_PARTICIPANTS } from '../../lib/wtetParticipants'
+
+const PRELOAD_IMAGES = ['/canvas_routes_refined.png', ...WTET_PARTICIPANTS.map(p => p.photo)]
 
 const T = {
   en: {
@@ -126,6 +131,7 @@ export default function WtetAwardsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter), sans-serif' }}>
+      <PageLoader images={PRELOAD_IMAGES} minMs={1200} />
       <div style={{ maxWidth: '560px', margin: '0 auto', padding: 'clamp(2.5rem,8vw,4.5rem) 1.25rem 4rem' }}>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
@@ -135,6 +141,7 @@ export default function WtetAwardsPage() {
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '96px', margin: '0 auto 1.5rem', display: 'block', opacity: 0.94 }} />
           <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.75rem' }}>{t.eyebrow}</div>
           <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.2rem,6vw,3rem)', fontWeight: '400', color: '#0F1E14', margin: '0 0 1rem', lineHeight: '1.1' }}>{t.title}</h1>
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75', margin: 0, maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{t.subtitle}</p>
@@ -213,7 +220,9 @@ export default function WtetAwardsPage() {
                           </div>
                         )}
                         {c.photo ? (
-                          <img src={c.photo} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '7px', display: 'block' }} />
+                          <div style={{ width: '100%', aspectRatio: '1', borderRadius: '7px', position: 'relative', overflow: 'hidden', background: '#EDE8E1' }}>
+                            <Image src={c.photo} alt={c.car} fill sizes="100px" quality={60} style={{ objectFit: 'cover' }} />
+                          </div>
                         ) : (
                           <div style={{ width: '100%', aspectRatio: '1', borderRadius: '7px', background: '#EDE8E1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><path d="M3 13h18v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4z"/><circle cx="7" cy="15" r="0.5"/><circle cx="17" cy="15" r="0.5"/></svg>

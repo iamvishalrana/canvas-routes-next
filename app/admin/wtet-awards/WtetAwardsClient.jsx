@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Err, ToggleSwitch } from '../_components/shared'
 import { CATEGORY_DISCOUNT_PCT } from '../../../lib/wtetAwardsContent'
 
@@ -122,7 +123,9 @@ export default function WtetAwardsClient() {
                       {i + 1}
                     </div>
                     {r.photo ? (
-                      <img src={r.photo} alt="" style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                      <div style={{ width: '32px', height: '32px', borderRadius: '6px', position: 'relative', overflow: 'hidden', flexShrink: 0, background: '#EDE8E1' }}>
+                        <Image src={r.photo} alt="" fill sizes="32px" quality={60} style={{ objectFit: 'cover' }} />
+                      </div>
                     ) : (
                       <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#EDE8E1', flexShrink: 0 }} />
                     )}

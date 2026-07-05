@@ -52,7 +52,7 @@ function denyConsent() {
 
 // Pages where the banner never shows — kept as prefixes checked together so
 // there's a single source of truth instead of scattered early-returns.
-const HIDDEN_PATH_PREFIXES = ['/verify', '/members', '/admin', '/wtet/checkin']
+const HIDDEN_PATH_PREFIXES = ['/verify', '/members', '/admin', '/wtet/checkin', '/wtet-awards']
 
 export default function CookieBanner() {
   const pathname = usePathname()
