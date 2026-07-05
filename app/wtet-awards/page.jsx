@@ -4,7 +4,7 @@ import Image from 'next/image'
 import PageLoader from '../../components/PageLoader'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 import { captureException } from '../../lib/sentry'
-import { WTET_AWARD_CATEGORIES } from '../../lib/wtetAwardsContent'
+import { WTET_AWARD_CATEGORIES, CATEGORY_DISCOUNT_PCT } from '../../lib/wtetAwardsContent'
 import { WTET_PARTICIPANTS } from '../../lib/wtetParticipants'
 
 const PRELOAD_IMAGES = ['/canvas_routes_refined.png', ...WTET_PARTICIPANTS.map(p => p.photo)]
@@ -26,6 +26,8 @@ const T = {
     successTitle: 'Your ballot is in!', successBody: 'You can come back and change your vote any time before voting closes.',
     votingAs: name => `Voting as ${name}`,
     incompleteNote: 'Pick one car in each category to submit.',
+    discountTag: pct => `Winner gets ${pct}% off the next route`,
+    finishLater: 'Finish later',
   },
   fr: {
     eyebrow: 'Whips to Eastern Townships',
@@ -43,6 +45,8 @@ const T = {
     successTitle: 'Votre vote a été reçu!', successBody: 'Vous pouvez revenir modifier votre vote en tout temps avant la fermeture du vote.',
     votingAs: name => `Vous votez en tant que ${name}`,
     incompleteNote: 'Choisissez une voiture dans chaque catégorie pour soumettre.',
+    discountTag: pct => `Le gagnant reçoit ${pct} % de rabais sur la prochaine route`,
+    finishLater: 'Terminer plus tard',
   },
 }
 
@@ -141,7 +145,7 @@ export default function WtetAwardsPage() {
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '96px', margin: '0 auto 1.5rem', display: 'block', opacity: 0.94 }} />
+          <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '190px', margin: '0 auto 1.5rem', display: 'block', opacity: 0.94 }} />
           <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.75rem' }}>{t.eyebrow}</div>
           <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.2rem,6vw,3rem)', fontWeight: '400', color: '#0F1E14', margin: '0 0 1rem', lineHeight: '1.1' }}>{t.title}</h1>
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75', margin: 0, maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{t.subtitle}</p>
@@ -177,7 +181,7 @@ export default function WtetAwardsPage() {
           </div>
         ) : (
           <form onSubmit={submitVote}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', marginBottom: '1.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
               <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c5a882', margin: 0 }}>
                 {t.votingAs(verified.voterName)}
               </p>
@@ -187,6 +191,15 @@ export default function WtetAwardsPage() {
                 ))}
               </div>
             </div>
+            <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setVerified(null)}
+                style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', color: '#999', textDecoration: 'underline', textUnderlineOffset: '2px', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}
+              >
+                {t.finishLater}
+              </button>
+            </div>
             {WTET_AWARD_CATEGORIES.map((cat, catIdx) => (
               <div key={cat.id} style={{ background: '#fff', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '0.5px solid rgba(0,0,0,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem', marginBottom: '0.5rem' }}>
@@ -194,6 +207,11 @@ export default function WtetAwardsPage() {
                     {catIdx + 1}
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.3rem', fontWeight: '500', color: '#0F1E14', margin: 0, lineHeight: '1.25' }}>{cat[lang].label}</h2>
+                </div>
+                <div style={{ marginBottom: '0.9rem' }}>
+                  <span style={{ display: 'inline-block', fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#45643c', border: '0.5px solid #45643c', borderRadius: '99px', padding: '3px 9px', fontWeight: '600' }}>
+                    {t.discountTag(CATEGORY_DISCOUNT_PCT[cat.id])}
+                  </span>
                 </div>
                 <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.7', margin: '0 0 1.1rem' }}>{cat[lang].body}</p>
                 <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '0.6rem' }}>{t.pickLabel}</label>
