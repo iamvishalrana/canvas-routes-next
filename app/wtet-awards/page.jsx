@@ -215,12 +215,11 @@ export default function WtetAwardsPage() {
                         {c.photo ? (
                           <img src={c.photo} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '7px', display: 'block' }} />
                         ) : (
-                          <div style={{ width: '100%', aspectRatio: '1', borderRadius: '7px', background: '#EDE8E1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#999', fontFamily: 'var(--font-cormorant), serif' }}>
-                            {c.name[0]}
+                          <div style={{ width: '100%', aspectRatio: '1', borderRadius: '7px', background: '#EDE8E1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><path d="M3 13h18v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4z"/><circle cx="7" cy="15" r="0.5"/><circle cx="17" cy="15" r="0.5"/></svg>
                           </div>
                         )}
-                        <div style={{ fontSize: '10.5px', fontWeight: '600', color: '#1a1a1a', textAlign: 'center', lineHeight: '1.25' }}>{c.name}</div>
-                        <div style={{ fontSize: '9px', color: '#999', textAlign: 'center', lineHeight: '1.25', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.car}</div>
+                        <div style={{ fontSize: '10.5px', fontWeight: '600', color: '#1a1a1a', textAlign: 'center', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.car}</div>
                       </button>
                     )
                   })}
