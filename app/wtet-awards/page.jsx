@@ -191,11 +191,11 @@ export default function WtetAwardsPage() {
                 ))}
               </div>
             </div>
-            <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
               <button
                 type="button"
                 onClick={() => setVerified(null)}
-                style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', color: '#999', textDecoration: 'underline', textUnderlineOffset: '2px', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}
+                style={{ background: 'none', border: 'none', padding: '0.95rem 1rem', margin: '-0.95rem 0', fontSize: '11px', color: '#999', textDecoration: 'underline', textUnderlineOffset: '2px', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
               >
                 {t.finishLater}
               </button>
