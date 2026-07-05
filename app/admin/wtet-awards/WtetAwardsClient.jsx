@@ -1,10 +1,10 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { Err, ToggleSwitch } from '../_components/shared'
+import { CATEGORY_DISCOUNT_PCT } from '../../../lib/wtetAwardsContent'
 
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }
 const RANK_COLORS = ['#c5a882', '#999', '#a97142'] // gold, silver, bronze
-const RANK_DISCOUNT = ['50%', '25%', '15%']
 
 export default function WtetAwardsClient() {
   const [loading, setLoading] = useState(true)
@@ -87,7 +87,12 @@ export default function WtetAwardsClient() {
         const results = data.tallies[cat.id] || []
         return (
           <div key={cat.id} style={CARD}>
-            <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', margin: '0 0 1rem' }}>{cat.label}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', margin: 0 }}>{cat.label}</h2>
+              <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid #c5a882', borderRadius: '99px', padding: '2px 8px', flexShrink: 0 }}>
+                Winner gets {CATEGORY_DISCOUNT_PCT[cat.id]}% off
+              </span>
+            </div>
             {results.length === 0 ? (
               <div style={{ fontSize: '12px', color: '#ccc' }}>No votes yet.</div>
             ) : (
@@ -98,9 +103,9 @@ export default function WtetAwardsClient() {
                       {i + 1}
                     </div>
                     <div style={{ flex: 1, fontSize: '13px', color: '#1a1a1a' }}>{r.name}</div>
-                    {i < 3 && (
-                      <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: RANK_COLORS[i], border: `0.5px solid ${RANK_COLORS[i]}`, borderRadius: '99px', padding: '2px 8px', flexShrink: 0 }}>
-                        {RANK_DISCOUNT[i]} off
+                    {i === 0 && (
+                      <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: RANK_COLORS[0], border: `0.5px solid ${RANK_COLORS[0]}`, borderRadius: '99px', padding: '2px 8px', flexShrink: 0 }}>
+                        {CATEGORY_DISCOUNT_PCT[cat.id]}% off
                       </span>
                     )}
                     <div style={{ fontSize: '12px', color: '#888', flexShrink: 0, minWidth: '48px', textAlign: 'right' }}>{r.count} vote{r.count !== 1 ? 's' : ''}</div>

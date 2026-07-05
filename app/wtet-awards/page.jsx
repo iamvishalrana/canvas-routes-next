@@ -17,9 +17,10 @@ const T = {
     genericError: 'Something went wrong — please try again.',
     closedTitle: 'Voting isn\'t open yet',
     closedBody: "Check back soon — we'll open the ballot once it's time to vote.",
-    pickLabel: 'Pick a car', submitBtn: 'Submit My Vote', submittingBtn: 'Submitting…', updateBtn: 'Update My Vote',
+    pickLabel: 'Tap a car to vote', submitBtn: 'Submit My Vote', submittingBtn: 'Submitting…', updateBtn: 'Update My Vote',
     successTitle: 'Your ballot is in!', successBody: 'You can come back and change your vote any time before voting closes.',
     votingAs: name => `Voting as ${name}`,
+    incompleteNote: 'Pick one car in each category to submit.',
   },
   fr: {
     eyebrow: 'Whips to Eastern Townships',
@@ -33,9 +34,10 @@ const T = {
     genericError: 'Une erreur est survenue — veuillez réessayer.',
     closedTitle: "Le vote n'est pas encore ouvert",
     closedBody: 'Revenez bientôt — nous ouvrirons le vote quand ce sera le temps.',
-    pickLabel: 'Choisissez une voiture', submitBtn: 'Soumettre Mon Vote', submittingBtn: 'Envoi…', updateBtn: 'Modifier Mon Vote',
+    pickLabel: 'Touchez une voiture pour voter', submitBtn: 'Soumettre Mon Vote', submittingBtn: 'Envoi…', updateBtn: 'Modifier Mon Vote',
     successTitle: 'Votre vote a été reçu!', successBody: 'Vous pouvez revenir modifier votre vote en tout temps avant la fermeture du vote.',
     votingAs: name => `Vous votez en tant que ${name}`,
+    incompleteNote: 'Choisissez une voiture dans chaque catégorie pour soumettre.',
   },
 }
 
@@ -55,6 +57,7 @@ export default function WtetAwardsPage() {
   const [verified, setVerified] = useState(null) // { email, voterName, candidates, votingOpen, existingVote }
 
   const [picks, setPicks] = useState({ most_beautiful: '', best_driver: '', best_energy: '' })
+  const allPicked = WTET_AWARD_CATEGORIES.every(cat => picks[cat.id])
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [submitted, setSubmitted] = useState(false)
@@ -167,32 +170,66 @@ export default function WtetAwardsPage() {
           </div>
         ) : (
           <form onSubmit={submitVote}>
-            <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c5a882', textAlign: 'center', marginBottom: '1.75rem' }}>
-              {t.votingAs(verified.voterName)}
-            </p>
-            {WTET_AWARD_CATEGORIES.map(cat => (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', marginBottom: '1.75rem' }}>
+              <p style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c5a882', margin: 0 }}>
+                {t.votingAs(verified.voterName)}
+              </p>
+              <div style={{ display: 'flex', gap: '5px' }}>
+                {WTET_AWARD_CATEGORIES.map(cat => (
+                  <div key={cat.id} style={{ width: '6px', height: '6px', borderRadius: '50%', background: picks[cat.id] ? '#45643c' : 'rgba(0,0,0,0.15)', transition: 'background 0.15s' }} />
+                ))}
+              </div>
+            </div>
+            {WTET_AWARD_CATEGORIES.map((cat, catIdx) => (
               <div key={cat.id} style={{ background: '#fff', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '0.5px solid rgba(0,0,0,0.06)' }}>
-                <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.3rem', fontWeight: '500', color: '#0F1E14', margin: '0 0 0.5rem' }}>{cat[lang].label}</h2>
-                <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.7', margin: '0 0 1rem' }}>{cat[lang].body}</p>
-                <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '0.4rem' }}>{t.pickLabel}</label>
-                <div style={{ position: 'relative' }}>
-                  <select
-                    value={picks[cat.id]}
-                    onChange={e => setPicks(p => ({ ...p, [cat.id]: e.target.value }))}
-                    required
-                    style={{ ...inp, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' }}
-                  >
-                    <option value="" disabled>—</option>
-                    {verified.candidates.map(c => (
-                      <option key={c.name} value={c.name}>{c.name} — {c.car}</option>
-                    ))}
-                  </select>
-                  <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem', marginBottom: '0.5rem' }}>
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: '1px solid #c5a882', color: '#c5a882', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '3px', fontFamily: 'var(--font-inter), sans-serif' }}>
+                    {catIdx + 1}
+                  </div>
+                  <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.3rem', fontWeight: '500', color: '#0F1E14', margin: 0, lineHeight: '1.25' }}>{cat[lang].label}</h2>
+                </div>
+                <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.7', margin: '0 0 1.1rem' }}>{cat[lang].body}</p>
+                <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '0.6rem' }}>{t.pickLabel}</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.6rem' }}>
+                  {verified.candidates.map(c => {
+                    const isSelected = picks[cat.id] === c.name
+                    return (
+                      <button
+                        key={c.name}
+                        type="button"
+                        onClick={() => setPicks(p => ({ ...p, [cat.id]: c.name }))}
+                        aria-pressed={isSelected}
+                        style={{
+                          position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem',
+                          padding: '0.5rem 0.35rem', background: isSelected ? 'rgba(197,168,130,0.14)' : '#fff',
+                          border: isSelected ? '1.5px solid #c5a882' : '0.5px solid rgba(0,0,0,0.1)',
+                          borderRadius: '10px', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif',
+                          WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
+                        }}
+                      >
+                        {isSelected && (
+                          <div style={{ position: 'absolute', top: '4px', right: '4px', width: '16px', height: '16px', borderRadius: '50%', background: '#45643c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          </div>
+                        )}
+                        {c.photo ? (
+                          <img src={c.photo} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '7px', display: 'block' }} />
+                        ) : (
+                          <div style={{ width: '100%', aspectRatio: '1', borderRadius: '7px', background: '#EDE8E1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#999', fontFamily: 'var(--font-cormorant), serif' }}>
+                            {c.name[0]}
+                          </div>
+                        )}
+                        <div style={{ fontSize: '10.5px', fontWeight: '600', color: '#1a1a1a', textAlign: 'center', lineHeight: '1.25' }}>{c.name}</div>
+                        <div style={{ fontSize: '9px', color: '#999', textAlign: 'center', lineHeight: '1.25', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.car}</div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             ))}
             {submitError && <p style={{ fontSize: '12px', color: '#7B2032', margin: '0 0 1rem', textAlign: 'center' }}>{submitError}</p>}
-            <button type="submit" disabled={submitting} style={{ width: '100%', padding: '0.9rem', background: '#45643c', color: '#fff', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: '600', cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.6 : 1, fontFamily: 'var(--font-inter), sans-serif' }}>
+            {!allPicked && <p style={{ fontSize: '12px', color: '#999', margin: '0 0 1rem', textAlign: 'center' }}>{t.incompleteNote}</p>}
+            <button type="submit" disabled={submitting || !allPicked} style={{ width: '100%', padding: '0.9rem', background: '#45643c', color: '#fff', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: '600', cursor: (submitting || !allPicked) ? 'not-allowed' : 'pointer', opacity: (submitting || !allPicked) ? 0.5 : 1, fontFamily: 'var(--font-inter), sans-serif' }}>
               {submitting ? t.submittingBtn : (verified.existingVote ? t.updateBtn : t.submitBtn)}
             </button>
           </form>
