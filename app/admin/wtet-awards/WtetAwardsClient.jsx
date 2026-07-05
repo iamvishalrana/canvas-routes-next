@@ -13,6 +13,9 @@ export default function WtetAwardsClient() {
   const [toggling, setToggling] = useState(false)
   const [toggleError, setToggleError] = useState(null)
   const [showVoters, setShowVoters] = useState(false)
+  const [confirmingReset, setConfirmingReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [resetError, setResetError] = useState(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -46,6 +49,22 @@ export default function WtetAwardsClient() {
       setToggleError('Network error.')
     } finally {
       setToggling(false)
+    }
+  }
+
+  async function resetVotes() {
+    setResetting(true)
+    setResetError(null)
+    try {
+      const res = await fetch('/api/admin/wtet-awards/reset', { method: 'POST' })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setResetError(d.error || 'Failed to reset.'); setResetting(false); return }
+      setConfirmingReset(false)
+      setResetting(false)
+      load()
+    } catch {
+      setResetError('Network error.')
+      setResetting(false)
     }
   }
 
@@ -145,6 +164,42 @@ export default function WtetAwardsClient() {
             ))}
           </div>
         )}
+      </div>
+
+      <div style={{ ...CARD, border: '0.5px solid rgba(123,32,50,0.25)' }}>
+        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Danger Zone</div>
+        <div style={{ fontSize: '12px', color: '#888', margin: '0.2rem 0 1rem' }}>
+          Permanently deletes every ballot cast so far ({data.totalVotes}). Use this to clear test votes before real voting starts — cannot be undone.
+        </div>
+        {!confirmingReset ? (
+          <button
+            onClick={() => setConfirmingReset(true)}
+            style={{ background: 'none', border: '0.5px solid #7B2032', color: '#7B2032', borderRadius: '6px', padding: '0.6rem 1.1rem', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}
+          >
+            Reset All Votes
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '12px', color: '#7B2032', fontWeight: '500' }}>
+              Delete all {data.totalVotes} ballot{data.totalVotes !== 1 ? 's' : ''}? This can't be undone.
+            </span>
+            <button
+              onClick={resetVotes}
+              disabled={resetting}
+              style={{ background: '#7B2032', border: 'none', color: '#fff', borderRadius: '6px', padding: '0.5rem 1rem', fontSize: '12px', fontWeight: '600', cursor: resetting ? 'wait' : 'pointer', opacity: resetting ? 0.6 : 1 }}
+            >
+              {resetting ? 'Resetting…' : 'Yes, delete everything'}
+            </button>
+            <button
+              onClick={() => setConfirmingReset(false)}
+              disabled={resetting}
+              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', color: '#555', borderRadius: '6px', padding: '0.5rem 1rem', fontSize: '12px', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+        {resetError && <Err msg={resetError} />}
       </div>
     </div>
   )
