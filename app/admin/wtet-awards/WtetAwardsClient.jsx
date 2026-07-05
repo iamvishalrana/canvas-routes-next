@@ -98,11 +98,19 @@ export default function WtetAwardsClient() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {results.map((r, i) => (
-                  <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '20px', fontSize: '11px', fontWeight: '600', color: i < 3 ? RANK_COLORS[i] : '#ccc', flexShrink: 0 }}>
+                  <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.3rem 0', borderBottom: i < results.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                    <div style={{ width: '18px', fontSize: '11px', fontWeight: '600', color: i < 3 ? RANK_COLORS[i] : '#ccc', flexShrink: 0 }}>
                       {i + 1}
                     </div>
-                    <div style={{ flex: 1, fontSize: '13px', color: '#1a1a1a' }}>{r.name}</div>
+                    {r.photo ? (
+                      <img src={r.photo} alt="" style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#EDE8E1', flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
+                      {r.car && <div style={{ fontSize: '11px', color: '#999', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.car}</div>}
+                    </div>
                     {i === 0 && (
                       <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: RANK_COLORS[0], border: `0.5px solid ${RANK_COLORS[0]}`, borderRadius: '99px', padding: '2px 8px', flexShrink: 0 }}>
                         {CATEGORY_DISCOUNT_PCT[cat.id]}% off

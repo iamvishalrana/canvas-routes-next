@@ -10,6 +10,8 @@ export async function GET() {
   const { data: votes, error } = await supabase.from('wtet_awards_votes').select('*').order('created_at', { ascending: true })
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
+  const byName = new Map(WTET_PARTICIPANTS.map(p => [p.name, p]))
+
   const tallies = {}
   for (const cat of WTET_AWARD_CATEGORIES) {
     const counts = {}
@@ -19,7 +21,7 @@ export async function GET() {
       counts[pick] = (counts[pick] || 0) + 1
     }
     tallies[cat.id] = Object.entries(counts)
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({ name, count, car: byName.get(name)?.car || null, photo: byName.get(name)?.photo || null }))
       .sort((a, b) => b.count - a.count)
   }
 
