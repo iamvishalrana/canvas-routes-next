@@ -581,7 +581,9 @@ export default function MembershipContent() {
         { href: '/#events', label: 'Events' },
         { href: '/#contact',label: 'Contact' },
         { href: '/faq',     label: 'FAQ' },
-      ]} ctaLabel="Membership" />
+      ]} ctaLabel="Membership"
+      banner={<>Use code <strong>FOUNDING</strong> for a special discount on your membership <span style={{ opacity: 0.6, marginLeft: '0.3rem' }}>→</span></>}
+      bannerHref="#register" />
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
       <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>

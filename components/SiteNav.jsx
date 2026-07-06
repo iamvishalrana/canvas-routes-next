@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '../lib/supabase/client'
@@ -11,9 +11,26 @@ import { createClient } from '../lib/supabase/client'
  * Props:
  *   links   – array of { href, label, onClick? } for the desktop + mobile nav
  *   ctaLabel – label for the Membership button (defaults to 'Membership')
+ *   banner   – optional announcement string/node shown as a fixed strip above
+ *              the nav. Its height is measured so the nav (and mobile menu)
+ *              shift down by exactly that amount — nothing hardcoded.
+ *   bannerHref – optional link target if the banner should be clickable
  */
-export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMenuChange }) {
+export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMenuChange, banner, bannerHref }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const bannerRef = useRef(null)
+  const [bannerHeight, setBannerHeight] = useState(0)
+
+  useEffect(() => {
+    if (!banner) { setBannerHeight(0); return }
+    const el = bannerRef.current
+    if (!el) return
+    const update = () => setBannerHeight(el.offsetHeight)
+    update()
+    const obs = new ResizeObserver(update)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [banner])
 
   function toggleMenu(open) {
     setMenuOpen(open)
@@ -42,9 +59,26 @@ export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMe
 
   const linkStyle = { color: '#555', textDecoration: 'none' }
 
+  const BannerTag = bannerHref ? 'a' : 'div'
+
   return (
     <>
-      <nav className="nav">
+      {banner && (
+        <BannerTag
+          ref={bannerRef}
+          {...(bannerHref ? { href: bannerHref } : {})}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 101,
+            display: 'block', background: '#0F1E14', color: '#c5a882',
+            textAlign: 'center', padding: '0.6rem 1.25rem',
+            fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase',
+            fontFamily: "'Inter',sans-serif", textDecoration: 'none', cursor: bannerHref ? 'pointer' : 'default',
+          }}
+        >
+          {banner}
+        </BannerTag>
+      )}
+      <nav className="nav" style={{ top: bannerHeight }}>
         <Link href="/">
           <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
         </Link>
@@ -89,7 +123,7 @@ export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMe
       </nav>
 
       {/* Mobile menu */}
-      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`} style={{ marginTop: bannerHeight }}>
         {links.map((l, i) =>
           l.onClick
             ? <a key={i} href={l.href} onClick={e => { l.onClick(e); toggleMenu(false) }} style={linkStyle}>{l.label}</a>
