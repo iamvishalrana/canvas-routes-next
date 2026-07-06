@@ -707,7 +707,7 @@ export default function Home() {
               const shared = {
                 date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '',
                 teaser: ev.description || '', _id: ev.id, photo_url: ev.photo_url || null,
-                _sortDate: ev.date || ev.date_display,
+                _sortDate: ev.date || ev.date_display, tripLength: ev.trip_length || null,
               }
               return past
                 ? { ...shared, type: ev.type === 'Route' ? 'Past Route' : 'Past Event', past: true }
@@ -729,9 +729,12 @@ export default function Home() {
                 : {background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",padding:"2rem"}
             } onClick={(e.past || e.photo_url) ? () => setPastModalEvent(e) : undefined}>
               {e.past && <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.8),transparent)"}} />}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.65)":"#7B2032"}}>{e.date}</div>
-                <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.6)":"#7B5B2E",border:`0.5px solid ${e.past?"rgba(197,168,130,0.5)":"#7B5B2E"}`,padding:"2px 8px"}}>{e.type}</div>
+                <div style={{display:"flex",gap:"0.4rem",flexWrap:"wrap"}}>
+                  {e.tripLength && <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.6)":"#3B6B2F",border:`0.5px solid ${e.past?"rgba(197,168,130,0.5)":"rgba(59,107,47,0.35)"}`,padding:"2px 8px"}}>{e.tripLength}</div>}
+                  <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.6)":"#7B5B2E",border:`0.5px solid ${e.past?"rgba(197,168,130,0.5)":"#7B5B2E"}`,padding:"2px 8px"}}>{e.type}</div>
+                </div>
               </div>
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:e.past?"#F5F1EC":"#1A1008",marginBottom:"0.5rem"}}>{e.name}</div>
               <div style={{fontSize:"12px",color:e.past?"rgba(245,241,236,0.4)":"#5A4A38",marginBottom:e.teaser?"0.75rem":"1.5rem"}}>{e.loc}</div>

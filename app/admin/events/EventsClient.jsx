@@ -3,9 +3,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
-  EVENT_TYPES, normalizeEventName,
+  EVENT_TYPES, TRIP_LENGTH_OPTIONS, normalizeEventName,
   parseCarMakeModel,
-  inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu, CopyBtn,
+  inp, sel, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu, CopyBtn,
 } from '../_components/shared'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -213,6 +213,7 @@ const FIELD_INFO = {
   name:                 'Shown on the event tile and popup on the homepage, and in the members events portal.',
   date:                 'The actual event date in YYYY-MM-DD format. Used for sorting, calendar invites, and auto-formatting the date when no Date Display is set.',
   type:                 'Categorises the event. Also controls which RSVP questions members see on the confirm-your-spot page — Route shows dietary / passengers / WhatsApp; all other types show guest / colour / mods / arrival time.',
+  trip_length:          'Shown as its own tile on the homepage event card (e.g. "Overnight"). Leave as None to hide it — mainly useful for Route events.',
   date_display:         'Optional free-text override for how the date appears to members. Useful for multi-day events (e.g. "June 7–8, 2026") or month-only ranges. Leave blank to auto-format the Date field.',
   location:             'Shown on the tile, popup, and used to generate an embedded map preview. Use the full venue name or address for the best map match.',
   description:          'Short teaser shown on the event tile and in the popup. 1–2 sentences is ideal.',
@@ -249,7 +250,7 @@ function InfoTip({ field }) {
   )
 }
 
-const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Route', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '', registration_visibility: 'members' }
+const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Route', trip_length: '', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '', registration_visibility: 'members' }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -407,7 +408,7 @@ export default function EventsClient() {
     setEditForm({
       name: item.name, date: item.date, date_display: item.date_display || '',
       location: item.location || '', description: item.description || '',
-      type: item.type, registration_url: item.registration_url || '',
+      type: item.type, trip_length: item.trip_length || '', registration_url: item.registration_url || '',
       registration_opens_at: item.registration_opens_at || '',
       registration_closes_at: item.registration_closes_at || '',
       capacity: item.capacity || '', member_price: item.member_price || null,
@@ -852,10 +853,16 @@ export default function EventsClient() {
       <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>New Event</div>
         <form onSubmit={post}>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.3fr 0.9fr 140px 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div><L>Event Name *<InfoTip field="name" /></L><input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Into the Laurentians" maxLength={200} /></div>
             <div><L>Date *<InfoTip field="date" /></L><input style={inp} type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></div>
             <div><L>Type *<InfoTip field="type" /></L><SelectWrap value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
+            <div><L>Trip Length<InfoTip field="trip_length" /></L>
+              <select style={sel} value={form.trip_length} onChange={e => setForm(p => ({ ...p, trip_length: e.target.value }))}>
+                <option value="">None</option>
+                {TRIP_LENGTH_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
           </div>
           <div style={{ marginBottom: '0.75rem' }}><L>Date Display<InfoTip field="date_display" /></L><input style={inp} value={form.date_display} onChange={e => setForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
           <div style={{ marginBottom: '0.75rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="Montreal → Mont-Tremblant" /></div>
@@ -936,6 +943,7 @@ export default function EventsClient() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.name}</span>
                       <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.45)', padding: '2px 7px' }}>{item.type}</span>
+                      {item.trip_length && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 7px' }}>{item.trip_length}</span>}
                       {item.registration_opens_at && (() => {
                         const now = new Date()
                         const opens = new Date(item.registration_opens_at)
@@ -1486,10 +1494,16 @@ export default function EventsClient() {
                     {/* ── Settings tab ──────────────────────────────────── */}
                     {tab === 'settings' && (
                       <div style={{ padding: '1.5rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.3fr 0.9fr 140px 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
                           <div><L>Name<InfoTip field="name" /></L><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></div>
                           <div><L>Date<InfoTip field="date" /></L><input style={inp} type="date" value={editForm.date || ''} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} /></div>
                           <div><L>Type<InfoTip field="type" /></L><SelectWrap value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} options={EVENT_TYPES} /></div>
+                          <div><L>Trip Length<InfoTip field="trip_length" /></L>
+                            <select style={sel} value={editForm.trip_length || ''} onChange={e => setEditForm(p => ({ ...p, trip_length: e.target.value }))}>
+                              <option value="">None</option>
+                              {TRIP_LENGTH_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                          </div>
                         </div>
                         <div style={{ marginBottom: '0.6rem' }}><L>Date Display<InfoTip field="date_display" /></L><input style={inp} value={editForm.date_display || ''} onChange={e => setEditForm(p => ({ ...p, date_display: e.target.value }))} placeholder="June 2026" /></div>
                         <div style={{ marginBottom: '0.6rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={editForm.location || ''} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} /></div>

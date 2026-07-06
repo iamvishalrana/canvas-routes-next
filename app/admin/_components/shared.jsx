@@ -17,6 +17,7 @@ export const STATUS_COLORS = {
   expired:   { bg: 'rgba(0,0,0,0.05)',      text: '#999',    border: 'rgba(0,0,0,0.15)'      },
 }
 export const EVENT_TYPES = ['Route', 'Cars & Coffee', 'Social', 'Track Day', 'Other']
+export const TRIP_LENGTH_OPTIONS = ['Same Day', 'Overnight', 'Multiple Nights']
 export const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 export const CANONICAL_EVENTS = [
   { name: 'Cars & Coffee — May 9, 2026', date: '2026-05-09' },
