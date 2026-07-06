@@ -156,13 +156,25 @@ export default function WtetAwardsClient() {
           <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Who's voted ({data.voters.length})</span>
         </button>
         {showVoters && (
-          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {data.voters.length === 0 ? (
               <div style={{ fontSize: '12px', color: '#ccc' }}>No one yet.</div>
             ) : data.voters.map(v => (
-              <div key={v.email} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#555', borderBottom: '0.5px solid rgba(0,0,0,0.05)', paddingBottom: '0.4rem' }}>
-                <span>{v.name} <span style={{ color: '#bbb' }}>· {v.email}</span></span>
-                <span style={{ color: '#bbb', flexShrink: 0 }}>{new Date(v.votedAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+              <div key={v.email} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.05)', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#555', marginBottom: '0.4rem' }}>
+                  <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{v.name} <span style={{ color: '#bbb', fontWeight: '400' }}>· {v.email}</span></span>
+                  <span style={{ color: '#bbb', flexShrink: 0 }}>{new Date(v.votedAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {v.picks.map(p => (
+                    <div key={p.categoryId} style={{ fontSize: '11px', color: '#888', display: 'flex', gap: '0.4rem' }}>
+                      <span style={{ minWidth: '150px', flexShrink: 0, color: '#aaa' }}>{p.categoryLabel}</span>
+                      <span style={{ color: p.name ? '#1a1a1a' : '#ccc' }}>
+                        {p.name || '—'}{p.car ? ` — ${p.car}` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

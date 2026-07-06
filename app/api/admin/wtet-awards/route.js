@@ -30,6 +30,16 @@ export async function GET() {
     tallies,
     totalVotes:    votes?.length || 0,
     totalEligible: WTET_PARTICIPANTS.length,
-    voters:        (votes || []).map(v => ({ email: v.email, name: v.voter_name, votedAt: v.updated_at })),
+    voters: (votes || []).map(v => ({
+      email: v.email,
+      name: v.voter_name,
+      votedAt: v.updated_at,
+      picks: WTET_AWARD_CATEGORIES.map(cat => ({
+        categoryId:    cat.id,
+        categoryLabel: cat.en.label,
+        name:          v[cat.id] || null,
+        car:           byName.get(v[cat.id])?.car || null,
+      })),
+    })),
   })
 }
