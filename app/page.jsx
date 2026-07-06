@@ -702,9 +702,9 @@ export default function Home() {
           {[
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
-            {date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true},
+            {date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Route",past:true},
             {date:"June 20, 2026",name:"Cars, Coffee & Dad Jokes",loc:"Cafe Napoleon, LaSalle",type:"Past Event",past:true},
-            {date:"July 5, 2026",name:"Whips to Eastern Townships",loc:"Montreal, QC",type:"Past Event",past:true},
+            {date:"July 5, 2026",name:"Whips to Eastern Townships",loc:"Montreal, QC",type:"Past Route",past:true},
             ...dbEvents.map(ev => ({
               date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '', type: ev.type,
               teaser: ev.description || '', _id: ev.id,
