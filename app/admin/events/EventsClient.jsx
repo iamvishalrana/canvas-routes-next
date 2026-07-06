@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   EVENT_TYPES, normalizeEventName,
   parseCarMakeModel,
-  inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu,
+  inp, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu, CopyBtn,
 } from '../_components/shared'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -1266,7 +1266,7 @@ export default function EventsClient() {
                                               ? <button onClick={() => router.push(r.href)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '12px', color: '#333', fontWeight: '500', textAlign: 'left', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.2)' }}>{r.name || '—'}</button>
                                               : <div style={{ fontSize: '12px', color: '#333', fontWeight: '500' }}>{r.name || '—'}</div>
                                             }
-                                            <div style={{ fontSize: '11px', color: '#888' }}>{r.email || '—'}</div>
+                                            <div style={{ fontSize: '11px', color: '#888', display: 'flex', alignItems: 'center', gap: '2px' }}>{r.email || '—'}<CopyBtn value={r.email} /></div>
                                             {r.car && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '1px' }}>{r.car}</div>}
                                             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap', alignItems: 'center' }}>
                                               <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
@@ -1304,7 +1304,7 @@ export default function EventsClient() {
                                           }
                                           {r.car && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '1px' }}>{r.car}</div>}
                                         </div>
-                                        <div style={{ fontSize: '12px', color: '#666' }}>{r.email || '—'}</div>
+                                        <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '2px' }}>{r.email || '—'}<CopyBtn value={r.email} /></div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#c5a882' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : r.status || '—'}</div>
                                         <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
