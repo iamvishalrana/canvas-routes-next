@@ -5,9 +5,12 @@ import PageLoader from '../../components/PageLoader'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 import { captureException } from '../../lib/sentry'
 import { WTET_AWARD_CATEGORIES, CATEGORY_DISCOUNT_PCT } from '../../lib/wtetAwardsContent'
-import { WTET_PARTICIPANTS } from '../../lib/wtetParticipants'
 
-const PRELOAD_IMAGES = ['/canvas_routes_refined.png', ...WTET_PARTICIPANTS.map(p => p.photo)]
+// Only the logo — candidate photos are multi-megabyte originals and aren't
+// needed until after email verification, well after this loader is gone.
+// Preloading them all upfront was flooding mobile connections and causing
+// the email lookup fetch itself to fail (Sentry: TypeError "Load failed").
+const PRELOAD_IMAGES = ['/canvas_routes_refined.png']
 
 const T = {
   en: {
