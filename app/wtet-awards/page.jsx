@@ -111,6 +111,15 @@ export default function WtetAwardsPage() {
     }
   }
 
+  function resetToGate() {
+    setVerified(null)
+    setEmail('')
+    setErrMsg(null)
+    setPicks({ most_beautiful: '', best_driver: '', best_energy: '' })
+    setSubmitted(false)
+    setSubmitError(null)
+  }
+
   async function submitVote(e) {
     e.preventDefault()
     setSubmitError(null)
@@ -201,7 +210,7 @@ export default function WtetAwardsPage() {
             <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
               <button
                 type="button"
-                onClick={() => setVerified(null)}
+                onClick={resetToGate}
                 style={{ background: 'none', border: 'none', padding: '0.95rem 1rem', margin: '-0.95rem 0', fontSize: '11px', color: '#999', textDecoration: 'underline', textUnderlineOffset: '2px', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
               >
                 {t.finishLater}
