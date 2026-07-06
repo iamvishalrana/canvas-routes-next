@@ -910,7 +910,7 @@ export default function EventsClient() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {displayItems.map((item, displayIdx) => {
             const isPast = isEventPast(item)
-            const isFirstPast = isPast && !isEventPast(displayItems[displayIdx - 1])
+            const isFirstPast = isPast && (displayIdx === 0 || !isEventPast(displayItems[displayIdx - 1]))
             const idx = items.findIndex(ev => ev.id === item.id)
             const isEditing = editing === item.id
             const tab = activeTab[item.id] || 'settings'
