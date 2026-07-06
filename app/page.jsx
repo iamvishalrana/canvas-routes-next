@@ -100,7 +100,10 @@ export default function Home() {
       .then(events => {
         const now = new Date(); now.setHours(0, 0, 0, 0)
         setDbEvents(events.filter(ev => {
-          const d = parseEventDate(ev.date_display || ev.date)
+          // Prefer the precise `date` field over the human-readable `date_display`
+          // ("July 2026") — falling back to date_display would parse to the *last*
+          // day of that month, keeping already-past events looking upcoming.
+          const d = parseEventDate(ev.date || ev.date_display)
           return !d || d >= now
         }))
       })
