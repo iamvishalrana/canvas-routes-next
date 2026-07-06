@@ -20,6 +20,28 @@ const COUNTRY_CODES = [
   '+886', '+961', '+962', '+965', '+966', '+968', '+971', '+972', '+973', '+974',
 ]
 
+function parseEventDate(str) {
+  if (!str) return null
+  const s = str.trim()
+  if (/^[A-Za-z]+ \d{4}$/.test(s)) {
+    const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2'))
+    if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  }
+  if (/^\d{4}-\d{2}$/.test(s)) {
+    const [y, m] = s.split('-').map(Number)
+    return new Date(y, m, 0)
+  }
+  const d = new Date(s)
+  return isNaN(d) ? null : d
+}
+
+function isEventPast(ev) {
+  const d = parseEventDate(ev.date || ev.date_display)
+  if (!d) return false
+  const now = new Date(); now.setHours(0, 0, 0, 0)
+  return d < now
+}
+
 function formatEventDate(isoDate) {
   if (!isoDate) return ''
   try {
@@ -87,32 +109,9 @@ export default function Home() {
   const [dbEvents, setDbEvents] = useState([])
 
   useEffect(() => {
-    function parseEventDate(str) {
-      if (!str) return null
-      const s = str.trim()
-      if (/^[A-Za-z]+ \d{4}$/.test(s)) {
-        const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2'))
-        if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth() + 1, 0)
-      }
-      if (/^\d{4}-\d{2}$/.test(s)) {
-        const [y, m] = s.split('-').map(Number)
-        return new Date(y, m, 0)
-      }
-      const d = new Date(s)
-      return isNaN(d) ? null : d
-    }
     fetch('/api/public/events')
       .then(r => r.json())
-      .then(events => {
-        const now = new Date(); now.setHours(0, 0, 0, 0)
-        setDbEvents(events.filter(ev => {
-          // Prefer the precise `date` field over the human-readable `date_display`
-          // ("July 2026") — falling back to date_display would parse to the *last*
-          // day of that month, keeping already-past events looking upcoming.
-          const d = parseEventDate(ev.date || ev.date_display)
-          return !d || d >= now
-        }))
-      })
+      .then(events => setDbEvents(events))
       .catch(() => {})
     fetch('/api/public/settings')
       .then(r => r.json())
@@ -700,20 +699,28 @@ export default function Home() {
         </FadeUp>
         <div className="events-grid">
           {[
+            // Legacy events from before the admin events system existed — no DB record to derive these from.
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
-            {date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Route",past:true},
-            {date:"June 20, 2026",name:"Cars, Coffee & Dad Jokes",loc:"Cafe Napoleon, LaSalle",type:"Past Event",past:true},
-            {date:"July 5, 2026",name:"Whips to Eastern Townships",loc:"Montreal, QC",type:"Past Route",past:true},
-            ...dbEvents.map(ev => ({
-              date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '', type: ev.type,
-              teaser: ev.description || '', _id: ev.id,
-              photo_url: ev.photo_url || null,
-              registration_url: ev.registration_url || null,
-              registration_opens_at: ev.registration_opens_at, registration_closes_at: ev.registration_closes_at,
-              member_price: ev.member_price,
-            })),
-          ].map((e,i) => (
+            ...dbEvents.map(ev => {
+              const past = isEventPast(ev)
+              const shared = {
+                date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '',
+                teaser: ev.description || '', _id: ev.id, photo_url: ev.photo_url || null,
+                _sortDate: ev.date || ev.date_display,
+              }
+              return past
+                ? { ...shared, type: ev.type === 'Route' ? 'Past Route' : 'Past Event', past: true }
+                : {
+                    ...shared, type: ev.type,
+                    registration_url: ev.registration_url || null,
+                    registration_opens_at: ev.registration_opens_at, registration_closes_at: ev.registration_closes_at,
+                    member_price: ev.member_price,
+                  }
+            }),
+          ]
+            .sort((a, b) => (parseEventDate(a._sortDate || a.date)?.getTime() ?? 0) - (parseEventDate(b._sortDate || b.date)?.getTime() ?? 0))
+            .map((e,i) => (
             <FadeUp key={i} delay={i * 70}>
             <div className="event-card" style={e.past
               ? {background:"#0F1E14",border:"1px solid rgba(197,168,130,0.55)",padding:"2rem",position:"relative",overflow:"hidden",cursor:"pointer"}
