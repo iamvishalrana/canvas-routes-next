@@ -55,6 +55,12 @@ const PAST_EVENTS = {
     sub: "Father's Day Weekend Special.",
     tags: ['09:30 – 12:00 PM', 'Open to all', 'Free entry'],
   },
+  'Whips to Eastern Townships': {
+    img: '/wtet.png', imgAlt: 'Whips to Eastern Townships poster', imgPos: 'top',
+    meta: 'Montreal · July 5, 2026', title: 'Whips to Eastern Townships',
+    sub: 'Wine country backroads and mountain passes.',
+    tags: ['July 5, 2026', 'Route', 'Members Only'],
+  },
 }
 
 export default function Home() {
@@ -698,6 +704,7 @@ export default function Home() {
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
             {date:"June 7, 2026",name:"Into the Laurentians",loc:"Mont-Tremblant, QC",type:"Past Event",past:true},
             {date:"June 20, 2026",name:"Cars, Coffee & Dad Jokes",loc:"Cafe Napoleon, LaSalle",type:"Past Event",past:true},
+            {date:"July 5, 2026",name:"Whips to Eastern Townships",loc:"Montreal, QC",type:"Past Event",past:true},
             ...dbEvents.map(ev => ({
               date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '', type: ev.type,
               teaser: ev.description || '', _id: ev.id,
