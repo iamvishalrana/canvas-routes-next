@@ -2,16 +2,18 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { attendanceKey, attendanceKeyToEventName, normalizeEventName } from '../../../../../lib/eventMeta.js'
 import { captureException } from '../../../../../lib/sentry.js'
+import { logAdminAction } from '../../../../../lib/adminAudit.js'
 
 export async function PATCH(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const admin = await requireAdmin()
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
   const supabase = createAdminClient()
 
   // Capture old email BEFORE any update so we can find the applications row later
-  const { data: memberBefore, error: memberLookupErr } = await supabase.from('members').select('email').eq('id', id).maybeSingle()
+  const { data: memberBefore, error: memberLookupErr } = await supabase.from('members').select('email, membership_status, tier').eq('id', id).maybeSingle()
   if (memberLookupErr || !memberBefore) return Response.json({ error: 'Member not found.' }, { status: 404 })
   const oldEmail = memberBefore.email?.toLowerCase().trim()
 
@@ -43,6 +45,23 @@ export async function PATCH(request, { params }) {
 
   const { error } = await supabase.from('members').update(update).eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+
+  // Audit trail for access-control-relevant changes — status/tier control what
+  // a member can see and do, so these are worth tracking even though the
+  // update itself already succeeded.
+  if (('membership_status' in update && update.membership_status !== memberBefore.membership_status)
+    || ('tier' in update && update.tier !== memberBefore.tier)) {
+    await logAdminAction(supabase, admin.email, {
+      action: 'member.status_or_tier_change',
+      entityType: 'member',
+      entityId: id,
+      entityName: body.name || oldEmail,
+      metadata: {
+        ...('membership_status' in update ? { from_status: memberBefore.membership_status, to_status: update.membership_status } : {}),
+        ...('tier' in update ? { from_tier: memberBefore.tier, to_tier: update.tier } : {}),
+      },
+    })
+  }
 
   // Sync shared fields to applications table
   const newEmail = update.email || null
@@ -128,17 +147,27 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const admin = await requireAdmin()
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const supabase = createAdminClient()
 
   // Fetch email and photo URL before any deletion
-  const { data: member } = await supabase.from('members').select('email, car_photo_url, profile_photo_url').eq('id', id).maybeSingle()
+  const { data: member } = await supabase.from('members').select('name, email, car_photo_url, profile_photo_url').eq('id', id).maybeSingle()
 
   // Delete auth user — cascade-deletes the members row via FK
   const { error } = await supabase.auth.admin.deleteUser(id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+
+  // Irreversible — log before the follow-up cleanup steps in case any of them fail.
+  await logAdminAction(supabase, admin.email, {
+    action: 'member.delete',
+    entityType: 'member',
+    entityId: id,
+    entityName: member?.name || member?.email || id,
+    metadata: { email: member?.email || null },
+  })
 
   // Delete profile photo from storage
   const photoFilename = member?.car_photo_url?.split('/').pop()?.split('?')[0]

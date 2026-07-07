@@ -2,9 +2,11 @@ import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { stripe } from '../../../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry.js'
+import { logAdminAction } from '../../../../../../lib/adminAudit.js'
 
 export async function POST(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const admin = await requireAdmin()
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
   if (!stripe) return Response.json({ error: 'Not configured.' }, { status: 503 })
 
   const { piId } = await params
@@ -16,7 +18,7 @@ export async function POST(request, { params }) {
   // Verify the PI belongs to a Canvas Routes record before issuing a refund
   const supabase = createAdminClient()
   const { data: app } = await supabase.from('applications')
-    .select('id, stripe_payment_status')
+    .select('id, name, email, stripe_payment_status')
     .eq('stripe_payment_intent_id', piId)
     .maybeSingle()
   if (!app) return Response.json({ error: 'Payment not found.' }, { status: 404 })
@@ -44,6 +46,14 @@ export async function POST(request, { params }) {
       .update({ stripe_payment_status: 'refunded', stripe_amount_refunded: refund.amount })
       .eq('stripe_payment_intent_id', piId)
     if (syncErr) captureException(new Error(syncErr.message), { context: 'admin-stripe-refund-db-sync', piId })
+
+    await logAdminAction(supabase, admin.email, {
+      action: 'payment.refund',
+      entityType: 'payment_intent',
+      entityId: piId,
+      entityName: app.name || app.email,
+      metadata: { amount: refund.amount, reason, email: app.email },
+    })
 
     return Response.json({ refund_id: refund.id })
   } catch (err) {

@@ -2,9 +2,11 @@ import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { stripe } from '../../../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry.js'
+import { logAdminAction } from '../../../../../../lib/adminAudit.js'
 
 export async function POST(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const admin = await requireAdmin()
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
   if (!stripe) return Response.json({ error: 'Not configured.' }, { status: 503 })
 
   const { id } = await params
@@ -12,7 +14,7 @@ export async function POST(request, { params }) {
 
   const { data: app } = await supabase
     .from('applications')
-    .select('stripe_payment_intent_id, stripe_payment_status')
+    .select('name, email, stripe_payment_intent_id, stripe_payment_status')
     .eq('id', id)
     .single()
 
@@ -32,6 +34,15 @@ export async function POST(request, { params }) {
       .eq('id', id)
       .eq('stripe_payment_status', 'paid')
     if (!count) captureException(new Error('Refund double-fire: row was no longer paid'), { context: 'admin-refund', appId: id })
+
+    await logAdminAction(supabase, admin.email, {
+      action: 'payment.refund',
+      entityType: 'application',
+      entityId: id,
+      entityName: app.name || app.email,
+      metadata: { amount: refund.amount, email: app.email },
+    })
+
     return Response.json({ refund_id: refund.id })
   } catch (err) {
     captureException(err, { context: 'admin-refund', appId: id })

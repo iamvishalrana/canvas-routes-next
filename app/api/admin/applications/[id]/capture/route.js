@@ -5,9 +5,11 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry.js'
 import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
+import { logAdminAction } from '../../../../../../lib/adminAudit.js'
 
 export async function POST(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const admin = await requireAdmin()
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
   if (!stripe) return Response.json({ error: 'Not configured.' }, { status: 503 })
 
   const { id } = await params
@@ -50,6 +52,14 @@ export async function POST(request, { params }) {
     stripe_amount_paid: pi.amount,
   }).eq('id', id)
   if (dbErr) captureException(dbErr, { context: 'admin-capture-db-write', appId: id })
+
+  await logAdminAction(supabase, admin.email, {
+    action: 'payment.capture',
+    entityType: 'application',
+    entityId: id,
+    entityName: app.name || app.email,
+    metadata: { amount: pi.amount, email: app.email },
+  })
 
   // Send emails — WTET confirmation or membership approval notification
   if (process.env.RESEND_API_KEY && pi.metadata?.type?.startsWith('membership_')) {
