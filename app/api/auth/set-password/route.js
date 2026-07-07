@@ -12,8 +12,8 @@ function validate(password) {
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
-  if (ip && await checkRateLimit(ip)) {
+    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  if (await checkRateLimit(ip)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 

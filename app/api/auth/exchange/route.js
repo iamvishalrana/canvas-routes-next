@@ -1,4 +1,10 @@
+import { checkRateLimit } from '../../../../lib/rateLimit.js'
+
 export async function GET(request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  if (await checkRateLimit(ip)) return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   if (!code) return Response.json({ error: 'No code.' }, { status: 400 })
