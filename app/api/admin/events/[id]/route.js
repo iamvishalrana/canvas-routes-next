@@ -7,7 +7,7 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
-  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'trip_length']
+  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'trip_length', 'checkin_enabled', 'checkin_sections', 'checkin_max_passengers', 'checkin_lunch_options', 'checkin_waiver_text', 'checkin_lunch_cutoff', 'awards_enabled', 'awards_categories', 'awards_ineligible_names']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if ('member_price' in update && update.member_price != null && update.member_price < 0)
@@ -23,6 +23,15 @@ export async function PATCH(request, { params }) {
   if ('public_registration_enabled' in update) update.public_registration_enabled = update.public_registration_enabled == null ? null : Boolean(update.public_registration_enabled)
   if ('registration_visibility' in update && !['members', 'public'].includes(update.registration_visibility)) update.registration_visibility = 'members'
   if ('trip_length' in update && !['Same Day', 'Overnight', 'Multiple Nights'].includes(update.trip_length)) update.trip_length = null
+  if ('checkin_enabled' in update) update.checkin_enabled = Boolean(update.checkin_enabled)
+  if ('checkin_sections' in update) update.checkin_sections = Array.isArray(update.checkin_sections) ? update.checkin_sections.filter(s => ['trip_details', 'waiver', 'lunch'].includes(s)) : []
+  if ('checkin_max_passengers' in update) update.checkin_max_passengers = parseInt(update.checkin_max_passengers) || 2
+  if ('checkin_lunch_options' in update) update.checkin_lunch_options = Array.isArray(update.checkin_lunch_options) ? update.checkin_lunch_options : []
+  if ('checkin_waiver_text' in update) update.checkin_waiver_text = update.checkin_waiver_text || null
+  if ('checkin_lunch_cutoff' in update) update.checkin_lunch_cutoff = update.checkin_lunch_cutoff || null
+  if ('awards_enabled' in update) update.awards_enabled = Boolean(update.awards_enabled)
+  if ('awards_categories' in update) update.awards_categories = Array.isArray(update.awards_categories) ? update.awards_categories : []
+  if ('awards_ineligible_names' in update) update.awards_ineligible_names = Array.isArray(update.awards_ineligible_names) ? update.awards_ineligible_names : []
   const supabase = createAdminClient()
   const { error } = await supabase.from('events').update(update).eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })

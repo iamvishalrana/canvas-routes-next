@@ -12,6 +12,7 @@ import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
 import WtetClient from '../wtet/WtetClient'
 import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
+import CheckinStatusClient from '../_components/CheckinStatusClient'
 
 function isWtetRegEvent(eventName) {
   return eventName === WTET_EVENT_NAME || (eventName || '').toLowerCase().includes('eastern townships')
@@ -418,6 +419,12 @@ export default function EventsClient() {
       registration_enabled: item.registration_enabled,
       public_registration_enabled: item.public_registration_enabled,
       registration_visibility: item.registration_visibility || 'members',
+      checkin_enabled: item.checkin_enabled || false,
+      checkin_sections: item.checkin_sections || [],
+      checkin_max_passengers: item.checkin_max_passengers || 2,
+      checkin_lunch_options: item.checkin_lunch_options || [],
+      checkin_waiver_text: item.checkin_waiver_text || '',
+      checkin_lunch_cutoff: item.checkin_lunch_cutoff || '',
     })
     setSaveError(null)
     setActiveTab(p => ({ ...p, [item.id]: p[item.id] || 'settings' }))
@@ -1488,6 +1495,7 @@ export default function EventsClient() {
                       tabs={[
                         { id: 'settings',     label: `Settings` },
                         { id: 'applications', label: `Applications${item.total_applications > 0 ? ` (${item.total_applications})` : ''}` },
+                        { id: 'checkin', label: 'Check-in' },
                         ...(isWtetRegEvent(item.name) ? [
                           { id: 'waiver', label: 'Waiver & Lunch' },
                           { id: 'awards', label: 'Route Awards' },
@@ -1630,6 +1638,94 @@ export default function EventsClient() {
                               )
                             })}
                           </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── Check-in tab (any event) ────────────────────────── */}
+                    {tab === 'checkin' && (
+                      <div style={{ padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                          <div>
+                            <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Check-in enabled</div>
+                            <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem' }}>
+                              {editForm.checkin_enabled ? `Public check-in page: canvasroutes.com/checkin/${item.id}` : 'Turn on to let registrants use the check-in page for this event.'}
+                            </div>
+                          </div>
+                          <ToggleSwitch checked={!!editForm.checkin_enabled} onChange={v => setEditForm(p => ({ ...p, checkin_enabled: v }))} label="Check-in enabled" />
+                        </div>
+
+                        {editForm.checkin_enabled && (
+                          <>
+                            <div style={{ marginBottom: '1.1rem' }}>
+                              <L>Sections</L>
+                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {[['trip_details', 'Trip Details'], ['waiver', 'Waiver'], ['lunch', 'Lunch']].map(([id, label]) => {
+                                  const on = (editForm.checkin_sections || []).includes(id)
+                                  return (
+                                    <button key={id} type="button"
+                                      onClick={() => setEditForm(p => ({ ...p, checkin_sections: on ? p.checkin_sections.filter(s => s !== id) : [...(p.checkin_sections || []), id] }))}
+                                      style={{ fontSize: '11px', letterSpacing: '0.06em', padding: '0.5rem 1rem', borderRadius: '8px', border: `0.5px solid ${on ? '#3B6B2F' : 'rgba(0,0,0,0.15)'}`, background: on ? 'rgba(59,107,47,0.06)' : '#fff', color: on ? '#3B6B2F' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                      {on ? '✓ ' : ''}{label}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+
+                            {(editForm.checkin_sections || []).includes('trip_details') && (
+                              <div style={{ marginBottom: '1.1rem', maxWidth: '220px' }}>
+                                <L>Max Passengers Per Car</L>
+                                <input type="number" min="1" max="10" style={inp} value={editForm.checkin_max_passengers}
+                                  onChange={e => setEditForm(p => ({ ...p, checkin_max_passengers: e.target.value }))} />
+                              </div>
+                            )}
+
+                            {(editForm.checkin_sections || []).includes('waiver') && (
+                              <div style={{ marginBottom: '1.1rem' }}>
+                                <L>Waiver Text</L>
+                                <textarea style={{ ...inp, height: '140px', resize: 'vertical' }}
+                                  value={editForm.checkin_waiver_text}
+                                  onChange={e => setEditForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
+                                  placeholder="Paste the liability waiver text participants will read and agree to…" />
+                              </div>
+                            )}
+
+                            {(editForm.checkin_sections || []).includes('lunch') && (
+                              <div style={{ marginBottom: '1.1rem' }}>
+                                <L>Lunch Cutoff</L>
+                                <input type="datetime-local" style={{ ...inp, maxWidth: '260px' }} value={editForm.checkin_lunch_cutoff}
+                                  onChange={e => setEditForm(p => ({ ...p, checkin_lunch_cutoff: e.target.value }))} />
+
+                                <div style={{ marginTop: '0.85rem' }}>
+                                  <L>Lunch Options</L>
+                                  {(editForm.checkin_lunch_options || []).map((dish, di) => (
+                                    <div key={dish.id || di} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                      <input style={inp} placeholder="Dish name" value={dish.name || ''}
+                                        onChange={e => setEditForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.map((d, i2) => i2 === di ? { ...d, name: e.target.value } : d) }))} />
+                                      <input style={inp} placeholder="Description (optional)" value={dish.description || ''}
+                                        onChange={e => setEditForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.map((d, i2) => i2 === di ? { ...d, description: e.target.value } : d) }))} />
+                                      <DangerBtn small onClick={() => setEditForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.filter((_, i2) => i2 !== di) }))}>Remove</DangerBtn>
+                                    </div>
+                                  ))}
+                                  <GhostBtn small onClick={() => setEditForm(p => ({ ...p, checkin_lunch_options: [...(p.checkin_lunch_options || []), { id: `dish_${Date.now()}_${p.checkin_lunch_options?.length || 0}`, name: '', description: '' }] }))}>
+                                    + Add Dish
+                                  </GhostBtn>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save Check-in Settings'}</PrimaryBtn>
+                        </div>
+                        <Err msg={saveError} />
+
+                        {editForm.checkin_enabled && item.checkin_enabled && (
+                          <div style={{ marginTop: '2rem', borderTop: '0.5px solid rgba(0,0,0,0.08)', paddingTop: '1rem' }}>
+                            <CheckinStatusClient eventId={item.id} />
+                          </div>
                         )}
                       </div>
                     )}
