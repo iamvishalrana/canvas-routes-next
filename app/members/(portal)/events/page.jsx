@@ -63,12 +63,15 @@ export default async function EventsPage() {
   const tier = member?.tier || 'routes_member'
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
+  // Prefer the precise `date` field over the human-readable `date_display`
+  // ("July 2026") — falling back to date_display would parse to the *last*
+  // day of that month, keeping already-past events looking upcoming.
   const upcoming = (events || []).filter(ev => {
-    const d = parseEventDate(ev.date_display || ev.date)
+    const d = parseEventDate(ev.date || ev.date_display)
     return !d || d >= today
   })
   const past = (events || []).filter(ev => {
-    const d = parseEventDate(ev.date_display || ev.date)
+    const d = parseEventDate(ev.date || ev.date_display)
     return d && d < today
   }).reverse()
 

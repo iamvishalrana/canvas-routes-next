@@ -54,7 +54,9 @@ export default async function EventDetailPage({ params }) {
     if (/^\d{4}-\d{2}$/.test(s)) { const [y, m] = s.split('-').map(Number); return new Date(y, m, 0) }
     const d = new Date(s); return isNaN(d) ? null : d
   }
-  const evDate = parseEvDate(ev.date_display || ev.date)
+  // Prefer the precise `date` field — date_display ("July 2026") parses to
+  // the last day of that month, keeping already-past events looking upcoming.
+  const evDate = parseEvDate(ev.date || ev.date_display)
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const isPast = evDate ? evDate < today : false
 

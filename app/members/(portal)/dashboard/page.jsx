@@ -143,8 +143,10 @@ export default async function DashboardPage() {
     if (!carPhotoUrl) missingProfileFields.push('car photo')
   }
 
+  // Prefer the precise `date` field — date_display ("July 2026") parses to
+  // the last day of that month, keeping already-past events looking upcoming.
   const upcomingEvents = (events || []).filter(ev => {
-    const d = parseEventDate(ev.date_display || ev.date)
+    const d = parseEventDate(ev.date || ev.date_display)
     return !d || d >= today
   })
 
