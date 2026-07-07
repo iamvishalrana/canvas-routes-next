@@ -9,7 +9,7 @@ const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 const DOB_YEARS = Array.from({ length: 2015 - 1945 + 1 }, (_, i) => 2015 - i)
-const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '' }
+const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '', paint: '', mods: [], photo_url: null }
 
 const inp = {
   width: '100%', padding: '0.88rem 1rem',
@@ -81,10 +81,10 @@ export default function ProfilePage() {
   const [savedPw, setSavedPw] = useState(false)
   const [pwError, setPwError] = useState(null)
 
-  const [carPhotoUrl, setCarPhotoUrl] = useState(null)
-  const [photoUploading, setPhotoUploading] = useState(false)
-  const [photoError, setPhotoError] = useState(null)
-  const fileInputRef = useRef(null)
+  const [photoUploadingIdx, setPhotoUploadingIdx] = useState(null)
+  const [photoErrors, setPhotoErrors] = useState({})
+  const [uploadTargetIdx, setUploadTargetIdx] = useState(null)
+  const carFileInputRef = useRef(null)
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState(null)
@@ -119,16 +119,20 @@ export default function ProfilePage() {
             dob_month: member.dob_month ? String(member.dob_month) : '',
             dob_year: member.dob_year ? String(member.dob_year) : '',
           }
-          const c = member.cars?.length > 0
-            ? member.cars
+          let c = member.cars?.length > 0
+            ? member.cars.map(car => ({ paint: '', mods: [], photo_url: null, ...car }))
             : (member.car_year || member.car_make || member.car_model)
-              ? [{ year: member.car_year || '', make: member.car_make || '', model: member.car_model || '', license_plate: '' }]
+              ? [{ ...EMPTY_CAR, year: member.car_year || '', make: member.car_make || '', model: member.car_model || '' }]
               : [{ ...EMPTY_CAR }]
+          // Backfill car 0's photo from the legacy shared column for members
+          // who uploaded before per-car photos existed.
+          if (member?.car_photo_url && !c[0].photo_url) {
+            c = c.map((car, i) => i === 0 ? { ...car, photo_url: member.car_photo_url } : car)
+          }
           setForm(f)
           setCars(c)
           savedForm.current = f
           savedCars.current = c
-          if (member?.car_photo_url) setCarPhotoUrl(member.car_photo_url)
           if (member?.profile_photo_url) setAvatarUrl(member.profile_photo_url)
           if (member?.tier) setTier(member.tier)
           if (member?.membership_number) setMembershipNumber(member.membership_number)
@@ -253,22 +257,29 @@ export default function ProfilePage() {
     }
   }
 
-  async function handlePhotoUpload(e) {
+  function triggerCarPhotoUpload(idx) {
+    setUploadTargetIdx(idx)
+    carFileInputRef.current?.click()
+  }
+
+  async function handleCarFileSelected(e) {
     const file = e.target.files?.[0]
-    if (!file) return
-    if (fileInputRef.current) fileInputRef.current.value = ''
-    setPhotoUploading(true); setPhotoError(null)
+    if (carFileInputRef.current) carFileInputRef.current.value = ''
+    const idx = uploadTargetIdx
+    if (!file || idx === null) return
+    setPhotoUploadingIdx(idx); setPhotoErrors(p => ({ ...p, [idx]: null }))
     try {
       const fd = new FormData()
       fd.append('photo', file)
+      fd.append('carIndex', String(idx))
       const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
       const data = await res.json()
-      if (res.ok) setCarPhotoUrl(data.url)
-      else setPhotoError(data.error || 'Upload failed.')
+      if (res.ok) setCars(prev => prev.map((c, i) => i === idx ? { ...c, photo_url: data.url } : c))
+      else setPhotoErrors(p => ({ ...p, [idx]: data.error || 'Upload failed.' }))
     } catch {
-      setPhotoError('Upload failed. Please check your connection.')
+      setPhotoErrors(p => ({ ...p, [idx]: 'Upload failed. Please check your connection.' }))
     } finally {
-      setPhotoUploading(false)
+      setPhotoUploadingIdx(null)
     }
   }
 
@@ -283,13 +294,14 @@ export default function ProfilePage() {
 
   // Profile completeness — drives the hero progress bar
   const validCarsList = cars.filter(c => c.year || c.make || c.model)
+  const primaryCar = validCarsList[0] || null
+  const primaryCarIdx = primaryCar ? cars.indexOf(primaryCar) : 0
   const completeness = [
     !!form.name, !!form.phone, !!form.instagram,
-    !!(form.dob_month && form.dob_day), validCarsList.length > 0, !!carPhotoUrl, !!avatarUrl,
+    !!(form.dob_month && form.dob_day), validCarsList.length > 0, !!primaryCar?.photo_url, !!avatarUrl,
   ]
   const completeCount = completeness.filter(Boolean).length
   const completePct = Math.round((completeCount / completeness.length) * 100)
-  const primaryCar = validCarsList[0] || null
   const extraCars = validCarsList.slice(1)
   const memberSinceStr = stats?.memberSince
     ? new Date(stats.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: MONTREAL_TZ })
@@ -504,11 +516,11 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+        <input ref={carFileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleCarFileSelected} />
 
-        {carPhotoUrl ? (
+        {primaryCar?.photo_url ? (
           <div className="cr-garage-photo" style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', lineHeight: 0 }}>
-            <img src={carPhotoUrl} alt={primaryCar ? [primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).join(' ') : 'Your car'} style={{ width: '100%', aspectRatio: '16 / 10', objectFit: 'cover', display: 'block' }} />
+            <img src={primaryCar.photo_url} alt={primaryCar ? [primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).join(' ') : 'Your car'} style={{ width: '100%', aspectRatio: '16 / 10', objectFit: 'cover', display: 'block' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,18,12,0.82) 0%, rgba(10,18,12,0.15) 45%, transparent 65%)', pointerEvents: 'none' }} />
             {/* Featured chip */}
             <div style={{ position: 'absolute', top: '0.85rem', left: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(10,18,12,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', borderRadius: '99px', padding: '0.35rem 0.85rem' }}>
@@ -518,9 +530,9 @@ export default function ProfilePage() {
             {/* Change photo */}
             <button
               type="button"
-              onClick={() => !photoUploading && fileInputRef.current?.click()}
+              onClick={() => photoUploadingIdx === null && triggerCarPhotoUpload(primaryCarIdx)}
               aria-label="Change car photo"
-              style={{ position: 'absolute', bottom: '0.85rem', right: '0.85rem', width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(10,18,12,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', border: '0.5px solid rgba(197,168,130,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploading ? 'wait' : 'pointer', animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}
+              style={{ position: 'absolute', bottom: '0.85rem', right: '0.85rem', width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(10,18,12,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', border: '0.5px solid rgba(197,168,130,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploadingIdx === primaryCarIdx ? 'wait' : 'pointer', animation: photoUploadingIdx === primaryCarIdx ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </button>
@@ -539,8 +551,8 @@ export default function ProfilePage() {
         ) : (
           <div
             className="photo-empty"
-            onClick={() => !photoUploading && fileInputRef.current?.click()}
-            style={{ borderRadius: '14px', height: '170px', border: '0.5px dashed rgba(197,168,130,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.04)', cursor: 'pointer', gap: '0.65rem', animation: photoUploading ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}
+            onClick={() => photoUploadingIdx === null && triggerCarPhotoUpload(primaryCarIdx)}
+            style={{ borderRadius: '14px', height: '170px', border: '0.5px dashed rgba(197,168,130,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.04)', cursor: 'pointer', gap: '0.65rem', animation: photoUploadingIdx === primaryCarIdx ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}
           >
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.55)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
@@ -549,26 +561,33 @@ export default function ProfilePage() {
               <circle cx="17.5" cy="17.5" r="1.5"/>
             </svg>
             <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.45)', letterSpacing: '0.04em', fontFamily: 'var(--font-inter), sans-serif' }}>
-              {photoUploading ? 'Uploading…' : primaryCar ? `Add a photo of your ${primaryCar.model || primaryCar.make}` : 'No photo yet — tap to upload'}
+              {photoUploadingIdx === primaryCarIdx ? 'Uploading…' : primaryCar ? `Add a photo of your ${primaryCar.model || primaryCar.make}` : 'No photo yet — tap to upload'}
             </span>
           </div>
         )}
-        {photoError && <div style={{ fontSize: '12px', color: '#d06070', marginTop: '0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>{photoError}</div>}
+        {photoErrors[primaryCarIdx] && <div style={{ fontSize: '12px', color: '#d06070', marginTop: '0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>{photoErrors[primaryCarIdx]}</div>}
 
         {/* Additional cars */}
         {extraCars.length > 0 && (
           <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             {extraCars.map((car, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '10px', background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
-                  <rect x="11" y="13" width="10" height="8" rx="2"/>
-                  <circle cx="7.5" cy="17.5" r="1.5"/>
-                  <circle cx="17.5" cy="17.5" r="1.5"/>
-                </svg>
-                <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.8)', fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.02em' }}>
-                  {[car.year, car.make, car.model].filter(Boolean).join(' ')}
-                </span>
+                {car.photo_url ? (
+                  <img src={car.photo_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '7px', objectFit: 'cover', flexShrink: 0 }} />
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/>
+                    <rect x="11" y="13" width="10" height="8" rx="2"/>
+                    <circle cx="7.5" cy="17.5" r="1.5"/>
+                    <circle cx="17.5" cy="17.5" r="1.5"/>
+                  </svg>
+                )}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '12px', color: 'rgba(245,241,236,0.8)', fontFamily: 'var(--font-inter), sans-serif', letterSpacing: '0.02em' }}>
+                    {[car.year, car.make, car.model].filter(Boolean).join(' ')}
+                  </div>
+                  {car.paint && <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.4)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '1px' }}>{car.paint}</div>}
+                </div>
               </div>
             ))}
           </div>
@@ -724,7 +743,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
-                    {[['Year', 'year', true], ['Make', 'make', false], ['Model', 'model', false], ['Plate', 'license_plate', false]].map(([label, field, isSelect]) => (
+                    {[['Year', 'year', true], ['Make', 'make', false], ['Model', 'model', false], ['Plate', 'license_plate', false], ['Paint', 'paint', false]].map(([label, field, isSelect]) => (
                       <div key={field}>
                         <FieldLabel>{label}</FieldLabel>
                         {isSelect ? (
@@ -735,12 +754,35 @@ export default function ProfilePage() {
                         ) : (
                           <input className="cr-input" type="text" value={car[field]}
                             onChange={e => updateCar(idx, field, e.target.value)}
-                            placeholder={field === 'make' ? 'e.g. Porsche' : field === 'model' ? 'e.g. 911' : 'ABC-123'}
+                            placeholder={field === 'make' ? 'e.g. Porsche' : field === 'model' ? 'e.g. 911' : field === 'paint' ? 'e.g. Guards Red' : 'ABC-123'}
                             maxLength={field === 'license_plate' ? 15 : 100}
                             style={{ ...inp, ...(field === 'license_plate' ? { textTransform: 'uppercase' } : {}) }} />
                         )}
                       </div>
                     ))}
+                  </div>
+
+                  <div style={{ marginTop: '0.6rem' }}>
+                    <FieldLabel>Mods</FieldLabel>
+                    <input className="cr-input" type="text"
+                      value={(car.mods || []).join(', ')}
+                      onChange={e => updateCar(idx, 'mods', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                      placeholder="e.g. Coilovers, Exhaust, Wheels — separate with commas"
+                      maxLength={300}
+                      style={inp} />
+                  </div>
+
+                  <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {car.photo_url ? (
+                      <img src={car.photo_url} alt="" style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: 'rgba(0,0,0,0.03)', border: '0.5px dashed rgba(0,0,0,0.15)', flexShrink: 0 }} />
+                    )}
+                    <button type="button" onClick={() => photoUploadingIdx === null && triggerCarPhotoUpload(idx)}
+                      style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '0.5rem 0.9rem', cursor: photoUploadingIdx === idx ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
+                      {photoUploadingIdx === idx ? 'Uploading…' : car.photo_url ? 'Change Photo' : 'Upload Photo'}
+                    </button>
+                    {photoErrors[idx] && <span style={{ fontSize: '11px', color: '#7B2032' }}>{photoErrors[idx]}</span>}
                   </div>
                 </div>
               ))}
