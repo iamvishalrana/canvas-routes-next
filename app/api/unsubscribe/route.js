@@ -1,6 +1,10 @@
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { checkRateLimit } from '../../../lib/rateLimit'
 
 export async function POST(request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  if (await checkRateLimit(ip, 20, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
+
   let email
   const contentType = request.headers.get('content-type') || ''
   if (contentType.includes('application/x-www-form-urlencoded')) {
