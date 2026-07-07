@@ -13,6 +13,7 @@ import WaiverViewerModal from '../_components/WaiverViewerModal'
 import WtetClient from '../wtet/WtetClient'
 import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
 import CheckinStatusClient from '../_components/CheckinStatusClient'
+import AwardsTallyClient from '../_components/AwardsTallyClient'
 
 function isWtetRegEvent(eventName) {
   return eventName === WTET_EVENT_NAME || (eventName || '').toLowerCase().includes('eastern townships')
@@ -217,6 +218,7 @@ const FIELD_INFO = {
   date:                 'The actual event date in YYYY-MM-DD format. Used for sorting, calendar invites, and auto-formatting the date when no Date Display is set.',
   type:                 'Categorises the event. Also controls which RSVP questions members see on the confirm-your-spot page — Route shows dietary / passengers / WhatsApp; all other types show guest / colour / mods / arrival time.',
   trip_length:          'Shown as its own tile on the homepage event card (e.g. "Overnight"). Leave as None to hide it — mainly useful for Route events.',
+  awards_ineligible_names: 'Names typed here never appear as a candidate in any category, even though they can still vote themselves — e.g. exclude the event organizer.',
   date_display:         'Optional free-text override for how the date appears to members. Useful for multi-day events (e.g. "June 7–8, 2026") or month-only ranges. Leave blank to auto-format the Date field.',
   location:             'Shown on the tile, popup, and used to generate an embedded map preview. Use the full venue name or address for the best map match.',
   description:          'Short teaser shown on the event tile and in the popup. 1–2 sentences is ideal.',
@@ -425,6 +427,9 @@ export default function EventsClient() {
       checkin_lunch_options: item.checkin_lunch_options || [],
       checkin_waiver_text: item.checkin_waiver_text || '',
       checkin_lunch_cutoff: item.checkin_lunch_cutoff || '',
+      awards_enabled: item.awards_enabled || false,
+      awards_categories: item.awards_categories || [],
+      awards_ineligible_names: item.awards_ineligible_names || [],
     })
     setSaveError(null)
     setActiveTab(p => ({ ...p, [item.id]: p[item.id] || 'settings' }))
@@ -1495,11 +1500,13 @@ export default function EventsClient() {
                       tabs={[
                         { id: 'settings',     label: `Settings` },
                         { id: 'applications', label: `Applications${item.total_applications > 0 ? ` (${item.total_applications})` : ''}` },
-                        { id: 'checkin', label: 'Check-in' },
                         ...(isWtetRegEvent(item.name) ? [
                           { id: 'waiver', label: 'Waiver & Lunch' },
                           { id: 'awards', label: 'Route Awards' },
-                        ] : []),
+                        ] : [
+                          { id: 'checkin', label: 'Check-in' },
+                          { id: 'genericAwards', label: 'Route Awards' },
+                        ]),
                       ]}
                       active={tab}
                       onChange={id => setActiveTab(p => ({ ...p, [item.id]: id }))}
@@ -1725,6 +1732,67 @@ export default function EventsClient() {
                         {editForm.checkin_enabled && item.checkin_enabled && (
                           <div style={{ marginTop: '2rem', borderTop: '0.5px solid rgba(0,0,0,0.08)', paddingTop: '1rem' }}>
                             <CheckinStatusClient eventId={item.id} />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── Generic Route Awards tab (any non-WTET event) ───── */}
+                    {tab === 'genericAwards' && !isWtetRegEvent(item.name) && (
+                      <div style={{ padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                          <div>
+                            <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Route Awards enabled</div>
+                            <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem' }}>
+                              {editForm.awards_enabled ? `Public ballot: canvasroutes.com/awards/${item.id}` : 'Turn on to configure a Route Awards ballot for this event.'}
+                            </div>
+                          </div>
+                          <ToggleSwitch checked={!!editForm.awards_enabled} onChange={v => setEditForm(p => ({ ...p, awards_enabled: v }))} label="Route Awards enabled" />
+                        </div>
+
+                        {editForm.awards_enabled && (
+                          <>
+                            <div style={{ marginBottom: '1.1rem' }}>
+                              <L>Categories</L>
+                              {(editForm.awards_categories || []).map((cat, ci) => (
+                                <div key={cat.id || ci} style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '0.85rem', marginBottom: '0.6rem' }}>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                    <input style={inp} placeholder="Category label (e.g. Most Beautiful Car)" value={cat.label || ''}
+                                      onChange={e => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, label: e.target.value } : c) }))} />
+                                    <input type="number" min="0" max="100" style={inp} placeholder="% off" value={cat.discount_pct ?? ''}
+                                      onChange={e => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, discount_pct: e.target.value === '' ? null : parseInt(e.target.value) } : c) }))} />
+                                    <DangerBtn small onClick={() => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.filter((_, i2) => i2 !== ci) }))}>Remove</DangerBtn>
+                                  </div>
+                                  <textarea style={{ ...inp, height: '60px', resize: 'vertical' }} placeholder="Short description shown to voters (optional)" value={cat.body || ''}
+                                    onChange={e => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, body: e.target.value } : c) }))} />
+                                </div>
+                              ))}
+                              <GhostBtn small onClick={() => setEditForm(p => ({
+                                ...p,
+                                awards_categories: [...(p.awards_categories || []), { id: `cat_${Date.now()}_${p.awards_categories?.length || 0}`, label: '', body: '', discount_pct: null }],
+                              }))}>
+                                + Add Category
+                              </GhostBtn>
+                            </div>
+
+                            <div style={{ marginBottom: '1.1rem' }}>
+                              <L>Ineligible Names<InfoTip field="awards_ineligible_names" /></L>
+                              <input style={inp} placeholder="e.g. Jerry — separate with commas"
+                                value={(editForm.awards_ineligible_names || []).join(', ')}
+                                onChange={e => setEditForm(p => ({ ...p, awards_ineligible_names: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} />
+                              <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem' }}>These names are excluded from every candidate list — e.g. the event organizer.</div>
+                            </div>
+                          </>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <PrimaryBtn onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save Awards Settings'}</PrimaryBtn>
+                        </div>
+                        <Err msg={saveError} />
+
+                        {editForm.awards_enabled && item.awards_enabled && (
+                          <div style={{ marginTop: '2rem', borderTop: '0.5px solid rgba(0,0,0,0.08)', paddingTop: '1rem' }}>
+                            <AwardsTallyClient eventId={item.id} />
                           </div>
                         )}
                       </div>
