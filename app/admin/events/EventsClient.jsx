@@ -10,6 +10,8 @@ import {
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
+import WtetClient from '../wtet/WtetClient'
+import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
 
 function isWtetRegEvent(eventName) {
   return eventName === WTET_EVENT_NAME || (eventName || '').toLowerCase().includes('eastern townships')
@@ -1486,6 +1488,10 @@ export default function EventsClient() {
                       tabs={[
                         { id: 'settings',     label: `Settings` },
                         { id: 'applications', label: `Applications${item.total_applications > 0 ? ` (${item.total_applications})` : ''}` },
+                        ...(isWtetRegEvent(item.name) ? [
+                          { id: 'waiver', label: 'Waiver & Lunch' },
+                          { id: 'awards', label: 'Route Awards' },
+                        ] : []),
                       ]}
                       active={tab}
                       onChange={id => setActiveTab(p => ({ ...p, [item.id]: id }))}
@@ -1627,6 +1633,12 @@ export default function EventsClient() {
                         )}
                       </div>
                     )}
+
+                    {/* ── Waiver & Lunch tab (WTET only) ──────────────────── */}
+                    {tab === 'waiver' && isWtetRegEvent(item.name) && <WtetClient />}
+
+                    {/* ── Route Awards tab (WTET only) ────────────────────── */}
+                    {tab === 'awards' && isWtetRegEvent(item.name) && <WtetAwardsClient />}
 
                   </div>
                 )}

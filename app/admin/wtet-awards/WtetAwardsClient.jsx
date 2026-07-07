@@ -69,12 +69,11 @@ export default function WtetAwardsClient() {
     }
   }
 
-  if (loading) return <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontSize: '13px', color: '#ccc' }}>Loading…</div>
-  if (!data) return <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontSize: '13px', color: '#7B2032' }}>Failed to load.</div>
+  if (loading) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+  if (!data) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#7B2032' }}>Failed to load.</div>
 
   return (
-    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', maxWidth: '760px' }}>
-      <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '400', color: '#1a1a1a', margin: '0 0 0.4rem' }}>Route Awards</h1>
+    <div style={{ padding: '1.5rem', maxWidth: '760px' }}>
       <p style={{ fontSize: '12px', color: '#888', margin: '0 0 1.5rem' }}>
         Public ballot: <a href="/wtet-awards" target="_blank" rel="noreferrer" style={{ color: '#8A6535' }}>canvasroutes.com/wtet-awards</a>
       </p>

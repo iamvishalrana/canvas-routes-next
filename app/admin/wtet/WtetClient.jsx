@@ -4,7 +4,7 @@ import { GhostBtn, Err } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
 
-const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
+const PAGE_STYLE = { padding: '1.5rem' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
 
 function Pill({ done, doneLabel, pendingLabel }) {
@@ -108,13 +108,9 @@ export default function WtetClient() {
 
   return (
     <div style={PAGE_STYLE}>
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>WTET — Waiver &amp; Lunch</h1>
-        <p style={{ fontSize: '13px', color: '#888', margin: '0.5rem 0 0', fontFamily: 'var(--font-inter),sans-serif' }}>
-          Whips to Eastern Townships — July 5, 2026. Track who still needs to sign the waiver or choose lunch.
-        </p>
-      </div>
+      <p style={{ fontSize: '13px', color: '#888', margin: '0 0 1.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+        Track who still needs to sign the waiver or choose lunch.
+      </p>
 
       {/* Stat + cutoff row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
