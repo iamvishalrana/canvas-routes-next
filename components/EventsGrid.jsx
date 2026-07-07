@@ -54,7 +54,10 @@ function EventCard({ ev, isRegistered, isPast, isAttended, onClick }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
             <div className="ev-card-name" style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.01em', lineHeight: 1.3 }}>{ev.name}</div>
-            <span style={{ fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '2px 8px', flexShrink: 0, background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.type}</span>
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', flexShrink: 0 }}>
+              {ev.trip_length && <span style={{ fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.28)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.trip_length}</span>}
+              <span style={{ fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '2px 8px', background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter), sans-serif' }}>{ev.type}</span>
+            </div>
           </div>
           {ev.location && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#999', marginBottom: '0.4rem' }}>
