@@ -14,6 +14,8 @@ export default function WtetAwardsClient() {
   const [toggling, setToggling] = useState(false)
   const [toggleError, setToggleError] = useState(null)
   const [showVoters, setShowVoters] = useState(false)
+  const [showNotVoted, setShowNotVoted] = useState(false)
+  const [notVotedCopied, setNotVotedCopied] = useState(false)
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [resetError, setResetError] = useState(null)
@@ -67,6 +69,14 @@ export default function WtetAwardsClient() {
       setResetError('Network error.')
       setResetting(false)
     }
+  }
+
+  function copyNotVotedEmails() {
+    const emails = (data.notVoted || []).map(p => p.email).filter(Boolean).join(', ')
+    navigator.clipboard?.writeText(emails).then(() => {
+      setNotVotedCopied(true)
+      setTimeout(() => setNotVotedCopied(false), 1500)
+    }).catch(() => {})
   }
 
   if (loading) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#ccc' }}>Loading…</div>
@@ -145,6 +155,46 @@ export default function WtetAwardsClient() {
           </div>
         )
       })}
+
+      <div style={CARD}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <button
+            onClick={() => setShowNotVoted(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+          >
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" style={{ transform: showNotVoted ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}><polyline points="9 18 15 12 9 6"/></svg>
+            <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Hasn't voted ({(data.notVoted || []).length})</span>
+          </button>
+          {(data.notVoted || []).length > 0 && (
+            <button onClick={copyNotVotedEmails} style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: notVotedCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${notVotedCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}>
+              {notVotedCopied ? 'Copied!' : 'Copy Emails'}
+            </button>
+          )}
+        </div>
+        {showNotVoted && (
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {(data.notVoted || []).length === 0 ? (
+              <div style={{ fontSize: '12px', color: '#3B6B2F' }}>Everyone eligible has voted.</div>
+            ) : data.notVoted.map(p => (
+              <div key={p.email} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '0.5px solid rgba(0,0,0,0.05)', paddingBottom: '0.5rem' }}>
+                {p.photo ? (
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', position: 'relative', overflow: 'hidden', flexShrink: 0, background: '#EDE8E1' }}>
+                    <Image src={p.photo} alt="" fill sizes="28px" quality={60} style={{ objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#EDE8E1', flexShrink: 0 }} />
+                )}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a' }}>
+                    {p.name}{p.car && <span style={{ color: '#999', fontWeight: '400' }}> — {p.car}</span>}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#bbb' }}>{p.email}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div style={CARD}>
         <button

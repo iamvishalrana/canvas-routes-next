@@ -24,6 +24,9 @@ export async function GET(request, { params }) {
   const categories = event.awards_categories || []
   const validNames = new Set(candidates.map(c => norm(c.name)))
 
+  const votedEmails = new Set((votes || []).map(v => norm(v.email)))
+  const notVoted = candidates.filter(c => !votedEmails.has(norm(c.email)))
+
   const tallies = {}
   for (const cat of categories) {
     const counts = {}
@@ -43,6 +46,7 @@ export async function GET(request, { params }) {
     tallies,
     totalVotes: votes?.length || 0,
     totalEligible: candidates.length,
+    notVoted,
     voters: (votes || []).map(v => ({
       email: v.email,
       name: v.voter_name,
