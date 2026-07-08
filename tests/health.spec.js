@@ -18,26 +18,25 @@ test('homepage loads', async ({ page }) => {
   await expect(page.locator('img.hero-logo')).toBeVisible()
 })
 
-test('homepage inquiry form renders', async ({ page }) => {
+test('homepage notify-signup form renders', async ({ page }) => {
   await page.goto('/')
   await dismissPopup(page)
   await page.locator('#join').scrollIntoViewIfNeeded()
-  await expect(page.locator('#join input[type="text"]')).toBeVisible({ timeout: 15000 })
-  await expect(page.locator('#join input[type="email"]')).toBeVisible()
+  await expect(page.locator('#join input[name="email"]')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('#join button[type="submit"]')).toBeVisible()
 })
 
-test('inquiry API validation works', async ({ request }) => {
-  const res = await request.post('/api/inquiry', { data: {} })
+test('notify-signup API validation works', async ({ request }) => {
+  const res = await request.post('/api/notify-signup', { data: {} })
   expect([400, 429]).toContain(res.status())
   if (res.status() === 400) {
     const body = await res.json()
-    expect(body.error).toBe('Please enter your name.')
+    expect(body.error).toBe('Please enter a valid email.')
   }
 })
 
-test('inquiry API rejects invalid email', async ({ request }) => {
-  const res = await request.post('/api/inquiry', { data: { name: 'Health Check', email: 'not-an-email' } })
+test('notify-signup API rejects invalid email', async ({ request }) => {
+  const res = await request.post('/api/notify-signup', { data: { name: 'Health Check', email: 'not-an-email' } })
   expect([400, 429]).toContain(res.status())
   if (res.status() === 400) {
     const body = await res.json()
