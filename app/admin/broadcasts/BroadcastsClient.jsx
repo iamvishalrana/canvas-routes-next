@@ -785,7 +785,7 @@ export default function BroadcastsClient() {
                       </button>
                       <button
                         onClick={() => deleteTemplate(t.id)}
-                        style={{ background: 'none', border: '0.5px solid rgba(123,32,50,0.2)', padding: '4px 10px', cursor: 'pointer', fontSize: '10px', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                        style={{ background: 'none', border: '0.5px solid rgba(147,51,62,0.2)', padding: '4px 10px', cursor: 'pointer', fontSize: '10px', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}
                       >
                         Delete
                       </button>
@@ -824,12 +824,12 @@ export default function BroadcastsClient() {
             </span>
           </div>
           {historyActionErr && (
-            <div style={{ padding: '0.6rem 1rem', fontSize: '12px', color: '#7B2032', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.2)', marginBottom: '1rem' }}>{historyActionErr}</div>
+            <div style={{ padding: '0.6rem 1rem', fontSize: '12px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', marginBottom: '1rem' }}>{historyActionErr}</div>
           )}
           {historyLoading ? (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
           ) : historyError ? (
-            <div style={{ padding: '1rem', fontSize: '13px', color: '#7B2032', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{historyError}</div>
+            <div style={{ padding: '1rem', fontSize: '13px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)' }}>{historyError}</div>
           ) : historyMonths.length === 0 ? (
             <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
               {history.length === 0 ? 'No broadcasts sent yet.' : 'No broadcasts match the current filters.'}
@@ -871,11 +871,11 @@ export default function BroadcastsClient() {
                               {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto' })}
                             </span>
                             <span style={{ fontSize: '11px', fontWeight: '500', color: '#3B6B2F' }}>{h.sent_count}✓</span>
-                            {h.failed_count > 0 && <span style={{ fontSize: '11px', fontWeight: '500', color: '#7B2032' }}>{h.failed_count}✗</span>}
+                            {h.failed_count > 0 && <span style={{ fontSize: '11px', fontWeight: '500', color: '#93333E' }}>{h.failed_count}✗</span>}
                             {(h.body_html || h.failed_recipients?.length > 0) && (
                               <button
                                 onClick={() => setExpandedHistoryId(expandedHistoryId === h.id ? null : h.id)}
-                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: h.failed_count > 0 ? '#7B2032' : '#888', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: h.failed_count > 0 ? '#93333E' : '#888', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
                               >
                                 {expandedHistoryId === h.id ? 'Hide' : h.failed_count > 0 ? 'Details' : 'Preview'}
                               </button>
@@ -890,7 +890,7 @@ export default function BroadcastsClient() {
                             <button
                               onClick={() => setDeleteHistoryConfirm(h)}
                               title="Delete from history"
-                              style={{ background: 'none', border: '0.5px solid rgba(123,32,50,0.25)', padding: '2px 7px', cursor: 'pointer', color: '#7B2032', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                              style={{ background: 'none', border: '0.5px solid rgba(147,51,62,0.25)', padding: '2px 7px', cursor: 'pointer', color: '#93333E', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
                             >
                               ×
                             </button>
@@ -904,15 +904,15 @@ export default function BroadcastsClient() {
                               </div>
                             )}
                             {h.failed_recipients?.length > 0 && (
-                              <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.75rem 0.9rem', background: 'rgba(123,32,50,0.04)', border: '0.5px solid rgba(123,32,50,0.18)' }}>
-                                <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.75rem 0.9rem', background: 'rgba(147,51,62,0.04)', border: '0.5px solid rgba(147,51,62,0.18)' }}>
+                                <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#93333E', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   {h.failed_recipients.length} failed recipient{h.failed_recipients.length !== 1 ? 's' : ''}
                                 </div>
                                 {h.failed_recipients.map((f, fi) => (
                                   <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < h.failed_recipients.length - 1 ? '0.35rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>
                                     <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{f.name || f.email}</span>
                                     {f.name && <span style={{ color: '#999' }}> · {f.email}</span>}
-                                    {f.reason && <span style={{ color: '#7B2032' }}> — {f.reason}</span>}
+                                    {f.reason && <span style={{ color: '#93333E' }}> — {f.reason}</span>}
                                   </div>
                                 ))}
                               </div>
@@ -950,9 +950,9 @@ export default function BroadcastsClient() {
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#3B6B2F', marginBottom: (result.failed > 0 || result.truncated || result.historySaved === false) ? '0.35rem' : 0 }}>
                 ✓ Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.
               </div>
-              {result.failed > 0 && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.25rem' }}>{result.failed} failed to deliver.</div>}
+              {result.failed > 0 && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.25rem' }}>{result.failed} failed to deliver.</div>}
               {result.truncated && <div style={{ fontSize: '12px', color: '#8A6535', marginTop: '0.25rem' }}>⚠ List capped at {MAX_RECIPIENTS} — {result.totalRecipients - MAX_RECIPIENTS} recipients not reached.</div>}
-              {result.historySaved === false && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.25rem' }}>⚠ Emails were sent, but this broadcast could not be saved to History{result.historyError ? ` — ${result.historyError}` : ''}.</div>}
+              {result.historySaved === false && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.25rem' }}>⚠ Emails were sent, but this broadcast could not be saved to History{result.historyError ? ` — ${result.historyError}` : ''}.</div>}
               <button onClick={() => setResult(null)} style={{ marginTop: '0.75rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '0.35rem 0.85rem', cursor: 'pointer', fontSize: '10px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 Compose another
               </button>
@@ -1090,7 +1090,7 @@ export default function BroadcastsClient() {
                       </GhostBtn>
                     </div>
                     {testResult && (
-                      <div style={{ marginTop: '0.4rem', fontSize: '11px', color: testResult === 'sent' ? '#3B6B2F' : '#7B2032' }}>
+                      <div style={{ marginTop: '0.4rem', fontSize: '11px', color: testResult === 'sent' ? '#3B6B2F' : '#93333E' }}>
                         {testResult === 'sent' ? '✓ Test email sent.' : testResult}
                       </div>
                     )}
@@ -1121,7 +1121,7 @@ export default function BroadcastsClient() {
                       <GhostBtn onClick={saveTemplate} disabled={templateSaving} small>{templateSaving ? 'Saving…' : 'Save'}</GhostBtn>
                       <GhostBtn onClick={() => { setShowSaveTemplate(false); setTemplateSaveError(null) }} disabled={templateSaving} small>Cancel</GhostBtn>
                     </div>
-                    {templateSaveError && <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#7B2032' }}>{templateSaveError}</div>}
+                    {templateSaveError && <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#93333E' }}>{templateSaveError}</div>}
                   </div>
                 )}
 
@@ -1129,7 +1129,7 @@ export default function BroadcastsClient() {
 
                 {/* Send / Confirm */}
                 {showConfirm ? (
-                  <div style={{ padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', borderLeft: '2px solid #7B2032' }}>
+                  <div style={{ padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', borderLeft: '2px solid #93333E' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.85rem', lineHeight: '1.5' }}>
                       Send to <strong>{audienceLabel}</strong>?<br />
                       <span style={{ fontSize: '11px', color: '#888' }}>This cannot be undone.</span>

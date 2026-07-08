@@ -145,7 +145,7 @@ export default function EventApplicationsClient() {
                       </div>
                       {spotsLeft !== null && (
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '18px', fontWeight: '300', color: spotsLeft <= 3 ? '#7B2032' : '#1a1a1a', lineHeight: 1 }}>{Math.max(0, spotsLeft)}</div>
+                          <div style={{ fontSize: '18px', fontWeight: '300', color: spotsLeft <= 3 ? '#93333E' : '#1a1a1a', lineHeight: 1 }}>{Math.max(0, spotsLeft)}</div>
                           <div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginTop: '2px' }}>Spots left</div>
                         </div>
                       )}
@@ -287,7 +287,7 @@ function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendI
           {busy ? '…' : isInvited ? 'Re-send Invite' : 'Send Invite'}
         </GhostBtn>
       </div>
-      {inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{inviteErr[keyStr]}</div>}
+      {inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#93333E' }}>{inviteErr[keyStr]}</div>}
       {inviteDone[keyStr] && !inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#3B6B2F' }}>Invite sent.</div>}
     </div>
   )

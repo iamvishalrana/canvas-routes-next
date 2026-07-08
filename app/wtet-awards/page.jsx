@@ -177,7 +177,7 @@ export default function WtetAwardsPage() {
               placeholder={t.emailPlaceholder}
               style={{ ...inp, marginBottom: '0.75rem' }}
             />
-            {errMsg && <p style={{ fontSize: '12px', color: '#7B2032', margin: '0 0 0.75rem' }}>{errMsg}</p>}
+            {errMsg && <p style={{ fontSize: '12px', color: '#93333E', margin: '0 0 0.75rem' }}>{errMsg}</p>}
             <button type="submit" disabled={checking} style={{ width: '100%', padding: '0.85rem', background: '#45643c', color: '#fff', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: '600', cursor: checking ? 'wait' : 'pointer', opacity: checking ? 0.6 : 1, fontFamily: 'var(--font-inter), sans-serif' }}>
               {checking ? t.checkingBtn : t.enterBtn}
             </button>
@@ -269,7 +269,7 @@ export default function WtetAwardsPage() {
                 </div>
               </div>
             ))}
-            {submitError && <p style={{ fontSize: '12px', color: '#7B2032', margin: '0 0 1rem', textAlign: 'center' }}>{submitError}</p>}
+            {submitError && <p style={{ fontSize: '12px', color: '#93333E', margin: '0 0 1rem', textAlign: 'center' }}>{submitError}</p>}
             {!allPicked && <p style={{ fontSize: '12px', color: '#999', margin: '0 0 1rem', textAlign: 'center' }}>{t.incompleteNote}</p>}
             <button type="submit" disabled={submitting || !allPicked} style={{ width: '100%', padding: '0.9rem', background: '#45643c', color: '#fff', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: '600', cursor: (submitting || !allPicked) ? 'not-allowed' : 'pointer', opacity: (submitting || !allPicked) ? 0.5 : 1, fontFamily: 'var(--font-inter), sans-serif' }}>
               {submitting ? t.submittingBtn : (verified.existingVote ? t.updateBtn : t.submitBtn)}

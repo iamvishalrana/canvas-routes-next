@@ -737,7 +737,7 @@ export default function ProfilePage() {
                     <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>Car {idx + 1}</div>
                     {(cars.length > 1 || car.year || car.make || car.model || car.license_plate) && (
                       <button type="button" onClick={() => removeCar(idx)}
-                        style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: 0.75 }}>
+                        style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#93333E', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: 0.75 }}>
                         Remove
                       </button>
                     )}
@@ -782,7 +782,7 @@ export default function ProfilePage() {
                       style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '0.5rem 0.9rem', cursor: photoUploadingIdx === idx ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
                       {photoUploadingIdx === idx ? 'Uploading…' : car.photo_url ? 'Change Photo' : 'Upload Photo'}
                     </button>
-                    {photoErrors[idx] && <span style={{ fontSize: '11px', color: '#7B2032' }}>{photoErrors[idx]}</span>}
+                    {photoErrors[idx] && <span style={{ fontSize: '11px', color: '#93333E' }}>{photoErrors[idx]}</span>}
                   </div>
                 </div>
               ))}
@@ -796,7 +796,7 @@ export default function ProfilePage() {
               )}
 
 
-              {error && <div style={{ fontSize: '12px', color: '#7B2032', margin: '0.75rem 0' }}>{error}</div>}
+              {error && <div style={{ fontSize: '12px', color: '#93333E', margin: '0.75rem 0' }}>{error}</div>}
 
               <div style={{ display: 'flex', gap: '0.65rem', marginTop: '1.25rem' }}>
                 <button type="submit" disabled={saving}
@@ -856,7 +856,7 @@ export default function ProfilePage() {
                       onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
                       minLength={8} autoComplete="new-password" style={inp} />
                   </Field>
-                  {pwError && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem' }}>{pwError}</div>}
+                  {pwError && <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '0.75rem' }}>{pwError}</div>}
                   {savedPw && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>

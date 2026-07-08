@@ -90,9 +90,9 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
   if (lunchLocked && !isDone) {
     return (
       <SectionCard title={t.lunchTitle} done={false} delay={180} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchDeadlinePassedLabel}>
-        <div style={{ fontSize: '13px', color: '#7B2032', lineHeight: 1.8 }}>
+        <div style={{ fontSize: '13px', color: '#93333E', lineHeight: 1.8 }}>
           {t.lunchDeadlinePassedBody(cutoffStr)}{' '}
-          <a href="mailto:jerry@canvasroutes.com" style={{ color: '#7B2032', textDecoration: 'underline' }}>jerry@canvasroutes.com</a> {t.lunchDeadlinePassedBody2}
+          <a href="mailto:jerry@canvasroutes.com" style={{ color: '#93333E', textDecoration: 'underline' }}>jerry@canvasroutes.com</a> {t.lunchDeadlinePassedBody2}
         </div>
       </SectionCard>
     )
@@ -108,7 +108,7 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
           {passengersList.map((p, i) => (
             <div key={i} className="wtetci-card" style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: '#fdfcfb', padding: '1.1rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.85rem' }}>
-                {t.lunchForPerson(p.name || (i === 0 ? t.driverLabel : t.passengerLabel(i + 1)), i === 0)} <span style={{ color: '#7B2032' }}>*</span>
+                {t.lunchForPerson(p.name || (i === 0 ? t.driverLabel : t.passengerLabel(i + 1)), i === 0)} <span style={{ color: '#93333E' }}>*</span>
               </div>
               <div style={{ display: 'grid', gap: '0.6rem' }}>
                 {lunchOptions.map(dish => (
@@ -124,7 +124,7 @@ export default function WtetLunchSection({ identifier, lunch, lunchOptions, lunc
             </div>
           ))}
         </div>
-        {error && <div className="wtetci-fade-in" style={{ fontSize: '13px', color: '#7B2032', padding: '0.7rem 0.9rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>{error}</div>}
+        {error && <div className="wtetci-fade-in" style={{ fontSize: '13px', color: '#93333E', padding: '0.7rem 0.9rem', background: 'rgba(147,51,62,0.05)', border: '0.5px solid rgba(147,51,62,0.2)' }}>{error}</div>}
         <div style={{ display: 'flex', gap: '0.6rem' }}>
           <button type="submit" disabled={submitting} className="wtetci-btn-primary" style={{ padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
             {submitting ? t.savingBtn : t.saveSelectionBtn}

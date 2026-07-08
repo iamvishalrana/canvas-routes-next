@@ -88,7 +88,7 @@ export default function ToolsClient() {
     if (!run) return 'rgba(0,0,0,0.1)'
     if (run.status === 'in_progress' || run.status === 'queued') return '#c5a882'
     if (run.conclusion === 'success') return '#3B6B2F'
-    if (run.conclusion === 'failure' || run.conclusion === 'timed_out') return '#7B2032'
+    if (run.conclusion === 'failure' || run.conclusion === 'timed_out') return '#93333E'
     return 'rgba(0,0,0,0.15)'
   }
 
@@ -138,7 +138,7 @@ export default function ToolsClient() {
             </GhostBtn>
           </div>
           {setTokenResult && (
-            <div style={{ marginTop: '0.6rem', fontSize: '12px', color: setTokenResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
+            <div style={{ marginTop: '0.6rem', fontSize: '12px', color: setTokenResult.error ? '#93333E' : '#3B6B2F', lineHeight: 1.6 }}>
               {setTokenResult.error
                 ? `Error: ${setTokenResult.error}`
                 : setTokenResult.tokenType === 'page'
@@ -161,7 +161,7 @@ export default function ToolsClient() {
           {igRefreshing ? 'Refreshing…' : 'Extend Current Token'}
         </GhostBtn>
         {igResult && (
-          <div style={{ marginTop: '0.75rem', fontSize: '12px', color: igResult.error ? '#7B2032' : '#3B6B2F', lineHeight: 1.6 }}>
+          <div style={{ marginTop: '0.75rem', fontSize: '12px', color: igResult.error ? '#93333E' : '#3B6B2F', lineHeight: 1.6 }}>
             {igResult.error
               ? `Error: ${igResult.error}`
               : `Token refreshed — valid for ${igResult.daysLeft} days (until ${new Date(igResult.expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}). Stored in Supabase automatically.`
@@ -177,7 +177,7 @@ export default function ToolsClient() {
             {igChecking ? 'Checking…' : 'Check Token Now'}
           </GhostBtn>
           {igCheckResult && (
-            <div style={{ marginTop: '0.6rem', fontSize: '12px', lineHeight: 1.6, color: igCheckResult.status === 'ok' ? '#3B6B2F' : igCheckResult.status === 'expiring_soon' ? '#8A6535' : '#7B2032' }}>
+            <div style={{ marginTop: '0.6rem', fontSize: '12px', lineHeight: 1.6, color: igCheckResult.status === 'ok' ? '#3B6B2F' : igCheckResult.status === 'expiring_soon' ? '#8A6535' : '#93333E' }}>
               {igCheckResult.status === 'ok' && `✓ Token is valid${igCheckResult.daysLeft ? ` — ${igCheckResult.daysLeft} days remaining` : ''}`}
               {igCheckResult.status === 'expiring_soon' && `⚠ Token expires in ${igCheckResult.daysLeft} days — click "Extend Current Token" now`}
               {igCheckResult.status === 'dead' && `✕ Token is dead: ${igCheckResult.error} — paste a new token above`}
@@ -222,10 +222,10 @@ export default function ToolsClient() {
           <button onClick={runHealthCheck} disabled={hcStatus === 'loading'}
             style={{
               flexShrink: 0, padding: '0.6rem 1.25rem',
-              background: hcStatus === 'ok' ? 'rgba(59,107,47,0.08)' : hcStatus === 'error' ? 'rgba(123,32,50,0.06)' : 'transparent',
-              border: `0.5px solid ${hcStatus === 'ok' ? 'rgba(59,107,47,0.4)' : hcStatus === 'error' ? 'rgba(123,32,50,0.4)' : 'rgba(0,0,0,0.2)'}`,
+              background: hcStatus === 'ok' ? 'rgba(59,107,47,0.08)' : hcStatus === 'error' ? 'rgba(147,51,62,0.06)' : 'transparent',
+              border: `0.5px solid ${hcStatus === 'ok' ? 'rgba(59,107,47,0.4)' : hcStatus === 'error' ? 'rgba(147,51,62,0.4)' : 'rgba(0,0,0,0.2)'}`,
               fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
-              color: hcStatus === 'ok' ? '#3B6B2F' : hcStatus === 'error' ? '#7B2032' : '#1a1a1a',
+              color: hcStatus === 'ok' ? '#3B6B2F' : hcStatus === 'error' ? '#93333E' : '#1a1a1a',
               cursor: hcStatus === 'loading' ? 'wait' : 'pointer',
               fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
             }}>

@@ -59,7 +59,7 @@ export function ExportModal({ isOpen, onClose, filename, title, headers, rows })
             ))}
           </div>
 
-          {error && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.75rem', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
+          {error && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.75rem', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
         </div>
 
         <div style={{ padding: '1rem 1.5rem', borderTop: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>

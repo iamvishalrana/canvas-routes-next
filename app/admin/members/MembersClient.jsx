@@ -132,7 +132,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
               <span style={{ fontSize: '11px', color: attendedCount > 0 ? '#3B6B2F' : '#bbb' }}>{attendedCount} attended</span>
               <span style={{ color: '#ddd' }}>·</span>
-              <span style={{ fontSize: '11px', color: noShowCount > 0 ? '#7B2032' : '#bbb' }}>{noShowCount} no-show</span>
+              <span style={{ fontSize: '11px', color: noShowCount > 0 ? '#93333E' : '#bbb' }}>{noShowCount} no-show</span>
               {upcomingCount > 0 && <><span style={{ color: '#ddd' }}>·</span><span style={{ fontSize: '11px', color: '#bbb' }}>{upcomingCount} upcoming</span></>}
             </div>
           )}
@@ -170,7 +170,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
               <GhostBtn small onClick={() => onSaveNote(m.id, noteValue)}>Save</GhostBtn>
               <GhostBtn small onClick={() => setEditingNote(null)}>Cancel</GhostBtn>
             </div>
-            {noteErr && editingNote === m.id && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem' }}>{noteErr}</div>}
+            {noteErr && editingNote === m.id && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.25rem' }}>{noteErr}</div>}
           </div>
         ) : (
           <div onClick={() => { setEditingNote(m.id); setNoteValue(m.notes || '') }}
@@ -465,7 +465,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   members.forEach(m => { if (counts[m.membership_status] !== undefined) counts[m.membership_status]++ })
 
   if (forbidden) return (
-    <div style={{ padding: '2rem', background: '#fff', border: '0.5px solid rgba(123,32,50,0.2)', fontSize: '13px', color: '#7B2032' }}>
+    <div style={{ padding: '2rem', background: '#fff', border: '0.5px solid rgba(147,51,62,0.2)', fontSize: '13px', color: '#93333E' }}>
       Access denied. Make sure your email is in the <code>ADMIN_EMAILS</code> environment variable.
     </div>
   )
@@ -482,7 +482,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
           { label: 'Total', value: total, color: '#1a1a1a' },
           { label: 'Active', value: counts.active, color: '#3B6B2F' },
           { label: 'Pending', value: counts.pending, color: '#8A6535' },
-          { label: 'Suspended', value: counts.suspended, color: '#7B2032' },
+          { label: 'Suspended', value: counts.suspended, color: '#93333E' },
         ].map(s => (
           <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.4rem' }}>
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -635,7 +635,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                   if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(m => m.id)]))
                   else setSelected(prev => { const n = new Set(prev); filtered.forEach(m => n.delete(m.id)); return n })
                 }}
-                style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
               />
               {['Name', 'Email', 'Status', 'Car', 'Joined', 'Setup', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
@@ -756,7 +756,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                       <div style={{ paddingBottom: '2px' }}>
                         {cidx === 0 && <div style={{ marginBottom: '0.35rem', height: '14px' }} />}
                         <button type="button" onClick={() => setEditCars(prev => prev.length === 1 ? [{ ...EMPTY_CAR }] : prev.filter((_, i) => i !== cidx))}
-                          style={{ padding: '0.5rem 0.6rem', background: 'transparent', border: '0.5px solid rgba(123,32,50,0.25)', color: '#7B2032', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1 }}>✕</button>
+                          style={{ padding: '0.5rem 0.6rem', background: 'transparent', border: '0.5px solid rgba(147,51,62,0.25)', color: '#93333E', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1 }}>✕</button>
                       </div>
                     </div>
                   ))}
@@ -783,7 +783,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                             <input type="checkbox"
                               checked={selected.has(m.id)}
                               onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(m.id) : n.delete(m.id); return n })}
-                              style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                              style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
                             />
                           </div>
                           <div>
@@ -825,7 +825,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                             <button
                               onClick={e => { e.stopPropagation(); if (!rs || (typeof rs === 'string' && rs !== 'sending' && rs !== 'sent')) setResendConfirm(m.id) }}
                               disabled={rs === 'sending' || rs === 'sent'}
-                              style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
+                              style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#93333E' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
                               {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}
                             </button>
                           )
@@ -846,7 +846,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                       <input type="checkbox"
                         checked={selected.has(m.id)}
                         onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(m.id) : n.delete(m.id); return n })}
-                        style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                        style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
                       />
                     </div>
                     <div>
@@ -900,13 +900,13 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                               <button
                                 onClick={e => { e.stopPropagation(); if (!rs || (typeof rs === 'string' && rs !== 'sending' && rs !== 'sent')) setResendConfirm(m.id) }}
                                 disabled={rs === 'sending' || rs === 'sent'}
-                                style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
+                                style={{ background: 'none', border: 'none', cursor: rs === 'sending' || rs === 'sent' ? 'default' : 'pointer', fontSize: '10px', color: rs === 'sent' ? '#3B6B2F' : typeof rs === 'string' && rs !== 'sending' ? '#93333E' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 0 }}>
                                 {rs === 'sending' ? 'Sending…' : rs === 'sent' ? '✓ Sent' : typeof rs === 'string' ? 'Retry' : 'Resend'}
                               </button>
                             )
                           })()}
                           {typeof resendStatus[m.id] === 'string' && resendStatus[m.id] !== 'sending' && resendStatus[m.id] !== 'sent' && (
-                            <span style={{ fontSize: '10px', color: '#7B2032' }}>{resendStatus[m.id]}</span>
+                            <span style={{ fontSize: '10px', color: '#93333E' }}>{resendStatus[m.id]}</span>
                           )}
                         </div>
                       )}
@@ -934,9 +934,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                     </div>
                   )}
                   {deleteMemberConfirm === m.id && (
-                    <div style={{ padding: '0.75rem 1.25rem', background: 'rgba(123,32,50,0.04)', borderTop: '0.5px solid rgba(123,32,50,0.1)' }}>
+                    <div style={{ padding: '0.75rem 1.25rem', background: 'rgba(147,51,62,0.04)', borderTop: '0.5px solid rgba(147,51,62,0.1)' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '12px', color: '#7B2032' }}>Delete {m.name || m.email}? This permanently removes them.</span>
+                        <span style={{ fontSize: '12px', color: '#93333E' }}>Delete {m.name || m.email}? This permanently removes them.</span>
                         <DangerBtn small onClick={() => deleteMember(m)}>Confirm Delete</DangerBtn>
                         <GhostBtn small onClick={() => { setDeleteMemberConfirm(null); setDeleteMemberError(null) }}>Cancel</GhostBtn>
                       </div>

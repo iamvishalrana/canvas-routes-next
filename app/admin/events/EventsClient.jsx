@@ -24,7 +24,7 @@ function isWtetRegEvent(eventName) {
 function StatusChip({ rsvp }) {
   if (!rsvp) return <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em' }}>—</span>
   if (rsvp.declined_at) return (
-    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.35)', padding: '2px 8px', background: 'rgba(123,32,50,0.05)', whiteSpace: 'nowrap' }}>Declined</span>
+    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', padding: '2px 8px', background: 'rgba(147,51,62,0.05)', whiteSpace: 'nowrap' }}>Declined</span>
   )
   if (rsvp.confirmed_at) return (
     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 8px', background: 'rgba(59,107,47,0.07)', whiteSpace: 'nowrap' }}>✓ Confirmed</span>
@@ -168,7 +168,7 @@ function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendI
   if (isDeclined) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
       <GhostBtn small onClick={() => onUndecline(app.id, ev.name)} disabled={busy}>{busy ? '…' : 'Undo Decline'}</GhostBtn>
-      {declineErr?.[keyStr] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{declineErr[keyStr]}</div>}
+      {declineErr?.[keyStr] && <div style={{ fontSize: '10px', color: '#93333E' }}>{declineErr[keyStr]}</div>}
     </div>
   )
   return (
@@ -179,9 +179,9 @@ function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendI
         </GhostBtn>
         <DangerBtn small onClick={() => onDecline(app.id, ev.name)} disabled={busy}>Decline</DangerBtn>
       </div>
-      {inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{inviteErr[keyStr]}</div>}
+      {inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#93333E' }}>{inviteErr[keyStr]}</div>}
       {inviteDone[keyStr] && !inviteErr[keyStr] && <div style={{ fontSize: '10px', color: '#3B6B2F' }}>Approved — invite sent.</div>}
-      {declineErr?.[keyStr] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{declineErr[keyStr]}</div>}
+      {declineErr?.[keyStr] && <div style={{ fontSize: '10px', color: '#93333E' }}>{declineErr[keyStr]}</div>}
     </div>
   )
 }
@@ -977,7 +977,7 @@ export default function EventsClient() {
                           { label: 'Applied',    value: item.total_applications, color: '#1a1a1a' },
                           { label: 'Invited',    value: item.invited_count,       color: '#8A6535' },
                           { label: 'Confirmed',  value: item.confirmed_count,     color: '#3B6B2F' },
-                          spotsLeft !== null && { label: 'Spots left', value: Math.max(0, spotsLeft), color: spotsLeft <= 3 ? '#7B2032' : '#888' },
+                          spotsLeft !== null && { label: 'Spots left', value: Math.max(0, spotsLeft), color: spotsLeft <= 3 ? '#93333E' : '#888' },
                         ].filter(Boolean).map(s => (
                           <div key={s.label} style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '16px', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -1074,8 +1074,8 @@ export default function EventsClient() {
 
                 {/* Delete confirm */}
                 {deleteEventConfirm === item.id && (
-                  <div style={{ padding: '0.75rem 1.5rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', background: 'rgba(123,32,50,0.03)', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this event?</span>
+                  <div style={{ padding: '0.75rem 1.5rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', background: 'rgba(147,51,62,0.03)', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '11px', color: '#93333E' }}>Delete this event?</span>
                     <GhostBtn small onClick={() => del(item.id)}>Confirm</GhostBtn>
                     <GhostBtn small onClick={() => { setDeleteEventConfirm(null); setDeleteEventError(p => ({ ...p, [item.id]: null })) }}>Cancel</GhostBtn>
                     {deleteEventError[item.id] && <Err msg={deleteEventError[item.id]} />}
@@ -1208,7 +1208,7 @@ export default function EventsClient() {
                                 {addingReg[item.id] ? 'Adding…' : 'Add'}
                               </PrimaryBtn>
                             </div>
-                            {addRegErr[item.id] && <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.4rem' }}>{addRegErr[item.id]}</div>}
+                            {addRegErr[item.id] && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.4rem' }}>{addRegErr[item.id]}</div>}
                           </div>
                         )}
 
@@ -1241,7 +1241,7 @@ export default function EventsClient() {
                                   ? 'Sending…'
                                   : `Send to ${[...new Set((registrantsData[item.id] || []).map(r => r.email).filter(e => e && e !== '—'))].length}`}
                               </PrimaryBtn>
-                              {regEmailResult[item.id]?.error && <span style={{ fontSize: '12px', color: '#7B2032' }}>{regEmailResult[item.id].error}</span>}
+                              {regEmailResult[item.id]?.error && <span style={{ fontSize: '12px', color: '#93333E' }}>{regEmailResult[item.id].error}</span>}
                             </div>
                           </div>
                         )}
@@ -1314,8 +1314,8 @@ export default function EventsClient() {
                                             }
                                           </div>
                                         </div>
-                                        {result?.error && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem' }}>{result.error}</div>}
-                                        {deleteErr && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem' }}>{deleteErr}</div>}
+                                        {result?.error && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.25rem' }}>{result.error}</div>}
+                                        {deleteErr && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.25rem' }}>{deleteErr}</div>}
                                       </div>
                                     ) : (
                                       <>
@@ -1341,7 +1341,7 @@ export default function EventsClient() {
                                               : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>{r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                           )}
                                           {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
-                                          {result?.error && <span style={{ fontSize: '10px', color: '#7B2032' }}>{result.error}</span>}
+                                          {result?.error && <span style={{ fontSize: '10px', color: '#93333E' }}>{result.error}</span>}
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                           {isDeletePending
@@ -1352,7 +1352,7 @@ export default function EventsClient() {
                                               </div>
                                             : <DangerBtn small onClick={() => { setDeleteRegConfirm(indivKey); setDeleteRegErr(p => ({ ...p, [indivKey]: null })) }}>Remove</DangerBtn>
                                           }
-                                          {deleteErr && <span style={{ fontSize: '10px', color: '#7B2032' }}>{deleteErr}</span>}
+                                          {deleteErr && <span style={{ fontSize: '10px', color: '#93333E' }}>{deleteErr}</span>}
                                         </div>
                                       </>
                                     )}
@@ -1425,7 +1425,7 @@ export default function EventsClient() {
                                     const doneCount = [!!r.wtetWaiver, r.wtetLunch?.length > 0, !!r.wtetCheckin].filter(Boolean).length
                                     const bothDone = doneCount === 3
                                     const anyDone = doneCount > 0
-                                    const color = bothDone ? '#3B6B2F' : anyDone ? '#8A6535' : '#7B2032'
+                                    const color = bothDone ? '#3B6B2F' : anyDone ? '#8A6535' : '#93333E'
                                     const wtetKey = `wtetreg_${indivKey}`
                                     return (
                                       <>
@@ -1439,7 +1439,7 @@ export default function EventsClient() {
                                           </span>
                                         </button>
                                         {rsvpExpanded[wtetKey] && (
-                                          <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: bothDone ? 'rgba(59,107,47,0.03)' : 'rgba(123,32,50,0.02)', borderBottom: !isLastTableRow ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                          <div style={{ padding: '0.5rem 0.85rem 0.75rem', background: bothDone ? 'rgba(59,107,47,0.03)' : 'rgba(147,51,62,0.02)', borderBottom: !isLastTableRow ? '0.5px solid rgba(0,0,0,0.05)' : 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Trip Details </span>
                                               {r.wtetCheckin ? (
@@ -1450,13 +1450,13 @@ export default function EventsClient() {
                                                     <>{' · '}{r.wtetCheckin.passengers_list.map((p, pi) => `${pi === 0 ? 'Driver' : `P${pi + 1}`}: ${p.name}, ${p.age}`).join(' · ')}</>
                                                   )}
                                                 </span>
-                                              ) : <span style={{ color: '#7B2032' }}>Not submitted</span>}
+                                              ) : <span style={{ color: '#93333E' }}>Not submitted</span>}
                                             </div>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>WhatsApp </span>
                                               {r.wtetCheckin?.whatsapp ? (
                                                 <span style={{ color: '#3B6B2F' }}>{r.wtetCheckin.whatsapp}</span>
-                                              ) : <span style={{ color: '#7B2032' }}>Not provided</span>}
+                                              ) : <span style={{ color: '#93333E' }}>Not provided</span>}
                                             </div>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Waiver </span>
@@ -1468,7 +1468,7 @@ export default function EventsClient() {
                                                   {' · '}
                                                   <button onClick={e => { e.stopPropagation(); setViewingWaiver({ name: r.name, email: r.email, waiver: r.wtetWaiver }) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '10px', fontFamily: 'var(--font-inter)' }}>View full waiver</button>
                                                 </>
-                                              ) : <span style={{ color: '#7B2032' }}>Not signed</span>}
+                                              ) : <span style={{ color: '#93333E' }}>Not signed</span>}
                                             </div>
                                             <div style={{ fontSize: '10px', fontFamily: 'var(--font-inter)' }}>
                                               <span style={{ color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '9px' }}>Lunch </span>
@@ -1476,7 +1476,7 @@ export default function EventsClient() {
                                                 <span style={{ color: '#3B6B2F' }}>
                                                   {r.wtetLunch.map((entry, i) => `${entry.name ? `${entry.name}: ` : ''}${entry.dish_name}`).join(' · ')}
                                                 </span>
-                                              ) : <span style={{ color: '#7B2032' }}>Not selected</span>}
+                                              ) : <span style={{ color: '#93333E' }}>Not selected</span>}
                                             </div>
                                           </div>
                                         )}
@@ -1570,7 +1570,7 @@ export default function EventsClient() {
                           {item.photo_url && (
                             <div style={{ marginBottom: '0.6rem', position: 'relative', display: 'inline-block' }}>
                               <img src={item.photo_url} alt="" style={{ width: '160px', height: '90px', objectFit: 'cover', display: 'block', border: '0.5px solid rgba(0,0,0,0.1)' }} />
-                              <button onClick={() => removePhoto(item.id)} disabled={uploadingPhoto === item.id} style={{ position: 'absolute', top: '3px', right: '3px', background: 'rgba(123,32,50,0.85)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '11px', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                              <button onClick={() => removePhoto(item.id)} disabled={uploadingPhoto === item.id} style={{ position: 'absolute', top: '3px', right: '3px', background: 'rgba(147,51,62,0.85)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '11px', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                             </div>
                           )}
                           <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: '#555', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(0,0,0,0.15)', padding: '0.45rem 0.9rem', background: '#fafaf9' }}>

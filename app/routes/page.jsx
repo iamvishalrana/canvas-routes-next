@@ -69,7 +69,7 @@ export default function RoutesPage() {
     const hasValue = !!form[field]
     let border, background, boxShadow
     if (hasError) {
-      border = '1px solid #7B2032'; background = 'rgba(123,32,50,0.04)'; boxShadow = 'none'
+      border = '1px solid #93333E'; background = 'rgba(147,51,62,0.04)'; boxShadow = 'none'
     } else if (hasValue) {
       border = '1px solid #3B6B2F'; background = 'rgba(59,107,47,0.05)'; boxShadow = 'none'
     } else if (isFocused) {
@@ -231,7 +231,7 @@ export default function RoutesPage() {
           </div>
 
           <div style={{textAlign:"center",paddingTop:"2.5rem",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#7B2032"}}>Spots are limited &nbsp;·&nbsp; Selection is curated.</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#93333E"}}>Spots are limited &nbsp;·&nbsp; Selection is curated.</div>
           </div>
 
         </div>
@@ -380,24 +380,24 @@ export default function RoutesPage() {
                 {/* Name + Email */}
                 <div className="join-form-row" style={{marginBottom:"1rem"}}>
                   <div className="join-form-field">
-                    <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                     <input id="field-name" type="text" name="name" autoComplete="name" inputMode="text" placeholder="Your full name" value={form.name} maxLength={100}
                       onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')}
                       onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
-                    {errors.name && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                    {errors.name && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                   </div>
                   <div className="join-form-field">
-                    <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                     <input id="field-email" type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={form.email}
                       onChange={e => updateForm('email', e.target.value)} style={inputStyle('email')}
                       onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} />
-                    {errors.email && <span style={{fontSize:"11px",color:"#7B2032"}}>Valid email required</span>}
+                    {errors.email && <span style={{fontSize:"11px",color:"#93333E"}}>Valid email required</span>}
                   </div>
                 </div>
 
                 {/* Phone */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <label htmlFor="field-phone" className="join-label">Phone number<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <label htmlFor="field-phone" className="join-label">Phone number<Phone size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                   {phoneOptOut ? (
                     <div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.65rem 0.9rem",background:"rgba(0,0,0,0.03)",border:"0.5px solid rgba(0,0,0,0.1)"}}>
                       <span style={{fontSize:"13px",color:"#aaa",flex:1}}>Phone not provided</span>
@@ -405,7 +405,7 @@ export default function RoutesPage() {
                     </div>
                   ) : (
                     <>
-                      <div style={{display:"flex",alignItems:"center",...(errors.phone ? {border:"1px solid #7B2032",background:"rgba(123,32,50,0.04)"} : form.phone ? {border:"1px solid #3B6B2F",background:"rgba(59,107,47,0.05)"} : focusedField === 'phone' ? {border:"1px solid #c5a882",background:"transparent",boxShadow:"0 0 0 3px rgba(197,168,130,0.2)"} : {border:"1px solid rgba(0,0,0,0.2)",background:"transparent"}),transition:"border-color 0.2s, box-shadow 0.2s, background 0.2s"}}>
+                      <div style={{display:"flex",alignItems:"center",...(errors.phone ? {border:"1px solid #93333E",background:"rgba(147,51,62,0.04)"} : form.phone ? {border:"1px solid #3B6B2F",background:"rgba(59,107,47,0.05)"} : focusedField === 'phone' ? {border:"1px solid #c5a882",background:"transparent",boxShadow:"0 0 0 3px rgba(197,168,130,0.2)"} : {border:"1px solid rgba(0,0,0,0.2)",background:"transparent"}),transition:"border-color 0.2s, box-shadow 0.2s, background 0.2s"}}>
                         <div style={{position:"relative",flexShrink:0}}>
                           <select
                             name="tel-country-code" autoComplete="off"
@@ -424,7 +424,7 @@ export default function RoutesPage() {
                           onChange={e => updateForm('phone', formatPhone(e.target.value))} style={{flex:1,padding:"0.9rem 1.2rem",border:"none",background:"transparent",fontSize:"13px",fontFamily:"var(--font-inter),sans-serif",outline:"none",color:"#1a1a1a",WebkitAppearance:"none",MozAppearance:"none",appearance:"none",minWidth:0}}
                           onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)} />
                       </div>
-                      {errors.phone && <span style={{fontSize:"11px",color:"#7B2032"}}>{countryCode === '+1' ? 'Please enter a valid 10-digit number' : 'Please enter a valid phone number'}</span>}
+                      {errors.phone && <span style={{fontSize:"11px",color:"#93333E"}}>{countryCode === '+1' ? 'Please enter a valid 10-digit number' : 'Please enter a valid phone number'}</span>}
                       <button type="button" onClick={() => { setPhoneOptOut(true); setForm(p => ({...p, phone:''})); setErrors(p => ({...p, phone: undefined})) }} style={{background:"none",border:"none",padding:"0.3rem 0",fontSize:"11px",color:"#aaa",cursor:"pointer",textDecoration:"underline",fontFamily:"var(--font-inter),sans-serif",textAlign:"left"}}>Prefer not to share my number</button>
                     </>
                   )}
@@ -432,7 +432,7 @@ export default function RoutesPage() {
 
                 {/* Date of birth */}
                 <div id="field-dob_month" className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
+                  <div className="join-label" style={{marginBottom:"0.5rem"}}>Date of birth<span style={{color:"#93333E",marginLeft:"3px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(year optional)</span></div>
                   <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1.2fr",gap:"0.75rem"}}>
                     <div style={{position:"relative"}}>
                       <select name="bday-month" autoComplete="bday-month" value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)}
@@ -465,13 +465,13 @@ export default function RoutesPage() {
                       <Chevron />
                     </div>
                   </div>
-                  {(errors.dob_month || errors.dob_day) && <span style={{fontSize:"11px",color:"#7B2032"}}>Month and day are required</span>}
+                  {(errors.dob_month || errors.dob_day) && <span style={{fontSize:"11px",color:"#93333E"}}>Month and day are required</span>}
                 </div>
 
                 {/* Year + Make */}
                 <div className="join-form-row" style={{marginBottom:"1rem"}}>
                   <div className="join-form-field">
-                    <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                     <div style={{position:"relative"}}>
                       <select id="field-year" autoComplete="off" value={form.year} onChange={e => updateForm('year', e.target.value)}
                         style={{...inputStyle('year'), cursor:"pointer", paddingRight:"2rem"}}>
@@ -482,10 +482,10 @@ export default function RoutesPage() {
                       </select>
                       <Chevron />
                     </div>
-                    {errors.year && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                    {errors.year && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                   </div>
                   <div className="join-form-field">
-                    <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                     <div style={{position:"relative"}}>
                       <select id="field-carMake" autoComplete="off" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)}
                         style={{...inputStyle('carMake'), cursor:"pointer", paddingRight:"2rem"}}>
@@ -494,22 +494,22 @@ export default function RoutesPage() {
                       </select>
                       <Chevron />
                     </div>
-                    {errors.carMake && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                    {errors.carMake && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                   </div>
                 </div>
 
                 {/* Model */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                   <input id="field-carModel" type="text" name="car-model" autoComplete="off" placeholder="e.g. 911 Carrera S" value={form.carModel} maxLength={100}
                     onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
-                  {errors.carModel && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  {errors.carModel && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                 </div>
 
                 {/* Passengers */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <label htmlFor="field-passengers" className="join-label">Number of passengers<Users size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(including driver)</span></label>
+                  <label htmlFor="field-passengers" className="join-label">Number of passengers<Users size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span> <span style={{color:"#888",fontWeight:"300",textTransform:"none",letterSpacing:0,fontSize:"11px"}}>(including driver)</span></label>
                   <div style={{position:"relative"}}>
                     <select id="field-passengers" value={form.passengers} onChange={e => updateForm('passengers', e.target.value)}
                       style={{...inputStyle('passengers'), cursor:"pointer", paddingRight:"2rem"}}>
@@ -521,7 +521,7 @@ export default function RoutesPage() {
                     </select>
                     <Chevron />
                   </div>
-                  {errors.passengers && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  {errors.passengers && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                   {(form.passengers === '3' || form.passengers === '4+') && (
                     <div style={{marginTop:"0.6rem",padding:"0.75rem 1rem",border:"0.5px solid rgba(197,168,130,0.35)",background:"rgba(197,168,130,0.05)"}}>
                       <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>The base price covers 2 people. Additional passengers are subject to an extra charge — details will be sent with your confirmation.</span>
@@ -531,20 +531,20 @@ export default function RoutesPage() {
 
                 {/* Children */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <div id="field-hasChildren" className="join-label" style={{marginBottom:"0.75rem"}}>Any children attending?<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></div>
+                  <div id="field-hasChildren" className="join-label" style={{marginBottom:"0.75rem"}}>Any children attending?<span style={{color:"#93333E",marginLeft:"3px"}}>*</span></div>
                   <div style={{display:"flex",gap:"1rem"}}>
                     {['Yes','No'].map(v => {
                       const val = v.toLowerCase()
                       const selected = form.hasChildren === val
                       return (
                         <button key={v} type="button" onClick={() => updateForm('hasChildren', val)}
-                          style={{flex:1,padding:"0.9rem",border:`1px solid ${selected?'#3B6B2F':errors.hasChildren?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.hasChildren?'rgba(123,32,50,0.03)':'transparent',cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",fontSize:"13px",color:selected?'#3B6B2F':'#1a1a1a',transition:"all 0.2s",letterSpacing:"0.04em"}}>
+                          style={{flex:1,padding:"0.9rem",border:`1px solid ${selected?'#3B6B2F':errors.hasChildren?'#93333E':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.hasChildren?'rgba(147,51,62,0.03)':'transparent',cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",fontSize:"13px",color:selected?'#3B6B2F':'#1a1a1a',transition:"all 0.2s",letterSpacing:"0.04em"}}>
                           {v}
                         </button>
                       )
                     })}
                   </div>
-                  {errors.hasChildren && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  {errors.hasChildren && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                   {form.hasChildren === 'yes' && (
                     <div style={{marginTop:"0.75rem",padding:"0.85rem 1rem",border:"0.5px solid rgba(197,168,130,0.4)",background:"rgba(197,168,130,0.08)"}}>
                       <span style={{fontSize:"12px",color:"#7B5B2E",lineHeight:"1.7"}}>Each child attending is an additional charge. We&apos;ll reach out by email with the details after you register.</span>
@@ -554,17 +554,17 @@ export default function RoutesPage() {
 
                 {form.hasChildren === 'yes' && (
                   <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                    <label htmlFor="field-childrenAges" className="join-label">Ages of children<span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                    <label htmlFor="field-childrenAges" className="join-label">Ages of children<span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                     <input id="field-childrenAges" type="text" placeholder="e.g. 4, 7, 12" value={form.childrenAges} maxLength={100}
                       onChange={e => updateForm('childrenAges', e.target.value)} style={inputStyle('childrenAges')}
                       onFocus={() => setFocusedField('childrenAges')} onBlur={() => setFocusedField(null)} />
-                    {errors.childrenAges && <span style={{fontSize:"11px",color:"#7B2032"}}>Please enter the ages</span>}
+                    {errors.childrenAges && <span style={{fontSize:"11px",color:"#93333E"}}>Please enter the ages</span>}
                   </div>
                 )}
 
                 {/* Source */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
-                  <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#7B2032",marginLeft:"3px"}}>*</span></label>
+                  <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                   <div style={{position:"relative"}}>
                     <select id="field-source" value={form.source} onChange={e => updateForm('source', e.target.value)}
                       style={{...inputStyle('source'), cursor:"pointer", paddingRight:"2rem"}}>
@@ -577,7 +577,7 @@ export default function RoutesPage() {
                     </select>
                     <Chevron />
                   </div>
-                  {errors.source && <span style={{fontSize:"11px",color:"#7B2032"}}>Required</span>}
+                  {errors.source && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                 </div>
 
                 {/* Tell us more */}
@@ -606,7 +606,7 @@ export default function RoutesPage() {
                   style={{display:"block",width:"100%",padding:"1.1rem",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",cursor:status==='loading'?'wait':'pointer',fontFamily:"var(--font-inter),sans-serif",marginBottom:"1rem"}}>
                   {status === 'loading' ? 'Submitting...' : 'Apply — $200 per car'}
                 </button>
-                {status === 'error' && <div style={{fontSize:"12px",color:"#7B2032",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
+                {status === 'error' && <div style={{fontSize:"12px",color:"#93333E",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
 
               </form>
             </>

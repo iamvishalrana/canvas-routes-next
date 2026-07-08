@@ -143,8 +143,8 @@ export default function SettingsClient() {
 
   if (loadError) return (
     <div style={SECTION_STYLE}>
-      <div style={{ background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.2)', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '13px', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '0.4rem' }}>Failed to load settings</div>
+      <div style={{ background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
+        <div style={{ fontSize: '13px', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '0.4rem' }}>Failed to load settings</div>
         <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Could not reach the settings API. Saving is disabled to prevent overwriting values with defaults.</div>
         <button onClick={load} style={{ marginTop: '0.75rem', padding: '0.35rem 0.9rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Retry</button>
       </div>

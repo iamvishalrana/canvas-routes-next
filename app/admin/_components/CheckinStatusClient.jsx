@@ -10,9 +10,9 @@ function Pill({ done, doneLabel, pendingLabel }) {
       display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
       fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
       padding: '3px 9px', borderRadius: '99px',
-      color: done ? '#3B6B2F' : '#7B2032',
-      border: `0.5px solid ${done ? 'rgba(59,107,47,0.3)' : 'rgba(123,32,50,0.3)'}`,
-      background: done ? 'rgba(59,107,47,0.06)' : 'rgba(123,32,50,0.05)',
+      color: done ? '#3B6B2F' : '#93333E',
+      border: `0.5px solid ${done ? 'rgba(59,107,47,0.3)' : 'rgba(147,51,62,0.3)'}`,
+      background: done ? 'rgba(59,107,47,0.06)' : 'rgba(147,51,62,0.05)',
       whiteSpace: 'nowrap',
     }}>
       {done ? doneLabel : pendingLabel}
@@ -68,7 +68,7 @@ export default function CheckinStatusClient({ eventId }) {
   const total = participants.length
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
-  if (!event) return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#7B2032' }}>Failed to load.</div>
+  if (!event) return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#93333E' }}>Failed to load.</div>
 
   if (!event.checkin_enabled) {
     return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Check-in isn't enabled for this event yet — turn it on in the Settings tab.</div>

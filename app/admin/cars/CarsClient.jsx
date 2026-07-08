@@ -218,7 +218,7 @@ export default function CarsClient() {
                       </div>
 
                       <GhostBtn small onClick={saveCar} disabled={saving}>{saving ? 'Saving…' : 'Save'}</GhostBtn>
-                      {saveErr && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.4rem' }}>{saveErr}</div>}
+                      {saveErr && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.4rem' }}>{saveErr}</div>}
                     </div>
                   )}
                 </div>
@@ -251,7 +251,7 @@ export default function CarsClient() {
                       {assigning[m.id] ? '…' : 'Assign'}
                     </GhostBtn>
                   </div>
-                  {assignErr[m.id] && <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.25rem', gridColumn: '1 / -1' }}>{assignErr[m.id]}</div>}
+                  {assignErr[m.id] && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.25rem', gridColumn: '1 / -1' }}>{assignErr[m.id]}</div>}
                 </div>
               ))}
             </div>

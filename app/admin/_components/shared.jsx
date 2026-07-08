@@ -13,7 +13,7 @@ export const EMPTY_CAR = { year: '', make: '', model: '', license_plate: '', pai
 export const STATUS_COLORS = {
   active:    { bg: 'rgba(59,107,47,0.1)',   text: '#3B6B2F', border: 'rgba(59,107,47,0.3)'   },
   pending:   { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
-  suspended: { bg: 'rgba(123,32,50,0.1)',   text: '#7B2032', border: 'rgba(123,32,50,0.3)'   },
+  suspended: { bg: 'rgba(147,51,62,0.1)',   text: '#93333E', border: 'rgba(147,51,62,0.3)'   },
   expired:   { bg: 'rgba(0,0,0,0.05)',      text: '#999',    border: 'rgba(0,0,0,0.15)'      },
 }
 export const EVENT_TYPES = ['Route', 'Cars & Coffee', 'Social', 'Track Day', 'Other']
@@ -96,7 +96,7 @@ export function GhostBtn({ onClick, small, disabled, children }) {
 export function DangerBtn({ onClick, small, disabled, children }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled} className="admin-btn"
-      style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.35)', borderRadius: '8px', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
+      style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', borderRadius: '8px', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
       {children}
     </button>
   )
@@ -127,7 +127,7 @@ export function KebabMenu({ items }) {
           {items.filter(Boolean).map((it, i) => (
             <button key={i} type="button" disabled={it.disabled}
               onClick={() => { setOpen(false); it.onClick() }}
-              style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: '44px', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: i < items.filter(Boolean).length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', color: it.danger ? '#7B2032' : '#333', cursor: it.disabled ? 'not-allowed' : 'pointer', opacity: it.disabled ? 0.4 : 1, fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+              style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: '44px', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: i < items.filter(Boolean).length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', color: it.danger ? '#93333E' : '#333', cursor: it.disabled ? 'not-allowed' : 'pointer', opacity: it.disabled ? 0.4 : 1, fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
               {it.label}
             </button>
           ))}
@@ -151,7 +151,7 @@ export function ConfirmDialog({ title, message, details, confirmLabel = 'Yes, co
     <div className="admin-modal-overlay" onClick={() => { if (!busy) onCancel() }}
       style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,30,20,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
       <div className="admin-modal-enter" role="alertdialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}
-        style={{ background: '#fff', width: '100%', maxWidth: '440px', border: '0.5px solid rgba(0,0,0,0.12)', borderTop: `2px solid ${danger ? '#7B2032' : '#45643c'}`, boxShadow: '0 12px 40px rgba(15,30,20,0.25)', maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: '16px' }}>
+        style={{ background: '#fff', width: '100%', maxWidth: '440px', border: '0.5px solid rgba(0,0,0,0.12)', borderTop: `2px solid ${danger ? '#93333E' : '#45643c'}`, boxShadow: '0 12px 40px rgba(15,30,20,0.25)', maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: '16px' }}>
         <div style={{ padding: '1.4rem 1.5rem 1.25rem' }}>
           <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: message ? '0.5rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>{title}</div>
           {message && <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65' }}>{message}</div>}
@@ -164,7 +164,7 @@ export function ConfirmDialog({ title, message, details, confirmLabel = 'Yes, co
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', padding: '0 1.5rem 1.4rem' }}>
           <GhostBtn onClick={onCancel} disabled={busy}>{cancelLabel}</GhostBtn>
           <button type="button" onClick={onConfirm} disabled={busy} className="admin-btn"
-            style={{ padding: '0.65rem 1.4rem', background: danger ? '#7B2032' : '#45643c', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: busy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: busy ? 0.6 : 1 }}>
+            style={{ padding: '0.65rem 1.4rem', background: danger ? '#93333E' : '#45643c', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: busy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: busy ? 0.6 : 1 }}>
             {busy ? 'Working…' : confirmLabel}
           </button>
         </div>
@@ -224,14 +224,14 @@ export function AttendanceToggle({ value, onChange, disabled }) {
   return (
     <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
       {seg(value === true,  '#3B6B2F', '#3B6B2F',             'rgba(59,107,47,0.1)',  '✓ Attended', true)}
-      {seg(value === false, '#7B2032', 'rgba(123,32,50,0.4)', 'rgba(123,32,50,0.08)', '✗ No-show',  false)}
+      {seg(value === false, '#93333E', 'rgba(147,51,62,0.4)', 'rgba(147,51,62,0.08)', '✗ No-show',  false)}
     </div>
   )
 }
 
 export function Err({ msg }) {
   if (!msg) return null
-  return <div style={{ fontSize: '12px', color: '#7B2032', marginTop: '0.6rem' }}>{msg}</div>
+  return <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.6rem' }}>{msg}</div>
 }
 
 export function Success({ msg }) {

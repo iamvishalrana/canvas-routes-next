@@ -23,7 +23,7 @@ const STATUS_CARD_DOT = {
 const STATUS_COLORS = {
   active:    { bg: 'rgba(59,107,47,0.08)',   text: '#3B6B2F', border: 'rgba(59,107,47,0.25)'  },
   pending:   { bg: 'rgba(123,91,46,0.08)',   text: '#7B5B2E', border: 'rgba(123,91,46,0.25)'  },
-  suspended: { bg: 'rgba(123,32,50,0.08)',   text: '#7B2032', border: 'rgba(123,32,50,0.25)'  },
+  suspended: { bg: 'rgba(147,51,62,0.08)',   text: '#93333E', border: 'rgba(147,51,62,0.25)'  },
   expired:   { bg: 'rgba(0,0,0,0.04)',       text: '#888',    border: 'rgba(0,0,0,0.12)'       },
 }
 

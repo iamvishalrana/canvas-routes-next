@@ -18,7 +18,7 @@ function fmtDate(iso) {
 
 function AttendedChip({ value }) {
   if (value === true)  return <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.08)', color: '#3B6B2F' }}>Attended</span>
-  if (value === false) return <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(123,32,50,0.3)', background: 'rgba(123,32,50,0.06)', color: '#7B2032' }}>No-show</span>
+  if (value === false) return <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(147,51,62,0.3)', background: 'rgba(147,51,62,0.06)', color: '#93333E' }}>No-show</span>
   return <span style={{ fontSize: '10px', color: '#ccc' }}>—</span>
 }
 
@@ -161,7 +161,7 @@ export default function RoadTripsClient() {
             {[
               { label: 'Total',    value: tabFiltered.length, color: '#1a1a1a' },
               { label: 'Attended', value: attended,           color: '#3B6B2F' },
-              { label: 'No-show',  value: noShows,            color: '#7B2032' },
+              { label: 'No-show',  value: noShows,            color: '#93333E' },
               { label: 'Unset',    value: pending,            color: '#aaa'    },
             ].map(s => (
               <div key={s.label} style={{ ...CARD, padding: '1.1rem 1.25rem' }}>

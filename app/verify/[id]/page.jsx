@@ -54,7 +54,7 @@ export default async function VerifyPage({ params }) {
           <div style={{
             background: isValid
               ? 'linear-gradient(145deg, rgba(59,107,47,0.14) 0%, rgba(59,107,47,0.06) 100%)'
-              : 'linear-gradient(145deg, rgba(123,32,50,0.14) 0%, rgba(123,32,50,0.06) 100%)',
+              : 'linear-gradient(145deg, rgba(147,51,62,0.14) 0%, rgba(147,51,62,0.06) 100%)',
             border: `0.5px solid ${isValid ? 'rgba(126,200,122,0.22)' : 'rgba(208,96,112,0.22)'}`,
             borderRadius: '14px',
             padding: '2rem 1.75rem',

@@ -22,7 +22,7 @@ const STATUS_COLORS = {
   refunded:            { bg: 'rgba(80,80,180,0.08)',   text: '#4040aa', border: 'rgba(80,80,180,0.3)' },
   partially_refunded:  { bg: 'rgba(197,168,130,0.12)', text: '#8A6535', border: 'rgba(197,168,130,0.4)' },
   disputed:            { bg: 'rgba(180,60,0,0.1)',     text: '#b33c00', border: 'rgba(180,60,0,0.3)' },
-  failed:              { bg: 'rgba(123,32,50,0.1)',    text: '#7B2032', border: 'rgba(123,32,50,0.3)' },
+  failed:              { bg: 'rgba(147,51,62,0.1)',    text: '#93333E', border: 'rgba(147,51,62,0.3)' },
   pending:             { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
 }
 
@@ -55,7 +55,7 @@ function Actions({ r, ctx }) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
           <div style={{ fontSize: '11px', color: '#1a1a1a' }}>Capture ${((r.stripe_amount_paid || 0) / 100).toFixed(2)} or cancel hold?</div>
-          {authorizedErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{authorizedErr[r.stripe_payment_intent_id]}</div>}
+          {authorizedErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#93333E' }}>{authorizedErr[r.stripe_payment_intent_id]}</div>}
           <div style={{ display: 'flex', gap: '0.35rem' }}>
             <GhostBtn small onClick={() => doCapture(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>
               {authorizedBusy === r.stripe_payment_intent_id ? '…' : 'Capture'}
@@ -72,8 +72,8 @@ function Actions({ r, ctx }) {
   if (refunding === r.stripe_payment_intent_id) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
-        <div style={{ fontSize: '11px', color: '#7B2032' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
-        {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#7B2032' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
+        <div style={{ fontSize: '11px', color: '#93333E' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
+        {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#93333E' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
         <select value={refundReason} onChange={e => setRefundReason(e.target.value)}
           style={{ fontSize: '11px', padding: '0.3rem 0.5rem', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff', fontFamily: 'var(--font-inter),sans-serif', color: '#555', cursor: 'pointer' }}>
           <option value="requested_by_customer">Requested by customer</option>
@@ -118,7 +118,7 @@ function Actions({ r, ctx }) {
           View Dispute ↗
         </a>
       )}
-      {receiptErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '10px', color: '#7B2032', width: '100%' }}>{receiptErr[r.stripe_payment_intent_id]}</div>}
+      {receiptErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '10px', color: '#93333E', width: '100%' }}>{receiptErr[r.stripe_payment_intent_id]}</div>}
     </div>
   )
 }

@@ -13,9 +13,9 @@ function Pill({ done, doneLabel, pendingLabel }) {
       display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
       fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
       padding: '3px 9px', borderRadius: '99px',
-      color: done ? '#3B6B2F' : '#7B2032',
-      border: `0.5px solid ${done ? 'rgba(59,107,47,0.3)' : 'rgba(123,32,50,0.3)'}`,
-      background: done ? 'rgba(59,107,47,0.06)' : 'rgba(123,32,50,0.05)',
+      color: done ? '#3B6B2F' : '#93333E',
+      border: `0.5px solid ${done ? 'rgba(59,107,47,0.3)' : 'rgba(147,51,62,0.3)'}`,
+      background: done ? 'rgba(59,107,47,0.06)' : 'rgba(147,51,62,0.05)',
       whiteSpace: 'nowrap',
     }}>
       {done ? doneLabel : pendingLabel}
@@ -240,7 +240,7 @@ export default function WtetClient() {
                           )}
                           <br />
                           <button onClick={() => setViewingWaiver({ name: p.name, email: p.email, waiver: p.wtet_waiver })} style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', marginRight: '1rem', cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>View full waiver</button>
-                          <button onClick={() => resetWaiver(p.id, p.name)} style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', cursor: 'pointer', color: '#7B2032', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>Reset waiver</button>
+                          <button onClick={() => resetWaiver(p.id, p.name)} style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', cursor: 'pointer', color: '#93333E', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>Reset waiver</button>
                         </div>
                       ) : (
                         <div style={{ fontSize: '12px', color: '#bbb' }}>Not signed yet.</div>

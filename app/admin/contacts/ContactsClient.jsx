@@ -410,12 +410,12 @@ export default function ContactsClient() {
           <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
           {deleteSelectedConfirm ? (
             <>
-              <span style={{ fontSize: '11px', color: '#7B2032' }}>Remove {selected.size} contact{selected.size > 1 ? 's' : ''}?</span>
+              <span style={{ fontSize: '11px', color: '#93333E' }}>Remove {selected.size} contact{selected.size > 1 ? 's' : ''}?</span>
               <DangerBtn small onClick={deleteSelected}>Confirm Delete</DangerBtn>
               <GhostBtn small onClick={() => setDeleteSelectedConfirm(false)}>Cancel</GhostBtn>
             </>
           ) : (
-            <button onClick={() => setDeleteSelectedConfirm(true)} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', background: 'none', border: '0.5px solid rgba(123,32,50,0.3)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Remove</button>
+            <button onClick={() => setDeleteSelectedConfirm(true)} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#93333E', background: 'none', border: '0.5px solid rgba(147,51,62,0.3)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Remove</button>
           )}
           <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
         </div>
@@ -451,7 +451,7 @@ export default function ContactsClient() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
           <button onClick={() => { setAddingNew(v => !v); setNewErr(null) }}
-            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: addingNew ? '#7B2032' : '#3B6B2F', background: 'none', border: `0.5px solid ${addingNew ? 'rgba(123,32,50,0.35)' : 'rgba(59,107,47,0.35)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: addingNew ? '#93333E' : '#3B6B2F', background: 'none', border: `0.5px solid ${addingNew ? 'rgba(147,51,62,0.35)' : 'rgba(59,107,47,0.35)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
             {addingNew ? 'Cancel' : '+ New Contact'}
           </button>
           <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -482,7 +482,7 @@ export default function ContactsClient() {
             <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={newForm.car_make} onChange={e => setNewForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
             <div style={{ gridColumn: isMobile ? undefined : 'span 2' }}><L>Model</L><input style={inp} value={newForm.car_model} onChange={e => setNewForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>
           </div>
-          {newErr && <div style={{ fontSize: '11px', color: '#7B2032', marginBottom: '0.75rem' }}>{newErr}</div>}
+          {newErr && <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '0.75rem' }}>{newErr}</div>}
           <button type="submit" disabled={savingNew}
             style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#fff', background: '#1a1a1a', border: 'none', padding: '8px 20px', cursor: savingNew ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
             {savingNew ? 'Adding…' : 'Add Contact'}
@@ -528,7 +528,7 @@ export default function ContactsClient() {
                   if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(c => c.contact_id)]))
                   else setSelected(prev => { const n = new Set(prev); filtered.forEach(c => n.delete(c.contact_id)); return n })
                 }}
-                style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
               />
               {['Name', 'Email', 'Car', 'DOB', 'Applied', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
@@ -551,14 +551,14 @@ export default function ContactsClient() {
             <div key={c.contact_id} style={{ borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
               {/* Summary row */}
               {isMobile ? (
-                <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
+                <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(147,51,62,0.03)' : undefined }}
                   onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null); if (contactTierPick === c.contact_id) setContactTierPick(null) }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }} onClick={e => e.stopPropagation()}>
                       <input type="checkbox"
                         checked={selected.has(c.contact_id)}
                         onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(c.contact_id) : n.delete(c.contact_id); return n })}
-                        style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px', flexShrink: 0 }}
+                        style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px', flexShrink: 0 }}
                       />
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -588,7 +588,7 @@ export default function ContactsClient() {
                         <button
                           onClick={() => setContactTierPick(c.contact_id)}
                           disabled={contactInviteStatus[c.contact_id] === 'sending'}
-                          style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
+                          style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#93333E' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
                         >
                           {contactInviteStatus[c.contact_id] === 'sending' ? '…' : typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? 'Error' : 'Invite'}
                         </button>
@@ -610,14 +610,14 @@ export default function ContactsClient() {
                 </div>
               ) : (
               <div
-                style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(123,32,50,0.03)' : undefined }}
+                style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(147,51,62,0.03)' : undefined }}
                 onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null); if (contactTierPick === c.contact_id) setContactTierPick(null) }}
               >
                 <div onClick={e => e.stopPropagation()}>
                   <input type="checkbox"
                     checked={selected.has(c.contact_id)}
                     onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(c.contact_id) : n.delete(c.contact_id); return n })}
-                    style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                    style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
                   />
                 </div>
                 <div>
@@ -658,7 +658,7 @@ export default function ContactsClient() {
                     <button
                       onClick={() => setContactTierPick(c.contact_id)}
                       disabled={contactInviteStatus[c.contact_id] === 'sending'}
-                      style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#7B2032' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
+                      style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#93333E' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
                     >
                       {contactInviteStatus[c.contact_id] === 'sending' ? '…' : typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? 'Error' : 'Invite'}
                     </button>
@@ -928,7 +928,7 @@ export default function ContactsClient() {
                       </div>
                       {removeContactConfirm === c.contact_id && (
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '11px', color: '#7B2032' }}>Remove this contact?</span>
+                          <span style={{ fontSize: '11px', color: '#93333E' }}>Remove this contact?</span>
                           <DangerBtn small onClick={() => removeContact(c.contact_id)}>Confirm Remove</DangerBtn>
                           <GhostBtn small onClick={() => { setRemoveContactConfirm(null); setRemoveContactError(null) }}>Cancel</GhostBtn>
                           {removeContactError && <Err msg={removeContactError} />}

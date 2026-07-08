@@ -129,7 +129,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
         <PaymentElement />
       </div>
       {error && (
-        <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)' }}>
+        <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(147,51,62,0.05)', border: '0.5px solid rgba(147,51,62,0.2)' }}>
           {error}
         </div>
       )}
@@ -237,7 +237,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
 
   if (chargedButFailed) {
     return (
-      <div style={{ fontSize: '12px', color: '#7B2032', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, padding: '0.6rem 0.75rem', background: 'rgba(123,32,50,0.05)', border: '0.5px solid rgba(123,32,50,0.2)', maxWidth: '380px' }}>
+      <div style={{ fontSize: '12px', color: '#93333E', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, padding: '0.6rem 0.75rem', background: 'rgba(147,51,62,0.05)', border: '0.5px solid rgba(147,51,62,0.2)', maxWidth: '380px' }}>
         Your payment was taken but registration didn&apos;t complete. Please contact us with reference: <strong>{chargedButFailed}</strong>
       </div>
     )
@@ -308,7 +308,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         )}
       </button>
       {(piError || regError) && (
-        <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.4rem' }}>{piError || regError}</div>
+        <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.4rem' }}>{piError || regError}</div>
       )}
 
       {/* Payment modal */}

@@ -604,9 +604,9 @@ export default function EasternTownshipsPage() {
               <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>{t.meetupDetail}</p>
               <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>{t.meetupSub}</p>
             </div>
-            <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #7B2032' }}>
-              <h2 style={{ ...SECTION_LABEL, color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>{t.contact}</h2>
-              <a href="tel:5144373437" style={{ fontSize: '14px', color: '#7B2032', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
+            <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
+              <h2 style={{ ...SECTION_LABEL, color: '#93333E', marginBottom: '5px', fontWeight: '600' }}>{t.contact}</h2>
+              <a href="tel:5144373437" style={{ fontSize: '14px', color: '#93333E', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
               </a>
               <CopyButton text="514-437-3437" copyLabel={t.copyBtn} copiedLabel={t.copied} />

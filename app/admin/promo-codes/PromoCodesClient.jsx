@@ -344,10 +344,10 @@ export default function PromoCodesClient() {
         <div style={{ fontSize: '12px', color: '#3B6B2F', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{formOk}</div>
       )}
       {deactivateErr && (
-        <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{deactivateErr}</div>
+        <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{deactivateErr}</div>
       )}
       {reactivateErr && (
-        <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{reactivateErr}</div>
+        <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{reactivateErr}</div>
       )}
 
       {/* Stats */}
@@ -399,7 +399,7 @@ export default function PromoCodesClient() {
                       <input style={{ ...inp, padding: '0.4rem 0.6rem', fontSize: '12px' }} type="date" value={editForm.expiresAt} onChange={e => setEditForm(f => ({ ...f, expiresAt: e.target.value }))} />
                     </div>
                   </div>
-                  {editErr && <div style={{ fontSize: '11px', color: '#7B2032' }}>{editErr}</div>}
+                  {editErr && <div style={{ fontSize: '11px', color: '#93333E' }}>{editErr}</div>}
                   <div style={{ display: 'flex', gap: '0.35rem' }}>
                     <PrimaryBtn onClick={() => handleSaveEdit(c)} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save'}</PrimaryBtn>
                     <GhostBtn small onClick={() => setEditing(null)}>Cancel</GhostBtn>
@@ -417,7 +417,7 @@ export default function PromoCodesClient() {
                   <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
                   {deactivateConfirm === c.id ? (
                     <>
-                      <span style={{ fontSize: '11px', color: '#7B2032' }}>Deactivate?</span>
+                      <span style={{ fontSize: '11px', color: '#93333E' }}>Deactivate?</span>
                       <DangerBtn small onClick={() => handleDeactivate(c.id)} disabled={deactivating === c.id}>{deactivating === c.id ? 'Deactivating…' : 'Confirm'}</DangerBtn>
                       <GhostBtn small onClick={() => setDeactivateConfirm(null)}>Cancel</GhostBtn>
                     </>
@@ -545,7 +545,7 @@ export default function PromoCodesClient() {
                           <input style={{ width: '90px', padding: '0.35rem 0.5rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff' }} type="number" min="1" placeholder="Max uses" value={editForm.maxRedemptions} onChange={e => setEditForm(f => ({ ...f, maxRedemptions: e.target.value }))} />
                           <input style={{ width: '120px', padding: '0.35rem 0.5rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff' }} type="date" value={editForm.expiresAt} onChange={e => setEditForm(f => ({ ...f, expiresAt: e.target.value }))} />
                         </div>
-                        {editErr && <div style={{ fontSize: '11px', color: '#7B2032' }}>{editErr}</div>}
+                        {editErr && <div style={{ fontSize: '11px', color: '#93333E' }}>{editErr}</div>}
                         <div style={{ display: 'flex', gap: '0.35rem' }}>
                           <PrimaryBtn onClick={() => handleSaveEdit(c)} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save'}</PrimaryBtn>
                           <GhostBtn small onClick={() => setEditing(null)}>Cancel</GhostBtn>
@@ -563,7 +563,7 @@ export default function PromoCodesClient() {
                         <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
                         {deactivateConfirm === c.id ? (
                           <>
-                            <span style={{ fontSize: '11px', color: '#7B2032' }}>Deactivate?</span>
+                            <span style={{ fontSize: '11px', color: '#93333E' }}>Deactivate?</span>
                             <DangerBtn small onClick={() => handleDeactivate(c.id)} disabled={deactivating === c.id}>{deactivating === c.id ? 'Deactivating…' : 'Confirm'}</DangerBtn>
                             <GhostBtn small onClick={() => setDeactivateConfirm(null)}>Cancel</GhostBtn>
                           </>

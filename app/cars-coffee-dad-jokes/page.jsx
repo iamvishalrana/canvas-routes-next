@@ -22,7 +22,7 @@ function Chevron() {
 }
 
 function inp(focused, filled, error) {
-  if (error)  return { border: '1px solid #7B2032', background: 'rgba(123,32,50,0.03)' }
+  if (error)  return { border: '1px solid #93333E', background: 'rgba(147,51,62,0.03)' }
   if (filled) return { border: '1px solid #3B6B2F', background: 'rgba(59,107,47,0.04)' }
   if (focused)return { border: '1px solid #c5a882', background: 'transparent', boxShadow: '0 0 0 3px rgba(197,168,130,0.15)' }
   return { border: '1px solid rgba(0,0,0,0.18)', background: 'transparent' }
@@ -254,7 +254,7 @@ export default function CCDPage() {
 
               {/* Name */}
               <div>
-                <label htmlFor="ccd-name" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.name ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Full Name <span style={{ color:'#d06070' }}>*</span></label>
+                <label htmlFor="ccd-name" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.name ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Full Name <span style={{ color:'#d06070' }}>*</span></label>
                 <input
                   id="ccd-name" type="text" autoComplete="name"
                   value={form.name} onChange={e => update('name', e.target.value)}
@@ -266,7 +266,7 @@ export default function CCDPage() {
 
               {/* Email */}
               <div>
-                <label htmlFor="ccd-email" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.email ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Email <span style={{ color:'#d06070' }}>*</span></label>
+                <label htmlFor="ccd-email" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.email ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Email <span style={{ color:'#d06070' }}>*</span></label>
                 <input
                   id="ccd-email" type="email" autoComplete="email"
                   autoCapitalize="none" autoCorrect="off" spellCheck={false}
@@ -280,7 +280,7 @@ export default function CCDPage() {
               {/* Car year + make */}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1.6fr', gap:'0.75rem' }}>
                 <div>
-                  <label htmlFor="ccd-year" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.year ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Year <span style={{ color:'#d06070' }}>*</span></label>
+                  <label htmlFor="ccd-year" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.year ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Year <span style={{ color:'#d06070' }}>*</span></label>
                   <div style={{ position:'relative' }}>
                     <select
                       id="ccd-year"
@@ -295,7 +295,7 @@ export default function CCDPage() {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="ccd-carMake" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.carMake ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Make <span style={{ color:'#d06070' }}>*</span></label>
+                  <label htmlFor="ccd-carMake" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.carMake ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Make <span style={{ color:'#d06070' }}>*</span></label>
                   <div style={{ position:'relative' }}>
                     <select
                       id="ccd-carMake"
@@ -313,7 +313,7 @@ export default function CCDPage() {
 
               {/* Car model */}
               <div>
-                <label htmlFor="ccd-carModel" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.carModel ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Model <span style={{ color:'#d06070' }}>*</span></label>
+                <label htmlFor="ccd-carModel" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.carModel ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Model <span style={{ color:'#d06070' }}>*</span></label>
                 <input
                   id="ccd-carModel" type="text"
                   value={form.carModel} onChange={e => update('carModel', e.target.value)}
@@ -342,7 +342,7 @@ export default function CCDPage() {
               {/* Phone — opt-in, hidden by default */}
               {phoneShown ? (
                 <div>
-                  <label htmlFor="ccd-phone" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.phone ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
+                  <label htmlFor="ccd-phone" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.phone ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>
                     Phone <span style={{ color:'#d06070' }}>*</span>
                   </label>
                   <div style={{ display:'flex', gap:'0.5rem' }}>
@@ -405,7 +405,7 @@ export default function CCDPage() {
 
               {/* Source — just above submit */}
               <div>
-                <label htmlFor="ccd-source" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.source ? '#7B2032' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>How did you hear about us? <span style={{ color:'#d06070' }}>*</span></label>
+                <label htmlFor="ccd-source" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.source ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>How did you hear about us? <span style={{ color:'#d06070' }}>*</span></label>
                 <div style={{ position:'relative' }}>
                   <select
                     id="ccd-source"
@@ -421,7 +421,7 @@ export default function CCDPage() {
               </div>
 
               {serverError && (
-                <p style={{ fontSize:'13px', color:'#7B2032', margin:0, fontFamily:'var(--font-inter), sans-serif' }}>{serverError}</p>
+                <p style={{ fontSize:'13px', color:'#93333E', margin:0, fontFamily:'var(--font-inter), sans-serif' }}>{serverError}</p>
               )}
 
               {/* Submit — sticky on mobile via CSS */}

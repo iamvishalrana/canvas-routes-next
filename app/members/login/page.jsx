@@ -145,7 +145,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1rem', lineHeight: '1.55', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>
+              <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '1rem', lineHeight: '1.55', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>
             )}
 
             <button type="submit" disabled={loading}
@@ -172,7 +172,7 @@ export default function LoginPage() {
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
                 style={inputStyle('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
             </div>
-            {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
+            {error && <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}
             <button type="submit" disabled={loading}
               style={{ width: '100%', padding: '0.95rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1 }}>
               {loading ? 'Sending…' : 'Send Reset Link'}

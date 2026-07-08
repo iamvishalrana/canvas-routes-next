@@ -417,7 +417,7 @@ export default function WtetPage() {
   function inputStyle(field) {
     const isFocused = focusedField === field, hasError = !!errors[field], hasValue = !!form[field]
     let border, background, boxShadow
-    if (hasError)       { border='1px solid #7B2032'; background='rgba(123,32,50,0.04)'; boxShadow='none' }
+    if (hasError)       { border='1px solid #93333E'; background='rgba(147,51,62,0.04)'; boxShadow='none' }
     else if (hasValue)  { border='1px solid #3B6B2F'; background='rgba(59,107,47,0.05)'; boxShadow='none' }
     else if (isFocused) { border='1px solid #c5a882'; background='transparent'; boxShadow='0 0 0 3px rgba(197,168,130,0.2)' }
     else                { border='1px solid rgba(0,0,0,0.2)'; background='transparent'; boxShadow='none' }
@@ -985,7 +985,7 @@ export default function WtetPage() {
                       colorPrimary: '#0F1E14',
                       colorBackground: '#ffffff',
                       colorText: '#1a1a1a',
-                      colorDanger: '#7B2032',
+                      colorDanger: '#93333E',
                       fontFamily: 'var(--font-inter), sans-serif',
                       borderRadius: '0px',
                       focusBoxShadow: '0 0 0 3px rgba(197,168,130,0.25)',
@@ -1049,7 +1049,7 @@ export default function WtetPage() {
                         const sel = form.isMember === val
                         return (
                           <button key={val} type="button" onClick={() => updateForm('isMember', val)}
-                            style={{padding:'1.1rem 1.25rem',border:`1.5px solid ${sel?'#c5a882':errors.isMember?'#7B2032':'rgba(0,0,0,0.14)'}`,background:sel?'rgba(197,168,130,0.08)':'#fff',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textAlign:'left',transition:'all 0.15s',display:'flex',flexDirection:'column',gap:'0.3rem'}}>
+                            style={{padding:'1.1rem 1.25rem',border:`1.5px solid ${sel?'#c5a882':errors.isMember?'#93333E':'rgba(0,0,0,0.14)'}`,background:sel?'rgba(197,168,130,0.08)':'#fff',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textAlign:'left',transition:'all 0.15s',display:'flex',flexDirection:'column',gap:'0.3rem'}}>
                             <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.6rem',letterSpacing:'0.04em',color:sel?'#1a1a1a':'#888',lineHeight:1}}>{p}</span>
                             <span style={{fontSize:'11px',fontWeight:'500',color:sel?'#1a1a1a':'#aaa',letterSpacing:'0.04em'}}>{label}</span>
                             <span style={{fontSize:'10px',color:sel?'#888':'#ccc',letterSpacing:'0.02em'}}>{sublabel}</span>
@@ -1057,7 +1057,7 @@ export default function WtetPage() {
                         )
                       })}
                     </div>
-                    {errors.isMember && <span style={{fontSize:'11px',color:'#7B2032',display:'block',marginTop:'0.5rem'}}>Please select one</span>}
+                    {errors.isMember && <span style={{fontSize:'11px',color:'#93333E',display:'block',marginTop:'0.5rem'}}>Please select one</span>}
                   </div>
                 )}
 
@@ -1095,24 +1095,24 @@ export default function WtetPage() {
                 {/* Name + Email */}
                 <div className="join-form-row" style={{marginBottom:'1rem'}}>
                   <div className="join-form-field">
-                    <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                    <label htmlFor="field-name" className="join-label">Full name<User size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                     <input id="field-name" type="text" name="name" autoComplete="name" inputMode="text" placeholder="Your full name" value={form.name} maxLength={100}
                       onChange={e => updateForm('name', e.target.value)} style={inputStyle('name')}
                       onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} />
-                    {errors.name && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
+                    {errors.name && <span style={{fontSize:'11px',color:'#93333E'}}>Required</span>}
                   </div>
                   <div className="join-form-field">
-                    <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                    <label htmlFor="field-email" className="join-label">Email<Mail size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                     <input id="field-email" type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={form.email}
                       onChange={e => updateForm('email', e.target.value)} style={inputStyle('email')}
                       onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} />
-                    {errors.email && <span style={{fontSize:'11px',color:'#7B2032'}}>Valid email required</span>}
+                    {errors.email && <span style={{fontSize:'11px',color:'#93333E'}}>Valid email required</span>}
                   </div>
                 </div>
 
                 {/* Phone */}
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
-                  <label htmlFor="field-phone" className="join-label">Phone<Phone size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                  <label htmlFor="field-phone" className="join-label">Phone<Phone size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                   {phoneOptOut ? (
                     <div style={{display:'flex',alignItems:'center',gap:'0.75rem',padding:'0.65rem 0.9rem',background:'rgba(0,0,0,0.03)',border:'0.5px solid rgba(0,0,0,0.1)'}}>
                       <span style={{fontSize:'13px',color:'#aaa',flex:1}}>Phone not provided</span>
@@ -1122,8 +1122,8 @@ export default function WtetPage() {
                     <>
                       {(() => {
                         const f=focusedField==='phone', err=!!errors.phone, val=!!form.phone
-                        const border = err?'1px solid #7B2032':val?'1px solid #3B6B2F':f?'1px solid #c5a882':'1px solid rgba(0,0,0,0.2)'
-                        const bg = err?'rgba(123,32,50,0.04)':val?'rgba(59,107,47,0.05)':'transparent'
+                        const border = err?'1px solid #93333E':val?'1px solid #3B6B2F':f?'1px solid #c5a882':'1px solid rgba(0,0,0,0.2)'
+                        const bg = err?'rgba(147,51,62,0.04)':val?'rgba(59,107,47,0.05)':'transparent'
                         const shadow = f&&!err&&!val?'0 0 0 3px rgba(197,168,130,0.2)':'none'
                         return (
                           <div style={{display:'flex',alignItems:'stretch',border,background:bg,boxShadow:shadow,transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s'}}>
@@ -1141,7 +1141,7 @@ export default function WtetPage() {
                           </div>
                         )
                       })()}
-                      {errors.phone && <span style={{fontSize:'11px',color:'#7B2032'}}>{countryCode==='+1'?'Please enter a valid 10-digit number':'Please enter a valid phone number'}</span>}
+                      {errors.phone && <span style={{fontSize:'11px',color:'#93333E'}}>{countryCode==='+1'?'Please enter a valid 10-digit number':'Please enter a valid phone number'}</span>}
                       <button type="button" onClick={() => { setPhoneOptOut(true); setForm(p=>({...p,phone:''})); setErrors(p=>({...p,phone:undefined})) }} style={{background:'none',border:'none',padding:'0.3rem 0',fontSize:'11px',color:'#aaa',cursor:'pointer',textDecoration:'underline',fontFamily:'var(--font-inter),sans-serif',textAlign:'left'}}>Prefer not to share my number</button>
                     </>
                   )}
@@ -1149,7 +1149,7 @@ export default function WtetPage() {
 
                 {/* Date of birth */}
                 <div id="field-dob_month" className="join-form-field" style={{marginBottom:'1rem'}}>
-                  <div className="join-label" style={{marginBottom:'0.5rem'}}>Date of birth<span style={{color:'#7B2032',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>(year optional)</span></div>
+                  <div className="join-label" style={{marginBottom:'0.5rem'}}>Date of birth<span style={{color:'#93333E',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>(year optional)</span></div>
                   <div className="wtet-dob-grid" style={{display:'grid',gridTemplateColumns:'1.4fr 1fr 1.2fr',gap:'0.75rem'}}>
                     <div style={{position:'relative'}}>
                       <select name="bday-month" autoComplete="bday-month" value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)} style={{...inputStyle('dob_month'),cursor:'pointer',paddingRight:'2rem'}}>
@@ -1170,46 +1170,46 @@ export default function WtetPage() {
                       </select><Chevron />
                     </div>
                   </div>
-                  {(errors.dob_month||errors.dob_day) && <span style={{fontSize:'11px',color:'#7B2032'}}>Month and day are required</span>}
+                  {(errors.dob_month||errors.dob_day) && <span style={{fontSize:'11px',color:'#93333E'}}>Month and day are required</span>}
                 </div>
                 </>}
 
                 {/* Car year + make */}
                 <div className="join-form-row" style={{marginBottom:'1rem'}}>
                   <div className="join-form-field">
-                    <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                    <label htmlFor="field-year" className="join-label">Year<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                     <div style={{position:'relative'}}>
                       <select id="field-year" autoComplete="off" value={form.year} onChange={e => updateForm('year', e.target.value)} style={{...inputStyle('year'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Select year</option>
                         {Array.from({length:2027-1940+1},(_,i)=>2027-i).map(y => <option key={y} value={String(y)}>{y}</option>)}
                       </select><Chevron />
                     </div>
-                    {errors.year && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
+                    {errors.year && <span style={{fontSize:'11px',color:'#93333E'}}>Required</span>}
                   </div>
                   <div className="join-form-field">
-                    <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                    <label htmlFor="field-carMake" className="join-label">Make<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                     <div style={{position:'relative'}}>
                       <select id="field-carMake" autoComplete="off" value={form.carMake} onChange={e => updateForm('carMake', e.target.value)} style={{...inputStyle('carMake'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">Select make</option>
                         {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
                       </select><Chevron />
                     </div>
-                    {errors.carMake && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
+                    {errors.carMake && <span style={{fontSize:'11px',color:'#93333E'}}>Required</span>}
                   </div>
                 </div>
 
                 {/* Model */}
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
-                  <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                  <label htmlFor="field-carModel" className="join-label">Model<Car size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                   <input id="field-carModel" type="text" name="car-model" autoComplete="off" placeholder="e.g. 911 Carrera S" value={form.carModel} maxLength={100}
                     onChange={e => updateForm('carModel', e.target.value)} style={inputStyle('carModel')}
                     onFocus={() => setFocusedField('carModel')} onBlur={() => setFocusedField(null)} />
-                  {errors.carModel && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
+                  {errors.carModel && <span style={{fontSize:'11px',color:'#93333E'}}>Required</span>}
                 </div>
 
                 {/* Passengers */}
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
-                  <label htmlFor="field-passengers" className="join-label">Passengers<Users size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>(including driver)</span></label>
+                  <label htmlFor="field-passengers" className="join-label">Passengers<Users size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>(including driver)</span></label>
                   <div style={{position:'relative'}}>
                     <select id="field-passengers" autoComplete="off" value={form.passengers} onChange={e => updateForm('passengers', e.target.value)} style={{...inputStyle('passengers'),cursor:'pointer',paddingRight:'2rem'}}>
                       <option value="">Select</option>
@@ -1219,7 +1219,7 @@ export default function WtetPage() {
                       <option value="4+">4+</option>
                     </select><Chevron />
                   </div>
-                  {errors.passengers && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
+                  {errors.passengers && <span style={{fontSize:'11px',color:'#93333E'}}>Required</span>}
                   {(form.passengers==='3'||form.passengers==='4+') && (
                     <div style={{marginTop:'0.6rem',padding:'0.75rem 1rem',border:'0.5px solid rgba(197,168,130,0.35)',background:'rgba(197,168,130,0.05)'}}>
                       <span style={{fontSize:'12px',color:'#7B5B2E',lineHeight:'1.7'}}>Base price covers 2 people. Additional passengers are subject to an extra charge — details will be sent with your confirmation.</span>
@@ -1229,19 +1229,19 @@ export default function WtetPage() {
 
                 {/* Children */}
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
-                  <div id="field-hasChildren" className="join-label" style={{marginBottom:'0.75rem'}}>Any children attending?<span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></div>
+                  <div id="field-hasChildren" className="join-label" style={{marginBottom:'0.75rem'}}>Any children attending?<span style={{color:'#93333E',marginLeft:'3px'}}>*</span></div>
                   <div style={{display:'flex',gap:'1rem'}}>
                     {['Yes','No'].map(v => {
                       const val=v.toLowerCase(), selected=form.hasChildren===val
                       return (
                         <button key={v} type="button" onClick={() => updateForm('hasChildren', val)}
-                          style={{flex:1,padding:'0.9rem',border:`1px solid ${selected?'#3B6B2F':errors.hasChildren?'#7B2032':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.hasChildren?'rgba(123,32,50,0.03)':'transparent',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',fontSize:'13px',color:selected?'#3B6B2F':'#1a1a1a',transition:'all 0.2s',letterSpacing:'0.04em'}}>
+                          style={{flex:1,padding:'0.9rem',border:`1px solid ${selected?'#3B6B2F':errors.hasChildren?'#93333E':'rgba(0,0,0,0.2)'}`,background:selected?'rgba(59,107,47,0.06)':errors.hasChildren?'rgba(147,51,62,0.03)':'transparent',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',fontSize:'13px',color:selected?'#3B6B2F':'#1a1a1a',transition:'all 0.2s',letterSpacing:'0.04em'}}>
                           {v}
                         </button>
                       )
                     })}
                   </div>
-                  {errors.hasChildren && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
+                  {errors.hasChildren && <span style={{fontSize:'11px',color:'#93333E'}}>Required</span>}
                   {form.hasChildren==='yes' && (
                     <div style={{marginTop:'0.75rem',padding:'0.85rem 1rem',border:'0.5px solid rgba(197,168,130,0.4)',background:'rgba(197,168,130,0.08)'}}>
                       <span style={{fontSize:'12px',color:'#7B5B2E',lineHeight:'1.7'}}>Each child attending is an additional charge. We&apos;ll reach out by email with the details after payment.</span>
@@ -1251,18 +1251,18 @@ export default function WtetPage() {
 
                 {form.hasChildren==='yes' && (
                   <div className="join-form-field" style={{marginBottom:'1rem'}}>
-                    <label htmlFor="field-childrenAges" className="join-label">Ages of children<span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                    <label htmlFor="field-childrenAges" className="join-label">Ages of children<span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                     <input id="field-childrenAges" type="text" autoComplete="off" placeholder="e.g. 4, 7, 12" value={form.childrenAges} maxLength={100}
                       onChange={e => updateForm('childrenAges', e.target.value)} style={inputStyle('childrenAges')}
                       onFocus={() => setFocusedField('childrenAges')} onBlur={() => setFocusedField(null)} />
-                    {errors.childrenAges && <span style={{fontSize:'11px',color:'#7B2032'}}>Please enter the ages</span>}
+                    {errors.childrenAges && <span style={{fontSize:'11px',color:'#93333E'}}>Please enter the ages</span>}
                   </div>
                 )}
 
                 {/* Source — only for non-members; members already know us */}
                 {!memberProfile && (
                 <div className="join-form-field" style={{marginBottom:'1rem'}}>
-                  <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#7B2032',marginLeft:'3px'}}>*</span></label>
+                  <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:'3px',verticalAlign:'middle'}}/><span style={{color:'#93333E',marginLeft:'3px'}}>*</span></label>
                   <div style={{position:'relative'}}>
                     <select id="field-source" autoComplete="off" value={form.source} onChange={e => updateForm('source', e.target.value)} style={{...inputStyle('source'),cursor:'pointer',paddingRight:'2rem'}}>
                       <option value="">Select an option</option>
@@ -1273,7 +1273,7 @@ export default function WtetPage() {
                       <option value="Other">Other</option>
                     </select><Chevron />
                   </div>
-                  {errors.source && <span style={{fontSize:'11px',color:'#7B2032'}}>Required</span>}
+                  {errors.source && <span style={{fontSize:'11px',color:'#93333E'}}>Required</span>}
                 </div>
                 )}
 
@@ -1307,7 +1307,7 @@ export default function WtetPage() {
                   <input ref={honeypotRef} type="text" name="cr_wt_field" tabIndex={-1} autoComplete="off" />
                 </div>
 
-                {(status==='error') && <div style={{fontSize:'12px',color:'#7B2032',marginBottom:'0.75rem'}}>{serverError}</div>}
+                {(status==='error') && <div style={{fontSize:'12px',color:'#93333E',marginBottom:'0.75rem'}}>{serverError}</div>}
 
                 {alreadyRegistered && memberProfile && (
                   <div style={{padding:'0.85rem 1rem',background:'rgba(59,107,47,0.06)',border:'0.5px solid rgba(59,107,47,0.3)',marginBottom:'1rem',fontSize:'13px',color:'#3B6B2F',fontFamily:'var(--font-inter),sans-serif',lineHeight:'1.5'}}>

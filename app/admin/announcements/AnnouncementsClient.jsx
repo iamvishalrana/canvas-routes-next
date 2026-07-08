@@ -394,7 +394,7 @@ export default function AnnouncementsClient() {
                         <GhostBtn small onClick={() => setEmailingId(null)}>Cancel</GhostBtn>
                       </div>
                       {emailResult[item.id]?.error && (
-                        <div style={{ fontSize: '11px', color: '#7B2032', marginTop: '0.5rem' }}>{emailResult[item.id].error}</div>
+                        <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.5rem' }}>{emailResult[item.id].error}</div>
                       )}
                     </div>
                   )}
@@ -402,7 +402,7 @@ export default function AnnouncementsClient() {
               )}
               {deleteConfirm === item.id && (
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this announcement?</span>
+                  <span style={{ fontSize: '11px', color: '#93333E' }}>Delete this announcement?</span>
                   <DangerBtn small onClick={() => del(item.id)}>Confirm Delete</DangerBtn>
                   <GhostBtn small onClick={() => setDeleteConfirm(null)}>Cancel</GhostBtn>
                 </div>

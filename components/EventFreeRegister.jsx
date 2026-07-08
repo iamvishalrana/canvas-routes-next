@@ -32,7 +32,7 @@ function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCanc
         <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.7, fontFamily: 'var(--font-inter), sans-serif', marginBottom: '1.5rem' }}>
           We&apos;ll use your profile information — no form needed.
         </p>
-        {error && <p style={{ fontSize: '12px', color: '#7B2032', marginBottom: '0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>{error}</p>}
+        {error && <p style={{ fontSize: '12px', color: '#93333E', marginBottom: '0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>{error}</p>}
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={onConfirm}

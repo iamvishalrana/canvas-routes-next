@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
           <p style={{ fontSize: '13px', color: '#777', textAlign: 'center', margin: 0 }}>Verifying link…</p>
         ) : !accessToken ? (
           <>
-            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '300', color: '#7B2032', marginBottom: '0.75rem' }}>Link expired.</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '300', color: '#93333E', marginBottom: '0.75rem' }}>Link expired.</div>
             <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75', marginBottom: '1.5rem' }}>
               This link has expired or has already been used. Please request a new one.
             </p>
@@ -150,13 +150,13 @@ export default function ResetPasswordPage() {
               </div>
 
               {confirm.length > 0 && (
-                <div style={{ fontSize: '11px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: passwordsMatch ? '#3B6B2F' : '#7B2032' }}>
-                  <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: passwordsMatch ? '#3B6B2F' : '#7B2032', flexShrink: 0 }} />
+                <div style={{ fontSize: '11px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: passwordsMatch ? '#3B6B2F' : '#93333E' }}>
+                  <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: passwordsMatch ? '#3B6B2F' : '#93333E', flexShrink: 0 }} />
                   {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
                 </div>
               )}
 
-              {error && <div style={{ fontSize: '12px', color: '#7B2032', marginBottom: '1rem' }}>{error}</div>}
+              {error && <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '1rem' }}>{error}</div>}
               <button type="submit" disabled={loading}
                 style={{ width: '100%', padding: '0.9rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: loading ? 0.6 : 1 }}>
                 {loading ? 'Setting password…' : 'Set Password'}

@@ -73,7 +73,7 @@ export default function AwardsTallyClient({ eventId }) {
   }
 
   if (loading) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#ccc' }}>Loading…</div>
-  if (!data) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#7B2032' }}>Failed to load.</div>
+  if (!data) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#93333E' }}>Failed to load.</div>
 
   if (data.categories.length === 0) {
     return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#ccc' }}>Add at least one category above and save before opening voting.</div>
@@ -229,7 +229,7 @@ export default function AwardsTallyClient({ eventId }) {
         )}
       </div>
 
-      <div style={{ ...CARD, border: '0.5px solid rgba(123,32,50,0.25)' }}>
+      <div style={{ ...CARD, border: '0.5px solid rgba(147,51,62,0.25)' }}>
         <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Danger Zone</div>
         <div style={{ fontSize: '12px', color: '#888', margin: '0.2rem 0 1rem' }}>
           Permanently deletes every ballot cast so far for this event ({data.totalVotes}). Cannot be undone.
@@ -237,19 +237,19 @@ export default function AwardsTallyClient({ eventId }) {
         {!confirmingReset ? (
           <button
             onClick={() => setConfirmingReset(true)}
-            style={{ background: 'none', border: '0.5px solid #7B2032', color: '#7B2032', borderRadius: '6px', padding: '0.6rem 1.1rem', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}
+            style={{ background: 'none', border: '0.5px solid #93333E', color: '#93333E', borderRadius: '6px', padding: '0.6rem 1.1rem', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}
           >
             Reset All Votes
           </button>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', color: '#7B2032', fontWeight: '500' }}>
+            <span style={{ fontSize: '12px', color: '#93333E', fontWeight: '500' }}>
               Delete all {data.totalVotes} ballot{data.totalVotes !== 1 ? 's' : ''}? This can't be undone.
             </span>
             <button
               onClick={resetVotes}
               disabled={resetting}
-              style={{ background: '#7B2032', border: 'none', color: '#fff', borderRadius: '6px', padding: '0.5rem 1rem', fontSize: '12px', fontWeight: '600', cursor: resetting ? 'wait' : 'pointer', opacity: resetting ? 0.6 : 1 }}
+              style={{ background: '#93333E', border: 'none', color: '#fff', borderRadius: '6px', padding: '0.5rem 1rem', fontSize: '12px', fontWeight: '600', cursor: resetting ? 'wait' : 'pointer', opacity: resetting ? 0.6 : 1 }}
             >
               {resetting ? 'Resetting…' : 'Yes, delete everything'}
             </button>

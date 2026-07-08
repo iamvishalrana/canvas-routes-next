@@ -444,11 +444,11 @@ export default function ApplicationsClient() {
           { label: 'Total Applications', value: apps.length, color: '#1a1a1a' },
           { label: 'Invited', value: totalInvited, color: '#3B6B2F' },
           { label: 'Pending Review', value: apps.length - totalInvited, color: '#8A6535' },
-          { label: 'New', value: unseenCount, color: unseenCount > 0 ? '#7B2032' : '#999', filter: 'unseen' },
+          { label: 'New', value: unseenCount, color: unseenCount > 0 ? '#93333E' : '#999', filter: 'unseen' },
         ].map(s => (
           <div key={s.label}
             onClick={() => s.filter ? setShowFilter(f => f === s.filter ? 'all' : s.filter) : undefined}
-            style={{ background: '#fff', border: `0.5px solid ${s.filter && showFilter === s.filter ? 'rgba(123,32,50,0.3)' : 'rgba(0,0,0,0.1)'}`, padding: '1.25rem 1.4rem', cursor: s.filter ? 'pointer' : undefined, transition: 'border-color 0.15s' }}>
+            style={{ background: '#fff', border: `0.5px solid ${s.filter && showFilter === s.filter ? 'rgba(147,51,62,0.3)' : 'rgba(0,0,0,0.1)'}`, padding: '1.25rem 1.4rem', cursor: s.filter ? 'pointer' : undefined, transition: 'border-color 0.15s' }}>
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.3rem' }}>{s.label}</div>
           </div>
@@ -509,9 +509,9 @@ export default function ApplicationsClient() {
           ].map(f => (
             <button key={f.key} onClick={() => setShowFilter(f.key)}
               style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: '0.5px solid', transition: 'all 0.15s',
-                background: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(123,32,50,0.07)' : 'rgba(0,0,0,0.06)') : 'none',
-                color: showFilter === f.key ? (f.key === 'unseen' ? '#7B2032' : '#1a1a1a') : '#888',
-                borderColor: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(123,32,50,0.3)' : 'rgba(0,0,0,0.25)') : 'rgba(0,0,0,0.15)',
+                background: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(147,51,62,0.07)' : 'rgba(0,0,0,0.06)') : 'none',
+                color: showFilter === f.key ? (f.key === 'unseen' ? '#93333E' : '#1a1a1a') : '#888',
+                borderColor: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(147,51,62,0.3)' : 'rgba(0,0,0,0.25)') : 'rgba(0,0,0,0.15)',
               }}>
               {f.label}
             </button>
@@ -549,7 +549,7 @@ export default function ApplicationsClient() {
                   if (e.target.checked) setSelected(prev => new Set([...prev, ...filtered.map(a => a.id)]))
                   else setSelected(prev => { const n = new Set(prev); filtered.forEach(a => n.delete(a.id)); return n })
                 }}
-                style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
               />
               {['Name', 'Email', 'Car', 'DOB', 'Date', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
@@ -586,15 +586,15 @@ export default function ApplicationsClient() {
                     )}
                     {rejectConfirm === a.id && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                        <div style={{ fontSize: '10px', color: '#7B2032' }}>Reject &amp; cancel hold?</div>
+                        <div style={{ fontSize: '10px', color: '#93333E' }}>Reject &amp; cancel hold?</div>
                         <div style={{ display: 'flex', gap: '0.3rem' }}>
-                          <button onClick={() => handleReject(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(123,32,50,0.1)', border: '0.5px solid rgba(123,32,50,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif' }}>Confirm</button>
+                          <button onClick={() => handleReject(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.1)', border: '0.5px solid rgba(147,51,62,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif' }}>Confirm</button>
                           <button onClick={() => setRejectConfirm(null)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '3px 7px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Cancel</button>
                         </div>
                       </div>
                     )}
                     {a.stripe_payment_status === 'rejected' && (
-                      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7B2032', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 9px', background: 'rgba(123,32,50,0.06)' }}>Rejected</span>
+                      <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.3)', padding: '3px 9px', background: 'rgba(147,51,62,0.06)' }}>Rejected</span>
                     )}
                     {/* Capture / Reject for authorized holds */}
                     {a.stripe_payment_status === 'authorized' && rejectConfirm !== a.id && rejecting !== a.id && (
@@ -604,9 +604,9 @@ export default function ApplicationsClient() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                           <div style={{ display: 'flex', gap: '0.3rem' }}>
                             <button onClick={() => setCaptureConfirm(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>Capture</button>
-                            <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(123,32,50,0.06)', border: '0.5px solid rgba(123,32,50,0.3)', padding: '3px 7px', cursor: 'pointer', color: '#7B2032', fontFamily: 'var(--font-inter),sans-serif' }}>Reject</button>
+                            <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.3)', padding: '3px 7px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif' }}>Reject</button>
                           </div>
-                          {captureErr[a.id] && <span style={{ fontSize: '10px', color: '#7B2032' }}>{captureErr[a.id]}</span>}
+                          {captureErr[a.id] && <span style={{ fontSize: '10px', color: '#93333E' }}>{captureErr[a.id]}</span>}
                         </div>
                       )
                     )}
@@ -633,7 +633,7 @@ export default function ApplicationsClient() {
                           {inviting === a.id ? '…' : 'Invite'}
                         </PrimaryBtn>
                         {inviteStatus[a.id] && inviteStatus[a.id] !== 'success' && (
-                          <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.3rem' }}>{inviteStatus[a.id]}</div>
+                          <div style={{ fontSize: '10px', color: '#93333E', marginTop: '0.3rem' }}>{inviteStatus[a.id]}</div>
                         )}
                       </div>
                     )
@@ -649,14 +649,14 @@ export default function ApplicationsClient() {
                             <input type="checkbox"
                               checked={selected.has(a.id)}
                               onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(a.id) : n.delete(a.id); return n })}
-                              style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                              style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
                             />
                           </div>
                           {!seenAppIds.has(a.id) && (
                           <button
                             onClick={e => { e.stopPropagation(); markSeen(a.id) }}
                             title="Mark as seen"
-                            style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
+                            style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#93333E', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
                           />
                         )}
                           {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-reg</span>}
@@ -682,7 +682,7 @@ export default function ApplicationsClient() {
                     <input type="checkbox"
                       checked={selected.has(a.id)}
                       onChange={e => setSelected(prev => { const n = new Set(prev); e.target.checked ? n.add(a.id) : n.delete(a.id); return n })}
-                      style={{ cursor: 'pointer', accentColor: '#7B2032', width: '13px', height: '13px' }}
+                      style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
                     />
                   </div>
                   <div style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
@@ -690,7 +690,7 @@ export default function ApplicationsClient() {
                       <button
                         onClick={e => { e.stopPropagation(); markSeen(a.id) }}
                         title="Mark as seen"
-                        style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#7B2032', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
+                        style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#93333E', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
                       />
                     )}
                     {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-registered</span>}
@@ -886,7 +886,7 @@ export default function ApplicationsClient() {
                             <GhostBtn onClick={() => addToContact(a.id)} small disabled={addingContact.has(a.id)}>
                               {addingContact.has(a.id) ? '…' : 'Add to Contacts'}
                             </GhostBtn>
-                            {addContactError[a.id] && <div style={{ fontSize: '10px', color: '#7B2032', marginTop: '0.25rem' }}>{addContactError[a.id]}</div>}
+                            {addContactError[a.id] && <div style={{ fontSize: '10px', color: '#93333E', marginTop: '0.25rem' }}>{addContactError[a.id]}</div>}
                           </div>
                           )
                         ) : (
@@ -915,11 +915,11 @@ export default function ApplicationsClient() {
                             <DangerBtn small onClick={() => setDeleteAppConfirm(a.id)}>Delete</DangerBtn>
                           </>
                         )}
-                        {isMobile && addContactError[a.id] && <div style={{ fontSize: '10px', color: '#7B2032' }}>{addContactError[a.id]}</div>}
+                        {isMobile && addContactError[a.id] && <div style={{ fontSize: '10px', color: '#93333E' }}>{addContactError[a.id]}</div>}
                       </div>
                       {deleteAppConfirm === a.id && (
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete application from {a.name || a.email}?</span>
+                          <span style={{ fontSize: '11px', color: '#93333E' }}>Delete application from {a.name || a.email}?</span>
                           <DangerBtn small onClick={() => deleteApp(a)}>Confirm Delete</DangerBtn>
                           <GhostBtn small onClick={() => { setDeleteAppConfirm(null); setDeleteAppError(p => ({ ...p, [a.id]: null })) }}>Cancel</GhostBtn>
                           {deleteAppError[a.id] && <Err msg={deleteAppError[a.id]} />}

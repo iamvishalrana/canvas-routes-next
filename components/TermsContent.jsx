@@ -93,7 +93,7 @@ export default function TermsContent() {
           },
         ].map((s,i) => (
           <div key={i} style={{marginBottom:"2.5rem"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.8rem"}}>{s.title}</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",marginBottom:"0.8rem"}}>{s.title}</div>
             <p style={{fontSize:"0.9rem",lineHeight:"1.9",color:"#555"}}>{s.body}</p>
           </div>
         ))}

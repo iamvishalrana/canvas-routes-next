@@ -463,7 +463,7 @@ export default function ExpensesClient() {
                                   </button>
                                   <button onClick={() => { setDeleteConfirm(expense.id); setEditingId(null) }}
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ddd', fontSize: '14px', padding: '2px 4px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.15s' }}
-                                    onMouseEnter={e => e.currentTarget.style.color = '#7B2032'}
+                                    onMouseEnter={e => e.currentTarget.style.color = '#93333E'}
                                     onMouseLeave={e => e.currentTarget.style.color = '#ddd'}>×</button>
                                 </>
                               )}
@@ -535,11 +535,11 @@ export default function ExpensesClient() {
 
                           {/* Delete confirm */}
                           {isPendingDelete && (
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.5rem 1.1rem', background: 'rgba(123,32,50,0.03)', borderTop: '0.5px solid rgba(123,32,50,0.08)' }}>
-                              <span style={{ fontSize: '11px', color: '#7B2032' }}>Delete this expense?</span>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.5rem 1.1rem', background: 'rgba(147,51,62,0.03)', borderTop: '0.5px solid rgba(147,51,62,0.08)' }}>
+                              <span style={{ fontSize: '11px', color: '#93333E' }}>Delete this expense?</span>
                               <DangerBtn small onClick={() => handleDelete(expense)} disabled={isDeletingThis}>{isDeletingThis ? '…' : 'Delete'}</DangerBtn>
                               <GhostBtn small onClick={() => { setDeleteConfirm(null); setDeleteErr(null) }}>Cancel</GhostBtn>
-                              {deleteErr && <span style={{ fontSize: '11px', color: '#7B2032' }}>{deleteErr}</span>}
+                              {deleteErr && <span style={{ fontSize: '11px', color: '#93333E' }}>{deleteErr}</span>}
                             </div>
                           )}
                         </div>

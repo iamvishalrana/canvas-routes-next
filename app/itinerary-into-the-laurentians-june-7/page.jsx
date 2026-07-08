@@ -342,7 +342,7 @@ export default function DrivePage() {
               style={{
                 display: 'block', width: '100%', padding: '0.9rem 2.75rem 0.9rem 1rem',
                 background: 'rgba(255,255,255,0.07)',
-                border: `0.5px solid ${err ? '#7B2032' : 'rgba(255,255,255,0.18)'}`,
+                border: `0.5px solid ${err ? '#93333E' : 'rgba(255,255,255,0.18)'}`,
                 color: '#F5F1EC', fontSize: '15px', outline: 'none',
                 fontFamily: 'Georgia, serif',
                 textAlign: 'center', letterSpacing: '0.12em', boxSizing: 'border-box',
@@ -412,9 +412,9 @@ export default function DrivePage() {
             </div>
 
             {/* Emergency — prominent red */}
-            <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #7B2032' }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#7B2032', marginBottom: '5px', fontWeight: '600' }}>Contact</div>
-              <a href="tel:5144373437" style={{ fontSize: '14px', color: '#7B2032', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
+            <div style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#93333E', marginBottom: '5px', fontWeight: '600' }}>Contact</div>
+              <a href="tel:5144373437" style={{ fontSize: '14px', color: '#93333E', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
               </a>
               <CopyButton text="514-437-3437" label="Copy number" />
