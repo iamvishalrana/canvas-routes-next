@@ -19,6 +19,7 @@ const AUDIENCE_LABELS = {
   pending_members:      'Pending Applications',
   all_contacts:         'All Contacts',
   contacts_non_members: 'Contacts (Non-Members)',
+  event_notify_subscribers: 'Event Notify Signups',
   everyone:             'Everyone',
   specific_emails:      'Specific Emails',
 }
@@ -30,6 +31,7 @@ const AUDIENCE_OPTIONS = [
   { value: 'pending_members',      label: 'Pending Applications'   },
   { value: 'all_contacts',         label: 'All Contacts'           },
   { value: 'contacts_non_members', label: 'Contacts (Non-Members)' },
+  { value: 'event_notify_subscribers', label: 'Event Notify Signups' },
   { value: 'everyone',             label: 'Everyone'               },
   { value: 'specific_emails',      label: 'Specific Emails'        },
 ]

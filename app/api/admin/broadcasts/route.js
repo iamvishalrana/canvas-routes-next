@@ -127,6 +127,12 @@ export async function POST(request) {
       .filter(c => c.email)
   }
 
+  async function fetchNotifySubscribers() {
+    const { data, error } = await supabase.from('event_notify_subscribers').select('email, name')
+    if (error) throw new Error(error.message)
+    return (data || []).filter(r => r.email)
+  }
+
   try {
     if (audience === 'canvas_routes_member') {
       recipients = await fetchMembers({ membership_status: 'active', tier: 'routes_member' })
@@ -138,6 +144,8 @@ export async function POST(request) {
       recipients = await fetchMembers({ membership_status: 'pending' })
     } else if (audience === 'all_contacts') {
       recipients = await fetchContacts()
+    } else if (audience === 'event_notify_subscribers') {
+      recipients = await fetchNotifySubscribers()
     } else if (audience === 'contacts_non_members') {
       const [allContacts, allMembers] = await Promise.all([
         fetchContacts(),
