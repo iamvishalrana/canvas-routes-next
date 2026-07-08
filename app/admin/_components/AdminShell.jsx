@@ -39,9 +39,8 @@ const SECTIONS = [
   {
     id: 'communication', label: 'Communication',
     items: [
-      { href: '/admin/announcements',    label: 'Announcements'      },
-      { href: '/admin/broadcasts',       label: 'Broadcasts'         },
-      { href: '/admin/notify-signups',   label: 'Notify Signups'     },
+      { href: '/admin/announcements', label: 'Announcements' },
+      { href: '/admin/broadcasts',    label: 'Broadcasts'    },
     ],
   },
   {

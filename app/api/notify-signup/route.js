@@ -6,6 +6,8 @@ import { normalizeEmail } from '../../../lib/normalizeEmail'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail'
 import { buildNotifySignupHtml } from '../../../lib/notifySignupEmail'
 
+const NOTIFY_EVENT_NAME = 'Event Notifications List'
+
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
@@ -21,13 +23,40 @@ export async function POST(request) {
   if (email.length > 254 || name.length > 100) return Response.json({ error: 'Input too long.' }, { status: 400 })
 
   const supabase = createAdminClient()
-  const { error } = await supabase
-    .from('event_notify_subscribers')
-    .upsert({ email, name: name || null }, { onConflict: 'email', ignoreDuplicates: false })
-  if (error) {
-    captureException(new Error(error.message), { context: 'notify-signup-db' })
+
+  // Reuses the applications table (same as every other registration flow) so
+  // this shows up in the existing Applications/Contacts admin views as an
+  // "Event Registrations" entry — no separate table or admin page needed.
+  // Never blindly upsert `registrations` — merge with what's already there or
+  // a repeat signup wipes an applicant's real event history.
+  const { data: existing, error: lookupErr } = await supabase
+    .from('applications')
+    .select('id, name, registrations')
+    .eq('email', email)
+    .maybeSingle()
+  if (lookupErr) {
+    captureException(new Error(lookupErr.message), { context: 'notify-signup-lookup' })
     return Response.json({ error: 'Could not save your signup. Please try again.' }, { status: 500 })
   }
+
+  const existingReg = (existing?.registrations || []).find(r => r.event === NOTIFY_EVENT_NAME)
+  const newReg = { event: NOTIFY_EVENT_NAME, registered_at: existingReg?.registered_at || new Date().toISOString(), attended: null }
+  const registrations = [...(existing?.registrations || []).filter(r => r.event !== NOTIFY_EVENT_NAME), newReg]
+
+  const { data: appData, error: upsertErr } = await supabase.from('applications').upsert({
+    email,
+    name: name || existing?.name || null,
+    registrations,
+  }, { onConflict: 'email' }).select('id').single()
+  if (upsertErr) {
+    captureException(new Error(upsertErr.message), { context: 'notify-signup-upsert' })
+    return Response.json({ error: 'Could not save your signup. Please try again.' }, { status: 500 })
+  }
+
+  // Ensure a contacts row exists so this signup appears in the admin Contacts tab
+  const { error: contactErr } = await supabase.from('contacts')
+    .upsert({ application_id: appData.id }, { onConflict: 'application_id', ignoreDuplicates: true })
+  if (contactErr) captureException(new Error(contactErr.message), { context: 'notify-signup-contacts' })
 
   after(() => Promise.allSettled([
     fetch('https://api.resend.com/emails', {

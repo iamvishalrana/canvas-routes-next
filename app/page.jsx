@@ -126,22 +126,6 @@ export default function Home() {
   const [membershipLive, setMembershipLive] = useState(false)
   const [homepageBanner, setHomepageBanner] = useState(null)
   const [eventPageUrl, setEventPageUrl] = useState(null)
-  const [queryForm, setQueryForm] = useState({ name: '', email: '', message: '' })
-  const [queryStatus, setQueryStatus] = useState(null)
-  const [queryError, setQueryError] = useState(null)
-
-  async function handleQuerySubmit(e) {
-    e.preventDefault()
-    if (!queryForm.name.trim() || !queryForm.email.trim()) { setQueryError('Please enter your name and email.'); return }
-    setQueryStatus('loading'); setQueryError(null)
-    try {
-      const res = await fetch('/api/inquiry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(queryForm) })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setQueryError(data.error || 'Could not send. Please try again.'); setQueryStatus(null) }
-      else setQueryStatus('success')
-    } catch { setQueryError('Network error. Please try again.'); setQueryStatus(null) }
-  }
-
   const [notifyForm, setNotifyForm] = useState({ name: '', email: '' })
   const [notifyStatus, setNotifyStatus] = useState(null)
   const [notifyError, setNotifyError] = useState(null)
@@ -916,28 +900,6 @@ export default function Home() {
           </div>
         ) : (
           <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Season 2026 memberships open tonight at 7 PM. Leave your details and we'll be in touch.</p>
-        )}
-
-        <div style={{width:"40px",height:"1px",background:"rgba(197,168,130,0.35)",margin:"0 auto 2.5rem"}}></div>
-        <div style={{fontSize:"10px",letterSpacing:"0.26em",textTransform:"uppercase",color:"#bbb",marginBottom:"2rem",fontFamily:"var(--font-inter),sans-serif"}}>Have a question?</div>
-
-        {queryStatus === 'success' ? (
-          <div>
-            <p style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"0.75rem"}}>Message received.</p>
-            <p style={{fontSize:"0.9rem",color:"#777",lineHeight:"1.7"}}>We'll get back to you at {queryForm.email}.</p>
-          </div>
-        ) : (
-          <form style={{maxWidth:"480px",margin:"0 auto",display:"flex",flexDirection:"column",gap:"1rem"}} onSubmit={handleQuerySubmit} noValidate>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1rem"}}>
-              <input type="text" name="name" autoComplete="name" inputMode="text" placeholder="Your name" value={queryForm.name} onChange={e => setQueryForm(p=>({...p,name:e.target.value}))} required style={{padding:"0.9rem 1rem",border:`1px solid ${queryError&&!queryForm.name.trim()?"#7B2032":"rgba(0,0,0,0.15)"}`,background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
-              <input type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={queryForm.email} onChange={e => setQueryForm(p=>({...p,email:e.target.value}))} required style={{padding:"0.9rem 1rem",border:`1px solid ${queryError&&!queryForm.email.trim()?"#7B2032":"rgba(0,0,0,0.15)"}`,background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
-            </div>
-            <textarea name="message" autoComplete="off" placeholder="Your message or question (optional)" value={queryForm.message} onChange={e => setQueryForm(p=>({...p,message:e.target.value}))} rows={3} style={{padding:"0.9rem 1rem",border:"1px solid rgba(0,0,0,0.15)",background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none",resize:"vertical"}} />
-            {queryError && <p style={{fontSize:"12px",color:"#7B2032",margin:0}}>{queryError}</p>}
-            <button type="submit" disabled={queryStatus==='loading'} className="btn-push btn-waitlist" style={{padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:queryStatus==='loading'?"not-allowed":"pointer",opacity:queryStatus==='loading'?0.6:1}}>
-              {queryStatus === 'loading' ? 'Sending…' : 'Send Message'}
-            </button>
-          </form>
         )}
 
         {/* NOT READY TO JOIN — EVENT NOTIFY SIGNUP */}

@@ -30,9 +30,6 @@ export async function GET(request) {
     } else if (audience === 'all_contacts') {
       const { count: c } = await supabase.from('contacts').select('*', { count: 'exact', head: true })
       count = c || 0
-    } else if (audience === 'event_notify_subscribers') {
-      const { count: c } = await supabase.from('event_notify_subscribers').select('*', { count: 'exact', head: true })
-      count = c || 0
     } else if (audience === 'contacts_non_members') {
       const { data: members } = await supabase.from('members').select('email').eq('membership_status', 'active')
       const memberEmails = new Set((members || []).map(m => m.email?.toLowerCase()))
