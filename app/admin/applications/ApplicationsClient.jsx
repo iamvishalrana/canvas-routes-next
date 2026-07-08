@@ -47,6 +47,7 @@ function AppAdminNotes({ appId, initialNotes, onSaved }) {
 // ─── Applications Client ──────────────────────────────────────────────────────
 
 const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
+const INTERESTED_IN_LABELS = { cars_coffee: 'Cars & Coffee', routes: 'Routes', both: 'Both' }
 
 export default function ApplicationsClient() {
   const searchParams = useSearchParams()
@@ -799,6 +800,7 @@ export default function ApplicationsClient() {
                         <InfoCell label="Payment" value={a.stripe_payment_status || null} />
                         <InfoCell label="Amount Paid" value={a.stripe_amount_paid ? `$${(a.stripe_amount_paid / 100).toFixed(2)} CAD` : null} />
                         {a.promo_code_used && <InfoCell label="Promo Code" value={a.promo_code_used} />}
+                        {a.interested_in && <InfoCell label="Interested In" value={INTERESTED_IN_LABELS[a.interested_in] || a.interested_in} />}
                       </div>
                       {a.more && (
                         <div style={{ marginBottom: '1rem' }}>

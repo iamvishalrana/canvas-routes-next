@@ -7,6 +7,8 @@ import { buildAdminNotifyHtml } from '../../../lib/adminEmail'
 import { buildNotifySignupHtml } from '../../../lib/notifySignupEmail'
 
 const NOTIFY_EVENT_NAME = 'Event Notifications List'
+const VALID_INTERESTS = ['cars_coffee', 'routes', 'both']
+const INTEREST_LABELS = { cars_coffee: 'Cars & Coffee', routes: 'Routes', both: 'Both' }
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
@@ -19,8 +21,23 @@ export async function POST(request) {
 
   const name = (body.name || '').trim()
   const email = normalizeEmail(body.email)
+  const phone = (body.phone || '').trim()
+  const dob = (body.dob || '').trim() // "YYYY-MM-DD", year may be "0000" if not provided
+  const carYear = (body.year || '').trim()
+  const carModel = (body.carModel || '').trim()
+  const interest = (body.interest || '').trim()
+  const more = (body.more || '').trim()
+
+  if (!name || name.length < 2) return Response.json({ error: 'Please enter your name.' }, { status: 400 })
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
-  if (email.length > 254 || name.length > 100) return Response.json({ error: 'Input too long.' }, { status: 400 })
+  if (!dob || !/^\d{4}-\d{2}-\d{2}$/.test(dob)) return Response.json({ error: 'Date of birth is required.' }, { status: 400 })
+  if (!carYear || !carModel) return Response.json({ error: 'Car year and model are required.' }, { status: 400 })
+  if (!VALID_INTERESTS.includes(interest)) return Response.json({ error: 'Please choose what you\'re interested in.' }, { status: 400 })
+  if (email.length > 254 || name.length > 100 || phone.length > 30 || carModel.length > 100 || more.length > 500) {
+    return Response.json({ error: 'Input too long.' }, { status: 400 })
+  }
+
+  const [dobYear, dobMonth, dobDay] = dob.split('-')
 
   const supabase = createAdminClient()
 
@@ -31,7 +48,7 @@ export async function POST(request) {
   // a repeat signup wipes an applicant's real event history.
   const { data: existing, error: lookupErr } = await supabase
     .from('applications')
-    .select('id, name, registrations')
+    .select('id, registrations')
     .eq('email', email)
     .maybeSingle()
   if (lookupErr) {
@@ -40,12 +57,20 @@ export async function POST(request) {
   }
 
   const existingReg = (existing?.registrations || []).find(r => r.event === NOTIFY_EVENT_NAME)
-  const newReg = { event: NOTIFY_EVENT_NAME, registered_at: existingReg?.registered_at || new Date().toISOString(), attended: null }
+  const newReg = { event: NOTIFY_EVENT_NAME, registered_at: existingReg?.registered_at || new Date().toISOString(), attended: null, interest }
   const registrations = [...(existing?.registrations || []).filter(r => r.event !== NOTIFY_EVENT_NAME), newReg]
 
   const { data: appData, error: upsertErr } = await supabase.from('applications').upsert({
     email,
-    name: name || existing?.name || null,
+    name,
+    phone: phone || null,
+    dob_month: dobMonth ? parseInt(dobMonth, 10) : null,
+    dob_day: dobDay ? parseInt(dobDay, 10) : null,
+    dob_year: dobYear && dobYear !== '0000' ? parseInt(dobYear, 10) : null,
+    car_year: carYear,
+    car_model: carModel,
+    more: more || null,
+    interested_in: interest,
     registrations,
   }, { onConflict: 'email' }).select('id').single()
   if (upsertErr) {
@@ -75,10 +100,14 @@ export async function POST(request) {
       body: JSON.stringify({
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: 'info@canvasroutes.com',
-        subject: `New event-notify signup — ${name || email}`,
+        subject: `New event-notify signup — ${name}`,
         html: buildAdminNotifyHtml('New event-notify signup', [
-          ['Name',  name || '(not provided)'],
+          ['Name',  name],
           ['Email', `<a href="mailto:${email}" style="color:#1a1a1a;">${email}</a>`],
+          ['Phone', phone || '(not provided)'],
+          ['Car',   `${carYear} ${carModel}`],
+          ['Interested in', INTEREST_LABELS[interest] || interest],
+          ['Tell us more', more || '(none)'],
         ]),
       }),
     }).catch(err => captureException(err, { context: 'notify-signup-admin-email' })),

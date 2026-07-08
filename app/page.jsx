@@ -126,26 +126,6 @@ export default function Home() {
   const [membershipLive, setMembershipLive] = useState(false)
   const [homepageBanner, setHomepageBanner] = useState(null)
   const [eventPageUrl, setEventPageUrl] = useState(null)
-  const [notifyForm, setNotifyForm] = useState({ name: '', email: '' })
-  const [notifyStatus, setNotifyStatus] = useState(null)
-  const [notifyError, setNotifyError] = useState(null)
-  const notifyHoneypotRef = useRef(null)
-
-  async function handleNotifySubmit(e) {
-    e.preventDefault()
-    if (!notifyForm.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyForm.email)) { setNotifyError('Please enter a valid email.'); return }
-    setNotifyStatus('loading'); setNotifyError(null)
-    try {
-      const res = await fetch('/api/notify-signup', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...notifyForm, _hp: notifyHoneypotRef.current?.value || '' }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setNotifyError(data.error || 'Could not sign up. Please try again.'); setNotifyStatus(null) }
-      else setNotifyStatus('success')
-    } catch { setNotifyError('Network error. Please try again.'); setNotifyStatus(null) }
-  }
-
   useEffect(() => {
     const LAUNCH = new Date('2026-06-10T23:00:00Z')
     if (new Date() >= LAUNCH) { setMembershipLive(true); return }
@@ -902,7 +882,7 @@ export default function Home() {
           <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Season 2026 memberships open tonight at 7 PM. Leave your details and we'll be in touch.</p>
         )}
 
-        {/* NOT READY TO JOIN — EVENT NOTIFY SIGNUP */}
+        {/* NOT READY TO JOIN — links out to /notify */}
         <div style={{width:"40px",height:"1px",background:"rgba(197,168,130,0.35)",margin:"3.5rem auto 2rem"}}></div>
         <div style={{fontSize:"10px",letterSpacing:"0.26em",textTransform:"uppercase",color:"#bbb",marginBottom:"0.75rem",fontFamily:"var(--font-inter),sans-serif"}}>Not ready to join?</div>
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.5rem",fontStyle:"italic",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.75rem"}}>Get notified about future events.</div>
@@ -912,25 +892,9 @@ export default function Home() {
         <p style={{fontSize:"0.8rem",color:"#8A6535",maxWidth:"420px",margin:"0 auto 2rem",lineHeight:"1.7"}}>
           Priority for events is always given to Canvas Routes members — non-member spots are limited.
         </p>
-
-        {notifyStatus === 'success' ? (
-          <div>
-            <p style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#3B6B2F",marginBottom:"0.75rem"}}>You&rsquo;re on the list.</p>
-            <p style={{fontSize:"0.85rem",color:"#777",lineHeight:"1.7"}}>We&rsquo;ll email {notifyForm.email} when new events go live.</p>
-          </div>
-        ) : (
-          <form style={{maxWidth:"480px",margin:"0 auto",display:"flex",flexDirection:"column",gap:"1rem"}} onSubmit={handleNotifySubmit} noValidate>
-            <input ref={notifyHoneypotRef} type="text" name="_hp" style={{display:"none"}} tabIndex={-1} autoComplete="off" aria-hidden="true" />
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1rem"}}>
-              <input type="text" name="name" autoComplete="name" inputMode="text" placeholder="Your name (optional)" value={notifyForm.name} onChange={e => setNotifyForm(p=>({...p,name:e.target.value}))} style={{padding:"0.9rem 1rem",border:"1px solid rgba(0,0,0,0.15)",background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
-              <input type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={notifyForm.email} onChange={e => setNotifyForm(p=>({...p,email:e.target.value}))} required style={{padding:"0.9rem 1rem",border:`1px solid ${notifyError?"#93333E":"rgba(0,0,0,0.15)"}`,background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
-            </div>
-            {notifyError && <p style={{fontSize:"12px",color:"#93333E",margin:0}}>{notifyError}</p>}
-            <button type="submit" disabled={notifyStatus==='loading'} style={{padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:notifyStatus==='loading'?"not-allowed":"pointer",opacity:notifyStatus==='loading'?0.6:1,background:"transparent",border:"1px solid #c5a882",color:"#8A6535",fontFamily:"var(--font-inter),sans-serif"}}>
-              {notifyStatus === 'loading' ? 'Signing up…' : 'Notify Me'}
-            </button>
-          </form>
-        )}
+        <Link href="/notify" style={{display:"inline-block",padding:"1rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",background:"transparent",border:"1px solid #c5a882",color:"#8A6535",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
+          Notify Me
+        </Link>
       </section>
 
 

@@ -14,6 +14,7 @@ import { MONTREAL_TZ } from '../../../lib/mtlTime'
 // ─── App sources (shared with Applications tab) ───────────────────────────────
 
 const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
+const INTERESTED_IN_LABELS = { cars_coffee: 'Cars & Coffee', routes: 'Routes', both: 'Both' }
 
 // ─── Admin notes wired to the applications API ────────────────────────────────
 
@@ -789,6 +790,12 @@ export default function ContactsClient() {
                           <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Applied</div>
                           <div style={{ fontSize: '13px', color: '#444' }}>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
                         </div>
+                        {c.interested_in && (
+                          <div>
+                            <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.25rem' }}>Interested In</div>
+                            <div style={{ fontSize: '13px', color: '#444' }}>{INTERESTED_IN_LABELS[c.interested_in] || c.interested_in}</div>
+                          </div>
+                        )}
                       </div>
                       {c.more && (
                         <div style={{ marginBottom: '1rem' }}>

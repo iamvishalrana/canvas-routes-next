@@ -18,12 +18,18 @@ test('homepage loads', async ({ page }) => {
   await expect(page.locator('img.hero-logo')).toBeVisible()
 })
 
-test('homepage notify-signup form renders', async ({ page }) => {
+test('homepage links to the notify page', async ({ page }) => {
   await page.goto('/')
   await dismissPopup(page)
   await page.locator('#join').scrollIntoViewIfNeeded()
-  await expect(page.locator('#join input[name="email"]')).toBeVisible({ timeout: 15000 })
-  await expect(page.locator('#join button[type="submit"]')).toBeVisible()
+  await expect(page.locator('#join a[href="/notify"]')).toBeVisible({ timeout: 15000 })
+})
+
+test('notify page form renders', async ({ page }) => {
+  await page.goto('/notify')
+  await expect(page.locator('input[name="name"]')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('input[name="email"]')).toBeVisible()
+  await expect(page.locator('button[type="submit"]')).toBeVisible()
 })
 
 test('notify-signup API validation works', async ({ request }) => {
@@ -31,7 +37,7 @@ test('notify-signup API validation works', async ({ request }) => {
   expect([400, 429]).toContain(res.status())
   if (res.status() === 400) {
     const body = await res.json()
-    expect(body.error).toBe('Please enter a valid email.')
+    expect(body.error).toBe('Please enter your name.')
   }
 })
 
