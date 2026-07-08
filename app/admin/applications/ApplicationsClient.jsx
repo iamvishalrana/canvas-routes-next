@@ -830,11 +830,6 @@ export default function ApplicationsClient() {
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
-                            {reg?.registered_at && (
-                              <span style={{ fontSize: '11px', color: '#bbb' }}>
-                                {new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
-                              </span>
-                            )}
                             {isNA ? (
                               <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>N/A</span>
                             ) : isPast ? (
