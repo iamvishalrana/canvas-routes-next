@@ -136,7 +136,7 @@ export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMe
             <Link href="/members/events"    onClick={() => toggleMenu(false)} style={{ color: '#555' }}>Events</Link>
             <button
               onClick={() => { toggleMenu(false); signOut() }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 0, fontSize: '13px', color: '#7B2032', fontWeight: '500', textAlign: 'left' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 0, fontSize: '13px', color: '#93333E', fontWeight: '500', textAlign: 'left' }}
             >
               Sign out
             </button>
@@ -144,7 +144,7 @@ export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMe
         ) : (
           <>
             <Link href="/membership" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>{ctaLabel}</Link>
-            <Link href="/members/login" onClick={() => toggleMenu(false)} style={{ color: '#7B2032', fontWeight: '500' }}>Members Login</Link>
+            <Link href="/members/login" onClick={() => toggleMenu(false)} style={{ color: '#93333E', fontWeight: '500' }}>Members Login</Link>
           </>
         )}
       </div>

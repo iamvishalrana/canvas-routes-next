@@ -401,7 +401,7 @@ export default function Home() {
     const hasValue = !!form[field]
     let border, background, boxShadow
     if (hasError) {
-      border = '1px solid #7B2032'; background = 'rgba(123,32,50,0.04)'; boxShadow = 'none'
+      border = '1px solid #93333E'; background = 'rgba(147,51,62,0.04)'; boxShadow = 'none'
     } else if (hasValue) {
       border = '1px solid #3B6B2F'; background = 'rgba(59,107,47,0.05)'; boxShadow = 'none'
     } else if (isFocused) {
@@ -572,7 +572,7 @@ export default function Home() {
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em",animation:"cr-fade-up 0.65s ease both",animationDelay:"680ms"}}>The Community. The Routes. The Canvas.</div>
         <div className="hero-buttons" style={{animation:"cr-fade-up 0.65s ease both",animationDelay:"820ms"}}>
           <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}><span className="join-label-desktop">Join</span><span className="join-label-mobile">Become a Member</span></Link>
-          <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #7B2032",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",textDecoration:"none",background:"transparent"}}>About Us</a>
+          <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #93333E",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",textDecoration:"none",background:"transparent"}}>About Us</a>
         </div>
         <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}
           aria-label="Scroll down"
@@ -591,7 +591,7 @@ export default function Home() {
           <FadeUp>
             <div>
               <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>About Us</div>
-              <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#7B2032"}}>art form.</em><br/>We treat it like one.</div>
+              <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#93333E"}}>art form.</em><br/>We treat it like one.</div>
               <div style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",maxWidth:"520px",marginBottom:"1.5rem"}}>
                 <strong style={{color:"#1a1a1a",fontWeight:"500"}}>We are driving enthusiasts before car enthusiasts.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We are not a show-and-tell club. We drive. The best roads deserve the best company, and great cars are meant to be experienced, not just owned.
                 <br/><br/>
@@ -601,7 +601,7 @@ export default function Home() {
               </div>
               <div style={{display:"flex",gap:"1rem",flexWrap:"wrap"}}>
                 <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #3B6B2F",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",textDecoration:"none"}}>Car Meets</a>
-                <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #7B2032",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",textDecoration:"none"}}>Routes</a>
+                <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #93333E",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",textDecoration:"none"}}>Routes</a>
               </div>
             </div>
           </FadeUp>
@@ -635,7 +635,7 @@ export default function Home() {
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>No membership required — just show up. Meet people who get it, see what Canvas Routes is about, and find out why people keep coming back. The format changes, the energy doesn't.</p>
                   </div>
                   <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1",boxShadow:"0 3px 16px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04)"}}>
-                    <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#7B2032",marginBottom:"0.8rem"}}>Private Meets</div>
+                    <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",marginBottom:"0.8rem"}}>Private Meets</div>
                     <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Members only</div>
                     <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, a tighter group, and a different kind of evening. Members are notified directly when one is announced — these don't get advertised.</p>
                   </div>
@@ -734,7 +734,7 @@ export default function Home() {
             } onClick={(e.past || e.photo_url) ? () => setPastModalEvent(e) : undefined}>
               {e.past && <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.8),transparent)"}} />}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem",flexWrap:"wrap",gap:"0.5rem"}}>
-                <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.65)":"#7B2032"}}>{e.date}</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.65)":"#93333E"}}>{e.date}</div>
                 <div style={{display:"flex",gap:"0.4rem",flexWrap:"wrap"}}>
                   {e.tripLength && <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.6)":"#3B6B2F",border:`0.5px solid ${e.past?"rgba(197,168,130,0.5)":"rgba(59,107,47,0.35)"}`,padding:"2px 8px"}}>{e.tripLength}</div>}
                   <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:e.past?"rgba(197,168,130,0.6)":"#7B5B2E",border:`0.5px solid ${e.past?"rgba(197,168,130,0.5)":"#7B5B2E"}`,padding:"2px 8px"}}>{e.type}</div>
@@ -746,7 +746,7 @@ export default function Home() {
               {e.past
                 ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Recap <span style={{fontSize:"13px"}}>→</span></div>
                 : e.inviteOnly
-                  ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",paddingBottom:"2px",display:"inline-block"}}>Invite Only</div>
+                  ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#93333E",paddingBottom:"2px",display:"inline-block"}}>Invite Only</div>
                   : e.membersOnly
                   ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",border:"0.5px solid rgba(59,107,47,0.35)",padding:"3px 10px",display:"inline-block",background:"rgba(59,107,47,0.06)"}}>Members Only</div>
                   : (e.registration_opens_at && !e.photo_url) ? (() => {
@@ -763,7 +763,7 @@ export default function Home() {
                   : e.photo_url
                     ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B5B2E",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Details <span style={{fontSize:"13px"}}>→</span></div>
                     : e.href
-                    ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B2032",border:"0.5px solid #7B2032",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
+                    ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#93333E",border:"0.5px solid #93333E",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
                     : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
               }
             </div>
@@ -838,7 +838,7 @@ export default function Home() {
       <section id="contact" style={{background:"#EDE8E1",padding:"6rem 3rem",textAlign:"center"}}>
         <FadeUp>
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Get in touch</div>
-        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>Let's talk <em style={{color:"#7B2032"}}>routes.</em></div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>Let's talk <em style={{color:"#93333E"}}>routes.</em></div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem auto"}}></div>
         <p style={{fontSize:"0.95rem",lineHeight:"1.8",color:"#555",maxWidth:"420px",margin:"0 auto 3rem"}}>Have a question, a partnership idea, or just want to know more? Reach out — we'd love to hear from you.</p>
         </FadeUp>
@@ -923,9 +923,9 @@ export default function Home() {
             <input ref={notifyHoneypotRef} type="text" name="_hp" style={{display:"none"}} tabIndex={-1} autoComplete="off" aria-hidden="true" />
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1rem"}}>
               <input type="text" name="name" autoComplete="name" inputMode="text" placeholder="Your name (optional)" value={notifyForm.name} onChange={e => setNotifyForm(p=>({...p,name:e.target.value}))} style={{padding:"0.9rem 1rem",border:"1px solid rgba(0,0,0,0.15)",background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
-              <input type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={notifyForm.email} onChange={e => setNotifyForm(p=>({...p,email:e.target.value}))} required style={{padding:"0.9rem 1rem",border:`1px solid ${notifyError?"#7B2032":"rgba(0,0,0,0.15)"}`,background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
+              <input type="email" name="email" autoComplete="email" inputMode="email" placeholder="Your email" value={notifyForm.email} onChange={e => setNotifyForm(p=>({...p,email:e.target.value}))} required style={{padding:"0.9rem 1rem",border:`1px solid ${notifyError?"#93333E":"rgba(0,0,0,0.15)"}`,background:"transparent",fontSize:"15px",fontFamily:"var(--font-inter),sans-serif",outline:"none"}} />
             </div>
-            {notifyError && <p style={{fontSize:"12px",color:"#7B2032",margin:0}}>{notifyError}</p>}
+            {notifyError && <p style={{fontSize:"12px",color:"#93333E",margin:0}}>{notifyError}</p>}
             <button type="submit" disabled={notifyStatus==='loading'} style={{padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",cursor:notifyStatus==='loading'?"not-allowed":"pointer",opacity:notifyStatus==='loading'?0.6:1,background:"transparent",border:"1px solid #c5a882",color:"#8A6535",fontFamily:"var(--font-inter),sans-serif"}}>
               {notifyStatus === 'loading' ? 'Signing up…' : 'Notify Me'}
             </button>

@@ -131,14 +131,14 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.35rem 1.2rem;
-  border: 0.5px solid #7B2032;
+  border: 0.5px solid #93333E;
   background: none;
   text-decoration: none;
-  color: #7B2032;
+  color: #93333E;
   text-align: center;
   transition: background 0.2s, color 0.2s;
 }
-.nav-members:hover { background: #7B2032; color: #F5F1EC; }
+.nav-members:hover { background: #93333E; color: #F5F1EC; }
 
 .hamburger {
   display: none;
@@ -292,13 +292,13 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 
 .join-submit-btn {
   background: transparent;
-  color: #7B2032;
-  border: 1px solid #7B2032;
+  color: #93333E;
+  border: 1px solid #93333E;
   transition: background 0.2s, color 0.2s, transform 0.1s ease;
 }
 .join-submit-btn:hover,
 .join-submit-btn:active {
-  background: #7B2032;
+  background: #93333E;
   color: #F5F1EC;
 }
 .join-submit-btn:active {
@@ -342,7 +342,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7B2032;
+  color: #93333E;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
