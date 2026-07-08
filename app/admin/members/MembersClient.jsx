@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   STATUS_OPTIONS, CAR_YEARS, MONTHS, DOB_YEARS, EMPTY_CAR,
-  CANONICAL_EVENTS, MEMBER_ATTENDANCE_KEYS,
+  CANONICAL_EVENTS,
   parseCarMakeModel,
   inp, sel,
   L, Badge, CopyBtn, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
@@ -13,6 +13,7 @@ import {
 import { ExportButton } from '../_components/ExportModal'
 import MemberProfilePreview from '../../../components/MemberProfilePreview'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { attendanceKey, normalizeEventName } from '../../../lib/eventMeta.js'
 
 // ─── Member Expanded Panel ────────────────────────────────────────────────────
 
@@ -25,8 +26,8 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
   const validCars = cars.filter(c => c.year || c.make || c.model)
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const pastEvents = events.filter(ev => new Date(ev.date) <= today)
-  const attendedCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === true).length
-  const noShowCount = pastEvents.filter(ev => m.event_attendance?.[MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name] === false).length
+  const attendedCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === true).length
+  const noShowCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === false).length
   const upcomingCount = events.filter(ev => new Date(ev.date) > today).length
   const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}${m.dob_year ? `, ${m.dob_year}` : ''}` : null
 
@@ -138,7 +139,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {events.map(ev => {
-            const key = MEMBER_ATTENDANCE_KEYS[ev.name] || ev.name
+            const key = attendanceKey(ev.name)
             const attended = m.event_attendance?.[key]
             const isPast = new Date(ev.date) <= today
             return (
@@ -212,7 +213,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
       .then(d => {
         if (!Array.isArray(d) || d.length === 0) return
         const evs = d.filter(e => e.name && e.date).map(e => ({ name: e.name, date: e.date }))
-        const names = new Set(evs.map(e => e.name))
+        const names = new Set(evs.map(e => normalizeEventName(e.name)))
         for (const c of CANONICAL_EVENTS) if (!names.has(c.name)) evs.push(c)
         evs.sort((a, b) => new Date(a.date) - new Date(b.date))
         setEventsList(evs)
@@ -370,7 +371,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
   }
 
   async function toggleMemberAttendance(m, eventName, value) {
-    const key = MEMBER_ATTENDANCE_KEYS[eventName] || eventName
+    const key = attendanceKey(eventName)
     const current = m.event_attendance || {}
     const newAttendance = { ...current, [key]: current[key] === value ? null : value }
     setMembers(prev => prev.map(x => x.id === m.id ? { ...x, event_attendance: newAttendance } : x))
