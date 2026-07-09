@@ -26,7 +26,7 @@ export default function RoadtripsAdminClient() {
   const [busyId, setBusyId]       = useState(null)
 
   const load = useCallback(() => {
-    fetch('/api/admin/roadtrips')
+    fetch('/api/admin/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
       .then(d => { setRoutes(Array.isArray(d) ? d : []); setLoading(false) })
       .catch(() => setLoading(false))
@@ -40,7 +40,7 @@ export default function RoadtripsAdminClient() {
     }
     setAdding(true); setFormErr(null)
     try {
-      const res = await fetch('/api/admin/roadtrips', {
+      const res = await fetch('/api/admin/upcoming-routes', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, target_count: parseInt(form.target_count, 10) || 12, sort_order: parseInt(form.sort_order, 10) || routes.length + 1 }),
       })
@@ -64,7 +64,7 @@ export default function RoadtripsAdminClient() {
   async function saveEdit(id) {
     setSavingEdit(true); setEditErr(null)
     try {
-      const res = await fetch(`/api/admin/roadtrips/${id}`, {
+      const res = await fetch(`/api/admin/upcoming-routes/${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...editForm, target_count: parseInt(editForm.target_count, 10), sort_order: parseInt(editForm.sort_order, 10) }),
       })
@@ -79,7 +79,7 @@ export default function RoadtripsAdminClient() {
   async function toggleActive(r) {
     setBusyId(r.id)
     try {
-      const res = await fetch(`/api/admin/roadtrips/${r.id}`, {
+      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !r.is_active }),
       })
@@ -91,7 +91,7 @@ export default function RoadtripsAdminClient() {
   async function del(id) {
     setBusyId(id)
     try {
-      const res = await fetch(`/api/admin/roadtrips/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/upcoming-routes/${id}`, { method: 'DELETE' })
       if (res.ok) { setRoutes(prev => prev.filter(r => r.id !== id)); setDeleteConfirm(null) }
     } catch {} finally { setBusyId(null) }
   }
@@ -99,7 +99,7 @@ export default function RoadtripsAdminClient() {
   async function launch(id) {
     setLaunching(true)
     try {
-      const res = await fetch(`/api/admin/roadtrips/${id}/launch`, {
+      const res = await fetch(`/api/admin/upcoming-routes/${id}/launch`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: launchMsg }),
       })

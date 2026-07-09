@@ -29,7 +29,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
 
   const load = useCallback(() => {
     const qs = memberEmail ? `?email=${encodeURIComponent(memberEmail)}` : ''
-    fetch(`/api/roadtrips${qs}`)
+    fetch(`/api/upcoming-routes${qs}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => {
         const list = Array.isArray(data) ? data : []
@@ -63,7 +63,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { patch(route.id, { error: 'Please enter a valid email.' }); return }
     patch(route.id, { submitting: true, error: null })
     try {
-      const res = await fetch('/api/roadtrips/interest', {
+      const res = await fetch('/api/upcoming-routes/interest', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug: route.slug, name, email, membership_optin: !isMember && !!route.formMembership, is_member: isMember }),
       })
@@ -137,7 +137,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       {embedded && (
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: ACCENT, marginBottom: '1rem' }}>Canvas Routes · 2026 Season</div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(2.4rem,5vw,3.4rem)', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.05, margin: 0, letterSpacing: '-0.01em' }}>Upcoming Roadtrips</h1>
+          <h1 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(2.4rem,5vw,3.4rem)', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.05, margin: 0, letterSpacing: '-0.01em' }}>Upcoming Routes</h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '0.9rem', maxWidth: '520px', lineHeight: 1.75 }}>{INTRO}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '1.25rem' }}>
             <span style={{ width: '6px', height: '6px', background: ACCENT, borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />

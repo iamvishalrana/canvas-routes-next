@@ -66,7 +66,7 @@ export async function POST(request) {
 
   // Mirror the lead into the CRM (applications + contacts), same pattern as the
   // notify flow: never blindly overwrite registrations[] — merge by event name.
-  const EVENT_NAME = `Roadtrip Interest — ${route.name}`
+  const EVENT_NAME = `Route Interest — ${route.name}`
   try {
     const { data: existing } = await supabase
       .from('applications').select('id, registrations').eq('email', email).maybeSingle()
@@ -98,8 +98,8 @@ export async function POST(request) {
     sendEmail({
       from: 'Canvas Routes <info@canvasroutes.com>',
       to: 'info@canvasroutes.com',
-      subject: `New roadtrip interest — ${route.name} (${interestedCount}/${route.target_count})`,
-      html: buildAdminNotifyHtml('New roadtrip interest', [
+      subject: `New route interest — ${route.name} (${interestedCount}/${route.target_count})`,
+      html: buildAdminNotifyHtml('New route interest', [
         ['Route', route.name],
         ['Name',  name],
         ['Email', `<a href="mailto:${email}" style="color:#1a1a1a;">${email}</a>`],
