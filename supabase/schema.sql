@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS public.route_interest (
   email            TEXT        NOT NULL,
   phone            TEXT,
   car              TEXT,
+  preferences      JSONB       NOT NULL DEFAULT '{}'::jsonb,
   membership_optin BOOLEAN     NOT NULL DEFAULT false,
   is_member        BOOLEAN     NOT NULL DEFAULT false,
   created_at       TIMESTAMPTZ DEFAULT now(),

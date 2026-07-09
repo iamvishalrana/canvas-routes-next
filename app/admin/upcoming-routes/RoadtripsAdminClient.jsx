@@ -175,10 +175,12 @@ export default function RoadtripsAdminClient() {
   }
 
   function exportCSV() {
-    const rows = [['Route', 'Name', 'Email', 'Phone', 'Car', 'Status', 'Registered']]
+    const rows = [['Route', 'Name', 'Email', 'Phone', 'Car', 'Budget', 'Preferred dates', 'Hotel', 'Activities', 'Notes', 'Status', 'Registered']]
     for (const r of routes) for (const p of (r.interest || [])) {
+      const pr = p.preferences || {}
       rows.push([
         r.name, p.name || '', p.email, p.phone || '', p.car || '',
+        pr.budget || '', pr.dates || '', pr.hotel || '', (pr.activities || []).join('; '), pr.notes || '',
         p.is_member ? 'Member' : (p.membership_optin ? 'Waitlist opt-in' : 'Public'),
         p.created_at ? new Date(p.created_at).toISOString().slice(0, 10) : '',
       ])
@@ -388,6 +390,17 @@ export default function RoadtripsAdminClient() {
                               <span style={{ fontSize: '13px', color: '#333' }}>{p.name || '—'}</span>
                               <a href={`mailto:${p.email}`} style={{ fontSize: '12px', color: '#888', marginLeft: '0.5rem', textDecoration: 'none' }}>{p.email}</a>
                               {(p.car || p.phone) && <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px' }}>{[p.car, p.phone].filter(Boolean).join(' · ')}</div>}
+                              {p.preferences && Object.keys(p.preferences).length > 0 && (
+                                <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: 1.5 }}>
+                                  {[
+                                    p.preferences.budget && `Budget: ${p.preferences.budget}`,
+                                    p.preferences.dates && `Dates: ${p.preferences.dates}`,
+                                    p.preferences.hotel && `Hotel: ${p.preferences.hotel}`,
+                                    p.preferences.activities?.length && `Activities: ${p.preferences.activities.join(', ')}`,
+                                    p.preferences.notes && `Notes: ${p.preferences.notes}`,
+                                  ].filter(Boolean).join(' · ')}
+                                </div>
+                              )}
                             </div>
                             <div style={{ fontSize: '10px', color: '#bbb', flexShrink: 0 }}>
                               {p.is_member ? 'Member' : (p.membership_optin ? 'Waitlist opt-in' : 'Public')}

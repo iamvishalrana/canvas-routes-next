@@ -31,6 +31,19 @@ export async function POST(request) {
   const membershipOptin = !!body.membership_optin
   const isMember = !!body.is_member
 
+  // Sanitize the trip-preference survey answers into a known shape.
+  const pIn = body.preferences && typeof body.preferences === 'object' ? body.preferences : {}
+  const str = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : undefined)
+  const preferences = {}
+  if (str(pIn.budget, 60)) preferences.budget = str(pIn.budget, 60)
+  if (str(pIn.dates, 120)) preferences.dates = str(pIn.dates, 120)
+  if (str(pIn.hotel, 60)) preferences.hotel = str(pIn.hotel, 60)
+  if (Array.isArray(pIn.activities)) {
+    const acts = pIn.activities.filter(a => typeof a === 'string' && a.trim()).slice(0, 12).map(a => a.trim().slice(0, 40))
+    if (acts.length) preferences.activities = acts
+  }
+  if (str(pIn.notes, 500)) preferences.notes = str(pIn.notes, 500)
+
   if (!slug) return Response.json({ error: 'Missing route.' }, { status: 400 })
   if (!name || name.length < 2) return Response.json({ error: 'Please enter your name.' }, { status: 400 })
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
@@ -53,7 +66,7 @@ export async function POST(request) {
   // Idempotent per (route, email): update the name/opt-in if they resubmit.
   const { error: upsertErr } = await supabase
     .from('route_interest')
-    .upsert({ route_id: route.id, name, email, phone: phone || null, car: car || null, membership_optin: membershipOptin, is_member: isMember },
+    .upsert({ route_id: route.id, name, email, phone: phone || null, car: car || null, preferences, membership_optin: membershipOptin, is_member: isMember },
             { onConflict: 'route_id,email' })
   if (upsertErr) {
     captureException(new Error(upsertErr.message), { context: 'roadtrip-interest-upsert' })
@@ -110,6 +123,11 @@ export async function POST(request) {
         ['Email', `<a href="mailto:${email}" style="color:#1a1a1a;">${email}</a>`],
         ['Phone', phone || '(not provided)'],
         ['Car',   car || '(not provided)'],
+        ...(preferences.budget ? [['Budget', preferences.budget]] : []),
+        ...(preferences.dates ? [['Preferred dates', preferences.dates]] : []),
+        ...(preferences.hotel ? [['Hotel', preferences.hotel]] : []),
+        ...(preferences.activities ? [['Activities', preferences.activities.join(', ')]] : []),
+        ...(preferences.notes ? [['Notes', preferences.notes]] : []),
         ['Interest', `${interestedCount} / ${route.target_count}`],
         ['Membership waitlist', membershipOptin ? 'Yes' : 'No'],
         ['Member', isMember ? 'Yes' : 'No'],

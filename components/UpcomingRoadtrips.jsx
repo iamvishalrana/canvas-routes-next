@@ -11,6 +11,9 @@ const ACCENT_BGS = [
 ]
 const INTRO = 'Each route launches once the right crew is assembled. Express your interest — we notify you the moment we hit critical mass.'
 const TRIP_LABELS = { overnight: 'Overnight', multi_day: 'Multi-Day' } // 'day' shows no badge
+const BUDGET_OPTIONS   = ['Under $250', '$250–500', '$500–1000', '$1000–2000', '$2000+']
+const HOTEL_OPTIONS    = ['No preference', 'Budget-friendly', 'Mid-range', 'Boutique / Luxury', 'Camping / Rustic']
+const ACTIVITY_OPTIONS = ['Scenic drives', 'Hiking', 'Local food', 'Fine dining', 'Photography', 'Sightseeing', 'Nightlife', 'Relaxing']
 
 function PinIcon() {
   return <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -45,6 +48,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           formEmail: memberEmail || '',
           formPhone: '',
           formCar: '',
+          formBudget: '',
+          formDates: '',
+          formHotel: '',
+          formActivities: [],
+          formNotes: '',
           formMembership: !isMember,
         })))
         setLoading(false)
@@ -69,7 +77,20 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     try {
       const res = await fetch('/api/upcoming-routes/interest', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: route.slug, name, email, phone: (route.formPhone || '').trim(), car: (route.formCar || '').trim(), membership_optin: !isMember && !!route.formMembership, is_member: isMember }),
+        body: JSON.stringify({
+          slug: route.slug, name, email,
+          phone: (route.formPhone || '').trim(),
+          car: (route.formCar || '').trim(),
+          preferences: {
+            budget: route.formBudget || '',
+            dates: (route.formDates || '').trim(),
+            hotel: route.formHotel || '',
+            activities: route.formActivities || [],
+            notes: (route.formNotes || '').trim(),
+          },
+          membership_optin: !isMember && !!route.formMembership,
+          is_member: isMember,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { patch(route.id, { submitting: false, error: data.error || 'Something went wrong.' }); return }
@@ -318,7 +339,36 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         <input type="text" placeholder="Your name" value={r.formName} onChange={e => patch(r.id, { formName: e.target.value, error: null })} className="rt-input" />
                         <input type="email" inputMode="email" placeholder="Your email" value={r.formEmail} onChange={e => patch(r.id, { formEmail: e.target.value, error: null })} className="rt-input" />
                         <input type="tel" inputMode="tel" placeholder="Phone (optional)" value={r.formPhone} onChange={e => patch(r.id, { formPhone: e.target.value })} className="rt-input" />
-                        <input type="text" placeholder="Car — year, make, model (optional)" value={r.formCar} onChange={e => patch(r.id, { formCar: e.target.value })} className="rt-input" style={{ marginBottom: '12px' }} />
+                        <input type="text" placeholder="Car — year, make, model (optional)" value={r.formCar} onChange={e => patch(r.id, { formCar: e.target.value })} className="rt-input" />
+
+                        {/* Trip preferences */}
+                        <select className="rt-input" value={r.formBudget} onChange={e => patch(r.id, { formBudget: e.target.value })}>
+                          <option value="">Budget per car (optional)</option>
+                          {BUDGET_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                        <input type="text" placeholder="Preferred dates (optional)" value={r.formDates} onChange={e => patch(r.id, { formDates: e.target.value })} className="rt-input" />
+                        {(r.trip_type === 'overnight' || r.trip_type === 'multi_day') && (
+                          <select className="rt-input" value={r.formHotel} onChange={e => patch(r.id, { formHotel: e.target.value })}>
+                            <option value="">Hotel preference (optional)</option>
+                            {HOTEL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        )}
+                        <div style={{ marginBottom: '10px' }}>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {ACTIVITY_OPTIONS.map(a => {
+                              const on = (r.formActivities || []).includes(a)
+                              return (
+                                <button type="button" key={a}
+                                  onClick={() => patch(r.id, s => ({ formActivities: on ? s.formActivities.filter(x => x !== a) : [...(s.formActivities || []), a] }))}
+                                  style={{ fontSize: '10px', letterSpacing: '0.03em', padding: '6px 10px', border: `0.5px solid ${on ? ACCENT : 'rgba(0,0,0,0.15)'}`, background: on ? 'rgba(197,168,130,0.12)' : 'transparent', color: on ? '#8a6535' : '#888', cursor: 'pointer', fontFamily: 'inherit' }}>
+                                  {a}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <textarea placeholder="Anything else? (optional)" value={r.formNotes} onChange={e => patch(r.id, { formNotes: e.target.value })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical', marginBottom: '12px' }} maxLength={500} />
                         {!isMember && (
                           <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px', cursor: 'pointer' }}>
                             <input type="checkbox" checked={!!r.formMembership} onChange={e => patch(r.id, { formMembership: e.target.checked })} style={{ cursor: 'pointer', accentColor: ACCENT, marginTop: '1px', flexShrink: 0 }} />
