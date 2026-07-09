@@ -101,6 +101,7 @@ export default function ExpensesClient() {
   const [dateFrom, setDateFrom]         = useState('')
   const [dateTo, setDateTo]             = useState('')
   const [showSummary, setShowSummary]   = useState(false)
+  const [isMobile, setIsMobile]         = useState(false)
   const [editingId, setEditingId]       = useState(null)
   const [editForm, setEditForm]         = useState({})
   const [editSaving, setEditSaving]     = useState(false)
@@ -116,6 +117,13 @@ export default function ExpensesClient() {
       .catch(() => setLoading(false))
   }, [])
   useEffect(() => { load() }, [load])
+
+  // Card layout on phones (iPhone 13 Pro ≈ 390px) instead of a side-scrolling table
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Sync folder selection to the form's event name unless user picked manually
   useEffect(() => {
@@ -804,14 +812,16 @@ export default function ExpensesClient() {
 
                 {isOpen && (
                   <div>
-                    {/* Column headers — scroll on their own so edit/delete stay full-width */}
-                    <div className="exp-scroll">
-                      <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '560px' }}>
-                        {['Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
-                          <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
-                        ))}
+                    {/* Column headers — desktop only; mobile uses card rows */}
+                    {!isMobile && (
+                      <div className="exp-scroll">
+                        <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '560px' }}>
+                          {['Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
+                            <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {group.items.map((expense, i) => {
                       const rowTax          = taxOf(expense)
@@ -821,58 +831,85 @@ export default function ExpensesClient() {
                       const isEditing       = editingId === expense.id
                       const isNew           = newIds.has(expense.id)
 
+                      const actionButtons = (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', alignItems: 'center' }}>
+                          {!isPendingDelete && !isEditing && (
+                            <>
+                              <button onClick={() => startEdit(expense)}
+                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '7px 16px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
+                                Edit
+                              </button>
+                              <button onClick={() => { setDeleteConfirm(expense.id); setEditingId(null) }} aria-label="Delete expense"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c99', fontSize: '18px', padding: isMobile ? '4px 10px' : '2px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+                            </>
+                          )}
+                          {isEditing && (
+                            <button onClick={cancelEdit}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '11px', padding: '4px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      )
+
                       return (
                         <div key={expense.id} className={isNew ? 'exp-new' : ''}
                           style={{ borderBottom: i < group.items.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
 
-                          {/* Data row — scrolls horizontally on its own */}
-                          <div className="exp-scroll">
-                          <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '560px' }}>
-                            <div style={{ fontSize: '12px', color: '#555' }}>{fmtDate(expense.expense_date)}</div>
-                            <div style={{ fontSize: '12px', color: '#333', minWidth: 0 }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
-                                {expense.vendor || <span style={{ color: '#ddd' }}>—</span>}
-                                {expense.receipt_url && (
-                                  <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
-                                    style={{ fontSize: '10px', color: '#c5a882', textDecoration: 'none' }}>↗</a>
-                                )}
-                                {expense.payment_method && (
-                                  <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '0.04em' }}>· {PAYMENT_LABELS[expense.payment_method]}</span>
-                                )}
-                              </span>
+                          {isMobile ? (
+                            /* Mobile card — no horizontal scroll */
+                            <div style={{ padding: '0.8rem 1.1rem', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                    {expense.vendor || <span style={{ color: '#ccc' }}>No vendor</span>}
+                                    {expense.receipt_url && (
+                                      <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
+                                        style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none' }}>↗</a>
+                                    )}
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                    {fmtDate(expense.expense_date)}
+                                    {expense.category && <> · {expense.category}</>}
+                                    {expense.payment_method && <> · {PAYMENT_LABELS[expense.payment_method]}</>}
+                                  </div>
+                                </div>
+                                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                  <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{fmt(total)}</div>
+                                  {rowTax > 0 && (
+                                    <div style={{ fontSize: '10px', color: '#aaa', fontVariantNumeric: 'tabular-nums', marginTop: '1px' }}>{fmt(expense.amount)} + {fmt(rowTax)} tax</div>
+                                  )}
+                                </div>
+                              </div>
+                              {!isEditing && !isPendingDelete && <div style={{ marginTop: '0.6rem' }}>{actionButtons}</div>}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#888' }}>{expense.category || <span style={{ color: '#ddd' }}>—</span>}</div>
-                            <div style={{ fontSize: '12px', color: '#333', fontVariantNumeric: 'tabular-nums' }}>{fmt(expense.amount)}</div>
-                            <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>
-                              {rowTax > 0 ? fmt(rowTax) : <span style={{ color: '#ddd' }}>—</span>}
+                          ) : (
+                            /* Desktop table row — scrolls horizontally on its own */
+                            <div className="exp-scroll">
+                              <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '560px' }}>
+                                <div style={{ fontSize: '12px', color: '#555' }}>{fmtDate(expense.expense_date)}</div>
+                                <div style={{ fontSize: '12px', color: '#333', minWidth: 0 }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                    {expense.vendor || <span style={{ color: '#ddd' }}>—</span>}
+                                    {expense.receipt_url && (
+                                      <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
+                                        style={{ fontSize: '10px', color: '#c5a882', textDecoration: 'none' }}>↗</a>
+                                    )}
+                                    {expense.payment_method && (
+                                      <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '0.04em' }}>· {PAYMENT_LABELS[expense.payment_method]}</span>
+                                    )}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#888' }}>{expense.category || <span style={{ color: '#ddd' }}>—</span>}</div>
+                                <div style={{ fontSize: '12px', color: '#333', fontVariantNumeric: 'tabular-nums' }}>{fmt(expense.amount)}</div>
+                                <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>
+                                  {rowTax > 0 ? fmt(rowTax) : <span style={{ color: '#ddd' }}>—</span>}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(total)}</div>
+                                {actionButtons}
+                              </div>
                             </div>
-                            <div style={{ fontSize: '12px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(total)}</div>
-
-                            {/* Actions */}
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.25rem', alignItems: 'center' }}>
-                              {!isPendingDelete && !isEditing && (
-                                <>
-                                  <button onClick={() => startEdit(expense)}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '11px', padding: '4px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.15s', letterSpacing: '0.04em' }}
-                                    onMouseEnter={e => e.currentTarget.style.color = '#555'}
-                                    onMouseLeave={e => e.currentTarget.style.color = '#ccc'}>
-                                    Edit
-                                  </button>
-                                  <button onClick={() => { setDeleteConfirm(expense.id); setEditingId(null) }}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ddd', fontSize: '16px', padding: '2px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.15s' }}
-                                    onMouseEnter={e => e.currentTarget.style.color = '#93333E'}
-                                    onMouseLeave={e => e.currentTarget.style.color = '#ddd'}>×</button>
-                                </>
-                              )}
-                              {isEditing && (
-                                <button onClick={cancelEdit}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '11px', padding: '4px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
-                                  Cancel
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          </div>
+                          )}
 
                           {/* Edit panel — full width, not inside the row scroller */}
                           {isEditing && (
@@ -973,15 +1010,25 @@ export default function ExpensesClient() {
                     })}
 
                     {/* Group total row */}
-                    <div className="exp-scroll">
-                      <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '560px' }}>
-                        <div style={{ gridColumn: '1 / 4', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
-                        <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
-                        <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
-                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total + group.totalTax)}</div>
-                        <div />
+                    {isMobile ? (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem', padding: '0.7rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9' }}>
+                        <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>Group total</span>
+                        <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
+                          {fmt(group.total + group.totalTax)}
+                          {group.totalTax > 0 && <span style={{ fontSize: '10px', color: '#aaa', fontWeight: 400 }}> incl. {fmt(group.totalTax)} tax</span>}
+                        </span>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="exp-scroll">
+                        <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '560px' }}>
+                          <div style={{ gridColumn: '1 / 4', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
+                          <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
+                          <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
+                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total + group.totalTax)}</div>
+                          <div />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
