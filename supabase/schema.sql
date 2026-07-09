@@ -166,7 +166,9 @@ CREATE TABLE IF NOT EXISTS public.route_interest (
 CREATE INDEX IF NOT EXISTS route_interest_route_id_idx ON public.route_interest (route_id);
 ALTER TABLE public.upcoming_routes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.route_interest  ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.upcoming_routes
+DROP POLICY IF EXISTS "block_direct_client_access" ON public.upcoming_routes;
+CREATE POLICY "block_direct_client_access" ON public.upcoming_routes
   USING (false) WITH CHECK (false);
-CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.route_interest
+DROP POLICY IF EXISTS "block_direct_client_access" ON public.route_interest;
+CREATE POLICY "block_direct_client_access" ON public.route_interest
   USING (false) WITH CHECK (false);

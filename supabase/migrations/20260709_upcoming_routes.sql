@@ -42,9 +42,12 @@ CREATE INDEX IF NOT EXISTS route_interest_route_id_idx ON public.route_interest 
 
 ALTER TABLE public.upcoming_routes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.route_interest  ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.upcoming_routes
+-- Postgres has no CREATE POLICY IF NOT EXISTS; drop-then-create is the idempotent form.
+DROP POLICY IF EXISTS "block_direct_client_access" ON public.upcoming_routes;
+CREATE POLICY "block_direct_client_access" ON public.upcoming_routes
   USING (false) WITH CHECK (false);
-CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.route_interest
+DROP POLICY IF EXISTS "block_direct_client_access" ON public.route_interest;
+CREATE POLICY "block_direct_client_access" ON public.route_interest
   USING (false) WITH CHECK (false);
 
 -- Seed the current 2026 season (safe to re-run — slug is unique, ON CONFLICT skips)
