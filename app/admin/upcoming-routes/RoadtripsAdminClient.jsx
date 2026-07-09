@@ -175,10 +175,10 @@ export default function RoadtripsAdminClient() {
   }
 
   function exportCSV() {
-    const rows = [['Route', 'Name', 'Email', 'Status', 'Registered']]
+    const rows = [['Route', 'Name', 'Email', 'Phone', 'Car', 'Status', 'Registered']]
     for (const r of routes) for (const p of (r.interest || [])) {
       rows.push([
-        r.name, p.name || '', p.email,
+        r.name, p.name || '', p.email, p.phone || '', p.car || '',
         p.is_member ? 'Member' : (p.membership_optin ? 'Waitlist opt-in' : 'Public'),
         p.created_at ? new Date(p.created_at).toISOString().slice(0, 10) : '',
       ])
@@ -387,6 +387,7 @@ export default function RoadtripsAdminClient() {
                             <div style={{ minWidth: 0 }}>
                               <span style={{ fontSize: '13px', color: '#333' }}>{p.name || '—'}</span>
                               <a href={`mailto:${p.email}`} style={{ fontSize: '12px', color: '#888', marginLeft: '0.5rem', textDecoration: 'none' }}>{p.email}</a>
+                              {(p.car || p.phone) && <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px' }}>{[p.car, p.phone].filter(Boolean).join(' · ')}</div>}
                             </div>
                             <div style={{ fontSize: '10px', color: '#bbb', flexShrink: 0 }}>
                               {p.is_member ? 'Member' : (p.membership_optin ? 'Waitlist opt-in' : 'Public')}

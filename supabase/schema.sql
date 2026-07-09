@@ -162,6 +162,8 @@ CREATE TABLE IF NOT EXISTS public.route_interest (
   route_id         UUID        NOT NULL REFERENCES public.upcoming_routes(id) ON DELETE CASCADE,
   name             TEXT        NOT NULL,
   email            TEXT        NOT NULL,
+  phone            TEXT,
+  car              TEXT,
   membership_optin BOOLEAN     NOT NULL DEFAULT false,
   is_member        BOOLEAN     NOT NULL DEFAULT false,
   created_at       TIMESTAMPTZ DEFAULT now(),

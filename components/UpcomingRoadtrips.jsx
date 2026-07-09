@@ -43,6 +43,8 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           submitting: false,
           formName: memberName || '',
           formEmail: memberEmail || '',
+          formPhone: '',
+          formCar: '',
           formMembership: !isMember,
         })))
         setLoading(false)
@@ -67,7 +69,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     try {
       const res = await fetch('/api/upcoming-routes/interest', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: route.slug, name, email, membership_optin: !isMember && !!route.formMembership, is_member: isMember }),
+        body: JSON.stringify({ slug: route.slug, name, email, phone: (route.formPhone || '').trim(), car: (route.formCar || '').trim(), membership_optin: !isMember && !!route.formMembership, is_member: isMember }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { patch(route.id, { submitting: false, error: data.error || 'Something went wrong.' }); return }
@@ -94,7 +96,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   const PADX = embedded ? '0px' : 'clamp(1.5rem,4vw,3rem)' // portal supplies its own gutter
 
   return (
-    <div style={{ background: embedded ? 'transparent' : '#F5F1EC', minHeight: embedded ? undefined : '100vh', fontFamily: "'Inter',var(--font-inter),sans-serif" }}>
+    <div style={{ background: embedded ? 'transparent' : '#F5F1EC', minHeight: embedded ? undefined : '100vh', overflowX: embedded ? undefined : 'hidden', fontFamily: "'Inter',var(--font-inter),sans-serif" }}>
       <style>{`
         @keyframes rtFadeUp { from { opacity:0; transform:translateY(28px);} to { opacity:1; transform:translateY(0);} }
         @keyframes rtFadeIn { from { opacity:0;} to { opacity:1;} }
@@ -175,7 +177,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: ACCENT, marginBottom: '12px' }}>How It Works</div>
           <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(1.8rem,3vw,2.4rem)', fontWeight: 300, color: '#1a1a1a', margin: '0 0 40px 0' }}>Routes launch when the crew is ready.</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 0, border: '0.5px solid rgba(0,0,0,0.07)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 0, border: '0.5px solid rgba(0,0,0,0.07)' }}>
             {[
               ['01', 'Express Interest', "Browse the upcoming routes and register your interest with your name and email. No payment, no commitment — just a signal that you're in."],
               ['02', 'We Hit Critical Mass', 'Each route has a minimum threshold. Once enough drivers are registered, the route officially launches. The progress bar on each card shows exactly where we stand.'],
@@ -227,7 +229,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(48px,8vw,96px) ${PADX}`, textAlign: 'center', fontSize: '13px', color: '#bbb' }}>Loading routes…</div>
       ) : view === 'grid' ? (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}` }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px,1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '20px' }}>
             {routes.map((r, i) => {
               const pct = Math.min(100, Math.round((r.interested_count / r.target_count) * 100))
               const slotsLeft = Math.max(0, r.target_count - r.interested_count)
@@ -314,7 +316,9 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                     ) : (
                       <div className="rt-form">
                         <input type="text" placeholder="Your name" value={r.formName} onChange={e => patch(r.id, { formName: e.target.value, error: null })} className="rt-input" />
-                        <input type="email" placeholder="Your email" value={r.formEmail} onChange={e => patch(r.id, { formEmail: e.target.value, error: null })} className="rt-input" style={{ marginBottom: '12px' }} />
+                        <input type="email" inputMode="email" placeholder="Your email" value={r.formEmail} onChange={e => patch(r.id, { formEmail: e.target.value, error: null })} className="rt-input" />
+                        <input type="tel" inputMode="tel" placeholder="Phone (optional)" value={r.formPhone} onChange={e => patch(r.id, { formPhone: e.target.value })} className="rt-input" />
+                        <input type="text" placeholder="Car — year, make, model (optional)" value={r.formCar} onChange={e => patch(r.id, { formCar: e.target.value })} className="rt-input" style={{ marginBottom: '12px' }} />
                         {!isMember && (
                           <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px', cursor: 'pointer' }}>
                             <input type="checkbox" checked={!!r.formMembership} onChange={e => patch(r.id, { formMembership: e.target.checked })} style={{ cursor: 'pointer', accentColor: ACCENT, marginTop: '1px', flexShrink: 0 }} />

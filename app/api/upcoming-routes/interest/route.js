@@ -26,13 +26,15 @@ export async function POST(request) {
   const slug = (body.slug || '').trim()
   const name = (body.name || '').trim()
   const email = normalizeEmail(body.email)
+  const phone = (body.phone || '').trim()
+  const car = (body.car || '').trim()
   const membershipOptin = !!body.membership_optin
   const isMember = !!body.is_member
 
   if (!slug) return Response.json({ error: 'Missing route.' }, { status: 400 })
   if (!name || name.length < 2) return Response.json({ error: 'Please enter your name.' }, { status: 400 })
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
-  if (name.length > 100 || email.length > 254) return Response.json({ error: 'Input too long.' }, { status: 400 })
+  if (name.length > 100 || email.length > 254 || phone.length > 40 || car.length > 120) return Response.json({ error: 'Input too long.' }, { status: 400 })
 
   const supabase = createAdminClient()
 
@@ -51,7 +53,7 @@ export async function POST(request) {
   // Idempotent per (route, email): update the name/opt-in if they resubmit.
   const { error: upsertErr } = await supabase
     .from('route_interest')
-    .upsert({ route_id: route.id, name, email, membership_optin: membershipOptin, is_member: isMember },
+    .upsert({ route_id: route.id, name, email, phone: phone || null, car: car || null, membership_optin: membershipOptin, is_member: isMember },
             { onConflict: 'route_id,email' })
   if (upsertErr) {
     captureException(new Error(upsertErr.message), { context: 'roadtrip-interest-upsert' })
@@ -73,8 +75,11 @@ export async function POST(request) {
     const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
     const newReg = { event: EVENT_NAME, registered_at: existingReg?.registered_at || new Date().toISOString(), attended: null, membership_optin: membershipOptin }
     const registrations = [...(existing?.registrations || []).filter(r => r.event !== EVENT_NAME), newReg]
+    const appPayload = { email, name, registrations }
+    if (phone) appPayload.phone = phone       // only set when provided — never wipe existing CRM data
+    if (car) appPayload.car_model = car
     const { data: appData, error: appErr } = await supabase.from('applications')
-      .upsert({ email, name, registrations }, { onConflict: 'email' }).select('id').single()
+      .upsert(appPayload, { onConflict: 'email' }).select('id').single()
     if (appErr) { captureException(new Error(appErr.message), { context: 'roadtrip-interest-application' }) }
     else if (appData?.id) {
       await supabase.from('contacts').upsert({ application_id: appData.id }, { onConflict: 'application_id', ignoreDuplicates: true })
@@ -103,6 +108,8 @@ export async function POST(request) {
         ['Route', route.name],
         ['Name',  name],
         ['Email', `<a href="mailto:${email}" style="color:#1a1a1a;">${email}</a>`],
+        ['Phone', phone || '(not provided)'],
+        ['Car',   car || '(not provided)'],
         ['Interest', `${interestedCount} / ${route.target_count}`],
         ['Membership waitlist', membershipOptin ? 'Yes' : 'No'],
         ['Member', isMember ? 'Yes' : 'No'],
