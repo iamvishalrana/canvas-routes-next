@@ -121,7 +121,11 @@ CREATE TABLE IF NOT EXISTS public.expenses (
   event_name   TEXT,
   vendor       TEXT,
   amount       NUMERIC(10,2)  NOT NULL DEFAULT 0,
-  tax_amount   NUMERIC(10,2)  NOT NULL DEFAULT 0,
+  tax_amount   NUMERIC(10,2)  NOT NULL DEFAULT 0,  -- legacy: superseded by gst_amount + qst_amount
+  gst_amount   NUMERIC(10,2)  NOT NULL DEFAULT 0,
+  qst_amount   NUMERIC(10,2)  NOT NULL DEFAULT 0,
+  province     TEXT           NOT NULL DEFAULT 'QC',
+  payment_method TEXT         CHECK (payment_method IN ('cash', 'credit', 'etransfer', 'other')),
   category     TEXT,
   receipt_url  TEXT,
   created_at   TIMESTAMPTZ    DEFAULT now()

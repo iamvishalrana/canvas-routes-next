@@ -3,7 +3,53 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
 
 const CATEGORIES = ['Fuel', 'Food & Beverages', 'Venue / Parking', 'Photography / Video', 'Merchandise', 'Equipment', 'Marketing', 'Insurance', 'Printing', 'Other']
-const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', amount: '', tax_amount: '', category: '', receipt_url: '' }
+
+const PAYMENT_METHODS = [
+  { value: 'cash',      label: 'Cash' },
+  { value: 'credit',    label: 'Credit card' },
+  { value: 'etransfer', label: 'E-transfer' },
+  { value: 'other',     label: 'Other' },
+]
+const PAYMENT_LABELS = { cash: 'Cash', credit: 'Card', etransfer: 'E-transfer', other: 'Other' }
+
+// Canadian sales tax by province/territory, split into the federal GST/HST-federal
+// portion (gst) and the provincial portion (prov: QST / PST / HST-provincial).
+// Quebec is the default. "No tax / Other" covers non-taxable or foreign spend.
+const PROVINCES = [
+  { value: 'QC',   label: 'Quebec',                 gst: 0.05, prov: 0.09975, provLabel: 'QST' },
+  { value: 'ON',   label: 'Ontario',                gst: 0.05, prov: 0.08,    provLabel: 'HST' },
+  { value: 'BC',   label: 'British Columbia',       gst: 0.05, prov: 0.07,    provLabel: 'PST' },
+  { value: 'AB',   label: 'Alberta',                gst: 0.05, prov: 0,       provLabel: 'PST' },
+  { value: 'MB',   label: 'Manitoba',               gst: 0.05, prov: 0.07,    provLabel: 'PST' },
+  { value: 'SK',   label: 'Saskatchewan',           gst: 0.05, prov: 0.06,    provLabel: 'PST' },
+  { value: 'NS',   label: 'Nova Scotia',            gst: 0.05, prov: 0.09,    provLabel: 'HST' },
+  { value: 'NB',   label: 'New Brunswick',          gst: 0.05, prov: 0.10,    provLabel: 'HST' },
+  { value: 'NL',   label: 'Newfoundland & Lab.',    gst: 0.05, prov: 0.10,    provLabel: 'HST' },
+  { value: 'PE',   label: 'Prince Edward Island',   gst: 0.05, prov: 0.10,    provLabel: 'HST' },
+  { value: 'YT',   label: 'Yukon',                  gst: 0.05, prov: 0,       provLabel: 'PST' },
+  { value: 'NT',   label: 'Northwest Territories',  gst: 0.05, prov: 0,       provLabel: 'PST' },
+  { value: 'NU',   label: 'Nunavut',                gst: 0.05, prov: 0,       provLabel: 'PST' },
+  { value: 'NONE', label: 'No tax / Other',         gst: 0,    prov: 0,       provLabel: 'Tax' },
+]
+const PROVINCE_MAP = Object.fromEntries(PROVINCES.map(p => [p.value, p]))
+const provLabelOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).provLabel
+
+const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', province: 'QC', category: '', payment_method: '', receipt_url: '' }
+
+function round2(n) { return Math.round((parseFloat(n) || 0) * 100) / 100 }
+// Break a tax-INCLUDED total into { subtotal, gst, qst } for a province's rates.
+function splitTax(total, provinceCode) {
+  const p = PROVINCE_MAP[provinceCode] || PROVINCE_MAP.QC
+  const t = parseFloat(total) || 0
+  const sub = t / (1 + p.gst + p.prov)
+  return { subtotal: round2(sub), gst: round2(sub * p.gst), qst: round2(sub * p.prov) }
+}
+// A row's tax total: prefer the GST+QST split; fall back to the legacy tax_amount
+// column so pre-split expenses keep showing their tax.
+function taxOf(e) {
+  const split = (parseFloat(e.gst_amount) || 0) + (parseFloat(e.qst_amount) || 0)
+  return split > 0 ? split : (parseFloat(e.tax_amount) || 0)
+}
 
 function computeFolderPath(eventName, date) {
   const slug = slugify(eventName)
@@ -28,8 +74,11 @@ function ChevronIcon({ open }) {
     </svg>
   )
 }
+function SelectChevron() {
+  return <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+}
 
-const COL = '100px 1fr 1fr 90px 90px 90px 80px'
+const COL = '96px 1fr 1fr 88px 88px 88px 78px'
 
 export default function ExpensesClient() {
   const [expenses, setExpenses]         = useState([])
@@ -37,9 +86,11 @@ export default function ExpensesClient() {
   const [form, setForm]                 = useState(EMPTY_FORM)
   const [folderEvent, setFolderEvent]   = useState('General')
   const folderManualRef                 = useRef(false)
+  const taxManualRef                    = useRef(false)
   const [submitting, setSubmitting]     = useState(false)
   const [formErr, setFormErr]           = useState(null)
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [scanning, setScanning]         = useState(false)
   const [receiptName, setReceiptName]   = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteErr, setDeleteErr] = useState(null)
@@ -52,6 +103,7 @@ export default function ExpensesClient() {
   const [editErr, setEditErr]           = useState(null)
   const [newIds, setNewIds]             = useState(new Set())
   const fileRef = useRef(null)
+  const scanRef = useRef(null)
 
   const load = useCallback(() => {
     fetch('/api/admin/expenses')
@@ -66,6 +118,15 @@ export default function ExpensesClient() {
     if (!folderManualRef.current) setFolderEvent(form.event_name?.trim() || 'General')
   }, [form.event_name])
 
+  // Auto-split GST/QST from the tax-included amount + province, unless the admin
+  // has typed a tax value by hand (taxManualRef). Recomputes as they type.
+  useEffect(() => {
+    if (taxManualRef.current) return
+    if (!form.paid) return
+    const { gst, qst } = splitTax(form.paid, form.province)
+    setForm(p => ({ ...p, gst_amount: gst ? String(gst) : '', qst_amount: qst ? String(qst) : '' }))
+  }, [form.paid, form.province])
+
   // Groups: all events sorted by most recent
   const allGroups = (() => {
     const map = {}
@@ -78,8 +139,8 @@ export default function ExpensesClient() {
       .map(([name, items]) => ({
         name,
         items: [...items].sort((a, b) => b.expense_date.localeCompare(a.expense_date)),
-        total:    items.reduce((s, e) => s + parseFloat(e.amount    || 0), 0),
-        totalTax: items.reduce((s, e) => s + parseFloat(e.tax_amount || 0), 0),
+        total:    items.reduce((s, e) => s + parseFloat(e.amount || 0), 0),
+        totalTax: items.reduce((s, e) => s + taxOf(e), 0),
       }))
       .sort((a, b) => b.items[0].expense_date.localeCompare(a.items[0].expense_date))
   })()
@@ -88,8 +149,8 @@ export default function ExpensesClient() {
   const groups = filterEvent === 'all' ? allGroups : allGroups.filter(g => g.name === filterEvent)
 
   const visibleExpenses = groups.flatMap(g => g.items)
-  const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount    || 0), 0)
-  const grandTotalTax = visibleExpenses.reduce((s, e) => s + parseFloat(e.tax_amount || 0), 0)
+  const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
+  const grandTotalTax = visibleExpenses.reduce((s, e) => s + taxOf(e), 0)
 
   function toggleGroup(name) { setOpenGroups(p => ({ ...p, [name]: !p[name] })) }
 
@@ -98,17 +159,27 @@ export default function ExpensesClient() {
     setEditErr(null)
     setDeleteConfirm(null)
     setEditForm({
-      expense_date: expense.expense_date || '',
-      event_name:   expense.event_name   || '',
-      vendor:       expense.vendor       || '',
-      amount:       expense.amount != null ? String(expense.amount) : '',
-      tax_amount:   expense.tax_amount != null ? String(expense.tax_amount) : '',
-      category:     expense.category     || '',
-      receipt_url:  expense.receipt_url  || '',
+      expense_date:   expense.expense_date || '',
+      event_name:     expense.event_name   || '',
+      vendor:         expense.vendor       || '',
+      amount:         expense.amount != null ? String(expense.amount) : '',
+      gst_amount:     expense.gst_amount != null && expense.gst_amount !== 0 ? String(expense.gst_amount) : '',
+      qst_amount:     expense.qst_amount != null && expense.qst_amount !== 0 ? String(expense.qst_amount) : '',
+      province:       expense.province     || 'QC',
+      category:       expense.category     || '',
+      payment_method: expense.payment_method || '',
+      receipt_url:    expense.receipt_url  || '',
     })
   }
 
   function cancelEdit() { setEditingId(null); setEditErr(null) }
+
+  // Edit uses the stored pre-tax subtotal directly, so tax = subtotal × rate.
+  function applyEditTax() {
+    const p = PROVINCE_MAP[editForm.province] || PROVINCE_MAP.QC
+    const sub = parseFloat(editForm.amount) || 0
+    setEditForm(f => ({ ...f, gst_amount: String(round2(sub * p.gst)), qst_amount: String(round2(sub * p.prov)) }))
+  }
 
   async function saveEdit(id) {
     setEditSaving(true); setEditErr(null)
@@ -116,11 +187,16 @@ export default function ExpensesClient() {
       const res = await fetch(`/api/admin/expenses/${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...editForm,
-          amount:     parseFloat(editForm.amount)     || 0,
-          tax_amount: parseFloat(editForm.tax_amount) || 0,
-          event_name: editForm.event_name?.trim() || null,
-          vendor:     editForm.vendor?.trim()     || null,
+          expense_date:   editForm.expense_date,
+          event_name:     editForm.event_name?.trim() || null,
+          vendor:         editForm.vendor?.trim()     || null,
+          category:       editForm.category || null,
+          province:       editForm.province || 'QC',
+          payment_method: editForm.payment_method || null,
+          receipt_url:    editForm.receipt_url || null,
+          amount:         parseFloat(editForm.amount)     || 0,
+          gst_amount:     parseFloat(editForm.gst_amount) || 0,
+          qst_amount:     parseFloat(editForm.qst_amount) || 0,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -149,15 +225,71 @@ export default function ExpensesClient() {
     finally { setUploadingFile(false) }
   }
 
+  // Scan a receipt photo: Claude vision extracts the fields, we prefill the empty
+  // ones (never clobber what the admin already typed), then attach the same file.
+  async function handleScan(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setScanning(true); setFormErr(null)
+    try {
+      const sfd = new FormData()
+      sfd.append('file', file)
+      const res = await fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setFormErr(data.error || 'Scan failed.'); return }
+
+      const total = data.total != null ? data.total
+        : (data.amount != null ? round2((data.amount || 0) + (data.gst || 0) + (data.qst || 0)) : null)
+      if (data.gst != null || data.qst != null) taxManualRef.current = true
+      setForm(p => ({
+        ...p,
+        vendor:       p.vendor       || data.vendor   || '',
+        expense_date: p.expense_date || data.date     || '',
+        category:     p.category     || data.category || '',
+        paid:         p.paid         || (total   != null ? String(total)   : ''),
+        gst_amount:   p.gst_amount   || (data.gst != null ? String(data.gst) : ''),
+        qst_amount:   p.qst_amount   || (data.qst != null ? String(data.qst) : ''),
+      }))
+
+      // Also store the scanned file so it's attached to the expense in one step
+      try {
+        const path = slugify(folderEvent) + ((data.date || form.expense_date) ? `/${data.date || form.expense_date}` : '')
+        const ufd = new FormData()
+        ufd.append('file', file)
+        ufd.append('folder_path', path)
+        const ures = await fetch('/api/admin/expenses/upload-receipt', { method: 'POST', body: ufd })
+        const udata = await ures.json().catch(() => ({}))
+        if (ures.ok && udata.url) { setForm(p => ({ ...p, receipt_url: udata.url })); setReceiptName(file.name) }
+      } catch {}
+    } catch { setFormErr('Scan failed.') }
+    finally { setScanning(false); if (scanRef.current) scanRef.current.value = '' }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.expense_date) { setFormErr('Date is required.'); return }
-    if (!form.amount || parseFloat(form.amount) < 0) { setFormErr('Valid amount is required.'); return }
+    const paidNum = parseFloat(form.paid) || 0
+    if (!form.paid || paidNum <= 0) { setFormErr('Amount paid is required.'); return }
+    const gstNum = round2(form.gst_amount)
+    const qstNum = round2(form.qst_amount)
+    const subtotal = round2(paidNum - gstNum - qstNum)
+    if (subtotal < 0) { setFormErr('Taxes are more than the amount paid.'); return }
     setSubmitting(true); setFormErr(null)
     try {
       const res = await fetch('/api/admin/expenses', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          expense_date:   form.expense_date,
+          event_name:     form.event_name,
+          vendor:         form.vendor,
+          category:       form.category,
+          receipt_url:    form.receipt_url,
+          province:       form.province,
+          payment_method: form.payment_method,
+          amount:         subtotal,
+          gst_amount:     gstNum,
+          qst_amount:     qstNum,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Failed to save.'); return }
@@ -170,6 +302,7 @@ export default function ExpensesClient() {
       setForm(EMPTY_FORM)
       setFolderEvent('General')
       folderManualRef.current = false
+      taxManualRef.current = false
       setReceiptName('')
       if (fileRef.current) fileRef.current.value = ''
     } catch { setFormErr('Network error.') }
@@ -198,13 +331,17 @@ export default function ExpensesClient() {
   function exportCSV() {
     const source = filterEvent === 'all' ? expenses : expenses.filter(e => (e.event_name || 'General') === filterEvent)
     const rows = [
-      ['Date', 'Event', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', 'Receipt'],
-      ...source.map(e => [
-        e.expense_date, e.event_name || 'General', e.vendor || '', e.category || '',
-        parseFloat(e.amount || 0).toFixed(2), parseFloat(e.tax_amount || 0).toFixed(2),
-        (parseFloat(e.amount || 0) + parseFloat(e.tax_amount || 0)).toFixed(2),
-        e.receipt_url || '',
-      ]),
+      ['Date', 'Event', 'Vendor', 'Category', 'Payment', 'Province', 'Amount', 'GST', 'QST', 'Tax', 'Total', 'Receipt'],
+      ...source.map(e => {
+        const gst = parseFloat(e.gst_amount || 0), qst = parseFloat(e.qst_amount || 0)
+        return [
+          e.expense_date, e.event_name || 'General', e.vendor || '', e.category || '',
+          PAYMENT_LABELS[e.payment_method] || '', e.province || 'QC',
+          parseFloat(e.amount || 0).toFixed(2), gst.toFixed(2), qst.toFixed(2), taxOf(e).toFixed(2),
+          (parseFloat(e.amount || 0) + taxOf(e)).toFixed(2),
+          e.receipt_url || '',
+        ]
+      }),
     ]
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
     const a = document.createElement('a')
@@ -215,8 +352,14 @@ export default function ExpensesClient() {
 
   const today = new Date().toISOString().slice(0, 10)
 
+  // Live breakdown for the add form
+  const paidNum = parseFloat(form.paid) || 0
+  const gstNum = parseFloat(form.gst_amount) || 0
+  const qstNum = parseFloat(form.qst_amount) || 0
+  const subtotalNum = round2(paidNum - gstNum - qstNum)
+
   return (
-    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', maxWidth: '900px' }}>
+    <div className="exp-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)', maxWidth: '900px' }}>
       <style>{`
         @keyframes expFadeIn {
           from { opacity: 0; transform: translateY(-6px); }
@@ -229,6 +372,14 @@ export default function ExpensesClient() {
         .exp-new { animation: expFadeIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
         .exp-edit-panel { animation: expPanelIn 0.2s ease both; }
         .exp-filter-chip { transition: background 0.15s, color 0.15s, border-color 0.15s; }
+        /* iOS: inputs must be >=16px or Safari zooms on focus; kill tap highlight */
+        .exp-wrap input, .exp-wrap select, .exp-wrap textarea { font-size: 16px !important; }
+        .exp-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .exp-tap { min-height: 44px; }
+        @media (max-width: 640px) {
+          .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
+          .exp-actions-row { flex-wrap: wrap; }
+        }
       `}</style>
 
       {/* Header */}
@@ -238,15 +389,27 @@ export default function ExpensesClient() {
       </div>
 
       {/* Add form */}
-      <form onSubmit={handleSubmit} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem', marginBottom: '2rem' }}>
+      <form className="exp-form" onSubmit={handleSubmit} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem', marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Add Expense</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.6rem', marginBottom: '0.6rem' }}>
+
+        {/* Scan-to-fill banner */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.7rem 0.85rem', marginBottom: '1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', borderRadius: '8px' }}>
+          <input ref={scanRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style={{ display: 'none' }} onChange={handleScan} />
+          <button type="button" className="exp-tap" onClick={() => scanRef.current?.click()} disabled={scanning}
+            style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', border: 'none', borderRadius: '6px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            {scanning ? 'Scanning…' : '⚡ Scan receipt'}
+          </button>
+          <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount &amp; tax.</span>
+        </div>
+
+        {/* Row 1 — what & where */}
+        <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.6rem', marginBottom: '0.6rem' }}>
           <div>
             <L>Date</L>
             <input type="date" style={inp} max={today} value={form.expense_date}
               onChange={e => setForm(p => ({ ...p, expense_date: e.target.value }))} required />
           </div>
-          <div style={{ minWidth: '180px' }}>
+          <div style={{ minWidth: '160px' }}>
             <L>Event / Label</L>
             <input style={inp} value={form.event_name} placeholder="e.g. Into the Laurentians"
               onChange={e => setForm(p => ({ ...p, event_name: e.target.value }))} maxLength={100} />
@@ -263,20 +426,59 @@ export default function ExpensesClient() {
                 <option value="">Select…</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+              <SelectChevron />
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2 — money */}
+        <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.6rem', marginBottom: '0.35rem' }}>
+          <div>
+            <L>Payment</L>
+            <div style={{ position: 'relative' }}>
+              <select style={sel} value={form.payment_method} onChange={e => setForm(p => ({ ...p, payment_method: e.target.value }))}>
+                <option value="">How paid…</option>
+                {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </select>
+              <SelectChevron />
             </div>
           </div>
           <div>
-            <L>Amount ($)</L>
-            <input style={inp} type="number" min="0" step="0.01" value={form.amount} placeholder="0.00"
-              onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} required />
+            <L>Province</L>
+            <div style={{ position: 'relative' }}>
+              <select style={sel} value={form.province}
+                onChange={e => { taxManualRef.current = false; setForm(p => ({ ...p, province: e.target.value })) }}>
+                {PROVINCES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+              <SelectChevron />
+            </div>
           </div>
           <div>
-            <L>Tax ($)</L>
-            <input style={inp} type="number" min="0" step="0.01" value={form.tax_amount} placeholder="0.00"
-              onChange={e => setForm(p => ({ ...p, tax_amount: e.target.value }))} />
+            <L>Amount paid ($)</L>
+            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.paid} placeholder="tax incl."
+              onChange={e => { taxManualRef.current = false; setForm(p => ({ ...p, paid: e.target.value })) }} required />
+          </div>
+          <div>
+            <L>GST ($)</L>
+            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.gst_amount} placeholder="0.00"
+              onChange={e => { taxManualRef.current = true; setForm(p => ({ ...p, gst_amount: e.target.value })) }} />
+          </div>
+          <div>
+            <L>{provLabelOf(form.province)} ($)</L>
+            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.qst_amount} placeholder="0.00"
+              onChange={e => { taxManualRef.current = true; setForm(p => ({ ...p, qst_amount: e.target.value })) }} />
           </div>
         </div>
+
+        {/* Live breakdown */}
+        {paidNum > 0 && (
+          <div style={{ fontSize: '11px', color: '#999', marginBottom: '0.85rem', fontVariantNumeric: 'tabular-nums' }}>
+            Subtotal <span style={{ color: '#555' }}>{fmt(subtotalNum)}</span>
+            &nbsp;·&nbsp; GST <span style={{ color: '#555' }}>{fmt(gstNum)}</span>
+            &nbsp;·&nbsp; {provLabelOf(form.province)} <span style={{ color: '#555' }}>{fmt(qstNum)}</span>
+            &nbsp;·&nbsp; Total <span style={{ color: '#1a1a1a' }}>{fmt(paidNum)}</span>
+          </div>
+        )}
 
         {/* Folder selector */}
         {(() => {
@@ -291,11 +493,11 @@ export default function ExpensesClient() {
                 {options.map(name => {
                   const active = folderEvent === name
                   return (
-                    <button key={name} type="button"
+                    <button key={name} type="button" className="exp-tap"
                       onClick={() => { folderManualRef.current = true; setFolderEvent(name) }}
                       style={{
-                        fontSize: '11px', padding: '5px 12px', border: '0.5px solid', cursor: 'pointer',
-                        fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.15s',
+                        fontSize: '11px', padding: '6px 12px', border: '0.5px solid', cursor: 'pointer',
+                        fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.15s', borderRadius: '6px',
                         background: active ? '#0F1E14' : 'none',
                         color:      active ? '#F5F1EC' : '#666',
                         borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.18)',
@@ -309,34 +511,34 @@ export default function ExpensesClient() {
                   <select
                     value={options.includes(folderEvent) ? '' : folderEvent}
                     onChange={e => { if (e.target.value) { folderManualRef.current = true; setFolderEvent(e.target.value) } }}
-                    style={{ ...sel, fontSize: '11px', padding: '5px 28px 5px 10px', color: options.includes(folderEvent) ? '#bbb' : '#333' }}>
+                    style={{ ...sel, fontSize: '11px', padding: '6px 28px 6px 10px', color: options.includes(folderEvent) ? '#bbb' : '#333' }}>
                     <option value="">Other…</option>
                     {existingNames.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
-                  <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                  <SelectChevron />
                 </div>
               </div>
-              <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'monospace' }}>{previewPath}</div>
+              <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'monospace', wordBreak: 'break-all' }}>{previewPath}</div>
             </div>
           )
         })()}
 
-        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="exp-actions-row" style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleFileChange} />
-          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploadingFile}
-            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.2)', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
-            {uploadingFile ? 'Uploading…' : '↑ Receipt'}
+          <button type="button" className="exp-tap" onClick={() => fileRef.current?.click()} disabled={uploadingFile}
+            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 12px', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '6px', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
+            {uploadingFile ? 'Uploading…' : '↑ Attach receipt'}
           </button>
           {receiptName && (
             <span style={{ fontSize: '11px', color: '#3B6B2F', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               ✓ {receiptName}
               <button type="button" onClick={() => { setForm(p => ({ ...p, receipt_url: '' })); setReceiptName(''); if (fileRef.current) fileRef.current.value = '' }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '14px', lineHeight: 1, padding: '0 2px' }}>×</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '0 2px' }}>×</button>
             </span>
           )}
           <div style={{ marginLeft: 'auto' }}>
-            <button type="submit" disabled={submitting || uploadingFile}
-              style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 20px', background: submitting ? 'rgba(15,30,20,0.6)' : '#0F1E14', color: '#F5F1EC', border: 'none', cursor: submitting ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            <button type="submit" className="exp-tap" disabled={submitting || uploadingFile || scanning}
+              style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '10px 20px', background: submitting ? 'rgba(15,30,20,0.6)' : '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: submitting ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {submitting ? 'Saving…' : 'Add Expense'}
             </button>
           </div>
@@ -353,11 +555,11 @@ export default function ExpensesClient() {
               {['all', ...eventNames].map(name => {
                 const active = filterEvent === name
                 return (
-                  <button key={name} className="exp-filter-chip"
+                  <button key={name} className="exp-filter-chip exp-tap"
                     onClick={() => setFilterEvent(name)}
                     style={{
                       fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase',
-                      padding: '4px 11px', border: '0.5px solid',
+                      padding: '6px 11px', border: '0.5px solid', borderRadius: '6px',
                       cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
                       background: active ? '#0F1E14' : 'none',
                       color:      active ? '#F5F1EC' : '#888',
@@ -371,7 +573,7 @@ export default function ExpensesClient() {
           )}
 
           {/* Summary row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>
               {visibleExpenses.length} expense{visibleExpenses.length !== 1 ? 's' : ''}
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
@@ -379,8 +581,8 @@ export default function ExpensesClient() {
               <span style={{ color: '#1a1a1a' }}>{fmt(grandTotal)}</span>
               {grandTotalTax > 0 && <> + <span style={{ color: '#888' }}>{fmt(grandTotalTax)} tax</span></>}
             </div>
-            <button onClick={exportCSV}
-              style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 12px', border: '0.5px solid rgba(0,0,0,0.18)', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>
+            <button onClick={exportCSV} className="exp-tap"
+              style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>
               Export CSV
             </button>
           </div>
@@ -401,30 +603,31 @@ export default function ExpensesClient() {
             return (
               <div key={group.name} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                 {/* Group header */}
-                <button onClick={() => toggleGroup(group.name)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.1rem', background: '#fafaf9', border: 'none', borderBottom: isOpen ? '0.5px solid rgba(0,0,0,0.07)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
+                <button onClick={() => toggleGroup(group.name)} className="exp-tap"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.1rem', background: '#fafaf9', border: 'none', borderRadius: isOpen ? '12px 12px 0 0' : '12px', borderBottom: isOpen ? '0.5px solid rgba(0,0,0,0.07)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
                   <ChevronIcon open={isOpen} />
-                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', flex: 1 }}>{group.name}</span>
-                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', marginRight: '0.5rem' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', flex: 1, minWidth: 0 }}>{group.name}</span>
+                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', marginRight: '0.5rem', whiteSpace: 'nowrap' }}>
                     {group.items.length} item{group.items.length !== 1 ? 's' : ''}
                   </span>
-                  <span style={{ fontSize: '13px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</span>
+                  <span style={{ fontSize: '13px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt(group.total)}</span>
                   {group.totalTax > 0 && (
-                    <span style={{ fontSize: '11px', color: '#bbb', marginLeft: '0.25rem' }}>+{fmt(group.totalTax)} tax</span>
+                    <span style={{ fontSize: '11px', color: '#bbb', marginLeft: '0.25rem', whiteSpace: 'nowrap' }}>+{fmt(group.totalTax)} tax</span>
                   )}
                 </button>
 
                 {isOpen && (
-                  <div style={{ overflowX: 'auto' }}>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                     {/* Column headers */}
-                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '580px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '560px' }}>
                       {['Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
                         <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                       ))}
                     </div>
 
                     {group.items.map((expense, i) => {
-                      const total           = parseFloat(expense.amount || 0) + parseFloat(expense.tax_amount || 0)
+                      const rowTax          = taxOf(expense)
+                      const total           = parseFloat(expense.amount || 0) + rowTax
                       const isPendingDelete = deleteConfirm === expense.id
                       const isDeletingThis  = deleting === expense.id
                       const isEditing       = editingId === expense.id
@@ -435,19 +638,24 @@ export default function ExpensesClient() {
                           style={{ borderBottom: i < group.items.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
 
                           {/* Data row */}
-                          <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '580px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '560px' }}>
                             <div style={{ fontSize: '12px', color: '#555' }}>{fmtDate(expense.expense_date)}</div>
-                            <div style={{ fontSize: '12px', color: '#333' }}>
-                              {expense.vendor || <span style={{ color: '#ddd' }}>—</span>}
-                              {expense.receipt_url && (
-                                <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
-                                  style={{ marginLeft: '0.4rem', fontSize: '10px', color: '#c5a882', textDecoration: 'none' }}>↗</a>
-                              )}
+                            <div style={{ fontSize: '12px', color: '#333', minWidth: 0 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                {expense.vendor || <span style={{ color: '#ddd' }}>—</span>}
+                                {expense.receipt_url && (
+                                  <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
+                                    style={{ fontSize: '10px', color: '#c5a882', textDecoration: 'none' }}>↗</a>
+                                )}
+                                {expense.payment_method && (
+                                  <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '0.04em' }}>· {PAYMENT_LABELS[expense.payment_method]}</span>
+                                )}
+                              </span>
                             </div>
                             <div style={{ fontSize: '11px', color: '#888' }}>{expense.category || <span style={{ color: '#ddd' }}>—</span>}</div>
                             <div style={{ fontSize: '12px', color: '#333', fontVariantNumeric: 'tabular-nums' }}>{fmt(expense.amount)}</div>
                             <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>
-                              {parseFloat(expense.tax_amount) > 0 ? fmt(expense.tax_amount) : <span style={{ color: '#ddd' }}>—</span>}
+                              {rowTax > 0 ? fmt(rowTax) : <span style={{ color: '#ddd' }}>—</span>}
                             </div>
                             <div style={{ fontSize: '12px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(total)}</div>
 
@@ -456,20 +664,20 @@ export default function ExpensesClient() {
                               {!isPendingDelete && !isEditing && (
                                 <>
                                   <button onClick={() => startEdit(expense)}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '11px', padding: '2px 5px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.15s', letterSpacing: '0.04em' }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '11px', padding: '4px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.15s', letterSpacing: '0.04em' }}
                                     onMouseEnter={e => e.currentTarget.style.color = '#555'}
                                     onMouseLeave={e => e.currentTarget.style.color = '#ccc'}>
                                     Edit
                                   </button>
                                   <button onClick={() => { setDeleteConfirm(expense.id); setEditingId(null) }}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ddd', fontSize: '14px', padding: '2px 4px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.15s' }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ddd', fontSize: '16px', padding: '2px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.15s' }}
                                     onMouseEnter={e => e.currentTarget.style.color = '#93333E'}
                                     onMouseLeave={e => e.currentTarget.style.color = '#ddd'}>×</button>
                                 </>
                               )}
                               {isEditing && (
                                 <button onClick={cancelEdit}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '11px', padding: '2px 5px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '11px', padding: '4px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
                                   Cancel
                                 </button>
                               )}
@@ -479,13 +687,13 @@ export default function ExpensesClient() {
                           {/* Edit panel */}
                           {isEditing && (
                             <div className="exp-edit-panel" style={{ padding: '1rem 1.1rem 1.1rem', borderTop: '0.5px solid rgba(197,168,130,0.2)', background: 'rgba(197,168,130,0.04)', borderLeft: '2px solid #c5a882' }}>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                              <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                 <div>
                                   <L>Date</L>
                                   <input type="date" style={inp} value={editForm.expense_date} max={today}
                                     onChange={e => setEditForm(p => ({ ...p, expense_date: e.target.value }))} />
                                 </div>
-                                <div style={{ minWidth: '160px' }}>
+                                <div style={{ minWidth: '150px' }}>
                                   <L>Event / Label</L>
                                   <input style={inp} value={editForm.event_name} placeholder="General"
                                     onChange={e => setEditForm(p => ({ ...p, event_name: e.target.value }))} maxLength={100} />
@@ -502,29 +710,57 @@ export default function ExpensesClient() {
                                       <option value="">—</option>
                                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
-                                    <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                                    <SelectChevron />
                                   </div>
                                 </div>
                                 <div>
-                                  <L>Amount ($)</L>
-                                  <input style={inp} type="number" min="0" step="0.01" value={editForm.amount} placeholder="0.00"
+                                  <L>Payment</L>
+                                  <div style={{ position: 'relative' }}>
+                                    <select style={sel} value={editForm.payment_method} onChange={e => setEditForm(p => ({ ...p, payment_method: e.target.value }))}>
+                                      <option value="">—</option>
+                                      {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                                    </select>
+                                    <SelectChevron />
+                                  </div>
+                                </div>
+                                <div>
+                                  <L>Province</L>
+                                  <div style={{ position: 'relative' }}>
+                                    <select style={sel} value={editForm.province} onChange={e => setEditForm(p => ({ ...p, province: e.target.value }))}>
+                                      {PROVINCES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                    </select>
+                                    <SelectChevron />
+                                  </div>
+                                </div>
+                                <div>
+                                  <L>Subtotal ($)</L>
+                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.amount} placeholder="0.00"
                                     onChange={e => setEditForm(p => ({ ...p, amount: e.target.value }))} />
                                 </div>
                                 <div>
-                                  <L>Tax ($)</L>
-                                  <input style={inp} type="number" min="0" step="0.01" value={editForm.tax_amount} placeholder="0.00"
-                                    onChange={e => setEditForm(p => ({ ...p, tax_amount: e.target.value }))} />
+                                  <L>GST ($)</L>
+                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.gst_amount} placeholder="0.00"
+                                    onChange={e => setEditForm(p => ({ ...p, gst_amount: e.target.value }))} />
+                                </div>
+                                <div>
+                                  <L>{provLabelOf(editForm.province)} ($)</L>
+                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.qst_amount} placeholder="0.00"
+                                    onChange={e => setEditForm(p => ({ ...p, qst_amount: e.target.value }))} />
                                 </div>
                               </div>
-                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                <button onClick={() => saveEdit(expense.id)} disabled={editSaving}
-                                  style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 16px', background: '#0F1E14', color: '#F5F1EC', border: 'none', cursor: editSaving ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: editSaving ? 0.6 : 1 }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <button onClick={() => saveEdit(expense.id)} disabled={editSaving} className="exp-tap"
+                                  style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: editSaving ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: editSaving ? 0.6 : 1 }}>
                                   {editSaving ? 'Saving…' : 'Save'}
                                 </button>
                                 <GhostBtn small onClick={cancelEdit}>Cancel</GhostBtn>
+                                <button type="button" onClick={applyEditTax}
+                                  style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  Auto tax ({editForm.province})
+                                </button>
                                 {editForm.receipt_url && (
                                   <a href={editForm.receipt_url} target="_blank" rel="noopener noreferrer"
-                                    style={{ fontSize: '11px', color: '#c5a882', marginLeft: '0.5rem', textDecoration: 'none' }}>
+                                    style={{ fontSize: '11px', color: '#c5a882', marginLeft: '0.25rem', textDecoration: 'none' }}>
                                     View receipt ↗
                                   </a>
                                 )}
@@ -535,7 +771,7 @@ export default function ExpensesClient() {
 
                           {/* Delete confirm */}
                           {isPendingDelete && (
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.5rem 1.1rem', background: 'rgba(147,51,62,0.03)', borderTop: '0.5px solid rgba(147,51,62,0.08)' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.6rem 1.1rem', background: 'rgba(147,51,62,0.03)', borderTop: '0.5px solid rgba(147,51,62,0.08)', flexWrap: 'wrap' }}>
                               <span style={{ fontSize: '11px', color: '#93333E' }}>Delete this expense?</span>
                               <DangerBtn small onClick={() => handleDelete(expense)} disabled={isDeletingThis}>{isDeletingThis ? '…' : 'Delete'}</DangerBtn>
                               <GhostBtn small onClick={() => { setDeleteConfirm(null); setDeleteErr(null) }}>Cancel</GhostBtn>
@@ -547,7 +783,7 @@ export default function ExpensesClient() {
                     })}
 
                     {/* Group total row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '580px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '560px' }}>
                       <div style={{ gridColumn: '1 / 4', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
                       <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
                       <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
