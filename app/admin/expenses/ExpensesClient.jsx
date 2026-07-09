@@ -440,6 +440,9 @@ export default function ExpensesClient() {
         .exp-wrap input, .exp-wrap select, .exp-wrap textarea { font-size: 16px !important; }
         .exp-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .exp-tap { min-height: 44px; }
+        /* Grid cells must be allowed to shrink or they force page-level scroll on iOS */
+        .exp-form-grid > div { min-width: 0; }
+        .exp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         @media (max-width: 640px) {
           .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
           .exp-actions-row { flex-wrap: wrap; }
@@ -473,7 +476,7 @@ export default function ExpensesClient() {
             <input type="date" style={inp} max={today} value={form.expense_date}
               onChange={e => setForm(p => ({ ...p, expense_date: e.target.value }))} required />
           </div>
-          <div style={{ minWidth: '160px' }}>
+          <div>
             <L>Event / Label</L>
             <input style={inp} value={form.event_name} placeholder="e.g. Into the Laurentians"
               onChange={e => setForm(p => ({ ...p, event_name: e.target.value }))} maxLength={100} />
@@ -800,12 +803,14 @@ export default function ExpensesClient() {
                 </button>
 
                 {isOpen && (
-                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    {/* Column headers */}
-                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '560px' }}>
-                      {['Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
-                        <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
-                      ))}
+                  <div>
+                    {/* Column headers — scroll on their own so edit/delete stay full-width */}
+                    <div className="exp-scroll">
+                      <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '560px' }}>
+                        {['Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
+                          <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
+                        ))}
+                      </div>
                     </div>
 
                     {group.items.map((expense, i) => {
@@ -820,7 +825,8 @@ export default function ExpensesClient() {
                         <div key={expense.id} className={isNew ? 'exp-new' : ''}
                           style={{ borderBottom: i < group.items.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
 
-                          {/* Data row */}
+                          {/* Data row — scrolls horizontally on its own */}
+                          <div className="exp-scroll">
                           <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '560px' }}>
                             <div style={{ fontSize: '12px', color: '#555' }}>{fmtDate(expense.expense_date)}</div>
                             <div style={{ fontSize: '12px', color: '#333', minWidth: 0 }}>
@@ -866,8 +872,9 @@ export default function ExpensesClient() {
                               )}
                             </div>
                           </div>
+                          </div>
 
-                          {/* Edit panel */}
+                          {/* Edit panel — full width, not inside the row scroller */}
                           {isEditing && (
                             <div className="exp-edit-panel" style={{ padding: '1rem 1.1rem 1.1rem', borderTop: '0.5px solid rgba(197,168,130,0.2)', background: 'rgba(197,168,130,0.04)', borderLeft: '2px solid #c5a882' }}>
                               <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -876,7 +883,7 @@ export default function ExpensesClient() {
                                   <input type="date" style={inp} value={editForm.expense_date} max={today}
                                     onChange={e => setEditForm(p => ({ ...p, expense_date: e.target.value }))} />
                                 </div>
-                                <div style={{ minWidth: '150px' }}>
+                                <div>
                                   <L>Event / Label</L>
                                   <input style={inp} value={editForm.event_name} placeholder="General"
                                     onChange={e => setEditForm(p => ({ ...p, event_name: e.target.value }))} maxLength={100} />
@@ -966,12 +973,14 @@ export default function ExpensesClient() {
                     })}
 
                     {/* Group total row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '560px' }}>
-                      <div style={{ gridColumn: '1 / 4', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
-                      <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
-                      <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
-                      <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total + group.totalTax)}</div>
-                      <div />
+                    <div className="exp-scroll">
+                      <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '560px' }}>
+                        <div style={{ gridColumn: '1 / 4', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
+                        <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
+                        <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
+                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total + group.totalTax)}</div>
+                        <div />
+                      </div>
                     </div>
                   </div>
                 )}
