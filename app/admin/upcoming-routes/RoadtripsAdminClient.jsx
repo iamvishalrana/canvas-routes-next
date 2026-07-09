@@ -1,11 +1,29 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 
-const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', description: '' }
+const TRIP_TYPES = [
+  { value: 'day',       label: 'Day trip'  },
+  { value: 'overnight', label: 'Overnight' },
+  { value: 'multi_day', label: 'Multi-day' },
+]
+const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
+
+const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', description: '' }
 
 function Field({ label, children }) {
   return <div style={{ minWidth: 0 }}><L>{label}</L>{children}</div>
+}
+
+function TripSelect({ value, onChange }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <select style={sel} value={value || 'day'} onChange={onChange}>
+        {TRIP_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+      </select>
+      <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+    </div>
+  )
 }
 
 export default function RoadtripsAdminClient() {
@@ -57,7 +75,8 @@ export default function RoadtripsAdminClient() {
     setEditForm({
       name: r.name, destination: r.destination, month_label: r.month_label,
       duration_label: r.duration_label || '', distance_label: r.distance_label || '',
-      target_count: String(r.target_count), sort_order: String(r.sort_order), description: r.description || '',
+      target_count: String(r.target_count), sort_order: String(r.sort_order),
+      trip_type: r.trip_type || 'day', description: r.description || '',
     })
   }
 
@@ -74,6 +93,25 @@ export default function RoadtripsAdminClient() {
       setEditId(null)
     } catch { setEditErr('Network error.') }
     finally { setSavingEdit(false) }
+  }
+
+  // Move a route up/down and persist the new order (normalised to 1..n).
+  async function move(id, dir) {
+    const ordered = [...routes].sort((a, b) => a.sort_order - b.sort_order)
+    const idx = ordered.findIndex(r => r.id === id)
+    const t = dir === 'up' ? idx - 1 : idx + 1
+    if (idx < 0 || t < 0 || t >= ordered.length) return
+    const arr = [...ordered]
+    ;[arr[idx], arr[t]] = [arr[t], arr[idx]]
+    const withOrder = arr.map((r, i) => ({ ...r, sort_order: i + 1 }))
+    const changed = withOrder.filter(r => (ordered.find(o => o.id === r.id)?.sort_order) !== r.sort_order)
+    setRoutes(withOrder) // optimistic
+    try {
+      await Promise.all(changed.map(r => fetch(`/api/admin/upcoming-routes/${r.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sort_order: r.sort_order }),
+      })))
+    } catch { load() } // reload on failure to resync
   }
 
   async function toggleActive(r) {
@@ -143,9 +181,10 @@ export default function RoadtripsAdminClient() {
           <Field label="Duration"><input style={inp} value={form.duration_label} onChange={e => setForm(p => ({ ...p, duration_label: e.target.value }))} placeholder="1 day" maxLength={40} /></Field>
           <Field label="Distance"><input style={inp} value={form.distance_label} onChange={e => setForm(p => ({ ...p, distance_label: e.target.value }))} placeholder="780 km (roundtrip)" maxLength={60} /></Field>
         </div>
-        <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+        <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
           <Field label="Target (threshold)"><input style={inp} type="number" inputMode="numeric" min="1" value={form.target_count} onChange={e => setForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
           <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} placeholder={String(routes.length + 1)} /></Field>
+          <Field label="Trip type"><TripSelect value={form.trip_type} onChange={e => setForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
         </div>
         <div style={{ marginBottom: '0.75rem' }}>
           <L>Description</L>
@@ -164,16 +203,23 @@ export default function RoadtripsAdminClient() {
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No routes yet.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          {routes.map(r => {
+          {routes.map((r, i) => {
             const pct = Math.min(100, Math.round((r.interested_count / r.target_count) * 100))
             const isEditing = editId === r.id
             const isOpen = !!expanded[r.id]
+            const arrowBtn = (dir, disabled) => (
+              <button onClick={() => move(r.id, dir)} disabled={disabled} aria-label={`Move ${dir}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', background: 'none', border: 'none', cursor: disabled ? 'default' : 'pointer', color: disabled ? '#ddd' : '#888', fontSize: '14px', lineHeight: 1 }}>
+                {dir === 'up' ? '↑' : '↓'}
+              </button>
+            )
             return (
               <div key={r.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', opacity: r.is_active ? 1 : 0.6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '19px', color: '#1a1a1a' }}>{r.name}</span>
+                      {TRIP_TAG[r.trip_type] && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8a6535', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 7px', borderRadius: '99px' }}>{TRIP_TAG[r.trip_type]}</span>}
                       {r.launched && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Launched</span>}
                       {!r.is_active && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '99px' }}>Hidden</span>}
                     </div>
@@ -192,9 +238,14 @@ export default function RoadtripsAdminClient() {
 
                 {/* actions */}
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <GhostBtn small onClick={() => setExpanded(p => ({ ...p, [r.id]: !p[r.id] }))}>{isOpen ? 'Hide' : `Interested (${r.interested_count})`}</GhostBtn>
+                  <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', overflow: 'hidden' }} title="Reorder">
+                    {arrowBtn('up', i === 0)}
+                    <div style={{ width: '0.5px', background: 'rgba(0,0,0,0.1)' }} />
+                    {arrowBtn('down', i === routes.length - 1)}
+                  </div>
+                  <GhostBtn small onClick={() => setExpanded(p => ({ ...p, [r.id]: !p[r.id] }))}>{isOpen ? 'Collapse' : `Interested (${r.interested_count})`}</GhostBtn>
                   <GhostBtn small onClick={() => (isEditing ? setEditId(null) : startEdit(r))}>{isEditing ? 'Close' : 'Edit'}</GhostBtn>
-                  <GhostBtn small onClick={() => toggleActive(r)} disabled={busyId === r.id}>{r.is_active ? 'Hide' : 'Show'}</GhostBtn>
+                  <GhostBtn small onClick={() => toggleActive(r)} disabled={busyId === r.id}>{r.is_active ? 'Hide from site' : 'Show on site'}</GhostBtn>
                   {!r.launched && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
                   <div style={{ marginLeft: 'auto' }}>
                     {deleteConfirm === r.id ? (
@@ -233,9 +284,10 @@ export default function RoadtripsAdminClient() {
                       <Field label="Duration"><input style={inp} value={editForm.duration_label} onChange={e => setEditForm(p => ({ ...p, duration_label: e.target.value }))} /></Field>
                       <Field label="Distance"><input style={inp} value={editForm.distance_label} onChange={e => setEditForm(p => ({ ...p, distance_label: e.target.value }))} /></Field>
                     </div>
-                    <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+                    <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
                       <Field label="Target"><input style={inp} type="number" inputMode="numeric" min="1" value={editForm.target_count} onChange={e => setEditForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
                       <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={editForm.sort_order} onChange={e => setEditForm(p => ({ ...p, sort_order: e.target.value }))} /></Field>
+                      <Field label="Trip type"><TripSelect value={editForm.trip_type} onChange={e => setEditForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Description</L>

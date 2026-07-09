@@ -10,6 +10,7 @@ const ACCENT_BGS = [
   'linear-gradient(135deg, #141e2a 0%, #0a1018 100%)',
 ]
 const INTRO = 'Each route launches once the right crew is assembled. Express your interest — we notify you the moment we hit critical mass.'
+const TRIP_LABELS = { overnight: 'Overnight', multi_day: 'Multi-Day' } // 'day' shows no badge
 
 function PinIcon() {
   return <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -87,7 +88,6 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank')
   }
 
-  const totalInterested = routes.reduce((s, r) => s + (r.interested_count || 0), 0)
   const myInterestCount = routes.filter(r => r.interested).length
   const heroBg = '#0F1E14', heroText = '#F5F1EC', heroMuted = 'rgba(245,241,236,0.55)'
   const PADX = embedded ? '0px' : 'clamp(1.5rem,4vw,3rem)' // portal supplies its own gutter
@@ -154,15 +154,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           <div className="rt-hero-1" style={{ fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, opacity: 0.7, marginBottom: '20px', fontWeight: 400 }}>Canvas Routes · 2026 Season</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(3rem,7vw,6rem)', fontWeight: 300, color: heroText, lineHeight: 1.05, margin: 0 }}>
             <span className="rt-hero-1" style={{ display: 'block' }}>Upcoming</span>
-            <span className="rt-hero-2" style={{ display: 'block', color: ACCENT, fontStyle: 'italic' }}>Journeys</span>
+            <span className="rt-hero-2" style={{ display: 'block', color: ACCENT, fontStyle: 'italic' }}>Routes</span>
           </h1>
           <span className="rt-hero-divider" />
           <p className="rt-hero-sub" style={{ fontSize: '14px', color: heroMuted, maxWidth: '520px', lineHeight: 1.85, fontWeight: 300 }}>{INTRO}</p>
           <div className="rt-hero-meta" style={{ display: 'flex', gap: '40px', marginTop: '36px', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '2.4rem', fontWeight: 300, color: ACCENT, lineHeight: 1 }}>{totalInterested}</div>
-              <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: heroMuted, marginTop: '4px' }}>Total Interested</div>
-            </div>
             <div>
               <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '2.4rem', fontWeight: 300, color: heroText, lineHeight: 1 }}>{routes.length}</div>
               <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: heroMuted, marginTop: '4px' }}>Routes Planned</div>
@@ -251,6 +247,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                       <div style={{ position: 'absolute', top: '14px', left: '14px', background: 'rgba(15,30,20,0.75)', backdropFilter: 'blur(6px)', padding: '5px 12px', border: '0.5px solid rgba(255,255,255,0.08)' }}>
                         <span style={{ fontSize: '9px', color: 'rgba(245,241,236,0.6)', letterSpacing: '0.1em' }}>{r.interested_count} interested</span>
                       </div>
+                      {TRIP_LABELS[r.trip_type] && (
+                        <div style={{ position: 'absolute', bottom: '14px', right: '14px', background: 'rgba(197,168,130,0.92)', padding: '5px 12px' }}>
+                          <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#0F1E14', fontWeight: 600 }}>{TRIP_LABELS[r.trip_type]}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   {/* Body */}

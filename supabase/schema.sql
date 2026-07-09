@@ -147,6 +147,7 @@ CREATE TABLE IF NOT EXISTS public.upcoming_routes (
   distance_label TEXT          NOT NULL DEFAULT '',
   target_count   INT           NOT NULL DEFAULT 12 CHECK (target_count > 0),
   sort_order     INT           NOT NULL DEFAULT 0,
+  trip_type      TEXT          NOT NULL DEFAULT 'day' CHECK (trip_type IN ('day', 'overnight', 'multi_day')),
   is_active      BOOLEAN       NOT NULL DEFAULT true,
   launched       BOOLEAN       NOT NULL DEFAULT false,
   launched_at    TIMESTAMPTZ,

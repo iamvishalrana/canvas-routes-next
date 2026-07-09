@@ -37,6 +37,7 @@ export async function POST(request) {
   const slug = slugify(body.slug) || slugify(name)
   if (!slug) return Response.json({ error: 'Could not derive a slug.' }, { status: 400 })
   const target = parseInt(body.target_count, 10)
+  const tripType = ['day', 'overnight', 'multi_day'].includes(body.trip_type) ? body.trip_type : 'day'
 
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('upcoming_routes').insert({
@@ -49,6 +50,7 @@ export async function POST(request) {
     distance_label: (body.distance_label || '').trim(),
     target_count: Number.isFinite(target) && target > 0 ? target : 12,
     sort_order: parseInt(body.sort_order, 10) || 0,
+    trip_type: tripType,
     is_active: body.is_active !== false,
   }).select('*').single()
   if (error) {
