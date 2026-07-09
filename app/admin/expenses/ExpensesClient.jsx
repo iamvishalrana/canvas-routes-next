@@ -97,6 +97,10 @@ export default function ExpensesClient() {
   const [deleting, setDeleting]         = useState(null)
   const [openGroups, setOpenGroups]     = useState({})
   const [filterEvent, setFilterEvent]   = useState('all')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [dateFrom, setDateFrom]         = useState('')
+  const [dateTo, setDateTo]             = useState('')
+  const [showSummary, setShowSummary]   = useState(false)
   const [editingId, setEditingId]       = useState(null)
   const [editForm, setEditForm]         = useState({})
   const [editSaving, setEditSaving]     = useState(false)
@@ -127,10 +131,19 @@ export default function ExpensesClient() {
     setForm(p => ({ ...p, gst_amount: gst ? String(gst) : '', qst_amount: qst ? String(qst) : '' }))
   }, [form.paid, form.province])
 
+  // Date-range + category filters feed both the list and the summary
+  const baseFiltered = expenses.filter(e => {
+    if (filterCategory !== 'all' && (e.category || '') !== filterCategory) return false
+    if (dateFrom && e.expense_date < dateFrom) return false
+    if (dateTo && e.expense_date > dateTo) return false
+    return true
+  })
+  const usedCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))].sort()
+
   // Groups: all events sorted by most recent
   const allGroups = (() => {
     const map = {}
-    for (const e of expenses) {
+    for (const e of baseFiltered) {
       const key = e.event_name?.trim() || 'General'
       if (!map[key]) map[key] = []
       map[key].push(e)
@@ -151,6 +164,57 @@ export default function ExpensesClient() {
   const visibleExpenses = groups.flatMap(g => g.items)
   const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
   const grandTotalTax = visibleExpenses.reduce((s, e) => s + taxOf(e), 0)
+
+  // Summary breakdowns — reflect whatever the filters currently show
+  const summaryByCategory = (() => {
+    const map = {}
+    for (const e of visibleExpenses) {
+      const c = e.category || 'Uncategorized'
+      if (!map[c]) map[c] = { count: 0, amount: 0, tax: 0 }
+      map[c].count++
+      map[c].amount += parseFloat(e.amount || 0)
+      map[c].tax += taxOf(e)
+    }
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v, total: v.amount + v.tax }))
+      .sort((a, b) => b.total - a.total)
+  })()
+  // Per calendar quarter — GST + QST recoverable as input tax credits
+  const summaryByQuarter = (() => {
+    const map = {}
+    for (const e of visibleExpenses) {
+      if (!e.expense_date) continue
+      const [y, m] = e.expense_date.split('-')
+      const q = Math.floor((parseInt(m, 10) - 1) / 3) + 1
+      const key = `${y}-Q${q}`
+      if (!map[key]) map[key] = { gst: 0, qst: 0 }
+      map[key].gst += parseFloat(e.gst_amount || 0)
+      map[key].qst += parseFloat(e.qst_amount || 0)
+    }
+    return Object.entries(map)
+      .map(([period, v]) => ({ period, ...v, total: v.gst + v.qst }))
+      .sort((a, b) => b.period.localeCompare(a.period))
+  })()
+  const summaryGst = summaryByQuarter.reduce((s, q) => s + q.gst, 0)
+  const summaryQst = summaryByQuarter.reduce((s, q) => s + q.qst, 0)
+
+  function setRangePreset(preset) {
+    const now = new Date()
+    const y = now.getFullYear()
+    const pad = n => String(n).padStart(2, '0')
+    if (preset === 'all') { setDateFrom(''); setDateTo(''); return }
+    if (preset === 'year') { setDateFrom(`${y}-01-01`); setDateTo(`${y}-12-31`); return }
+    if (preset === 'quarter') {
+      const startM = Math.floor(now.getMonth() / 3) * 3 + 1
+      const endM = startM + 2
+      setDateFrom(`${y}-${pad(startM)}-01`); setDateTo(`${y}-${pad(endM)}-${pad(new Date(y, endM, 0).getDate())}`); return
+    }
+    if (preset === 'month') {
+      const m = now.getMonth() + 1
+      setDateFrom(`${y}-${pad(m)}-01`); setDateTo(`${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}`)
+    }
+  }
+  const hasDateFilter = !!(dateFrom || dateTo)
 
   function toggleGroup(name) { setOpenGroups(p => ({ ...p, [name]: !p[name] })) }
 
@@ -572,6 +636,41 @@ export default function ExpensesClient() {
             </div>
           )}
 
+          {/* Date range + category filters */}
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '0.85rem' }}>
+            <div style={{ width: '150px' }}>
+              <L>From</L>
+              <input type="date" style={inp} value={dateFrom} max={dateTo || today}
+                onChange={e => setDateFrom(e.target.value)} />
+            </div>
+            <div style={{ width: '150px' }}>
+              <L>To</L>
+              <input type="date" style={inp} value={dateTo} min={dateFrom || undefined} max={today}
+                onChange={e => setDateTo(e.target.value)} />
+            </div>
+            <div style={{ width: '180px' }}>
+              <L>Category</L>
+              <div style={{ position: 'relative' }}>
+                <select style={sel} value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
+                  <option value="all">All categories</option>
+                  {usedCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <SelectChevron />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', paddingBottom: '2px' }}>
+              {[['month', 'This month'], ['quarter', 'This quarter'], ['year', 'This year'], ['all', 'All time']].map(([key, label]) => {
+                const active = key === 'all' ? !hasDateFilter : false
+                return (
+                  <button key={key} type="button" className="exp-tap" onClick={() => setRangePreset(key)}
+                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '8px 10px', border: '0.5px solid', borderRadius: '6px', background: active ? '#0F1E14' : 'none', color: active ? '#F5F1EC' : '#777', borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.15)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Summary row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>
@@ -581,11 +680,95 @@ export default function ExpensesClient() {
               <span style={{ color: '#1a1a1a' }}>{fmt(grandTotal)}</span>
               {grandTotalTax > 0 && <> + <span style={{ color: '#888' }}>{fmt(grandTotalTax)} tax</span></>}
             </div>
-            <button onClick={exportCSV} className="exp-tap"
-              style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>
-              Export CSV
-            </button>
+            <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
+              <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
+                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', background: showSummary ? '#0F1E14' : 'none', color: showSummary ? '#F5F1EC' : '#555', borderColor: showSummary ? '#0F1E14' : 'rgba(0,0,0,0.18)' }}>
+                {showSummary ? 'Hide summary' : 'Summary'}
+              </button>
+              <button onClick={exportCSV} className="exp-tap"
+                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Export CSV
+              </button>
+            </div>
           </div>
+
+          {/* Summary panel */}
+          {showSummary && (
+            <div style={{ marginTop: '1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '1.1rem' }}>
+                Summary{hasDateFilter ? ` · ${dateFrom || '…'} → ${dateTo || '…'}` : ' · All time'}
+                {filterEvent !== 'all' && ` · ${filterEvent}`}
+                {filterCategory !== 'all' && ` · ${filterCategory}`}
+              </div>
+
+              {visibleExpenses.length === 0 ? (
+                <div style={{ fontSize: '12px', color: '#bbb' }}>No expenses in this range.</div>
+              ) : (
+                <>
+                  {/* By category */}
+                  <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>By category</div>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: '1.5rem' }}>
+                    <div style={{ minWidth: '440px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 56px 90px 90px 92px', padding: '0.35rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+                        {['Category', 'Items', 'Subtotal', 'Tax', 'Total'].map((h, i) => (
+                          <div key={i} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', textAlign: i === 0 ? 'left' : 'right' }}>{h}</div>
+                        ))}
+                      </div>
+                      {summaryByCategory.map(c => (
+                        <div key={c.name} style={{ display: 'grid', gridTemplateColumns: '1fr 56px 90px 90px 92px', padding: '0.45rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.04)' }}>
+                          <div style={{ fontSize: '12px', color: '#333' }}>{c.name}</div>
+                          <div style={{ fontSize: '12px', color: '#999', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{c.count}</div>
+                          <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(c.amount)}</div>
+                          <div style={{ fontSize: '12px', color: '#888', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(c.tax)}</div>
+                          <div style={{ fontSize: '12px', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(c.total)}</div>
+                        </div>
+                      ))}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 56px 90px 90px 92px', padding: '0.5rem 0', borderTop: '0.5px solid rgba(0,0,0,0.12)' }}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>Total</div>
+                        <div />
+                        <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal)}</div>
+                        <div style={{ fontSize: '12px', color: '#888', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotalTax)}</div>
+                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal + grandTotalTax)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tax recoverable by quarter */}
+                  <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.3rem' }}>Tax recoverable by quarter</div>
+                  <div style={{ fontSize: '10px', color: '#bbb', marginBottom: '0.65rem' }}>GST &amp; QST paid — claimable as input tax credits.</div>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <div style={{ minWidth: '380px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px', padding: '0.35rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+                        {['Quarter', 'GST', 'QST', 'Total'].map((h, i) => (
+                          <div key={i} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', textAlign: i === 0 ? 'left' : 'right' }}>{h}</div>
+                        ))}
+                      </div>
+                      {summaryByQuarter.length === 0 ? (
+                        <div style={{ fontSize: '12px', color: '#bbb', padding: '0.5rem 0' }}>No GST/QST recorded in this range.</div>
+                      ) : (
+                        <>
+                          {summaryByQuarter.map(q => (
+                            <div key={q.period} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px', padding: '0.45rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.04)' }}>
+                              <div style={{ fontSize: '12px', color: '#333' }}>{q.period.replace('-', ' ')}</div>
+                              <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(q.gst)}</div>
+                              <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(q.qst)}</div>
+                              <div style={{ fontSize: '12px', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(q.total)}</div>
+                            </div>
+                          ))}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px', padding: '0.5rem 0', borderTop: '0.5px solid rgba(0,0,0,0.12)' }}>
+                            <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>Total</div>
+                            <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(summaryGst)}</div>
+                            <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(summaryQst)}</div>
+                            <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(summaryGst + summaryQst)}</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
