@@ -1652,10 +1652,10 @@ export default function EventsClient() {
                     {/* ── Check-in tab (any event) ────────────────────────── */}
                     {tab === 'checkin' && (
                       <div style={{ padding: '1.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                          <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.25rem' }}>
+                          <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Check-in enabled</div>
-                            <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem' }}>
+                            <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>
                               {editForm.checkin_enabled ? `Public check-in page: canvasroutes.com/checkin/${item.id}` : 'Turn on to let registrants use the check-in page for this event.'}
                             </div>
                           </div>
@@ -1707,7 +1707,7 @@ export default function EventsClient() {
                                 <div style={{ marginTop: '0.85rem' }}>
                                   <L>Lunch Options</L>
                                   {(editForm.checkin_lunch_options || []).map((dish, di) => (
-                                    <div key={dish.id || di} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                    <div key={dish.id || di} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                       <input style={inp} placeholder="Dish name" value={dish.name || ''}
                                         onChange={e => setEditForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.map((d, i2) => i2 === di ? { ...d, name: e.target.value } : d) }))} />
                                       <input style={inp} placeholder="Description (optional)" value={dish.description || ''}
@@ -1740,10 +1740,10 @@ export default function EventsClient() {
                     {/* ── Generic Route Awards tab (any non-WTET event) ───── */}
                     {tab === 'genericAwards' && !isWtetRegEvent(item.name) && (
                       <div style={{ padding: '1.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                          <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.25rem' }}>
+                          <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Route Awards enabled</div>
-                            <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem' }}>
+                            <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>
                               {editForm.awards_enabled ? `Public ballot: canvasroutes.com/awards/${item.id}` : 'Turn on to configure a Route Awards ballot for this event.'}
                             </div>
                           </div>
@@ -1756,7 +1756,7 @@ export default function EventsClient() {
                               <L>Categories</L>
                               {(editForm.awards_categories || []).map((cat, ci) => (
                                 <div key={cat.id || ci} style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '0.85rem', marginBottom: '0.6rem' }}>
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 110px auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                     <input style={inp} placeholder="Category label (e.g. Most Beautiful Car)" value={cat.label || ''}
                                       onChange={e => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, label: e.target.value } : c) }))} />
                                     <input type="number" min="0" max="100" style={inp} placeholder="% off" value={cat.discount_pct ?? ''}

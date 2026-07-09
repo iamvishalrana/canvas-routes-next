@@ -553,6 +553,14 @@ section[id] {
   input, select, textarea { font-size: 16px !important; }
 }
 
+/* Admin PWA (iOS home-screen app, iPhone 13 Pro ≈ 390px): let long unbreakable
+   tokens — emails, URLs, UUIDs — wrap so grid/flex cells can shrink instead of
+   spilling into the neighbouring column. Only affects narrow widths; desktop
+   tables (rendered ≥768px) are untouched. */
+@media (max-width: 767px) {
+  .admin-main { overflow-wrap: anywhere; }
+}
+
 /* Prevent iOS landscape-rotation font inflation */
 html { -webkit-text-size-adjust: 100%; }
 
