@@ -46,6 +46,9 @@ export async function POST(request, { params }) {
             monthLabel: route.month_label,
             destination: route.destination,
             message,
+            pricePerCar: route.price_per_car,
+            maxCars: route.max_cars,
+            itinerary: route.itinerary,
           }),
         }),
       }).catch(err => captureException(err, { context: 'roadtrip-launch-email' }))

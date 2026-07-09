@@ -37,6 +37,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         setRoutes(list.map(r => ({
           ...r,
           showForm: false,
+          showItinerary: false,
           interested: !!r.registered,
           error: null,
           submitting: false,
@@ -273,6 +274,21 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         <div style={{ fontSize: '13px', color: '#333' }}>{r.distance_label}</div>
                       </div>
                     </div>
+                    {r.price_per_car != null && r.price_per_car !== '' && (
+                      <div style={{ fontSize: '12px', color: '#8a6535', marginBottom: '18px', letterSpacing: '0.02em' }}>
+                        <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#1a1a1a' }}>${Number(r.price_per_car).toFixed(Number.isInteger(Number(r.price_per_car)) ? 0 : 2)}</span> per car
+                      </div>
+                    )}
+                    {r.itinerary && (
+                      <div style={{ marginBottom: '18px' }}>
+                        <button onClick={() => patch(r.id, s => ({ showItinerary: !s.showItinerary }))}
+                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT, display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'inherit' }}>
+                          {r.showItinerary ? 'Hide itinerary' : 'View itinerary'}
+                          <span style={{ display: 'inline-block', transform: r.showItinerary ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>↓</span>
+                        </button>
+                        {r.showItinerary && <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.8, marginTop: '10px', whiteSpace: 'pre-wrap', fontWeight: 300 }}>{r.itinerary}</p>}
+                      </div>
+                    )}
                     {/* Progress */}
                     <div style={{ marginBottom: '18px' }}>
                       <div className="rt-track" style={{ marginBottom: '7px' }}>

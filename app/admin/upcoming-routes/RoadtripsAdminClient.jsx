@@ -9,7 +9,7 @@ const TRIP_TYPES = [
 ]
 const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
 
-const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', description: '' }
+const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', description: '' }
 
 function Field({ label, children }) {
   return <div style={{ minWidth: 0 }}><L>{label}</L>{children}</div>
@@ -41,6 +41,10 @@ export default function RoadtripsAdminClient() {
   const [launchFor, setLaunchFor] = useState(null) // route id
   const [launchMsg, setLaunchMsg] = useState('')
   const [launching, setLaunching] = useState(false)
+  const [emailFor, setEmailFor]   = useState(null) // route id
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailMsg, setEmailMsg]   = useState('')
+  const [emailing, setEmailing]   = useState(false)
   const [busyId, setBusyId]       = useState(null)
 
   const load = useCallback(() => {
@@ -76,7 +80,11 @@ export default function RoadtripsAdminClient() {
       name: r.name, destination: r.destination, month_label: r.month_label,
       duration_label: r.duration_label || '', distance_label: r.distance_label || '',
       target_count: String(r.target_count), sort_order: String(r.sort_order),
-      trip_type: r.trip_type || 'day', description: r.description || '',
+      trip_type: r.trip_type || 'day',
+      price_per_car: r.price_per_car != null ? String(r.price_per_car) : '',
+      max_cars: r.max_cars != null ? String(r.max_cars) : '',
+      itinerary: r.itinerary || '',
+      description: r.description || '',
     })
   }
 
@@ -151,6 +159,37 @@ export default function RoadtripsAdminClient() {
     finally { setLaunching(false) }
   }
 
+  async function sendBroadcast(id) {
+    if (!emailMsg.trim()) return
+    setEmailing(true)
+    try {
+      const res = await fetch(`/api/admin/upcoming-routes/${id}/broadcast`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: emailSubject, message: emailMsg }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) { setEmailFor(null); setEmailSubject(''); setEmailMsg(''); alert(`Sent to ${data.emailed || 0} interested driver(s).`) }
+      else alert(data.error || 'Failed to send.')
+    } catch { alert('Network error.') }
+    finally { setEmailing(false) }
+  }
+
+  function exportCSV() {
+    const rows = [['Route', 'Name', 'Email', 'Status', 'Registered']]
+    for (const r of routes) for (const p of (r.interest || [])) {
+      rows.push([
+        r.name, p.name || '', p.email,
+        p.is_member ? 'Member' : (p.membership_optin ? 'Waitlist opt-in' : 'Public'),
+        p.created_at ? new Date(p.created_at).toISOString().slice(0, 10) : '',
+      ])
+    }
+    const csv = rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    a.download = `route-interest-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(a.href)
+  }
+
   const totalInterest = routes.reduce((s, r) => s + (r.interested_count || 0), 0)
 
   return (
@@ -167,6 +206,11 @@ export default function RoadtripsAdminClient() {
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: 300, color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Upcoming Routes</h1>
         <p style={{ fontSize: '12px', color: '#999', marginTop: '0.5rem' }}>Shown on <a href="/routes" target="_blank" rel="noreferrer" style={{ color: '#c5a882' }}>canvasroutes.com/routes</a>. {routes.length} route{routes.length !== 1 ? 's' : ''} · {totalInterest} total interested.</p>
+        {totalInterest > 0 && (
+          <button onClick={exportCSV} style={{ marginTop: '0.75rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '7px 14px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Export interested (CSV)
+          </button>
+        )}
       </div>
 
       {/* Add form */}
@@ -185,6 +229,14 @@ export default function RoadtripsAdminClient() {
           <Field label="Target (threshold)"><input style={inp} type="number" inputMode="numeric" min="1" value={form.target_count} onChange={e => setForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
           <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} placeholder={String(routes.length + 1)} /></Field>
           <Field label="Trip type"><TripSelect value={form.trip_type} onChange={e => setForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
+        </div>
+        <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+          <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.price_per_car} onChange={e => setForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional — e.g. 200" /></Field>
+          <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={form.max_cars} onChange={e => setForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
+        </div>
+        <div style={{ marginBottom: '0.6rem' }}>
+          <L>Itinerary (optional — shown on the card, expandable)</L>
+          <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.itinerary} onChange={e => setForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
         </div>
         <div style={{ marginBottom: '0.75rem' }}>
           <L>Description</L>
@@ -246,6 +298,7 @@ export default function RoadtripsAdminClient() {
                   <GhostBtn small onClick={() => setExpanded(p => ({ ...p, [r.id]: !p[r.id] }))}>{isOpen ? 'Collapse' : `Interested (${r.interested_count})`}</GhostBtn>
                   <GhostBtn small onClick={() => (isEditing ? setEditId(null) : startEdit(r))}>{isEditing ? 'Close' : 'Edit'}</GhostBtn>
                   <GhostBtn small onClick={() => toggleActive(r)} disabled={busyId === r.id}>{r.is_active ? 'Hide from site' : 'Show on site'}</GhostBtn>
+                  <GhostBtn small onClick={() => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }} disabled={r.interested_count === 0}>Email</GhostBtn>
                   {!r.launched && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
                   <div style={{ marginLeft: 'auto' }}>
                     {deleteConfirm === r.id ? (
@@ -272,6 +325,19 @@ export default function RoadtripsAdminClient() {
                   </div>
                 )}
 
+                {/* Email-everyone composer */}
+                {emailFor === r.id && (
+                  <div style={{ marginTop: '0.85rem', padding: '0.85rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.12)', borderRadius: '8px' }}>
+                    <L>Email all {r.interested_count} interested driver{r.interested_count !== 1 ? 's' : ''}</L>
+                    <input style={{ ...inp, marginBottom: '0.5rem' }} value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={`Subject (default: Update — ${r.name})`} maxLength={140} />
+                    <textarea style={{ ...inp, height: '96px', resize: 'vertical' }} value={emailMsg} onChange={e => setEmailMsg(e.target.value)} placeholder="Your message to everyone interested in this route…" maxLength={3000} />
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                      <PrimaryBtn small disabled={emailing || !emailMsg.trim()} onClick={() => sendBroadcast(r.id)}>{emailing ? 'Sending…' : `Send to ${r.interested_count}`}</PrimaryBtn>
+                      <GhostBtn small onClick={() => setEmailFor(null)}>Cancel</GhostBtn>
+                    </div>
+                  </div>
+                )}
+
                 {/* Edit panel */}
                 {isEditing && (
                   <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
@@ -288,6 +354,14 @@ export default function RoadtripsAdminClient() {
                       <Field label="Target"><input style={inp} type="number" inputMode="numeric" min="1" value={editForm.target_count} onChange={e => setEditForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
                       <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={editForm.sort_order} onChange={e => setEditForm(p => ({ ...p, sort_order: e.target.value }))} /></Field>
                       <Field label="Trip type"><TripSelect value={editForm.trip_type} onChange={e => setEditForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
+                    </div>
+                    <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+                      <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.price_per_car} onChange={e => setEditForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional" /></Field>
+                      <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={editForm.max_cars} onChange={e => setEditForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
+                    </div>
+                    <div style={{ marginBottom: '0.6rem' }}>
+                      <L>Itinerary</L>
+                      <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.itinerary} onChange={e => setEditForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Description</L>
