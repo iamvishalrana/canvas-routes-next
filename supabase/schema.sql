@@ -133,3 +133,40 @@ CREATE TABLE IF NOT EXISTS public.expenses (
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.expenses
   USING (false) WITH CHECK (false);
+
+-- Upcoming Roadtrips (public /routes hub). interested_count is a live aggregate
+-- from route_interest, never stored on the route row.
+CREATE TABLE IF NOT EXISTS public.upcoming_routes (
+  id             UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug           TEXT          UNIQUE NOT NULL,
+  name           TEXT          NOT NULL,
+  destination    TEXT          NOT NULL,
+  month_label    TEXT          NOT NULL,
+  description    TEXT          NOT NULL DEFAULT '',
+  duration_label TEXT          NOT NULL DEFAULT '',
+  distance_label TEXT          NOT NULL DEFAULT '',
+  target_count   INT           NOT NULL DEFAULT 12 CHECK (target_count > 0),
+  sort_order     INT           NOT NULL DEFAULT 0,
+  is_active      BOOLEAN       NOT NULL DEFAULT true,
+  launched       BOOLEAN       NOT NULL DEFAULT false,
+  launched_at    TIMESTAMPTZ,
+  threshold_notified_at TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ   DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS public.route_interest (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  route_id         UUID        NOT NULL REFERENCES public.upcoming_routes(id) ON DELETE CASCADE,
+  name             TEXT        NOT NULL,
+  email            TEXT        NOT NULL,
+  membership_optin BOOLEAN     NOT NULL DEFAULT false,
+  is_member        BOOLEAN     NOT NULL DEFAULT false,
+  created_at       TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (route_id, email)
+);
+CREATE INDEX IF NOT EXISTS route_interest_route_id_idx ON public.route_interest (route_id);
+ALTER TABLE public.upcoming_routes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.route_interest  ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.upcoming_routes
+  USING (false) WITH CHECK (false);
+CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.route_interest
+  USING (false) WITH CHECK (false);

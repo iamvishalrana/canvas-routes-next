@@ -23,8 +23,9 @@ const SECTIONS = [
   {
     id: 'events', label: 'Events',
     items: [
-      { href: '/admin/events',      label: 'Events'  },
-      { href: '/admin/road-trips',  label: 'Routes'  },
+      { href: '/admin/events',       label: 'Events'          },
+      { href: '/admin/road-trips',   label: 'Routes'          },
+      { href: '/admin/roadtrips',    label: 'Upcoming Routes' },
     ],
   },
   {
