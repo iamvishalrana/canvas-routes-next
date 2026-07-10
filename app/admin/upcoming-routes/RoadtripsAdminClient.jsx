@@ -9,7 +9,7 @@ const TRIP_TYPES = [
 ]
 const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
 
-const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', description: '' }
+const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '' }
 
 const splitActs = v => (v || '').split(',').map(x => x.trim()).filter(Boolean)
 
@@ -87,6 +87,8 @@ export default function RoadtripsAdminClient() {
       max_cars: r.max_cars != null ? String(r.max_cars) : '',
       itinerary: r.itinerary || '',
       activity_options: (r.activity_options || []).join(', '),
+      dest_lat: r.dest_lat != null ? String(r.dest_lat) : '',
+      dest_lng: r.dest_lng != null ? String(r.dest_lng) : '',
       description: r.description || '',
     })
   }
@@ -239,6 +241,10 @@ export default function RoadtripsAdminClient() {
           <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.price_per_car} onChange={e => setForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional — e.g. 200" /></Field>
           <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={form.max_cars} onChange={e => setForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
         </div>
+        <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+          <Field label="Destination latitude"><input style={inp} type="number" inputMode="decimal" step="any" value={form.dest_lat} onChange={e => setForm(p => ({ ...p, dest_lat: e.target.value }))} placeholder="e.g. 47.4412 — plots the map" /></Field>
+          <Field label="Destination longitude"><input style={inp} type="number" inputMode="decimal" step="any" value={form.dest_lng} onChange={e => setForm(p => ({ ...p, dest_lng: e.target.value }))} placeholder="e.g. -70.5052" /></Field>
+        </div>
         <div style={{ marginBottom: '0.6rem' }}>
           <L>Itinerary (optional — shown on the card, expandable)</L>
           <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.itinerary} onChange={e => setForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
@@ -367,6 +373,10 @@ export default function RoadtripsAdminClient() {
                     <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
                       <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.price_per_car} onChange={e => setEditForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional" /></Field>
                       <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={editForm.max_cars} onChange={e => setEditForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
+                    </div>
+                    <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+                      <Field label="Destination latitude"><input style={inp} type="number" inputMode="decimal" step="any" value={editForm.dest_lat} onChange={e => setEditForm(p => ({ ...p, dest_lat: e.target.value }))} placeholder="e.g. 47.4412" /></Field>
+                      <Field label="Destination longitude"><input style={inp} type="number" inputMode="decimal" step="any" value={editForm.dest_lng} onChange={e => setEditForm(p => ({ ...p, dest_lng: e.target.value }))} placeholder="e.g. -70.5052" /></Field>
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Itinerary</L>

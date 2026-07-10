@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 const ACCENT = '#c5a882'
 const ACCENT_BGS = [
@@ -22,6 +22,110 @@ const BUDGET_OPTIONS   = ['Under $250', '$250–500', '$500–1000', '$1000–20
 const HOTEL_OPTIONS    = ['No preference', 'Budget-friendly', 'Mid-range', 'Boutique / Luxury', 'Camping / Rustic']
 // Generic fallback — routes carry their own area-specific activity_options
 const ACTIVITY_OPTIONS = ['Scenic drives', 'Local food', 'Fine dining', 'Photography', 'Sightseeing', 'Nightlife', 'Relaxing']
+
+const MONTREAL = { lat: 45.5019, lng: -73.5674 }
+
+// Real map for the Map view — same parchment styling as the itinerary pages
+// (whips-to-eastern-townships RouteMap). Plots Montreal plus every route
+// destination; the selected route gets a bold Montreal→destination line.
+function RoutesMap({ routes, selectedId, onSelect }) {
+  const containerRef = useRef(null)
+  const mapRef = useRef(null)
+  const overlaysRef = useRef([])
+  const fittedRef = useRef(false)
+  const [status, setStatus] = useState('loading')
+
+  useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) { setStatus('error'); return }
+    let destroyed = false
+
+    const initMap = () => {
+      if (destroyed || !containerRef.current || mapRef.current) return
+      try {
+        const google = window.google
+        if (!google?.maps) { setStatus('error'); return }
+        const map = new google.maps.Map(containerRef.current, {
+          mapTypeId: 'roadmap',
+          zoomControl: true,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: true,
+          styles: [
+            { featureType: 'poi',          elementType: 'labels',   stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit',                               stylers: [{ visibility: 'off' }] },
+            { featureType: 'road',         elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+            { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f5e9d6' }] },
+            { featureType: 'landscape',                             stylers: [{ color: '#f0ede8' }] },
+            { featureType: 'water',                                 stylers: [{ color: '#c8d8e8' }] },
+          ],
+        })
+        new google.maps.Marker({
+          position: MONTREAL, map, title: 'Montreal — departure',
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#3B6B2F', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
+        })
+        mapRef.current = map
+        if (!destroyed) setStatus('ready')
+      } catch { if (!destroyed) setStatus('error') }
+    }
+
+    const scriptId = 'gmap-script'
+    if (window.google?.maps) {
+      initMap()
+    } else if (document.getElementById(scriptId)) {
+      document.getElementById(scriptId).addEventListener('load', initMap)
+    } else {
+      const script = document.createElement('script')
+      script.id = scriptId
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+      script.async = true
+      script.onload = initMap
+      script.onerror = () => { if (!destroyed) setStatus('error') }
+      document.head.appendChild(script)
+    }
+    return () => { destroyed = true }
+  }, [])
+
+  // (Re)draw destination markers + Montreal lines whenever selection changes
+  useEffect(() => {
+    const google = window.google
+    if (status !== 'ready' || !google?.maps || !mapRef.current) return
+    overlaysRef.current.forEach(o => o.setMap(null))
+    overlaysRef.current = []
+    const pts = routes.filter(r => r.dest_lat != null && r.dest_lng != null)
+    const bounds = new google.maps.LatLngBounds()
+    bounds.extend(MONTREAL)
+    pts.forEach(r => {
+      const pos = { lat: parseFloat(r.dest_lat), lng: parseFloat(r.dest_lng) }
+      bounds.extend(pos)
+      const sel = r.id === selectedId
+      const line = new google.maps.Polyline({
+        path: [MONTREAL, pos], geodesic: true, map: mapRef.current,
+        strokeColor: '#0F1E14', strokeOpacity: sel ? 0.8 : 0.16, strokeWeight: sel ? 3 : 2,
+      })
+      const marker = new google.maps.Marker({
+        position: pos, map: mapRef.current, title: r.name,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: sel ? 10 : 7, fillColor: sel ? '#0F1E14' : ACCENT, fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
+      })
+      marker.addListener('click', () => onSelect(r.id))
+      overlaysRef.current.push(line, marker)
+    })
+    if (!fittedRef.current && pts.length) { mapRef.current.fitBounds(bounds, 48); fittedRef.current = true }
+  }, [routes, selectedId, status, onSelect])
+
+  if (status === 'error') {
+    return (
+      <div className="rt-map-canvas" style={{ background: '#EDE8E1', border: '0.5px solid rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '18px' }}>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="0.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#bbb', marginBottom: '6px' }}>Route Map</div>
+          <div style={{ fontSize: '12px', color: '#ccc', fontWeight: 300 }}>Map unavailable right now</div>
+        </div>
+      </div>
+    )
+  }
+  return <div ref={containerRef} className="rt-map-canvas" style={{ border: '0.5px solid rgba(0,0,0,0.07)', background: '#EDE8E1' }} />
+}
 
 function PinIcon() {
   return <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -240,9 +344,10 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         }
         .rt-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.7); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px; animation:rtFadeIn .2s ease forwards; }
         .rt-modal { background:#F5F1EC; padding:40px; max-width:420px; width:100%; border:0.5px solid rgba(0,0,0,0.1); animation:rtFadeUp .3s cubic-bezier(.22,.68,0,1.1) forwards; }
+        .rt-map-canvas { height:580px; }
         @media (max-width:768px) {
           .rt-map-grid { grid-template-columns:1fr !important; }
-          .rt-map-placeholder { height:300px !important; }
+          .rt-map-canvas { height:340px; }
           .rt-modal { padding:28px 22px; }
         }
       `}</style>
@@ -506,13 +611,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       ) : (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}` }}>
           <div className="rt-map-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', alignItems: 'start' }}>
-            <div className="rt-map-placeholder" style={{ background: '#EDE8E1', border: '0.5px solid rgba(0,0,0,0.07)', height: '580px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '18px' }}>
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="0.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#bbb', marginBottom: '6px' }}>Interactive Map</div>
-                <div style={{ fontSize: '12px', color: '#ccc', fontWeight: 300 }}>All routes plotted — Mapbox integration</div>
-              </div>
-            </div>
+            <RoutesMap routes={routes} selectedId={selectedId} onSelect={setSelectedId} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#999', marginBottom: '8px', paddingLeft: '4px' }}>All Routes</div>
               {routes.map(r => {

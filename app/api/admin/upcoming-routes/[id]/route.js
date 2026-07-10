@@ -2,7 +2,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 
-const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'max_cars', 'itinerary', 'activity_options', 'is_active', 'slug']
+const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug']
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -25,6 +25,12 @@ export async function PATCH(request, { params }) {
     update.max_cars = Number.isFinite(m) && m > 0 ? m : null
   }
   if ('itinerary' in update) update.itinerary = (update.itinerary || '').trim()
+  for (const k of ['dest_lat', 'dest_lng']) {
+    if (k in update) {
+      const v = parseFloat(update[k])
+      update[k] = Number.isFinite(v) ? v : null
+    }
+  }
   if ('activity_options' in update) {
     update.activity_options = Array.isArray(update.activity_options)
       ? update.activity_options.filter(a => typeof a === 'string' && a.trim()).slice(0, 12).map(a => a.trim().slice(0, 40))

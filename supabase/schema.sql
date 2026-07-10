@@ -152,6 +152,8 @@ CREATE TABLE IF NOT EXISTS public.upcoming_routes (
   max_cars       INT,
   itinerary      TEXT          NOT NULL DEFAULT '',
   activity_options JSONB       NOT NULL DEFAULT '[]'::jsonb,
+  dest_lat       NUMERIC(9,6),
+  dest_lng       NUMERIC(9,6),
   is_active      BOOLEAN       NOT NULL DEFAULT true,
   launched       BOOLEAN       NOT NULL DEFAULT false,
   launched_at    TIMESTAMPTZ,

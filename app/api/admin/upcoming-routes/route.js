@@ -60,6 +60,8 @@ export async function POST(request) {
     max_cars: Number.isFinite(maxCars) && maxCars > 0 ? maxCars : null,
     itinerary: (body.itinerary || '').trim(),
     activity_options: activityOptions,
+    dest_lat: Number.isFinite(parseFloat(body.dest_lat)) ? parseFloat(body.dest_lat) : null,
+    dest_lng: Number.isFinite(parseFloat(body.dest_lng)) ? parseFloat(body.dest_lng) : null,
     is_active: body.is_active !== false,
   }).select('*').single()
   if (error) {
