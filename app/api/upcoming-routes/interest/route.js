@@ -53,7 +53,7 @@ export async function POST(request) {
 
   const { data: route, error: routeErr } = await supabase
     .from('upcoming_routes')
-    .select('id, name, slug, destination, month_label, target_count, launched, threshold_notified_at')
+    .select('id, name, slug, destination, month_label, duration_label, distance_label, target_count, launched, threshold_notified_at')
     .eq('slug', slug)
     .eq('is_active', true)
     .maybeSingle()
@@ -125,7 +125,7 @@ export async function POST(request) {
       from: 'Canvas Routes <info@canvasroutes.com>',
       to: email,
       subject: `You're on the list — ${route.name}`,
-      html: buildRouteInterestHtml({ firstName: name.split(' ')[0] || '', routeName: route.name, monthLabel: route.month_label }),
+      html: buildRouteInterestHtml({ firstName: name.split(' ')[0] || '', route, interestedCount }),
     }, 'roadtrip-interest-confirm-email'),
     sendEmail({
       from: 'Canvas Routes <info@canvasroutes.com>',
