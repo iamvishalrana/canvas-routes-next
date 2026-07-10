@@ -121,7 +121,7 @@ export default function Home() {
       })
       .catch(() => {})
   }, [])
-  const [showWtetPopup, setShowWtetPopup] = useState(false)
+  const [showRoutesPopup, setShowRoutesPopup] = useState(false)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
   const [homepageBanner, setHomepageBanner] = useState(null)
@@ -133,11 +133,19 @@ export default function Home() {
     return () => clearInterval(t)
   }, [])
 
-  // WTET popup — shown once per session after launch time; sessionStorage prevents it
-  // re-appearing on every reload once the user has dismissed it
+  // 2026 Routes popup — nudges every visitor toward /routes to express interest.
+  // Shown once per session (sessionStorage) after a short delay so the hero
+  // paints first and the popup doesn't feel like an ambush.
   useEffect(() => {
-    // WTET popup disabled — event complete
+    if (sessionStorage.getItem('routes_popup_seen')) return
+    const t = setTimeout(() => setShowRoutesPopup(true), 1600)
+    return () => clearTimeout(t)
   }, [])
+
+  function dismissRoutesPopup() {
+    setShowRoutesPopup(false)
+    sessionStorage.setItem('routes_popup_seen', '1')
+  }
 
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
   const refSource = useRef('')
@@ -160,7 +168,7 @@ export default function Home() {
   useEffect(() => { setPastModalImageFailed(false) }, [pastModalEvent])
 
   useEffect(() => {
-    const isOpen = pastModalEvent !== null || showWtetPopup
+    const isOpen = pastModalEvent !== null || showRoutesPopup
     if (!isOpen) {
       const savedTop = document.body.style.top
       document.body.style.overflow = ''
@@ -184,7 +192,7 @@ export default function Home() {
       document.body.style.width = ''
       if (top) window.scrollTo(0, -parseInt(top, 10))
     }
-  }, [pastModalEvent, showWtetPopup])
+  }, [pastModalEvent, showRoutesPopup])
 
   useEffect(() => {
     setCookieBannerVisible(getConsent() === null)
@@ -412,43 +420,45 @@ export default function Home() {
         ]}
       />
 
-      {/* WTET LAUNCH POPUP — shown on every reload after 5 pm EDT (21:00 UTC) June 24 */}
-      {showWtetPopup && (
+      {/* 2026 ROUTES POPUP — leads every visitor to /routes to express interest */}
+      {showRoutesPopup && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Whips to Eastern Townships registration open"
+          aria-label="The 2026 routes are open for interest"
           style={{
             position: 'fixed', inset: 0, zIndex: 999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '1.5rem',
+            padding: '1.25rem',
             background: 'rgba(8,14,10,0.72)',
             backdropFilter: 'blur(3px)',
           }}
-          onClick={() => { setShowWtetPopup(false); sessionStorage.setItem('wtet_popup_seen', '1') }}
+          onClick={dismissRoutesPopup}
         >
           <div
             onClick={e => e.stopPropagation()}
             style={{
               background: '#0F1E14', maxWidth: '480px', width: '100%',
               position: 'relative', overflow: 'hidden',
+              maxHeight: '86dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
               boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
             }}
           >
             {/* Gold top line */}
             <div style={{ height: '2px', background: 'linear-gradient(90deg, transparent, #c5a882, transparent)' }} />
 
-            <div style={{ padding: 'clamp(2rem,5vw,2.75rem)' }}>
-              {/* Close */}
+            <div style={{ padding: 'clamp(1.75rem,5vw,2.75rem)' }}>
+              {/* Close — 44px target for iOS */}
               <button
-                onClick={() => { setShowWtetPopup(false); sessionStorage.setItem('wtet_popup_seen', '1') }}
+                onClick={dismissRoutesPopup}
                 aria-label="Close"
                 style={{
-                  position: 'absolute', top: '1rem', right: '1rem',
+                  position: 'absolute', top: '0.4rem', right: '0.4rem',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'rgba(245,241,236,0.35)', fontSize: '20px', lineHeight: 1, padding: '4px',
+                  color: 'rgba(245,241,236,0.35)', fontSize: '20px', lineHeight: 1, padding: '12px',
+                  minWidth: '44px', minHeight: '44px',
                   fontFamily: 'var(--font-inter),sans-serif',
-                  transition: 'color 0.15s',
+                  transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent',
                 }}
                 onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.75)'}
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.35)'}
@@ -461,7 +471,7 @@ export default function Home() {
                 fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
                 color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem',
               }}>
-                Canvas Routes · July 5, 2026
+                Canvas Routes · 2026 Season
               </div>
 
               {/* Heading */}
@@ -470,7 +480,7 @@ export default function Home() {
                 fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1,
                 margin: '0 0 0.6rem',
               }}>
-                Whips to Eastern Townships
+                The 2026 routes<br />are on the table.
               </h2>
 
               {/* Sub */}
@@ -479,7 +489,7 @@ export default function Home() {
                 fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic',
                 marginBottom: '1.25rem',
               }}>
-                Montreal to Lac Memphrémagog
+                Charlevoix to the Cabot Trail
               </div>
 
               {/* Divider */}
@@ -488,17 +498,27 @@ export default function Home() {
               {/* Body */}
               <p style={{
                 fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8',
-                fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1.75rem',
+                fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem',
               }}>
-                Registration is now open. Serene backroads through wine country, a private winery experience, and a curated lunch to close the day. Limited to 15 cars.
+                Five drives from Montreal are gathering their crews. Express your interest — no payment, no commitment — and each route launches the moment enough drivers are in.
               </p>
 
-              {/* CTA */}
+              {/* Route names */}
+              <div style={{
+                fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif',
+                lineHeight: 2, margin: '0 0 1.5rem',
+              }}>
+                Charlevoix · Gaspésie · Tobermory · Calabogie · Cabot Trail
+              </div>
+
+              {/* CTA — full-width on mobile */}
               <a
-                href="/wtet"
-                onClick={() => { setShowWtetPopup(false); sessionStorage.setItem('wtet_popup_seen', '1') }}
+                href="/routes"
+                onClick={dismissRoutesPopup}
+                className="routes-popup-cta"
                 style={{
-                  display: 'inline-block', padding: '0.85rem 2rem',
+                  display: 'block', textAlign: 'center', padding: '0.95rem 2rem',
                   background: '#F5F1EC', color: '#0F1E14',
                   fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase',
                   fontFamily: 'var(--font-inter),sans-serif', fontWeight: '600',
@@ -507,8 +527,23 @@ export default function Home() {
                 onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
                 onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
               >
-                Secure your seat →
+                View routes &amp; lock in →
               </a>
+
+              {/* Soft dismiss */}
+              <button
+                onClick={dismissRoutesPopup}
+                style={{
+                  display: 'block', width: '100%', marginTop: '0.4rem',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '0.8rem', minHeight: '44px',
+                  fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase',
+                  color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter),sans-serif',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                Maybe later
+              </button>
             </div>
           </div>
         </div>
