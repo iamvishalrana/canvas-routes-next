@@ -23,6 +23,16 @@ const HOTEL_OPTIONS    = ['No preference', 'Budget-friendly', 'Mid-range', 'Bout
 // Generic fallback — routes carry their own area-specific activity_options
 const ACTIVITY_OPTIONS = ['Scenic drives', 'Local food', 'Fine dining', 'Photography', 'Sightseeing', 'Nightlife', 'Relaxing']
 
+// Real route photography (optimized copies in /public/routes-photos).
+// Routes without an entry fall back to the gradient + watermark art.
+const ROUTE_PHOTOS = {
+  'memoirs-to-charlevoix': '/routes-photos/memoirs-to-charlevoix.jpg',
+  'the-gaspesie-odyssey':  '/routes-photos/the-gaspesie-odyssey.jpg',
+  'the-tobermory-story':   '/routes-photos/the-tobermory-story.jpg',
+  'the-calabogie-boogie':  '/routes-photos/the-calabogie-boogie.jpg',
+  'the-cabot-trail-grail': '/routes-photos/the-cabot-trail-grail.jpg',
+}
+
 const MONTREAL = { lat: 45.5019, lng: -73.5674 }
 
 // Real map for the Map view — same parchment styling as the itinerary pages
@@ -124,7 +134,7 @@ function RoutesMap({ routes, selectedId, onSelect }) {
       </div>
     )
   }
-  return <div ref={containerRef} className="rt-map-canvas" style={{ border: '0.5px solid rgba(0,0,0,0.07)', background: '#EDE8E1' }} />
+  return <div ref={containerRef} className="rt-map-canvas" style={{ border: '0.5px solid rgba(0,0,0,0.07)', background: '#EDE8E1', boxShadow: '0 6px 28px rgba(15,30,20,0.08)' }} />
 }
 
 function PinIcon() {
@@ -313,11 +323,12 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-hero-divider { display:block; height:1px; background:rgba(197,168,130,0.4); margin:28px 0; width:0; animation:rtHeroDivider .8s ease .5s forwards; }
         @keyframes rtCtaShimmer { 0% { left:-80%; opacity:0; } 15% { opacity:1; } 85% { opacity:1; } 100% { left:130%; opacity:0; } }
         .rt-hero-cta { position:relative; overflow:hidden; display:inline-block; min-height:44px; padding:13px 34px; background:#F5F1EC; color:#0F1E14; border:none; font-family:inherit; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; transition:transform .1s; }
+        .rt-hero-cta { box-shadow:0 10px 34px rgba(0,0,0,0.35); }
         .rt-hero-cta:active { transform:scale(0.98); }
         .rt-hero-cta::after { content:''; position:absolute; top:-10%; left:-80%; width:40%; height:120%; background:linear-gradient(105deg, transparent 10%, rgba(197,168,130,0.35) 50%, transparent 90%); transform:skewX(-10deg); animation:rtCtaShimmer .9s cubic-bezier(.4,0,.2,1) 1.6s forwards; pointer-events:none; }
         @media (max-width:480px) { .rt-hero-cta { display:block; width:100%; text-align:center; } }
-        .rt-card { background:#fff; border:0.5px solid rgba(0,0,0,0.07); display:flex; flex-direction:column; overflow:hidden; opacity:0; transform:translateY(24px); transition:box-shadow .35s ease, transform .35s ease, border-color .35s ease; animation:rtFadeUp .65s cubic-bezier(.22,.68,0,1.1) forwards; }
-        @media (hover:hover) { .rt-card:hover { box-shadow:0 12px 48px rgba(0,0,0,0.1), 0 2px 8px rgba(197,168,130,0.12); transform:translateY(-4px); border-color:rgba(197,168,130,0.4); } .rt-card:hover .rt-card-img { transform:scale(1.04); } }
+        .rt-card { background:#fff; border:0.5px solid rgba(0,0,0,0.07); display:flex; flex-direction:column; overflow:hidden; opacity:0; transform:translateY(24px); transition:box-shadow .35s ease, transform .35s ease, border-color .35s ease; animation:rtFadeUp .65s cubic-bezier(.22,.68,0,1.1) forwards; box-shadow:0 6px 28px rgba(15,30,20,0.08), 0 1px 4px rgba(0,0,0,0.05); }
+        @media (hover:hover) { .rt-card:hover { box-shadow:0 18px 56px rgba(15,30,20,0.16), 0 3px 10px rgba(197,168,130,0.16); transform:translateY(-4px); border-color:rgba(197,168,130,0.4); } .rt-card:hover .rt-card-img { transform:scale(1.04); } }
         .rt-card-img { transition:transform .6s ease; }
         .rt-track { background:rgba(0,0,0,0.06); height:3px; overflow:hidden; }
         .rt-fill { height:100%; width:0%; transition:width 1.2s cubic-bezier(.4,0,.2,1); background:linear-gradient(90deg, #c5a882 25%, #f0ddb8 50%, #c5a882 75%); background-size:400px 100%; animation:rtShimmer 2s ease-in-out infinite; }
@@ -331,7 +342,8 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-success { animation:rtSuccessPop .4s cubic-bezier(.22,.68,0,1.2) forwards; }
         .rt-pill { background:transparent; border:0.5px solid rgba(0,0,0,0.18); font-family:inherit; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; padding:9px 22px; cursor:pointer; color:#666; transition:all .2s; }
         .rt-pill-active { background:#0F1E14; color:#F5F1EC; border-color:#0F1E14; }
-        .rt-maprow { border:0.5px solid rgba(0,0,0,0.07); background:#fff; padding:14px 18px; cursor:pointer; transition:border-color .2s, background .2s; border-left:3px solid transparent; }
+        .rt-maprow { border:0.5px solid rgba(0,0,0,0.07); background:#fff; padding:14px 18px; cursor:pointer; transition:border-color .2s, background .2s, box-shadow .2s; border-left:3px solid transparent; box-shadow:0 3px 14px rgba(15,30,20,0.06); }
+        .rt-maprow-active { box-shadow:0 8px 24px rgba(15,30,20,0.12); }
         .rt-maprow:hover { background:#faf9f7; border-color:rgba(197,168,130,0.4); }
         .rt-maprow-active { border-left-color:#c5a882 !important; background:#faf9f7; }
         @keyframes rtSheetUp { from { transform:translateY(100%);} to { transform:translateY(0);} }
@@ -355,7 +367,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       {/* ── STICKY CONTEXT BAR (mobile-first, slides over the tall nav) ── */}
       {!embedded && (
         <div onClick={scrollToRoutes} role="button" aria-label="Back to routes"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 102, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: 'env(safe-area-inset-top) clamp(1rem,4vw,3rem) 0', transform: showBar ? 'translateY(0)' : 'translateY(-110%)', transition: 'transform .3s cubic-bezier(.22,.68,0,1)', cursor: 'pointer' }}>
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 102, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: 'env(safe-area-inset-top) clamp(1rem,4vw,3rem) 0', transform: showBar ? 'translateY(0)' : 'translateY(-110%)', transition: 'transform .3s cubic-bezier(.22,.68,0,1)', cursor: 'pointer', boxShadow: showBar ? '0 8px 28px rgba(8,14,10,0.4)' : 'none' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', gap: '12px' }}>
             <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '16px', color: '#F5F1EC', whiteSpace: 'nowrap' }}>
               Upcoming Routes <span style={{ color: ACCENT }}>· {routes.length}</span>
@@ -382,7 +394,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
 
       {/* ── HERO — convoy aerial with dark scrim (event-hero pattern) ── */}
       {!embedded && (
-      <div style={{ backgroundColor: heroBg, backgroundImage: "url('/convoy-hero.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 40%', padding: 'clamp(96px,11vw,132px) clamp(1.5rem,4vw,3rem) clamp(48px,7vw,80px)', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: heroBg, backgroundImage: "url('/convoy-hero.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 40%', padding: 'clamp(124px,14vw,168px) clamp(1.5rem,4vw,3rem) clamp(48px,7vw,80px)', position: 'relative', overflow: 'hidden' }}>
         {/* Dark overlay so cream/gold text stays readable over the busy image */}
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,12,0.78)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(197,168,130,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(197,168,130,0.04) 1px, transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
@@ -525,8 +537,12 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <div key={r.id} className="rt-card" style={{ animationDelay: `${i * 0.08 + 0.05}s` }}>
                   {/* Image area */}
                   <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9', background: ACCENT_BGS[i % ACCENT_BGS.length] }}>
-                    <div className="rt-card-img" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative' }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(1.2rem,3vw,1.6rem)', fontWeight: 300, color: 'rgba(245,241,236,0.18)', textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{r.name}</div>
+                    <div className="rt-card-img" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', backgroundImage: ROUTE_PHOTOS[r.slug] ? `url('${ROUTE_PHOTOS[r.slug]}')` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                      {ROUTE_PHOTOS[r.slug] ? (
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.35) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.45) 100%)' }} />
+                      ) : (
+                        <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(1.2rem,3vw,1.6rem)', fontWeight: 300, color: 'rgba(245,241,236,0.18)', textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{r.name}</div>
+                      )}
                       <div style={{ position: 'absolute', bottom: '14px', left: '14px', background: 'rgba(15,30,20,0.75)', backdropFilter: 'blur(6px)', padding: '5px 12px', border: '0.5px solid rgba(197,168,130,0.2)' }}>
                         <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, fontWeight: 500 }}>{r.month_label}</span>
                       </div>
