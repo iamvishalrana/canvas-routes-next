@@ -10,6 +10,13 @@ const ACCENT_BGS = [
   'linear-gradient(135deg, #141e2a 0%, #0a1018 100%)',
 ]
 const INTRO = 'Each route launches once the right crew is assembled. Express your interest — we notify you the moment we hit critical mass.'
+// Completed 2026 routes shown in the season strip — historical facts, hardcoded
+// like the homepage past-events list.
+const PAST_ROUTES = [
+  { name: 'Into the Laurentians',        month: 'June 2026', cars: 11, target: 9 },
+  { name: 'Whips to Eastern Townships',  month: 'July 2026', cars: 22, target: 18 },
+]
+const CONTACT_KEY = 'cr_routes_contact' // returning-visitor prefill + registered flags
 const TRIP_LABELS = { overnight: 'Overnight', multi_day: 'Multi-Day' } // 'day' shows no badge
 const BUDGET_OPTIONS   = ['Under $250', '$250–500', '$500–1000', '$1000–2000', '$2000+']
 const HOTEL_OPTIONS    = ['No preference', 'Budget-friendly', 'Mid-range', 'Boutique / Luxury', 'Camping / Rustic']
@@ -30,9 +37,18 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   const [shareRoute, setShareRoute] = useState(null)
   const [animated, setAnimated]   = useState(false)
   const [copied, setCopied]       = useState(false)
+  const [sheetId, setSheetId]     = useState(null)  // route id with the interest sheet open
+  const [showBar, setShowBar]     = useState(false) // sticky context bar past the hero
+  const [howOpen, setHowOpen]     = useState(false) // How-It-Works accordion (mobile)
+  const [isMobileView, setIsMobileView] = useState(false)
 
   const load = useCallback(() => {
-    const qs = memberEmail ? `?email=${encodeURIComponent(memberEmail)}` : ''
+    // Returning visitors: reuse the contact they submitted with last time so
+    // their cards come back pre-marked and the form is prefilled.
+    let stored = {}
+    try { stored = JSON.parse(localStorage.getItem(CONTACT_KEY) || '{}') || {} } catch {}
+    const knownEmail = memberEmail || stored.email || ''
+    const qs = knownEmail ? `?email=${encodeURIComponent(knownEmail)}` : ''
     fetch(`/api/upcoming-routes${qs}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => {
@@ -44,10 +60,10 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           interested: !!r.registered,
           error: null,
           submitting: false,
-          formName: memberName || '',
-          formEmail: memberEmail || '',
-          formPhone: '',
-          formCar: '',
+          formName: memberName || stored.name || '',
+          formEmail: memberEmail || stored.email || '',
+          formPhone: stored.phone || '',
+          formCar: stored.car || '',
           formBudget: '',
           formDates: '',
           formHotel: '',
@@ -63,6 +79,42 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   useEffect(() => { load() }, [load])
 
   useEffect(() => { const t = setTimeout(() => setAnimated(true), 140); return () => clearTimeout(t) }, [loading])
+
+  useEffect(() => {
+    const check = () => setIsMobileView(window.innerWidth < 768)
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Sticky context bar: slides in once the route list reaches the top
+  useEffect(() => {
+    if (embedded) return
+    const onScroll = () => {
+      const el = document.getElementById('routes-list')
+      setShowBar(window.scrollY > (el ? el.offsetTop - 120 : 600))
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [embedded])
+
+  // While the context bar is shown, slide the tall fixed SiteNav out of the way
+  // so they never half-overlap — the slim bar takes over as the header.
+  useEffect(() => {
+    if (embedded) return
+    const nav = document.querySelector('.nav')
+    if (!nav) return
+    nav.style.transition = 'transform .3s cubic-bezier(.22,.68,0,1)'
+    nav.style.transform = showBar ? 'translateY(-105%)' : ''
+    return () => { nav.style.transform = ''; nav.style.transition = '' }
+  }, [showBar, embedded])
+
+  // Lock body scroll while the sheet or share modal is open (iOS background-scroll fix)
+  useEffect(() => {
+    const lock = !!(sheetId || shareRoute)
+    document.body.style.overflow = lock ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [sheetId, shareRoute])
 
   function patch(id, changes) {
     setRoutes(prev => prev.map(r => r.id === id ? { ...r, ...(typeof changes === 'function' ? changes(r) : changes) } : r))
@@ -94,15 +146,28 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { patch(route.id, { submitting: false, error: data.error || 'Something went wrong.' }); return }
+      // Remember the contact so return visits prefill + pre-mark their cards
+      try { localStorage.setItem(CONTACT_KEY, JSON.stringify({ name, email, phone: (route.formPhone || '').trim(), car: (route.formCar || '').trim() })) } catch {}
       patch(route.id, {
         submitting: false, showForm: false, interested: true, error: null,
         interested_count: typeof data.interested_count === 'number' ? data.interested_count : route.interested_count + 1,
       })
+      setSheetId(null)
     } catch { patch(route.id, { submitting: false, error: 'Network error. Please try again.' }) }
   }
 
   function scrollToRoutes() {
     document.getElementById('routes-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // Native share sheet on iOS/Android; falls back to the modal on desktop
+  function shareInterest(r) {
+    const text = `I'm locked in for Canvas Routes: ${r.name} · ${r.month_label} 🏁`
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({ text, url: 'https://canvasroutes.com/routes' }).catch(() => {})
+    } else {
+      setShareRoute(r); setCopied(false)
+    }
   }
 
   function copyShare() {
@@ -117,6 +182,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   }
 
   const myInterestCount = routes.filter(r => r.interested).length
+  const sheetRoute = routes.find(r => r.id === sheetId) || null
   const heroBg = '#0F1E14', heroText = '#F5F1EC', heroMuted = 'rgba(245,241,236,0.55)'
   const PADX = embedded ? '0px' : 'clamp(1.5rem,4vw,3rem)' // portal supplies its own gutter
 
@@ -157,6 +223,14 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-maprow { border:0.5px solid rgba(0,0,0,0.07); background:#fff; padding:14px 18px; cursor:pointer; transition:border-color .2s, background .2s; border-left:3px solid transparent; }
         .rt-maprow:hover { background:#faf9f7; border-color:rgba(197,168,130,0.4); }
         .rt-maprow-active { border-left-color:#c5a882 !important; background:#faf9f7; }
+        @keyframes rtSheetUp { from { transform:translateY(100%);} to { transform:translateY(0);} }
+        .rt-sheet-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.55); backdrop-filter:blur(3px); z-index:1100; animation:rtFadeIn .2s ease forwards; }
+        .rt-sheet { position:fixed; left:0; right:0; bottom:0; z-index:1101; background:#F5F1EC; border-radius:18px 18px 0 0; max-height:88dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:10px 20px calc(24px + env(safe-area-inset-bottom)); animation:rtSheetUp .32s cubic-bezier(.22,.68,0,1) forwards; box-shadow:0 -8px 40px rgba(0,0,0,0.25); }
+        .rt-sheet-handle { width:36px; height:4px; border-radius:99px; background:rgba(0,0,0,0.15); margin:6px auto 14px; }
+        @media (min-width:769px) {
+          .rt-sheet { left:50%; right:auto; bottom:auto; top:50%; width:460px; max-height:82vh; transform:translate(-50%,-50%); border-radius:4px; padding:28px 32px 32px; animation:rtFadeIn .25s ease forwards; }
+          .rt-sheet-handle { display:none; }
+        }
         .rt-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.7); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px; animation:rtFadeIn .2s ease forwards; }
         .rt-modal { background:#F5F1EC; padding:40px; max-width:420px; width:100%; border:0.5px solid rgba(0,0,0,0.1); animation:rtFadeUp .3s cubic-bezier(.22,.68,0,1.1) forwards; }
         @media (max-width:768px) {
@@ -165,6 +239,21 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           .rt-modal { padding:28px 22px; }
         }
       `}</style>
+
+      {/* ── STICKY CONTEXT BAR (mobile-first, slides over the tall nav) ── */}
+      {!embedded && (
+        <div onClick={scrollToRoutes} role="button" aria-label="Back to routes"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 102, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: 'env(safe-area-inset-top) clamp(1rem,4vw,3rem) 0', transform: showBar ? 'translateY(0)' : 'translateY(-110%)', transition: 'transform .3s cubic-bezier(.22,.68,0,1)', cursor: 'pointer' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', gap: '12px' }}>
+            <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '16px', color: '#F5F1EC', whiteSpace: 'nowrap' }}>
+              Upcoming Routes <span style={{ color: ACCENT }}>· {routes.length}</span>
+            </span>
+            <span style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: ACCENT, whiteSpace: 'nowrap' }}>
+              {myInterestCount} registered ↑
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Compact header for the members-portal embed */}
       {embedded && (
@@ -206,30 +295,66 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       </div>
       )}
 
-      {/* ── HOW IT WORKS ── */}
+      {/* ── SEASON STRIP — completed routes + what's gathering ── */}
       {!embedded && (
-      <div style={{ background: '#fff', borderBottom: '0.5px solid rgba(0,0,0,0.07)', padding: '56px clamp(1.5rem,4vw,3rem)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: ACCENT, marginBottom: '12px' }}>How It Works</div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(1.8rem,3vw,2.4rem)', fontWeight: 300, color: '#1a1a1a', margin: '0 0 40px 0' }}>Routes launch when the crew is ready.</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 0, border: '0.5px solid rgba(0,0,0,0.07)' }}>
-            {[
-              ['01', 'Express Interest', "Browse the upcoming routes and register your interest with your name and email. No payment, no commitment — just a signal that you're in."],
-              ['02', 'We Hit Critical Mass', 'Each route has a minimum threshold. Once enough drivers are registered, the route officially launches. The progress bar on each card shows exactly where we stand.'],
-              ['03', 'You Get Notified', 'The moment a route launches, everyone on the interest list gets an email with full details — meeting point, route, convoy rules, and how to officially register your spot.'],
-              ['04', 'You Show Up', 'Arrive at the meeting point, meet the crew, and drive. Each route has a per-car fee determined by the route — length, planned stops, overnight stays, and logistics all factor in. Pricing is confirmed in the launch email.'],
-            ].map(([num, title, body], i, arr) => (
-              <div key={num} style={{ padding: '32px', borderRight: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
-                <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '3rem', fontWeight: 300, color: 'rgba(197,168,130,0.3)', lineHeight: 1, marginBottom: '20px' }}>{num}</div>
-                <h3 style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', margin: '0 0 10px 0', letterSpacing: '0.04em' }}>{title}</h3>
-                <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.8, margin: 0, fontWeight: 300 }}>{body}</p>
+        <div style={{ background: '#EDE8E1', borderBottom: '0.5px solid rgba(0,0,0,0.06)', padding: `18px ${PADX}` }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#8a7a5c', marginBottom: '10px' }}>2026 Season · So Far</div>
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px' }}>
+              {PAST_ROUTES.map(p => (
+                <div key={p.name} style={{ flexShrink: 0, background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', padding: '10px 16px', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '15px', color: '#1a1a1a', lineHeight: 1.2 }}>{p.name}</div>
+                  <div style={{ fontSize: '10px', color: '#45643c', letterSpacing: '0.06em', marginTop: '3px' }}>
+                    ✓ Ran · {p.cars} cars <span style={{ color: '#aaa' }}>— target {p.target}</span>
+                  </div>
+                </div>
+              ))}
+              <div style={{ flexShrink: 0, background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.35)', padding: '10px 16px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#8a6535', letterSpacing: '0.04em' }}>{routes.length} routes gathering interest →</span>
               </div>
-            ))}
+            </div>
           </div>
-          <p style={{ fontSize: '11px', color: '#bbb', margin: '20px 0 0 0', lineHeight: 1.7, maxWidth: '680px' }}>Per-car fees are set per route based on length, stops, and overnight stays — exact pricing is confirmed in the launch email. Routes that don't reach their threshold by 30 days before the planned date are postponed to a future season.</p>
+        </div>
+      )}
+
+      {/* ── HOW IT WORKS — accordion on mobile, always open on desktop ── */}
+      {!embedded && (
+      <div style={{ background: '#fff', borderBottom: '0.5px solid rgba(0,0,0,0.07)', padding: isMobileView ? '24px clamp(1.5rem,4vw,3rem)' : '56px clamp(1.5rem,4vw,3rem)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <button type="button" onClick={isMobileView ? () => setHowOpen(o => !o) : undefined}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: isMobileView ? 'pointer' : 'default', fontFamily: 'inherit', minHeight: isMobileView ? '44px' : undefined }}>
+            <div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: ACCENT, marginBottom: '12px' }}>How It Works</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(1.8rem,3vw,2.4rem)', fontWeight: 300, color: '#1a1a1a', margin: (!isMobileView || howOpen) ? '0 0 40px 0' : 0 }}>Routes launch when the crew is ready.</h2>
+            </div>
+            {isMobileView && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round"
+                style={{ flexShrink: 0, transform: howOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s' }}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            )}
+          </button>
+          {(!isMobileView || howOpen) && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 0, border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                {[
+                  ['01', 'Express Interest', "Browse the upcoming routes and register your interest with your name and email. No payment, no commitment — just a signal that you're in."],
+                  ['02', 'We Hit Critical Mass', 'Each route has a minimum threshold. Once enough drivers are registered, the route officially launches. The progress bar on each card shows exactly where we stand.'],
+                  ['03', 'You Get Notified', 'The moment a route launches, everyone on the interest list gets an email with full details — meeting point, route, convoy rules, and how to officially register your spot.'],
+                  ['04', 'You Show Up', 'Arrive at the meeting point, meet the crew, and drive. Each route has a per-car fee determined by the route — length, planned stops, overnight stays, and logistics all factor in. Pricing is confirmed in the launch email.'],
+                ].map(([num, title, body], i, arr) => (
+                  <div key={num} style={{ padding: '32px', borderRight: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '3rem', fontWeight: 300, color: 'rgba(197,168,130,0.3)', lineHeight: 1, marginBottom: '20px' }}>{num}</div>
+                    <h3 style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', margin: '0 0 10px 0', letterSpacing: '0.04em' }}>{title}</h3>
+                    <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.8, margin: 0, fontWeight: 300 }}>{body}</p>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: '11px', color: '#bbb', margin: '20px 0 0 0', lineHeight: 1.7, maxWidth: '680px' }}>Per-car fees are set per route based on length, stops, and overnight stays — exact pricing is confirmed in the launch email. Routes that don't reach their threshold by 30 days before the planned date are postponed to a future season.</p>
+            </>
+          )}
         </div>
       </div>
-
       )}
 
       {/* ── MEMBERSHIP NUDGE / MEMBER BADGE ── */}
@@ -342,59 +467,12 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
                           <CheckIcon /><span style={{ fontSize: '10px', color: '#7B5B2E', letterSpacing: '0.18em', textTransform: 'uppercase' }}>You're on the list</span>
                         </div>
-                        <button onClick={() => { setShareRoute(r); setCopied(false) }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', padding: '2px 4px' }} aria-label="Share">↗</button>
+                        <button onClick={() => shareInterest(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', padding: '8px 10px' }} aria-label="Share">↗</button>
                       </div>
                     ) : r.launched ? (
                       <div style={{ padding: '12px 14px', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', textAlign: 'center' }}>Route launched — check your email</div>
-                    ) : !r.showForm ? (
-                      <button onClick={() => patch(r.id, { showForm: true, error: null })} className="rt-btn">Express Interest</button>
                     ) : (
-                      <div className="rt-form">
-                        <input type="text" placeholder="Your name" value={r.formName} onChange={e => patch(r.id, { formName: e.target.value, error: null })} className="rt-input" />
-                        <input type="email" inputMode="email" placeholder="Your email" value={r.formEmail} onChange={e => patch(r.id, { formEmail: e.target.value, error: null })} className="rt-input" />
-                        <input type="tel" inputMode="tel" placeholder="Phone (optional)" value={r.formPhone} onChange={e => patch(r.id, { formPhone: e.target.value })} className="rt-input" />
-                        <input type="text" placeholder="Car — year, make, model (optional)" value={r.formCar} onChange={e => patch(r.id, { formCar: e.target.value })} className="rt-input" />
-
-                        {/* Trip preferences */}
-                        <select className="rt-input" value={r.formBudget} onChange={e => patch(r.id, { formBudget: e.target.value })}>
-                          <option value="">Budget per car (optional)</option>
-                          {BUDGET_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                        <input type="text" placeholder="Preferred dates (optional)" value={r.formDates} onChange={e => patch(r.id, { formDates: e.target.value })} className="rt-input" />
-                        {(r.trip_type === 'overnight' || r.trip_type === 'multi_day') && (
-                          <select className="rt-input" value={r.formHotel} onChange={e => patch(r.id, { formHotel: e.target.value })}>
-                            <option value="">Hotel preference (optional)</option>
-                            {HOTEL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                        )}
-                        <div style={{ marginBottom: '10px' }}>
-                          <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want</div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {ACTIVITY_OPTIONS.map(a => {
-                              const on = (r.formActivities || []).includes(a)
-                              return (
-                                <button type="button" key={a}
-                                  onClick={() => patch(r.id, s => ({ formActivities: on ? s.formActivities.filter(x => x !== a) : [...(s.formActivities || []), a] }))}
-                                  style={{ fontSize: '10px', letterSpacing: '0.03em', padding: '6px 10px', border: `0.5px solid ${on ? ACCENT : 'rgba(0,0,0,0.15)'}`, background: on ? 'rgba(197,168,130,0.12)' : 'transparent', color: on ? '#8a6535' : '#888', cursor: 'pointer', fontFamily: 'inherit' }}>
-                                  {a}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                        <textarea placeholder="Anything else? (optional)" value={r.formNotes} onChange={e => patch(r.id, { formNotes: e.target.value })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical', marginBottom: '12px' }} maxLength={500} />
-                        {!isMember && (
-                          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px', cursor: 'pointer' }}>
-                            <input type="checkbox" checked={!!r.formMembership} onChange={e => patch(r.id, { formMembership: e.target.checked })} style={{ cursor: 'pointer', accentColor: ACCENT, marginTop: '1px', flexShrink: 0 }} />
-                            <span style={{ fontSize: '11px', color: '#999', lineHeight: 1.5, letterSpacing: '0.02em' }}>Add me to the membership waitlist</span>
-                          </label>
-                        )}
-                        {r.error && <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '10px' }}>{r.error}</div>}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button onClick={() => submitInterest(r)} disabled={r.submitting} className="rt-btn" style={{ flex: 1, padding: '13px' }}>{r.submitting ? 'Saving…' : 'Lock In'}</button>
-                          <button onClick={() => patch(r.id, { showForm: false, error: null })} className="rt-ghost" aria-label="Cancel">✕</button>
-                        </div>
-                      </div>
+                      <button onClick={() => { patch(r.id, { error: null }); setSheetId(r.id) }} className="rt-btn">Express Interest</button>
                     )}
                   </div>
                 </div>
@@ -429,6 +507,69 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 )
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EXPRESS INTEREST — bottom sheet on mobile, centered dialog on desktop ── */}
+      {sheetRoute && (
+        <div className="rt-sheet-backdrop" onClick={() => setSheetId(null)}>
+          <div className="rt-sheet" onClick={e => e.stopPropagation()}>
+            <div className="rt-sheet-handle" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '18px' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: ACCENT, marginBottom: '8px' }}>Express Interest</div>
+                <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '24px', fontWeight: 300, color: '#1a1a1a', margin: 0, lineHeight: 1.15 }}>{sheetRoute.name}</h2>
+                <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{sheetRoute.month_label} · {sheetRoute.destination}</div>
+              </div>
+              <button onClick={() => setSheetId(null)} aria-label="Close"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '20px', lineHeight: 1, padding: '10px', margin: '-10px -10px 0 0', flexShrink: 0 }}>✕</button>
+            </div>
+
+            <input type="text" placeholder="Your name" value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
+            <input type="email" inputMode="email" placeholder="Your email" value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
+            <input type="tel" inputMode="tel" placeholder="Phone (optional)" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value })} className="rt-input" />
+            <input type="text" placeholder="Car — year, make, model (optional)" value={sheetRoute.formCar} onChange={e => patch(sheetRoute.id, { formCar: e.target.value })} className="rt-input" />
+
+            {/* Trip preferences */}
+            <select className="rt-input" value={sheetRoute.formBudget} onChange={e => patch(sheetRoute.id, { formBudget: e.target.value })}>
+              <option value="">Budget per car (optional)</option>
+              {BUDGET_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+            <input type="text" placeholder="Preferred dates (optional)" value={sheetRoute.formDates} onChange={e => patch(sheetRoute.id, { formDates: e.target.value })} className="rt-input" />
+            {(sheetRoute.trip_type === 'overnight' || sheetRoute.trip_type === 'multi_day') && (
+              <select className="rt-input" value={sheetRoute.formHotel} onChange={e => patch(sheetRoute.id, { formHotel: e.target.value })}>
+                <option value="">Hotel preference (optional)</option>
+                {HOTEL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            )}
+            <div style={{ margin: '4px 0 10px' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {ACTIVITY_OPTIONS.map(a => {
+                  const on = (sheetRoute.formActivities || []).includes(a)
+                  return (
+                    <button type="button" key={a}
+                      onClick={() => patch(sheetRoute.id, s => ({ formActivities: on ? s.formActivities.filter(x => x !== a) : [...(s.formActivities || []), a] }))}
+                      style={{ fontSize: '11px', letterSpacing: '0.03em', padding: '8px 12px', minHeight: '36px', border: `0.5px solid ${on ? ACCENT : 'rgba(0,0,0,0.15)'}`, background: on ? 'rgba(197,168,130,0.12)' : 'transparent', color: on ? '#8a6535' : '#888', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {a}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <textarea placeholder="Anything else? (optional)" value={sheetRoute.formNotes} onChange={e => patch(sheetRoute.id, { formNotes: e.target.value })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical' }} maxLength={500} />
+            {!isMember && (
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '6px 0 14px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={!!sheetRoute.formMembership} onChange={e => patch(sheetRoute.id, { formMembership: e.target.checked })} style={{ cursor: 'pointer', accentColor: ACCENT, marginTop: '1px', flexShrink: 0 }} />
+                <span style={{ fontSize: '11px', color: '#999', lineHeight: 1.5, letterSpacing: '0.02em' }}>Add me to the membership waitlist</span>
+              </label>
+            )}
+            {sheetRoute.error && <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '10px' }}>{sheetRoute.error}</div>}
+            <button onClick={() => submitInterest(sheetRoute)} disabled={sheetRoute.submitting} className="rt-btn" style={{ marginTop: '4px' }}>
+              {sheetRoute.submitting ? 'Saving…' : 'Lock In'}
+            </button>
+            <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>No payment, no commitment — just a signal that you're in.</div>
           </div>
         </div>
       )}
