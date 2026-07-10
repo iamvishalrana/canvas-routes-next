@@ -274,9 +274,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         </div>
       )}
 
-      {/* ── HERO ── */}
+      {/* ── HERO — convoy aerial with dark scrim (event-hero pattern) ── */}
       {!embedded && (
-      <div style={{ background: heroBg, padding: 'clamp(96px,11vw,132px) clamp(1.5rem,4vw,3rem) clamp(48px,7vw,80px)', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: heroBg, backgroundImage: "url('/convoy-hero.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 40%', padding: 'clamp(96px,11vw,132px) clamp(1.5rem,4vw,3rem) clamp(48px,7vw,80px)', position: 'relative', overflow: 'hidden' }}>
+        {/* Dark overlay so cream/gold text stays readable over the busy image */}
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,20,12,0.78)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(197,168,130,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(197,168,130,0.04) 1px, transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
         <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
           <div className="rt-hero-1" style={{ fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, opacity: 0.7, marginBottom: '20px', fontWeight: 400 }}>Canvas Routes · 2026 Season</div>
