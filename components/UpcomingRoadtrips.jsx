@@ -20,7 +20,8 @@ const CONTACT_KEY = 'cr_routes_contact' // returning-visitor prefill + registere
 const TRIP_LABELS = { overnight: 'Overnight', multi_day: 'Multi-Day' } // 'day' shows no badge
 const BUDGET_OPTIONS   = ['Under $250', '$250–500', '$500–1000', '$1000–2000', '$2000+']
 const HOTEL_OPTIONS    = ['No preference', 'Budget-friendly', 'Mid-range', 'Boutique / Luxury', 'Camping / Rustic']
-const ACTIVITY_OPTIONS = ['Scenic drives', 'Hiking', 'Local food', 'Fine dining', 'Photography', 'Sightseeing', 'Nightlife', 'Relaxing']
+// Generic fallback — routes carry their own area-specific activity_options
+const ACTIVITY_OPTIONS = ['Scenic drives', 'Local food', 'Fine dining', 'Photography', 'Sightseeing', 'Nightlife', 'Relaxing']
 
 function PinIcon() {
   return <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -572,7 +573,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <div style={{ margin: '4px 0 10px' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {ACTIVITY_OPTIONS.map(a => {
+                {(sheetRoute.activity_options?.length ? sheetRoute.activity_options : ACTIVITY_OPTIONS).map(a => {
                   const on = (sheetRoute.formActivities || []).includes(a)
                   return (
                     <button type="button" key={a}

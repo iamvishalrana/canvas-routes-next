@@ -9,7 +9,9 @@ const TRIP_TYPES = [
 ]
 const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
 
-const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', description: '' }
+const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', description: '' }
+
+const splitActs = v => (v || '').split(',').map(x => x.trim()).filter(Boolean)
 
 function Field({ label, children }) {
   return <div style={{ minWidth: 0 }}><L>{label}</L>{children}</div>
@@ -64,7 +66,7 @@ export default function RoadtripsAdminClient() {
     try {
       const res = await fetch('/api/admin/upcoming-routes', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, target_count: parseInt(form.target_count, 10) || 12, sort_order: parseInt(form.sort_order, 10) || routes.length + 1 }),
+        body: JSON.stringify({ ...form, activity_options: splitActs(form.activity_options), target_count: parseInt(form.target_count, 10) || 12, sort_order: parseInt(form.sort_order, 10) || routes.length + 1 }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Failed to add.'); return }
@@ -84,6 +86,7 @@ export default function RoadtripsAdminClient() {
       price_per_car: r.price_per_car != null ? String(r.price_per_car) : '',
       max_cars: r.max_cars != null ? String(r.max_cars) : '',
       itinerary: r.itinerary || '',
+      activity_options: (r.activity_options || []).join(', '),
       description: r.description || '',
     })
   }
@@ -93,7 +96,7 @@ export default function RoadtripsAdminClient() {
     try {
       const res = await fetch(`/api/admin/upcoming-routes/${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...editForm, target_count: parseInt(editForm.target_count, 10), sort_order: parseInt(editForm.sort_order, 10) }),
+        body: JSON.stringify({ ...editForm, activity_options: splitActs(editForm.activity_options), target_count: parseInt(editForm.target_count, 10), sort_order: parseInt(editForm.sort_order, 10) }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setEditErr(data.error || 'Failed to save.'); return }
@@ -240,6 +243,10 @@ export default function RoadtripsAdminClient() {
           <L>Itinerary (optional — shown on the card, expandable)</L>
           <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.itinerary} onChange={e => setForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
         </div>
+        <div style={{ marginBottom: '0.6rem' }}>
+          <L>Activity options (comma-separated — asked on the interest form)</L>
+          <input style={inp} value={form.activity_options} onChange={e => setForm(p => ({ ...p, activity_options: e.target.value }))} placeholder="Scenic drives, Whale watching, Local food…" maxLength={500} />
+        </div>
         <div style={{ marginBottom: '0.75rem' }}>
           <L>Description</L>
           <textarea style={{ ...inp, height: '72px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} maxLength={600} placeholder="Short evocative description shown on the card." />
@@ -364,6 +371,10 @@ export default function RoadtripsAdminClient() {
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Itinerary</L>
                       <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.itinerary} onChange={e => setEditForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
+                    </div>
+                    <div style={{ marginBottom: '0.6rem' }}>
+                      <L>Activity options (comma-separated)</L>
+                      <input style={inp} value={editForm.activity_options} onChange={e => setEditForm(p => ({ ...p, activity_options: e.target.value }))} placeholder="Scenic drives, Whale watching, Local food…" maxLength={500} />
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Description</L>

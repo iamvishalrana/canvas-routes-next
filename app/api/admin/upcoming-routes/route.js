@@ -40,6 +40,9 @@ export async function POST(request) {
   const tripType = ['day', 'overnight', 'multi_day'].includes(body.trip_type) ? body.trip_type : 'day'
   const price = body.price_per_car === '' || body.price_per_car == null ? null : (Number.isFinite(parseFloat(body.price_per_car)) ? parseFloat(body.price_per_car) : null)
   const maxCars = parseInt(body.max_cars, 10)
+  const activityOptions = Array.isArray(body.activity_options)
+    ? body.activity_options.filter(a => typeof a === 'string' && a.trim()).slice(0, 12).map(a => a.trim().slice(0, 40))
+    : []
 
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('upcoming_routes').insert({
@@ -56,6 +59,7 @@ export async function POST(request) {
     price_per_car: price,
     max_cars: Number.isFinite(maxCars) && maxCars > 0 ? maxCars : null,
     itinerary: (body.itinerary || '').trim(),
+    activity_options: activityOptions,
     is_active: body.is_active !== false,
   }).select('*').single()
   if (error) {
