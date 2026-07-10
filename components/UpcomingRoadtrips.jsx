@@ -101,6 +101,10 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     } catch { patch(route.id, { submitting: false, error: 'Network error. Please try again.' }) }
   }
 
+  function scrollToRoutes() {
+    document.getElementById('routes-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   function copyShare() {
     if (!shareRoute) return
     navigator.clipboard?.writeText(`I'm locked in for Canvas Routes: ${shareRoute.name} · ${shareRoute.month_label} — canvasroutes.com`)
@@ -130,6 +134,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-hero-sub { opacity:0; animation:rtFadeIn .7s ease .6s forwards; }
         .rt-hero-meta { opacity:0; animation:rtFadeIn .7s ease .85s forwards; }
         .rt-hero-divider { display:block; height:1px; background:rgba(197,168,130,0.4); margin:28px 0; width:0; animation:rtHeroDivider .8s ease .5s forwards; }
+        @keyframes rtCtaShimmer { 0% { left:-80%; opacity:0; } 15% { opacity:1; } 85% { opacity:1; } 100% { left:130%; opacity:0; } }
+        .rt-hero-cta { position:relative; overflow:hidden; display:inline-block; min-height:44px; padding:13px 34px; background:#F5F1EC; color:#0F1E14; border:none; font-family:inherit; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; transition:transform .1s; }
+        .rt-hero-cta:active { transform:scale(0.98); }
+        .rt-hero-cta::after { content:''; position:absolute; top:-10%; left:-80%; width:40%; height:120%; background:linear-gradient(105deg, transparent 10%, rgba(197,168,130,0.35) 50%, transparent 90%); transform:skewX(-10deg); animation:rtCtaShimmer .9s cubic-bezier(.4,0,.2,1) 1.6s forwards; pointer-events:none; }
+        @media (max-width:480px) { .rt-hero-cta { display:block; width:100%; text-align:center; } }
         .rt-card { background:#fff; border:0.5px solid rgba(0,0,0,0.07); display:flex; flex-direction:column; overflow:hidden; opacity:0; transform:translateY(24px); transition:box-shadow .35s ease, transform .35s ease, border-color .35s ease; animation:rtFadeUp .65s cubic-bezier(.22,.68,0,1.1) forwards; }
         @media (hover:hover) { .rt-card:hover { box-shadow:0 12px 48px rgba(0,0,0,0.1), 0 2px 8px rgba(197,168,130,0.12); transform:translateY(-4px); border-color:rgba(197,168,130,0.4); } .rt-card:hover .rt-card-img { transform:scale(1.04); } }
         .rt-card-img { transition:transform .6s ease; }
@@ -182,11 +191,16 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           </h1>
           <span className="rt-hero-divider" />
           <p className="rt-hero-sub" style={{ fontSize: '14px', color: heroMuted, maxWidth: '520px', lineHeight: 1.85, fontWeight: 300 }}>{INTRO}</p>
-          <div className="rt-hero-meta" style={{ display: 'flex', gap: '40px', marginTop: '36px', flexWrap: 'wrap' }}>
+          <div className="rt-hero-meta" style={{ display: 'flex', gap: '40px', marginTop: '36px', flexWrap: 'wrap', alignItems: 'center' }}>
             <div>
               <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '2.4rem', fontWeight: 300, color: heroText, lineHeight: 1 }}>{routes.length}</div>
               <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: heroMuted, marginTop: '4px' }}>Routes Planned</div>
             </div>
+          </div>
+          <div className="rt-hero-meta" style={{ marginTop: '32px' }}>
+            <button onClick={scrollToRoutes} className="rt-hero-cta">
+              View Routes ↓
+            </button>
           </div>
         </div>
       </div>
@@ -236,7 +250,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       ))}
 
       {/* ── VIEW TOGGLE ── */}
-      <div style={{ background: embedded ? 'transparent' : '#F5F1EC', borderBottom: '0.5px solid rgba(0,0,0,0.08)', padding: `20px ${PADX}`, marginTop: embedded ? '0.5rem' : 0 }}>
+      <div id="routes-list" style={{ background: embedded ? 'transparent' : '#F5F1EC', borderBottom: '0.5px solid rgba(0,0,0,0.08)', padding: `20px ${PADX}`, marginTop: embedded ? '0.5rem' : 0, scrollMarginTop: '84px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button onClick={() => setView('grid')} className={`rt-pill${view === 'grid' ? ' rt-pill-active' : ''}`}>Grid</button>
           <button onClick={() => setView('map')} className={`rt-pill${view === 'map' ? ' rt-pill-active' : ''}`}>Map</button>
