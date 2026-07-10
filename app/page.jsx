@@ -414,6 +414,7 @@ export default function Home() {
         ctaLabel={membershipLive ? 'Become a Member' : 'Join'}
         links={[
           { href:'#about',   label:'About Us', onClick: e => { e.preventDefault(); smoothScroll('about') } },
+          { href:'/routes',  label:'Routes' },
           { href:'#events',  label:'Events',   onClick: e => { e.preventDefault(); smoothScroll('events') } },
           { href:'#contact', label:'Contact',  onClick: e => { e.preventDefault(); smoothScroll('contact') } },
           { href:'/faq',     label:'FAQ' },
@@ -694,6 +695,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:"1rem",flexWrap:"wrap"}}>
+                  <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",background:"#0F1E14",color:"#F5F1EC"}}>2026 Routes — Lock In →</Link>
                   <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
                   <Link href="/routes/past" style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#555",textDecoration:"none",borderBottom:"0.5px solid rgba(0,0,0,0.25)",paddingBottom:"1px"}}>Past Routes →</Link>
                 </div>

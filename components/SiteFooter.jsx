@@ -6,7 +6,7 @@ const COLS = [
     heading: 'Explore',
     links: [
       { label: 'Membership',  href: '/membership' },
-      { label: 'Routes',      href: '/#routes' },
+      { label: 'Routes',      href: '/routes' },
       { label: 'Partners',    href: '/partners' },
       { label: 'FAQ',         href: '/faq' },
     ],
