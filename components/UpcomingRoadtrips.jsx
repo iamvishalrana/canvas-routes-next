@@ -153,6 +153,8 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   const [animated, setAnimated]   = useState(false)
   const [copied, setCopied]       = useState(false)
   const [sheetId, setSheetId]     = useState(null)  // route id with the interest sheet open
+  const [sheetSuccess, setSheetSuccess] = useState(false) // show in-sheet confirmation after submit
+  const hpRef = useRef(null) // honeypot
   const [showBar, setShowBar]     = useState(false) // sticky context bar past the hero
   const [howOpen, setHowOpen]     = useState(false) // How-It-Works accordion (mobile)
   const [isMobileView, setIsMobileView] = useState(false)
@@ -224,11 +226,23 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     return () => { nav.style.transform = ''; nav.style.transition = '' }
   }, [showBar, embedded])
 
-  // Lock body scroll while the sheet or share modal is open (iOS background-scroll fix)
+  // Lock body scroll while the sheet or share modal is open. iOS Safari
+  // ignores overflow:hidden alone — needs the position:fixed technique
+  // (same as the homepage popup), with scroll restored on close.
   useEffect(() => {
     const lock = !!(sheetId || shareRoute)
-    document.body.style.overflow = lock ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (!lock) return
+    const scrollY = window.scrollY
+    const body = document.body
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    return () => {
+      const top = body.style.top
+      body.style.overflow = ''; body.style.position = ''; body.style.top = ''; body.style.width = ''
+      if (top) window.scrollTo(0, -parseInt(top, 10))
+    }
   }, [sheetId, shareRoute])
 
   function patch(id, changes) {
@@ -257,6 +271,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           },
           membership_optin: !isMember && !!route.formMembership,
           is_member: isMember,
+          _hp: hpRef.current?.value || undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -270,7 +285,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         submitting: false, showForm: false, interested: true, error: null,
         interested_count: typeof data.interested_count === 'number' ? data.interested_count : route.interested_count + 1,
       })
-      setSheetId(null)
+      setSheetSuccess(true) // sheet stays open showing the confirmation
     } catch { patch(route.id, { submitting: false, error: 'Network error. Please try again.' }) }
   }
 
@@ -354,7 +369,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           .rt-sheet { left:50%; right:auto; bottom:auto; top:50%; width:460px; max-height:82vh; transform:translate(-50%,-50%); border-radius:4px; padding:28px 32px 32px; animation:rtFadeIn .25s ease forwards; }
           .rt-sheet-handle { display:none; }
         }
-        .rt-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.7); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px; animation:rtFadeIn .2s ease forwards; }
+        .rt-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.7); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:1200; padding:16px; animation:rtFadeIn .2s ease forwards; }
         .rt-modal { background:#F5F1EC; padding:40px; max-width:420px; width:100%; border:0.5px solid rgba(0,0,0,0.1); animation:rtFadeUp .3s cubic-bezier(.22,.68,0,1.1) forwards; }
         .rt-map-canvas { height:580px; }
         @media (max-width:768px) {
@@ -616,7 +631,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                     ) : r.launched ? (
                       <div style={{ padding: '12px 14px', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', textAlign: 'center' }}>Route launched — check your email</div>
                     ) : (
-                      <button onClick={() => { patch(r.id, { error: null }); setSheetId(r.id) }} className="rt-btn">Express Interest</button>
+                      <button onClick={() => { patch(r.id, { error: null }); setSheetSuccess(false); setSheetId(r.id) }} className="rt-btn">Express Interest</button>
                     )}
                   </div>
                 </div>
@@ -664,7 +679,24 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '20px', lineHeight: 1, padding: '10px', margin: '-10px -10px 0 0', flexShrink: 0 }}>✕</button>
             </div>
 
-            {isMember && profileMissing.length > 0 ? (
+            {sheetSuccess && sheetRoute.interested ? (
+              /* In-sheet confirmation — closing abruptly on success felt broken
+                 when the card was scrolled out of view. */
+              <div className="rt-success" style={{ textAlign: 'center', padding: '10px 0 4px' }}>
+                <div style={{ width: '54px', height: '54px', borderRadius: '50%', border: '1px solid rgba(197,168,130,0.5)', background: 'rgba(197,168,130,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '23px', fontWeight: 300, color: '#1a1a1a', marginBottom: '8px' }}>You're on the list.</div>
+                <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.75, margin: '0 0 20px', padding: '0 8px' }}>
+                  {sheetRoute.interested_count} of {sheetRoute.target_count} drivers in — we'll email you the moment {sheetRoute.name} launches.
+                </p>
+                <button onClick={() => shareInterest(sheetRoute)} className="rt-btn">Tell your crew ↗</button>
+                <button onClick={() => { setSheetId(null); setSheetSuccess(false) }}
+                  style={{ display: 'block', width: '100%', marginTop: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: '12px', minHeight: '44px', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
+                  Done
+                </button>
+              </div>
+            ) : isMember && profileMissing.length > 0 ? (
               /* Member with an incomplete profile — finish it first so every
                  registration carries full, reliable info. */
               <div>
@@ -681,10 +713,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>Takes under a minute — then come back and add your name.</div>
               </div>
             ) : (
-            <>
-            <input type="text" placeholder="Your name" value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
-            <input type="email" inputMode="email" placeholder="Your email" value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
-            <input type="tel" inputMode="tel" placeholder="Phone (optional)" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value })} className="rt-input" />
+            <form onSubmit={e => { e.preventDefault(); submitInterest(sheetRoute) }}>
+            <input ref={hpRef} type="text" name="cr_routes_field" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }} />
+            <input type="text" name="name" autoComplete="name" placeholder="Your name" value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
+            <input type="email" name="email" inputMode="email" autoComplete="email" placeholder="Your email" value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
+            <input type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="Phone (optional)" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value })} className="rt-input" />
             <input type="text" placeholder="Car — year, make, model (optional)" value={sheetRoute.formCar} onChange={e => patch(sheetRoute.id, { formCar: e.target.value })} className="rt-input" />
 
             {/* Trip preferences */}
@@ -731,11 +764,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 )}
               </div>
             )}
-            <button onClick={() => submitInterest(sheetRoute)} disabled={sheetRoute.submitting} className="rt-btn" style={{ marginTop: '4px' }}>
-              {sheetRoute.submitting ? 'Saving…' : 'Add My Name'}
+            <button type="submit" disabled={sheetRoute.submitting} className="rt-btn" style={{ marginTop: '4px' }}>
+              {sheetRoute.submitting ? 'Adding you…' : 'Add My Name'}
             </button>
             <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>No payment, no commitment — just a signal that you're in.</div>
-            </>
+            </form>
             )}
           </div>
         </div>
