@@ -682,17 +682,17 @@ export default function ProfilePage() {
           ) : (
             /* ── Edit mode ── */
             <form onSubmit={saveProfile}>
-              <Field label="Email">
+              <Field label="Email *">
                 <input type="email" value={user?.email || ''} disabled
                   style={{ ...inp, background: 'rgba(0,0,0,0.02)', color: '#bbb', cursor: 'not-allowed', borderColor: 'rgba(0,0,0,0.08)' }} />
               </Field>
-              <Field label="Full Name">
+              <Field label="Full Name *">
                 <input className="cr-input" type="text" value={form.name}
                   onChange={e => setForm(p => ({ ...p, name: e.target.value.replace(/\b\w/g, c => c.toUpperCase()) }))}
                   maxLength={100} autoCapitalize="words" style={inp} />
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
-                <Field label="Phone">
+                <Field label="Phone *">
                   <input className="cr-input" type="tel" value={form.phone}
                     onChange={e => setForm(p => ({ ...p, phone: formatPhone(e.target.value) }))}
                     placeholder="+1 (514) 000-0000" maxLength={18} style={inp} />
@@ -704,7 +704,7 @@ export default function ProfilePage() {
                 </Field>
               </div>
 
-              <SectionDivider>Date of Birth</SectionDivider>
+              <SectionDivider>Date of Birth *</SectionDivider>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
                   <FieldLabel>Month</FieldLabel>
@@ -745,7 +745,7 @@ export default function ProfilePage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
                     {[['Year', 'year', true], ['Make', 'make', false], ['Model', 'model', false], ['Plate', 'license_plate', false], ['Paint', 'paint', false]].map(([label, field, isSelect]) => (
                       <div key={field}>
-                        <FieldLabel>{label}</FieldLabel>
+                        <FieldLabel>{label}{idx === 0 && ['year', 'make', 'model'].includes(field) ? ' *' : ''}</FieldLabel>
                         {isSelect ? (
                           <SelectWrap value={car[field]} onChange={e => updateCar(idx, field, e.target.value)}>
                             <option value="">Select</option>

@@ -63,6 +63,20 @@ export async function POST(request) {
   }
   if (!route) return Response.json({ error: 'That route is no longer available.' }, { status: 404 })
 
+  // If a guest submits with an email that belongs to a member account, don't
+  // register them anonymously — send them to log in so the registration is
+  // tied to their account (priority spots, prefilled profile, cross-device).
+  if (!isMember) {
+    const { data: memberMatch } = await supabase
+      .from('members').select('id').eq('email', email).maybeSingle()
+    if (memberMatch) {
+      return Response.json({
+        error: 'This email belongs to a Canvas Routes member account.',
+        member: true,
+      }, { status: 409 })
+    }
+  }
+
   // Idempotent per (route, email): update the name/opt-in if they resubmit.
   const { error: upsertErr } = await supabase
     .from('route_interest')

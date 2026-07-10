@@ -29,7 +29,7 @@ function CheckIcon() {
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 }
 
-export default function UpcomingRoadtrips({ isMember = false, memberName = '', memberEmail = '', memberPhone = '', memberCar = '', embedded = false }) {
+export default function UpcomingRoadtrips({ isMember = false, memberName = '', memberEmail = '', memberPhone = '', memberCar = '', profileMissing = [], embedded = false }) {
   const [routes, setRoutes]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [view, setView]           = useState('grid')
@@ -145,7 +145,10 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { patch(route.id, { submitting: false, error: data.error || 'Something went wrong.' }); return }
+      if (!res.ok) {
+        patch(route.id, { submitting: false, error: data.error || 'Something went wrong.', memberPrompt: !!data.member })
+        return
+      }
       // Remember the contact so return visits prefill + pre-mark their cards
       try { localStorage.setItem(CONTACT_KEY, JSON.stringify({ name, email, phone: (route.formPhone || '').trim(), car: (route.formCar || '').trim() })) } catch {}
       patch(route.id, {
@@ -160,11 +163,15 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     document.getElementById('routes-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  // One share message everywhere — native sheet, copy, and tweet
+  function shareText(r) {
+    return `I'm locked in for ${r.name} — ${r.month_label} 🏁 It launches once enough drivers are in. Lock in with me:`
+  }
+
   // Native share sheet on iOS/Android; falls back to the modal on desktop
   function shareInterest(r) {
-    const text = `I'm locked in for Canvas Routes: ${r.name} · ${r.month_label} 🏁`
     if (typeof navigator !== 'undefined' && navigator.share) {
-      navigator.share({ text, url: 'https://canvasroutes.com/routes' }).catch(() => {})
+      navigator.share({ text: shareText(r), url: 'https://canvasroutes.com/routes' }).catch(() => {})
     } else {
       setShareRoute(r); setCopied(false)
     }
@@ -172,13 +179,12 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
 
   function copyShare() {
     if (!shareRoute) return
-    navigator.clipboard?.writeText(`I'm locked in for Canvas Routes: ${shareRoute.name} · ${shareRoute.month_label} — canvasroutes.com`)
+    navigator.clipboard?.writeText(`${shareText(shareRoute)} canvasroutes.com/routes`)
     setCopied(true); setTimeout(() => setCopied(false), 1800)
   }
   function shareTwitter() {
     if (!shareRoute) return
-    const text = `I'm locked in for Canvas Routes: ${shareRoute.name} · ${shareRoute.month_label} 🏁`
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank')
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${shareText(shareRoute)} canvasroutes.com/routes`)}`, '_blank')
   }
 
   const myInterestCount = routes.filter(r => r.interested).length
@@ -526,6 +532,24 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '20px', lineHeight: 1, padding: '10px', margin: '-10px -10px 0 0', flexShrink: 0 }}>✕</button>
             </div>
 
+            {isMember && profileMissing.length > 0 ? (
+              /* Member with an incomplete profile — finish it first so every
+                 registration carries full, reliable info. */
+              <div>
+                <p style={{ fontSize: '13px', color: '#555', lineHeight: 1.75, margin: '0 0 14px' }}>
+                  Almost there — complete your member profile first, and we'll fill your registrations automatically from now on.
+                </p>
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', padding: '14px 16px', marginBottom: '18px' }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb', marginBottom: '8px' }}>Missing from your profile</div>
+                  {profileMissing.map(f => (
+                    <div key={f} style={{ fontSize: '12px', color: '#93333E', lineHeight: 1.9 }}>• {f} *</div>
+                  ))}
+                </div>
+                <a href="/members/profile" className="rt-btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>Complete my profile →</a>
+                <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>Takes under a minute — then come back and lock in.</div>
+              </div>
+            ) : (
+            <>
             <input type="text" placeholder="Your name" value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
             <input type="email" inputMode="email" placeholder="Your email" value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
             <input type="tel" inputMode="tel" placeholder="Phone (optional)" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value })} className="rt-input" />
@@ -565,11 +589,22 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <span style={{ fontSize: '11px', color: '#999', lineHeight: 1.5, letterSpacing: '0.02em' }}>Add me to the membership waitlist</span>
               </label>
             )}
-            {sheetRoute.error && <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '10px' }}>{sheetRoute.error}</div>}
+            {sheetRoute.error && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '11px', color: '#93333E', marginBottom: sheetRoute.memberPrompt ? '10px' : 0 }}>{sheetRoute.error}</div>
+                {sheetRoute.memberPrompt && (
+                  <a href="/members/login?redirect=/members/routes" className="rt-btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', padding: '12px' }}>
+                    Log in to register →
+                  </a>
+                )}
+              </div>
+            )}
             <button onClick={() => submitInterest(sheetRoute)} disabled={sheetRoute.submitting} className="rt-btn" style={{ marginTop: '4px' }}>
               {sheetRoute.submitting ? 'Saving…' : 'Lock In'}
             </button>
             <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>No payment, no commitment — just a signal that you're in.</div>
+            </>
+            )}
           </div>
         </div>
       )}
@@ -582,7 +617,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '26px', fontWeight: 300, color: '#1a1a1a', marginBottom: '6px' }}>{shareRoute.name}</h2>
             <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '28px', lineHeight: 1.7 }}>Let your crew know you're locked in for this drive.</p>
             <div style={{ background: '#EDE8E1', padding: '14px 16px', border: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '24px' }}>
-              <p style={{ fontSize: '11px', color: '#666', lineHeight: 1.65 }}>I'm locked in for Canvas Routes: {shareRoute.name} · {shareRoute.month_label}</p>
+              <p style={{ fontSize: '11px', color: '#666', lineHeight: 1.65 }}>{shareText(shareRoute)} canvasroutes.com/routes</p>
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <button onClick={copyShare} className="rt-btn" style={{ flex: 1, padding: '12px' }}>{copied ? 'Copied ✓' : 'Copy Text'}</button>
