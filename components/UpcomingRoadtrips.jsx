@@ -166,7 +166,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
 
   // One share message everywhere — native sheet, copy, and tweet
   function shareText(r) {
-    return `I'm locked in for ${r.name} — ${r.month_label} 🏁 It launches once enough drivers are in. Lock in with me:`
+    return `I put my name down for ${r.name} — ${r.month_label} 🏁 It launches once enough drivers are in. Add yours:`
   }
 
   // Native share sheet on iOS/Android; falls back to the modal on desktop
@@ -549,7 +549,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                   ))}
                 </div>
                 <a href="/members/profile" className="rt-btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>Complete my profile →</a>
-                <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>Takes under a minute — then come back and lock in.</div>
+                <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>Takes under a minute — then come back and add your name.</div>
               </div>
             ) : (
             <>
@@ -603,7 +603,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
               </div>
             )}
             <button onClick={() => submitInterest(sheetRoute)} disabled={sheetRoute.submitting} className="rt-btn" style={{ marginTop: '4px' }}>
-              {sheetRoute.submitting ? 'Saving…' : 'Lock In'}
+              {sheetRoute.submitting ? 'Saving…' : 'Add My Name'}
             </button>
             <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>No payment, no commitment — just a signal that you're in.</div>
             </>
@@ -618,7 +618,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           <div className="rt-modal" onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: ACCENT, marginBottom: '12px' }}>Share Route</div>
             <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '26px', fontWeight: 300, color: '#1a1a1a', marginBottom: '6px' }}>{shareRoute.name}</h2>
-            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '28px', lineHeight: 1.7 }}>Let your crew know you're locked in for this drive.</p>
+            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '28px', lineHeight: 1.7 }}>Let your crew know you've got your name down for this drive.</p>
             <div style={{ background: '#EDE8E1', padding: '14px 16px', border: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '24px' }}>
               <p style={{ fontSize: '11px', color: '#666', lineHeight: 1.65 }}>{shareText(shareRoute)} canvasroutes.com/routes</p>
             </div>

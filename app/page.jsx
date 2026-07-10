@@ -528,7 +528,7 @@ export default function Home() {
                 onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
                 onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
               >
-                View routes &amp; lock in →
+                See the 2026 routes →
               </a>
 
               {/* Soft dismiss */}
@@ -695,7 +695,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:"1rem",flexWrap:"wrap"}}>
-                  <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",background:"#0F1E14",color:"#F5F1EC"}}>2026 Routes — Lock In →</Link>
+                  <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",background:"#0F1E14",color:"#F5F1EC"}}>2026 Routes — Express Interest →</Link>
                   <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
                   <Link href="/routes/past" style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#555",textDecoration:"none",borderBottom:"0.5px solid rgba(0,0,0,0.25)",paddingBottom:"1px"}}>Past Routes →</Link>
                 </div>

@@ -5,15 +5,15 @@ export const metadata = {
   alternates: { canonical: 'https://canvasroutes.com/routes' },
   openGraph: {
     title: 'The 2026 Routes Are on the Table — Canvas Routes',
-    description: 'Charlevoix to the Cabot Trail — five drives from Montreal waiting for a crew. Lock in your interest; the route launches when enough drivers are in.',
+    description: 'Charlevoix to the Cabot Trail — five drives from Montreal waiting for a crew. Put your name down — each route launches when enough drivers are in.',
     url: 'https://canvasroutes.com/routes',
-    images: [{ url: 'https://canvasroutes.com/api/og?type=event&title=The+2026+Routes&date=Lock+In+Your+Interest&bg=/convoy-hero.jpg', width: 1200, height: 630, alt: 'The 2026 Routes — Canvas Routes' }],
+    images: [{ url: 'https://canvasroutes.com/api/og?type=event&title=The+2026+Routes&date=Express+Your+Interest&bg=/convoy-hero.jpg', width: 1200, height: 630, alt: 'The 2026 Routes — Canvas Routes' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'The 2026 Routes Are on the Table — Canvas Routes',
-    description: 'Charlevoix to the Cabot Trail — five drives from Montreal waiting for a crew. Lock in your interest; the route launches when enough drivers are in.',
-    images: ['https://canvasroutes.com/api/og?type=event&title=The+2026+Routes&date=Lock+In+Your+Interest&bg=/convoy-hero.jpg'],
+    description: 'Charlevoix to the Cabot Trail — five drives from Montreal waiting for a crew. Put your name down — each route launches when enough drivers are in.',
+    images: ['https://canvasroutes.com/api/og?type=event&title=The+2026+Routes&date=Express+Your+Interest&bg=/convoy-hero.jpg'],
   },
 }
 
