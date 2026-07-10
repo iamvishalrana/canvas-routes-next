@@ -304,22 +304,36 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       </div>
       )}
 
-      {/* ── SEASON STRIP — completed routes + what's gathering ── */}
+      {/* ── SEASON STRIP — the story so far, editorial stat row ── */}
       {!embedded && (
-        <div style={{ background: '#EDE8E1', borderBottom: '0.5px solid rgba(0,0,0,0.06)', padding: `18px ${PADX}` }}>
+        <div style={{ background: '#EDE8E1', borderBottom: '0.5px solid rgba(0,0,0,0.06)', padding: `26px ${PADX} 22px` }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#8a7a5c', marginBottom: '10px' }}>2026 Season · So Far</div>
-            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px' }}>
-              {PAST_ROUTES.map(p => (
-                <div key={p.name} style={{ flexShrink: 0, background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', padding: '10px 16px', whiteSpace: 'nowrap' }}>
-                  <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '15px', color: '#1a1a1a', lineHeight: 1.2 }}>{p.name}</div>
-                  <div style={{ fontSize: '10px', color: '#45643c', letterSpacing: '0.06em', marginTop: '3px' }}>
-                    ✓ Ran · {p.cars} cars <span style={{ color: '#aaa' }}>— target {p.target}</span>
+            <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#8a7a5c', marginBottom: '16px' }}>2026 Season — The Story So Far</div>
+            <div style={{ display: 'flex', alignItems: 'stretch', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px' }}>
+              {PAST_ROUTES.map((p, i) => (
+                <div key={p.name} style={{ display: 'flex', alignItems: 'stretch', flexShrink: 0 }}>
+                  {i > 0 && <div style={{ width: '0.5px', background: 'rgba(0,0,0,0.12)', margin: '4px 26px' }} />}
+                  <div style={{ whiteSpace: 'nowrap' }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '18px', fontWeight: 400, color: '#1a1a1a', lineHeight: 1.2 }}>{p.name}</div>
+                    <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, margin: '4px 0 6px' }}>
+                      <CheckIcon /> <span style={{ verticalAlign: '1px' }}>Ran {p.month}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#555', letterSpacing: '0.02em' }}>
+                      <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#1a1a1a' }}>{p.cars}</span> cars
+                      <span style={{ color: '#45643c' }}> · {p.cars - p.target} over target</span>
+                    </div>
                   </div>
                 </div>
               ))}
-              <div style={{ flexShrink: 0, background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.35)', padding: '10px 16px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: '#8a6535', letterSpacing: '0.04em' }}>{routes.length} routes gathering interest →</span>
+              <div style={{ display: 'flex', alignItems: 'stretch', flexShrink: 0 }}>
+                <div style={{ width: '0.5px', background: 'rgba(0,0,0,0.12)', margin: '4px 26px' }} />
+                <button onClick={scrollToRoutes} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', whiteSpace: 'nowrap', WebkitTapHighlightColor: 'transparent' }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '18px', fontStyle: 'italic', color: '#8a6535', lineHeight: 1.2 }}>Next up</div>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#8a7a5c', margin: '4px 0 6px' }}>Gathering crews</div>
+                  <div style={{ fontSize: '12px', color: '#555' }}>
+                    <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#1a1a1a' }}>{routes.length}</span> routes open <span style={{ color: '#8a6535' }}>→</span>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
