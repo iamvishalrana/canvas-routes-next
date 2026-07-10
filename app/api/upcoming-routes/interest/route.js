@@ -71,7 +71,7 @@ export async function POST(request) {
       .from('members').select('id').eq('email', email).maybeSingle()
     if (memberMatch) {
       return Response.json({
-        error: 'This email belongs to a Canvas Routes member account.',
+        error: 'This email belongs to a Canvas Routes member account. Log in to register instead — your details fill in automatically and your registration carries member priority.',
         member: true,
       }, { status: 409 })
     }

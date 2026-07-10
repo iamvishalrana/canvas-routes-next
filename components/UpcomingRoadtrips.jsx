@@ -154,6 +154,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   const [copied, setCopied]       = useState(false)
   const [sheetId, setSheetId]     = useState(null)  // route id with the interest sheet open
   const [sheetSuccess, setSheetSuccess] = useState(false) // show in-sheet confirmation after submit
+  const [emailIsMember, setEmailIsMember] = useState(false) // live check: typed email belongs to a member
   const hpRef = useRef(null) // honeypot
   const [showBar, setShowBar]     = useState(false) // sticky context bar past the hero
   const [howOpen, setHowOpen]     = useState(false) // How-It-Works accordion (mobile)
@@ -244,6 +245,25 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       if (top) window.scrollTo(0, -parseInt(top, 10))
     }
   }, [sheetId, shareRoute])
+
+  // Live member-email check: as a guest types their email, quietly ask the
+  // server whether it belongs to a member account — warn before submit.
+  const sheetEmailValue = !isMember && sheetId ? (routes.find(r => r.id === sheetId)?.formEmail || '') : ''
+  useEffect(() => {
+    setEmailIsMember(false)
+    const email = sheetEmailValue.trim()
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return
+    const t = setTimeout(() => {
+      fetch('/api/upcoming-routes/member-check', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+        .then(r => r.ok ? r.json() : { member: false })
+        .then(d => setEmailIsMember(!!d.member))
+        .catch(() => {})
+    }, 450)
+    return () => clearTimeout(t)
+  }, [sheetEmailValue, isMember, sheetId])
 
   function patch(id, changes) {
     setRoutes(prev => prev.map(r => r.id === id ? { ...r, ...(typeof changes === 'function' ? changes(r) : changes) } : r))
@@ -451,8 +471,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                       <CheckIcon /> <span style={{ verticalAlign: '1px' }}>Ran {p.month}</span>
                     </div>
                     <div style={{ fontSize: '12px', color: '#555', letterSpacing: '0.02em' }}>
-                      <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#1a1a1a' }}>{p.cars}</span> cars
-                      <span style={{ color: '#45643c' }}> · {p.cars - p.target} over target</span>
+                      Target {p.target} cars — <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#45643c' }}>{p.cars}</span><span style={{ color: '#45643c' }}> showed up</span>
                     </div>
                   </div>
                 </div>
@@ -717,6 +736,14 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <input ref={hpRef} type="text" name="cr_routes_field" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }} />
             <input type="text" name="name" autoComplete="name" placeholder="Your name" value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
             <input type="email" name="email" inputMode="email" autoComplete="email" placeholder="Your email" value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
+            {!isMember && emailIsMember && (
+              <div style={{ background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '12px 14px', margin: '2px 0 10px' }}>
+                <div style={{ fontSize: '11.5px', color: '#6b5535', lineHeight: 1.7 }}>
+                  <strong style={{ color: '#1a1a1a', fontWeight: 500 }}>This email belongs to a Canvas Routes member.</strong> Log in to register instead — your name, phone and car fill in automatically, the registration is tied to your membership, and members get priority when spots are confirmed.
+                </div>
+                <a href="/members/login?redirect=/members/routes" className="rt-btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', padding: '12px', marginTop: '10px' }}>Log in to continue →</a>
+              </div>
+            )}
             <input type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="Phone (optional)" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value })} className="rt-input" />
             <input type="text" placeholder="Car — year, make, model (optional)" value={sheetRoute.formCar} onChange={e => patch(sheetRoute.id, { formCar: e.target.value })} className="rt-input" />
 
@@ -764,7 +791,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 )}
               </div>
             )}
-            <button type="submit" disabled={sheetRoute.submitting} className="rt-btn" style={{ marginTop: '4px' }}>
+            <button type="submit" disabled={sheetRoute.submitting || (!isMember && emailIsMember)} className="rt-btn" style={{ marginTop: '4px' }}>
               {sheetRoute.submitting ? 'Adding you…' : 'Add My Name'}
             </button>
             <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>No payment, no commitment — just a signal that you're in.</div>
@@ -793,15 +820,8 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         </div>
       )}
 
-      {/* FOOTER */}
-      {!embedded && (
-        <div style={{ background: '#0F1E14', padding: '28px clamp(1.5rem,4vw,3rem)', marginTop: '80px' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <span style={{ fontSize: '10px', color: 'rgba(245,241,236,0.25)', letterSpacing: '0.1em' }}>© 2026 Canvas Routes Inc. — Montreal, QC</span>
-            <a href="/" style={{ fontSize: '10px', color: 'rgba(197,168,130,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none' }}>canvasroutes.com →</a>
-          </div>
-        </div>
-      )}
+      {/* Breathing room before the site footer (rendered by the page) */}
+      {!embedded && <div style={{ height: '80px' }} />}
     </div>
   )
 }
