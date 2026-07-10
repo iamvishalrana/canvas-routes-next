@@ -493,10 +493,10 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 0, border: '0.5px solid rgba(0,0,0,0.07)' }}>
                 {[
-                  ['01', 'Express Interest', "Browse the upcoming routes and register your interest with your name and email. No payment, no commitment — just a signal that you're in."],
-                  ['02', 'We Hit Critical Mass', 'Each route has a minimum threshold. Once enough drivers are registered, the route officially launches. The progress bar on each card shows exactly where we stand.'],
-                  ['03', 'You Get Notified', 'The moment a route launches, everyone on the interest list gets an email with full details — meeting point, route, convoy rules, and how to officially register your spot.'],
-                  ['04', 'You Show Up', 'Arrive at the meeting point, meet the crew, and drive. Each route has a per-car fee determined by the route — length, planned stops, overnight stays, and logistics all factor in. Pricing is confirmed in the launch email.'],
+                  ['01', 'Raise Your Hand', "See a road that calls to you? Put your name down. It takes thirty seconds, costs nothing, and promises nothing — it just tells us you'd be in the convoy."],
+                  ['02', 'The Crew Comes Together', 'Every route needs a certain number of cars to feel right. As more drivers add their names, the bar on each card fills — and when the crew is complete, the route comes to life.'],
+                  ['03', 'You Hear From Us First', "The moment your route launches, you'll be the first to know — one email with everything: where we meet, the roads we take, the convoy rules, and how to make your seat official."],
+                  ['04', 'Then We Drive', 'Show up, shake hands, roll out. Every route carries its own per-car fee — shaped by the distance, the stops, and the nights away — confirmed in your launch email. The rest is just you, the crew, and the road.'],
                 ].map(([num, title, body], i, arr) => (
                   <div key={num} style={{ padding: '32px', borderRight: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
                     <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '3rem', fontWeight: 300, color: 'rgba(197,168,130,0.3)', lineHeight: 1, marginBottom: '20px' }}>{num}</div>
