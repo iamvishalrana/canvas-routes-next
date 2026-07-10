@@ -471,7 +471,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                       <CheckIcon /> <span style={{ verticalAlign: '1px' }}>Ran {p.month}</span>
                     </div>
                     <div style={{ fontSize: '12px', color: '#555', letterSpacing: '0.02em' }}>
-                      Target {p.target} cars — <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#45643c' }}>{p.cars}</span><span style={{ color: '#45643c' }}> showed up</span>
+                      Target {p.target} cars — <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#45643c' }}>{p.cars}</span><span style={{ color: '#45643c' }}> rolled out</span>
                     </div>
                   </div>
                 </div>
