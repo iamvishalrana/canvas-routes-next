@@ -29,7 +29,7 @@ function CheckIcon() {
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 }
 
-export default function UpcomingRoadtrips({ isMember = false, memberName = '', memberEmail = '', embedded = false }) {
+export default function UpcomingRoadtrips({ isMember = false, memberName = '', memberEmail = '', memberPhone = '', memberCar = '', embedded = false }) {
   const [routes, setRoutes]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [view, setView]           = useState('grid')
@@ -62,8 +62,8 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           submitting: false,
           formName: memberName || stored.name || '',
           formEmail: memberEmail || stored.email || '',
-          formPhone: stored.phone || '',
-          formCar: stored.car || '',
+          formPhone: memberPhone || stored.phone || '',
+          formCar: memberCar || stored.car || '',
           formBudget: '',
           formDates: '',
           formHotel: '',
@@ -75,7 +75,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         setSelectedId(list[0]?.id ?? null)
       })
       .catch(() => setLoading(false))
-  }, [memberEmail, memberName, isMember])
+  }, [memberEmail, memberName, memberPhone, memberCar, isMember])
   useEffect(() => { load() }, [load])
 
   useEffect(() => { const t = setTimeout(() => setAnimated(true), 140); return () => clearTimeout(t) }, [loading])

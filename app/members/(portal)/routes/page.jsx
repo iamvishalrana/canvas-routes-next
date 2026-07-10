@@ -12,7 +12,27 @@ export default async function MemberRoadtripsPage() {
   if (error || !user) redirect('/members/login')
 
   const admin = createAdminClient()
-  const { data: member } = await admin.from('members').select('name').eq('id', user.id).maybeSingle()
+  const { data: member } = await admin.from('members')
+    .select('name, phone, car_year, car_make, car_model, cars')
+    .eq('id', user.id).maybeSingle()
 
-  return <UpcomingRoadtrips embedded isMember memberName={member?.name || ''} memberEmail={user.email || ''} />
+  // Primary car: garage first entry, falling back to the legacy columns —
+  // same resolution as the member card page.
+  const primaryCar = member?.cars?.[0]
+  const carLine = [
+    (primaryCar?.year || member?.car_year)?.toString().trim(),
+    (primaryCar?.make || member?.car_make)?.trim(),
+    (primaryCar?.model || member?.car_model)?.trim(),
+  ].filter(Boolean).join(' ')
+
+  return (
+    <UpcomingRoadtrips
+      embedded
+      isMember
+      memberName={member?.name || ''}
+      memberEmail={user.email || ''}
+      memberPhone={member?.phone || ''}
+      memberCar={carLine}
+    />
+  )
 }
