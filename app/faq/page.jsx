@@ -125,6 +125,36 @@ const faqSchema = {
       name: 'What does a Canvas Routes membership include?',
       acceptedAnswer: { '@type': 'Answer', text: 'Priority registration for all events and road trips, access to members-only experiences, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through November.' },
     },
+    {
+      '@type': 'Question',
+      name: 'How does expressing interest in an upcoming route work?',
+      acceptedAnswer: { '@type': 'Answer', text: "Our Routes page lists the drives we're planning for the season. If a road calls to you, put your name down — it takes thirty seconds, costs nothing, and commits you to nothing. Each route needs a minimum number of cars; once enough drivers are in, we launch it and email everyone on the list with the full details and how to confirm a spot." },
+    },
+    {
+      '@type': 'Question',
+      name: 'Does expressing interest cost anything or commit me to going?',
+      acceptedAnswer: { '@type': 'Answer', text: "No and no. Expressing interest is completely free — no payment details are collected — and it isn't a booking or a commitment. It simply tells us you'd be in the convoy. If your plans change, you simply don't confirm when the route launches." },
+    },
+    {
+      '@type': 'Question',
+      name: 'When do I pay for a route?',
+      acceptedAnswer: { '@type': 'Answer', text: "Only after a route officially launches. When we hit the crew we need, everyone on the interest list gets a launch email with the per-car fee — set by the route's distance, stops, and any overnight stays — and instructions to confirm your spot. Nothing is charged before then." },
+    },
+    {
+      '@type': 'Question',
+      name: "What happens if a route doesn't reach its target?",
+      acceptedAnswer: { '@type': 'Answer', text: "It gets postponed to a future season rather than run half-empty — a Canvas Routes convoy only rolls out when the crew is right. Your name stays on the list, and you'll be the first to hear when that route comes back around." },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do members get priority on upcoming routes?',
+      acceptedAnswer: { '@type': 'Answer', text: "Yes. When a route launches, members get priority as spots are confirmed, and expressing interest from the members portal fills in your details automatically. If you use an email tied to a member account, we'll ask you to log in first so your registration carries that priority." },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why do you ask about budget, dates, and activities when I express interest?',
+      acceptedAnswer: { '@type': 'Answer', text: "Because the crew shapes the trip. Your preferences — budget range, dates that work, hotel style, the things you'd want to do along the way — feed directly into how we plan the route, where we stay, and what makes the itinerary. Every one of those questions is optional, and none of them commit you to anything." },
+    },
   ],
 }
 
