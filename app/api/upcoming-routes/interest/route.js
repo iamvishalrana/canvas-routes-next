@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import { deviceType } from '../../../../lib/deviceType'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
@@ -102,7 +103,7 @@ export async function POST(request) {
     const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
     const newReg = { event: EVENT_NAME, registered_at: existingReg?.registered_at || new Date().toISOString(), attended: null, membership_optin: membershipOptin }
     const registrations = [...(existing?.registrations || []).filter(r => r.event !== EVENT_NAME), newReg]
-    const appPayload = { email, name, registrations }
+    const appPayload = { email, name, registrations, device_type: deviceType(request) }
     if (phone) appPayload.phone = phone       // only set when provided — never wipe existing CRM data
     if (car) appPayload.car_model = car
     const { data: appData, error: appErr } = await supabase.from('applications')

@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import { deviceType } from '../../../../../../lib/deviceType'
 import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry'
@@ -136,6 +137,7 @@ export async function POST(request, { params }) {
     const prevRegs = (existingApp?.registrations || []).filter(r => r.event !== ev.name)
 
     const { data: appData, error: appErr } = await admin.from('applications').upsert({
+      device_type: deviceType(request),
       email: normalEmail,
       name: memberName,
       car_year: member.car_year || null,

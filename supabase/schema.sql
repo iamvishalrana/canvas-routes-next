@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
   stripe_amount_paid INTEGER,
   stripe_payment_type TEXT,
   stripe_paid_at TIMESTAMPTZ,
+  device_type TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;

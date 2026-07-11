@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import { deviceType } from '../../../lib/deviceType'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../lib/rateLimit'
 import { captureException } from '../../../lib/sentry'
@@ -61,6 +62,7 @@ export async function POST(request) {
   const registrations = [...(existing?.registrations || []).filter(r => r.event !== NOTIFY_EVENT_NAME), newReg]
 
   const { data: appData, error: upsertErr } = await supabase.from('applications').upsert({
+      device_type: deviceType(request),
     email,
     name,
     phone: phone || null,

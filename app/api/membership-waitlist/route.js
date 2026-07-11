@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import { deviceType } from '../../../lib/deviceType'
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
@@ -244,6 +245,7 @@ export async function POST(request) {
 
     const upsertPayload = {
       email: normalEmail,
+      device_type: deviceType(request),
       name: name.trim(),
       car_year: year.trim(),
       car_make: carMake?.trim() || null,

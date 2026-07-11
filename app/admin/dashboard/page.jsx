@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../lib/supabase/admin'
 import Link from 'next/link'
 import StatNumber from './StatNumber'
+import DeviceChart from './DeviceChart'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dashboard — Admin' }
@@ -19,7 +20,7 @@ export default async function DashboardPage() {
   const in180Str = in180.toISOString().slice(0, 10)
 
   let totalMembers = 0, activeMembers = 0, totalContacts = 0, paidApplications = 0
-  let recentMembers = [], recentContacts = [], upcomingEvents = []
+  let recentMembers = [], recentContacts = [], upcomingEvents = [], deviceRows = []
 
   try {
     ;[
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
       { data: recentMembers },
       { data: recentContacts },
       { data: upcomingEvents },
+      { data: deviceRows },
     ] = await Promise.all([
       supabase.from('members').select('*', { count: 'exact', head: true }),
       supabase.from('members').select('*', { count: 'exact', head: true }).eq('membership_status', 'active'),
@@ -38,10 +40,18 @@ export default async function DashboardPage() {
       supabase.from('members').select('id, name, email, created_at, membership_status, tier').order('created_at', { ascending: false }).limit(7),
       supabase.from('contacts').select('id, created_at, applications(name, email)').order('created_at', { ascending: false }).limit(5),
       supabase.from('events').select('id, name, date, type').gte('date', todayStr).lte('date', in180Str).order('date').limit(8),
+      supabase.from('applications').select('device_type').not('device_type', 'is', null),
     ])
   } catch {
     // Partial failures degrade gracefully — stats will show 0/empty
   }
+
+  // Aggregate the device split for the chart card
+  const deviceCountMap = {}
+  for (const r of deviceRows || []) {
+    if (r.device_type) deviceCountMap[r.device_type] = (deviceCountMap[r.device_type] || 0) + 1
+  }
+  const deviceCounts = Object.entries(deviceCountMap).map(([label, count]) => ({ label, count }))
 
   const recentSignups = [
     ...(recentMembers || []).map(m => ({ name: m.name || m.email, type: 'Member', date: m.created_at, tier: m.tier, status: m.membership_status })),
@@ -76,6 +86,12 @@ export default async function DashboardPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        {/* Device split */}
+        <div style={{ ...CARD, padding: '1.5rem', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: '0.3s' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1.1rem', fontFamily: 'var(--font-inter),sans-serif' }}>Devices</div>
+          <DeviceChart counts={deviceCounts} />
+        </div>
+
         {/* Recent sign-ups */}
         <div style={{ ...CARD, padding: '1.5rem', opacity: 0, animation: 'adminFadeIn 0.35s ease-out forwards', animationDelay: '0.38s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>

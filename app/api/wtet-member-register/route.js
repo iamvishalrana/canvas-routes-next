@@ -1,4 +1,5 @@
 import { createClient } from '../../../lib/supabase/server'
+import { deviceType } from '../../../lib/deviceType'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
@@ -102,6 +103,7 @@ export async function POST(request) {
     const registrations = [...prevRegs, newReg]
 
     const { data: appData, error: upsertErr } = await admin.from('applications').upsert({
+      device_type: deviceType(request),
       email: normalEmail,
       name: memberName,
       car_year: carYear.trim(),

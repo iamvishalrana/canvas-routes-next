@@ -1,4 +1,5 @@
 import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { deviceType } from '../../../lib/deviceType'
 import { captureException } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
@@ -179,6 +180,7 @@ export async function POST(request) {
     const registrations = [...prevRegs, newReg]
 
     const { data: appData, error: upsertErr } = await supabase.from('applications').upsert({
+      device_type: deviceType(request),
       email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),

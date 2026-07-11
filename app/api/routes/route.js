@@ -1,4 +1,5 @@
 import { captureException, captureMessage } from '../../../lib/sentry.js'
+import { deviceType } from '../../../lib/deviceType'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 
@@ -207,6 +208,7 @@ export async function POST(request) {
       .map(ev => ({ event: ev, registered_at: null, attended: null }))
     const registrations = [...prevRegs, ...missingCanonical, newReg]
     await supabase.from('applications').upsert({
+      device_type: deviceType(request),
       email: normalEmail,
       name: name.trim(),
       dob: dob || null,
