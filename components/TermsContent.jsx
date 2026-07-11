@@ -25,11 +25,11 @@ export default function TermsContent() {
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Legal</div>
         <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem",lineHeight:"1.2"}}>Terms & Conditions</div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem 0"}}></div>
-        <div style={{fontSize:"12px",color:"#888",marginBottom:"3rem"}}>Last updated: June 2026</div>
+        <div style={{fontSize:"12px",color:"#888",marginBottom:"3rem"}}>Last updated: July 2026</div>
         {[
           {
             title: "Acceptance of terms",
-            body: "By submitting a membership application, route registration, or any other form on Canvas Routes, you agree to be bound by these Terms & Conditions as issued by Événements Canvas Routes Inc. / Canvas Routes Events Inc., a corporation incorporated in Quebec, Canada. If you do not agree, please do not submit an application or registration."
+            body: "By submitting a membership application, route registration, expression of interest in an upcoming route, notification-list signup, or any other form on Canvas Routes, you agree to be bound by these Terms & Conditions as issued by Événements Canvas Routes Inc. / Canvas Routes Events Inc., a corporation incorporated in Quebec, Canada. If you do not agree, please do not submit an application or registration."
           },
           {
             title: "Membership tiers",
@@ -41,15 +41,19 @@ export default function TermsContent() {
           },
           {
             title: "Payment",
-            body: "Membership fees are processed through Stripe. When you complete checkout as part of your membership application, your card is charged immediately for the applicable membership fee. All prices are in Canadian dollars (CAD). If your application is reviewed and declined, a full refund will be issued to your original payment method within 5–10 business days. Membership is not active until your application has been reviewed and approved by Canvas Routes, regardless of when payment was made. By submitting your card details, you authorize Événements Canvas Routes Inc. to process the applicable membership fee."
+            body: "Membership fees are processed through Stripe. When you complete checkout as part of your membership application, an authorization hold is placed on your card for the applicable membership fee — your card is not charged at that moment. If your application is approved, the held amount is captured and your membership begins. If your application is declined, the hold is released in full and no charge is made; depending on your bank, the hold may take a few business days to disappear from your statement. All prices are in Canadian dollars (CAD). Membership is not active until your application has been reviewed and approved by Canvas Routes. By submitting your card details, you authorize Événements Canvas Routes Inc. to place this hold and, upon approval, capture the applicable membership fee."
           },
           {
             title: "Cancellations & refunds",
             body: "Membership fees are non-refundable once your application has been approved and the season has begun. If your application is declined, a full refund is issued automatically. If you are approved but choose not to proceed before the season begins, contact us as soon as possible at info@canvasroutes.com. If Canvas Routes cancels a membership without cause on its part, a prorated refund may be issued at our discretion based on the remaining portion of the season."
           },
           {
+            title: "Expressing interest in upcoming routes",
+            body: "Our Routes page lists planned drives that launch once enough drivers have registered their interest. Expressing interest is free and is not a booking, reservation, or commitment of any kind — it signals that you would like to join, and no payment details are collected. Each planned route has a minimum interest threshold; when it is reached, Canvas Routes may launch the route and notify everyone on the interest list by email with full details, including the per-car fee and how to confirm a spot. Interest counts shown on the site are indicative only. Canvas Routes may modify, postpone, or withdraw any planned route at its discretion, including where the interest threshold is not met, and expressing interest does not guarantee that a route will run, that spots will be available, or that you will receive a spot. Members receive priority when spots are confirmed. Trip preferences you share when expressing interest are used to help plan the route and carry no obligation on either side."
+          },
+          {
             title: "Route fees",
-            body: "Route participation fees vary by event and are stated on the individual event page. Payment is collected at the time of registration. Route fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any route due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
+            body: "Route participation fees vary by event and are stated on the individual event page or, for routes announced through the interest process, in the launch email — per-car fees are set for each route based on its length, planned stops, overnight stays, and logistics, and are always communicated before any payment is collected. Payment is collected at the time of registration. Route fees are non-refundable once your registration has been confirmed. If you are unable to attend after confirmation, you may transfer your spot to another eligible Canvas Routes member with prior written approval from info@canvasroutes.com. Canvas Routes reserves the right to cancel or reschedule any route due to weather, road conditions, or other circumstances beyond its control — in such cases, a full refund will be issued."
           },
           {
             title: "Member conduct",
