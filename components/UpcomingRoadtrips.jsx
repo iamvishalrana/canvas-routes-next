@@ -9,7 +9,7 @@ const ACCENT_BGS = [
   'linear-gradient(135deg, #271e14 0%, #1a1208 100%)',
   'linear-gradient(135deg, #141e2a 0%, #0a1018 100%)',
 ]
-const INTRO = 'Each route launches once the right crew is assembled. Express your interest — we notify you the moment we hit critical mass.'
+const INTRO = 'Every route launches once enough drivers put their names down. Add yours — no payment, no commitment — and the moment your route is a go, you\'ll be the first to know.'
 // Completed 2026 routes shown in the season strip — historical facts, hardcoded
 // like the homepage past-events list.
 const PAST_ROUTES = [
