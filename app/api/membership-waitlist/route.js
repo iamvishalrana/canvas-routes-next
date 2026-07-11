@@ -242,7 +242,7 @@ export async function POST(request) {
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== 'Canvas Routes Membership')
     const registrations = [...prevRegs, membershipReg]
 
-    const { error: upsertErr } = await supabase.from('applications').upsert({
+    const upsertPayload = {
       email: normalEmail,
       name: name.trim(),
       car_year: year.trim(),
@@ -262,11 +262,23 @@ export async function POST(request) {
       // Store PI ID immediately so admin can act even if the webhook is delayed
       ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
-    }, { onConflict: 'email' })
+    }
+    let { error: upsertErr } = await supabase.from('applications').upsert(upsertPayload, { onConflict: 'email' })
+    if (upsertErr) {
+      // Retry once — transient PostgREST/network blips are the common cause
+      // (seen July 10: direct upsert failed, webhook rescue succeeded seconds later)
+      await new Promise(r => setTimeout(r, 400))
+      const retry = await supabase.from('applications').upsert(upsertPayload, { onConflict: 'email' })
+      upsertErr = retry.error || null
+    }
     if (upsertErr) {
       // Data survives in PI metadata; the webhook requires_capture rescue will
-      // recreate the row. Report loudly but don't fail — the hold is already placed.
-      captureMessage('membership-waitlist: application upsert failed', { error: upsertErr.message, email: normalEmail, tier, paymentIntentId })
+      // recreate the row. Report loudly (DB error in the title so the alert is
+      // diagnosable) but don't fail — the hold is already placed.
+      captureMessage(`membership-waitlist: application upsert failed — ${upsertErr.message}`, {
+        error: upsertErr.message, code: upsertErr.code, details: upsertErr.details, hint: upsertErr.hint,
+        email: normalEmail, tier, paymentIntentId,
+      })
     }
 
     // Atomic dedup gate — exactly one caller per PI claims the notification.
