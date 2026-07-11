@@ -781,7 +781,9 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <span style={{ fontSize: '11px', color: '#999', lineHeight: 1.5, letterSpacing: '0.02em' }}>Add me to the membership waitlist</span>
               </label>
             )}
-            {sheetRoute.error && (
+            {/* Suppress the 409 duplicate when the live member notice (with its
+                own login button) is already showing above */}
+            {sheetRoute.error && !(sheetRoute.memberPrompt && emailIsMember) && (
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '11px', color: '#93333E', marginBottom: sheetRoute.memberPrompt ? '10px' : 0 }}>{sheetRoute.error}</div>
                 {sheetRoute.memberPrompt && (
