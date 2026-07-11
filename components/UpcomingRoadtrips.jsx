@@ -265,6 +265,19 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     return () => clearTimeout(t)
   }, [sheetEmailValue, isMember, sheetId])
 
+  // Reveal-on-scroll: below-the-fold cards/sections animate when they actually
+  // enter the viewport instead of invisibly on mount.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return
+    const els = document.querySelectorAll('.rt-reveal:not(.rt-in)')
+    if (!els.length) return
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('rt-in'); io.unobserve(e.target) } })
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.05 })
+    els.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [routes, loading, view, howOpen, embedded])
+
   function patch(id, changes) {
     setRoutes(prev => prev.map(r => r.id === id ? { ...r, ...(typeof changes === 'function' ? changes(r) : changes) } : r))
   }
@@ -362,12 +375,29 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-hero-cta:active { transform:scale(0.98); }
         .rt-hero-cta::after { content:''; position:absolute; top:-10%; left:-80%; width:40%; height:120%; background:linear-gradient(105deg, transparent 10%, rgba(197,168,130,0.35) 50%, transparent 90%); transform:skewX(-10deg); animation:rtCtaShimmer .9s cubic-bezier(.4,0,.2,1) 1.6s forwards; pointer-events:none; }
         @media (max-width:480px) { .rt-hero-cta { display:block; width:100%; text-align:center; } }
-        .rt-card { background:#fff; border:0.5px solid rgba(0,0,0,0.07); display:flex; flex-direction:column; overflow:hidden; opacity:0; transform:translateY(24px); transition:box-shadow .35s ease, transform .35s ease, border-color .35s ease; animation:rtFadeUp .65s cubic-bezier(.22,.68,0,1.1) forwards; box-shadow:0 6px 28px rgba(15,30,20,0.08), 0 1px 4px rgba(0,0,0,0.05); }
-        @media (hover:hover) { .rt-card:hover { box-shadow:0 18px 56px rgba(15,30,20,0.16), 0 3px 10px rgba(197,168,130,0.16); transform:translateY(-4px); border-color:rgba(197,168,130,0.4); } .rt-card:hover .rt-card-img { transform:scale(1.04); } }
-        .rt-card-img { transition:transform .6s ease; }
+        /* Scroll-triggered reveal — elements animate in as they enter the viewport */
+        .rt-reveal { opacity:0; transform:translateY(22px); }
+        .rt-reveal.rt-in { animation:rtFadeUp .6s cubic-bezier(.22,.68,0,1.1) forwards; }
+        .rt-card { background:#fff; border:0.5px solid rgba(0,0,0,0.07); display:flex; flex-direction:column; overflow:hidden; transition:box-shadow .35s ease, transform .35s ease, border-color .35s ease; box-shadow:0 6px 28px rgba(15,30,20,0.08), 0 1px 4px rgba(0,0,0,0.05); }
+        @media (hover:hover) { .rt-card:hover { box-shadow:0 18px 56px rgba(15,30,20,0.16), 0 3px 10px rgba(197,168,130,0.16); transform:translateY(-4px); border-color:rgba(197,168,130,0.4); } .rt-card:hover .rt-card-photo { transform:scale(1.05); } }
+        /* Touch feedback — hover never fires on phones, so press states carry the weight */
+        @media (hover:none) {
+          .rt-card:active { transform:scale(0.988); box-shadow:0 3px 14px rgba(15,30,20,0.1); }
+          .rt-maprow:active { background:#f2efe9; }
+          .rt-pill:active, .rt-ghost:active { background:rgba(0,0,0,0.04); }
+        }
+        .rt-card-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .6s ease; }
+        @keyframes rtCountPulse { 0% { transform:scale(1); } 45% { transform:scale(1.16); } 100% { transform:scale(1); } }
+        .rt-pulse-once { animation:rtCountPulse .5s ease .1s; }
+        @keyframes rtCheckDraw { to { stroke-dashoffset:0; } }
+        .rt-check-draw polyline { stroke-dasharray:24; stroke-dashoffset:24; animation:rtCheckDraw .5s cubic-bezier(.4,0,.2,1) .18s forwards; }
+        @media (prefers-reduced-motion: reduce) {
+          .rt-reveal, .rt-card, .rt-hero-1, .rt-hero-2, .rt-hero-sub, .rt-hero-meta { opacity:1 !important; transform:none !important; animation:none !important; }
+          .rt-fill, .rt-hero-cta::after, .rt-pulse-once { animation:none !important; }
+        }
         .rt-track { background:rgba(0,0,0,0.06); height:3px; overflow:hidden; }
         .rt-fill { height:100%; width:0%; transition:width 1.2s cubic-bezier(.4,0,.2,1); background:linear-gradient(90deg, #c5a882 25%, #f0ddb8 50%, #c5a882 75%); background-size:400px 100%; animation:rtShimmer 2s ease-in-out infinite; }
-        .rt-btn { background:#0F1E14; color:#F5F1EC; border:none; font-family:inherit; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:13px 20px; cursor:pointer; transition:background .2s, transform .1s; width:100%; }
+        .rt-btn { background:#0F1E14; color:#F5F1EC; border:none; font-family:inherit; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:13px 20px; cursor:pointer; transition:background .2s, transform .1s; width:100%; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
         .rt-btn:hover { background:#1a3322; } .rt-btn:active { transform:scale(0.98); } .rt-btn:disabled { opacity:0.6; cursor:default; }
         .rt-ghost { background:transparent; color:#888; border:0.5px solid rgba(0,0,0,0.15); font-family:inherit; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; padding:13px 16px; cursor:pointer; transition:border-color .2s, color .2s; }
         .rt-ghost:hover { border-color:#999; color:#555; }
@@ -375,7 +405,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-input { width:100%; padding:11px 12px; border:0.5px solid rgba(0,0,0,0.15); background:#faf9f7; font-family:inherit; font-size:12px; color:#1a1a1a; outline:none; transition:border-color .2s, background .2s; margin-bottom:8px; }
         .rt-input:focus { border-color:#c5a882; background:#fff; }
         .rt-success { animation:rtSuccessPop .4s cubic-bezier(.22,.68,0,1.2) forwards; }
-        .rt-pill { background:transparent; border:0.5px solid rgba(0,0,0,0.18); font-family:inherit; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; padding:9px 22px; cursor:pointer; color:#666; transition:all .2s; }
+        .rt-pill { background:transparent; border:0.5px solid rgba(0,0,0,0.18); font-family:inherit; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; padding:9px 22px; min-height:38px; cursor:pointer; color:#666; transition:all .2s; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
         .rt-pill-active { background:#0F1E14; color:#F5F1EC; border-color:#0F1E14; }
         .rt-maprow { border:0.5px solid rgba(0,0,0,0.07); background:#fff; padding:14px 18px; cursor:pointer; transition:border-color .2s, background .2s, box-shadow .2s; border-left:3px solid transparent; box-shadow:0 3px 14px rgba(15,30,20,0.06); }
         .rt-maprow-active { box-shadow:0 8px 24px rgba(15,30,20,0.12); }
@@ -383,7 +413,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-maprow-active { border-left-color:#c5a882 !important; background:#faf9f7; }
         @keyframes rtSheetUp { from { transform:translateY(100%);} to { transform:translateY(0);} }
         .rt-sheet-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.55); backdrop-filter:blur(3px); z-index:1100; animation:rtFadeIn .2s ease forwards; }
-        .rt-sheet { position:fixed; left:0; right:0; bottom:0; z-index:1101; background:#F5F1EC; border-radius:18px 18px 0 0; max-height:88dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:10px 20px calc(24px + env(safe-area-inset-bottom)); animation:rtSheetUp .32s cubic-bezier(.22,.68,0,1) forwards; box-shadow:0 -8px 40px rgba(0,0,0,0.25); }
+        .rt-sheet { position:fixed; left:0; right:0; bottom:0; z-index:1101; background:#F5F1EC; border-radius:18px 18px 0 0; max-height:88dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px 20px calc(24px + env(safe-area-inset-bottom)); animation:rtSheetUp .32s cubic-bezier(.22,.68,0,1) forwards; box-shadow:0 -8px 40px rgba(0,0,0,0.25); }
         .rt-sheet-handle { width:36px; height:4px; border-radius:99px; background:rgba(0,0,0,0.15); margin:6px auto 14px; }
         @media (min-width:769px) {
           .rt-sheet { left:50%; right:auto; bottom:auto; top:50%; width:460px; max-height:82vh; transform:translate(-50%,-50%); border-radius:4px; padding:28px 32px 32px; animation:rtFadeIn .25s ease forwards; }
@@ -463,7 +493,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#8a7a5c', marginBottom: '16px' }}>2026 Season — The Story So Far</div>
             <div style={{ display: 'flex', alignItems: 'stretch', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px' }}>
               {PAST_ROUTES.map((p, i) => (
-                <div key={p.name} style={{ display: 'flex', alignItems: 'stretch', flexShrink: 0 }}>
+                <div key={p.name} className="rt-reveal" style={{ display: 'flex', alignItems: 'stretch', flexShrink: 0, animationDelay: `${i * 0.09}s` }}>
                   {i > 0 && <div style={{ width: '0.5px', background: 'rgba(0,0,0,0.12)', margin: '4px 26px' }} />}
                   <div style={{ whiteSpace: 'nowrap' }}>
                     <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '18px', fontWeight: 400, color: '#1a1a1a', lineHeight: 1.2 }}>{p.name}</div>
@@ -517,7 +547,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                   ['03', 'You Hear From Us First', "The moment your route launches, you'll be the first to know — one email with everything: where we meet, the roads we take, the convoy rules, and how to make your seat official."],
                   ['04', 'Then We Drive', 'Show up, shake hands, roll out. Every route carries its own per-car fee — shaped by the distance, the stops, and the nights away — confirmed in your launch email. The rest is just you, the crew, and the road.'],
                 ].map(([num, title, body], i, arr) => (
-                  <div key={num} style={{ padding: '32px', borderRight: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
+                  <div key={num} className="rt-reveal" style={{ padding: '32px', borderRight: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none', animationDelay: `${i * 0.08}s` }}>
                     <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '3rem', fontWeight: 300, color: 'rgba(197,168,130,0.3)', lineHeight: 1, marginBottom: '20px' }}>{num}</div>
                     <h3 style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', margin: '0 0 10px 0', letterSpacing: '0.04em' }}>{title}</h3>
                     <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.8, margin: 0, fontWeight: 300 }}>{body}</p>
@@ -562,16 +592,20 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       {loading ? (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(48px,8vw,96px) ${PADX}`, textAlign: 'center', fontSize: '13px', color: '#bbb' }}>Loading routes…</div>
       ) : view === 'grid' ? (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}` }}>
+        <div key="grid" style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}`, animation: 'rtFadeIn .3s ease' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '20px' }}>
             {routes.map((r, i) => {
               const pct = Math.min(100, Math.round((r.interested_count / r.target_count) * 100))
               const slotsLeft = Math.max(0, r.target_count - r.interested_count)
               return (
-                <div key={r.id} className="rt-card" style={{ animationDelay: `${i * 0.08 + 0.05}s` }}>
+                <div key={r.id} className="rt-card rt-reveal" style={{ animationDelay: `${(i % 3) * 0.08 + 0.05}s` }}>
                   {/* Image area */}
                   <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9', background: ACCENT_BGS[i % ACCENT_BGS.length] }}>
-                    <div className="rt-card-img" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', backgroundImage: ROUTE_PHOTOS[r.slug] ? `url('${ROUTE_PHOTOS[r.slug]}')` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                    <div className="rt-card-img" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative' }}>
+                      {ROUTE_PHOTOS[r.slug] && (
+                        <img src={ROUTE_PHOTOS[r.slug]} alt="" className="rt-card-photo"
+                          loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
+                      )}
                       {ROUTE_PHOTOS[r.slug] ? (
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.35) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.45) 100%)' }} />
                       ) : (
@@ -585,7 +619,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                           <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#0F1E14', fontWeight: 600 }}>Priority</span>
                         </div>
                       )}
-                      <div style={{ position: 'absolute', top: '14px', left: '14px', background: 'rgba(15,30,20,0.75)', backdropFilter: 'blur(6px)', padding: '5px 12px', border: '0.5px solid rgba(255,255,255,0.08)' }}>
+                      <div className={r.interested ? 'rt-pulse-once' : ''} style={{ position: 'absolute', top: '14px', left: '14px', background: 'rgba(15,30,20,0.75)', backdropFilter: 'blur(6px)', padding: '5px 12px', border: '0.5px solid rgba(255,255,255,0.08)' }}>
                         <span style={{ fontSize: '9px', color: 'rgba(245,241,236,0.6)', letterSpacing: '0.1em' }}>{r.interested_count} interested</span>
                       </div>
                       {TRIP_LABELS[r.trip_type] && (
@@ -626,7 +660,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                           {r.showItinerary ? 'Hide itinerary' : 'View itinerary'}
                           <span style={{ display: 'inline-block', transform: r.showItinerary ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>↓</span>
                         </button>
-                        {r.showItinerary && <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.8, marginTop: '10px', whiteSpace: 'pre-wrap', fontWeight: 300 }}>{r.itinerary}</p>}
+                        {r.showItinerary && <p className="rt-form" style={{ fontSize: '12px', color: '#777', lineHeight: 1.8, marginTop: '10px', whiteSpace: 'pre-wrap', fontWeight: 300 }}>{r.itinerary}</p>}
                       </div>
                     )}
                     {/* Progress */}
@@ -659,7 +693,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           </div>
         </div>
       ) : (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}` }}>
+        <div key="map" style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}`, animation: 'rtFadeIn .3s ease' }}>
           <div className="rt-map-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', alignItems: 'start' }}>
             <RoutesMap routes={routes} selectedId={selectedId} onSelect={setSelectedId} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -703,7 +737,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                  when the card was scrolled out of view. */
               <div className="rt-success" style={{ textAlign: 'center', padding: '10px 0 4px' }}>
                 <div style={{ width: '54px', height: '54px', borderRadius: '50%', border: '1px solid rgba(197,168,130,0.5)', background: 'rgba(197,168,130,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg className="rt-check-draw" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '23px', fontWeight: 300, color: '#1a1a1a', marginBottom: '8px' }}>You're on the list.</div>
                 <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.75, margin: '0 0 20px', padding: '0 8px' }}>
