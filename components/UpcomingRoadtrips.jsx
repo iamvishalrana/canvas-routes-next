@@ -782,8 +782,8 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             ) : (
             <form onSubmit={e => { e.preventDefault(); submitInterest(sheetRoute) }}>
             <input ref={hpRef} type="text" name="cr_routes_field" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }} />
-            <input type="text" name="name" autoComplete="name" placeholder="Your name" value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
-            <input type="email" name="email" inputMode="email" autoComplete="email" placeholder="Your email" value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
+            <input type="text" name="name" autoComplete="name" placeholder="Your name *" value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
+            <input type="email" name="email" inputMode="email" autoComplete="email" placeholder="Your email *" value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
             {!isMember && emailIsMember && (
               <div style={{ background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '12px 14px', margin: '2px 0 10px' }}>
                 <div style={{ fontSize: '11.5px', color: '#6b5535', lineHeight: 1.7 }}>
@@ -792,23 +792,23 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <a href="/members/login?redirect=/members/routes" className="rt-btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', padding: '12px', marginTop: '10px' }}>Log in to continue →</a>
               </div>
             )}
-            <input type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="Phone" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value, error: null })} className="rt-input" />
-            <input type="text" placeholder="Car — year, make, model" value={sheetRoute.formCar} onChange={e => patch(sheetRoute.id, { formCar: e.target.value, error: null })} className="rt-input" />
+            <input type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="Phone *" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value, error: null })} className="rt-input" />
+            <input type="text" placeholder="Car — year, make, model *" value={sheetRoute.formCar} onChange={e => patch(sheetRoute.id, { formCar: e.target.value, error: null })} className="rt-input" />
 
             {/* Trip preferences */}
             <select className="rt-input" value={sheetRoute.formBudget} onChange={e => patch(sheetRoute.id, { formBudget: e.target.value, error: null })}>
-              <option value="">Budget per car</option>
+              <option value="">Budget per car *</option>
               {budgetsFor(sheetRoute.trip_type).map(o => <option key={o} value={o}>{o}</option>)}
             </select>
-            <input type="text" placeholder="Preferred dates — e.g. any August weekend" value={sheetRoute.formDates} onChange={e => patch(sheetRoute.id, { formDates: e.target.value, error: null })} className="rt-input" />
+            <input type="text" placeholder="Preferred dates — e.g. any August weekend *" value={sheetRoute.formDates} onChange={e => patch(sheetRoute.id, { formDates: e.target.value, error: null })} className="rt-input" />
             {(sheetRoute.trip_type === 'overnight' || sheetRoute.trip_type === 'multi_day') && (
               <select className="rt-input" value={sheetRoute.formHotel} onChange={e => patch(sheetRoute.id, { formHotel: e.target.value, error: null })}>
-                <option value="">Hotel preference</option>
+                <option value="">Hotel preference *</option>
                 {HOTEL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             )}
             <div style={{ margin: '4px 0 10px' }}>
-              <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want — pick at least one</div>
+              <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want * — pick at least one</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {(sheetRoute.activity_options?.length ? sheetRoute.activity_options : ACTIVITY_OPTIONS).map(a => {
                   const on = (sheetRoute.formActivities || []).includes(a)
@@ -822,11 +822,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 })}
               </div>
             </div>
-            <textarea placeholder="Anything else we should know?" value={sheetRoute.formNotes} onChange={e => patch(sheetRoute.id, { formNotes: e.target.value, error: null })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical' }} maxLength={500} />
+            <textarea placeholder="Anything else we should know? *" value={sheetRoute.formNotes} onChange={e => patch(sheetRoute.id, { formNotes: e.target.value, error: null })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical' }} maxLength={500} />
             {!isMember && (
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '6px 0 14px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={!!sheetRoute.formMembership} onChange={e => patch(sheetRoute.id, { formMembership: e.target.checked })} style={{ cursor: 'pointer', accentColor: ACCENT, marginTop: '1px', flexShrink: 0 }} />
-                <span style={{ fontSize: '11px', color: '#999', lineHeight: 1.5, letterSpacing: '0.02em' }}>Add me to the membership waitlist</span>
+                <span style={{ fontSize: '11px', color: '#999', lineHeight: 1.5, letterSpacing: '0.02em' }}>I'm interested in becoming a Canvas Routes member</span>
               </label>
             )}
             {/* Suppress the 409 duplicate when the live member notice (with its

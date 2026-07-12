@@ -154,7 +154,7 @@ export async function POST(request) {
         ...(preferences.activities ? [['Activities', preferences.activities.join(', ')]] : []),
         ...(preferences.notes ? [['Notes', preferences.notes]] : []),
         ['Interest', `${interestedCount} / ${route.target_count}`],
-        ['Membership waitlist', membershipOptin ? 'Yes' : 'No'],
+        ['Interested in membership', membershipOptin ? 'Yes' : 'No'],
         ['Member', isMember ? 'Yes' : 'No'],
       ]),
     }, 'roadtrip-interest-admin-email'),

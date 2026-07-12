@@ -48,6 +48,9 @@ export default function RoadtripsAdminClient() {
   const [emailMsg, setEmailMsg]   = useState('')
   const [emailing, setEmailing]   = useState(false)
   const [busyId, setBusyId]       = useState(null)
+  const [person, setPerson]       = useState(null)  // { route, p } — detail popup
+  const [personConfirm, setPersonConfirm] = useState(false)
+  const [personDeleting, setPersonDeleting] = useState(false)
 
   const load = useCallback(() => {
     fetch('/api/admin/upcoming-routes')
@@ -179,6 +182,23 @@ export default function RoadtripsAdminClient() {
     finally { setEmailing(false) }
   }
 
+  async function deleteInterest(routeId, pr) {
+    setPersonDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/upcoming-routes/${routeId}/interest`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interest_id: pr.id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(data.error || 'Failed to remove.'); return }
+      setRoutes(prev => prev.map(r => r.id === routeId
+        ? { ...r, interest: (r.interest || []).filter(x => x.id !== pr.id), interested_count: Math.max(0, (r.interested_count || 1) - 1) }
+        : r))
+      setPerson(null); setPersonConfirm(false)
+    } catch { alert('Network error.') }
+    finally { setPersonDeleting(false) }
+  }
+
   function exportCSV() {
     const rows = [['Route', 'Name', 'Email', 'Phone', 'Car', 'Budget', 'Preferred dates', 'Hotel', 'Activities', 'Notes', 'Status', 'Registered']]
     for (const r of routes) for (const p of (r.interest || [])) {
@@ -186,7 +206,7 @@ export default function RoadtripsAdminClient() {
       rows.push([
         r.name, p.name || '', p.email, p.phone || '', p.car || '',
         pr.budget || '', pr.dates || '', pr.hotel || '', (pr.activities || []).join('; '), pr.notes || '',
-        p.is_member ? 'Member' : (p.membership_optin ? 'Waitlist opt-in' : 'Public'),
+        p.is_member ? 'Member' : (p.membership_optin ? 'Membership lead' : 'Public'),
         p.created_at ? new Date(p.created_at).toISOString().slice(0, 10) : '',
       ])
     }
@@ -406,27 +426,25 @@ export default function RoadtripsAdminClient() {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         {r.interest.map((p, i) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                          <button key={p.id || i} type="button"
+                            onClick={() => { setPerson({ route: r, p }); setPersonConfirm(false) }}
+                            style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', width: '100%', minHeight: '44px', padding: '0.5rem 0.6rem', margin: '0 -0.6rem', background: 'none', border: 'none', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                             <div style={{ minWidth: 0 }}>
                               <span style={{ fontSize: '13px', color: '#333' }}>{p.name || '—'}</span>
-                              <a href={`mailto:${p.email}`} style={{ fontSize: '12px', color: '#888', marginLeft: '0.5rem', textDecoration: 'none' }}>{p.email}</a>
-                              {(p.car || p.phone) && <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px' }}>{[p.car, p.phone].filter(Boolean).join(' · ')}</div>}
-                              {p.preferences && Object.keys(p.preferences).length > 0 && (
-                                <div style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: 1.5 }}>
-                                  {[
-                                    p.preferences.budget && `Budget: ${p.preferences.budget}`,
-                                    p.preferences.dates && `Dates: ${p.preferences.dates}`,
-                                    p.preferences.hotel && `Hotel: ${p.preferences.hotel}`,
-                                    p.preferences.activities?.length && `Activities: ${p.preferences.activities.join(', ')}`,
-                                    p.preferences.notes && `Notes: ${p.preferences.notes}`,
-                                  ].filter(Boolean).join(' · ')}
+                              <span style={{ fontSize: '12px', color: '#888', marginLeft: '0.5rem' }}>{p.email}</span>
+                              {(p.car || p.preferences?.budget) && (
+                                <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {[p.car, p.preferences?.budget].filter(Boolean).join(' · ')}
                                 </div>
                               )}
                             </div>
-                            <div style={{ fontSize: '10px', color: '#bbb', flexShrink: 0 }}>
-                              {p.is_member ? 'Member' : (p.membership_optin ? 'Waitlist opt-in' : 'Public')}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                              <span style={{ fontSize: '10px', color: '#bbb' }}>{p.is_member ? 'Member' : (p.membership_optin ? 'Membership lead' : 'Public')}</span>
+                              <span style={{ color: '#c5a882', fontSize: '12px' }}>›</span>
                             </div>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -437,6 +455,62 @@ export default function RoadtripsAdminClient() {
           })}
         </div>
       )}
+
+      {/* ── Interested-person detail popup ── */}
+      {person && (() => {
+        const { route: pr, p } = person
+        const prefs = p.preferences || {}
+        const rows = [
+          ['Route', pr.name],
+          ['Name', p.name || '—'],
+          ['Email', <a key="e" href={`mailto:${p.email}`} style={{ color: '#8A6535', textDecoration: 'none' }}>{p.email}</a>],
+          ['Phone', p.phone ? <a key="t" href={`tel:${p.phone}`} style={{ color: '#8A6535', textDecoration: 'none' }}>{p.phone}</a> : '—'],
+          ['Car', p.car || '—'],
+          ['Status', p.is_member ? 'Member' : (p.membership_optin ? 'Public · interested in membership' : 'Public')],
+          ['Budget', prefs.budget || '—'],
+          ['Preferred dates', prefs.dates || '—'],
+          ['Hotel', prefs.hotel || '—'],
+          ['Activities', prefs.activities?.length ? prefs.activities.join(', ') : '—'],
+          ['Notes', prefs.notes || '—'],
+          ['Registered', p.created_at ? new Date(p.created_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' }) : '—'],
+        ]
+        return (
+          <div onClick={() => setPerson(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(15,30,20,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 24px 80px rgba(0,0,0,0.35)', width: '100%', maxWidth: '440px', maxHeight: '86dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1.4rem 1.5rem 1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '6px' }}>Route Interest</div>
+                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '22px', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.15 }}>{p.name || p.email}</div>
+                </div>
+                <button onClick={() => setPerson(null)} aria-label="Close"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '19px', lineHeight: 1, padding: '10px', margin: '-8px -10px 0 0', minWidth: '44px', minHeight: '44px' }}>✕</button>
+              </div>
+              <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', overflow: 'hidden', marginBottom: '1rem' }}>
+                {rows.map(([k, v], i) => (
+                  <div key={k} style={{ display: 'flex', gap: '0.85rem', padding: '0.6rem 0.85rem', borderBottom: i < rows.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', background: i % 2 ? '#fdfdfc' : '#fff' }}>
+                    <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', width: '92px', flexShrink: 0, paddingTop: '2px' }}>{k}</div>
+                    <div style={{ fontSize: '13px', color: '#333', lineHeight: 1.55, minWidth: 0, overflowWrap: 'anywhere' }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {personConfirm ? (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '12px', color: '#93333E' }}>Remove {p.name?.split(' ')[0] || 'them'} from {pr.name}?</span>
+                  <DangerBtn small disabled={personDeleting} onClick={() => deleteInterest(pr.id, p)}>{personDeleting ? 'Removing…' : 'Yes, remove'}</DangerBtn>
+                  <GhostBtn small onClick={() => setPersonConfirm(false)}>Cancel</GhostBtn>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                  <GhostBtn small onClick={() => setPerson(null)}>Close</GhostBtn>
+                  <DangerBtn small onClick={() => setPersonConfirm(true)}>Remove from route</DangerBtn>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

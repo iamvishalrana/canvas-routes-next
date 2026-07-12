@@ -11,7 +11,7 @@ export async function GET() {
   const supabase = createAdminClient()
   const [{ data: routes, error }, { data: interest }] = await Promise.all([
     supabase.from('upcoming_routes').select('*').order('sort_order', { ascending: true }),
-    supabase.from('route_interest').select('route_id, name, email, phone, car, preferences, membership_optin, is_member, created_at').order('created_at', { ascending: false }),
+    supabase.from('route_interest').select('id, route_id, name, email, phone, car, preferences, membership_optin, is_member, created_at').order('created_at', { ascending: false }),
   ])
   if (error) {
     captureException(new Error(error.message), { context: 'admin-roadtrips-list' })
