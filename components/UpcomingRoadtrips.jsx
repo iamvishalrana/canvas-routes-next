@@ -18,7 +18,14 @@ const PAST_ROUTES = [
 ]
 const CONTACT_KEY = 'cr_routes_contact' // returning-visitor prefill + registered flags
 const TRIP_LABELS = { overnight: 'Overnight', multi_day: 'Multi-Day' } // 'day' shows no badge
-const BUDGET_OPTIONS   = ['Under $250', '$250–500', '$500–1000', '$1000–2000', '$2000+']
+// Budget brackets scale with the trip: a day loop and a five-day expedition
+// shouldn't offer the same ranges.
+const BUDGET_OPTIONS = {
+  day:       ['$250–500', '$500–1,000', '$1,000+'],
+  overnight: ['$500–1,000', '$1,000–1,500', '$1,500–2,000', '$2,000+'],
+  multi_day: ['$1,000–1,500', '$1,500–2,000', '$2,000–3,000', '$3,000+'],
+}
+const budgetsFor = t => BUDGET_OPTIONS[t] || BUDGET_OPTIONS.overnight
 const HOTEL_OPTIONS    = ['No preference', 'Budget-friendly', 'Mid-range', 'Boutique / Luxury', 'Camping / Rustic']
 // Generic fallback — routes carry their own area-specific activity_options
 const ACTIVITY_OPTIONS = ['Scenic drives', 'Local food', 'Fine dining', 'Photography', 'Sightseeing', 'Nightlife', 'Relaxing']
@@ -287,6 +294,13 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     const email = (route.formEmail || '').trim()
     if (!name || name.length < 2) { patch(route.id, { error: 'Please enter your name.' }); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { patch(route.id, { error: 'Please enter a valid email.' }); return }
+    if (!(route.formPhone || '').trim()) { patch(route.id, { error: 'Please enter your phone number.' }); return }
+    if (!(route.formCar || '').trim()) { patch(route.id, { error: 'Please tell us your car — year, make and model.' }); return }
+    if (!route.formBudget) { patch(route.id, { error: 'Please pick a budget range.' }); return }
+    if (!(route.formDates || '').trim()) { patch(route.id, { error: 'Please tell us which dates work for you.' }); return }
+    if ((route.trip_type === 'overnight' || route.trip_type === 'multi_day') && !route.formHotel) { patch(route.id, { error: 'Please pick a hotel preference.' }); return }
+    if (!(route.formActivities || []).length) { patch(route.id, { error: 'Please pick at least one activity.' }); return }
+    if (!(route.formNotes || '').trim()) { patch(route.id, { error: 'Please add a note — even a line about what you\'re hoping for helps.' }); return }
     patch(route.id, { submitting: true, error: null })
     try {
       const res = await fetch('/api/upcoming-routes/interest', {
@@ -778,23 +792,23 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <a href="/members/login?redirect=/members/routes" className="rt-btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', padding: '12px', marginTop: '10px' }}>Log in to continue →</a>
               </div>
             )}
-            <input type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="Phone (optional)" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value })} className="rt-input" />
-            <input type="text" placeholder="Car — year, make, model (optional)" value={sheetRoute.formCar} onChange={e => patch(sheetRoute.id, { formCar: e.target.value })} className="rt-input" />
+            <input type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="Phone" value={sheetRoute.formPhone} onChange={e => patch(sheetRoute.id, { formPhone: e.target.value, error: null })} className="rt-input" />
+            <input type="text" placeholder="Car — year, make, model" value={sheetRoute.formCar} onChange={e => patch(sheetRoute.id, { formCar: e.target.value, error: null })} className="rt-input" />
 
             {/* Trip preferences */}
-            <select className="rt-input" value={sheetRoute.formBudget} onChange={e => patch(sheetRoute.id, { formBudget: e.target.value })}>
-              <option value="">Budget per car (optional)</option>
-              {BUDGET_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            <select className="rt-input" value={sheetRoute.formBudget} onChange={e => patch(sheetRoute.id, { formBudget: e.target.value, error: null })}>
+              <option value="">Budget per car</option>
+              {budgetsFor(sheetRoute.trip_type).map(o => <option key={o} value={o}>{o}</option>)}
             </select>
-            <input type="text" placeholder="Preferred dates (optional)" value={sheetRoute.formDates} onChange={e => patch(sheetRoute.id, { formDates: e.target.value })} className="rt-input" />
+            <input type="text" placeholder="Preferred dates — e.g. any August weekend" value={sheetRoute.formDates} onChange={e => patch(sheetRoute.id, { formDates: e.target.value, error: null })} className="rt-input" />
             {(sheetRoute.trip_type === 'overnight' || sheetRoute.trip_type === 'multi_day') && (
-              <select className="rt-input" value={sheetRoute.formHotel} onChange={e => patch(sheetRoute.id, { formHotel: e.target.value })}>
-                <option value="">Hotel preference (optional)</option>
+              <select className="rt-input" value={sheetRoute.formHotel} onChange={e => patch(sheetRoute.id, { formHotel: e.target.value, error: null })}>
+                <option value="">Hotel preference</option>
                 {HOTEL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             )}
             <div style={{ margin: '4px 0 10px' }}>
-              <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want</div>
+              <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '7px' }}>Activities you'd want — pick at least one</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {(sheetRoute.activity_options?.length ? sheetRoute.activity_options : ACTIVITY_OPTIONS).map(a => {
                   const on = (sheetRoute.formActivities || []).includes(a)
@@ -808,7 +822,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 })}
               </div>
             </div>
-            <textarea placeholder="Anything else? (optional)" value={sheetRoute.formNotes} onChange={e => patch(sheetRoute.id, { formNotes: e.target.value })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical' }} maxLength={500} />
+            <textarea placeholder="Anything else we should know?" value={sheetRoute.formNotes} onChange={e => patch(sheetRoute.id, { formNotes: e.target.value, error: null })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical' }} maxLength={500} />
             {!isMember && (
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '6px 0 14px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={!!sheetRoute.formMembership} onChange={e => patch(sheetRoute.id, { formMembership: e.target.checked })} style={{ cursor: 'pointer', accentColor: ACCENT, marginTop: '1px', flexShrink: 0 }} />

@@ -49,12 +49,19 @@ export async function POST(request) {
   if (!name || name.length < 2) return Response.json({ error: 'Please enter your name.' }, { status: 400 })
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
   if (name.length > 100 || email.length > 254 || phone.length > 40 || car.length > 120) return Response.json({ error: 'Input too long.' }, { status: 400 })
+  // All fields are mandatory (hotel only for trips with nights away — checked after the route lookup)
+  if (!phone) return Response.json({ error: 'Please enter your phone number.' }, { status: 400 })
+  if (!car) return Response.json({ error: 'Please tell us your car — year, make and model.' }, { status: 400 })
+  if (!preferences.budget) return Response.json({ error: 'Please pick a budget range.' }, { status: 400 })
+  if (!preferences.dates) return Response.json({ error: 'Please tell us which dates work for you.' }, { status: 400 })
+  if (!preferences.activities?.length) return Response.json({ error: 'Please pick at least one activity.' }, { status: 400 })
+  if (!preferences.notes) return Response.json({ error: 'Please add a note about what you\'re hoping for.' }, { status: 400 })
 
   const supabase = createAdminClient()
 
   const { data: route, error: routeErr } = await supabase
     .from('upcoming_routes')
-    .select('id, name, slug, destination, month_label, duration_label, distance_label, target_count, launched, threshold_notified_at')
+    .select('id, name, slug, destination, month_label, duration_label, distance_label, trip_type, target_count, launched, threshold_notified_at')
     .eq('slug', slug)
     .eq('is_active', true)
     .maybeSingle()
@@ -63,6 +70,9 @@ export async function POST(request) {
     return Response.json({ error: 'Could not save your interest. Please try again.' }, { status: 500 })
   }
   if (!route) return Response.json({ error: 'That route is no longer available.' }, { status: 404 })
+  if ((route.trip_type === 'overnight' || route.trip_type === 'multi_day') && !preferences.hotel) {
+    return Response.json({ error: 'Please pick a hotel preference.' }, { status: 400 })
+  }
 
   // If a guest submits with an email that belongs to a member account, don't
   // register them anonymously — send them to log in so the registration is
