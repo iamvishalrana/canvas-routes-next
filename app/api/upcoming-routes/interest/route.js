@@ -29,7 +29,6 @@ export async function POST(request) {
   const email = normalizeEmail(body.email)
   const phone = (body.phone || '').trim()
   const car = (body.car || '').trim()
-  const membershipOptin = !!body.membership_optin
   const isMember = !!body.is_member
 
   // Sanitize the trip-preference survey answers into a known shape.
@@ -91,7 +90,7 @@ export async function POST(request) {
   // Idempotent per (route, email): update the name/opt-in if they resubmit.
   const { error: upsertErr } = await supabase
     .from('route_interest')
-    .upsert({ route_id: route.id, name, email, phone: phone || null, car: car || null, preferences, membership_optin: membershipOptin, is_member: isMember },
+    .upsert({ route_id: route.id, name, email, phone: phone || null, car: car || null, preferences, is_member: isMember },
             { onConflict: 'route_id,email' })
   if (upsertErr) {
     captureException(new Error(upsertErr.message), { context: 'roadtrip-interest-upsert' })
@@ -111,7 +110,7 @@ export async function POST(request) {
     const { data: existing } = await supabase
       .from('applications').select('id, registrations').eq('email', email).maybeSingle()
     const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
-    const newReg = { event: EVENT_NAME, registered_at: existingReg?.registered_at || new Date().toISOString(), attended: null, membership_optin: membershipOptin }
+    const newReg = { event: EVENT_NAME, registered_at: existingReg?.registered_at || new Date().toISOString(), attended: null }
     const registrations = [...(existing?.registrations || []).filter(r => r.event !== EVENT_NAME), newReg]
     const appPayload = { email, name, registrations, device_type: deviceType(request) }
     if (phone) appPayload.phone = phone       // only set when provided — never wipe existing CRM data
@@ -136,7 +135,7 @@ export async function POST(request) {
       from: 'Canvas Routes <info@canvasroutes.com>',
       to: email,
       subject: `You're on the list — ${route.name}`,
-      html: buildRouteInterestHtml({ firstName: name.split(' ')[0] || '', route, interestedCount }),
+      html: buildRouteInterestHtml({ firstName: name.split(' ')[0] || '', route, interestedCount, isMember }),
     }, 'roadtrip-interest-confirm-email'),
     sendEmail({
       from: 'Canvas Routes <info@canvasroutes.com>',
@@ -154,7 +153,6 @@ export async function POST(request) {
         ...(preferences.activities ? [['Activities', preferences.activities.join(', ')]] : []),
         ...(preferences.notes ? [['Notes', preferences.notes]] : []),
         ['Interest', `${interestedCount} / ${route.target_count}`],
-        ['Interested in membership', membershipOptin ? 'Yes' : 'No'],
         ['Member', isMember ? 'Yes' : 'No'],
       ]),
     }, 'roadtrip-interest-admin-email'),

@@ -194,7 +194,6 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           formHotel: '',
           formActivities: [],
           formNotes: '',
-          formMembership: !isMember,
         })))
         setLoading(false)
         setSelectedId(list[0]?.id ?? null)
@@ -316,7 +315,6 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             activities: route.formActivities || [],
             notes: (route.formNotes || '').trim(),
           },
-          membership_optin: !isMember && !!route.formMembership,
           is_member: isMember,
           _hp: hpRef.current?.value || undefined,
         }),
@@ -823,12 +821,6 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
               </div>
             </div>
             <textarea placeholder="Anything else we should know? *" value={sheetRoute.formNotes} onChange={e => patch(sheetRoute.id, { formNotes: e.target.value, error: null })} className="rt-input" style={{ minHeight: '60px', resize: 'vertical' }} maxLength={500} />
-            {!isMember && (
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '6px 0 14px', cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!sheetRoute.formMembership} onChange={e => patch(sheetRoute.id, { formMembership: e.target.checked })} style={{ cursor: 'pointer', accentColor: ACCENT, marginTop: '1px', flexShrink: 0 }} />
-                <span style={{ fontSize: '11px', color: '#999', lineHeight: 1.5, letterSpacing: '0.02em' }}>I'm interested in becoming a Canvas Routes member</span>
-              </label>
-            )}
             {/* Suppress the 409 duplicate when the live member notice (with its
                 own login button) is already showing above */}
             {sheetRoute.error && !(sheetRoute.memberPrompt && emailIsMember) && (
