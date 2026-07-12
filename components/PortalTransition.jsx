@@ -16,6 +16,11 @@ export default function PortalTransition({ children }) {
     el.style.animation = 'none'
     void el.offsetHeight
     el.style.animation = 'portal-page-in 0.35s cubic-bezier(0.23, 1, 0.32, 1) both'
+    // Release the animation once done: fill-mode 'both' would otherwise pin a
+    // transform on this wrapper forever, and a transformed ancestor hijacks
+    // position:fixed — the routes interest sheet (and any fixed overlay)
+    // would anchor to the page instead of the viewport and render off-screen.
+    el.addEventListener('animationend', () => { el.style.animation = '' }, { once: true })
   }, [pathname])
 
   return <div ref={ref}>{children}</div>

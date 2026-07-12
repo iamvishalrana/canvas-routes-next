@@ -144,7 +144,10 @@ export default function ProfilePage() {
 
   function formatPhone(v) {
     let d = v.replace(/\D/g, '')
-    if (d.startsWith('1') && d.length > 1) d = d.slice(1)
+    // The '+1 ' prefix echoes back through onChange as a leading 1, and users
+    // often type their own country-code 1 on top of it. NANP area codes never
+    // start with 1, so every leading 1 is safe to drop.
+    while (d.startsWith('1')) d = d.slice(1)
     d = d.slice(0, 10)
     if (!d) return ''
     const p = '+1 '
