@@ -137,14 +137,16 @@ export default function Home() {
   // Shown once per session (sessionStorage) after a short delay so the hero
   // paints first and the popup doesn't feel like an ambush.
   useEffect(() => {
-    if (sessionStorage.getItem('routes_popup_seen')) return
+    // Storage access can throw in strict in-app browsers / private modes —
+    // never let that take down the homepage.
+    try { if (sessionStorage.getItem('routes_popup_seen')) return } catch {}
     const t = setTimeout(() => setShowRoutesPopup(true), 1600)
     return () => clearTimeout(t)
   }, [])
 
   function dismissRoutesPopup() {
     setShowRoutesPopup(false)
-    sessionStorage.setItem('routes_popup_seen', '1')
+    try { sessionStorage.setItem('routes_popup_seen', '1') } catch {}
   }
 
   const [cookieBannerVisible, setCookieBannerVisible] = useState(false)
@@ -441,7 +443,7 @@ export default function Home() {
             style={{
               background: '#0F1E14', maxWidth: '480px', width: '100%',
               position: 'relative', overflow: 'hidden',
-              maxHeight: '86dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+              maxHeight: '86vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
               boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
             }}
           >

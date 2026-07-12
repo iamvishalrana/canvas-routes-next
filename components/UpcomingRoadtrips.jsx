@@ -354,8 +354,14 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
 
   function copyShare() {
     if (!shareRoute) return
-    navigator.clipboard?.writeText(`${shareText(shareRoute)} canvasroutes.com/routes`)
-    setCopied(true); setTimeout(() => setCopied(false), 1800)
+    // Clipboard API is missing in some in-app browsers — only confirm a real
+    // copy; the preview text below is tap-selectable as the manual fallback.
+    const text = `${shareText(shareRoute)} canvasroutes.com/routes`
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800) })
+        .catch(() => {})
+    }
   }
   function shareTwitter() {
     if (!shareRoute) return
@@ -425,7 +431,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         .rt-maprow-active { border-left-color:#c5a882 !important; background:#faf9f7; }
         @keyframes rtSheetUp { from { transform:translateY(100%);} to { transform:translateY(0);} }
         .rt-sheet-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.55); backdrop-filter:blur(3px); z-index:1100; animation:rtFadeIn .2s ease forwards; }
-        .rt-sheet { position:fixed; left:0; right:0; bottom:0; z-index:1101; background:#F5F1EC; border-radius:18px 18px 0 0; max-height:88dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px 20px calc(24px + env(safe-area-inset-bottom)); animation:rtSheetUp .32s cubic-bezier(.22,.68,0,1) forwards; box-shadow:0 -8px 40px rgba(0,0,0,0.25); }
+        .rt-sheet { position:fixed; left:0; right:0; bottom:0; z-index:1101; background:#F5F1EC; border-radius:18px 18px 0 0; max-height:88vh; max-height:88dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px 20px calc(24px + env(safe-area-inset-bottom)); animation:rtSheetUp .32s cubic-bezier(.22,.68,0,1) forwards; box-shadow:0 -8px 40px rgba(0,0,0,0.25); }
         .rt-sheet-handle { width:36px; height:4px; border-radius:99px; background:rgba(0,0,0,0.15); margin:6px auto 14px; }
         @media (min-width:769px) {
           .rt-sheet { left:50%; right:auto; bottom:auto; top:50%; width:460px; max-height:82vh; transform:translate(-50%,-50%); border-radius:4px; padding:28px 32px 32px; animation:rtFadeIn .25s ease forwards; }
@@ -851,7 +857,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '26px', fontWeight: 300, color: '#1a1a1a', marginBottom: '6px' }}>{shareRoute.name}</h2>
             <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '28px', lineHeight: 1.7 }}>Let your crew know you've got your name down for this drive.</p>
             <div style={{ background: '#EDE8E1', padding: '14px 16px', border: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '24px' }}>
-              <p style={{ fontSize: '11px', color: '#666', lineHeight: 1.65 }}>{shareText(shareRoute)} canvasroutes.com/routes</p>
+              <p style={{ fontSize: '11px', color: '#666', lineHeight: 1.65, userSelect: 'all', WebkitUserSelect: 'all' }}>{shareText(shareRoute)} canvasroutes.com/routes</p>
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <button onClick={copyShare} className="rt-btn" style={{ flex: 1, padding: '12px' }}>{copied ? 'Copied ✓' : 'Copy Text'}</button>

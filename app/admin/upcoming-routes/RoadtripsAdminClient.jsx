@@ -478,7 +478,7 @@ export default function RoadtripsAdminClient() {
           <div onClick={() => setPerson(null)}
             style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(15,30,20,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 24px 80px rgba(0,0,0,0.35)', width: '100%', maxWidth: '440px', maxHeight: '86dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1.4rem 1.5rem 1.25rem' }}>
+              style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 24px 80px rgba(0,0,0,0.35)', width: '100%', maxWidth: '440px', maxHeight: '86vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1.4rem 1.5rem 1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div>
                   <div style={{ fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '6px' }}>Route Interest</div>
