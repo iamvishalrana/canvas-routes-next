@@ -48,7 +48,7 @@ export default async function DashboardPage() {
   if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
-  const [{ data: member }, { data: announcements }, { data: events }, { data: application }, { data: eventRegs }] = await Promise.all([
+  const [{ data: member }, { data: announcements }, { data: events }, { data: application }, { data: eventRegs }, { data: routes }, { data: routeInterestRows }] = await Promise.all([
     admin.from('members').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
     admin.from('events').select('*').order('date', { ascending: true }),
@@ -56,7 +56,18 @@ export default async function DashboardPage() {
       ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle()
       : Promise.resolve({ data: null }),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
+    admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type').eq('is_active', true).eq('launched', false).order('sort_order', { ascending: true }),
+    admin.from('route_interest').select('route_id, email'),
   ])
+
+  // Live interest counts + "have I already added my name" per route
+  const routeInterestCounts = {}
+  const myRouteIds = new Set()
+  for (const r of (routeInterestRows || [])) {
+    routeInterestCounts[r.route_id] = (routeInterestCounts[r.route_id] || 0) + 1
+    if (user.email && r.email === user.email.toLowerCase()) myRouteIds.add(r.route_id)
+  }
+  const upcomingRoutes = (routes || []).map(r => ({ ...r, interested_count: routeInterestCounts[r.id] || 0, registered: myRouteIds.has(r.id) }))
 
   const eventRegMap = {}
   for (const r of (eventRegs || [])) eventRegMap[r.event_id] = r.stripe_payment_status
@@ -337,7 +348,7 @@ export default async function DashboardPage() {
           {/* Upcoming Events */}
           <FadeUp delay={120}><div className="dash-card">
             <div className="card-head">
-              <span className="section-label">Upcoming Events</span>
+              <span className="section-label">Upcoming Meets &amp; Events</span>
               <Link href="/members/events" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
                 View all
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -345,7 +356,7 @@ export default async function DashboardPage() {
             </div>
             <div className="card-pad">
               {!upcomingEvents.length ? (
-                <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>Nothing scheduled yet — check back soon.</p>
+                <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>No upcoming meets &amp; events yet.</p>
               ) : upcomingEvents.map((ev, i) => {
                 const rawDate = ev.date_display || ev.date || ''
                 const ds = rawDate.trim()
@@ -421,6 +432,44 @@ export default async function DashboardPage() {
                         ) : null}
                       </div>
                     </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div></FadeUp>
+
+          {/* Upcoming Routes — still gathering interest, distinct from the confirmed
+              calendar above (gold left edge marks it as a different kind of listing) */}
+          <FadeUp delay={160}><div className="dash-card" style={{ borderLeft: '3px solid #c5a882' }}>
+            <div className="card-head">
+              <span className="section-label">Upcoming Routes</span>
+              <Link href="/members/routes" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
+                View all
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </Link>
+            </div>
+            <div className="card-pad">
+              {!upcomingRoutes.length ? (
+                <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>No upcoming routes right now — check back soon.</p>
+              ) : upcomingRoutes.map((r, i) => {
+                const pct = Math.min(100, Math.round((r.interested_count / r.target_count) * 100))
+                return (
+                  <Link key={r.id} href="/members/routes" style={{ display: 'block', borderBottom: i < upcomingRoutes.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', textDecoration: 'none', padding: '1.1rem 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', lineHeight: 1.35, letterSpacing: '0.01em' }}>{r.name}</div>
+                        <div style={{ fontSize: '11px', color: '#999', marginTop: '0.15rem' }}>{r.destination} · {r.month_label}</div>
+                      </div>
+                      {r.registered ? (
+                        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', flexShrink: 0, whiteSpace: 'nowrap' }}>You're In</span>
+                      ) : (
+                        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px', background: 'rgba(197,168,130,0.04)', fontFamily: 'var(--font-inter), sans-serif', flexShrink: 0, whiteSpace: 'nowrap' }}>Add Your Name</span>
+                      )}
+                    </div>
+                    <div style={{ height: '3px', background: 'rgba(0,0,0,0.05)', borderRadius: '99px', overflow: 'hidden', marginTop: '0.5rem' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#c5a882,#e8c99a)' }} />
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>{r.interested_count} / {r.target_count} drivers in</div>
                   </Link>
                 )
               })}

@@ -107,11 +107,16 @@ export default function Home() {
   const [pastModalImageFailed, setPastModalImageFailed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [dbEvents, setDbEvents] = useState([])
+  const [teaserRoutes, setTeaserRoutes] = useState([])
 
   useEffect(() => {
     fetch('/api/public/events')
       .then(r => r.json())
       .then(events => setDbEvents(events))
+      .catch(() => {})
+    fetch('/api/upcoming-routes')
+      .then(r => r.ok ? r.json() : [])
+      .then(list => setTeaserRoutes(Array.isArray(list) ? list : []))
       .catch(() => {})
     fetch('/api/public/settings')
       .then(r => r.json())
@@ -717,7 +722,6 @@ export default function Home() {
             <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>Meets &amp; Events</div>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
             <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
-            <Link href="/routes" style={{display:"inline-block",marginTop:"1.5rem",padding:"0.7rem 1.8rem",border:"0.5px solid rgba(197,168,130,0.45)",fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none"}}>Upcoming Routes — Express Interest →</Link>
           </div>
         </FadeUp>
         <div className="events-grid">
@@ -789,6 +793,25 @@ export default function Home() {
             </FadeUp>
           ))}
         </div>
+
+        {/* Upcoming Routes — visually distinct from the confirmed calendar above:
+            cream card floating on the dark section, gold border, its own CTA */}
+        <FadeUp>
+          <div style={{maxWidth:"780px",margin:"4rem auto 0",background:"#F5F1EC",border:"0.5px solid rgba(197,168,130,0.4)",borderRadius:"2px",padding:"clamp(1.75rem,4vw,2.5rem)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1.5rem",flexWrap:"wrap"}}>
+            <div style={{flex:"1 1 320px"}}>
+              <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#8A6535",marginBottom:"0.6rem"}}>Upcoming Routes · Not Yet Confirmed</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.7rem",fontWeight:"300",color:"#1a1a1a",lineHeight:1.2,marginBottom:"0.5rem"}}>
+                {teaserRoutes.length > 0 ? `${teaserRoutes.length} route${teaserRoutes.length !== 1 ? 's' : ''} gathering interest for 2026` : 'New routes are gathering interest for 2026'}
+              </div>
+              <p style={{fontSize:"0.85rem",color:"#777",lineHeight:1.75,margin:0}}>
+                {teaserRoutes.length > 0
+                  ? `${teaserRoutes.slice(0,3).map(r=>r.name).join(', ')}${teaserRoutes.length > 3 ? ' and more' : ''} — add your name and we'll email you the moment a route is a go. No payment, no commitment.`
+                  : "Add your name to a route you'd want to drive — we'll email you the moment it's a go. No payment, no commitment."}
+              </p>
+            </div>
+            <Link href="/routes" style={{flexShrink:0,display:"inline-block",padding:"0.85rem 2rem",background:"#0F1E14",color:"#F5F1EC",fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",textDecoration:"none",whiteSpace:"nowrap"}}>Explore Routes →</Link>
+          </div>
+        </FadeUp>
       </section>
 
       {/* INSTAGRAM FILM STRIP */}
