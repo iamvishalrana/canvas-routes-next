@@ -714,7 +714,7 @@ export default function Home() {
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
         <FadeUp>
           <div style={{textAlign:"center",marginBottom:"4rem"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>On the calendar</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>Meets &amp; Events</div>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
             <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
             <Link href="/routes" style={{display:"inline-block",marginTop:"1.5rem",padding:"0.7rem 1.8rem",border:"0.5px solid rgba(197,168,130,0.45)",fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#c5a882",textDecoration:"none"}}>Upcoming Routes — Express Interest →</Link>

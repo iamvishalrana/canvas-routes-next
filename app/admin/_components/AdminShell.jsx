@@ -23,7 +23,7 @@ const SECTIONS = [
   {
     id: 'events', label: 'Events',
     items: [
-      { href: '/admin/events',          label: 'Events'          },
+      { href: '/admin/events',          label: 'Meets & Events'  },
       { href: '/admin/upcoming-routes', label: 'Upcoming Routes' },
     ],
   },

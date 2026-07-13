@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import EventsGrid from '../../../../components/EventsGrid'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: { absolute: 'Events | Canvas Routes' } }
+export const metadata = { title: { absolute: 'Meets & Events | Canvas Routes' } }
 
 function parseEventDate(str) {
   if (!str) return null
@@ -82,7 +82,7 @@ export default async function EventsPage() {
           Canvas Routes &mdash; Season 2026
         </div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.4rem, 5vw, 3.4rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: 0, letterSpacing: '-0.01em' }}>
-          Events
+          Meets &amp; Events
         </h1>
       </header>
 
