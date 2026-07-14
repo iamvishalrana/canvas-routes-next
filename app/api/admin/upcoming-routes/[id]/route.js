@@ -2,7 +2,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 
-const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug']
+const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug']
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -16,6 +16,7 @@ export async function PATCH(request, { params }) {
     update.target_count = t
   }
   if (update.sort_order != null) update.sort_order = parseInt(update.sort_order, 10) || 0
+  if ('price_range' in update) update.price_range = (update.price_range || '').trim() || null
   if ('price_per_car' in update) {
     update.price_per_car = update.price_per_car === '' || update.price_per_car == null ? null
       : (Number.isFinite(parseFloat(update.price_per_car)) ? parseFloat(update.price_per_car) : null)

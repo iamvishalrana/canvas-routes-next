@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS public.upcoming_routes (
   sort_order     INT           NOT NULL DEFAULT 0,
   trip_type      TEXT          NOT NULL DEFAULT 'day' CHECK (trip_type IN ('day', 'overnight', 'multi_day')),
   price_per_car  NUMERIC(10,2),
+  price_range    TEXT,
   max_cars       INT,
   itinerary      TEXT          NOT NULL DEFAULT '',
   activity_options JSONB       NOT NULL DEFAULT '[]'::jsonb,

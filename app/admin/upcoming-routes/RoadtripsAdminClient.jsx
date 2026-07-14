@@ -87,6 +87,7 @@ export default function RoadtripsAdminClient() {
       target_count: String(r.target_count), sort_order: String(r.sort_order),
       trip_type: r.trip_type || 'day',
       price_per_car: r.price_per_car != null ? String(r.price_per_car) : '',
+      price_range: r.price_range || '',
       max_cars: r.max_cars != null ? String(r.max_cars) : '',
       itinerary: r.itinerary || '',
       activity_options: (r.activity_options || []).join(', '),
@@ -257,8 +258,9 @@ export default function RoadtripsAdminClient() {
           <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} placeholder={String(routes.length + 1)} /></Field>
           <Field label="Trip type"><TripSelect value={form.trip_type} onChange={e => setForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
         </div>
-        <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
-          <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.price_per_car} onChange={e => setForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional — e.g. 200" /></Field>
+        <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
+          <Field label="Avg. price range"><input style={inp} value={form.price_range} onChange={e => setForm(p => ({ ...p, price_range: e.target.value }))} placeholder="e.g. $800–$1,200 per car" maxLength={60} /></Field>
+          <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.price_per_car} onChange={e => setForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="exact — set at launch" /></Field>
           <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={form.max_cars} onChange={e => setForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
         </div>
         <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
@@ -390,7 +392,8 @@ export default function RoadtripsAdminClient() {
                       <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={editForm.sort_order} onChange={e => setEditForm(p => ({ ...p, sort_order: e.target.value }))} /></Field>
                       <Field label="Trip type"><TripSelect value={editForm.trip_type} onChange={e => setEditForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
                     </div>
-                    <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+                    <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
+                      <Field label="Avg. price range"><input style={inp} value={editForm.price_range} onChange={e => setEditForm(p => ({ ...p, price_range: e.target.value }))} placeholder="e.g. $800–$1,200 per car" maxLength={60} /></Field>
                       <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.price_per_car} onChange={e => setEditForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional" /></Field>
                       <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={editForm.max_cars} onChange={e => setEditForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
                     </div>

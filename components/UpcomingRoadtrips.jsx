@@ -666,9 +666,13 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         <div style={{ fontSize: '13px', color: '#333' }}>{r.distance_label}</div>
                       </div>
                     </div>
-                    {r.price_per_car != null && r.price_per_car !== '' && (
+                    {r.price_per_car != null && r.price_per_car !== '' ? (
                       <div style={{ fontSize: '12px', color: '#8a6535', marginBottom: '18px', letterSpacing: '0.02em' }}>
                         <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#1a1a1a' }}>${Number(r.price_per_car).toFixed(Number.isInteger(Number(r.price_per_car)) ? 0 : 2)}</span> per car
+                      </div>
+                    ) : r.price_range && (
+                      <div style={{ fontSize: '12px', color: '#999', marginBottom: '18px', letterSpacing: '0.02em' }}>
+                        <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#8a6535' }}>{r.price_range}</span> <span style={{ fontSize: '10px' }}>est. — confirmed at launch</span>
                       </div>
                     )}
                     {r.itinerary && (

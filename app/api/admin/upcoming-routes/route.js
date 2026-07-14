@@ -57,6 +57,7 @@ export async function POST(request) {
     sort_order: parseInt(body.sort_order, 10) || 0,
     trip_type: tripType,
     price_per_car: price,
+    price_range: (body.price_range || '').trim() || null,
     max_cars: Number.isFinite(maxCars) && maxCars > 0 ? maxCars : null,
     itinerary: (body.itinerary || '').trim(),
     activity_options: activityOptions,
