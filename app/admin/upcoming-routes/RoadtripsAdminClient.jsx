@@ -200,9 +200,17 @@ export default function RoadtripsAdminClient() {
     finally { setPersonDeleting(false) }
   }
 
-  function exportCSV() {
+  function downloadCSV(rows, filename) {
+    const csv = rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    a.download = filename
+    a.click(); URL.revokeObjectURL(a.href)
+  }
+
+  function interestRows(routesToExport) {
     const rows = [['Route', 'Name', 'Email', 'Phone', 'Car', 'Budget', 'Preferred dates', 'Hotel', 'Activities', 'Notes', 'Status', 'Registered']]
-    for (const r of routes) for (const p of (r.interest || [])) {
+    for (const r of routesToExport) for (const p of (r.interest || [])) {
       const pr = p.preferences || {}
       rows.push([
         r.name, p.name || '', p.email, p.phone || '', p.car || '',
@@ -211,11 +219,16 @@ export default function RoadtripsAdminClient() {
         p.created_at ? new Date(p.created_at).toISOString().slice(0, 10) : '',
       ])
     }
-    const csv = rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = `route-interest-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click(); URL.revokeObjectURL(a.href)
+    return rows
+  }
+
+  function exportCSV() {
+    downloadCSV(interestRows(routes), `route-interest-${new Date().toISOString().slice(0, 10)}.csv`)
+  }
+
+  function exportRouteCSV(route) {
+    const slug = route.slug || route.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    downloadCSV(interestRows([route]), `${slug}-interest-${new Date().toISOString().slice(0, 10)}.csv`)
   }
 
   const totalInterest = routes.reduce((s, r) => s + (r.interested_count || 0), 0)
@@ -336,6 +349,7 @@ export default function RoadtripsAdminClient() {
                   <GhostBtn small onClick={() => (isEditing ? setEditId(null) : startEdit(r))}>{isEditing ? 'Close' : 'Edit'}</GhostBtn>
                   <GhostBtn small onClick={() => toggleActive(r)} disabled={busyId === r.id}>{r.is_active ? 'Hide from site' : 'Show on site'}</GhostBtn>
                   <GhostBtn small onClick={() => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }} disabled={r.interested_count === 0}>Email</GhostBtn>
+                  <GhostBtn small onClick={() => exportRouteCSV(r)} disabled={r.interested_count === 0}>Export CSV</GhostBtn>
                   {!r.launched && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
                   <div style={{ marginLeft: 'auto' }}>
                     {deleteConfirm === r.id ? (

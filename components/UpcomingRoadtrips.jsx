@@ -17,7 +17,7 @@ const PAST_ROUTES = [
   { name: 'Whips to Eastern Townships',  month: 'July 2026', cars: 22, target: 18 },
 ]
 const CONTACT_KEY = 'cr_routes_contact' // returning-visitor prefill + registered flags
-const TRIP_LABELS = { overnight: 'Overnight', multi_day: 'Multi-Day' } // 'day' shows no badge
+const TRIP_LABELS = { day: 'Day Trip', overnight: 'Overnight', multi_day: 'Multi-Day' }
 // Budget brackets scale with the trip: a day loop and a five-day expedition
 // shouldn't offer the same ranges.
 const BUDGET_OPTIONS = {
@@ -453,7 +453,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 102, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: 'env(safe-area-inset-top) clamp(1rem,4vw,3rem) 0', transform: showBar ? 'translateY(0)' : 'translateY(-110%)', transition: 'transform .3s cubic-bezier(.22,.68,0,1)', cursor: 'pointer', boxShadow: showBar ? '0 8px 28px rgba(8,14,10,0.4)' : 'none' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', gap: '12px' }}>
             <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '16px', color: '#F5F1EC', whiteSpace: 'nowrap' }}>
-              Upcoming Routes <span style={{ color: ACCENT }}>· {routes.length}</span>
+              Upcoming Routes <span style={{ color: ACCENT, fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", letterSpacing: '0.04em' }}>· {routes.length}</span>
             </span>
             <span style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: ACCENT, whiteSpace: 'nowrap' }}>
               {myInterestCount} registered ↑
@@ -491,7 +491,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           <p className="rt-hero-sub" style={{ fontSize: '14px', color: heroMuted, maxWidth: '520px', lineHeight: 1.85, fontWeight: 300 }}>{INTRO}</p>
           <div className="rt-hero-meta" style={{ display: 'flex', gap: '40px', marginTop: '36px', flexWrap: 'wrap', alignItems: 'center' }}>
             <div>
-              <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '2.4rem', fontWeight: 300, color: heroText, lineHeight: 1 }}>{routes.length}</div>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.4rem', fontWeight: 400, color: heroText, lineHeight: 1, letterSpacing: '0.03em' }}>{routes.length}</div>
               <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: heroMuted, marginTop: '4px' }}>Routes Planned</div>
             </div>
           </div>
@@ -519,7 +519,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                       <CheckIcon /> <span style={{ verticalAlign: '1px' }}>Ran {p.month}</span>
                     </div>
                     <div style={{ fontSize: '12px', color: '#555', letterSpacing: '0.02em' }}>
-                      Target {p.target} cars — <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#45643c' }}>{p.cars}</span><span style={{ color: '#45643c' }}> rolled out</span>
+                      Target {p.target} cars — <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#45643c', letterSpacing: '0.03em' }}>{p.cars}</span><span style={{ color: '#45643c' }}> rolled out</span>
                     </div>
                   </div>
                 </div>
@@ -530,7 +530,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                   <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '18px', fontStyle: 'italic', color: '#8a6535', lineHeight: 1.2 }}>Next up</div>
                   <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#8a7a5c', margin: '4px 0 6px' }}>Gathering crews</div>
                   <div style={{ fontSize: '12px', color: '#555' }}>
-                    <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#1a1a1a' }}>{routes.length}</span> routes open <span style={{ color: '#8a6535' }}>→</span>
+                    <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#1a1a1a', letterSpacing: '0.03em' }}>{routes.length}</span> routes open <span style={{ color: '#8a6535' }}>→</span>
                   </div>
                 </button>
               </div>
@@ -668,11 +668,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                     </div>
                     {r.price_per_car != null && r.price_per_car !== '' ? (
                       <div style={{ fontSize: '12px', color: '#8a6535', marginBottom: '18px', letterSpacing: '0.02em' }}>
-                        <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#1a1a1a' }}>${Number(r.price_per_car).toFixed(Number.isInteger(Number(r.price_per_car)) ? 0 : 2)}</span> per car
+                        <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#1a1a1a', letterSpacing: '0.03em' }}>${Number(r.price_per_car).toFixed(Number.isInteger(Number(r.price_per_car)) ? 0 : 2)}</span> per car
                       </div>
                     ) : r.price_range && (
                       <div style={{ fontSize: '12px', color: '#999', marginBottom: '18px', letterSpacing: '0.02em' }}>
-                        <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '17px', color: '#8a6535' }}>{r.price_range}</span> <span style={{ fontSize: '10px' }}>est. — confirmed at launch</span>
+                        <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#8a6535', letterSpacing: '0.03em' }}>{r.price_range}</span> <span style={{ fontSize: '10px' }}>est. for 2 per car — confirmed at launch</span>
                       </div>
                     )}
                     {r.itinerary && (
