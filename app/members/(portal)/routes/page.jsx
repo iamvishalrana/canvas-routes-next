@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import UpcomingRoadtrips from '../../../../components/UpcomingRoadtrips'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: { absolute: 'Upcoming Routes | Canvas Routes' } }
+export const metadata = { title: { absolute: 'Routes | Canvas Routes' } }
 
 export default async function MemberRoadtripsPage() {
   const supabase = await createClient()

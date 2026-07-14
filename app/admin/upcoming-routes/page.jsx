@@ -1,6 +1,6 @@
 import RoadtripsAdminClient from './RoadtripsAdminClient'
 
-export const metadata = { title: 'Upcoming Routes — Admin' }
+export const metadata = { title: 'Routes — Admin' }
 
 // Auth is enforced by middleware.js. Data is fetched client-side.
 export default function RoadtripsAdminPage() {

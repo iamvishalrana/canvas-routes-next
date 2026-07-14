@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
+import { PAST_ROUTES } from '../lib/pastRoutes'
 
 const ACCENT = '#c5a882'
 export const ACCENT_BGS = [
@@ -10,12 +12,6 @@ export const ACCENT_BGS = [
   'linear-gradient(135deg, #141e2a 0%, #0a1018 100%)',
 ]
 const INTRO = 'A route launches when enough drivers are in. Add your name — no payments, no strings — and you\'ll hear from us the moment it\'s a go.'
-// Completed 2026 routes shown in the season strip — historical facts, hardcoded
-// like the homepage past-events list.
-const PAST_ROUTES = [
-  { name: 'Into the Laurentians',        month: 'June 2026', cars: 11, target: 9 },
-  { name: 'Whips to Eastern Townships',  month: 'July 2026', cars: 22, target: 18 },
-]
 const CONTACT_KEY = 'cr_routes_contact' // returning-visitor prefill + registered flags
 const TRIP_LABELS = { day: 'Day Trip', overnight: 'Overnight', multi_day: 'Multi-Day' }
 // Budget brackets scale with the trip: a day loop and a five-day expedition
@@ -454,7 +450,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 102, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: 'env(safe-area-inset-top) clamp(1rem,4vw,3rem) 0', transform: showBar ? 'translateY(0)' : 'translateY(-110%)', transition: 'transform .3s cubic-bezier(.22,.68,0,1)', cursor: 'pointer', boxShadow: showBar ? '0 8px 28px rgba(8,14,10,0.4)' : 'none' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', gap: '12px' }}>
             <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '16px', color: '#F5F1EC', whiteSpace: 'nowrap' }}>
-              Upcoming Routes <span style={{ color: ACCENT }}>· {routes.length}</span>
+              Routes <span style={{ color: ACCENT }}>· {routes.length}</span>
             </span>
             <span style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: ACCENT, whiteSpace: 'nowrap' }}>
               {myInterestCount} registered ↑
@@ -467,7 +463,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       {embedded && (
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: ACCENT, marginBottom: '1rem' }}>Canvas Routes · 2026 Season</div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(2.4rem,5vw,3.4rem)', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.05, margin: 0, letterSpacing: '-0.01em' }}>Upcoming Routes</h1>
+          <h1 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(2.4rem,5vw,3.4rem)', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.05, margin: 0, letterSpacing: '-0.01em' }}>Routes</h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '0.9rem', maxWidth: '520px', lineHeight: 1.75 }}>{INTRO}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '1.25rem' }}>
             <span style={{ width: '6px', height: '6px', background: ACCENT, borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />
@@ -485,7 +481,6 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
           <div className="rt-hero-1" style={{ fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: ACCENT, opacity: 0.7, marginBottom: '20px', fontWeight: 400 }}>Canvas Routes · 2026 Season</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(3rem,7vw,6rem)', fontWeight: 300, color: heroText, lineHeight: 1.05, margin: 0 }}>
-            <span className="rt-hero-1" style={{ display: 'block' }}>Upcoming</span>
             <span className="rt-hero-2" style={{ display: 'block', color: ACCENT, fontStyle: 'italic' }}>Routes</span>
           </h1>
           <span className="rt-hero-divider" />
@@ -517,7 +512,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                   <div style={{ whiteSpace: 'nowrap' }}>
                     <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '18px', fontWeight: 400, color: '#1a1a1a', lineHeight: 1.2 }}>{p.name}</div>
                     <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, margin: '4px 0 6px' }}>
-                      <CheckIcon /> <span style={{ verticalAlign: '1px' }}>Ran {p.month}</span>
+                      <CheckIcon /> <span style={{ verticalAlign: '1px' }}>Ran {p.month_label}</span>
                     </div>
                     <div style={{ fontSize: '12px', color: '#555', letterSpacing: '0.02em' }}>
                       Target {p.target} cars — <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#45643c', letterSpacing: '0.03em' }}>{p.cars}</span><span style={{ color: '#45643c' }}> rolled out</span>
@@ -713,6 +708,33 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 </div>
               )
             })}
+            {/* Completed routes — hardcoded (see lib/pastRoutes.js), shown
+                alongside the active ones so this reads as "Routes" rather
+                than just what's still gathering interest. */}
+            {PAST_ROUTES.map((p, i) => (
+              <Link key={p.slug} href={p.href} className="rt-card rt-reveal" style={{ animationDelay: `${((routes.length + i) % 3) * 0.08 + 0.05}s`, textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
+                  <img src={p.photo} alt="" className="rt-card-photo" loading="lazy" decoding="async" />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)' }} />
+                  <div style={{ position: 'absolute', bottom: '14px', left: '14px', background: 'rgba(197,168,130,0.92)', padding: '5px 12px' }}>
+                    <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#0F1E14', fontWeight: 600 }}>Completed · {p.month_label}</span>
+                  </div>
+                </div>
+                <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ marginBottom: '14px' }}>
+                    <h3 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '21px', fontWeight: 300, color: '#1a1a1a', marginBottom: '5px', lineHeight: 1.2 }}>{p.name}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <PinIcon /><span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.04em' }}>{p.destination}</span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '12.5px', color: '#777', lineHeight: 1.8, marginBottom: '20px', flex: 1, fontWeight: 300 }}>{p.description}</p>
+                  <div style={{ fontSize: '12px', color: '#8a6535', marginBottom: '18px', letterSpacing: '0.02em' }}>
+                    <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#1a1a1a', letterSpacing: '0.03em' }}>{p.cars}</span> of {p.target} cars rolled out
+                  </div>
+                  <div style={{ padding: '12px 14px', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', textAlign: 'center' }}>View Recap →</div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       ) : (

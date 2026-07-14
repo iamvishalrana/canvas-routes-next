@@ -7,6 +7,7 @@ import SiteFooter from '../components/SiteFooter'
 import FadeUp from '../components/FadeUp'
 import SiteNav from '../components/SiteNav'
 import { ROUTE_PHOTOS, ACCENT_BGS } from '../components/UpcomingRoadtrips'
+import { PAST_ROUTES } from '../lib/pastRoutes'
 import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -795,50 +796,68 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Upcoming Routes — real route cards (photo, destination, live interest
-            count), same visual language as the Meets & Events grid above so
-            this reads as a peer section, not a footnote */}
+        {/* Routes — real route cards (photo, destination), same visual
+            language as the Meets & Events grid above. Upcoming routes (live
+            interest count) plus completed ones (see lib/pastRoutes.js) show
+            side by side so this reads as the full picture, not just what's
+            still gathering interest. */}
         <div style={{marginTop:"5rem"}}>
           <FadeUp>
             <div style={{textAlign:"center",marginBottom:"3rem"}}>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Upcoming Routes</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Routes</div>
               <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>No payment, no commitment — we'll email you the moment one launches</div>
             </div>
           </FadeUp>
-          {teaserRoutes.length > 0 ? (
-            <div className="events-grid">
-              {teaserRoutes.slice(0, 3).map((r, i) => (
-                <FadeUp key={r.id} delay={i * 70}>
-                  <Link href="/routes" className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer"}}>
-                    <div style={{position:"relative",aspectRatio:"16/9",overflow:"hidden",background:ACCENT_BGS[i % ACCENT_BGS.length]}}>
-                      {ROUTE_PHOTOS[r.slug] && (
-                        <img src={ROUTE_PHOTOS[r.slug]} alt="" className="route-teaser-photo"
-                          style={{width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" />
-                      )}
-                      <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)"}} />
-                      <div style={{position:"absolute",bottom:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(197,168,130,0.2)"}}>
-                        <span style={{fontSize:"9px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",fontWeight:500}}>{r.month_label}</span>
+          {(() => {
+            const combined = [
+              ...teaserRoutes.slice(0, 3).map(r => ({ ...r, _past: false })),
+              ...PAST_ROUTES.map(p => ({ ...p, _past: true })),
+            ]
+            return combined.length > 0 ? (
+              <div className="events-grid">
+                {combined.map((r, i) => (
+                  <FadeUp key={r.slug || r.id} delay={i * 70}>
+                    <Link href={r._past ? r.href : '/routes'} className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer"}}>
+                      <div style={{position:"relative",aspectRatio:"16/9",overflow:"hidden",background:ACCENT_BGS[i % ACCENT_BGS.length]}}>
+                        {(r._past ? r.photo : ROUTE_PHOTOS[r.slug]) && (
+                          <img src={r._past ? r.photo : ROUTE_PHOTOS[r.slug]} alt="" className="route-teaser-photo"
+                            style={{width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" />
+                        )}
+                        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)"}} />
+                        {r._past ? (
+                          <div style={{position:"absolute",bottom:"12px",left:"12px",background:"rgba(197,168,130,0.92)",padding:"4px 10px"}}>
+                            <span style={{fontSize:"9px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#0F1E14",fontWeight:600}}>Completed · {r.month_label}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{position:"absolute",bottom:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(197,168,130,0.2)"}}>
+                              <span style={{fontSize:"9px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",fontWeight:500}}>{r.month_label}</span>
+                            </div>
+                            <div style={{position:"absolute",top:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(255,255,255,0.08)"}}>
+                              <span style={{fontSize:"9px",color:"rgba(245,241,236,0.6)",letterSpacing:"0.1em"}}>{r.interested_count} interested</span>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <div style={{position:"absolute",top:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(255,255,255,0.08)"}}>
-                        <span style={{fontSize:"9px",color:"rgba(245,241,236,0.6)",letterSpacing:"0.1em"}}>{r.interested_count} interested</span>
+                      <div style={{padding:"1.5rem"}}>
+                        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.35rem"}}>{r.name}</div>
+                        <div style={{fontSize:"11px",color:"#999",marginBottom:"0.9rem",letterSpacing:"0.04em"}}>{r.destination}</div>
+                        <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>
+                          {r._past ? 'View Recap' : 'View Route'} <span style={{fontSize:"13px"}}>→</span>
+                        </div>
                       </div>
-                    </div>
-                    <div style={{padding:"1.5rem"}}>
-                      <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.35rem"}}>{r.name}</div>
-                      <div style={{fontSize:"11px",color:"#999",marginBottom:"0.9rem",letterSpacing:"0.04em"}}>{r.destination}</div>
-                      <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Route <span style={{fontSize:"13px"}}>→</span></div>
-                    </div>
-                  </Link>
-                </FadeUp>
-              ))}
-            </div>
-          ) : (
-            <FadeUp>
-              <div style={{textAlign:"center",fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.3rem)",fontWeight:"300",color:"#F5F1EC"}}>
-                New routes are being planned for 2026
+                    </Link>
+                  </FadeUp>
+                ))}
               </div>
-            </FadeUp>
-          )}
+            ) : (
+              <FadeUp>
+                <div style={{textAlign:"center",fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.3rem)",fontWeight:"300",color:"#F5F1EC"}}>
+                  New routes are being planned for 2026
+                </div>
+              </FadeUp>
+            )
+          })()}
           <FadeUp delay={200}>
             <div style={{textAlign:"center",marginTop:"3rem"}}>
               <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.95rem 2.75rem",background:"#c5a882",color:"#0F1E14",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>Explore All Routes →</Link>

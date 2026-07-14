@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { PAST_ROUTES } from '../../../lib/pastRoutes'
 
 const TRIP_TYPES = [
   { value: 'day',       label: 'Day trip'  },
@@ -241,7 +242,7 @@ export default function RoadtripsAdminClient() {
 
       <div style={{ marginBottom: '1.75rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: 300, color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Upcoming Routes</h1>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: 300, color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Routes</h1>
         <p style={{ fontSize: '12px', color: '#999', marginTop: '0.5rem' }}>Shown on <a href="/routes" target="_blank" rel="noreferrer" style={{ color: '#c5a882' }}>canvasroutes.com/routes</a>. {routes.length} route{routes.length !== 1 ? 's' : ''} · {totalInterest} total interested.</p>
       </div>
 
@@ -463,6 +464,26 @@ export default function RoadtripsAdminClient() {
           })}
         </div>
       )}
+
+      {/* ── Completed routes — hardcoded (see lib/pastRoutes.js), not DB rows
+             so they're read-only here. Edit the file directly to update. ── */}
+      <div style={{ marginTop: '2.5rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.85rem' }}>Completed Routes</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {PAST_ROUTES.map(p => (
+            <div key={p.slug} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '18px', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.2 }}>{p.name}</div>
+                <div style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>{p.destination} · Ran {p.month_label}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                <div style={{ fontSize: '11px', color: '#7B5B2E' }}>{p.cars} of {p.target} cars rolled out</div>
+                <a href={p.href} target="_blank" rel="noreferrer" style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none' }}>View →</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* ── Interested-person detail popup ── */}
       {person && (() => {
