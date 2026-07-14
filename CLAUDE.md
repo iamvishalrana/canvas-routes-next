@@ -203,6 +203,10 @@ WTET used a bespoke `type: 'road_trip_wtet'` that nothing else could target. Pro
 - Admins can create a promo code scoped to that specific route, or to "any route," directly from the promo-codes admin page — including before the route launches.
 - `apply-promo` accepts it automatically (any `road_trip_*` prefix is allowed) without needing a new hardcoded allowlist entry per route.
 
+The **shared infrastructure every route flows through** — `app/api/stripe/webhook/route.js` and both admin capture routes (`app/api/admin/stripe-payments/[piId]/capture`, `app/api/admin/applications/[id]/capture`) — already branch on `type?.startsWith('road_trip_')`, not an exact `'road_trip_wtet'` match, so a new route needs zero changes there. (This wasn't always true — the `requires_capture` handler and both capture routes' confirmation-email triggers used to hardcode the exact WTET string, which silently dropped the rescue-upsert and confirmation email for any other road-trip type. Fixed 2026-07 — if you see `=== 'road_trip_wtet'` reappear in shared code, that's a regression.) The **per-route files that WTET's page uses directly** — `app/api/wtet-register`, `wtet-member-register`, `wtet-member-confirm` — are meant to be cloned per event (per the template below), so their hardcoded `EVENT_NAME`/type checks are expected and each clone needs its own `road_trip_<slug>` value.
+
+Note: the WTET confirmation email's check-in button (`/wtet/checkin`) only renders for `type === 'road_trip_wtet'` specifically — other routes get the email without a check-in button until a generic check-in link is wired up for them (the generic `/checkin/[eventId]` system already exists for meets/events; road-trip check-in isn't connected to it yet).
+
 ## Event Registration Page Template
 
 The WTET page (`app/wtet/page.jsx`) is the established template for paid road-trip/event registration pages. Reuse its structure for every future event — only swap out the route name, date, hero image, stops, pricing, and copy.

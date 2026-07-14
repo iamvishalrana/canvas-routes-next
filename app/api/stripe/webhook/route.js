@@ -206,7 +206,10 @@ export async function POST(request) {
           // Non-member confirmation email — only when capture came from Stripe dashboard.
           // Admin panel captures send this email themselves via the capture route.
           if (!isMember && !adminPanelAlreadyCaptured && process.env.RESEND_API_KEY && normalEmail) {
-            const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
+            // WTET has its own frozen check-in page; other routes don't have
+            // an equivalent wired up yet, so omit the button rather than
+            // link to WTET's page for a different event.
+            const checkinUrl = type === 'road_trip_wtet' ? `https://canvasroutes.com/wtet/checkin?t=${pi.id}` : null
             await Promise.all([
               fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -236,7 +239,7 @@ export async function POST(request) {
         // is actually awaiting capture — prevents overwriting a paid status with authorized.
         if (pi.status !== 'requires_capture') break
         const { type, email, name, event_name: piEventName } = pi.metadata
-        if (!type?.startsWith('membership_') && type !== 'road_trip_wtet') break
+        if (!type?.startsWith('membership_') && !type?.startsWith('road_trip_')) break
         const amountHeld = pi.amount
         const normalEmail = email?.toLowerCase().trim()
 
@@ -277,9 +280,9 @@ export async function POST(request) {
         console.log(`Payment authorized (held): ${type} — ${normalEmail} — $${(amountHeld / 100).toFixed(2)} CAD`)
 
         // Send registration received email + admin notification for road trip holds
-        if (type === 'road_trip_wtet' && process.env.RESEND_API_KEY) {
+        if (type?.startsWith('road_trip_') && process.env.RESEND_API_KEY) {
           const firstName   = (name || '').trim().split(' ')[0] || 'there'
-          const eventLabel  = piEventName || 'Whips to Eastern Townships'
+          const eventLabel  = piEventName || 'Canvas Routes Road Trip'
           const amountFmt   = `$${(amountHeld / 100).toFixed(2)} CAD`
           after(() => Promise.allSettled([
             // Registrant hold email

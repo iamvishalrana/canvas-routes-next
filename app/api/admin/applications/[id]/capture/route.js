@@ -83,13 +83,15 @@ export async function POST(request, { params }) {
     ]))
   }
 
-  if (process.env.RESEND_API_KEY && pi.metadata?.type === 'road_trip_wtet' && pi.metadata?.is_member !== 'yes') {
+  if (process.env.RESEND_API_KEY && pi.metadata?.type?.startsWith('road_trip_') && pi.metadata?.is_member !== 'yes') {
     const email      = (pi.metadata.email || app.email)?.toLowerCase().trim()
     const name       = pi.metadata.name || app.name || email?.split('@')[0] || 'there'
     const firstName  = name.trim().split(' ')[0]
-    const eventLabel = pi.metadata.event_name || 'Whips to Eastern Townships — July 5, 2026'
+    const eventLabel = pi.metadata.event_name || 'Canvas Routes Road Trip'
     const amount     = `$${(pi.amount / 100).toFixed(2)} CAD`
-    const checkinUrl = `https://canvasroutes.com/wtet/checkin?t=${piId}`
+    // WTET has its own frozen check-in page; other routes don't have an
+    // equivalent wired up yet, so omit the button for them.
+    const checkinUrl = pi.metadata?.type === 'road_trip_wtet' ? `https://canvasroutes.com/wtet/checkin?t=${piId}` : null
 
     after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {
