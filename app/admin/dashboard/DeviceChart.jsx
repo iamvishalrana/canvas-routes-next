@@ -75,7 +75,7 @@ export default function DeviceChart({ counts }) {
                 offset -= p
                 return el
               })}
-              <text x="21" y="20" textAnchor="middle" style={{ fontSize: '7px', fill: '#1a1a1a', fontFamily: 'Georgia,serif' }}>{total}</text>
+              <text x="21" y="20" textAnchor="middle" style={{ fontSize: '7px', fill: '#1a1a1a', fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif" }}>{total}</text>
               <text x="21" y="26" textAnchor="middle" style={{ fontSize: '3px', fill: '#999', letterSpacing: '0.5px', textTransform: 'uppercase' }}>APPLICANTS</text>
             </svg>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', minWidth: 0 }}>

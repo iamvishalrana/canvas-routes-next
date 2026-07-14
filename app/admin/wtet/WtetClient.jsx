@@ -115,23 +115,23 @@ export default function WtetClient() {
       {/* Stat + cutoff row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{total}</div>
+          <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', fontWeight: '400', color: '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{total}</div>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Total participants</div>
         </div>
         <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: fullyDoneCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1 }}>{fullyDoneCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
+          <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', fontWeight: '400', color: fullyDoneCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{fullyDoneCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Fully checked in</div>
         </div>
         <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: tripCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1 }}>{tripCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
+          <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', fontWeight: '400', color: tripCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{tripCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Trip details</div>
         </div>
         <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: waiverCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1 }}>{waiverCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
+          <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', fontWeight: '400', color: waiverCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{waiverCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Waivers signed</div>
         </div>
         <div style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.2rem', fontWeight: '300', color: lunchCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1 }}>{lunchCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
+          <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', fontWeight: '400', color: lunchCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{lunchCount}<span style={{ fontSize: '1.1rem', color: '#ccc' }}>/{total}</span></div>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Lunch selected</div>
         </div>
       </div>

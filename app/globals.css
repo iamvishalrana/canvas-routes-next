@@ -281,6 +281,15 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   transform: scale(0.95);
 }
 
+/* Refined gold-outline CTA for dark sections — reads as a premium
+   invitation rather than a solid saturated block. */
+.gold-outline-cta {
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+@media (hover: hover) {
+  .gold-outline-cta:hover { background: rgba(197,168,130,0.14) !important; }
+}
+
 .btn-waitlist {
   color: #45643c;
   background: transparent;

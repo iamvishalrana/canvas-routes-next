@@ -864,7 +864,7 @@ export default function Home() {
           })()}
           <FadeUp delay={200}>
             <div style={{textAlign:"center",marginTop:"3rem"}}>
-              <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.95rem 2.75rem",background:"#c5a882",color:"#0F1E14",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>Explore All Routes →</Link>
+              <Link href="/routes" className="btn-push gold-outline-cta" style={{display:"inline-block",padding:"0.95rem 2.75rem",background:"transparent",border:"1px solid #c5a882",color:"#c5a882",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>Explore All Routes →</Link>
             </div>
           </FadeUp>
         </div>
@@ -1064,7 +1064,7 @@ export default function Home() {
                   {/* Register CTA for current (non-past) events with a registration URL */}
                   {!pastModalEvent.past && pastModalEvent.registration_url && (
                     <div style={{marginTop:"1.5rem"}}>
-                      <Link href={pastModalEvent.registration_url} style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#0F1E14",background:"#c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
+                      <Link href={pastModalEvent.registration_url} className="gold-outline-cta" style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",background:"transparent",border:"1px solid #c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
                         Register
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                       </Link>
@@ -1072,7 +1072,7 @@ export default function Home() {
                   )}
                   {d.routeHref && (
                     <div style={{marginTop:"1.5rem"}}>
-                      <Link href={d.routeHref} style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#0F1E14",background:"#c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
+                      <Link href={d.routeHref} className="gold-outline-cta" style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",background:"transparent",border:"1px solid #c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
                         View Route
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                       </Link>

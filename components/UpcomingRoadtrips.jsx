@@ -647,16 +647,16 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, fontWeight: 500 }}>{r.month_label}</span>
                       </div>
                       {isMember && (
-                        <div style={{ position: 'absolute', top: '14px', right: '14px', background: ACCENT, padding: '4px 10px' }}>
-                          <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#0F1E14', fontWeight: 600 }}>Priority</span>
+                        <div style={{ position: 'absolute', top: '14px', right: '14px', background: 'rgba(15,30,20,0.75)', backdropFilter: 'blur(6px)', padding: '4px 10px', border: '0.5px solid rgba(197,168,130,0.35)' }}>
+                          <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: ACCENT, fontWeight: 600 }}>Priority</span>
                         </div>
                       )}
                       <div className={r.interested ? 'rt-pulse-once' : ''} style={{ position: 'absolute', top: '14px', left: '14px', background: 'rgba(15,30,20,0.75)', backdropFilter: 'blur(6px)', padding: '5px 12px', border: '0.5px solid rgba(255,255,255,0.08)' }}>
                         <span style={{ fontSize: '9px', color: 'rgba(245,241,236,0.6)', letterSpacing: '0.1em' }}>{r.interested_count} interested</span>
                       </div>
                       {TRIP_LABELS[r.trip_type] && (
-                        <div style={{ position: 'absolute', bottom: '14px', right: '14px', background: 'rgba(197,168,130,0.92)', padding: '5px 12px' }}>
-                          <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#0F1E14', fontWeight: 600 }}>{TRIP_LABELS[r.trip_type]}</span>
+                        <div style={{ position: 'absolute', bottom: '14px', right: '14px', background: 'rgba(15,30,20,0.75)', backdropFilter: 'blur(6px)', padding: '5px 12px', border: '0.5px solid rgba(197,168,130,0.35)' }}>
+                          <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: ACCENT, fontWeight: 600 }}>{TRIP_LABELS[r.trip_type]}</span>
                         </div>
                       )}
                     </div>

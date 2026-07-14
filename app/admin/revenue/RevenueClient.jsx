@@ -61,7 +61,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
         {stats.map(s => (
           <div key={s.label} style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
-            <div style={{ fontSize: s.big ? '1.7rem' : '1.5rem', fontWeight: '300', color: s.color, lineHeight: 1.1, fontFamily: 'var(--font-inter),sans-serif', wordBreak: 'break-word' }}>{s.value}</div>
+            <div style={{ fontSize: s.big ? '1.7rem' : '1.5rem', fontWeight: '400', color: s.color, lineHeight: 1.1, fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", letterSpacing: '0.03em', wordBreak: 'break-word' }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.5rem' }}>{s.label}</div>
           </div>
         ))}
