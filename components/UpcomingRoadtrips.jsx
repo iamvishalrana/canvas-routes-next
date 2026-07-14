@@ -726,35 +726,41 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 </div>
               )
             })}
-            {/* Past routes — hardcoded (see lib/pastRoutes.js), shown alongside
-                the active ones so this reads as "Routes" rather than just
-                what's still gathering interest. Toned down (greyscale photo,
-                muted colors) so past clearly reads as past at a glance. */}
-            {PAST_ROUTES.map((p, i) => (
-              <Link key={p.slug} href={p.href} onClick={e => { e.preventDefault(); setRecapRoute(p) }}
-                className="rt-card rt-reveal" style={{ animationDelay: `${((routes.length + i) % 3) * 0.08 + 0.05}s`, textDecoration: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.82 }}>
-                <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
-                  <img src={p.photo} alt="" className="rt-card-photo" loading="lazy" decoding="async" style={{ filter: 'grayscale(0.65) brightness(0.85)' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.35) 0%, rgba(15,30,20,0.15) 45%, rgba(15,30,20,0.6) 100%)' }} />
-                  <div style={{ position: 'absolute', bottom: '14px', left: '14px', background: 'rgba(90,90,90,0.85)', padding: '5px 12px' }}>
-                    <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', fontWeight: 600 }}>Past Route · {p.month_label}</span>
-                  </div>
-                </div>
-                <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ marginBottom: '14px' }}>
-                    <h3 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '21px', fontWeight: 300, color: '#555', marginBottom: '5px', lineHeight: 1.2 }}>{p.name}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <PinIcon /><span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em' }}>{p.destination}</span>
+          </div>
+
+          {/* Past routes — hardcoded (see lib/pastRoutes.js), a distinct
+              section below the active grid rather than mixed into it.
+              Toned down (greyscale photo, muted colors) so past clearly
+              reads as past at a glance. */}
+          <div style={{ marginTop: 'clamp(48px,7vw,72px)', paddingTop: 'clamp(32px,5vw,48px)', borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#999', marginBottom: '24px' }}>Past Routes</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '20px' }}>
+              {PAST_ROUTES.map((p, i) => (
+                <Link key={p.slug} href={p.href} onClick={e => { e.preventDefault(); setRecapRoute(p) }}
+                  className="rt-card rt-reveal" style={{ animationDelay: `${(i % 3) * 0.08 + 0.05}s`, textDecoration: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.82 }}>
+                  <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
+                    <img src={p.photo} alt="" className="rt-card-photo" loading="lazy" decoding="async" style={{ filter: 'grayscale(0.65) brightness(0.85)' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.35) 0%, rgba(15,30,20,0.15) 45%, rgba(15,30,20,0.6) 100%)' }} />
+                    <div style={{ position: 'absolute', bottom: '14px', left: '14px', background: 'rgba(90,90,90,0.85)', padding: '5px 12px' }}>
+                      <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', fontWeight: 600 }}>Past Route · {p.month_label}</span>
                     </div>
                   </div>
-                  <p style={{ fontSize: '12.5px', color: '#999', lineHeight: 1.8, marginBottom: '20px', flex: 1, fontWeight: 300 }}>{p.description}</p>
-                  <div style={{ fontSize: '12px', color: '#999', marginBottom: '18px', letterSpacing: '0.02em' }}>
-                    <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#777', letterSpacing: '0.03em' }}>{p.cars}</span> of {p.target} cars rolled out
+                  <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ marginBottom: '14px' }}>
+                      <h3 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '21px', fontWeight: 300, color: '#555', marginBottom: '5px', lineHeight: 1.2 }}>{p.name}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <PinIcon /><span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em' }}>{p.destination}</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '12.5px', color: '#999', lineHeight: 1.8, marginBottom: '20px', flex: 1, fontWeight: 300 }}>{p.description}</p>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '18px', letterSpacing: '0.02em' }}>
+                      <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#777', letterSpacing: '0.03em' }}>{p.cars}</span> of {p.target} cars rolled out
+                    </div>
+                    <div style={{ padding: '12px 14px', background: 'rgba(0,0,0,0.04)', border: '0.5px solid rgba(0,0,0,0.1)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', textAlign: 'center' }}>View Recap →</div>
                   </div>
-                  <div style={{ padding: '12px 14px', background: 'rgba(0,0,0,0.04)', border: '0.5px solid rgba(0,0,0,0.1)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', textAlign: 'center' }}>View Recap →</div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
