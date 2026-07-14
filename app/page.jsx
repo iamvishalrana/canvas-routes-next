@@ -720,8 +720,8 @@ export default function Home() {
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
         <FadeUp>
           <div style={{textAlign:"center",marginBottom:"4rem"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>Meets &amp; Events</div>
-            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>2026 Season</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Meets &amp; Events</div>
             <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
           </div>
         </FadeUp>
@@ -801,8 +801,7 @@ export default function Home() {
         <div style={{marginTop:"5rem"}}>
           <FadeUp>
             <div style={{textAlign:"center",marginBottom:"3rem"}}>
-              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>Upcoming Routes</div>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Upcoming Routes</div>
               <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Add your name — no payment, no commitment</div>
             </div>
           </FadeUp>
