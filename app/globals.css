@@ -76,6 +76,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 .nav-links {
   display: flex;
   gap: 2rem;
+  font-family: var(--font-inter), sans-serif;
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -176,6 +177,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   padding: 1.5rem 2rem;
 }
 .mobile-menu a {
+  font-family: var(--font-inter), sans-serif;
   font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
