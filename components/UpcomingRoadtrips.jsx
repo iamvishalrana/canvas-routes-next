@@ -846,7 +846,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <button type="submit" disabled={sheetRoute.submitting || (!isMember && emailIsMember)} className="rt-btn" style={{ marginTop: '4px' }}>
               {sheetRoute.submitting ? 'Adding you…' : 'Add My Name'}
             </button>
-            <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>No payment, no commitment — just a signal that you're in.</div>
+            <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>No payment, no commitment — just a signal that you're in. Payment details arrive with the full itinerary once the route launches.</div>
             </form>
             )}
           </div>
