@@ -54,7 +54,6 @@ export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', instagram: '', instagram_opted_out: false, dob_day: '', dob_month: '', dob_year: '' })
-  const [dismissingIg, setDismissingIg] = useState(false)
   const [cars, setCars] = useState([{ ...EMPTY_CAR }])
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -183,22 +182,6 @@ export default function ProfilePage() {
 
   function removeCar(idx) {
     setCars(prev => prev.length === 1 ? [{ ...EMPTY_CAR }] : prev.filter((_, i) => i !== idx))
-  }
-
-  async function dismissInstagram() {
-    setDismissingIg(true)
-    try {
-      const res = await fetch('/api/member/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instagram_opted_out: true }),
-      })
-      if (res.ok) {
-        setForm(p => ({ ...p, instagram_opted_out: true }))
-        savedForm.current = savedForm.current ? { ...savedForm.current, instagram_opted_out: true } : savedForm.current
-      }
-    } catch {}
-    finally { setDismissingIg(false) }
   }
 
   async function saveProfile(e) {
@@ -493,24 +476,14 @@ export default function ProfilePage() {
               Instagram not shared
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.35rem' }}>
-              <button
-                type="button"
-                onClick={startEditing}
-                className="cr-hero-pill"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(245,241,236,0.06)', border: 'none', borderRadius: '99px', padding: '0.5rem 1.2rem', fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', cursor: 'pointer', letterSpacing: '0.03em', transition: 'background 0.2s' }}
-              >
-                + Add Instagram
-              </button>
-              <button
-                type="button"
-                onClick={dismissInstagram}
-                disabled={dismissingIg}
-                style={{ background: 'none', border: 'none', padding: 0, fontSize: '10px', letterSpacing: '0.06em', color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter), sans-serif', cursor: dismissingIg ? 'wait' : 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}
-              >
-                {dismissingIg ? 'Saving…' : "Don't share Instagram"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={startEditing}
+              className="cr-hero-pill"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(245,241,236,0.06)', border: 'none', borderRadius: '99px', padding: '0.5rem 1.2rem', fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', cursor: 'pointer', letterSpacing: '0.03em', marginBottom: '1.35rem', transition: 'background 0.2s' }}
+            >
+              + Add Instagram
+            </button>
           )}
 
           {/* Tier row */}
@@ -734,8 +707,16 @@ export default function ProfilePage() {
                 </Field>
                 <Field label="Instagram">
                   <input className="cr-input" type="text" value={form.instagram}
-                    onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))}
-                    maxLength={50} placeholder="@yourhandle" style={inp} />
+                    onChange={e => setForm(p => ({ ...p, instagram: e.target.value, instagram_opted_out: e.target.value ? false : p.instagram_opted_out }))}
+                    maxLength={50} placeholder={form.instagram_opted_out ? 'Not shared' : '@yourhandle'} style={inp} />
+                  {!form.instagram && (
+                    <button type="button"
+                      onClick={() => setForm(p => ({ ...p, instagram_opted_out: !p.instagram_opted_out }))}
+                      style={{ background: 'none', border: 'none', padding: '0.35rem 0 0', fontSize: '10px', letterSpacing: '0.04em', color: form.instagram_opted_out ? '#3B6B2F' : '#bbb', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                    >
+                      {form.instagram_opted_out ? "✓ Won't share Instagram" : "Don't share Instagram"}
+                    </button>
+                  )}
                 </Field>
               </div>
 
