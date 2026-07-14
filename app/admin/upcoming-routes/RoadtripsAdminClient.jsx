@@ -222,10 +222,6 @@ export default function RoadtripsAdminClient() {
     return rows
   }
 
-  function exportCSV() {
-    downloadCSV(interestRows(routes), `route-interest-${new Date().toISOString().slice(0, 10)}.csv`)
-  }
-
   function exportRouteCSV(route) {
     const slug = route.slug || route.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     downloadCSV(interestRows([route]), `${slug}-interest-${new Date().toISOString().slice(0, 10)}.csv`)
@@ -247,11 +243,6 @@ export default function RoadtripsAdminClient() {
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: 300, color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Upcoming Routes</h1>
         <p style={{ fontSize: '12px', color: '#999', marginTop: '0.5rem' }}>Shown on <a href="/routes" target="_blank" rel="noreferrer" style={{ color: '#c5a882' }}>canvasroutes.com/routes</a>. {routes.length} route{routes.length !== 1 ? 's' : ''} · {totalInterest} total interested.</p>
-        {totalInterest > 0 && (
-          <button onClick={exportCSV} style={{ marginTop: '0.75rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '7px 14px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
-            Export interested (CSV)
-          </button>
-        )}
       </div>
 
       {/* Add form */}
