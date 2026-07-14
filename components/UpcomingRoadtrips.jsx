@@ -560,7 +560,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 0, border: '0.5px solid rgba(0,0,0,0.07)' }}>
                 {[
-                  ['01', 'Raise Your Hand', "See a road that calls to you? Put your name down. It takes thirty seconds, costs nothing, and promises nothing — it just tells us you'd be in the convoy."],
+                  ['01', 'Raise Your Hand', "See a road that calls to you? Put your name down. Takes thirty seconds, costs nothing — it just tells us you'd be in the convoy."],
                   ['02', 'The Crew Comes Together', 'Every route needs a certain number of cars to feel right. As more drivers add their names, the bar on each card fills — and when the crew is complete, the route comes to life.'],
                   ['03', 'You Hear From Us First', "The moment your route launches, you'll be the first to know — one email with everything: where we meet, the roads we take, the convoy rules, and how to make your seat official."],
                   ['04', 'Then We Drive', 'Show up, shake hands, roll out. Every route carries its own per-car fee — shaped by the distance, the stops, and the nights away — confirmed in your launch email. The rest is just you, the crew, and the road.'],

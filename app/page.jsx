@@ -488,7 +488,7 @@ export default function Home() {
                 fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1,
                 margin: '0 0 0.6rem',
               }}>
-                The 2026 routes<br />are on the table.
+                The roads are calling<br />for 2026.
               </h2>
 
               {/* Sub */}
