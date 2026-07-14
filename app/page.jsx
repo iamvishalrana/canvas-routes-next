@@ -6,6 +6,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import SiteFooter from '../components/SiteFooter'
 import FadeUp from '../components/FadeUp'
 import SiteNav from '../components/SiteNav'
+import { ROUTE_PHOTOS, ACCENT_BGS } from '../components/UpcomingRoadtrips'
 import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -794,27 +795,57 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Upcoming Routes — evergreen copy only (no route names, they change
-            season to season and this section is permanent); a prominent
-            gold-lit spotlight card so it reads as a destination, not a footnote */}
-        <FadeUp>
-          <div style={{maxWidth:"640px",margin:"4rem auto 0",background:"linear-gradient(180deg, #F5F1EC 0%, #EDE8E1 100%)",border:"1px solid rgba(197,168,130,0.55)",borderRadius:"2px",padding:"clamp(2.5rem,6vw,3.5rem) clamp(2rem,5vw,3rem)",textAlign:"center",boxShadow:"0 24px 70px rgba(197,168,130,0.18), 0 4px 20px rgba(0,0,0,0.15)"}}>
-            <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"#8A6535",marginBottom:"1.1rem"}}>Upcoming Routes</div>
-            {teaserRoutes.length > 0 ? (
-              <>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,4rem)",fontWeight:"300",color:"#1a1a1a",lineHeight:1}}>{teaserRoutes.length}</div>
-                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginTop:"0.5rem",fontWeight:"500"}}>route{teaserRoutes.length !== 1 ? 's' : ''} gathering interest for 2026</div>
-              </>
-            ) : (
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.3rem)",fontWeight:"300",color:"#1a1a1a",lineHeight:1.25}}>New routes are being planned for 2026</div>
-            )}
-            <div style={{width:"32px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"1.5rem auto"}} />
-            <p style={{fontSize:"0.9rem",color:"#777",lineHeight:1.85,margin:"0 auto",maxWidth:"420px"}}>
-              Add your name to a route you'd want to drive. No payment, no commitment — we'll email you the moment it's a go.
-            </p>
-            <Link href="/routes" style={{display:"inline-block",marginTop:"2rem",padding:"0.95rem 2.75rem",background:"#c5a882",color:"#0F1E14",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>Explore Routes →</Link>
-          </div>
-        </FadeUp>
+        {/* Upcoming Routes — real route cards (photo, destination, live interest
+            count), same visual language as the Meets & Events grid above so
+            this reads as a peer section, not a footnote */}
+        <div style={{marginTop:"5rem"}}>
+          <FadeUp>
+            <div style={{textAlign:"center",marginBottom:"3rem"}}>
+              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>Upcoming Routes</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>2026 Season</div>
+              <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Add your name — no payment, no commitment</div>
+            </div>
+          </FadeUp>
+          {teaserRoutes.length > 0 ? (
+            <div className="events-grid">
+              {teaserRoutes.slice(0, 3).map((r, i) => (
+                <FadeUp key={r.id} delay={i * 70}>
+                  <Link href="/routes" className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer"}}>
+                    <div style={{position:"relative",aspectRatio:"16/9",overflow:"hidden",background:ACCENT_BGS[i % ACCENT_BGS.length]}}>
+                      {ROUTE_PHOTOS[r.slug] && (
+                        <img src={ROUTE_PHOTOS[r.slug]} alt="" className="route-teaser-photo"
+                          style={{width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" />
+                      )}
+                      <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)"}} />
+                      <div style={{position:"absolute",bottom:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(197,168,130,0.2)"}}>
+                        <span style={{fontSize:"9px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",fontWeight:500}}>{r.month_label}</span>
+                      </div>
+                      <div style={{position:"absolute",top:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(255,255,255,0.08)"}}>
+                        <span style={{fontSize:"9px",color:"rgba(245,241,236,0.6)",letterSpacing:"0.1em"}}>{r.interested_count} interested</span>
+                      </div>
+                    </div>
+                    <div style={{padding:"1.5rem"}}>
+                      <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.35rem"}}>{r.name}</div>
+                      <div style={{fontSize:"11px",color:"#999",marginBottom:"0.9rem",letterSpacing:"0.04em"}}>{r.destination}</div>
+                      <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>Add your name <span style={{fontSize:"13px"}}>→</span></div>
+                    </div>
+                  </Link>
+                </FadeUp>
+              ))}
+            </div>
+          ) : (
+            <FadeUp>
+              <div style={{textAlign:"center",fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.3rem)",fontWeight:"300",color:"#F5F1EC"}}>
+                New routes are being planned for 2026
+              </div>
+            </FadeUp>
+          )}
+          <FadeUp delay={200}>
+            <div style={{textAlign:"center",marginTop:"3rem"}}>
+              <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.95rem 2.75rem",background:"#c5a882",color:"#0F1E14",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>Explore All Routes →</Link>
+            </div>
+          </FadeUp>
+        </div>
       </section>
 
       {/* INSTAGRAM FILM STRIP */}

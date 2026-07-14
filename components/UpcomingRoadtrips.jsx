@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 const ACCENT = '#c5a882'
-const ACCENT_BGS = [
+export const ACCENT_BGS = [
   'linear-gradient(135deg, #1a3322 0%, #0F1E14 100%)',
   'linear-gradient(135deg, #1c2e28 0%, #0d1e18 100%)',
   'linear-gradient(135deg, #2a2418 0%, #1a160e 100%)',
@@ -32,7 +32,8 @@ const ACTIVITY_OPTIONS = ['Scenic drives', 'Local food', 'Fine dining', 'Photogr
 
 // Real route photography (optimized copies in /public/routes-photos).
 // Routes without an entry fall back to the gradient + watermark art.
-const ROUTE_PHOTOS = {
+// Exported so the homepage teaser grid can reuse the exact same mapping.
+export const ROUTE_PHOTOS = {
   'memoirs-to-charlevoix': '/routes-photos/memoirs-to-charlevoix.jpg',
   'the-gaspesie-odyssey':  '/routes-photos/the-gaspesie-odyssey.jpg',
   'the-tobermory-story':   '/routes-photos/the-tobermory-story.jpg',

@@ -313,6 +313,20 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   transform: translateY(-2px);
 }
 
+.route-teaser-card {
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.07);
+}
+.route-teaser-card .route-teaser-photo { transition: transform 0.6s ease; }
+@media (hover: hover) {
+  .route-teaser-card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(197,168,130,0.2);
+    transform: translateY(-2px);
+    border-color: rgba(197,168,130,0.4) !important;
+  }
+  .route-teaser-card:hover .route-teaser-photo { transform: scale(1.05); }
+}
+
 .contact-links {
   display: flex;
   gap: 3rem;

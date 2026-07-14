@@ -97,7 +97,7 @@ const SECTIONS = [
     items: [
       {
         q: 'What is a Canvas Routes route?',
-        a: 'A fully planned curated convoy through some of the most scenic backroads in North America. Every detail is handled — breakfast before departure, stops along the route, group lunch, farewell drinks and personal photography of your car on the road. All you bring is your car and your energy.',
+        a: 'A fully planned curated convoy through some of the most scenic backroads in North America. Every detail is handled — an early meetup, a guided drive with a lead car the entire route, curated stops along the way, a hosted lunch, and personal photography and video coverage of your car on the road. All you bring is your car and your energy.',
       },
       {
         q: 'How does expressing interest in an upcoming route work?',
@@ -137,7 +137,7 @@ const SECTIONS = [
       },
       {
         q: 'What is included in the route fee?',
-        a: 'The fee covers premium breakfast before departure, all food and drink stops along the route, personal photography of your car on the road, a Canvas Routes members kit and full media coverage of the day. Parking fees (if needed) and your car\'s gas are not included.',
+        a: 'The fee covers a guided convoy with a lead car the entire route, a hosted lunch stop, and personal photography and video coverage of your car on the road. Some routes add a curated stop of their own — a winery, a scenic overlook, free time in a village — the specifics are always laid out in the launch email and the private itinerary page. Parking fees (if needed) and your car\'s gas are not included.',
       },
       {
         q: 'Can I bring a passenger?',
