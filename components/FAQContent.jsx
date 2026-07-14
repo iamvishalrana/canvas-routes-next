@@ -100,6 +100,30 @@ const SECTIONS = [
         a: 'A fully planned curated convoy through some of the most scenic backroads in North America. Every detail is handled — breakfast before departure, stops along the route, group lunch, farewell drinks and personal photography of your car on the road. All you bring is your car and your energy.',
       },
       {
+        q: 'How does expressing interest in an upcoming route work?',
+        a: 'Our Routes page lists the drives we\'re planning for the season. If a road calls to you, put your name down — it takes thirty seconds, costs nothing, and commits you to nothing. Each route needs a minimum number of cars; once enough drivers are in, we launch it and email everyone on the list with the full details and how to confirm a spot.',
+      },
+      {
+        q: 'Does expressing interest cost anything or commit me to going?',
+        a: 'No and no. Expressing interest is completely free — no payment details are collected — and it isn\'t a booking or a commitment. It simply tells us you\'d be in the convoy. If your plans change, you simply don\'t confirm when the route launches.',
+      },
+      {
+        q: 'When do I pay for a route?',
+        a: 'Only after a route officially launches. When we hit the crew we need, everyone on the interest list gets a launch email with the per-car fee — set by the route\'s distance, stops, and any overnight stays — and instructions to confirm your spot. Nothing is charged before then.',
+      },
+      {
+        q: 'What happens if a route doesn\'t reach its target?',
+        a: 'It gets postponed to a future season rather than run half-empty — a Canvas Routes convoy only rolls out when the crew is right. Your name stays on the list, and you\'ll be the first to hear when that route comes back around.',
+      },
+      {
+        q: 'Do members get priority on upcoming routes?',
+        a: 'Yes. When a route launches, members get priority as spots are confirmed, and expressing interest from the members portal fills in your details automatically. If you use an email tied to a member account, we\'ll ask you to log in first so your registration carries that priority.',
+      },
+      {
+        q: 'Why do you ask about budget, dates, and activities when I express interest?',
+        a: 'Because the crew shapes the trip. Your preferences — budget range, dates that work, hotel style, the things you\'d want to do along the way — feed directly into how we plan the route, where we stay, and what makes the itinerary. Every one of those questions is optional, and none of them commit you to anything.',
+      },
+      {
         q: 'What kind of roads can I expect?',
         a: 'We plan every route to avoid highways as much as possible. After the first regroup stop we take nothing but backroads all the way to the destination. Every route is personally mapped and scouted before the trip. Expect winding two-lane roads, elevation changes, lake views and long sweeping corners.',
       },
@@ -146,7 +170,7 @@ const SECTIONS = [
       },
       {
         q: 'What is the Canvas Routes flagship route?',
-        a: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, one of the greatest driving roads in North America. This is a route we are actively planning. Reach out at info@canvasroutes.com to be kept in the loop.',
+        a: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, one of the greatest driving roads in North America. It is on the table for this season: head to canvasroutes.com/routes and express your interest — the route launches once enough drivers are in.',
       },
       {
         q: 'How far do your routes go?',
