@@ -10,13 +10,6 @@ import { CHECKIN_T as t } from '../../../lib/genericCheckinContent'
 import { captureException } from '../../../lib/sentry'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
 
-const NAV_LINKS = [
-  { href: '/',         label: 'Home' },
-  { href: '/#events',  label: 'Events' },
-  { href: '/#contact', label: 'Contact' },
-  { href: '/faq',      label: 'FAQ' },
-]
-
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
   background: '#fff', fontSize: '15px', fontFamily: 'var(--font-inter), sans-serif',
@@ -157,7 +150,7 @@ function CheckinContent() {
 export default function CheckinPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter), Inter, sans-serif' }}>
-      <SiteNav links={NAV_LINKS} />
+      <SiteNav />
       <Suspense fallback={
         <div style={{ maxWidth: '540px', margin: '0 auto', padding: '7rem 1.5rem 6rem', textAlign: 'center' }}>
           <div style={{ fontSize: '13px', color: '#bbb', letterSpacing: '0.08em' }}>Loading…</div>

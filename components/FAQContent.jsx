@@ -1103,12 +1103,6 @@ export default function FAQContent() {
       )}
 
       <SiteNav
-        links={[
-          { href: '/',         label: 'Home' },
-          { href: '/#events',  label: 'Events' },
-          { href: '/#contact', label: 'Contact' },
-          { href: '/faq',      label: 'FAQ' },
-        ]}
         onMenuChange={setMenuOpen}
       />
 

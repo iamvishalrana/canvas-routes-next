@@ -19,12 +19,7 @@ export default function RoutesPage() {
           '/routes-photos/the-cabot-trail-grail.jpg',
         ]}
       />
-      <SiteNav links={[
-        { href: '/',         label: 'Home'    },
-        { href: '/#events',  label: 'Events'  },
-        { href: '/#contact', label: 'Contact' },
-        { href: '/faq',      label: 'FAQ'     },
-      ]} />
+      <SiteNav />
       <UpcomingRoadtrips />
       <SiteFooter />
     </>

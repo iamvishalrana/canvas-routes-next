@@ -190,12 +190,7 @@ export default function PartnerContent() {
         }
       `}</style>
 
-      <SiteNav links={[
-        { href: '/',         label: 'Home' },
-        { href: '/#events',  label: 'Events' },
-        { href: '/#contact', label: 'Contact' },
-        { href: '/faq',      label: 'FAQ' },
-      ]} />
+      <SiteNav />
 
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <section style={{ minHeight: 'clamp(480px,62vh,580px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(140px,16vw,200px) 2rem clamp(4rem,8vw,6rem)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>

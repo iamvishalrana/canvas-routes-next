@@ -576,12 +576,7 @@ export default function MembershipContent() {
         input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.28); }
       `}</style>
 
-      <SiteNav links={[
-        { href: '/',        label: 'Home' },
-        { href: '/#events', label: 'Events' },
-        { href: '/#contact',label: 'Contact' },
-        { href: '/faq',     label: 'FAQ' },
-      ]} ctaLabel="Membership"
+      <SiteNav ctaLabel="Membership"
       banner={<>Use code <strong>FOUNDING</strong> for a special discount on your membership <span style={{ opacity: 0.6, marginLeft: '0.3rem' }}>→</span></>}
       bannerHref="#register" />
 

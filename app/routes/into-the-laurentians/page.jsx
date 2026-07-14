@@ -168,12 +168,7 @@ export default function RoutesPage() {
         }
       `}</style>
 
-      <SiteNav links={[
-        { href: '/',         label: 'Home' },
-        { href: '/#events',  label: 'Events' },
-        { href: '/#contact', label: 'Contact' },
-        { href: '/faq',      label: 'FAQ' },
-      ]} />
+      <SiteNav />
 
       {/* HERO */}
       <section className="routes-hero" style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>

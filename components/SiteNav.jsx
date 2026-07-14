@@ -3,19 +3,32 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '../lib/supabase/client'
 
+// Single source of truth for the standard nav — every page that doesn't need
+// custom in-page-scroll links (see app/page.jsx) should rely on this default
+// rather than hardcoding its own copy, so header changes only happen once.
+export const DEFAULT_NAV_LINKS = [
+  { href: '/',         label: 'Home'    },
+  { href: '/routes',   label: 'Routes'  },
+  { href: '/#events',  label: 'Events'  },
+  { href: '/#contact', label: 'Contact' },
+  { href: '/faq',      label: 'FAQ'     },
+]
+
 /**
  * Shared public-site nav. Detects member session and shows Dashboard / Profile /
  * Sign out when logged in, otherwise Membership / Members Login.
  *
  * Props:
- *   links   – array of { href, label, onClick? } for the desktop + mobile nav
+ *   links   – array of { href, label, onClick? } for the desktop + mobile nav.
+ *             Defaults to DEFAULT_NAV_LINKS — only override this when a page
+ *             needs custom behavior (e.g. in-page scroll links on the homepage).
  *   ctaLabel – label for the Membership button (defaults to 'Membership')
  *   banner   – optional announcement string/node shown as a fixed strip above
  *              the nav. Its height is measured so the nav (and mobile menu)
  *              shift down by exactly that amount — nothing hardcoded.
  *   bannerHref – optional link target if the banner should be clickable
  */
-export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMenuChange, banner, bannerHref }) {
+export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become a Member', onMenuChange, banner, bannerHref }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const bannerRef = useRef(null)
   const [bannerHeight, setBannerHeight] = useState(0)
