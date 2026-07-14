@@ -589,7 +589,7 @@ export default function Home() {
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem",animation:"cr-fade-in 0.6s ease both",animationDelay:"280ms"}}></div>
         <div style={{animation:"cr-fade-up 0.75s ease both",animationDelay:"380ms"}}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-color.svg" alt="Canvas Routes" width={1500} height={999} className="hero-logo" />
+          <img src="/logo-color.svg" alt="Canvas Routes" className="hero-logo" />
         </div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem",animation:"cr-fade-in 0.5s ease both",animationDelay:"600ms"}}></div>
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em",animation:"cr-fade-up 0.65s ease both",animationDelay:"680ms"}}>The Community. The Routes. The Canvas.</div>

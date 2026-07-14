@@ -80,7 +80,7 @@ export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMe
       <nav className="nav" style={{ top: bannerHeight }}>
         <Link href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-color.svg" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
+          <img src="/logo-color.svg" alt="Canvas Routes" className="nav-logo" />
         </Link>
 
         <div className="nav-links">

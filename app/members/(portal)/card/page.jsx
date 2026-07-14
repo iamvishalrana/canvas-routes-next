@@ -90,7 +90,7 @@ export default async function CardPage() {
             <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>2026</div>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/white-outline.png" alt="Canvas Routes" width={162} height={108} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
+          <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
         </div>
 
         {/* Member info — tight gap below logo, no divider between them */}

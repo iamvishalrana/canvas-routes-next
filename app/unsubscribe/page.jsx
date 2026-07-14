@@ -39,7 +39,7 @@ function UnsubscribeContent() {
       <div style={{ padding: '1.5rem 2rem' }}>
         <Link href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '100px', height: 'auto', opacity: 0.85 }} />
+          <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '100px', height: 'auto', opacity: 0.85 }} />
         </Link>
       </div>
 

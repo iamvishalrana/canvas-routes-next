@@ -103,7 +103,7 @@ export default function EventProfilePage() {
       <div style={{ background: '#0F1E14', padding: '1rem 2rem' }}>
         <Link href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-color.svg" alt="Canvas Routes" width={140} height={93} style={{ width: '90px', height: 'auto', opacity: 0.9 }} />
+          <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '90px', height: 'auto', opacity: 0.9 }} />
         </Link>
       </div>
 

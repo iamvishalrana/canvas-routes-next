@@ -121,7 +121,7 @@ function buildHtml(bodyHtml) {
 
       <!-- Header -->
       <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
-        <img src="https://canvasroutes.com/logo-white.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:20px;opacity:0.92;" />
+        <img src="https://canvasroutes.com/white-outline.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:20px;opacity:0.92;" />
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
       </td></tr>
 
