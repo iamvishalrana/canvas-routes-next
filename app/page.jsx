@@ -794,22 +794,25 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Upcoming Routes — visually distinct from the confirmed calendar above:
-            cream card floating on the dark section, gold border, its own CTA */}
+        {/* Upcoming Routes — evergreen copy only (no route names, they change
+            season to season and this section is permanent); a prominent
+            gold-lit spotlight card so it reads as a destination, not a footnote */}
         <FadeUp>
-          <div style={{maxWidth:"780px",margin:"4rem auto 0",background:"#F5F1EC",border:"0.5px solid rgba(197,168,130,0.4)",borderRadius:"2px",padding:"clamp(1.75rem,4vw,2.5rem)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1.5rem",flexWrap:"wrap"}}>
-            <div style={{flex:"1 1 320px"}}>
-              <div style={{fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#8A6535",marginBottom:"0.6rem"}}>Upcoming Routes · Not Yet Confirmed</div>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.7rem",fontWeight:"300",color:"#1a1a1a",lineHeight:1.2,marginBottom:"0.5rem"}}>
-                {teaserRoutes.length > 0 ? `${teaserRoutes.length} route${teaserRoutes.length !== 1 ? 's' : ''} gathering interest for 2026` : 'New routes are gathering interest for 2026'}
-              </div>
-              <p style={{fontSize:"0.85rem",color:"#777",lineHeight:1.75,margin:0}}>
-                {teaserRoutes.length > 0
-                  ? `${teaserRoutes.slice(0,3).map(r=>r.name).join(', ')}${teaserRoutes.length > 3 ? ' and more' : ''} — add your name and we'll email you the moment a route is a go. No payment, no commitment.`
-                  : "Add your name to a route you'd want to drive — we'll email you the moment it's a go. No payment, no commitment."}
-              </p>
-            </div>
-            <Link href="/routes" style={{flexShrink:0,display:"inline-block",padding:"0.85rem 2rem",background:"#0F1E14",color:"#F5F1EC",fontSize:"11px",letterSpacing:"0.16em",textTransform:"uppercase",textDecoration:"none",whiteSpace:"nowrap"}}>Explore Routes →</Link>
+          <div style={{maxWidth:"640px",margin:"4rem auto 0",background:"linear-gradient(180deg, #F5F1EC 0%, #EDE8E1 100%)",border:"1px solid rgba(197,168,130,0.55)",borderRadius:"2px",padding:"clamp(2.5rem,6vw,3.5rem) clamp(2rem,5vw,3rem)",textAlign:"center",boxShadow:"0 24px 70px rgba(197,168,130,0.18), 0 4px 20px rgba(0,0,0,0.15)"}}>
+            <div style={{fontSize:"10px",letterSpacing:"0.28em",textTransform:"uppercase",color:"#8A6535",marginBottom:"1.1rem"}}>Upcoming Routes</div>
+            {teaserRoutes.length > 0 ? (
+              <>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(3rem,7vw,4rem)",fontWeight:"300",color:"#1a1a1a",lineHeight:1}}>{teaserRoutes.length}</div>
+                <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",marginTop:"0.5rem",fontWeight:"500"}}>route{teaserRoutes.length !== 1 ? 's' : ''} gathering interest for 2026</div>
+              </>
+            ) : (
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.3rem)",fontWeight:"300",color:"#1a1a1a",lineHeight:1.25}}>New routes are being planned for 2026</div>
+            )}
+            <div style={{width:"32px",height:"0.5px",background:"rgba(197,168,130,0.5)",margin:"1.5rem auto"}} />
+            <p style={{fontSize:"0.9rem",color:"#777",lineHeight:1.85,margin:"0 auto",maxWidth:"420px"}}>
+              Add your name to a route you'd want to drive. No payment, no commitment — we'll email you the moment it's a go.
+            </p>
+            <Link href="/routes" style={{display:"inline-block",marginTop:"2rem",padding:"0.95rem 2.75rem",background:"#c5a882",color:"#0F1E14",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>Explore Routes →</Link>
           </div>
         </FadeUp>
       </section>
