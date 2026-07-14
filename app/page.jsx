@@ -802,7 +802,7 @@ export default function Home() {
           <FadeUp>
             <div style={{textAlign:"center",marginBottom:"3rem"}}>
               <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Upcoming Routes</div>
-              <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Add your name — no payment, no commitment</div>
+              <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>No payment, no commitment — we'll email you the moment one launches</div>
             </div>
           </FadeUp>
           {teaserRoutes.length > 0 ? (
@@ -826,7 +826,7 @@ export default function Home() {
                     <div style={{padding:"1.5rem"}}>
                       <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.35rem"}}>{r.name}</div>
                       <div style={{fontSize:"11px",color:"#999",marginBottom:"0.9rem",letterSpacing:"0.04em"}}>{r.destination}</div>
-                      <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>Add your name <span style={{fontSize:"13px"}}>→</span></div>
+                      <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Route <span style={{fontSize:"13px"}}>→</span></div>
                     </div>
                   </Link>
                 </FadeUp>
