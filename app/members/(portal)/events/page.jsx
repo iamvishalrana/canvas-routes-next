@@ -63,14 +63,18 @@ export default async function EventsPage() {
   const tier = member?.tier || 'routes_member'
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
+  // Route-type events (WTET, Into the Laurentians) live in the Routes
+  // section (/members/routes) now, not here.
+  const meetEvents = (events || []).filter(ev => ev.type !== 'Route')
+
   // Prefer the precise `date` field over the human-readable `date_display`
   // ("July 2026") — falling back to date_display would parse to the *last*
   // day of that month, keeping already-past events looking upcoming.
-  const upcoming = (events || []).filter(ev => {
+  const upcoming = meetEvents.filter(ev => {
     const d = parseEventDate(ev.date || ev.date_display)
     return !d || d >= today
   })
-  const past = (events || []).filter(ev => {
+  const past = meetEvents.filter(ev => {
     const d = parseEventDate(ev.date || ev.date_display)
     return d && d < today
   }).reverse()

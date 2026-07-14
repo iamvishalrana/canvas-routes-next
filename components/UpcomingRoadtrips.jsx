@@ -15,14 +15,30 @@ const INTRO = 'A route launches when enough drivers are in. Add your name — no
 const CONTACT_KEY = 'cr_routes_contact' // returning-visitor prefill + registered flags
 const TRIP_LABELS = { day: 'Day Trip', overnight: 'Overnight', multi_day: 'Multi-Day' }
 // Budget brackets scale with the trip: a day loop and a five-day expedition
-// shouldn't offer the same ranges.
+// shouldn't offer the same ranges. Fallback only — routes with a real
+// price_range set (see admin "Avg. price range") get brackets anchored to
+// that actual number instead, via budgetsFor() below.
 const BUDGET_OPTIONS = {
   day:       ['$250–500', '$500–1,000', '$1,000+'],
   overnight: ['$500–1,000', '$1,000–1,500', '$1,500–2,000', '$2,000+'],
   multi_day: ['$1,000–1,500', '$1,500–2,000', '$2,000–3,000', '$3,000+'],
 }
-const budgetsFor = t => BUDGET_OPTIONS[t] || BUDGET_OPTIONS.overnight
-const HOTEL_OPTIONS    = ['No preference', 'Budget-friendly', 'Mid-range', 'Boutique / Luxury', 'Camping / Rustic']
+// Pulls the low/high numbers out of a free-text price_range like
+// "$800–$1,200" or "$800-1200 per car" so brackets can anchor to it.
+function parsePriceRange(str) {
+  const nums = String(str || '').match(/[\d,]+/g)?.map(s => parseInt(s.replace(/,/g, ''), 10)).filter(Number.isFinite)
+  if (!nums || nums.length === 0) return null
+  return { low: Math.min(...nums), high: Math.max(...nums) }
+}
+function budgetsFor(route) {
+  const parsed = parsePriceRange(route?.price_range)
+  if (parsed) {
+    const fmt = n => `$${n.toLocaleString('en-US')}`
+    return [`Under ${fmt(parsed.low)}`, `${fmt(parsed.low)}–${fmt(parsed.high)}`, `${fmt(parsed.high)}+`]
+  }
+  return BUDGET_OPTIONS[route?.trip_type] || BUDGET_OPTIONS.overnight
+}
+const HOTEL_OPTIONS    = ['Budget-friendly', 'Mid-range', 'Boutique / Luxury', 'Camping / Rustic']
 // Generic fallback — routes carry their own area-specific activity_options
 const ACTIVITY_OPTIONS = ['Scenic drives', 'Local food', 'Fine dining', 'Photography', 'Sightseeing', 'Nightlife', 'Relaxing']
 
@@ -829,7 +845,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             {/* Trip preferences */}
             <select className="rt-input" value={sheetRoute.formBudget} onChange={e => patch(sheetRoute.id, { formBudget: e.target.value, error: null })}>
               <option value="">Budget per car *</option>
-              {budgetsFor(sheetRoute.trip_type).map(o => <option key={o} value={o}>{o}</option>)}
+              {budgetsFor(sheetRoute).map(o => <option key={o} value={o}>{o}</option>)}
             </select>
             <input type="text" placeholder="Preferred dates — e.g. any August weekend *" value={sheetRoute.formDates} onChange={e => patch(sheetRoute.id, { formDates: e.target.value, error: null })} className="rt-input" />
             {(sheetRoute.trip_type === 'overnight' || sheetRoute.trip_type === 'multi_day') && (

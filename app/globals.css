@@ -569,6 +569,16 @@ section[id] {
   input, select, textarea { font-size: 16px !important; }
 }
 
+/* Placeholder text doesn't trigger the iOS zoom, so it can shrink freely —
+   at the enforced 16px an empty field's grey hint text reads oversized next
+   to the smaller labels around it on narrow screens. */
+@media (max-width: 480px) {
+  input::placeholder, textarea::placeholder { font-size: 13px !important; }
+}
+@media (min-width: 481px) and (max-width: 767px) {
+  input::placeholder, textarea::placeholder { font-size: 14px !important; }
+}
+
 /* Admin PWA (iOS home-screen app, iPhone 13 Pro ≈ 390px): let long unbreakable
    tokens — emails, URLs, UUIDs — wrap so grid/flex cells can shrink instead of
    spilling into the neighbouring column. Only affects narrow widths; desktop

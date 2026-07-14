@@ -731,7 +731,10 @@ export default function Home() {
             // Legacy events from before the admin events system existed — no DB record to derive these from.
             {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
             {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
-            ...dbEvents.map(ev => {
+            // Route-type events (WTET, Into the Laurentians) live in the
+            // Routes section below now, not here — exclude to avoid showing
+            // the same trip twice on the page.
+            ...dbEvents.filter(ev => ev.type !== 'Route').map(ev => {
               const past = isEventPast(ev)
               const shared = {
                 date: ev.date_display || formatEventDate(ev.date), name: ev.name, loc: ev.location || '',
@@ -739,7 +742,7 @@ export default function Home() {
                 _sortDate: ev.date || ev.date_display, tripLength: ev.trip_length || null,
               }
               return past
-                ? { ...shared, type: ev.type === 'Route' ? 'Past Route' : 'Past Event', past: true }
+                ? { ...shared, type: 'Past Event', past: true }
                 : {
                     ...shared, type: ev.type,
                     registration_url: ev.registration_url || null,

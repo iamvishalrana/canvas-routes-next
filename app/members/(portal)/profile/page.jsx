@@ -53,7 +53,8 @@ function SectionDivider({ children, extra }) {
 export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [form, setForm] = useState({ name: '', phone: '', instagram: '', dob_day: '', dob_month: '', dob_year: '' })
+  const [form, setForm] = useState({ name: '', phone: '', instagram: '', instagram_opted_out: false, dob_day: '', dob_month: '', dob_year: '' })
+  const [dismissingIg, setDismissingIg] = useState(false)
   const [cars, setCars] = useState([{ ...EMPTY_CAR }])
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -115,6 +116,7 @@ export default function ProfilePage() {
             name: member.name || '',
             phone: member.phone || '',
             instagram: member.instagram || '',
+            instagram_opted_out: !!member.instagram_opted_out,
             dob_day: member.dob_day ? String(member.dob_day) : '',
             dob_month: member.dob_month ? String(member.dob_month) : '',
             dob_year: member.dob_year ? String(member.dob_year) : '',
@@ -181,6 +183,22 @@ export default function ProfilePage() {
 
   function removeCar(idx) {
     setCars(prev => prev.length === 1 ? [{ ...EMPTY_CAR }] : prev.filter((_, i) => i !== idx))
+  }
+
+  async function dismissInstagram() {
+    setDismissingIg(true)
+    try {
+      const res = await fetch('/api/member/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instagram_opted_out: true }),
+      })
+      if (res.ok) {
+        setForm(p => ({ ...p, instagram_opted_out: true }))
+        savedForm.current = savedForm.current ? { ...savedForm.current, instagram_opted_out: true } : savedForm.current
+      }
+    } catch {}
+    finally { setDismissingIg(false) }
   }
 
   async function saveProfile(e) {
@@ -300,7 +318,7 @@ export default function ProfilePage() {
   const primaryCar = validCarsList[0] || null
   const primaryCarIdx = primaryCar ? cars.indexOf(primaryCar) : 0
   const completeness = [
-    !!form.name, !!form.phone, !!form.instagram,
+    !!form.name, !!form.phone, !!form.instagram || form.instagram_opted_out,
     !!(form.dob_month && form.dob_day), validCarsList.length > 0, !!primaryCar?.photo_url, !!avatarUrl,
   ]
   const completeCount = completeness.filter(Boolean).length
@@ -470,15 +488,29 @@ export default function ProfilePage() {
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
               @{igHandle}
             </a>
+          ) : form.instagram_opted_out ? (
+            <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '1.35rem' }}>
+              Instagram not shared
+            </div>
           ) : (
-            <button
-              type="button"
-              onClick={startEditing}
-              className="cr-hero-pill"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(245,241,236,0.06)', border: 'none', borderRadius: '99px', padding: '0.5rem 1.2rem', fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', cursor: 'pointer', letterSpacing: '0.03em', marginBottom: '1.35rem', transition: 'background 0.2s' }}
-            >
-              + Add Instagram
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.35rem' }}>
+              <button
+                type="button"
+                onClick={startEditing}
+                className="cr-hero-pill"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(245,241,236,0.06)', border: 'none', borderRadius: '99px', padding: '0.5rem 1.2rem', fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', cursor: 'pointer', letterSpacing: '0.03em', transition: 'background 0.2s' }}
+              >
+                + Add Instagram
+              </button>
+              <button
+                type="button"
+                onClick={dismissInstagram}
+                disabled={dismissingIg}
+                style={{ background: 'none', border: 'none', padding: 0, fontSize: '10px', letterSpacing: '0.06em', color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter), sans-serif', cursor: dismissingIg ? 'wait' : 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+              >
+                {dismissingIg ? 'Saving…' : "Don't share Instagram"}
+              </button>
+            </div>
           )}
 
           {/* Tier row */}
@@ -613,7 +645,7 @@ export default function ProfilePage() {
           ].map(tile => (
             <div key={tile.label} className="cr-stat-tile" style={{ background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)', borderRadius: '14px', padding: '1.1rem 1.2rem' }}>
               <div style={{ marginBottom: '0.6rem' }}>{tile.icon}</div>
-              <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.9rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1 }}>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.9rem', fontWeight: '400', color: '#F5F1EC', lineHeight: 1, letterSpacing: '0.03em' }}>
                 {tile.value === null ? '—' : <CountUp to={tile.value} />}
               </div>
               <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '0.4rem' }}>{tile.label}</div>

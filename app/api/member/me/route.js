@@ -11,7 +11,7 @@ export async function GET() {
     const normalEmail = user.email?.toLowerCase().trim()
 
     const [{ data: member }, { data: application }, { data: eventRegs }] = await Promise.all([
-      admin.from('members').select('id, name, email, phone, instagram, car_year, car_make, car_model, cars, dob_month, dob_day, dob_year, membership_status, tier, join_date, created_at, membership_number, car_photo_url, profile_photo_url, password_set_at, event_attendance').eq('id', user.id).maybeSingle(),
+      admin.from('members').select('id, name, email, phone, instagram, instagram_opted_out, car_year, car_make, car_model, cars, dob_month, dob_day, dob_year, membership_status, tier, join_date, created_at, membership_number, car_photo_url, profile_photo_url, password_set_at, event_attendance').eq('id', user.id).maybeSingle(),
       normalEmail
         ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', normalEmail).maybeSingle()
         : Promise.resolve({ data: null }),

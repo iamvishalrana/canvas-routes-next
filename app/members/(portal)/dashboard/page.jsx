@@ -156,7 +156,10 @@ export default async function DashboardPage() {
 
   // Prefer the precise `date` field — date_display ("July 2026") parses to
   // the last day of that month, keeping already-past events looking upcoming.
+  // Route-type events (WTET, Into the Laurentians) live in the Routes
+  // section (/members/routes) now, not the Meets & Events preview.
   const upcomingEvents = (events || []).filter(ev => {
+    if (ev.type === 'Route') return false
     const d = parseEventDate(ev.date || ev.date_display)
     return !d || d >= today
   })
@@ -324,7 +327,7 @@ export default async function DashboardPage() {
             <FadeUp delay={60}><div className="dash-card">
               <div className="card-head">
                 <span className="section-label">Announcements</span>
-                <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.1rem', fontWeight: '300', color: '#ddd', lineHeight: 1 }}>{announcements.length}</span>
+                <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.1rem', fontWeight: '400', color: '#ddd', lineHeight: 1, letterSpacing: '0.03em' }}>{announcements.length}</span>
               </div>
               <div className="card-pad">
                 {announcements.map((a, i) => (
@@ -376,7 +379,7 @@ export default async function DashboardPage() {
                     <div style={{ textAlign: 'center', paddingTop: '1px' }}>
                       {day ? (
                         <>
-                          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2.4rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{day}</div>
+                          <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.4rem', fontWeight: '400', color: '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{day}</div>
                           <div style={{ fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginTop: '3px' }}>{month}</div>
                         </>
                       ) : month ? (
@@ -496,7 +499,7 @@ export default async function DashboardPage() {
                 <div>
                   <div style={{ fontSize: '7.5px', letterSpacing: '0.44em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>Canvas Routes</div>
                   {member?.membership_number && (
-                    <div style={{ fontSize: '7px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '5px' }}>No. <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '0.95rem', fontWeight: '300', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.1em', fontStyle: 'normal' }}><CountUp to={member.membership_number} pad={3} prefix="#" duration={800} /></span></div>
+                    <div style={{ fontSize: '7px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '5px' }}>No. <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '0.95rem', fontWeight: '400', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.1em', fontStyle: 'normal' }}><CountUp to={member.membership_number} pad={3} prefix="#" duration={800} /></span></div>
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -587,7 +590,7 @@ export default async function DashboardPage() {
             <FadeUp delay={80}><div className="dash-card">
               <div className="card-head">
                 <span className="section-label">Events Attended</span>
-                <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#c5a882', lineHeight: 1 }}>{attendedEvents.length}</span>
+                <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.5rem', fontWeight: '400', color: '#c5a882', lineHeight: 1, letterSpacing: '0.03em' }}>{attendedEvents.length}</span>
               </div>
               <div className="card-pad">
                 {attendedEvents.map((r, i) => (

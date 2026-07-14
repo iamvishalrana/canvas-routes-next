@@ -197,7 +197,7 @@ export default async function EventDetailPage({ params }) {
             {ev.capacity && (
               <div>
                 <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.3rem' }}>Capacity</div>
-                <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{ev.capacity}</div>
+                <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', fontWeight: '400', color: '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{ev.capacity}</div>
               </div>
             )}
           </div>
