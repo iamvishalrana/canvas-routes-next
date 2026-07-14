@@ -453,7 +453,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 102, background: '#0F1E14', borderBottom: '0.5px solid rgba(197,168,130,0.25)', padding: 'env(safe-area-inset-top) clamp(1rem,4vw,3rem) 0', transform: showBar ? 'translateY(0)' : 'translateY(-110%)', transition: 'transform .3s cubic-bezier(.22,.68,0,1)', cursor: 'pointer', boxShadow: showBar ? '0 8px 28px rgba(8,14,10,0.4)' : 'none' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', gap: '12px' }}>
             <span style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: '16px', color: '#F5F1EC', whiteSpace: 'nowrap' }}>
-              Upcoming Routes <span style={{ color: ACCENT, fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", letterSpacing: '0.04em' }}>· {routes.length}</span>
+              Upcoming Routes <span style={{ color: ACCENT }}>· {routes.length}</span>
             </span>
             <span style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: ACCENT, whiteSpace: 'nowrap' }}>
               {myInterestCount} registered ↑
