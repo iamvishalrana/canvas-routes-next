@@ -20,7 +20,7 @@ function notifyHtml({ name, business, city, type, email, phone, message }) {
 <tr><td align="center" style="padding:40px 16px;">
 <table role="presentation" cellpadding="0" cellspacing="0" width="560" style="max-width:560px;width:100%;">
 <tr><td style="padding-bottom:24px;">
-  <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="180" style="display:block;width:180px;height:auto;"/>
+  <img src="https://canvasroutes.com/logo-white.png" alt="Canvas Routes" width="180" style="display:block;width:180px;height:auto;"/>
 </td></tr>
 <tr><td style="padding-bottom:20px;"><table role="presentation" cellpadding="0" cellspacing="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table></td></tr>
 <tr><td style="font-family:Georgia,serif;font-size:22px;font-weight:400;color:#F5F1EC;padding-bottom:28px;">
@@ -69,7 +69,7 @@ function confirmHtml({ name, business }) {
 
       <!-- Logo -->
       <tr><td style="padding-bottom:36px;">
-        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;"/>
+        <img src="https://canvasroutes.com/logo-white.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;"/>
       </td></tr>
 
       <!-- Gold divider -->

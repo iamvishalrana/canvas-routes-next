@@ -10,7 +10,7 @@ import { WTET_AWARD_CATEGORIES, CATEGORY_DISCOUNT_PCT } from '../../lib/wtetAwar
 // needed until after email verification, well after this loader is gone.
 // Preloading them all upfront was flooding mobile connections and causing
 // the email lookup fetch itself to fail (Sentry: TypeError "Load failed").
-const PRELOAD_IMAGES = ['/canvas_routes_refined.png']
+const PRELOAD_IMAGES = ['/logo-color.svg']
 
 const T = {
   en: {
@@ -161,7 +161,7 @@ export default function WtetAwardsPage() {
       <div style={{ maxWidth: '560px', margin: '0 auto', padding: 'clamp(2.5rem,8vw,4.5rem) 1.25rem 4rem' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <img src="/canvas_routes_refined.png" alt="Canvas Routes" style={{ width: '190px', margin: '0 auto 1.5rem', display: 'block', opacity: 0.94 }} />
+          <img src="/logo-color.svg" alt="Canvas Routes" style={{ width: '190px', margin: '0 auto 1.5rem', display: 'block', opacity: 0.94 }} />
           <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.75rem' }}>{t.eyebrow}</div>
           <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.2rem,6vw,3rem)', fontWeight: '400', color: '#0F1E14', margin: '0 0 1rem', lineHeight: '1.1' }}>{t.title}</h1>
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75', margin: 0, maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{t.subtitle}</p>

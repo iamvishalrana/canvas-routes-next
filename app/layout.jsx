@@ -95,8 +95,8 @@ const jsonLd = {
       name: 'Canvas Routes',
       alternateName: 'Canvas Routes Montreal',
       url: 'https://canvasroutes.com',
-      logo: { '@type': 'ImageObject', url: 'https://canvasroutes.com/canvas_routes_refined.png' },
-      image: 'https://canvasroutes.com/canvas_routes_refined.png',
+      logo: { '@type': 'ImageObject', url: 'https://canvasroutes.com/logo-color.png' },
+      image: 'https://canvasroutes.com/logo-color.png',
       email: 'info@canvasroutes.com',
       foundingLocation: { '@type': 'Place', name: 'Montreal, Quebec, Canada' },
       knowsAbout: [
@@ -124,8 +124,8 @@ const jsonLd = {
       name: 'Canvas Routes',
       description: "Canvas Routes is Montreal's premier car community, organizing invite-only Cars and Coffee events, curated road trips through the Laurentians and Eastern Townships, and scenic convoy drives across Quebec, Ontario, Vermont, Maine, New York and beyond. Whether you're searching for road trips from Montreal, cars and coffee events in Quebec, scenic driving routes through the Laurentians, or an overnight car convoy to Nova Scotia's Cabot Trail, Canvas Routes brings passionate drivers together for unforgettable experiences on the road.",
       url: 'https://canvasroutes.com',
-      logo: 'https://canvasroutes.com/canvas_routes_refined.png',
-      image: 'https://canvasroutes.com/canvas_routes_refined.png',
+      logo: 'https://canvasroutes.com/logo-color.png',
+      image: 'https://canvasroutes.com/logo-color.png',
       priceRange: '$–$$$',
       address: {
         '@type': 'PostalAddress',

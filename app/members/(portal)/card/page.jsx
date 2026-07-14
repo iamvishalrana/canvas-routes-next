@@ -1,7 +1,6 @@
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import CardInteractive from './CardInteractive'
 
@@ -90,7 +89,8 @@ export default async function CardPage() {
             <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.15rem' }}>Season</div>
             <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>2026</div>
           </div>
-          <Image src="/white-outline.png" alt="Canvas Routes" width={162} height={108} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-white.svg" alt="Canvas Routes" width={162} height={108} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
         </div>
 
         {/* Member info — tight gap below logo, no divider between them */}

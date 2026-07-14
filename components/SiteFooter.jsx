@@ -45,7 +45,7 @@ export default function SiteFooter() {
         {/* Brand column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <img
-            src="/white-outline.png"
+            src="/logo-white.svg"
             alt="Canvas Routes"
             style={{ width: '140px', height: 'auto', opacity: 0.9 }}
           />

@@ -37,3 +37,9 @@ playwright-report/
 
 # Temp files
 *.tmp
+
+# Raw design source files (PSD/AI/EPS/originals) — kept locally for reference
+# only. Never in /public: Next.js serves that directory verbatim, so raw
+# multi-MB source files would otherwise become publicly downloadable on the
+# live site. Deployed logo assets live at /public/logo-*.svg|png instead.
+/brand-assets/

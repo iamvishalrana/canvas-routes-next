@@ -2,7 +2,6 @@
 export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 
 export default function ResetPasswordPage() {
@@ -87,7 +86,8 @@ export default function ResetPasswordPage() {
 
       <Link href="/" style={{ marginBottom: '3rem', display: 'block' }}>
         <div style={{ width: '142px', height: '64px', overflow: 'hidden' }}>
-          <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-white.svg" alt="Canvas Routes" width={1024} height={1536}
             style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
         </div>
       </Link>

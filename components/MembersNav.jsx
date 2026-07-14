@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
@@ -46,7 +45,8 @@ export default function MembersNav({ email, isAdmin }) {
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ width: '142px', height: '64px', overflow: 'hidden', flexShrink: 0 }}>
-            <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-white.svg" alt="Canvas Routes" width={1024} height={1536}
               style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
           </div>
         </Link>

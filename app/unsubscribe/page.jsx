@@ -2,7 +2,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 
 function UnsubscribeContent() {
   const params = useSearchParams()
@@ -39,7 +38,8 @@ function UnsubscribeContent() {
     <div style={{ minHeight: '100vh', background: '#0F1E14', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '1.5rem 2rem' }}>
         <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ width: '100px', height: 'auto', opacity: 0.85 }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-white.svg" alt="Canvas Routes" width={140} height={93} style={{ width: '100px', height: 'auto', opacity: 0.85 }} />
         </Link>
       </div>
 

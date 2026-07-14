@@ -76,7 +76,7 @@ const SIG_HTML = `
 <table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
   <tr>
     <td style="vertical-align:middle;padding-right:14px;">
-      <img src="https://canvasroutes.com/canvas_routes_refined.png" width="78" height="52" border="0" style="display:block;" alt="Canvas Routes"/>
+      <img src="https://canvasroutes.com/logo-color.png" width="78" height="30" border="0" style="display:block;" alt="Canvas Routes"/>
     </td>
     <td style="vertical-align:middle;padding-left:14px;border-left:1px solid #e8e8e8;">
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Jerry</div>
@@ -121,7 +121,7 @@ function buildHtml(bodyHtml) {
 
       <!-- Header -->
       <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
-        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:20px;opacity:0.92;" />
+        <img src="https://canvasroutes.com/logo-white.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:20px;opacity:0.92;" />
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
       </td></tr>
 
@@ -225,7 +225,7 @@ function Signature() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/canvas_routes_refined.png" width="78" style={{ display: 'block', marginRight: '14px', flexShrink: 0 }} alt="Canvas Routes" />
+      <img src="/logo-color.svg" width="78" style={{ display: 'block', marginRight: '14px', flexShrink: 0 }} alt="Canvas Routes" />
       <div style={{ paddingLeft: '14px', borderLeft: '1px solid #e8e8e8' }}>
         <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '2px' }}>Jerry</div>
         <div style={{ fontSize: '11px', color: '#888', marginBottom: '4px' }}>Founder, Canvas Routes</div>

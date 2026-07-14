@@ -1,7 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { MapPin } from 'lucide-react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SiteFooter from '../components/SiteFooter'
@@ -589,7 +588,8 @@ export default function Home() {
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",animation:"cr-fade-up 0.65s ease both",animationDelay:"100ms"}}><MapPin size={12} strokeWidth={1.5} />Montreal · Est. 2025</div>
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem",animation:"cr-fade-in 0.6s ease both",animationDelay:"280ms"}}></div>
         <div style={{animation:"cr-fade-up 0.75s ease both",animationDelay:"380ms"}}>
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="hero-logo" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-color.svg" alt="Canvas Routes" width={1500} height={999} className="hero-logo" />
         </div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem",animation:"cr-fade-in 0.5s ease both",animationDelay:"600ms"}}></div>
         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em",animation:"cr-fade-up 0.65s ease both",animationDelay:"680ms"}}>The Community. The Routes. The Canvas.</div>

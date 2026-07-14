@@ -2,7 +2,6 @@
 export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 
 export default function LoginPage() {
@@ -211,7 +210,8 @@ export default function LoginPage() {
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)' }} />
           <Link href="/" style={{ display: 'inline-block' }}>
             <div style={{ width: '107px', height: '49px', overflow: 'hidden' }}>
-              <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-white.svg" alt="Canvas Routes" width={1024} height={1536}
                 style={{ width: '107px', height: 'auto', marginTop: '-51px', display: 'block', opacity: 0.9 }} />
             </div>
           </Link>
@@ -235,7 +235,8 @@ export default function LoginPage() {
 
         <Link href="/">
           <div style={{ width: '142px', height: '64px', overflow: 'hidden' }}>
-            <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-white.svg" alt="Canvas Routes" width={1024} height={1536}
               style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
           </div>
         </Link>

@@ -136,7 +136,7 @@ export default function CCDPage() {
       <nav style={{ position:'fixed', top:0, left:0, right:0, zIndex:100, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.9rem 2rem', background:'#0F1E14', borderBottom:'0.5px solid rgba(197,168,130,0.12)' }}>
         <Link href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/white-outline.png" alt="Canvas Routes" style={{ height:'72px', width:'auto', display:'block' }} />
+          <img src="/logo-white.svg" alt="Canvas Routes" style={{ height:'72px', width:'auto', display:'block' }} />
         </Link>
         <Link href="/" style={{ fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'rgba(245,241,236,0.55)', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif' }}>
           ← Back to site

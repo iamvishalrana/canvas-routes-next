@@ -25,7 +25,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
   <tr><td align="center" style="padding:32px 16px 48px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
       <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
-        <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:24px;opacity:0.92;" />
+        <img src="https://canvasroutes.com/logo-white.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:24px;opacity:0.92;" />
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40" style="margin-bottom:20px;"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
         <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Canvas Routes &middot; 2026 Season</p>
         <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:300;line-height:1.2;color:#F5F1EC;">Welcome, ${h(firstName)}.</h1>

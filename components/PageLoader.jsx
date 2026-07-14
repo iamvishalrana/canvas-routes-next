@@ -42,7 +42,7 @@ export default function PageLoader({ images = [], minMs = 1500 }) {
     }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/canvas_routes_refined.png"
+        src="/logo-color.svg"
         alt="Canvas Routes"
         style={{ width: '200px', opacity: 0.92 }}
       />

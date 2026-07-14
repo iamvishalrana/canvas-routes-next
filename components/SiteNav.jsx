@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '../lib/supabase/client'
 
@@ -80,7 +79,8 @@ export default function SiteNav({ links = [], ctaLabel = 'Become a Member', onMe
       )}
       <nav className="nav" style={{ top: bannerHeight }}>
         <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-color.svg" alt="Canvas Routes" width={1500} height={999} className="nav-logo" />
         </Link>
 
         <div className="nav-links">

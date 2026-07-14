@@ -69,7 +69,7 @@ export async function GET(request) {
           {/* Light scrim so the logo reads over the bright photo */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(10,20,12,0.32)', display: 'flex' }} />
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img src={`${origin}/white-outline.png`} style={{ width: '340px', objectFit: 'contain' }} />
+            <img src={`${origin}/logo-white.png`} style={{ width: '340px', objectFit: 'contain' }} />
           </div>
         </div>
       ),
@@ -77,8 +77,8 @@ export async function GET(request) {
     )
   }
 
-  // Default: logo on dark green
-  const logoUrl = `${origin}/canvas_routes_refined.png`
+  // Default: logo on cream
+  const logoUrl = `${origin}/logo-color.png`
 
   return new ImageResponse(
     (

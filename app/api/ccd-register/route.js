@@ -31,7 +31,7 @@ function confirmHtml(firstName, { year, carMake, carModel }) {
         <!-- ── Header ─────────────────────────────────────────── -->
         <tr>
           <td style="background:#0F1E14;padding:36px 40px 32px;">
-            <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:28px;opacity:0.92;" />
+            <img src="https://canvasroutes.com/logo-white.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:28px;opacity:0.92;" />
             <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#c5a882;">Father&rsquo;s Day Weekend &middot; June 20</p>
             <h1 style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#F5F1EC;line-height:1.15;">Cars, Coffee<br/>&amp; Dad Jokes</h1>
             <!-- Event detail chips -->

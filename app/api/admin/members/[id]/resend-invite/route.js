@@ -27,7 +27,7 @@ function inviteHtml({ firstName, tier, actionLink }) {
           <!-- Logo -->
           <tr>
             <td style="padding-bottom:32px;">
-              <img src="https://canvasroutes.com/canvas_routes_refined.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
+              <img src="https://canvasroutes.com/logo-white.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;outline:0;" />
             </td>
           </tr>
 

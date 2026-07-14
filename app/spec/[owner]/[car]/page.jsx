@@ -253,7 +253,7 @@ export default function SpecSheet({ params }) {
 
         {/* Header */}
         <div className="spec-header">
-          <img src="/canvas_routes_refined.png" alt="Canvas Routes" className="spec-logo" />
+          <img src="/logo-color.svg" alt="Canvas Routes" className="spec-logo" />
           <div className="spec-event-label">
             Grand Prix Weekend · May 23, 2026 · Montreal, QC
           </div>

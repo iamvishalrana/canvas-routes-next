@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import SiteFooter from '../../../components/SiteFooter'
 
 const PAST_ROUTES = [
@@ -26,7 +25,8 @@ export default function PastRoutesPage() {
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', height: '68px', borderBottom: '0.5px solid rgba(197,168,130,0.12)', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(15,30,20,0.97)', backdropFilter: 'blur(12px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <div style={{ width: '142px', height: '64px', overflow: 'hidden', flexShrink: 0 }}>
-            <Image src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-white.svg" alt="Canvas Routes" width={1024} height={1536} style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
           </div>
         </Link>
         <Link href="/routes" style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', textDecoration: 'none' }}>← Routes</Link>

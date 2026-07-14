@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 
 const INP = {
   width: '100%', boxSizing: 'border-box', padding: '0.75rem 1rem',
@@ -103,7 +102,8 @@ export default function EventProfilePage() {
       {/* Nav */}
       <div style={{ background: '#0F1E14', padding: '1rem 2rem' }}>
         <Link href="/">
-          <Image src="/canvas_routes_refined.png" alt="Canvas Routes" width={140} height={93} style={{ width: '90px', height: 'auto', opacity: 0.9 }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-color.svg" alt="Canvas Routes" width={140} height={93} style={{ width: '90px', height: 'auto', opacity: 0.9 }} />
         </Link>
       </div>
 
