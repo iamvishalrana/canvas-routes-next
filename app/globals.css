@@ -72,7 +72,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   border-bottom: 0.5px solid rgba(0,0,0,0.12);
   background: #F5F1EC;
 }
-.nav-logo { height: 73px; width: auto; background: #F5F1EC; }
+.nav-logo { height: 56px; width: auto; background: #F5F1EC; }
 .nav-links {
   display: flex;
   gap: 2rem;
@@ -468,7 +468,7 @@ section[id] {
 
 @media (max-width: 768px) {
   .nav { padding: 0.75rem 1.2rem; }
-  .nav-logo { height: 50px; }
+  .nav-logo { height: 40px; }
   .nav-links { display: none; }
   .nav-cta { display: none; }
   .nav-join { display: none; }
