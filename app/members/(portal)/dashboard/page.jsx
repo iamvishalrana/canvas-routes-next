@@ -445,7 +445,7 @@ export default async function DashboardPage() {
               calendar above (gold left edge marks it as a different kind of listing) */}
           <FadeUp delay={160}><div className="dash-card" style={{ borderLeft: '3px solid #c5a882' }}>
             <div className="card-head">
-              <span className="section-label">Upcoming Routes</span>
+              <span className="section-label">Routes</span>
               <Link href="/members/routes" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
                 View all
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>

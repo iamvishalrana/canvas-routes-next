@@ -468,7 +468,7 @@ export default function RoadtripsAdminClient() {
       {/* ── Completed routes — hardcoded (see lib/pastRoutes.js), not DB rows
              so they're read-only here. Edit the file directly to update. ── */}
       <div style={{ marginTop: '2.5rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.85rem' }}>Completed Routes</div>
+        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.85rem' }}>Past Routes</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           {PAST_ROUTES.map(p => (
             <div key={p.slug} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>

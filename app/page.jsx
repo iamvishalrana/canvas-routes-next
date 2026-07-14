@@ -8,6 +8,7 @@ import FadeUp from '../components/FadeUp'
 import SiteNav from '../components/SiteNav'
 import { ROUTE_PHOTOS, ACCENT_BGS } from '../components/UpcomingRoadtrips'
 import { PAST_ROUTES } from '../lib/pastRoutes'
+import PastRouteRecapModal from '../components/PastRouteRecapModal'
 import { getConsent } from '../lib/consent'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -109,6 +110,7 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false)
   const [dbEvents, setDbEvents] = useState([])
   const [teaserRoutes, setTeaserRoutes] = useState([])
+  const [recapRoute, setRecapRoute] = useState(null) // past route showing the "View Recap" modal
 
   useEffect(() => {
     fetch('/api/public/events')
@@ -820,16 +822,18 @@ export default function Home() {
               <div className="events-grid">
                 {combined.map((r, i) => (
                   <FadeUp key={r.slug || r.id} delay={i * 70}>
-                    <Link href={r._past ? r.href : '/routes'} className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer"}}>
+                    <Link href={r._past ? r.href : '/routes'}
+                      onClick={r._past ? (e => { e.preventDefault(); setRecapRoute(r) }) : undefined}
+                      className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer",opacity:r._past?0.82:1}}>
                       <div style={{position:"relative",aspectRatio:"16/9",overflow:"hidden",background:ACCENT_BGS[i % ACCENT_BGS.length]}}>
                         {(r._past ? r.photo : ROUTE_PHOTOS[r.slug]) && (
                           <img src={r._past ? r.photo : ROUTE_PHOTOS[r.slug]} alt="" className="route-teaser-photo"
-                            style={{width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" />
+                            style={{width:"100%",height:"100%",objectFit:"cover",filter:r._past?"grayscale(0.65) brightness(0.85)":"none"}} loading="lazy" />
                         )}
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)"}} />
                         {r._past ? (
-                          <div style={{position:"absolute",bottom:"12px",left:"12px",background:"rgba(197,168,130,0.92)",padding:"4px 10px"}}>
-                            <span style={{fontSize:"9px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#0F1E14",fontWeight:600}}>Completed · {r.month_label}</span>
+                          <div style={{position:"absolute",bottom:"12px",left:"12px",background:"rgba(90,90,90,0.85)",padding:"4px 10px"}}>
+                            <span style={{fontSize:"9px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#F5F1EC",fontWeight:600}}>Past Route · {r.month_label}</span>
                           </div>
                         ) : (
                           <>
@@ -843,9 +847,9 @@ export default function Home() {
                         )}
                       </div>
                       <div style={{padding:"1.5rem"}}>
-                        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#1A1008",marginBottom:"0.35rem"}}>{r.name}</div>
-                        <div style={{fontSize:"11px",color:"#999",marginBottom:"0.9rem",letterSpacing:"0.04em"}}>{r.destination}</div>
-                        <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>
+                        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:r._past?"#555":"#1A1008",marginBottom:"0.35rem"}}>{r.name}</div>
+                        <div style={{fontSize:"11px",color:r._past?"#bbb":"#999",marginBottom:"0.9rem",letterSpacing:"0.04em"}}>{r.destination}</div>
+                        <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:r._past?"#999":"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>
                           {r._past ? 'View Recap' : 'View Route'} <span style={{fontSize:"13px"}}>→</span>
                         </div>
                       </div>
@@ -1093,6 +1097,8 @@ export default function Home() {
 
       {/* FOOTER */}
       <SiteFooter />
+
+      <PastRouteRecapModal route={recapRoute} onClose={() => setRecapRoute(null)} />
 
     </div>
     </ErrorBoundary>
