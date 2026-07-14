@@ -730,9 +730,6 @@ export default function Home() {
         </FadeUp>
         <div className="events-grid">
           {[
-            // Legacy events from before the admin events system existed — no DB record to derive these from.
-            {date:"May 9, 2026",name:"Cars & Coffee",loc:"Montreal, QC",type:"Past Event",past:true},
-            {date:"May 23, 2026",name:"Grand Prix Weekend - Cars, Coffee & Cruise",loc:"Exotics and Classics",type:"Past Event",past:true},
             // Route-type events (WTET, Into the Laurentians) live in the
             // Routes section below now, not here — exclude to avoid showing
             // the same trip twice on the page.
@@ -815,7 +812,7 @@ export default function Home() {
           </FadeUp>
           {(() => {
             const combined = [
-              ...teaserRoutes.slice(0, 3).map(r => ({ ...r, _past: false })),
+              ...teaserRoutes.map(r => ({ ...r, _past: false })),
               ...PAST_ROUTES.map(p => ({ ...p, _past: true })),
             ]
             return combined.length > 0 ? (
