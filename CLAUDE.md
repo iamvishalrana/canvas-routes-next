@@ -198,6 +198,11 @@ doConfirm().catch(() => setTimeout(() => doConfirm().catch(() => {}), 4000))
 **13. Block payment if a promo code is typed but not applied**
 Both WTET and membership payment forms must check `promoInput.trim()` before `confirmPayment` and show an error if a code is entered but not applied. Do this before `setPaying(true)` so the button does not get stuck.
 
+**15. Road-trip PaymentIntent metadata `type` must be `road_trip_<slug>`, matching the route's `upcoming_routes.slug`**
+WTET used a bespoke `type: 'road_trip_wtet'` that nothing else could target. Promo codes (`app/api/admin/promo-codes/route.js`, `app/api/stripe/apply-promo/route.js`) now validate road-trip types against `road_trip_<slug>` for every row in `upcoming_routes`, plus a `road_trip_any` wildcard that matches any `road_trip_*` type. Every future route's registration page must set `metadata.type` to `road_trip_<slug>` (not a one-off name) so:
+- Admins can create a promo code scoped to that specific route, or to "any route," directly from the promo-codes admin page — including before the route launches.
+- `apply-promo` accepts it automatically (any `road_trip_*` prefix is allowed) without needing a new hardcoded allowlist entry per route.
+
 ## Event Registration Page Template
 
 The WTET page (`app/wtet/page.jsx`) is the established template for paid road-trip/event registration pages. Reuse its structure for every future event — only swap out the route name, date, hero image, stops, pricing, and copy.

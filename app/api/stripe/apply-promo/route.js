@@ -115,17 +115,22 @@ export async function POST(request) {
       await releaseLock(lockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
-    // Allow promo codes on membership and WTET road trip payments
-    const allowedTypes = ['membership_routes', 'membership_inner_circle', 'road_trip_wtet']
-    if (!allowedTypes.includes(pi.metadata?.type)) {
+    // Allow promo codes on membership and road trip payments. Road trip
+    // types are route-scoped as road_trip_<slug> (see lib/pastRoutes.js-style
+    // convention documented in CLAUDE.md) so this covers every route without
+    // an allowlist that needs updating per route.
+    const piType = pi.metadata?.type || ''
+    if (!piType.startsWith('membership_') && !piType.startsWith('road_trip_')) {
       await releaseLock(lockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
-    // If the promo code has an applies_to restriction, verify the PI type is included
+    // If the promo code has an applies_to restriction, verify the PI type is
+    // included — road_trip_any matches any route, not just one specific slug.
     const appliesToRaw = promoCode.metadata?.applies_to
     if (appliesToRaw) {
       const allowed = appliesToRaw.split(',').map(s => s.trim())
-      if (!allowed.includes(pi.metadata?.type)) {
+      const matchesAnyRoute = allowed.includes('road_trip_any') && piType.startsWith('road_trip_')
+      if (!matchesAnyRoute && !allowed.includes(piType)) {
         await releaseLock(lockKey)
         return Response.json({ error: 'This promo code is not valid for this purchase.' }, { status: 400 })
       }

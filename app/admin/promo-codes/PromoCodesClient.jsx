@@ -32,18 +32,24 @@ function StatusChip({ active }) {
     : <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(0,0,0,0.12)', background: 'rgba(0,0,0,0.04)', color: '#999', whiteSpace: 'nowrap' }}>Inactive</span>
 }
 
-const APPLIES_TO_OPTIONS = [
+const MEMBERSHIP_APPLIES_TO_OPTIONS = [
   { value: 'membership_routes',       label: 'Membership — Routes' },
   { value: 'membership_inner_circle', label: 'Membership — Inner Circle' },
-  { value: 'road_trip_wtet',          label: 'Whips to Eastern Townships — July 5, 2026' },
 ]
+// road_trip_wtet is no longer selectable (WTET is closed) but existing codes
+// may still reference it — keep the label so history displays cleanly.
+const LEGACY_APPLIES_TO_LABELS = {
+  road_trip_wtet: 'Whips to Eastern Townships (closed)',
+  road_trip_any:  'Any route — current & future',
+}
 
-function fmtAppliesTo(metadata) {
+function fmtAppliesTo(metadata, appliesToOptions) {
   const raw = metadata?.applies_to
   if (!raw) return 'All'
   return raw.split(',').map(t => {
-    const opt = APPLIES_TO_OPTIONS.find(o => o.value === t.trim())
-    return opt ? opt.label : t.trim()
+    const v = t.trim()
+    const opt = appliesToOptions.find(o => o.value === v)
+    return opt ? opt.label : (LEGACY_APPLIES_TO_LABELS[v] || v)
   }).join(', ')
 }
 
@@ -72,6 +78,7 @@ export default function PromoCodesClient() {
   const [showInactive, setShowInactive] = useState(false)
   const [reactivating, setReactivating] = useState(null)
   const [reactivateErr, setReactivateErr] = useState(null)
+  const [routes, setRoutes] = useState([])
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -88,6 +95,21 @@ export default function PromoCodesClient() {
   }, [])
   useEffect(() => { load() }, [load])
   // no realtime table for promo codes
+
+  // Every route (active, inactive, launched or not) is a valid promo-code
+  // target — a code can be pre-created before a route even launches.
+  useEffect(() => {
+    fetch('/api/admin/upcoming-routes')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setRoutes(Array.isArray(data) ? data : []))
+      .catch(() => setRoutes([]))
+  }, [])
+
+  const appliesToOptions = [
+    ...MEMBERSHIP_APPLIES_TO_OPTIONS,
+    { value: 'road_trip_any', label: LEGACY_APPLIES_TO_LABELS.road_trip_any },
+    ...routes.map(r => ({ value: `road_trip_${r.slug}`, label: `${r.name} — ${r.month_label}` })),
+  ]
 
   const activeList     = codes.filter(c => c.active)
   const inactiveList   = codes.filter(c => !c.active)
@@ -315,7 +337,7 @@ export default function PromoCodesClient() {
             <div style={{ marginBottom: '1rem' }}>
               <L>Applies to (leave blank for all)</L>
               <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
-                {APPLIES_TO_OPTIONS.map(opt => (
+                {appliesToOptions.map(opt => (
                   <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '13px', color: '#555', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', userSelect: 'none' }}>
                     <input
                       type="checkbox"
@@ -385,7 +407,7 @@ export default function PromoCodesClient() {
                 {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
               </div>
               <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '0.6rem' }}>
-                Applies to: {fmtAppliesTo(c.metadata)}
+                Applies to: {fmtAppliesTo(c.metadata, appliesToOptions)}
               </div>
               {c.active && editing === c.id ? (
                 <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -473,7 +495,7 @@ export default function PromoCodesClient() {
                   <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.2rem' }}>
                     {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '0.6rem' }}>Applies to: {fmtAppliesTo(c.metadata)}</div>
+                  <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '0.6rem' }}>Applies to: {fmtAppliesTo(c.metadata, appliesToOptions)}</div>
                   <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     <button
                       onClick={() => loadUsage(c.id)}
@@ -533,7 +555,7 @@ export default function PromoCodesClient() {
                 <tr style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
                   <td style={TD}>{fmtDiscount(c.coupon)}</td>
-                  <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata)}</td>
+                  <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata, appliesToOptions)}</td>
                   <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
@@ -623,7 +645,7 @@ export default function PromoCodesClient() {
                   <tr style={{ background: i % 2 === 0 ? '#fafaf8' : '#f5f4f2', opacity: 0.75 }}>
                     <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
                     <td style={TD}>{fmtDiscount(c.coupon)}</td>
-                    <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata)}</td>
+                    <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata, appliesToOptions)}</td>
                     <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
                     <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                     <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
