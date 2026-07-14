@@ -373,7 +373,7 @@ export default function AdminShell({ children }) {
         <div className="admin-sidebar-safe-top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0 }}>
           <Link href="/" onClick={() => setIsOpen(false)} style={{ display: 'flex' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-white.svg" alt="Canvas Routes" width={140} height={93} style={{ width: '80px', height: 'auto', opacity: 0.9 }} />
+            <img src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '80px', height: 'auto', opacity: 0.9 }} />
           </Link>
           <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,241,236,0.4)', fontSize: '24px', lineHeight: 1, padding: '4px 6px' }}>×</button>
         </div>
@@ -390,7 +390,7 @@ export default function AdminShell({ children }) {
         <div className="admin-sidebar-safe-top" style={{ padding: '0.2rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
           <Link href="/" className="admin-sidebar-logo" style={{ display: 'flex' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-white.svg" alt="Canvas Routes" width={200} height={133} style={{ width: '110px', height: 'auto', opacity: 0.9 }} />
+            <img src="/white-outline.png" alt="Canvas Routes" width={200} height={133} style={{ width: '110px', height: 'auto', opacity: 0.9 }} />
           </Link>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>

@@ -72,7 +72,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   border-bottom: 0.5px solid rgba(0,0,0,0.12);
   background: #F5F1EC;
 }
-.nav-logo { height: 125px; width: auto; background: #F5F1EC; }
+.nav-logo { height: 73px; width: auto; background: #F5F1EC; }
 .nav-links {
   display: flex;
   gap: 2rem;
@@ -196,7 +196,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   padding: 182px 2rem 6rem;
   box-shadow: 0 12px 48px rgba(0,0,0,0.07);
 }
-.hero-logo { width: 750px; max-width: 92vw; height: auto; display: block; margin: 0 auto 1.5rem; }
+.hero-logo { width: 480px; max-width: 80vw; height: auto; display: block; margin: 0 auto 1.5rem; }
 .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 3rem; }
 .hero-buttons a { transition: background 0.25s, color 0.25s; }
 
@@ -466,7 +466,7 @@ section[id] {
 
 @media (max-width: 768px) {
   .nav { padding: 0.75rem 1.2rem; }
-  .nav-logo { height: 85px; }
+  .nav-logo { height: 50px; }
   .nav-links { display: none; }
   .nav-cta { display: none; }
   .nav-join { display: none; }
@@ -482,7 +482,7 @@ section[id] {
   }
 
   .hero { padding: 130px 1.5rem 4rem; min-height: 80vh; }
-  .hero-logo { width: 85vw; }
+  .hero-logo { width: 65vw; }
   .hero-buttons { flex-direction: column; align-items: center; }
   .hero-buttons a { width: 100%; text-align: center; }
 

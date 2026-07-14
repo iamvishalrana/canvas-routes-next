@@ -39,7 +39,7 @@ export default async function VerifyPage({ params }) {
       <div style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ display: 'flex', lineHeight: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-white.svg" alt="Canvas Routes" width={140} height={93} style={{ width: '68px', height: 'auto', opacity: 0.8 }} />
+          <img src="/white-outline.png" alt="Canvas Routes" width={140} height={93} style={{ width: '68px', height: 'auto', opacity: 0.8 }} />
         </Link>
         <div style={{ fontSize: '9px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)' }}>
           Verification

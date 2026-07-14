@@ -211,7 +211,7 @@ export default function LoginPage() {
           <Link href="/" style={{ display: 'inline-block' }}>
             <div style={{ width: '107px', height: '49px', overflow: 'hidden' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-white.svg" alt="Canvas Routes" width={1024} height={1536}
+              <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
                 style={{ width: '107px', height: 'auto', marginTop: '-51px', display: 'block', opacity: 0.9 }} />
             </div>
           </Link>
@@ -236,7 +236,7 @@ export default function LoginPage() {
         <Link href="/">
           <div style={{ width: '142px', height: '64px', overflow: 'hidden' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-white.svg" alt="Canvas Routes" width={1024} height={1536}
+            <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536}
               style={{ width: '142px', height: 'auto', marginTop: '-69px', display: 'block', opacity: 0.9 }} />
           </div>
         </Link>
