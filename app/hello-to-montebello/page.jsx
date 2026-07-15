@@ -550,7 +550,7 @@ export default function HelloToMontebelloPage() {
 
   return (
     <div style={{background:'#F5F1EC',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',minHeight:'100vh'}}>
-      <PageLoader images={['/convoy-hero.jpg']} minMs={2000} />
+      <PageLoader images={['/montebello-hero.jpg']} minMs={2000} />
       <style>{`
         /* ── Hero entrance animations ── */
         @keyframes htm-fade-up {
@@ -666,7 +666,7 @@ export default function HelloToMontebelloPage() {
       <SiteNav />
 
       {/* HERO */}
-      <section className="htm-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/convoy-hero.jpg')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
+      <section className="htm-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/montebello-hero.jpg')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
         <div className="htm-hero-overlay" style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
         <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem',animation:'htm-fade-in 0.7s ease both',animationDelay:'100ms'}}>Canvas Routes</div>
