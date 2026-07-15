@@ -1,21 +1,21 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { ROUTE_PATH } from './routePath'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
 
 const PASSWORD = 'montebello'
 
-const MY_MAPS_ID = '1qTSDL1sAHB6uGFhZJ-ZFhLuYi23WTvc'
-
-// Only real venues — drives the itinerary timeline. The map itself is the
-// custom Google My Maps route linked by Jerry, embedded via iframe below.
+// Only real venues so this one array can drive both the itinerary timeline
+// and the map markers. lat/lng for the meetup point and Fairmont come from
+// Jerry's traced My Maps route (see routePath.js); the rest are estimates.
 const STOPS = [
-  { label: 'Angrignon Mall — outside the SAQ', note: '8:00 AM · LaSalle', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal' },
-  { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9' },
-  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop', tag: 'Included in the fee', href: null },
-  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Included in the fee', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC' },
-  { label: 'Chocomotive', note: 'Montebello · Chocolate workshop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC' },
-  { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9' },
+  { label: 'Angrignon Mall — outside the SAQ', note: '8:00 AM · LaSalle', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal', lat: 45.4487767, lng: -73.6174344 },
+  { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
+  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop', tag: 'Included in the fee', href: null, lat: 45.68, lng: -75.05 },
+  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Included in the fee', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
+  { label: 'Chocomotive', note: 'Montebello · Chocolate workshop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6514, lng: -74.9438 },
+  { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
 ]
 
 // Single participant confirmed so far — no group-splitting needed yet
@@ -72,6 +72,133 @@ function ModalImage({ src, alt }) {
         onLoad={() => setLoaded(true)}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease' }}
       />
+    </div>
+  )
+}
+
+function RouteMap({ stops }) {
+  const containerRef = useRef(null)
+  const mapRef = useRef(null)
+  const [status, setStatus] = useState('loading')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) { setStatus('error'); return }
+
+    let destroyed = false
+
+    const initMap = () => {
+      if (destroyed || !containerRef.current || mapRef.current) return
+      try {
+        const google = window.google
+        if (!google?.maps) { setStatus('error'); return }
+
+        const bounds = new google.maps.LatLngBounds()
+        stops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }))
+
+        const map = new google.maps.Map(containerRef.current, {
+          mapTypeId: 'roadmap',
+          zoomControl: true,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: true,
+          styles: [
+            { featureType: 'poi',          elementType: 'labels',   stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit',                               stylers: [{ visibility: 'off' }] },
+            { featureType: 'road',         elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+            { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f5e9d6' }] },
+            { featureType: 'landscape',                             stylers: [{ color: '#f0ede8' }] },
+            { featureType: 'water',                                 stylers: [{ color: '#c8d8e8' }] },
+          ],
+        })
+        map.fitBounds(bounds, 40)
+        mapRef.current = map
+
+        new google.maps.Polyline({
+          path: ROUTE_PATH,
+          geodesic: true,
+          strokeColor: '#0F1E14',
+          strokeOpacity: 0.75,
+          strokeWeight: 3,
+          map,
+        })
+
+        stops.forEach(stop => {
+          const color = stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : '#c5a882'
+          const marker = new google.maps.Marker({
+            position: { lat: stop.lat, lng: stop.lng },
+            map,
+            title: stop.label,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: stop.start || stop.end ? 9 : 7,
+              fillColor: color,
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2,
+            },
+          })
+          const infoWindow = new google.maps.InfoWindow({
+            content: `<div style="font-family:sans-serif;padding:2px 4px"><strong style="font-size:13px">${stop.label}</strong><br/><span style="color:#888;font-size:11px">${stop.note}</span></div>`,
+          })
+          marker.addListener('click', () => infoWindow.open(map, marker))
+        })
+
+        if (!destroyed) setStatus('ready')
+      } catch (e) {
+        if (!destroyed) { setErrorMsg(String(e)); setStatus('error') }
+      }
+    }
+
+    window.gm_authFailure = () => {
+      if (!destroyed) { setErrorMsg('Auth failure — key invalid or domain not allowed'); setStatus('error') }
+    }
+
+    const scriptId = 'gmap-script'
+    if (window.google?.maps) {
+      initMap()
+    } else if (document.getElementById(scriptId)) {
+      const existing = document.getElementById(scriptId)
+      if (existing.dataset.error) {
+        if (!destroyed) { setErrorMsg('Script failed to load previously'); setStatus('error') }
+      } else {
+        existing.addEventListener('load', initMap)
+        existing.addEventListener('error', () => { if (!destroyed) setStatus('error') })
+      }
+    } else {
+      const script = document.createElement('script')
+      script.id = scriptId
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+      script.async = true
+      script.onload = initMap
+      script.onerror = () => {
+        script.dataset.error = '1'
+        if (!destroyed) { setErrorMsg('Script failed to load'); setStatus('error') }
+      }
+      document.head.appendChild(script)
+    }
+
+    return () => {
+      destroyed = true
+      if (mapRef.current) { mapRef.current = null }
+    }
+  }, [stops])
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div ref={containerRef} style={{ width: '100%', height: '100%', opacity: status === 'ready' ? 1 : 0 }} />
+      {status === 'loading' && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0ede8' }}>
+          <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Loading map…</span>
+        </div>
+      )}
+      {status === 'error' && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0ede8', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Map unavailable</span>
+          {errorMsg && <span style={{ fontSize: '10px', color: '#c0392b', maxWidth: '280px', lineHeight: '1.5' }}>{errorMsg}</span>}
+        </div>
+      )}
     </div>
   )
 }
@@ -464,13 +591,7 @@ export default function HelloToMontebelloItineraryPage() {
         <section className="scroll-reveal" style={{ padding: '2rem 0' }}>
           <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Map</h2>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-            <iframe
-              src={`https://www.google.com/maps/d/embed?mid=${MY_MAPS_ID}`}
-              title="Hello to Montebello route map"
-              style={{ width: '100%', height: '100%', border: 0 }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            <RouteMap stops={STOPS} />
           </div>
         </section>
 
