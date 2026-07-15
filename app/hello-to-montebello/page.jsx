@@ -682,7 +682,7 @@ export default function HelloToMontebelloPage() {
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'htm-fade-in 0.5s ease both',animationDelay:'700ms'}} />
           <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'htm-fade-up 0.7s ease both',animationDelay:'800ms'}}>
-            A relaxed Sunday out to the Outaouais — countryside roads, a château lunch, and a sweet finish at the old Montebello train station before the drive home.
+            A relaxed Sunday out to the Outaouais, built around lunch at the legendary Fairmont Le Château Montebello — the largest log château in the world — with a coffee stop, countryside roads, and a sweet finish along the way.
           </p>
 
           {/* Countdown */}
@@ -765,11 +765,15 @@ export default function HelloToMontebelloPage() {
             ))}
           </div>
 
-          {/* Château highlight */}
-          <div style={{borderLeft:'2px solid #c5a882',padding:'1rem 1.25rem',background:'rgba(197,168,130,0.06)',marginBottom:'2.5rem'}}>
-            <div style={{fontSize:'9px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif',marginBottom:'0.5rem'}}>The Finish</div>
-            <p style={{margin:0,fontSize:'14px',color:'#444',lineHeight:'1.8',fontFamily:'var(--font-inter),sans-serif'}}>
-              Lunch at Aux Chantignoles, inside the historic Fairmont Le Château Montebello — the largest log château in the world. Cars parked out front, lunch overlooking the Ottawa River, then a short walk to Chocomotive for something sweet before the drive home.
+          {/* Château highlight — the centerpiece of the route, given the same
+              prominent treatment as WTET's winery highlight */}
+          <div style={{background:'#0F1E14',padding:'1.75rem 1.9rem',marginBottom:'2.5rem',boxShadow:'0 6px 24px rgba(0,0,0,0.22)'}}>
+            <div style={{fontSize:'9px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.7)',fontFamily:'var(--font-inter),sans-serif',marginBottom:'0.6rem'}}>The Centerpiece of the Route</div>
+            <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'1.4rem',color:'#F5F1EC',fontWeight:'300',lineHeight:'1.3',marginBottom:'0.85rem'}}>
+              Lunch at Aux Chantignoles, Fairmont Le Château Montebello
+            </div>
+            <p style={{margin:0,fontSize:'14px',color:'rgba(245,241,236,0.6)',lineHeight:'1.85',fontFamily:'var(--font-inter),sans-serif'}}>
+              Everything about this route is built around lunch at Aux Chantignoles, inside the largest log château in the world. Cars parked out front, lunch overlooking the Ottawa River — then a short walk to Chocomotive for something sweet before the drive home.
             </p>
           </div>
 
@@ -808,19 +812,24 @@ export default function HelloToMontebelloPage() {
             { label:'Meetup — 8:00 AM', venue:'Angrignon Mall — outside the SAQ', venueHref:'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal', address:'LaSalle, QC', desc:'The group gathers at 8:00 AM in the parking lot outside the SAQ. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
             { label:'Regroup', venue:'Porte du Nord', venueHref:'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', address:'Saint-Jérôme, QC', desc:'A quick fuel and regroup stop before we leave the highway behind and head east into the countryside.', pays:false },
             { label:'Coffee Stop', venue:"L'Atelier des Deux P", address:'Amherst, QC', desc:'A short coffee break to stretch your legs before the last stretch into the Outaouais.', pays:true },
-            { label:'Lunch — Aux Chantignoles', venue:'Fairmont Le Château Montebello', venueHref:'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', address:'Montebello, QC', desc:'Lunch inside the world\'s largest log château, overlooking the Ottawa River. Cars parked out front for the afternoon.', pays:true },
+            { label:'Lunch — Aux Chantignoles', venue:'Fairmont Le Château Montebello', venueHref:'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', address:'Montebello, QC', desc:'Lunch inside the world\'s largest log château, overlooking the Ottawa River. Cars parked out front for the afternoon.', pays:true, feature:true },
             { label:'Sweet Stop', venue:'Chocomotive', venueHref:'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', address:'Montebello, QC', desc:'A short walk from the château — an artisan chocolate workshop housed in Montebello\'s old train station. Good for a treat before the drive back.', pays:false },
             { label:'The Drive Back', venue:null, address:'Via Autoroute 50, or back the way we came', desc:'We split the return between Autoroute 50 for those ready to head straight home, and the scenic route back for anyone who wants more road.', pays:false },
             { label:'Final Regroup', venue:'Porte du Nord', venueHref:'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', address:'Saint-Jérôme, QC', desc:'One last stop together before everyone splits off for home.', pays:false },
           ].map((stop, i, arr) => (
             <FadeUp key={i} delay={i * 80}>
-            <div className="htm-stop" style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none'}}>
-              <div style={{width:'6px',height:'6px',borderRadius:'50%',background:stop.pays?'#c5a882':'rgba(197,168,130,0.35)',flexShrink:0,marginTop:'6px'}} />
+            <div className="htm-stop" style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none', background:stop.feature?'rgba(197,168,130,0.06)':'transparent', margin:stop.feature?'0 -1.25rem':0, padding:stop.feature?'1.75rem 1.25rem':'1.75rem 0'}}>
+              <div style={{width:stop.feature?'10px':'6px',height:stop.feature?'10px':'6px',borderRadius:'50%',background:stop.pays?'#c5a882':'rgba(197,168,130,0.35)',flexShrink:0,marginTop:stop.feature?'4px':'6px'}} />
               <div style={{flex:1}}>
-                <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'0.35rem'}}>{stop.label}</div>
+                <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.35rem',flexWrap:'wrap'}}>
+                  <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>{stop.label}</div>
+                  {stop.feature && (
+                    <div style={{fontSize:'8px',letterSpacing:'0.14em',textTransform:'uppercase',color:'#0F1E14',background:'#c5a882',padding:'2px 8px',fontWeight:'600'}}>★ Centerpiece</div>
+                  )}
+                </div>
                 {stop.venue && (
                   stop.venueHref
-                    ? <a href={stop.venueHref} target="_blank" rel="noreferrer" style={{fontSize:'15px',fontWeight:'500',color:'#F5F1EC',marginBottom:'0.2rem',lineHeight:'1.4',display:'inline-flex',alignItems:'center',gap:'0.4rem',textDecoration:'none',borderBottom:'0.5px solid rgba(197,168,130,0.35)',paddingBottom:'1px'}}>
+                    ? <a href={stop.venueHref} target="_blank" rel="noreferrer" style={{fontSize:stop.feature?'17px':'15px',fontWeight:'500',color:'#F5F1EC',marginBottom:'0.2rem',lineHeight:'1.4',display:'inline-flex',alignItems:'center',gap:'0.4rem',textDecoration:'none',borderBottom:'0.5px solid rgba(197,168,130,0.35)',paddingBottom:'1px'}}>
                         {stop.venue}
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(197,168,130,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                       </a>

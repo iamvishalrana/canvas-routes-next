@@ -13,7 +13,7 @@ const STOPS = [
   { label: 'Angrignon Mall — outside the SAQ', note: '8:00 AM · LaSalle', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal', lat: 45.4459, lng: -73.6034 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop', tag: 'Included in the fee', href: null, lat: 45.68, lng: -75.05 },
-  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Included in the fee', href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6450, lng: -74.9500 },
+  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Included in the fee', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6450, lng: -74.9500 },
   { label: 'Chocomotive', note: 'Montebello · Chocolate workshop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6514, lng: -74.9438 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
 ]
@@ -461,28 +461,28 @@ export default function HelloToMontebelloItineraryPage() {
             <p style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', margin: 0 }}>Tap a stop to open in Maps</p>
           </div>
           {STOPS.map((stop, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: '1rem' }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: '1rem', background: stop.feature ? 'rgba(197,168,130,0.08)' : 'transparent', margin: stop.feature ? '0 -1.25rem' : 0, padding: stop.feature ? '0.5rem 1.25rem' : 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '14px' }}>
                 <div style={{
-                  width: stop.start || stop.end ? '10px' : '8px',
-                  height: stop.start || stop.end ? '10px' : '8px',
+                  width: stop.start || stop.end || stop.feature ? '10px' : '8px',
+                  height: stop.start || stop.end || stop.feature ? '10px' : '8px',
                   borderRadius: stop.start || stop.end ? '0' : '50%',
-                  background: stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : 'rgba(0,0,0,0.22)',
+                  background: stop.start ? '#3B6B2F' : stop.end ? '#0F1E14' : stop.feature ? '#c5a882' : 'rgba(0,0,0,0.22)',
                   marginTop: '5px', flexShrink: 0,
                 }} />
                 {i < STOPS.length - 1 && (
                   <div style={{ width: '1px', flexGrow: 1, minHeight: '44px', background: 'rgba(0,0,0,0.1)', marginTop: '4px' }} />
                 )}
               </div>
-              <div style={{ flex: 1, paddingBottom: stop.tag ? 0 : '10px' }}>
+              <div style={{ flex: 1, paddingBottom: stop.tag ? '10px' : '10px', paddingTop: stop.feature ? '10px' : 0 }}>
                 {stop.href ? (
                   <a
                     href={stop.href}
                     target="_blank"
                     rel="noreferrer"
                     style={{
-                      fontSize: '15px', color: '#1a1a1a',
-                      fontWeight: stop.start || stop.end ? '600' : '400',
+                      fontSize: stop.feature ? '17px' : '15px', color: '#1a1a1a',
+                      fontWeight: stop.start || stop.end || stop.feature ? '600' : '400',
                       lineHeight: '1.35', textDecoration: 'underline',
                       textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)',
                       display: 'block',
@@ -493,14 +493,21 @@ export default function HelloToMontebelloItineraryPage() {
                 ) : (
                   <div style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '400', lineHeight: '1.35' }}>{stop.label}</div>
                 )}
-                <p style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: stop.tag ? '5px' : '10px' }}>
+                <p style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '5px' }}>
                   {stop.note}
                 </p>
-                {stop.tag && (
-                  <div style={{ display: 'inline-block', marginBottom: '10px', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
-                    {stop.tag}
-                  </div>
-                )}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                  {stop.feature && (
+                    <div style={{ display: 'inline-block', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0F1E14', background: '#c5a882', padding: '2px 8px', fontWeight: '600' }}>
+                      ★ Centerpiece
+                    </div>
+                  )}
+                  {stop.tag && (
+                    <div style={{ display: 'inline-block', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
+                      {stop.tag}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -517,6 +524,20 @@ export default function HelloToMontebelloItineraryPage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Centerpiece — same visual treatment as WTET's winery highlight */}
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>The Centerpiece</h2>
+          <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem', boxShadow: '0 6px 24px rgba(0,0,0,0.22)' }}>
+            <p style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem', marginTop: 0 }}>Fairmont Le Château Montebello · Aux Chantignoles</p>
+            <p style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.2rem', color: '#F5F1EC', fontWeight: '400', lineHeight: '1.3', marginBottom: '0.75rem', marginTop: 0 }}>
+              Everything about this route is built around this lunch.
+            </p>
+            <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
+              Aux Chantignoles sits inside the largest log château in the world, overlooking the Ottawa River — cars parked out front for the afternoon, lunch included in your registration fee. The coffee and chocolate stops are nice detours; this is the reason we're driving to Montebello.
+            </p>
+          </div>
         </section>
 
         {/* Who's Coming */}
