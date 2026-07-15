@@ -259,7 +259,7 @@ export default function HelloToMontebelloItineraryPage() {
         minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
         backgroundColor: '#0F1E14',
-        backgroundImage: 'url(/convoy-hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'center 40%',
+        backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center 40%',
         fontFamily: 'sans-serif', padding: 'clamp(2rem,6vw,4rem) 1.25rem',
       }}>
         <style>{`
@@ -352,7 +352,7 @@ export default function HelloToMontebelloItineraryPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      <PageLoader images={['/convoy-hero.jpg', ...PARTICIPANTS.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
+      <PageLoader images={['/montebello-itinerary.jpg', ...PARTICIPANTS.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
 
       {/* Scroll indicator */}
       <button
@@ -406,7 +406,7 @@ export default function HelloToMontebelloItineraryPage() {
       {/* Header */}
       <header style={{
         position: 'relative', padding: '3.5rem 1.25rem 3rem', textAlign: 'center',
-        backgroundImage: 'url(/convoy-hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'center',
+        backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center',
         overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />

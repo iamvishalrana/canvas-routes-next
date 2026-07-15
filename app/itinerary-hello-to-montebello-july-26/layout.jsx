@@ -1,4 +1,4 @@
-const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Hello+to+Montebello&date=July+26%2C+2026&bg=/montebello-hero.jpg'
+const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Hello+to+Montebello&date=July+26%2C+2026&bg=/montebello-itinerary.jpg'
 
 export const metadata = {
   title: 'Hello to Montebello — Private Itinerary',
