@@ -399,20 +399,6 @@ export default function HelloToMontebelloItineraryPage() {
           </ul>
         </section>
 
-        {/* Centerpiece — same visual treatment as WTET's winery highlight */}
-        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>The Centerpiece</h2>
-          <div style={{ background: '#0F1E14', padding: '1.5rem 1.75rem', boxShadow: '0 6px 24px rgba(0,0,0,0.22)' }}>
-            <p style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '0.6rem', marginTop: 0 }}>Fairmont Le Château Montebello · Aux Chantignoles</p>
-            <p style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.2rem', color: '#F5F1EC', fontWeight: '400', lineHeight: '1.3', marginBottom: '0.75rem', marginTop: 0 }}>
-              Everything about this route is built around this lunch.
-            </p>
-            <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.75', margin: 0 }}>
-              Aux Chantignoles sits inside the largest log château in the world, overlooking the Ottawa River — cars parked out front for the afternoon, lunch included in your registration fee. The coffee and chocolate stops are nice detours; this is the reason we're driving to Montebello.
-            </p>
-          </div>
-        </section>
-
         {/* Who's Coming */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Who&apos;s Coming — {PARTICIPANTS.length} Car{PARTICIPANTS.length !== 1 ? 's' : ''} So Far</h2>

@@ -765,16 +765,12 @@ export default function HelloToMontebelloPage() {
             ))}
           </div>
 
-          {/* Château highlight — the centerpiece of the route, given the same
-              prominent treatment as WTET's winery highlight */}
-          <div style={{background:'#0F1E14',padding:'1.75rem 1.9rem',marginBottom:'2.5rem',boxShadow:'0 6px 24px rgba(0,0,0,0.22)'}}>
-            <div style={{fontSize:'9px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.7)',fontFamily:'var(--font-inter),sans-serif',marginBottom:'0.6rem'}}>The Centerpiece of the Route</div>
-            <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'1.4rem',color:'#F5F1EC',fontWeight:'300',lineHeight:'1.3',marginBottom:'0.85rem'}}>
-              Lunch at Aux Chantignoles, Fairmont Le Château Montebello
+          {/* Château highlight — lighter callout matching the eligibility box below */}
+          <div style={{display:'flex',alignItems:'flex-start',gap:'1rem',padding:'1rem 1.25rem',border:'0.5px solid rgba(197,168,130,0.4)',background:'rgba(197,168,130,0.08)',marginBottom:'2.5rem'}}>
+            <div>
+              <div style={{fontSize:'11px',fontWeight:'600',color:'#1a1a1a',letterSpacing:'0.04em',marginBottom:'0.25rem',fontFamily:'var(--font-inter),sans-serif'}}>Lunch at Aux Chantignoles, Fairmont Le Château Montebello</div>
+              <div style={{fontSize:'13px',color:'#666',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>Inside the largest log château in the world, overlooking the Ottawa River — included in your registration fee.</div>
             </div>
-            <p style={{margin:0,fontSize:'14px',color:'rgba(245,241,236,0.6)',lineHeight:'1.85',fontFamily:'var(--font-inter),sans-serif'}}>
-              Everything about this route is built around lunch at Aux Chantignoles, inside the largest log château in the world. Cars parked out front, lunch overlooking the Ottawa River — then a short walk to Chocomotive for something sweet before the drive home.
-            </p>
           </div>
 
           {/* Car eligibility callout */}
