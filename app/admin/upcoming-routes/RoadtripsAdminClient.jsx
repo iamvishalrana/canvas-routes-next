@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
-import { PAST_ROUTES } from '../../../lib/pastRoutes'
 
 const TRIP_TYPES = [
   { value: 'day',       label: 'Day trip'  },
@@ -10,7 +9,7 @@ const TRIP_TYPES = [
 ]
 const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
 
-const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '' }
+const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '', is_past: false, cars_rolled_out: '', photo_url: '', recap_href: '' }
 
 const splitActs = v => (v || '').split(',').map(x => x.trim()).filter(Boolean)
 
@@ -70,7 +69,7 @@ export default function RoadtripsAdminClient() {
     try {
       const res = await fetch('/api/admin/upcoming-routes', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, activity_options: splitActs(form.activity_options), target_count: parseInt(form.target_count, 10) || 12, sort_order: parseInt(form.sort_order, 10) || routes.length + 1 }),
+        body: JSON.stringify({ ...form, activity_options: splitActs(form.activity_options), target_count: parseInt(form.target_count, 10) || 12, sort_order: parseInt(form.sort_order, 10) || routes.length + 1, cars_rolled_out: form.cars_rolled_out === '' ? null : parseInt(form.cars_rolled_out, 10) }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Failed to add.'); return }
@@ -95,6 +94,10 @@ export default function RoadtripsAdminClient() {
       dest_lat: r.dest_lat != null ? String(r.dest_lat) : '',
       dest_lng: r.dest_lng != null ? String(r.dest_lng) : '',
       description: r.description || '',
+      is_past: !!r.is_past,
+      cars_rolled_out: r.cars_rolled_out != null ? String(r.cars_rolled_out) : '',
+      photo_url: r.photo_url || '',
+      recap_href: r.recap_href || '',
     })
   }
 
@@ -103,7 +106,7 @@ export default function RoadtripsAdminClient() {
     try {
       const res = await fetch(`/api/admin/upcoming-routes/${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...editForm, activity_options: splitActs(editForm.activity_options), target_count: parseInt(editForm.target_count, 10), sort_order: parseInt(editForm.sort_order, 10) }),
+        body: JSON.stringify({ ...editForm, activity_options: splitActs(editForm.activity_options), target_count: parseInt(editForm.target_count, 10), sort_order: parseInt(editForm.sort_order, 10), cars_rolled_out: editForm.cars_rolled_out === '' ? null : parseInt(editForm.cars_rolled_out, 10) }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setEditErr(data.error || 'Failed to save.'); return }
@@ -284,6 +287,19 @@ export default function RoadtripsAdminClient() {
           <L>Description</L>
           <textarea style={{ ...inp, height: '72px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} maxLength={600} placeholder="Short evocative description shown on the card." />
         </div>
+        <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', marginBottom: '0.75rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#555', marginBottom: '0.6rem', cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.is_past} onChange={e => setForm(p => ({ ...p, is_past: e.target.checked }))} />
+            This route already ran — show it in Past Routes instead of the active list
+          </label>
+          {form.is_past && (
+            <div className="rta-grid rta-grid-3">
+              <Field label="Cars rolled out"><input style={inp} type="number" inputMode="numeric" min="0" value={form.cars_rolled_out} onChange={e => setForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
+              <Field label="Photo URL"><input style={inp} value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/wtet.png" /></Field>
+              <Field label="Recap link"><input style={inp} value={form.recap_href} onChange={e => setForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <PrimaryBtn disabled={adding} onClick={addRoute}>{adding ? 'Adding…' : 'Add Route'}</PrimaryBtn>
           {formErr && <Err msg={formErr} />}
@@ -314,21 +330,33 @@ export default function RoadtripsAdminClient() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '19px', color: '#1a1a1a' }}>{r.name}</span>
                       {TRIP_TAG[r.trip_type] && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8a6535', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 7px', borderRadius: '99px' }}>{TRIP_TAG[r.trip_type]}</span>}
-                      {r.launched && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Launched</span>}
+                      {r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Past</span>}
+                      {r.launched && !r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Launched</span>}
                       {!r.is_active && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '99px' }}>Hidden</span>}
                     </div>
                     <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>{r.destination} · {r.month_label} · {r.duration_label || '—'} · {r.distance_label || '—'}</div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '15px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{r.interested_count} / {r.target_count}</div>
-                    <div style={{ fontSize: '10px', color: '#bbb' }}>{pct}% to launch</div>
+                    {r.is_past ? (
+                      <>
+                        <div style={{ fontSize: '15px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{r.cars_rolled_out ?? '—'} / {r.target_count}</div>
+                        <div style={{ fontSize: '10px', color: '#bbb' }}>cars rolled out</div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '15px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{r.interested_count} / {r.target_count}</div>
+                        <div style={{ fontSize: '10px', color: '#bbb' }}>{pct}% to launch</div>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* progress */}
-                <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden', margin: '0.75rem 0' }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: pct >= 100 ? '#3B6B2F' : 'linear-gradient(90deg,#c5a882,#e8c99a)' }} />
-                </div>
+                {!r.is_past && (
+                  <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden', margin: '0.75rem 0' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: pct >= 100 ? '#3B6B2F' : 'linear-gradient(90deg,#c5a882,#e8c99a)' }} />
+                  </div>
+                )}
 
                 {/* actions */}
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -342,7 +370,7 @@ export default function RoadtripsAdminClient() {
                   <GhostBtn small onClick={() => toggleActive(r)} disabled={busyId === r.id}>{r.is_active ? 'Hide from site' : 'Show on site'}</GhostBtn>
                   <GhostBtn small onClick={() => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }} disabled={r.interested_count === 0}>Email</GhostBtn>
                   <GhostBtn small onClick={() => exportRouteCSV(r)} disabled={r.interested_count === 0}>Export CSV</GhostBtn>
-                  {!r.launched && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
+                  {!r.launched && !r.is_past && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
                   <div style={{ marginLeft: 'auto' }}>
                     {deleteConfirm === r.id ? (
                       <span style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}>
@@ -419,6 +447,19 @@ export default function RoadtripsAdminClient() {
                       <L>Description</L>
                       <textarea style={{ ...inp, height: '72px', resize: 'vertical' }} value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} maxLength={600} />
                     </div>
+                    <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', marginBottom: '0.6rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#555', marginBottom: '0.6rem', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={editForm.is_past} onChange={e => setEditForm(p => ({ ...p, is_past: e.target.checked }))} />
+                        This route already ran — show it in Past Routes instead of the active list
+                      </label>
+                      {editForm.is_past && (
+                        <div className="rta-grid rta-grid-3">
+                          <Field label="Cars rolled out"><input style={inp} type="number" inputMode="numeric" min="0" value={editForm.cars_rolled_out} onChange={e => setEditForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
+                          <Field label="Photo URL"><input style={inp} value={editForm.photo_url} onChange={e => setEditForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/wtet.png" /></Field>
+                          <Field label="Recap link"><input style={inp} value={editForm.recap_href} onChange={e => setEditForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
+                        </div>
+                      )}
+                    </div>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <PrimaryBtn small disabled={savingEdit} onClick={() => saveEdit(r.id)}>{savingEdit ? 'Saving…' : 'Save'}</PrimaryBtn>
                       <GhostBtn small onClick={() => setEditId(null)}>Cancel</GhostBtn>
@@ -464,26 +505,6 @@ export default function RoadtripsAdminClient() {
           })}
         </div>
       )}
-
-      {/* ── Completed routes — hardcoded (see lib/pastRoutes.js), not DB rows
-             so they're read-only here. Edit the file directly to update. ── */}
-      <div style={{ marginTop: '2.5rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.85rem' }}>Past Routes</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {PAST_ROUTES.map(p => (
-            <div key={p.slug} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '18px', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.2 }}>{p.name}</div>
-                <div style={{ fontSize: '11px', color: '#999', marginTop: '3px' }}>{p.destination} · Ran {p.month_label}</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-                <div style={{ fontSize: '11px', color: '#7B5B2E' }}>{p.cars} of {p.target} cars rolled out</div>
-                <a href={p.href} target="_blank" rel="noreferrer" style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none' }}>View →</a>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* ── Interested-person detail popup ── */}
       {person && (() => {

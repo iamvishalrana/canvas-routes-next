@@ -116,9 +116,9 @@ export async function POST(request) {
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
     // Allow promo codes on membership and road trip payments. Road trip
-    // types are route-scoped as road_trip_<slug> (see lib/pastRoutes.js-style
-    // convention documented in CLAUDE.md) so this covers every route without
-    // an allowlist that needs updating per route.
+    // types are route-scoped as road_trip_<slug> (upcoming_routes.slug — see
+    // CLAUDE.md) so this covers every route without an allowlist that needs
+    // updating per route.
     const piType = pi.metadata?.type || ''
     if (!piType.startsWith('membership_') && !piType.startsWith('road_trip_')) {
       await releaseLock(lockKey)

@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { PAST_ROUTES } from '../lib/pastRoutes'
 import PastRouteRecapModal from './PastRouteRecapModal'
 
 const ACCENT = '#c5a882'
@@ -181,6 +180,18 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   const [howOpen, setHowOpen]     = useState(false) // How-It-Works accordion (mobile)
   const [isMobileView, setIsMobileView] = useState(false)
   const [recapRoute, setRecapRoute] = useState(null) // past route showing the "View Recap" modal
+  const [pastRoutes, setPastRoutes] = useState([]) // completed routes — DB-backed (admin: Routes tab), was hardcoded lib/pastRoutes.js
+
+  useEffect(() => {
+    fetch('/api/upcoming-routes/past')
+      .then(r => r.ok ? r.json() : [])
+      .then(list => setPastRoutes((Array.isArray(list) ? list : []).map(r => ({
+        slug: r.slug, name: r.name, destination: r.destination, month_label: r.month_label,
+        description: r.description, photo: r.photo_url, href: r.recap_href,
+        cars: r.cars_rolled_out, target: r.target_count,
+      }))))
+      .catch(() => {})
+  }, [])
 
   const load = useCallback(() => {
     // Returning visitors: reuse the contact they submitted with last time so
@@ -524,7 +535,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#8a7a5c', marginBottom: '16px' }}>2026 Season — The Story So Far</div>
             <div style={{ display: 'flex', alignItems: 'stretch', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px' }}>
-              {PAST_ROUTES.map((p, i) => (
+              {pastRoutes.map((p, i) => (
                 <div key={p.name} className="rt-reveal" style={{ display: 'flex', alignItems: 'stretch', flexShrink: 0, animationDelay: `${i * 0.09}s` }}>
                   {i > 0 && <div style={{ width: '0.5px', background: 'rgba(0,0,0,0.12)', margin: '4px 26px' }} />}
                   <div style={{ whiteSpace: 'nowrap' }}>
@@ -728,14 +739,15 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             })}
           </div>
 
-          {/* Past routes — hardcoded (see lib/pastRoutes.js), a distinct
-              section below the active grid rather than mixed into it.
-              Toned down (greyscale photo, muted colors) so past clearly
-              reads as past at a glance. */}
+          {/* Past routes — DB-backed (admin: Routes tab), a distinct section
+              below the active grid rather than mixed into it. Toned down
+              (greyscale photo, muted colors) so past clearly reads as past
+              at a glance. */}
+          {pastRoutes.length > 0 && (
           <div style={{ marginTop: 'clamp(48px,7vw,72px)', paddingTop: 'clamp(32px,5vw,48px)', borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#999', marginBottom: '24px' }}>Past Routes</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '20px' }}>
-              {PAST_ROUTES.map((p, i) => (
+              {pastRoutes.map((p, i) => (
                 <Link key={p.slug} href={p.href} onClick={e => { e.preventDefault(); setRecapRoute(p) }}
                   className="rt-card rt-reveal" style={{ animationDelay: `${(i % 3) * 0.08 + 0.05}s`, textDecoration: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.82 }}>
                   <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
@@ -762,6 +774,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
               ))}
             </div>
           </div>
+          )}
         </div>
       ) : (
         <div key="map" style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}`, animation: 'rtFadeIn .3s ease' }}>

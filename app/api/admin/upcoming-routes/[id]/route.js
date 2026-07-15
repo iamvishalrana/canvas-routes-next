@@ -2,7 +2,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 
-const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug']
+const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug', 'is_past', 'cars_rolled_out', 'photo_url', 'recap_href', 'launched']
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -37,6 +37,12 @@ export async function PATCH(request, { params }) {
       ? update.activity_options.filter(a => typeof a === 'string' && a.trim()).slice(0, 12).map(a => a.trim().slice(0, 40))
       : []
   }
+  if ('cars_rolled_out' in update) {
+    const c = parseInt(update.cars_rolled_out, 10)
+    update.cars_rolled_out = Number.isFinite(c) && c >= 0 ? c : null
+  }
+  if ('photo_url' in update) update.photo_url = (update.photo_url || '').trim() || null
+  if ('recap_href' in update) update.recap_href = (update.recap_href || '').trim() || null
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
 
   const supabase = createAdminClient()

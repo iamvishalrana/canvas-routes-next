@@ -7,7 +7,6 @@ import SiteFooter from '../components/SiteFooter'
 import FadeUp from '../components/FadeUp'
 import SiteNav from '../components/SiteNav'
 import { ROUTE_PHOTOS, ACCENT_BGS } from '../components/UpcomingRoadtrips'
-import { PAST_ROUTES } from '../lib/pastRoutes'
 import PastRouteRecapModal from '../components/PastRouteRecapModal'
 import { getConsent } from '../lib/consent'
 
@@ -110,6 +109,7 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false)
   const [dbEvents, setDbEvents] = useState([])
   const [teaserRoutes, setTeaserRoutes] = useState([])
+  const [pastRoutes, setPastRoutes] = useState([]) // completed routes — DB-backed (admin: Routes tab), was hardcoded lib/pastRoutes.js
   const [recapRoute, setRecapRoute] = useState(null) // past route showing the "View Recap" modal
 
   useEffect(() => {
@@ -120,6 +120,14 @@ export default function Home() {
     fetch('/api/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
       .then(list => setTeaserRoutes(Array.isArray(list) ? list : []))
+      .catch(() => {})
+    fetch('/api/upcoming-routes/past')
+      .then(r => r.ok ? r.json() : [])
+      .then(list => setPastRoutes((Array.isArray(list) ? list : []).map(r => ({
+        slug: r.slug, name: r.name, destination: r.destination, month_label: r.month_label,
+        description: r.description, photo: r.photo_url, href: r.recap_href,
+        cars: r.cars_rolled_out, target: r.target_count,
+      }))))
       .catch(() => {})
     fetch('/api/public/settings')
       .then(r => r.json())
@@ -800,9 +808,9 @@ export default function Home() {
 
         {/* Routes — real route cards (photo, destination), same visual
             language as the Meets & Events grid above. Upcoming routes (live
-            interest count) plus completed ones (see lib/pastRoutes.js) show
-            side by side so this reads as the full picture, not just what's
-            still gathering interest. */}
+            interest count) plus completed ones (DB-backed, admin: Routes
+            tab) show side by side so this reads as the full picture, not
+            just what's still gathering interest. */}
         <div style={{marginTop:"5rem"}}>
           <FadeUp>
             <div style={{textAlign:"center",marginBottom:"3rem"}}>
@@ -813,7 +821,7 @@ export default function Home() {
           {(() => {
             const combined = [
               ...teaserRoutes.map(r => ({ ...r, _past: false })),
-              ...PAST_ROUTES.map(p => ({ ...p, _past: true })),
+              ...pastRoutes.map(p => ({ ...p, _past: true })),
             ]
             return combined.length > 0 ? (
               <div className="events-grid">

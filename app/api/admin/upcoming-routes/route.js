@@ -43,6 +43,7 @@ export async function POST(request) {
   const activityOptions = Array.isArray(body.activity_options)
     ? body.activity_options.filter(a => typeof a === 'string' && a.trim()).slice(0, 12).map(a => a.trim().slice(0, 40))
     : []
+  const carsRolledOut = parseInt(body.cars_rolled_out, 10)
 
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('upcoming_routes').insert({
@@ -64,6 +65,11 @@ export async function POST(request) {
     dest_lat: Number.isFinite(parseFloat(body.dest_lat)) ? parseFloat(body.dest_lat) : null,
     dest_lng: Number.isFinite(parseFloat(body.dest_lng)) ? parseFloat(body.dest_lng) : null,
     is_active: body.is_active !== false,
+    is_past: body.is_past === true,
+    launched: body.launched === true,
+    cars_rolled_out: Number.isFinite(carsRolledOut) && carsRolledOut >= 0 ? carsRolledOut : null,
+    photo_url: (body.photo_url || '').trim() || null,
+    recap_href: (body.recap_href || '').trim() || null,
   }).select('*').single()
   if (error) {
     if (error.code === '23505') return Response.json({ error: 'A route with that slug already exists.' }, { status: 409 })

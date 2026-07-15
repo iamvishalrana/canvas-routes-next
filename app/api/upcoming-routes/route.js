@@ -14,6 +14,7 @@ export async function GET(request) {
     .from('upcoming_routes')
     .select('id, slug, name, destination, month_label, description, duration_label, distance_label, target_count, sort_order, trip_type, price_per_car, price_range, itinerary, activity_options, dest_lat, dest_lng, launched')
     .eq('is_active', true)
+    .eq('is_past', false)
     .order('sort_order', { ascending: true })
   if (error) {
     captureException(new Error(error.message), { context: 'roadtrips-list' })
