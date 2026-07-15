@@ -177,9 +177,9 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
           </div>
         </div>
         {[
+          'Coffee at L\'Atelier des Deux P, Amherst',
           'Lunch at Aux Chantignoles — Fairmont Le Château Montebello',
           'Guided convoy — Montreal to Montebello and back',
-          'Coffee and chocolate stops along the way',
         ].map((item, i) => (
           <div key={i} style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.3rem'}}>
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -807,7 +807,7 @@ export default function HelloToMontebelloPage() {
           {[
             { label:'Meetup — 8:00 AM', venue:'Angrignon Mall — outside the SAQ', venueHref:'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal', address:'LaSalle, QC', desc:'The group gathers at 8:00 AM in the parking lot outside the SAQ. Time to walk around, take in each other\'s cars, and get ready for the road.', pays:false },
             { label:'Regroup', venue:'Porte du Nord', venueHref:'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', address:'Saint-Jérôme, QC', desc:'A quick fuel and regroup stop before we leave the highway behind and head east into the countryside.', pays:false },
-            { label:'Coffee Stop', venue:"L'Atelier des Deux P", address:'Amherst, QC', desc:'A short coffee break to stretch your legs before the last stretch into the Outaouais.', pays:false },
+            { label:'Coffee Stop', venue:"L'Atelier des Deux P", address:'Amherst, QC', desc:'A short coffee break to stretch your legs before the last stretch into the Outaouais.', pays:true },
             { label:'Lunch — Aux Chantignoles', venue:'Fairmont Le Château Montebello', venueHref:'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', address:'Montebello, QC', desc:'Lunch inside the world\'s largest log château, overlooking the Ottawa River. Cars parked out front for the afternoon.', pays:true },
             { label:'Sweet Stop', venue:'Chocomotive', venueHref:'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', address:'Montebello, QC', desc:'A short walk from the château — an artisan chocolate workshop housed in Montebello\'s old train station. Good for a treat before the drive back.', pays:false },
             { label:'The Drive Back', venue:null, address:'Via Autoroute 50, or back the way we came', desc:'We split the return between Autoroute 50 for those ready to head straight home, and the scenic route back for anyone who wants more road.', pays:false },
@@ -841,7 +841,7 @@ export default function HelloToMontebelloPage() {
           <div className="incl-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',marginBottom:'4rem'}}>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>What&apos;s included</div>
-              {['Lunch at Aux Chantignoles, Fairmont Le Château Montebello','Guided convoy with a lead car the entire route — per car, up to 2 people','On-route photography and video coverage'].map((item, i) => (
+              {['Coffee stop at L\'Atelier des Deux P, Amherst','Lunch at Aux Chantignoles, Fairmont Le Château Montebello','Guided convoy with a lead car the entire route — per car, up to 2 people','On-route photography and video coverage'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a9e4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.7)',lineHeight:'1.65'}}>{item}</span>
@@ -850,7 +850,7 @@ export default function HelloToMontebelloPage() {
             </div>
             <div>
               <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.25rem'}}>Not included</div>
-              {['Gas for your car','Coffee at L\'Atelier des Deux P','Anything from Chocomotive','Any additional purchases at any of our stops'].map((item, i) => (
+              {['Gas for your car','Anything from Chocomotive','Any additional purchases at any of our stops'].map((item, i) => (
                 <div key={i} style={{display:'flex',gap:'0.65rem',alignItems:'flex-start',marginBottom:'0.85rem'}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,236,0.25)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'2px'}}><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span style={{fontSize:'14px',color:'rgba(245,241,236,0.45)',lineHeight:'1.65'}}>{item}</span>
