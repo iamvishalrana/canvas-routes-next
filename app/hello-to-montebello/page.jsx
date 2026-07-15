@@ -755,8 +755,8 @@ export default function HelloToMontebelloPage() {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
             {[
-              'We meet at 8 AM in LaSalle, then regroup at Porte du Nord in Saint-Jérôme before heading east through the countryside toward the Outaouais.',
-              'A coffee stop at L\'Atelier des Deux P in Amherst breaks up the drive before the roads open up on the approach to Montebello — the kind of quiet backroads that make the detour worth it.',
+              '8 AM in LaSalle — engines fire up together and we roll out as one convoy. A quick regroup at Porte du Nord in Saint-Jérôme, then the city disappears behind us as the road bends east into the Outaouais.',
+              'Coffee at L\'Atelier des Deux P in Amherst, then the drive opens up — empty backroads, long sightlines, and nothing but trees and pavement all the way into Montebello.',
             ].map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
                 <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
@@ -769,7 +769,7 @@ export default function HelloToMontebelloPage() {
           <div style={{display:'flex',alignItems:'flex-start',gap:'1rem',padding:'1rem 1.25rem',border:'0.5px solid rgba(197,168,130,0.4)',background:'rgba(197,168,130,0.08)',marginBottom:'2.5rem'}}>
             <div>
               <div style={{fontSize:'11px',fontWeight:'600',color:'#1a1a1a',letterSpacing:'0.04em',marginBottom:'0.25rem',fontFamily:'var(--font-inter),sans-serif'}}>Lunch at Aux Chantignoles, Fairmont Le Château Montebello</div>
-              <div style={{fontSize:'13px',color:'#666',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>Inside the largest log château in the world, overlooking the Ottawa River — included in your registration fee.</div>
+              <div style={{fontSize:'13px',color:'#666',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>Cars parked out front of the largest log château in the world, the Ottawa River stretched out behind it — this is the whole reason we're driving to Montebello. Included in your registration fee.</div>
             </div>
           </div>
 
