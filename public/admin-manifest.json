@@ -9,7 +9,8 @@
   "background_color": "#0F1E14",
   "theme_color": "#0F1E14",
   "icons": [
-    { "src": "/favicon.png",      "sizes": "32x32",   "type": "image/png" },
-    { "src": "/white-outline.png","sizes": "512x512",  "type": "image/png", "purpose": "any maskable" }
+    { "src": "/admin-icon-192.png",  "sizes": "192x192",   "type": "image/png", "purpose": "any maskable" },
+    { "src": "/admin-icon-512.png",  "sizes": "512x512",   "type": "image/png", "purpose": "any maskable" },
+    { "src": "/admin-icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }
   ]
 }

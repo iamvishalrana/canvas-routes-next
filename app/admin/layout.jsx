@@ -12,6 +12,15 @@ const splash = (w, h, dw, dh, dpr) => ({
 export const metadata = {
   title: { default: 'Admin — Canvas Routes', template: '%s — Admin' },
   manifest: '/admin-manifest.json',
+  // Overrides the root layout's icons for /admin/* — the home-screen icon iOS
+  // captures at Add to Home Screen comes from this apple-touch-icon.
+  icons: {
+    icon: [
+      { url: '/admin-icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+    ],
+    apple: { url: '/admin-icon-180.png', sizes: '180x180' },
+  },
   appleWebApp: {
     capable: true,
     title: 'CR Admin',
