@@ -97,6 +97,8 @@ export default function ExpensesClient() {
   const [deleteErr, setDeleteErr] = useState(null)
   const [deleting, setDeleting]         = useState(null)
   const [openGroups, setOpenGroups]     = useState({})
+  const [openYears, setOpenYears]       = useState({})
+  const [sortBy, setSortBy]             = useState('date_desc')
   const [filterEvent, setFilterEvent]   = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
   const [dateFrom, setDateFrom]         = useState('')
@@ -151,7 +153,25 @@ export default function ExpensesClient() {
   })
   const usedCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))].sort()
 
-  // Groups: all events sorted by most recent
+  // Sort order applies to expenses within a folder AND to the folder order itself
+  const totalOf = e => parseFloat(e.amount || 0) + taxOf(e)
+  const sortItems = items => {
+    const arr = [...items]
+    if (sortBy === 'date_asc')    return arr.sort((a, b) => a.expense_date.localeCompare(b.expense_date))
+    if (sortBy === 'amount_desc') return arr.sort((a, b) => totalOf(b) - totalOf(a))
+    if (sortBy === 'amount_asc')  return arr.sort((a, b) => totalOf(a) - totalOf(b))
+    if (sortBy === 'vendor_az')   return arr.sort((a, b) => (a.vendor || '').localeCompare(b.vendor || '') || b.expense_date.localeCompare(a.expense_date))
+    return arr.sort((a, b) => b.expense_date.localeCompare(a.expense_date))
+  }
+  const sortEventGroups = evs => {
+    if (sortBy === 'vendor_az')   return evs.sort((a, b) => a.name.localeCompare(b.name))
+    if (sortBy === 'amount_desc') return evs.sort((a, b) => (b.total + b.totalTax) - (a.total + a.totalTax))
+    if (sortBy === 'amount_asc')  return evs.sort((a, b) => (a.total + a.totalTax) - (b.total + b.totalTax))
+    if (sortBy === 'date_asc')    return evs.sort((a, b) => a.items[0].expense_date.localeCompare(b.items[0].expense_date))
+    return evs.sort((a, b) => b.items[0].expense_date.localeCompare(a.items[0].expense_date))
+  }
+
+  // Groups: all events (used for the filter chips and totals)
   const allGroups = (() => {
     const map = {}
     for (const e of baseFiltered) {
@@ -159,14 +179,13 @@ export default function ExpensesClient() {
       if (!map[key]) map[key] = []
       map[key].push(e)
     }
-    return Object.entries(map)
+    return sortEventGroups(Object.entries(map)
       .map(([name, items]) => ({
         name,
-        items: [...items].sort((a, b) => b.expense_date.localeCompare(a.expense_date)),
+        items: sortItems(items),
         total:    items.reduce((s, e) => s + parseFloat(e.amount || 0), 0),
         totalTax: items.reduce((s, e) => s + taxOf(e), 0),
-      }))
-      .sort((a, b) => b.items[0].expense_date.localeCompare(a.items[0].expense_date))
+      })))
   })()
 
   const eventNames = allGroups.map(g => g.name)
@@ -182,6 +201,37 @@ export default function ExpensesClient() {
   useEffect(() => {
     if (filterEvent !== 'all' && !eventNames.includes(filterEvent)) setFilterEvent('all')
   })
+
+  // Folder hierarchy: Year → Event. An event spanning two years shows in both,
+  // holding only that year's expenses, so yearly totals stay truthful.
+  const yearGroups = (() => {
+    const byYear = {}
+    for (const g of groups) {
+      for (const e of g.items) {
+        const y = (e.expense_date || '').slice(0, 4) || 'Undated'
+        if (!byYear[y]) byYear[y] = {}
+        if (!byYear[y][g.name]) byYear[y][g.name] = []
+        byYear[y][g.name].push(e)
+      }
+    }
+    return Object.entries(byYear)
+      .map(([year, evMap]) => {
+        const events = sortEventGroups(Object.entries(evMap).map(([name, items]) => ({
+          name,
+          items: sortItems(items),
+          total:    items.reduce((s, e) => s + parseFloat(e.amount || 0), 0),
+          totalTax: items.reduce((s, e) => s + taxOf(e), 0),
+        })))
+        return {
+          year, events,
+          count:    events.reduce((s, ev) => s + ev.items.length, 0),
+          total:    events.reduce((s, ev) => s + ev.total, 0),
+          totalTax: events.reduce((s, ev) => s + ev.totalTax, 0),
+        }
+      })
+      .sort((a, b) => sortBy === 'date_asc' ? a.year.localeCompare(b.year) : b.year.localeCompare(a.year))
+  })()
+  const newestYear = yearGroups.reduce((m, g) => (g.year > m ? g.year : m), '')
 
   const visibleExpenses = groups.flatMap(g => g.items)
   const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
@@ -717,6 +767,19 @@ export default function ExpensesClient() {
                 <SelectChevron />
               </div>
             </div>
+            <div style={{ width: '170px' }}>
+              <L>Sort</L>
+              <div style={{ position: 'relative' }}>
+                <select style={sel} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                  <option value="date_desc">Newest first</option>
+                  <option value="date_asc">Oldest first</option>
+                  <option value="amount_desc">Highest amount</option>
+                  <option value="amount_asc">Lowest amount</option>
+                  <option value="vendor_az">Vendor A–Z</option>
+                </select>
+                <SelectChevron />
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', paddingBottom: '2px' }}>
               {[['month', 'This month'], ['quarter', 'This quarter'], ['year', 'This year'], ['all', 'All time']].map(([key, label]) => {
                 const active = key === 'all' ? !hasDateFilter : false
@@ -840,13 +903,35 @@ export default function ExpensesClient() {
       ) : groups.length === 0 ? (
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No expenses for this event.</div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {groups.map(group => {
-            const isOpen = !!openGroups[group.name]
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {yearGroups.map(yg => {
+            // Newest year starts open; the rest start collapsed
+            const yearOpen = openYears[yg.year] ?? (yg.year === newestYear)
             return (
-              <div key={group.name} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+              <div key={yg.year}>
+                {/* Year folder header */}
+                <button onClick={() => setOpenYears(p => ({ ...p, [yg.year]: !yearOpen }))} className="exp-tap"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem 0.35rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <ChevronIcon open={yearOpen} />
+                  <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '21px', fontWeight: 400, color: '#1a1a1a', lineHeight: 1 }}>{yg.year}</span>
+                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                    {yg.events.length} folder{yg.events.length !== 1 ? 's' : ''} · {yg.count} item{yg.count !== 1 ? 's' : ''}
+                  </span>
+                  <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt(yg.total)}</span>
+                  {yg.totalTax > 0 && (
+                    <span style={{ fontSize: '11px', color: '#bbb', whiteSpace: 'nowrap' }}>+{fmt(yg.totalTax)} tax</span>
+                  )}
+                </button>
+
+                {yearOpen && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: isMobile ? 0 : '1.5rem', marginBottom: '0.75rem' }}>
+          {yg.events.map(group => {
+            const gKey = `${yg.year}::${group.name}`
+            const isOpen = !!openGroups[gKey]
+            return (
+              <div key={gKey} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                 {/* Group header */}
-                <button onClick={() => toggleGroup(group.name)} className="exp-tap"
+                <button onClick={() => toggleGroup(gKey)} className="exp-tap"
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.1rem', background: '#fafaf9', border: 'none', borderRadius: isOpen ? '12px 12px 0 0' : '12px', borderBottom: isOpen ? '0.5px solid rgba(0,0,0,0.07)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
                   <ChevronIcon open={isOpen} />
                   <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', flex: 1, minWidth: 0 }}>{group.name}</span>
@@ -1094,6 +1179,11 @@ export default function ExpensesClient() {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
                   </div>
                 )}
               </div>

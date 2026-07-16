@@ -291,13 +291,15 @@ export default function PaymentsClient({ initialRecords = [] }) {
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Filters — on mobile the search takes its own full row and the two
+          selects split the next row, instead of fixed desktop widths wrapping
+          into a ragged stack on a 390px screen */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email…"
-          style={{ ...inp, width: '220px', padding: '0.55rem 0.9rem', fontSize: '13px' }} />
-        <div style={{ position: 'relative' }}>
+          style={{ ...inp, width: isMobile ? '100%' : '220px', padding: '0.55rem 0.9rem', fontSize: '13px' }} />
+        <div style={{ position: 'relative', ...(isMobile ? { flex: '1 1 0', minWidth: 0 } : {}) }}>
           <select value={filter} onChange={e => setFilter(e.target.value)}
-            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: '155px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
+            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: isMobile ? '100%' : '155px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
             <option value="">All statuses</option>
             <option value="paid">Paid</option>
             <option value="partially_refunded">Partially Refunded</option>
@@ -307,9 +309,9 @@ export default function PaymentsClient({ initialRecords = [] }) {
           </select>
           <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', ...(isMobile ? { flex: '1 1 0', minWidth: 0 } : {}) }}>
           <select value={sort} onChange={e => setSort(e.target.value)}
-            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: '170px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
+            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: isMobile ? '100%' : '170px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
             <option value="date_desc">Newest first</option>
             <option value="date_asc">Oldest first</option>
             <option value="amount_desc">Highest amount</option>
@@ -420,7 +422,25 @@ export default function PaymentsClient({ initialRecords = [] }) {
               Failed &amp; Rejected ({failedRecords.length})
             </span>
           </button>
-          {showFailed && (
+          {showFailed && (isMobile ? (
+            /* Cards on mobile — same as the main list, instead of a side-scrolling table */
+            <div style={{ marginTop: '0.5rem' }}>
+              {failedRecords.map((r, i) => (
+                <div key={r.stripe_payment_intent_id || i} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'baseline' }}>
+                    <div style={{ fontSize: '13px', color: '#888', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name || '—'}</div>
+                    <div style={{ fontSize: '12px', color: '#bbb', flexShrink: 0 }}>{r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}</div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#bbb', margin: '2px 0 8px', wordBreak: 'break-all' }}>{r.email}</div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <StatusChip status={r.stripe_payment_status} />
+                    <PiLink id={r.stripe_payment_intent_id} manual={r.manual} />
+                    <span style={{ fontSize: '11px', color: '#ccc', marginLeft: 'auto' }}>{fmtDate(r.stripe_paid_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
             <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', marginTop: '0.5rem', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
@@ -437,7 +457,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                 </tbody>
               </table>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>
