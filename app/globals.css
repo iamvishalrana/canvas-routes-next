@@ -166,7 +166,10 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
   display: flex;
   flex-direction: column;
   background: #F5F1EC;
-  border-bottom: 0.5px solid rgba(0,0,0,0.12);
+  /* Border only when open — overflow:hidden doesn't clip the element's own
+     border, so a border on the collapsed 0-height box paints a permanent
+     hairline across every page on mobile */
+  border-bottom: 0 solid rgba(0,0,0,0.12);
   gap: 1.5rem;
   max-height: 0;
   overflow: hidden;
@@ -176,6 +179,7 @@ body { background: #F5F1EC; color: #1a1a1a; overflow-x: hidden; }
 .mobile-menu.open {
   max-height: 400px;
   padding: 1.5rem 2rem;
+  border-bottom-width: 0.5px;
 }
 .mobile-menu a {
   font-family: var(--font-inter), sans-serif;
