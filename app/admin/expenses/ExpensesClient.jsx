@@ -104,6 +104,7 @@ export default function ExpensesClient() {
   const [dateFrom, setDateFrom]         = useState('')
   const [dateTo, setDateTo]             = useState('')
   const [showSummary, setShowSummary]   = useState(false)
+  const [showAdd, setShowAdd]           = useState(false)
   const [isMobile, setIsMobile]         = useState(false)
   const [editingId, setEditingId]       = useState(null)
   const [editForm, setEditForm]         = useState({})
@@ -122,6 +123,15 @@ export default function ExpensesClient() {
       .catch(() => setLoading(false))
   }, [])
   useEffect(() => { load() }, [load])
+
+  // First visit with nothing recorded: open the add form so the page isn't bare
+  const autoOpenedRef = useRef(false)
+  useEffect(() => {
+    if (!loading && expenses.length === 0 && !autoOpenedRef.current) {
+      autoOpenedRef.current = true
+      setShowAdd(true)
+    }
+  }, [loading, expenses.length])
 
   // Card layout on phones (iPhone 13 Pro ≈ 390px) instead of a side-scrolling table
   useEffect(() => {
@@ -556,12 +566,36 @@ export default function ExpensesClient() {
       <datalist id="exp-vendor-names">{vendorNames.map(n => <option key={n} value={n} />)}</datalist>
 
       {/* Header */}
-      <div style={{ marginBottom: '2rem' }}>
+      <div style={{ marginBottom: '1.75rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Expenses</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Expenses</h1>
+          <button type="button" className="exp-tap" onClick={() => setShowAdd(f => !f)}
+            style={{ padding: '0.55rem 1.2rem', background: showAdd ? 'rgba(0,0,0,0.05)' : '#0F1E14', color: showAdd ? '#555' : '#F5F1EC', border: showAdd ? '0.5px solid rgba(0,0,0,0.15)' : 'none', borderRadius: '6px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            {showAdd ? 'Close' : '+ Add Expense'}
+          </button>
+        </div>
       </div>
 
+      {/* Stat cards — reflect whatever the filters currently show */}
+      {expenses.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          {[
+            { label: 'Total Spent',     value: fmt(grandTotal + grandTotalTax),  color: '#1a1a1a' },
+            { label: 'Tax Recoverable', value: fmt(grandTotalTax),               color: '#8A6535' },
+            { label: 'Expenses',        value: visibleExpenses.length,           color: '#1a1a1a' },
+            { label: 'Missing Receipts', value: missingReceiptCount,             color: missingReceiptCount > 0 ? '#93333E' : '#3B6B2F' },
+          ].map(s => (
+            <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem' }}>
+              <div style={{ fontSize: '1.55rem', fontWeight: '300', color: s.color, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{s.value}</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.35rem' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Add form */}
+      {showAdd && (
       <form className="exp-form" onSubmit={handleSubmit} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem', marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Add Expense</div>
 
@@ -718,10 +752,11 @@ export default function ExpensesClient() {
         </div>
         {formErr && <Err msg={formErr} />}
       </form>
+      )}
 
       {/* Filter + summary bar */}
       {expenses.length > 0 && (
-        <div style={{ marginBottom: '1.25rem' }}>
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.1rem', marginBottom: '1.25rem' }}>
           {/* Event filter chips */}
           {eventNames.length > 1 && (
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
@@ -793,15 +828,12 @@ export default function ExpensesClient() {
             </div>
           </div>
 
-          {/* Summary row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          {/* Summary row — totals live in the stat cards above */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '0.85rem' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>
               {visibleExpenses.length} expense{visibleExpenses.length !== 1 ? 's' : ''}
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
-              &nbsp;·&nbsp;
-              <span style={{ color: '#1a1a1a' }}>{fmt(grandTotal)}</span>
-              {grandTotalTax > 0 && <> + <span style={{ color: '#888' }}>{fmt(grandTotalTax)} tax</span></>}
-              {missingReceiptCount > 0 && <> &nbsp;·&nbsp; <span style={{ color: '#93333E' }}>{missingReceiptCount} missing receipt{missingReceiptCount !== 1 ? 's' : ''}</span></>}
+              {(hasDateFilter || filterCategory !== 'all') && <span style={{ color: '#c5a882' }}> · filtered</span>}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
@@ -817,7 +849,7 @@ export default function ExpensesClient() {
 
           {/* Summary panel */}
           {showSummary && (
-            <div style={{ marginTop: '1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem' }}>
+            <div style={{ marginTop: '1rem', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '8px', padding: '1.1rem 1.25rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '1.1rem' }}>
                 Summary{hasDateFilter ? ` · ${dateFrom || '…'} → ${dateTo || '…'}` : ' · All time'}
                 {filterEvent !== 'all' && ` · ${filterEvent}`}
@@ -899,7 +931,7 @@ export default function ExpensesClient() {
       {loading ? (
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : expenses.length === 0 ? (
-        <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No expenses yet.</div>
+        <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No expenses yet — use “+ Add Expense” above to record the first one.</div>
       ) : groups.length === 0 ? (
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No expenses for this event.</div>
       ) : (
