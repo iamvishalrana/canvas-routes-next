@@ -157,6 +157,38 @@ test('membership API rejects invalid tier', async ({ request }) => {
   }
 })
 
+// ─── Routes APIs (read paths) ────────────────────────────────────────────────
+
+test('upcoming routes API returns routes', async ({ request }) => {
+  const res = await request.get('/api/upcoming-routes')
+  expect(res.status()).toBe(200)
+  const body = await res.json()
+  expect(Array.isArray(body)).toBe(true)
+})
+
+test('past routes API returns routes', async ({ request }) => {
+  const res = await request.get('/api/upcoming-routes/past')
+  expect(res.status()).toBe(200)
+  const body = await res.json()
+  expect(Array.isArray(body)).toBe(true)
+  // WTET and Into the Laurentians are permanent history — an empty array
+  // means the query or data regressed even if the endpoint returns 200
+  expect(body.length).toBeGreaterThan(0)
+})
+
+// ─── DB Schema Sync ──────────────────────────────────────────────────────────
+
+// Catches "migration never run in prod" — the class of bug the honeypot tests
+// deliberately can't see because they return before the DB write. limit(0)
+// selects validate every write-path column exists without touching any rows.
+test('production DB schema matches code expectations', async ({ request }) => {
+  const res = await request.get('/api/health/schema')
+  const body = await res.json()
+  expect(body.failures || []).toEqual([])
+  expect(res.status()).toBe(200)
+  expect(body.ok).toBe(true)
+})
+
 // ─── Partners ────────────────────────────────────────────────────────────────
 
 test('partners page loads', async ({ page }) => {
