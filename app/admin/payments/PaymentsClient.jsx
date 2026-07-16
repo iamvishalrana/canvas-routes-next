@@ -1,8 +1,9 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, GhostBtn, DangerBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.5rem' }
@@ -13,7 +14,76 @@ function fmt(cents) {
 
 function fmtDate(iso) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })
+  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
+}
+
+const WALLET_LABELS = { apple_pay: 'Apple Pay', google_pay: 'Google Pay', link: 'Link' }
+const CARD_BRANDS   = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover', interac: 'Interac' }
+
+// Expandable per-payment detail panel — every field the record and its PI
+// metadata carry, in a grid that collapses to one column on phones.
+function PaymentDetails({ r }) {
+  const m = r.metadata || {}
+  const net = (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)
+  const cardLabel = r.card_brand
+    ? `${CARD_BRANDS[r.card_brand] || r.card_brand} •••• ${r.card_last4}${r.wallet ? ` · ${WALLET_LABELS[r.wallet] || r.wallet}` : ''}`
+    : (r.manual ? 'Manual / e-transfer' : null)
+  const rows = [
+    ['Name',       r.name],
+    ['Email',      r.email],
+    ['Phone',      m.phone],
+    ['Type',       r.stripe_payment_type],
+    ['Event',      m.event_name],
+    ['Amount',     r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : null],
+    ['Refunded',   r.stripe_amount_refunded > 0 ? `−${fmt(r.stripe_amount_refunded)}` : null],
+    ['Net',        r.stripe_amount_refunded > 0 ? fmt(net) : null],
+    ['Paid with',  cardLabel],
+    ['Date',       fmtDateTime(r.stripe_paid_at)],
+    ['DOB',        m.dob],
+    ['Car',        [m.car_year, m.car_model || m.car_make].filter(Boolean).join(' ')],
+    ['Passengers', m.passengers],
+    ['Children',   m.has_children === 'yes' ? (m.children_ages ? `Yes — ages ${m.children_ages}` : 'Yes') : null],
+    ['Instagram',  m.instagram ? `@${m.instagram}` : null],
+    ['Heard via',  m.source],
+    ['Message',    m.message || m.more],
+  ].filter(([, v]) => v)
+  return (
+    <div onClick={e => e.stopPropagation()} style={{ padding: '0.9rem 1rem 1rem', background: 'rgba(197,168,130,0.05)', borderTop: '0.5px solid rgba(197,168,130,0.25)', cursor: 'default' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 230px), 1fr))', gap: '0.55rem 1.25rem' }}>
+        {rows.map(([label, value]) => (
+          <div key={label} style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b5a184', marginBottom: '2px' }}>{label}</div>
+            <div style={{ fontSize: '13px', color: '#1a1a1a', wordBreak: 'break-word' }}>{value}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.9rem' }}>
+        {r.stripe_payment_intent_id && !r.manual && (
+          <a href={PI_BASE + r.stripe_payment_intent_id} target="_blank" rel="noreferrer"
+            style={{ fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'none', borderBottom: '0.5px solid rgba(138,101,53,0.4)', paddingBottom: '1px' }}>
+            View in Stripe ↗
+          </a>
+        )}
+        {r.receipt_url && (
+          <a href={r.receipt_url} target="_blank" rel="noreferrer"
+            style={{ fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'none', borderBottom: '0.5px solid rgba(138,101,53,0.4)', paddingBottom: '1px' }}>
+            Stripe receipt ↗
+          </a>
+        )}
+        {r.id && (
+          <a href="/admin/applications"
+            style={{ fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'none', borderBottom: '0.5px solid rgba(138,101,53,0.4)', paddingBottom: '1px' }}>
+            Application →
+          </a>
+        )}
+      </div>
+    </div>
+  )
 }
 
 const STATUS_COLORS = {
@@ -164,6 +234,10 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const [receiptBusy, setReceiptBusy] = useState(null)
   const [receiptDone, setReceiptDone] = useState({})     // { [id]: true }
   const [receiptErr, setReceiptErr]   = useState({})
+  const [expandedKey, setExpandedKey] = useState(null)   // rowKey of the open detail panel
+
+  const rowKey = (r, i) => r.stripe_payment_intent_id || `${r.email || 'row'}-${i}`
+  const toggleExpanded = k => setExpandedKey(p => (p === k ? null : k))
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -345,11 +419,16 @@ export default function PaymentsClient({ initialRecords = [] }) {
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No payment records found.</div>
       ) : isMobile ? (
         <div>
-          {filtered.map((r, i) => (
-            <div key={r.stripe_payment_intent_id || r.email || i} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem', marginBottom: '0.5rem' }}>
+          {filtered.map((r, i) => {
+            const k = rowKey(r, i)
+            const open = expandedKey === k
+            return (
+            <div key={k} onClick={() => toggleExpanded(k)}
+              style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', marginBottom: '0.5rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', overflow: 'hidden' }}>
+              <div style={{ padding: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
                 <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{r.name || '—'}</div>
-                <div>
+                <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
                     {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
                   </div>
@@ -358,16 +437,23 @@ export default function PaymentsClient({ initialRecords = [] }) {
                   )}
                 </div>
               </div>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.4rem' }}>{r.email}</div>
-              <div style={{ marginBottom: '0.5rem' }}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></div>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.5rem', wordBreak: 'break-all' }}>{r.email}</div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                 <StatusChip status={r.stripe_payment_status} />
                 {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{r.stripe_payment_type}</span>}
-                <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto' }}>{fmtDate(r.stripe_paid_at)}</span>
+                <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  {fmtDate(r.stripe_paid_at)}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
               </div>
-              <Actions r={r} ctx={actionsCtx} />
+              <div onClick={e => e.stopPropagation()} style={{ cursor: 'default' }}>
+                <Actions r={r} ctx={actionsCtx} />
+              </div>
+              </div>
+              {open && <PaymentDetails r={r} />}
             </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflowX: 'auto' }}>
@@ -385,8 +471,12 @@ export default function PaymentsClient({ initialRecords = [] }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r, i) => (
-                <tr key={r.stripe_payment_intent_id || r.email || i} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+              {filtered.map((r, i) => {
+                const k = rowKey(r, i)
+                const open = expandedKey === k
+                return (
+                <React.Fragment key={k}>
+                <tr onClick={() => toggleExpanded(k)} style={{ background: open ? 'rgba(197,168,130,0.05)' : i % 2 === 0 ? '#fff' : '#fafaf8', cursor: 'pointer' }}>
                   <td style={TD}>{r.name || <span style={{ color: '#ccc' }}>—</span>}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email || <span style={{ color: '#ccc' }}>—</span>}</td>
                   <td style={{ ...TD, fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
@@ -398,13 +488,22 @@ export default function PaymentsClient({ initialRecords = [] }) {
                   <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type || '—'}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtDate(r.stripe_paid_at)}</td>
-                  <td style={TD}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
-                  <td style={{ ...TD, whiteSpace: 'nowrap' }}>
+                  <td style={TD} onClick={e => e.stopPropagation()}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
+                  <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
                     <Actions r={r} ctx={actionsCtx} />
                     {r.id && <a href={`/admin/applications`} style={{ marginLeft: '0.5rem', fontSize: '11px', color: '#8A6535', textDecoration: 'underline', textUnderlineOffset: '2px' }}>Application →</a>}
                   </td>
                 </tr>
-              ))}
+                {open && (
+                  <tr>
+                    <td colSpan={8} style={{ padding: 0, borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
+                      <PaymentDetails r={r} />
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
+                )
+              })}
             </tbody>
           </table>
         </div>

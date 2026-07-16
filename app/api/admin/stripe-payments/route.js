@@ -66,6 +66,8 @@ export async function GET() {
       stripe_payment_status = pi.status
     }
 
+    const card = (charge && typeof charge === 'object') ? charge.payment_method_details?.card : null
+
     return {
       id: app?.id || null,
       stripe_payment_intent_id: pi.id,
@@ -80,6 +82,12 @@ export async function GET() {
       stripe_paid_at: (charge && typeof charge === 'object' && charge.created)
         ? new Date(charge.created * 1000).toISOString()
         : new Date(pi.created * 1000).toISOString(),
+      // Extras for the expandable detail view (admin-only route)
+      card_brand:  card?.brand  || null,
+      card_last4:  card?.last4  || null,
+      wallet:      card?.wallet?.type || null, // apple_pay / google_pay
+      receipt_url: (charge && typeof charge === 'object') ? (charge.receipt_url || null) : null,
+      metadata:    pi.metadata || {},
     }
   })
 
