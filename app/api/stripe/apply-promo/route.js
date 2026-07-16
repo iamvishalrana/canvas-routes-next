@@ -154,6 +154,8 @@ export async function POST(request) {
     } else if (coupon.amount_off) {
       discountedAmount = Math.max(50, currentAmount - coupon.amount_off) // Stripe minimum is 50 cents
     } else {
+      await releaseLock(lockKey)
+      await releaseLock(codeLockKey)
       return Response.json({ error: 'Unsupported coupon type.' }, { status: 400 })
     }
 

@@ -211,9 +211,14 @@ export async function POST(request) {
         captureMessage('Membership waitlist PI verification failed', { piId: paymentIntentId, piEmail, normalEmail, piType: pi.metadata?.type, expectedType, piStatus: pi.status })
         return Response.json({ error: 'Payment verification failed. Please contact support.' }, { status: 400 })
       }
-      // Reject if amount is suspiciously low (below 50% of tier price — covers legitimate promo codes)
-      if (pi.amount < Math.floor((PRICES[expectedType] ?? 0) * 0.5)) {
-        captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, expected: PRICES[TIER_TYPE_MAP[tier]] })
+      // Reject if the amount doesn't reconcile with the tier price. apply-promo
+      // records discount_amount in PI metadata, so amount + discount must add
+      // back up to the canonical price — validates any legitimate discount
+      // exactly (the old below-50%-of-price heuristic rejected valid promo
+      // codes over 50% off AFTER the card was already authorized).
+      const discount = parseInt(pi.metadata?.discount_amount || '0', 10) || 0
+      if (pi.amount + discount < (PRICES[expectedType] ?? 0)) {
+        captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, discount, expected: PRICES[expectedType] })
         return Response.json({ error: 'Payment amount invalid. Please contact support.' }, { status: 400 })
       }
     } catch (err) {

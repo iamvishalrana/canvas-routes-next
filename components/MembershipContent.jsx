@@ -435,6 +435,9 @@ export default function MembershipContent() {
   const honeypotRef                       = useRef(null)
   const submittingRef                     = useRef(false)
   const purchasePriceRef                  = useRef(null)
+  // Survives onBack (which nulls clientSecret) so a re-submit can still cancel
+  // the abandoned PI — deriving previousPiId from clientSecret always sent null.
+  const lastPiIdRef                       = useRef(null)
   const [alreadyApplied, setAlreadyApplied] = useState(false)
 
   // Fire Purchase pixel event once on payment success
@@ -471,8 +474,10 @@ export default function MembershipContent() {
   function inp(field) {
     const base = { width:'100%', padding:'0.6rem 0', fontSize:'15px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
     if (errors[field]) return { ...base, borderBottom:'1px solid rgba(208,96,112,0.8)' }
-    if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(15,30,20,0.6)' }
-    if (form[field]) return { ...base, borderBottom:'1px solid rgba(15,30,20,0.35)' }
+    // Gold focus/filled underlines — matches the phone field so the whole form
+    // signals state consistently (was a mix of gold and dark green)
+    if (focusedField === field) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.9)' }
+    if (form[field]) return { ...base, borderBottom:'1px solid rgba(197,168,130,0.6)' }
     return base
   }
 
@@ -514,7 +519,7 @@ export default function MembershipContent() {
     setStatus('loading'); setSubmitError(null)
     try {
       const type = form.tier === 'Inner Circle' ? 'membership_inner_circle' : 'membership_routes'
-      const previousPiId = clientSecret ? clientSecret.split('_secret_')[0] : null
+      const previousPiId = lastPiIdRef.current
       const res = await fetch('/api/stripe/create-payment-intent', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -523,6 +528,7 @@ export default function MembershipContent() {
           phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '',
           dob: form.dob_month && form.dob_day ? `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}` : '',
           year: form.year, carMake: form.carMake, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), source: form.source,
+          referredBy: form.referredBy, carPaint: form.carPaint, more: form.more,
           previousPiId,
         }),
       })
@@ -531,6 +537,7 @@ export default function MembershipContent() {
       if (!data.clientSecret) throw new Error('Payment could not be initialised. Please try again.')
       try { localStorage.setItem('membership_form_pending', JSON.stringify({ form, countryCode })) } catch {}
       purchasePriceRef.current = form.tier === 'Inner Circle' ? 249 : 99
+      lastPiIdRef.current = data.clientSecret.split('_secret_')[0]
       setClientSecret(data.clientSecret)  // set before paymentStep so Elements renders with a valid secret
       setPaymentStep(true)
       setStatus(null)
@@ -572,6 +579,10 @@ export default function MembershipContent() {
         }
         @media(max-width:768px){
           input, select, textarea { font-size: 16px !important; }
+          /* Inputs must stay 16px (iOS zooms on focus below that) but the grey
+             placeholder text can render smaller — 16px placeholders dominate
+             the empty form on mobile. */
+          input::placeholder, textarea::placeholder { font-size: 13px !important; }
         }
         input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.28); }
       `}</style>
@@ -1123,7 +1134,7 @@ export default function MembershipContent() {
 
               <label id="mem-field-termsAccepted" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '2rem', cursor: 'pointer', padding: errors.termsAccepted ? '0.75rem' : '0', border: errors.termsAccepted ? '0.5px solid rgba(208,96,112,0.4)' : 'none' }}>
                 <input type="checkbox" checked={termsAccepted} onChange={e => { setTermsAccepted(e.target.checked); if (e.target.checked) setErrors(er => ({ ...er, termsAccepted: false })) }}
-                  style={{ accentColor: '#c5a882', width: '13px', height: '13px', flexShrink: 0, marginTop: '2px' }} />
+                  style={{ accentColor: '#c5a882', width: '16px', height: '16px', flexShrink: 0, marginTop: '1px' }} />
                 <span style={{ fontSize: '12px', color: 'rgba(0,0,0,0.45)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.6 }}>
                   I have read and agree to the{' '}
                   <a href="/terms" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms &amp; Conditions</a>
@@ -1133,6 +1144,12 @@ export default function MembershipContent() {
               {alreadyApplied && (
                 <div style={{ padding: '0.85rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', marginBottom: '1rem', fontSize: '13px', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', lineHeight: '1.5' }}>
                   It looks like you&apos;ve already submitted an application with this email. Continuing will update your existing application.
+                </div>
+              )}
+
+              {Object.values(errors).some(Boolean) && !submitError && (
+                <div style={{ fontSize: '12px', color: '#d06070', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  Please complete the highlighted fields above.
                 </div>
               )}
 

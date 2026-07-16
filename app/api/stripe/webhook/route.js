@@ -266,6 +266,9 @@ export async function POST(request) {
           ...(pi.metadata?.car_make ? { car_make: pi.metadata.car_make } : {}),
           ...(pi.metadata?.car_model ? { car_model: pi.metadata.car_model } : {}),
           ...(pi.metadata?.source   ? { source:   pi.metadata.source }   : {}),
+          ...(pi.metadata?.referred_by ? { referred_by: pi.metadata.referred_by } : {}),
+          ...(pi.metadata?.car_paint   ? { car_paint:   pi.metadata.car_paint }   : {}),
+          ...(pi.metadata?.more        ? { more:        pi.metadata.more }        : {}),
           stripe_payment_intent_id: pi.id,
           stripe_payment_status:    'authorized',
           stripe_amount_paid:       amountHeld,
@@ -336,6 +339,17 @@ export async function POST(request) {
             .select('registrations').eq('email', normalEmail).maybeSingle()
           const waitlistRan = (appRow?.registrations || []).some(r => r.event === 'Canvas Routes Membership')
           if (waitlistRan) break
+          // Atomic claim on the same dedup column membership-waitlist uses —
+          // whichever path claims this PI first sends the emails; the other
+          // matches zero rows and skips. Closes the race where this webhook
+          // landed before the waitlist upsert committed and both sets sent.
+          const { data: claimRows, error: claimErr } = await supabase
+            .from('applications')
+            .update({ waitlist_notified_pi: pi.id })
+            .eq('email', normalEmail)
+            .or(`waitlist_notified_pi.is.null,waitlist_notified_pi.neq.${pi.id}`)
+            .select('id')
+          if (!claimErr && (claimRows || []).length === 0) break
           const firstName  = (name || '').trim().split(' ')[0] || 'there'
           const tierLabel  = type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
           const amountFmt  = `$${(amountHeld / 100).toFixed(2)} CAD`
@@ -366,10 +380,13 @@ export async function POST(request) {
                   ['Phone',     pi.metadata?.phone || '—'],
                   ['DOB',       pi.metadata?.dob || '—'],
                   ['Hold',      amountFmt],
-                  ['Car year',  pi.metadata?.car_year || '—'],
-                  ['Car',       pi.metadata?.car_model || '—'],
-                  ['Source',    pi.metadata?.source || '—'],
-                  ['PI',        pi.id],
+                  ['Car year',    pi.metadata?.car_year || '—'],
+                  ['Car',         pi.metadata?.car_model || '—'],
+                  ['Paint',       pi.metadata?.car_paint || '—'],
+                  ['Source',      pi.metadata?.source || '—'],
+                  ['Referred by', pi.metadata?.referred_by || '—'],
+                  ['Message',     pi.metadata?.more || '—'],
+                  ['PI',          pi.id],
                 ]),
               }),
             }).catch(err => captureException(err, { context: 'membership-hold-admin-email-rescue', email: normalEmail })),

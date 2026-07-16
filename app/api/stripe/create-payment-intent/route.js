@@ -25,7 +25,7 @@ export async function POST(request) {
   // For membership PIs, accept optional form fields to store in metadata.
   // This ensures the webhook rescue path can write full application data
   // even if the client closes the tab before /api/membership-waitlist fires.
-  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source, previousPiId, _health_check } = body
+  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source, referredBy, carPaint, more, previousPiId, _health_check } = body
 
   if (!type || !VALID_TYPES.includes(type)) {
     return Response.json({ error: 'Invalid payment type.' }, { status: 400 })
@@ -51,12 +51,15 @@ export async function POST(request) {
         event_name: eventName || '',
         // Membership-only fields stored so webhook can rescue form data on tab-close
         ...(isMembership ? {
-          phone:     phone    || '',
-          dob:       dob      || '',
-          car_year:  year     || '',
-          car_make:  carMake  || '',
-          car_model: carModel || '',
-          source:    source   || '',
+          phone:       phone    || '',
+          dob:         dob      || '',
+          car_year:    year     || '',
+          car_make:    carMake  || '',
+          car_model:   carModel || '',
+          source:      source   || '',
+          referred_by: (referredBy || '').slice(0, 200),
+          car_paint:   (carPaint  || '').slice(0, 100),
+          more:        (more      || '').slice(0, 450), // Stripe metadata values cap at 500 chars
         } : {}),
         ...(_health_check ? {
           source: 'health_check',
@@ -70,9 +73,17 @@ export async function POST(request) {
       ...(isMembership ? { capture_method: 'manual' } : {}),
     })
 
-    // Cancel the old PI if the user went back and re-submitted (e.g. tier switch) — prevents ghost holds
-    if (previousPiId && previousPiId.startsWith('pi_') && previousPiId !== paymentIntent.id) {
-      stripe.paymentIntents.cancel(previousPiId).catch(() => {})
+    // Cancel the old PI if the user went back and re-submitted (e.g. tier switch) — prevents
+    // ghost holds. The ID arrives from the client, so verify ownership and status first:
+    // never cancel a PI that belongs to someone else or already carries a hold/charge.
+    if (previousPiId && typeof previousPiId === 'string' && previousPiId.startsWith('pi_') && previousPiId !== paymentIntent.id) {
+      stripe.paymentIntents.retrieve(previousPiId).then(prev => {
+        const prevEmail = prev.metadata?.email?.toLowerCase().trim()
+        const unconfirmed = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(prev.status)
+        if (prevEmail === email.toLowerCase().trim() && unconfirmed) {
+          return stripe.paymentIntents.cancel(previousPiId)
+        }
+      }).catch(() => {})
     }
 
     return Response.json({ clientSecret: paymentIntent.client_secret })
