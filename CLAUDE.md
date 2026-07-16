@@ -207,6 +207,34 @@ The **shared infrastructure every route flows through** — `app/api/stripe/webh
 
 Note: the WTET confirmation email's check-in button (`/wtet/checkin`) only renders for `type === 'road_trip_wtet'` specifically — other routes get the email without a check-in button until a generic check-in link is wired up for them (the generic `/checkin/[eventId]` system already exists for meets/events; road-trip check-in isn't connected to it yet).
 
+**16. Never cancel a client-supplied PaymentIntent id blind**
+PI ids are semi-public (they appear in 3DS `return_url` query params). Any route that accepts a `previousPiId` (or similar) from the browser must retrieve it and verify BOTH ownership and status before cancelling — otherwise anyone with a PI id can cancel another user's pending payment:
+```js
+stripe.paymentIntents.retrieve(previousPiId).then(prev => {
+  const prevEmail = prev.metadata?.email?.toLowerCase().trim()
+  const unconfirmed = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(prev.status)
+  if (prevEmail === email.toLowerCase().trim() && unconfirmed) {
+    return stripe.paymentIntents.cancel(previousPiId)
+  }
+}).catch(() => {})
+```
+Cancelling a PI id read from your own DB row (the rule-2 pattern) needs no check — it's server-verified. Reference: `app/api/stripe/create-payment-intent/route.js`.
+
+**17. Post-payment amount validation must reconcile discounts exactly — never a %-of-price floor**
+`apply-promo` records `discount_amount` in PI metadata. Any save route that validates the paid amount must check `pi.amount + parseInt(pi.metadata?.discount_amount || '0', 10) >= PRICES[type]`. A heuristic floor (e.g. "reject below 50% of price") rejects legitimate large promo codes AFTER the card is already authorized — payment goes through, application save fails. Reference: `app/api/membership-waitlist/route.js`.
+
+**18. Every early-return in a lock-holding route must release ALL held locks**
+`apply-promo` holds two locks (per-code and per-PI). A `return` path that skips `releaseLock()` blocks that promo code / PI for everyone until the TTL expires. When adding a new validation branch to any route using `acquireLock`, release every lock acquired so far before returning.
+
+**19. Client-side: `previousPiId` must survive back/reset**
+If the payment page derives the previous PI id from state that the back button clears (e.g. `clientSecret`), a back-then-resubmit sends `null` and orphans the old PI. Keep the last created PI id in a `useRef` and read it from there. Reference: `lastPiIdRef` in `components/MembershipContent.jsx`.
+
+**20. Webhook rescue/hold emails must claim the same atomic dedup gate as the normal flow**
+Checking a side-effect of the normal flow (like a `registrations[]` entry) races with it — if the webhook lands before the normal flow's upsert commits, both send. Before sending emails from a `requires_capture`/`amount_capturable_updated` handler, do a conditional-update claim on `applications.waitlist_notified_pi` (matches zero rows → another path already sent → skip). Both the membership and road-trip branches in the webhook do this — every new flow's webhook branch must too. This also makes Stripe event redelivery safe.
+
+**21. Every field the webhook rescue should restore must be in PI metadata**
+Stripe metadata values cap at 500 chars — truncate free-text fields (`.slice(0, 450)`). Membership stores: phone, dob, car_year, car_make, car_model, source, referred_by, car_paint, more. When adding a form field to any paid flow, add it to the PI metadata AND to the webhook's rescue upsert, or it's silently lost when the user closes the tab mid-flow (this happened with `referred_by` in July 2026).
+
 ## Event Registration Page Template
 
 The WTET page (`app/wtet/page.jsx`) is the established template for paid road-trip/event registration pages. Reuse its structure for every future event — only swap out the route name, date, hero image, stops, pricing, and copy.

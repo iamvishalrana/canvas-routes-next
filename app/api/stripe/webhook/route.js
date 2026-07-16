@@ -284,6 +284,16 @@ export async function POST(request) {
 
         // Send registration received email + admin notification for road trip holds
         if (type?.startsWith('road_trip_') && process.env.RESEND_API_KEY) {
+          // Atomic per-PI claim — amount_capturable_updated can be redelivered
+          // (Stripe retries, amount changes while requires_capture); without
+          // this the hold emails would send once per delivery.
+          const { data: rtClaim, error: rtClaimErr } = await supabase
+            .from('applications')
+            .update({ waitlist_notified_pi: pi.id })
+            .eq('email', normalEmail)
+            .or(`waitlist_notified_pi.is.null,waitlist_notified_pi.neq.${pi.id}`)
+            .select('id')
+          if (!rtClaimErr && (rtClaim || []).length === 0) break
           const firstName   = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel  = piEventName || 'Canvas Routes Road Trip'
           const amountFmt   = `$${(amountHeld / 100).toFixed(2)} CAD`
