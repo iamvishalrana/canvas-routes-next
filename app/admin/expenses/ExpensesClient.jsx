@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
 
-const CATEGORIES = ['Fuel', 'Food & Beverages', 'Venue / Parking', 'Photography / Video', 'Merchandise', 'Equipment', 'Marketing', 'Insurance', 'Printing', 'Other']
+const CATEGORIES = EXPENSE_CATEGORIES
 
 const PAYMENT_METHODS = [
   { value: 'cash',      label: 'Cash' },
@@ -107,8 +108,10 @@ export default function ExpensesClient() {
   const [editSaving, setEditSaving]     = useState(false)
   const [editErr, setEditErr]           = useState(null)
   const [newIds, setNewIds]             = useState(new Set())
+  const [editUploading, setEditUploading] = useState(false)
   const fileRef = useRef(null)
   const scanRef = useRef(null)
+  const editFileRef = useRef(null)
 
   const load = useCallback(() => {
     fetch('/api/admin/expenses')
@@ -168,10 +171,22 @@ export default function ExpensesClient() {
 
   const eventNames = allGroups.map(g => g.name)
   const groups = filterEvent === 'all' ? allGroups : allGroups.filter(g => g.name === filterEvent)
+  // Autocomplete source for the Event/Vendor inputs — reduces near-duplicate
+  // group names from typos (e.g. "Into the Laurentians" vs "into the laurentians"
+  // fragmenting the same event across two separate groups).
+  const vendorNames = [...new Set(expenses.map(e => e.vendor?.trim()).filter(Boolean))].sort()
+
+  // If the category/date filters narrow the list until the selected event's
+  // chip disappears, the filter was silently still active with no chip shown
+  // as selected -- reset to "All" so the UI never shows an orphaned filter.
+  useEffect(() => {
+    if (filterEvent !== 'all' && !eventNames.includes(filterEvent)) setFilterEvent('all')
+  })
 
   const visibleExpenses = groups.flatMap(g => g.items)
   const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
   const grandTotalTax = visibleExpenses.reduce((s, e) => s + taxOf(e), 0)
+  const missingReceiptCount = visibleExpenses.filter(e => !e.receipt_url).length
 
   // Summary breakdowns — reflect whatever the filters currently show
   const summaryByCategory = (() => {
@@ -254,6 +269,11 @@ export default function ExpensesClient() {
   }
 
   async function saveEdit(id) {
+    if (!editForm.expense_date) { setEditErr('Date is required.'); return }
+    const amtNum = parseFloat(editForm.amount) || 0
+    const gstNum = parseFloat(editForm.gst_amount) || 0
+    const qstNum = parseFloat(editForm.qst_amount) || 0
+    if (amtNum < 0 || gstNum < 0 || qstNum < 0) { setEditErr('Amounts cannot be negative.') ; return }
     setEditSaving(true); setEditErr(null)
     try {
       const res = await fetch(`/api/admin/expenses/${id}`, {
@@ -266,9 +286,9 @@ export default function ExpensesClient() {
           province:       editForm.province || 'QC',
           payment_method: editForm.payment_method || null,
           receipt_url:    editForm.receipt_url || null,
-          amount:         parseFloat(editForm.amount)     || 0,
-          gst_amount:     parseFloat(editForm.gst_amount) || 0,
-          qst_amount:     parseFloat(editForm.qst_amount) || 0,
+          amount:         amtNum,
+          gst_amount:     gstNum,
+          qst_amount:     qstNum,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -295,6 +315,26 @@ export default function ExpensesClient() {
       setReceiptName(file.name)
     } catch { setFormErr('Upload failed.') }
     finally { setUploadingFile(false) }
+  }
+
+  // Attach or replace a receipt on an existing expense from the edit panel.
+  // The actual old-file cleanup happens server-side on Save (PATCH diffs the
+  // receipt_url) so cancelling the edit here doesn't touch storage at all.
+  async function handleEditFileChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setEditUploading(true); setEditErr(null)
+    try {
+      const uploadPath = slugify(editForm.event_name || 'General') + (editForm.expense_date ? `/${editForm.expense_date}` : '')
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('folder_path', uploadPath)
+      const res = await fetch('/api/admin/expenses/upload-receipt', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setEditErr(data.error || 'Upload failed.'); return }
+      setEditForm(p => ({ ...p, receipt_url: data.url }))
+    } catch { setEditErr('Upload failed.') }
+    finally { setEditUploading(false); if (editFileRef.current) editFileRef.current.value = '' }
   }
 
   // Scan a receipt photo: Claude vision extracts the fields, we prefill the empty
@@ -344,6 +384,7 @@ export default function ExpensesClient() {
     if (!form.paid || paidNum <= 0) { setFormErr('Amount paid is required.'); return }
     const gstNum = round2(form.gst_amount)
     const qstNum = round2(form.qst_amount)
+    if (gstNum < 0 || qstNum < 0) { setFormErr('Tax amounts cannot be negative.'); return }
     const subtotal = round2(paidNum - gstNum - qstNum)
     if (subtotal < 0) { setFormErr('Taxes are more than the amount paid.'); return }
     setSubmitting(true); setFormErr(null)
@@ -401,7 +442,11 @@ export default function ExpensesClient() {
   }
 
   function exportCSV() {
-    const source = filterEvent === 'all' ? expenses : expenses.filter(e => (e.event_name || 'General') === filterEvent)
+    // Must match what's on screen — visibleExpenses already reflects the
+    // event, category, AND date-range filters. A previous version of this
+    // only respected the event filter, so "This quarter" + Export CSV
+    // silently exported all-time data instead.
+    const source = visibleExpenses
     const rows = [
       ['Date', 'Event', 'Vendor', 'Category', 'Payment', 'Province', 'Amount', 'GST', 'QST', 'Tax', 'Total', 'Receipt'],
       ...source.map(e => {
@@ -457,6 +502,9 @@ export default function ExpensesClient() {
         }
       `}</style>
 
+      <datalist id="exp-event-names">{eventNames.map(n => <option key={n} value={n} />)}</datalist>
+      <datalist id="exp-vendor-names">{vendorNames.map(n => <option key={n} value={n} />)}</datalist>
+
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
@@ -486,12 +534,12 @@ export default function ExpensesClient() {
           </div>
           <div>
             <L>Event / Label</L>
-            <input style={inp} value={form.event_name} placeholder="e.g. Into the Laurentians"
+            <input style={inp} value={form.event_name} placeholder="e.g. Into the Laurentians" list="exp-event-names"
               onChange={e => setForm(p => ({ ...p, event_name: e.target.value }))} maxLength={100} />
           </div>
           <div>
             <L>Vendor</L>
-            <input style={inp} value={form.vendor} placeholder="e.g. Costco"
+            <input style={inp} value={form.vendor} placeholder="e.g. Costco" list="exp-vendor-names"
               onChange={e => setForm(p => ({ ...p, vendor: e.target.value }))} maxLength={100} />
           </div>
           <div>
@@ -690,6 +738,7 @@ export default function ExpensesClient() {
               &nbsp;·&nbsp;
               <span style={{ color: '#1a1a1a' }}>{fmt(grandTotal)}</span>
               {grandTotalTax > 0 && <> + <span style={{ color: '#888' }}>{fmt(grandTotalTax)} tax</span></>}
+              {missingReceiptCount > 0 && <> &nbsp;·&nbsp; <span style={{ color: '#93333E' }}>{missingReceiptCount} missing receipt{missingReceiptCount !== 1 ? 's' : ''}</span></>}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
@@ -917,17 +966,17 @@ export default function ExpensesClient() {
                               <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                 <div>
                                   <L>Date</L>
-                                  <input type="date" style={inp} value={editForm.expense_date} max={today}
+                                  <input type="date" style={inp} value={editForm.expense_date} max={today} required
                                     onChange={e => setEditForm(p => ({ ...p, expense_date: e.target.value }))} />
                                 </div>
                                 <div>
                                   <L>Event / Label</L>
-                                  <input style={inp} value={editForm.event_name} placeholder="General"
+                                  <input style={inp} value={editForm.event_name} placeholder="General" list="exp-event-names"
                                     onChange={e => setEditForm(p => ({ ...p, event_name: e.target.value }))} maxLength={100} />
                                 </div>
                                 <div>
                                   <L>Vendor</L>
-                                  <input style={inp} value={editForm.vendor} placeholder="—"
+                                  <input style={inp} value={editForm.vendor} placeholder="—" list="exp-vendor-names"
                                     onChange={e => setEditForm(p => ({ ...p, vendor: e.target.value }))} maxLength={100} />
                                 </div>
                                 <div>
@@ -976,8 +1025,8 @@ export default function ExpensesClient() {
                                 </div>
                               </div>
                               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <button onClick={() => saveEdit(expense.id)} disabled={editSaving} className="exp-tap"
-                                  style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: editSaving ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: editSaving ? 0.6 : 1 }}>
+                                <button onClick={() => saveEdit(expense.id)} disabled={editSaving || editUploading} className="exp-tap"
+                                  style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: (editSaving || editUploading) ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: (editSaving || editUploading) ? 0.6 : 1 }}>
                                   {editSaving ? 'Saving…' : 'Save'}
                                 </button>
                                 <GhostBtn small onClick={cancelEdit}>Cancel</GhostBtn>
@@ -985,11 +1034,27 @@ export default function ExpensesClient() {
                                   style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   Auto tax ({editForm.province})
                                 </button>
-                                {editForm.receipt_url && (
-                                  <a href={editForm.receipt_url} target="_blank" rel="noopener noreferrer"
-                                    style={{ fontSize: '11px', color: '#c5a882', marginLeft: '0.25rem', textDecoration: 'none' }}>
-                                    View receipt ↗
-                                  </a>
+                                <input ref={editFileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleEditFileChange} />
+                                {editForm.receipt_url ? (
+                                  <>
+                                    <a href={editForm.receipt_url} target="_blank" rel="noopener noreferrer"
+                                      style={{ fontSize: '11px', color: '#c5a882', marginLeft: '0.25rem', textDecoration: 'none' }}>
+                                      View receipt ↗
+                                    </a>
+                                    <button type="button" onClick={() => editFileRef.current?.click()} disabled={editUploading}
+                                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                      {editUploading ? 'Uploading…' : 'Replace'}
+                                    </button>
+                                    <button type="button" onClick={() => setEditForm(p => ({ ...p, receipt_url: '' }))}
+                                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: 'none', color: '#c99', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                      Remove
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button type="button" onClick={() => editFileRef.current?.click()} disabled={editUploading}
+                                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                    {editUploading ? 'Uploading…' : '↑ Attach receipt'}
+                                  </button>
                                 )}
                               </div>
                               {editErr && <Err msg={editErr} />}

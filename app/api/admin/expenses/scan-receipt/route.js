@@ -2,13 +2,14 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { getAnthropic } from '../../../../../lib/anthropic'
 import { checkRateLimit } from '../../../../../lib/rateLimit'
 import { captureException } from '../../../../../lib/sentry'
+import { EXPENSE_CATEGORIES } from '../../../../../lib/expenseCategories'
 
 // Vision-capable image types Anthropic accepts. HEIC (common on iPhone) is NOT
 // supported by the vision API, so it's rejected with a clear message below.
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
 
-const CATEGORIES = ['Fuel', 'Food & Beverages', 'Venue / Parking', 'Photography / Video', 'Merchandise', 'Equipment', 'Marketing', 'Insurance', 'Printing', 'Other']
+const CATEGORIES = EXPENSE_CATEGORIES
 
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
