@@ -114,6 +114,10 @@ export async function POST(request) {
       more: more || null,
       registrations,
       stripe_payment_status: 'pending',
+      // New payment cycle — clear the previous flow's capture timestamp so the
+      // confirm route's email claim and the webhook's already-captured check
+      // (both keyed on stripe_paid_at) work for this registration
+      stripe_paid_at: null,
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' }).select('id').single()
 
@@ -157,9 +161,16 @@ export async function POST(request) {
       description: `Canvas Routes — ${EVENT_NAME} (Member rate)`,
       automatic_payment_methods: { enabled: true },
     })
-    // Cancel the previous PI if re-registering — prevents ghost holds on the member's card
+    // Cancel the previous PI if re-registering — prevents ghost holds. The
+    // applications row shares ONE stripe_payment_intent_id across membership and
+    // every road trip, so verify the stored PI belongs to THIS flow before
+    // cancelling — a blind cancel can release a live hold from another flow.
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
-      stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
+      stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id).then(prev => {
+        if (prev.metadata?.type === 'road_trip_hello-to-montebello' && prev.status !== 'succeeded') {
+          return stripe.paymentIntents.cancel(existing.stripe_payment_intent_id)
+        }
+      }).catch(() => {})
     }
 
     // Store PI ID immediately so htm-member-confirm can find this row after payment

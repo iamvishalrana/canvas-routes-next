@@ -49,7 +49,7 @@ export async function POST(request, { params }) {
 
   // Early-exit if already registered (before any PI work)
   const { data: existing } = await admin.from('event_registrations')
-    .select('stripe_payment_status, stripe_payment_intent_id').eq('event_id', eventId).eq('member_id', user.id).maybeSingle()
+    .select('stripe_payment_status, stripe_payment_intent_id, amount_paid').eq('event_id', eventId).eq('member_id', user.id).maybeSingle()
   if (existing && ['free', 'paid'].includes(existing.stripe_payment_status)) {
     // If the webhook already wrote 'paid' for this exact PI before this API call landed,
     // treat it as a successful idempotent registration rather than an error.

@@ -239,9 +239,16 @@ export async function POST(request) {
       .maybeSingle()
     if (existingErr) captureMessage('membership-waitlist: existing-row read failed', { error: existingErr.message, email: normalEmail })
 
-    // Cancel the previous PI if the user is re-applying — prevents ghost holds on their card
+    // Cancel the previous PI if the user is re-applying — prevents ghost holds.
+    // The applications row shares ONE stripe_payment_intent_id across membership
+    // and every road trip, so verify the stored PI is a membership PI before
+    // cancelling — a blind cancel here could release someone's live road-trip hold.
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== paymentIntentId && stripe) {
-      stripe.paymentIntents.cancel(existing.stripe_payment_intent_id).catch(() => {})
+      stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id).then(prev => {
+        if (prev.metadata?.type?.startsWith('membership_') && prev.status !== 'succeeded') {
+          return stripe.paymentIntents.cancel(existing.stripe_payment_intent_id)
+        }
+      }).catch(() => {})
     }
 
     const membershipReg = { event: 'Canvas Routes Membership', tier, registered_at: new Date().toISOString(), attended: null }
@@ -265,6 +272,8 @@ export async function POST(request) {
       referred_by: referredBy?.trim() || null,
       registrations,
       stripe_payment_status: 'pending',
+      // New payment cycle — clear any stale capture timestamp from a previous flow
+      stripe_paid_at: null,
       stripe_payment_type: TIER_TYPE_MAP[tier] || null,
       // Store PI ID immediately so admin can act even if the webhook is delayed
       ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),

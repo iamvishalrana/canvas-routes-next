@@ -38,9 +38,25 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Could not verify payment.' }, { status: 500 })
   }
 
+  // Authoritative Stripe-side status check — the DB status is only a proxy
+  if (pi.status === 'succeeded') return Response.json({ error: 'Already captured.' }, { status: 400 })
+  if (pi.status !== 'requires_capture') {
+    return Response.json({ error: `Payment cannot be captured (Stripe status: ${pi.status}).` }, { status: 400 })
+  }
+
+  // Claim stripe_paid_at BEFORE capturing — the succeeded webhook can land within
+  // milliseconds of capture and reads stripe_paid_at to decide whether this route
+  // already sent the confirmation email
+  const { error: claimErr } = await supabase.from('applications')
+    .update({ stripe_paid_at: new Date().toISOString() })
+    .eq('id', id)
+  if (claimErr) captureException(claimErr, { context: 'admin-app-capture-claim', appId: id })
+
   try {
     await stripe.paymentIntents.capture(piId, {}, { idempotencyKey: `capture-${piId}` })
   } catch (err) {
+    // Roll back the claim so a retry (or the webhook) can still send the email
+    await supabase.from('applications').update({ stripe_paid_at: null }).eq('id', id)
     captureException(err, { context: 'admin-approve-capture', appId: id })
     return Response.json({ error: err.message || 'Capture failed.' }, { status: 500 })
   }
@@ -48,7 +64,6 @@ export async function POST(request, { params }) {
   // Capture succeeded — update DB separately so a DB error doesn't surface as "Capture failed"
   const { error: dbErr } = await supabase.from('applications').update({
     stripe_payment_status: 'paid',
-    stripe_paid_at: new Date().toISOString(),
     stripe_amount_paid: pi.amount,
   }).eq('id', id)
   if (dbErr) captureException(dbErr, { context: 'admin-capture-db-write', appId: id })

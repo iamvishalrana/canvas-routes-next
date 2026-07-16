@@ -235,6 +235,15 @@ Checking a side-effect of the normal flow (like a `registrations[]` entry) races
 **21. Every field the webhook rescue should restore must be in PI metadata**
 Stripe metadata values cap at 500 chars — truncate free-text fields (`.slice(0, 450)`). Membership stores: phone, dob, car_year, car_make, car_model, source, referred_by, car_paint, more. When adding a form field to any paid flow, add it to the PI metadata AND to the webhook's rescue upsert, or it's silently lost when the user closes the tab mid-flow (this happened with `referred_by` in July 2026).
 
+**22. The applications row shares ONE `stripe_payment_intent_id` across flows — only cancel same-flow PIs**
+Membership and every road trip write to the same row (keyed by email). The rule-2 "cancel the previous PI" pattern must retrieve the stored PI and verify `prev.metadata.type` belongs to THIS flow (and `prev.status !== 'succeeded'`) before cancelling — a blind cancel releases a live hold from a different flow (e.g. applying for membership would have cancelled the person's road-trip hold). `event_registrations` rows are per-event, so the event flow may cancel blind. Reference: any of the register routes or `membership-waitlist`.
+
+**23. Reset `stripe_paid_at: null` on every pending upsert that starts a new payment cycle**
+`stripe_paid_at` is the claim column for member-confirm emails (`.is('stripe_paid_at', null)`) and the webhook's already-captured check. Because the row is shared across flows, a stale value from an earlier purchase makes the confirm claim match zero rows — the member's confirmation email silently never sends on their second purchase. Every register route's `stripe_payment_status: 'pending'` upsert must also set `stripe_paid_at: null`.
+
+**24. Admin capture routes: authoritative status check + claim BEFORE capture**
+After retrieving the PI, check `pi.status` from Stripe (`succeeded` → already captured; anything other than `requires_capture` → refuse) — the DB status is a proxy and can be stale. Then write `stripe_paid_at` BEFORE calling `stripe.paymentIntents.capture()` and roll it back to null if capture throws: the `payment_intent.succeeded` webhook can arrive within milliseconds of capture and uses `stripe_paid_at` to decide whether the capture route already sent the confirmation email — claiming after capture is a duplicate-email race. Reference: both routes under `app/api/admin/*/capture/`.
+
 ## Event Registration Page Template
 
 The WTET page (`app/wtet/page.jsx`) is the established template for paid road-trip/event registration pages. Reuse its structure for every future event — only swap out the route name, date, hero image, stops, pricing, and copy.

@@ -49,7 +49,7 @@ export async function POST(request, { params }) {
     return Response.json({ error: `Payment cannot be captured (status: ${app.stripe_payment_status}).` }, { status: 400 })
   }
 
-  // Retrieve PI if we haven't yet (needed for amount and metadata)
+  // Retrieve PI if we haven't yet (needed for amount, metadata, and the status check)
   if (!pi) {
     try {
       pi = await stripe.paymentIntents.retrieve(piId)
@@ -59,17 +59,36 @@ export async function POST(request, { params }) {
     }
   }
 
+  // Authoritative Stripe-side status check — the DB status is only a proxy and
+  // can be stale (the found-by-email fallback reads a row whose status may
+  // reflect a different flow entirely)
+  if (pi.status === 'succeeded') return Response.json({ error: 'Already captured.' }, { status: 400 })
+  if (pi.status !== 'requires_capture') {
+    return Response.json({ error: `Payment cannot be captured (Stripe status: ${pi.status}).` }, { status: 400 })
+  }
+
+  // Claim stripe_paid_at BEFORE capturing — the succeeded webhook can land within
+  // milliseconds of capture and reads stripe_paid_at to decide whether this route
+  // already sent the confirmation email. Also syncs the PI id onto rows found via
+  // the email fallback (updating by PI id would match zero rows for those).
+  const { error: claimErr } = await supabase.from('applications')
+    .update({ stripe_paid_at: new Date().toISOString(), stripe_payment_intent_id: piId })
+    .eq('id', app.id)
+  if (claimErr) captureException(claimErr, { context: 'admin-capture-claim', piId })
+
   try {
     await stripe.paymentIntents.capture(piId, {}, { idempotencyKey: `capture-${piId}` })
   } catch (err) {
+    // Roll back the claim so a retry (or the webhook) can still send the email
+    await supabase.from('applications').update({ stripe_paid_at: null }).eq('id', app.id)
     captureException(err, { context: 'admin-capture-stripe', piId })
     return Response.json({ error: err.message || 'Capture failed.' }, { status: 500 })
   }
 
   // Update DB — best-effort; webhook will rescue if this fails
   const { error: dbErr } = await supabase.from('applications')
-    .update({ stripe_payment_status: 'paid', stripe_paid_at: new Date().toISOString(), stripe_amount_paid: pi.amount })
-    .eq('stripe_payment_intent_id', piId)
+    .update({ stripe_payment_status: 'paid', stripe_amount_paid: pi.amount })
+    .eq('id', app.id)
   if (dbErr) captureException(dbErr, { context: 'admin-capture-db', piId })
 
   await logAdminAction(supabase, admin.email, {
