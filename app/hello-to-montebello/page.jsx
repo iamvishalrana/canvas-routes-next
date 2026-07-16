@@ -682,7 +682,7 @@ export default function HelloToMontebelloPage() {
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'htm-fade-in 0.5s ease both',animationDelay:'700ms'}} />
           <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'htm-fade-up 0.7s ease both',animationDelay:'800ms'}}>
-            A relaxed Sunday out to the Outaouais, built around lunch at the legendary Fairmont Le Château Montebello — the largest log château in the world — with a coffee stop, countryside roads, and a sweet finish along the way.
+            From the Laurentians to a historic château through Quebec&apos;s hidden backroads.
           </p>
 
           {/* Countdown */}
