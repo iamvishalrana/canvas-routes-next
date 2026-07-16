@@ -1,15 +1,17 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-// Device palette — brand-adjacent, consistent across all three chart types
+// Device palette — one clearly distinct hue per OS (the old set had two
+// near-identical golds for iOS/iPadOS and two dark greens for Android/macOS),
+// muted to sit with the brand colours. Consistent across all three chart types.
 const COLORS = {
-  iOS:     '#c5a882',
-  iPadOS:  '#d9c4a4',
-  Android: '#45643c',
-  macOS:   '#0F1E14',
-  Windows: '#7a8a99',
-  Linux:   '#8A6535',
-  Other:   '#cccccc',
+  iOS:     '#c5a882', // gold
+  iPadOS:  '#93333E', // brand red
+  Android: '#45643C', // brand green
+  macOS:   '#3D6B99', // steel blue
+  Windows: '#6B4E8E', // violet
+  Linux:   '#4FA3A5', // teal
+  Other:   '#999999', // grey
 }
 const MODES = ['bars', 'donut', 'split']
 const MODE_LABELS = { bars: 'Bars', donut: 'Donut', split: 'Split' }

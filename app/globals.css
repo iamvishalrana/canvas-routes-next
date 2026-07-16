@@ -577,10 +577,22 @@ section[id] {
 }
 
 /* iOS Safari auto-zooms any focused input with font-size < 16px. Enforce
-   site-wide on mobile widths — portal, auth, admin, and public forms alike.
+   site-wide on mobile widths — portal, auth, and public forms alike.
    (Event pages already do this unscoped in their own style blocks.) */
 @media (max-width: 767px) {
   input, select, textarea { font-size: 16px !important; }
+}
+
+/* Admin panel opts out: its layout sets viewport maximumScale=1, which
+   suppresses the focus auto-zoom, so inputs can keep the designed 13px.
+   The forced 16px made every value, placeholder, and select in mobile
+   admin look oversized and pushed grid fields into each other. */
+@media (max-width: 767px) {
+  .admin-shell input, .admin-shell select, .admin-shell textarea { font-size: 13px !important; }
+  .admin-shell input::placeholder, .admin-shell textarea::placeholder { font-size: 13px !important; }
+  /* iOS date/time inputs have an intrinsic min-width that overflows tight
+     two-column grids — let them shrink with their cell instead */
+  .admin-shell input[type="date"], .admin-shell input[type="time"] { min-width: 0; }
 }
 
 /* Placeholder text doesn't trigger the iOS zoom, so it can shrink freely —

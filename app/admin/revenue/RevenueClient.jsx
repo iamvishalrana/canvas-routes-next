@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
@@ -19,6 +20,13 @@ function fmtDate(iso) {
 }
 
 export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType = [], byMonth = [], recentPayments = [], payments = [] }) {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const routesRevenue = byType.find(t => t.key === 'membership_routes')?.revenue ?? 0
   const innerCircleRevenue = byType.find(t => t.key === 'membership_inner_circle')?.revenue ?? 0
   const roadTripRevenue = byType.filter(t => t.key?.startsWith('road_trip')).reduce((sum, t) => sum + (t.revenue ?? 0), 0)
@@ -138,6 +146,24 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
         </div>
         {recentPayments.length === 0 ? (
           <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No payments yet.</div>
+        ) : isMobile ? (
+          /* Cards on mobile — a five-column table only side-scrolls at 390px */
+          <div style={{ padding: '0 1rem 1rem' }}>
+            {recentPayments.map((p, i) => (
+              <div key={`${p.email}-${p.date}-${i}`}
+                style={{ padding: '0.75rem 0.25rem', borderTop: i > 0 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(p.amount)}</div>
+                </div>
+                <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', wordBreak: 'break-all' }}>{p.email}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginTop: '3px' }}>
+                  <span style={{ fontSize: '11px', color: '#8A6535' }}>{p.type}</span>
+                  <span style={{ fontSize: '11px', color: '#bbb', flexShrink: 0 }}>{fmtDate(p.date)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
