@@ -25,10 +25,14 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { code, percentOff, amountOff, maxRedemptions, expiresAt, appliesTo } = body
+  const { code, percentOff, amountOff, maxRedemptions, expiresAt, appliesTo, minimumAmount } = body
 
   if (!code?.trim()) return Response.json({ error: 'Code is required.' }, { status: 400 })
   if (!percentOff && !amountOff) return Response.json({ error: 'A discount value is required.' }, { status: 400 })
+  const minAmt = minimumAmount === undefined || minimumAmount === '' ? null : parseFloat(minimumAmount)
+  if (minAmt !== null && (!Number.isFinite(minAmt) || minAmt <= 0)) {
+    return Response.json({ error: 'Minimum purchase must be a positive amount.' }, { status: 400 })
+  }
 
   // Route options are dynamic — every row in upcoming_routes (active or not,
   // launched or not) is a valid target, so a code can be pre-created for a
@@ -56,6 +60,8 @@ export async function POST(request) {
       max_redemptions: maxRedemptions || undefined,
       // Use end-of-day UTC so codes don't expire at midnight start-of-day
       expires_at: expiresAt ? Math.floor(new Date(expiresAt).getTime() / 1000) + 86399 : undefined,
+      // Enforced at redemption time by apply-promo's minimum_amount check
+      ...(minAmt ? { restrictions: { minimum_amount: Math.round(minAmt * 100), minimum_amount_currency: 'cad' } } : {}),
       metadata: appliesToList.length ? { applies_to: appliesToList.join(',') } : {},
     }, { expand: ['coupon'] })
 

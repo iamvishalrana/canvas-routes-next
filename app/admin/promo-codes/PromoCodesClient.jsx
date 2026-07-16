@@ -26,10 +26,24 @@ function fmtCreated(ts) {
   return new Date(ts * 1000).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
 }
 
-function StatusChip({ active }) {
-  return active
-    ? <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.1)', color: '#3B6B2F', whiteSpace: 'nowrap' }}>Active</span>
-    : <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(0,0,0,0.12)', background: 'rgba(0,0,0,0.04)', color: '#999', whiteSpace: 'nowrap' }}>Inactive</span>
+// A Stripe code stays active=true after its expiry passes or its redemption
+// limit fills — but it can no longer be redeemed. Surface the real state
+// instead of a misleading "Active" chip.
+function codeStatus(c) {
+  if (!c.active) return 'inactive'
+  if (c.expires_at && c.expires_at * 1000 < Date.now()) return 'expired'
+  if (c.max_redemptions && (c.times_redeemed ?? 0) >= c.max_redemptions) return 'maxed'
+  return 'active'
+}
+const CHIP_STYLES = {
+  active:   { border: 'rgba(59,107,47,0.3)',    bg: 'rgba(59,107,47,0.1)',    color: '#3B6B2F', label: 'Active' },
+  expired:  { border: 'rgba(147,51,62,0.3)',    bg: 'rgba(147,51,62,0.08)',   color: '#93333E', label: 'Expired' },
+  maxed:    { border: 'rgba(197,168,130,0.45)', bg: 'rgba(197,168,130,0.15)', color: '#8A6535', label: 'Fully used' },
+  inactive: { border: 'rgba(0,0,0,0.12)',       bg: 'rgba(0,0,0,0.04)',       color: '#999',    label: 'Inactive' },
+}
+function StatusChip({ code }) {
+  const s = CHIP_STYLES[codeStatus(code)]
+  return <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: `0.5px solid ${s.border}`, background: s.bg, color: s.color, whiteSpace: 'nowrap' }}>{s.label}</span>
 }
 
 const MEMBERSHIP_APPLIES_TO_OPTIONS = [
@@ -53,7 +67,67 @@ function fmtAppliesTo(metadata, appliesToOptions) {
   }).join(', ')
 }
 
-const EMPTY_FORM = { code: '', discountType: 'percent', discountValue: '', maxRedemptions: '', expiresAt: '', appliesTo: [] }
+const EMPTY_FORM = { code: '', discountType: 'percent', discountValue: '', maxRedemptions: '', expiresAt: '', appliesTo: [], minimumAmount: '' }
+
+function fmtCents(cents) {
+  return `$${(cents / 100).toFixed(2)}`
+}
+
+// One usage panel for all four spots (active/inactive × mobile/desktop),
+// with a totals row so the revenue impact of a code is visible at a glance.
+function UsageList({ rows, mobile }) {
+  if (!rows || rows.length === 0) {
+    return <div style={{ fontSize: '12px', color: '#ccc', padding: mobile ? 0 : '0.5rem 0' }}>No redemptions recorded.</div>
+  }
+  const totalPaid     = rows.reduce((s, u) => s + (u.amount || 0), 0)
+  const totalDiscount = rows.reduce((s, u) => s + (u.discount || 0), 0)
+  const totals = (
+    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', paddingTop: '0.5rem', marginTop: '0.25rem', borderTop: '0.5px solid rgba(0,0,0,0.1)', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif' }}>
+      <span style={{ color: '#999', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.1em' }}>{rows.length} redemption{rows.length !== 1 ? 's' : ''}</span>
+      <span style={{ color: '#3B6B2F' }}>Paid {fmtCents(totalPaid)}</span>
+      <span style={{ color: '#8A6535' }}>−{fmtCents(totalDiscount)} given</span>
+    </div>
+  )
+  if (mobile) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {rows.map((u, ui) => (
+          <div key={ui} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: ui < rows.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+            <div style={{ fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a' }}>{u.name}</div>
+            <div style={{ fontFamily: 'var(--font-inter),sans-serif', wordBreak: 'break-all' }}>{u.email}</div>
+            <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+              <span style={{ color: '#3B6B2F' }}>Paid {fmtCents(u.amount)}</span>
+              <span style={{ color: '#8A6535' }}>−{fmtCents(u.discount)}</span>
+            </div>
+            <div style={{ color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
+          </div>
+        ))}
+        {totals}
+      </div>
+    )
+  }
+  return (
+    <>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
+        <thead>
+          <tr>{['Name', 'Email', 'Paid', 'Discount', 'Date'].map(h => <th key={h} style={{ padding: '0.4rem 0.75rem', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((u, ui) => (
+            <tr key={ui}>
+              <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{u.name}</td>
+              <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</td>
+              <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>{fmtCents(u.amount)}</td>
+              <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>−{fmtCents(u.discount)}</td>
+              <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {totals}
+    </>
+  )
+}
 
 export default function PromoCodesClient() {
   const [codes, setCodes]         = useState([])
@@ -111,9 +185,15 @@ export default function PromoCodesClient() {
     ...routes.map(r => ({ value: `road_trip_${r.slug}`, label: `${r.name} — ${r.month_label}` })),
   ]
 
-  const activeList     = codes.filter(c => c.active)
-  const inactiveList   = codes.filter(c => !c.active)
+  const [search, setSearch] = useState('')
+  const q = search.trim().toUpperCase()
+  const matchesSearch = c => !q
+    || c.code.toUpperCase().includes(q)
+    || fmtAppliesTo(c.metadata, appliesToOptions).toUpperCase().includes(q)
+  const activeList     = codes.filter(c => c.active).filter(matchesSearch)
+  const inactiveList   = codes.filter(c => !c.active).filter(matchesSearch)
   const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)
+  const liveCount      = codes.filter(c => codeStatus(c) === 'active').length
 
   // Auto-dismiss success banner after 5 seconds
   useEffect(() => {
@@ -135,6 +215,9 @@ export default function PromoCodesClient() {
     if (!form.code.trim()) return setFormErr('Code is required.')
     if (!form.discountValue || isNaN(val) || val <= 0) return setFormErr('Enter a valid discount value.')
     if (form.discountType === 'percent' && val > 100) return setFormErr('Percent off cannot exceed 100.')
+    const minVal = form.minimumAmount ? parseFloat(form.minimumAmount) : null
+    if (form.minimumAmount && (isNaN(minVal) || minVal <= 0)) return setFormErr('Minimum purchase must be a positive amount.')
+    if (minVal && form.discountType === 'amount' && val >= minVal) return setFormErr('Minimum purchase should be higher than the discount amount.')
 
     setSubmitting(true)
     try {
@@ -143,6 +226,7 @@ export default function PromoCodesClient() {
         ...(form.discountType === 'percent' ? { percentOff: val } : { amountOff: val }),
         ...(form.maxRedemptions ? { maxRedemptions: parseInt(form.maxRedemptions, 10) } : {}),
         ...(form.expiresAt ? { expiresAt: form.expiresAt } : {}),
+        ...(minVal ? { minimumAmount: minVal } : {}),
         appliesTo: form.appliesTo,
       }
       const res = await fetch('/api/admin/promo-codes', {
@@ -192,6 +276,25 @@ export default function PromoCodesClient() {
       }
     } catch { setReactivateErr('Network error.') }
     setReactivating(null)
+  }
+
+  // Prefill the create form from an existing code — everything but the code
+  // string itself carries over (Stripe requires unique active code strings).
+  function startDuplicate(c) {
+    setForm({
+      code: '',
+      discountType: c.coupon?.percent_off ? 'percent' : 'amount',
+      discountValue: c.coupon?.percent_off ? String(c.coupon.percent_off)
+        : c.coupon?.amount_off ? String(c.coupon.amount_off / 100) : '',
+      maxRedemptions: c.max_redemptions ? String(c.max_redemptions) : '',
+      expiresAt: c.expires_at ? new Date(c.expires_at * 1000).toISOString().slice(0, 10) : '',
+      appliesTo: c.metadata?.applies_to ? c.metadata.applies_to.split(',').map(s => s.trim()) : [],
+      minimumAmount: c.restrictions?.minimum_amount ? String(c.restrictions.minimum_amount / 100) : '',
+    })
+    setShowForm(true)
+    setFormErr(null)
+    setFormOk(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function startEdit(c) {
@@ -247,10 +350,6 @@ export default function PromoCodesClient() {
     } finally {
       setUsageLoading(null)
     }
-  }
-
-  function fmtCents(cents) {
-    return `$${(cents / 100).toFixed(2)}`
   }
 
   return (
@@ -333,6 +432,18 @@ export default function PromoCodesClient() {
                   onChange={e => setField('expiresAt', e.target.value)}
                 />
               </div>
+              <div>
+                <L>Minimum Purchase $ (optional)</L>
+                <input
+                  style={inp}
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={form.minimumAmount}
+                  onChange={e => setField('minimumAmount', e.target.value)}
+                  placeholder="No minimum"
+                />
+              </div>
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <L>Applies to (leave blank for all)</L>
@@ -373,9 +484,10 @@ export default function PromoCodesClient() {
       )}
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
         {[
-          { label: 'Active Codes',      value: activeList.length,   color: '#3B6B2F' },
+          // "Live" = still redeemable: active AND not expired AND not fully used
+          { label: 'Live Codes',        value: liveCount,     color: '#3B6B2F' },
           { label: 'Total Redemptions', value: totalRedeemed, color: '#1a1a1a' },
           { label: 'Total Codes',       value: codes.length,  color: '#1a1a1a' },
         ].map(s => (
@@ -386,11 +498,23 @@ export default function PromoCodesClient() {
         ))}
       </div>
 
+      {/* Search */}
+      {codes.length > 0 && (
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search codes…"
+          style={{ ...inp, width: isMobile ? '100%' : '260px', marginBottom: '1.25rem', padding: '0.55rem 0.9rem' }}
+        />
+      )}
+
       {/* Table / Cards */}
       {loading ? (
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
       ) : codes.length === 0 ? (
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No promo codes yet.</div>
+      ) : activeList.length === 0 && inactiveList.length === 0 ? (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No codes match “{search.trim()}”.</div>
       ) : isMobile ? (
         <div>
           {activeList.map(c => (
@@ -400,9 +524,12 @@ export default function PromoCodesClient() {
                   <span style={{ fontFamily: 'monospace', fontWeight: '600', fontSize: '14px', letterSpacing: '0.04em' }}>{c.code}</span>
                   <CopyBtn value={c.code} />
                 </div>
-                <StatusChip active={c.active} />
+                <StatusChip code={c} />
               </div>
-              <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>{fmtDiscount(c.coupon)}</div>
+              <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>
+                {fmtDiscount(c.coupon)}
+                {c.restrictions?.minimum_amount ? <span style={{ color: '#aaa' }}> · min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</span> : null}
+              </div>
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.2rem' }}>
                 {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
               </div>
@@ -437,6 +564,7 @@ export default function PromoCodesClient() {
                     {usageLoading === c.id ? '…' : 'Usage'}
                   </button>
                   <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
+                        <GhostBtn small onClick={() => startDuplicate(c)}>Duplicate</GhostBtn>
                   {deactivateConfirm === c.id ? (
                     <>
                       <span style={{ fontSize: '11px', color: '#93333E' }}>Deactivate?</span>
@@ -450,23 +578,7 @@ export default function PromoCodesClient() {
               )}
               {usageOpen === c.id && (
                 <div style={{ marginTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '0.75rem' }}>
-                  {!usageData[c.id] || usageData[c.id].length === 0 ? (
-                    <div style={{ fontSize: '12px', color: '#ccc' }}>No redemptions recorded.</div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {usageData[c.id].map((u, ui) => (
-                        <div key={ui} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: ui < usageData[c.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
-                          <div style={{ fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a' }}>{u.name}</div>
-                          <div style={{ fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</div>
-                          <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                            <span style={{ color: '#3B6B2F' }}>Paid {fmtCents(u.amount)}</span>
-                            <span style={{ color: '#8A6535' }}>−{fmtCents(u.discount)}</span>
-                          </div>
-                          <div style={{ color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <UsageList rows={usageData[c.id]} mobile />
                 </div>
               )}
             </div>
@@ -489,9 +601,12 @@ export default function PromoCodesClient() {
                       <span style={{ fontFamily: 'monospace', fontWeight: '600', fontSize: '14px', letterSpacing: '0.04em' }}>{c.code}</span>
                       <CopyBtn value={c.code} />
                     </div>
-                    <StatusChip active={false} />
+                    <StatusChip code={c} />
                   </div>
-                  <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>{fmtDiscount(c.coupon)}</div>
+                  <div style={{ fontSize: '13px', color: '#555', marginBottom: '0.25rem' }}>
+                {fmtDiscount(c.coupon)}
+                {c.restrictions?.minimum_amount ? <span style={{ color: '#aaa' }}> · min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</span> : null}
+              </div>
                   <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.2rem' }}>
                     {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
                   </div>
@@ -507,26 +622,11 @@ export default function PromoCodesClient() {
                     <GhostBtn small onClick={() => handleReactivate(c.id)} disabled={reactivating === c.id}>
                       {reactivating === c.id ? 'Reactivating…' : 'Reactivate'}
                     </GhostBtn>
+                    <GhostBtn small onClick={() => startDuplicate(c)}>Duplicate</GhostBtn>
                   </div>
                   {usageOpen === c.id && (
                     <div style={{ marginTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '0.75rem' }}>
-                      {!usageData[c.id] || usageData[c.id].length === 0 ? (
-                        <div style={{ fontSize: '12px', color: '#ccc' }}>No redemptions recorded.</div>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {usageData[c.id].map((u, ui) => (
-                            <div key={ui} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: ui < usageData[c.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
-                              <div style={{ fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a' }}>{u.name}</div>
-                              <div style={{ fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</div>
-                              <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                <span style={{ color: '#3B6B2F' }}>Paid {fmtCents(u.amount)}</span>
-                                <span style={{ color: '#8A6535' }}>−{fmtCents(u.discount)}</span>
-                              </div>
-                              <div style={{ color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <UsageList rows={usageData[c.id]} mobile />
                     </div>
                   )}
                 </div>
@@ -554,12 +654,15 @@ export default function PromoCodesClient() {
                 <React.Fragment key={c.id}>
                 <tr style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                   <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
-                  <td style={TD}>{fmtDiscount(c.coupon)}</td>
+                  <td style={TD}>
+                    {fmtDiscount(c.coupon)}
+                    {c.restrictions?.minimum_amount ? <div style={{ fontSize: '10px', color: '#aaa' }}>min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</div> : null}
+                  </td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata, appliesToOptions)}</td>
                   <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
-                  <td style={TD}><StatusChip active={true} /></td>
+                  <td style={TD}><StatusChip code={c} /></td>
                   <td style={{ ...TD, minWidth: editing === c.id ? '280px' : undefined }}>
                     {editing === c.id ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -583,6 +686,7 @@ export default function PromoCodesClient() {
                           {usageLoading === c.id ? '…' : 'Usage'}
                         </button>
                         <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
+                        <GhostBtn small onClick={() => startDuplicate(c)}>Duplicate</GhostBtn>
                         {deactivateConfirm === c.id ? (
                           <>
                             <span style={{ fontSize: '11px', color: '#93333E' }}>Deactivate?</span>
@@ -599,26 +703,7 @@ export default function PromoCodesClient() {
                 {usageOpen === c.id && (
                   <tr>
                     <td colSpan={8} style={{ padding: '0 1rem 1rem', background: '#fafaf8', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
-                      {!usageData[c.id] || usageData[c.id].length === 0 ? (
-                        <div style={{ fontSize: '12px', color: '#ccc', padding: '0.5rem 0' }}>No redemptions recorded.</div>
-                      ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
-                          <thead>
-                            <tr>{['Name', 'Email', 'Paid', 'Discount', 'Date'].map(h => <th key={h} style={{ padding: '0.4rem 0.75rem', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>{h}</th>)}</tr>
-                          </thead>
-                          <tbody>
-                            {usageData[c.id].map((u, ui) => (
-                              <tr key={ui}>
-                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{u.name}</td>
-                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</td>
-                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>{fmtCents(u.amount)}</td>
-                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>−{fmtCents(u.discount)}</td>
-                                <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
+                      <UsageList rows={usageData[c.id]} />
                     </td>
                   </tr>
                 )}
@@ -644,12 +729,15 @@ export default function PromoCodesClient() {
                   <React.Fragment key={c.id}>
                   <tr style={{ background: i % 2 === 0 ? '#fafaf8' : '#f5f4f2', opacity: 0.75 }}>
                     <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
-                    <td style={TD}>{fmtDiscount(c.coupon)}</td>
+                    <td style={TD}>
+                    {fmtDiscount(c.coupon)}
+                    {c.restrictions?.minimum_amount ? <div style={{ fontSize: '10px', color: '#aaa' }}>min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</div> : null}
+                  </td>
                     <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata, appliesToOptions)}</td>
                     <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
                     <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                     <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
-                    <td style={TD}><StatusChip active={false} /></td>
+                    <td style={TD}><StatusChip code={c} /></td>
                     <td style={TD}>
                       <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
                         <button
@@ -662,32 +750,14 @@ export default function PromoCodesClient() {
                         <GhostBtn small onClick={() => handleReactivate(c.id)} disabled={reactivating === c.id}>
                           {reactivating === c.id ? 'Reactivating…' : 'Reactivate'}
                         </GhostBtn>
+                        <GhostBtn small onClick={() => startDuplicate(c)}>Duplicate</GhostBtn>
                       </div>
                     </td>
                   </tr>
                   {usageOpen === c.id && (
                     <tr>
                       <td colSpan={8} style={{ padding: '0 1rem 1rem', background: '#f5f4f2', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
-                        {!usageData[c.id] || usageData[c.id].length === 0 ? (
-                          <div style={{ fontSize: '12px', color: '#ccc', padding: '0.5rem 0' }}>No redemptions recorded.</div>
-                        ) : (
-                          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
-                            <thead>
-                              <tr>{['Name', 'Email', 'Paid', 'Discount', 'Date'].map(h => <th key={h} style={{ padding: '0.4rem 0.75rem', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>{h}</th>)}</tr>
-                            </thead>
-                            <tbody>
-                              {usageData[c.id].map((u, ui) => (
-                                <tr key={ui}>
-                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{u.name}</td>
-                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</td>
-                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>{fmtCents(u.amount)}</td>
-                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>−{fmtCents(u.discount)}</td>
-                                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
+                        <UsageList rows={usageData[c.id]} />
                       </td>
                     </tr>
                   )}

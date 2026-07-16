@@ -31,6 +31,14 @@ export async function PATCH(request, { params }) {
         ...(body.maxRedemptions ? { max_redemptions: parseInt(body.maxRedemptions, 10) } : {}),
         // Use end-of-day UTC so codes don't expire at midnight start-of-day
         ...(body.expiresAt ? { expires_at: Math.floor(new Date(body.expiresAt).getTime() / 1000) + 86399 } : {}),
+        // Preserve the minimum-purchase restriction — without this, editing
+        // max uses or expiry silently strips it from the recreated code
+        ...(existing.restrictions?.minimum_amount ? {
+          restrictions: {
+            minimum_amount: existing.restrictions.minimum_amount,
+            minimum_amount_currency: existing.restrictions.minimum_amount_currency || 'cad',
+          },
+        } : {}),
         // Preserve applies_to and any other metadata from the original code
         metadata: existing.metadata || {},
       }, { expand: ['coupon'] })
