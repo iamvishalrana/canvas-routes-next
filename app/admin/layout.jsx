@@ -1,5 +1,14 @@
 import AdminShell from './_components/AdminShell'
 
+// iOS shows a blank white screen while a standalone home-screen app loads
+// unless apple-touch-startup-image links are provided. iOS only uses a splash
+// whose pixel size + media query EXACTLY match the device, so one entry per
+// iPhone size (portrait; manifest locks orientation to portrait-primary).
+const splash = (w, h, dw, dh, dpr) => ({
+  url: `/admin-splash/splash-${w}x${h}.png`,
+  media: `screen and (device-width: ${dw}px) and (device-height: ${dh}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`,
+})
+
 export const metadata = {
   title: { default: 'Admin — Canvas Routes', template: '%s — Admin' },
   manifest: '/admin-manifest.json',
@@ -7,6 +16,18 @@ export const metadata = {
     capable: true,
     title: 'CR Admin',
     statusBarStyle: 'black',
+    startupImage: [
+      splash(750, 1334, 375, 667, 2),   // SE 2/3, 6s–8
+      splash(828, 1792, 414, 896, 2),   // XR, 11
+      splash(1125, 2436, 375, 812, 3),  // X, XS, 11 Pro, 12/13 mini
+      splash(1170, 2532, 390, 844, 3),  // 12/13/14, 12/13 Pro
+      splash(1179, 2556, 393, 852, 3),  // 14 Pro, 15, 15 Pro, 16
+      splash(1206, 2622, 402, 874, 3),  // 16 Pro
+      splash(1242, 2688, 414, 896, 3),  // XS Max, 11 Pro Max
+      splash(1284, 2778, 428, 926, 3),  // 12/13 Pro Max, 14 Plus
+      splash(1290, 2796, 430, 932, 3),  // 14 Pro Max, 15 Plus/Pro Max, 16 Plus
+      splash(1320, 2868, 440, 956, 3),  // 16 Pro Max
+    ],
   },
 }
 
