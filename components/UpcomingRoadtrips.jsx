@@ -167,6 +167,7 @@ function CheckIcon() {
 export default function UpcomingRoadtrips({ isMember = false, memberName = '', memberEmail = '', memberPhone = '', memberCar = '', profileMissing = [], embedded = false }) {
   const [routes, setRoutes]       = useState([])
   const [loading, setLoading]     = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [view, setView]           = useState('grid')
   const [selectedId, setSelectedId] = useState(null)
   const [shareRoute, setShareRoute] = useState(null)
@@ -200,8 +201,9 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     try { stored = JSON.parse(localStorage.getItem(CONTACT_KEY) || '{}') || {} } catch {}
     const knownEmail = memberEmail || stored.email || ''
     const qs = knownEmail ? `?email=${encodeURIComponent(knownEmail)}` : ''
+    setLoadError(false)
     fetch(`/api/upcoming-routes${qs}`)
-      .then(r => r.ok ? r.json() : [])
+      .then(r => { if (!r.ok) throw new Error(`upcoming-routes HTTP ${r.status}`); return r.json() })
       .then(data => {
         const list = Array.isArray(data) ? data : []
         setRoutes(list.map(r => ({
@@ -224,7 +226,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         setLoading(false)
         setSelectedId(list[0]?.id ?? null)
       })
-      .catch(() => setLoading(false))
+      .catch(() => { setLoadError(true); setLoading(false) })
   }, [memberEmail, memberName, memberPhone, memberCar, isMember])
   useEffect(() => { load() }, [load])
 
@@ -634,6 +636,17 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
       {/* ── GRID / MAP ── */}
       {loading ? (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(48px,8vw,96px) ${PADX}`, textAlign: 'center', fontSize: '13px', color: '#bbb' }}>Loading routes…</div>
+      ) : loadError ? (
+        /* API failure — show a retry instead of a silently empty section */
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(48px,8vw,96px) ${PADX}`, textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+            The routes couldn&apos;t be loaded right now.
+          </div>
+          <button onClick={() => { setLoading(true); load() }}
+            style={{ padding: '0.75rem 2rem', background: '#45643c', border: 'none', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Try again
+          </button>
+        </div>
       ) : view === 'grid' ? (
         <div key="grid" style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}`, animation: 'rtFadeIn .3s ease' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '20px' }}>
