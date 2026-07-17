@@ -3,7 +3,11 @@ import { NextResponse } from 'next/server'
 
 export async function middleware(request) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    if (request.nextUrl.pathname.startsWith('/members') || request.nextUrl.pathname.startsWith('/admin')) {
+    const p = request.nextUrl.pathname
+    if (p.startsWith('/admin') && p !== '/admin/login') {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+    if (p.startsWith('/members') && p !== '/members/login') {
       return NextResponse.redirect(new URL('/members/login', request.url))
     }
     return NextResponse.next({ request })
@@ -32,6 +36,7 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl
 
   const isLogin = pathname === '/members/login'
+  const isAdminLogin = pathname === '/admin/login'
   const isReset = pathname.startsWith('/members/reset-password')
   const isApiAdmin = pathname.startsWith('/api/admin')
   const isApiMember = pathname.startsWith('/api/member')
@@ -39,10 +44,15 @@ export async function middleware(request) {
   // API prefixes must be checked explicitly or they pass through unauthenticated,
   // relying entirely on each route's own requireAdmin() call as the only gate.
   const isMembers = (pathname.startsWith('/members') && !isLogin && !isReset) || isApiMember
-  const isAdmin = pathname.startsWith('/admin') || isApiAdmin
+  const isAdmin = (pathname.startsWith('/admin') && !isAdminLogin) || isApiAdmin
 
   if (isLogin && user) {
     return NextResponse.redirect(new URL('/members/dashboard', request.url))
+  }
+  if (isAdminLogin && user) {
+    // Already signed in — admins go to the dashboard, everyone else to the portal
+    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
+    return NextResponse.redirect(new URL(adminEmails.includes(user.email) ? '/admin/dashboard' : '/members/dashboard', request.url))
   }
 
   if ((isMembers || isAdmin) && !user) {
@@ -50,7 +60,9 @@ export async function middleware(request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 401 })
     }
     const url = request.nextUrl.clone()
-    url.pathname = '/members/login'
+    // Admin pages get the admin login — it lives inside the /admin segment so
+    // the CR Admin PWA metadata is present wherever Add to Home Screen happens
+    url.pathname = pathname.startsWith('/admin') ? '/admin/login' : '/members/login'
     return NextResponse.redirect(url)
   }
 

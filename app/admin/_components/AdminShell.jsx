@@ -334,6 +334,12 @@ export default function AdminShell({ children }) {
     setRefreshKey(k => k + 1)
   }, [router])
 
+  // The login page lives inside the /admin segment so it carries the PWA
+  // manifest + apple-web-app meta (Add to Home Screen must always capture a
+  // web app, never a Safari bookmark) — but it renders without the shell.
+  // (After all hooks, so navigation to/from it never changes hook order.)
+  if (pathname === '/admin/login') return children
+
   return (
     <div className="admin-shell" style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3', fontFamily: 'var(--font-inter),sans-serif' }}>
 
