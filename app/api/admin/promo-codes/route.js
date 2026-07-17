@@ -1,10 +1,12 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { stripe } from '../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry.js'
 
 export async function GET() {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   if (!stripe) return Response.json({ error: 'Not configured.' }, { status: 503 })
 
   try {
@@ -17,7 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   if (!stripe) return Response.json({ error: 'Not configured.' }, { status: 503 })
 
   let body
@@ -65,6 +68,10 @@ export async function POST(request) {
       metadata: appliesToList.length ? { applies_to: appliesToList.join(',') } : {},
     }, { expand: ['coupon'] })
 
+    await logAdminAction(admin, adminUser?.email, {
+      action: 'promo.create', entityType: 'promo_code', entityName: code.trim().toUpperCase(),
+      metadata: { percentOff: percentOff || null, amountOff: amountOff || null, appliesTo: appliesToList.join(',') || 'all' },
+    })
     return Response.json(promoCode)
   } catch (err) {
     captureException(err, { context: 'admin-promo-codes-create' })

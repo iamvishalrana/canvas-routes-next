@@ -1,9 +1,12 @@
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { stripe } from '../../../../../lib/stripe.js'
+import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry.js'
 
 export async function PATCH(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   if (!stripe) return Response.json({ error: 'Not configured.' }, { status: 503 })
 
   const { id } = await params
@@ -44,6 +47,7 @@ export async function PATCH(request, { params }) {
       }, { expand: ['coupon'] })
       // Only deactivate the old code after the new one is confirmed created
       await stripe.promotionCodes.update(id, { active: false })
+      await logAdminAction(createAdminClient(), adminUser?.email, { action: 'promo.edit', entityType: 'promo_code', entityId: id, entityName: existing.code })
       return Response.json({ oldId: id, newCode })
     } catch (err) {
       captureException(err, { context: 'promo-code-edit', id })
@@ -55,6 +59,7 @@ export async function PATCH(request, { params }) {
   if (body.action === 'reactivate') {
     try {
       const updated = await stripe.promotionCodes.update(id, { active: true })
+      await logAdminAction(createAdminClient(), adminUser?.email, { action: 'promo.reactivate', entityType: 'promo_code', entityId: id, entityName: updated.code })
       return Response.json(updated)
     } catch (err) {
       captureException(err, { context: 'promo-code-reactivate', id })
@@ -65,6 +70,7 @@ export async function PATCH(request, { params }) {
   // Default: deactivate
   try {
     const updated = await stripe.promotionCodes.update(id, { active: false })
+    await logAdminAction(createAdminClient(), adminUser?.email, { action: 'promo.deactivate', entityType: 'promo_code', entityId: id, entityName: updated.code })
     return Response.json(updated)
   } catch (err) {
     captureException(err, { context: 'promo-code-deactivate', id })

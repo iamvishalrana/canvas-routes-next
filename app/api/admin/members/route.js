@@ -3,6 +3,7 @@ import { captureException, captureMessage } from '../../../../lib/sentry.js'
 import { attendanceKey } from '../../../../lib/eventMeta.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 
 function h(str) {
@@ -65,7 +66,8 @@ function inviteHtml({ firstName, tier, actionLink }) {
 }
 
 export async function GET(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const supabase = createAdminClient()
@@ -75,7 +77,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const { name, email, membership_status = 'pending', tier, dob_month, dob_day, dob_year, phone, instagram, cars } = await request.json()
@@ -159,5 +162,10 @@ export async function POST(request) {
     }).catch(err => captureException(err, { context: 'member-invite-email-network', email })))
   }
 
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'member.invite', entityType: 'member', entityId: invited.user.id,
+    entityName: name || email.toLowerCase().trim(),
+    metadata: { tier: tier || 'routes_member', status: membership_status },
+  })
   return Response.json({ success: true })
 }

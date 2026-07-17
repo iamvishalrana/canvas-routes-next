@@ -1,9 +1,11 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { captureMessage } from '../../../../../lib/sentry.js'
 
 export async function PATCH(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
@@ -35,11 +37,13 @@ export async function PATCH(request, { params }) {
   const supabase = createAdminClient()
   const { error } = await supabase.from('events').update(update).eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  await logAdminAction(supabase, adminUser?.email, { action: 'event.update', entityType: 'event', entityId: id, metadata: { fields: Object.keys(update).join(', ') } })
   return Response.json({ success: true })
 }
 
 export async function DELETE(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const supabase = createAdminClient()
@@ -65,6 +69,8 @@ export async function DELETE(request, { params }) {
     const { error: tokenErr } = await supabase.from('rsvp_tokens').delete().eq('event_name', ev.name)
     if (tokenErr) captureMessage('Orphaned rsvp_tokens after event delete', { error: tokenErr.message, eventName: ev.name })
   }
+
+  await logAdminAction(supabase, adminUser?.email, { action: 'event.delete', entityType: 'event', entityId: id, entityName: ev?.name || null })
 
   return Response.json({ success: true })
 }

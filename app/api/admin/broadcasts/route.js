@@ -1,5 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureMessage } from '../../../../lib/sentry'
 
@@ -66,7 +67,8 @@ function buildEmail({ from, recipient, subject, html, unsubPageUrl, unsubApiUrl 
 }
 
 export async function GET() {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('broadcasts')
@@ -81,7 +83,8 @@ export async function GET() {
 }
 
 export async function DELETE(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await request.json().catch(() => ({}))
   if (!id) return Response.json({ error: 'ID required.' }, { status: 400 })
   const supabase = createAdminClient()
@@ -94,7 +97,8 @@ export async function DELETE(request) {
 }
 
 export async function POST(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
@@ -254,6 +258,11 @@ export async function POST(request) {
   if (historyError) {
     captureMessage('Broadcast history insert failed', { error: historyError.message, audience, sent, failed })
   }
+
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'broadcast.send', entityType: 'broadcast', entityName: subject.trim(),
+    metadata: { audience, sent, failed },
+  })
 
   // Emails already went out — report the history failure but don't fail the response
   return Response.json({

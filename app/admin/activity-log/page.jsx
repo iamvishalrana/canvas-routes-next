@@ -10,7 +10,7 @@ export default async function ActivityLogPage() {
     .from('admin_activity_log')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(500)
 
   return <ActivityLogClient logs={logs || []} />
 }

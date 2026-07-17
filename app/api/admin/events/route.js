@@ -1,9 +1,11 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 
 export async function GET(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const supabase = createAdminClient()
@@ -15,7 +17,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const { name, date, date_display, location, description, type, registration_url, registration_opens_at, registration_closes_at, capacity, member_price, priority_window_end, registration_visibility, trip_length } = await request.json()
@@ -43,5 +46,9 @@ export async function POST(request) {
     trip_length: ['Same Day', 'Overnight', 'Multiple Nights'].includes(trip_length) ? trip_length : null,
   }).select().single()
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'event.create', entityType: 'event', entityId: data.id, entityName: data.name,
+    metadata: { date: data.date, type: data.type },
+  })
   return Response.json(data)
 }

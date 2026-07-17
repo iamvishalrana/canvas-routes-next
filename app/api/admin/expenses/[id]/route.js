@@ -1,10 +1,12 @@
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 import { deleteReceiptFile } from '../../../../../lib/deleteReceiptFile'
 
 export async function PATCH(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
@@ -51,7 +53,8 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const supabase = createAdminClient()
 
@@ -64,6 +67,7 @@ export async function DELETE(request, { params }) {
     return Response.json({ error: error.message }, { status: 500 })
   }
 
+  await logAdminAction(supabase, adminUser?.email, { action: 'expense.delete', entityType: 'expense', entityId: id })
   await deleteReceiptFile(supabase, expense?.receipt_url)
 
   return Response.json({ success: true })

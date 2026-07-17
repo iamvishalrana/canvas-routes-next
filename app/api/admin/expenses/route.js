@@ -1,9 +1,11 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
+import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
 
 export async function GET() {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('expenses')
@@ -14,7 +16,8 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   let body
   try { body = await request.json() } catch {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
@@ -49,5 +52,10 @@ export async function POST(request) {
     captureException(error, { context: 'admin-expenses-insert' })
     return Response.json({ error: error.message }, { status: 500 })
   }
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'expense.create', entityType: 'expense', entityId: data.id,
+    entityName: [vendor?.trim(), event_name?.trim()].filter(Boolean).join(' — ') || 'Expense',
+    metadata: { amount: amt, date: expense_date },
+  })
   return Response.json(data)
 }
