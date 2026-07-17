@@ -38,7 +38,7 @@ function htmlToPlainText(html) {
     .trim()
 }
 
-function buildEmail({ from, recipient, subject, html, unsubPageUrl, unsubApiUrl }) {
+function buildEmail({ from, recipient, subject, html, unsubPageUrl, unsubApiUrl, attachments }) {
   const unsubFooter = buildUnsubscribeFooter(recipient.email, unsubPageUrl)
   const resolvedHtml = html.includes('<!-- UNSUBSCRIBE_FOOTER -->')
     ? html.replace('<!-- UNSUBSCRIBE_FOOTER -->', unsubFooter)
@@ -55,6 +55,7 @@ function buildEmail({ from, recipient, subject, html, unsubPageUrl, unsubApiUrl 
     subject: personalise(subject),
     html: finalHtml,
     text: htmlToPlainText(finalHtml) + `\n\nUnsubscribe: ${unsubPageUrl}`,
+    ...(attachments?.length ? { attachments } : {}),
     headers: {
       // RFC 8058: List-Unsubscribe-Post requires the URL to accept a POST with
       // application/x-www-form-urlencoded — the API endpoint handles this.
@@ -102,7 +103,27 @@ export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
-  const { subject, html, body_html, audience, specificEmails, excludeEmails, fromEmail } = await request.json()
+  const { subject, html, body_html, audience, specificEmails, excludeEmails, fromEmail, attachments } = await request.json()
+
+  // Validate attachments: base64 payloads passed straight to Resend. The 3 MB
+  // original-size cap (≈4.1 MB base64) keeps the request under Vercel's limit.
+  const cleanAttachments = []
+  if (Array.isArray(attachments) && attachments.length > 0) {
+    if (attachments.length > 5) return Response.json({ error: 'Up to 5 attachments per email.' }, { status: 400 })
+    let totalB64 = 0
+    for (const a of attachments) {
+      if (!a || typeof a.filename !== 'string' || !a.filename.trim() || typeof a.content !== 'string' || !a.content) {
+        return Response.json({ error: 'Invalid attachment.' }, { status: 400 })
+      }
+      totalB64 += a.content.length
+      cleanAttachments.push({
+        filename: a.filename.replace(/[\\/]/g, '_').slice(0, 120),
+        content: a.content,
+        ...(typeof a.contentType === 'string' && a.contentType ? { content_type: a.contentType } : {}),
+      })
+    }
+    if (totalB64 > 4_400_000) return Response.json({ error: 'Attachments are limited to 3 MB total.' }, { status: 400 })
+  }
   const ALLOWED_FROM = ['info@canvasroutes.com', 'jerry@canvasroutes.com']
   const resolvedFrom = ALLOWED_FROM.includes(fromEmail) ? fromEmail : 'info@canvasroutes.com'
   const fromHeader = resolvedFrom === 'jerry@canvasroutes.com'
@@ -214,32 +235,65 @@ export async function POST(request) {
   let failed = 0
   const failedRecipients = []
 
-  // Use Resend's batch endpoint — one API call per 100 emails, no per-request rate limits
-  for (let i = 0; i < recipients.length; i += RESEND_BATCH_SIZE) {
-    const batch = recipients.slice(i, i + RESEND_BATCH_SIZE)
-    const payload = batch.map(recipient => {
-      const unsubPageUrl = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(recipient.email)}`
-      const unsubApiUrl  = `${SITE_URL}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}`
-      return buildEmail({ from: fromHeader, recipient, subject: subject.trim(), html, unsubPageUrl, unsubApiUrl })
-    })
-    try {
-      const res = await fetch('https://api.resend.com/emails/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify(payload),
-      })
-      if (res.ok) {
-        sent += batch.length
-      } else {
-        let reason = `HTTP ${res.status}`
-        try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
+  const emailFor = recipient => {
+    const unsubPageUrl = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(recipient.email)}`
+    const unsubApiUrl  = `${SITE_URL}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}`
+    return buildEmail({ from: fromHeader, recipient, subject: subject.trim(), html, unsubPageUrl, unsubApiUrl, attachments: cleanAttachments })
+  }
+
+  if (cleanAttachments.length > 0) {
+    // Resend's batch endpoint does NOT support attachments — send one email
+    // per recipient, two at a time under the API rate limit. Capped so the
+    // function can't run past its execution window.
+    if (recipients.length > 300) {
+      return Response.json({ error: `Attachment emails are limited to 300 recipients per send — this audience is ${recipients.length}. Remove the attachments or narrow the audience.` }, { status: 400 })
+    }
+    for (let i = 0; i < recipients.length; i += 2) {
+      const pair = recipients.slice(i, i + 2)
+      await Promise.all(pair.map(async recipient => {
+        try {
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+            body: JSON.stringify(emailFor(recipient)),
+          })
+          if (res.ok) { sent += 1 } else {
+            let reason = `HTTP ${res.status}`
+            try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
+            failed += 1
+            failedRecipients.push({ email: recipient.email, name: recipient.name || '', reason })
+          }
+        } catch (err) {
+          failed += 1
+          failedRecipients.push({ email: recipient.email, name: recipient.name || '', reason: err.message || 'Network error' })
+        }
+      }))
+      if (i + 2 < recipients.length) await new Promise(r => setTimeout(r, 600))
+    }
+  } else {
+    // Use Resend's batch endpoint — one API call per 100 emails, no per-request rate limits
+    for (let i = 0; i < recipients.length; i += RESEND_BATCH_SIZE) {
+      const batch = recipients.slice(i, i + RESEND_BATCH_SIZE)
+      const payload = batch.map(emailFor)
+      try {
+        const res = await fetch('https://api.resend.com/emails/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify(payload),
+        })
+        if (res.ok) {
+          sent += batch.length
+        } else {
+          let reason = `HTTP ${res.status}`
+          try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
+          failed += batch.length
+          for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
+        }
+      } catch (err) {
+        const reason = err.message || 'Network error'
         failed += batch.length
         for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
       }
-    } catch (err) {
-      const reason = err.message || 'Network error'
-      failed += batch.length
-      for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
     }
   }
 
@@ -261,7 +315,7 @@ export async function POST(request) {
 
   await logAdminAction(supabase, adminUser?.email, {
     action: 'broadcast.send', entityType: 'broadcast', entityName: subject.trim(),
-    metadata: { audience, sent, failed },
+    metadata: { audience, sent, failed, ...(cleanAttachments.length ? { attachments: cleanAttachments.length } : {}) },
   })
 
   // Emails already went out — report the history failure but don't fail the response

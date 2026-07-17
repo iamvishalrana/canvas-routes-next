@@ -90,20 +90,36 @@ const SIG_HTML = `
   </tr>
 </table>`
 
+// Mirrors the editor's rendering 1:1 in email clients. The editor shows
+// paragraphs 0.75em apart and a blank line where you pressed Enter twice —
+// the sent email must look identical, so paragraphs get the same margin
+// inline and empty paragraphs (which email clients collapse to nothing)
+// get a &nbsp; so the blank line survives.
 function processBodyHtml(html) {
   return html
-    .replace(/<ul(\s[^>]*)?>/gi, (_, a = '') => `<ul${a} style="margin:0 0 1em;padding-left:1.5em;list-style-type:disc;">`)
-    .replace(/<ol(\s[^>]*)?>/gi, (_, a = '') => `<ol${a} style="margin:0 0 1em;padding-left:1.5em;list-style-type:decimal;">`)
-    .replace(/<li(\s[^>]*)?>/gi, (_, a = '') => `<li${a} style="margin:0 0 0.35em;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#444;">`)
-    .replace(/<blockquote(\s[^>]*)?>/gi, (_, a = '') => `<blockquote${a} style="margin:0 0 1em;padding:0.5em 1em;border-left:3px solid #c5a882;color:#666;">`)
-    .replace(/<h1(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.75em;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:#1a1a1a;line-height:1.3;">`)
+    // Blank lines typed in the editor are empty <p> tags — give them content
+    // or Gmail/Outlook collapse them to zero height
+    .replace(/<p([^>]*)>(?:\s|&nbsp;|<br[^>]*\/?>)*<\/p>/gi, '<p$1>&nbsp;</p>')
+    // Style plain and align-styled paragraphs to match the editor exactly.
+    // Runs before the h1-h3 conversions so headings keep their own styles.
+    .replace(/<p>/gi, '<p style="margin:0 0 0.75em;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#333;">')
+    .replace(/<p style="(?!margin:0 0 0\.75em)/gi, '<p style="margin:0 0 0.75em;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#333;')
+    .replace(/<ul(\s[^>]*)?>/gi, (_, a = '') => `<ul${a} style="margin:0 0 0.75em;padding-left:1.5em;list-style-type:disc;">`)
+    .replace(/<ol(\s[^>]*)?>/gi, (_, a = '') => `<ol${a} style="margin:0 0 0.75em;padding-left:1.5em;list-style-type:decimal;">`)
+    .replace(/<li(\s[^>]*)?>/gi, (_, a = '') => `<li${a} style="margin:0 0 0.35em;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#333;">`)
+    .replace(/<blockquote(\s[^>]*)?>/gi, (_, a = '') => `<blockquote${a} style="margin:0 0 0.75em;padding:0.5em 1em;border-left:3px solid #ddd;color:#666;">`)
+    .replace(/<h1(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.75em;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;color:#1a1a1a;line-height:1.3;">`)
     .replace(/<\/h1>/gi, '</p>')
-    .replace(/<h2(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.65em;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:400;color:#1a1a1a;line-height:1.3;">`)
+    .replace(/<h2(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.7em;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#1a1a1a;line-height:1.3;">`)
     .replace(/<\/h2>/gi, '</p>')
-    .replace(/<h3(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.5em;font-family:Arial,sans-serif;font-size:15px;font-weight:600;color:#1a1a1a;">`)
+    .replace(/<h3(\s[^>]*)?>/gi, (_, a = '') => `<p${a} style="margin:0 0 0.6em;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#1a1a1a;">`)
     .replace(/<\/h3>/gi, '</p>')
 }
 
+// Plain, personal-looking email: white background, no boxed layout, no
+// coloured header/footer — just the message with the signature underneath,
+// like an email typed by hand. (The old template put everything in a beige
+// box with a dark logo header, which read as dated marketing.)
 function buildHtml(bodyHtml) {
   const processed = processBodyHtml(bodyHtml)
   return `<!DOCTYPE html>
@@ -114,46 +130,26 @@ function buildHtml(bodyHtml) {
   <meta name="color-scheme" content="light">
   <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 </head>
-<body style="margin:0;padding:0;background-color:#F5F1EC;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
-  <tr><td align="center" style="padding:32px 16px 48px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
-
-      <!-- Header -->
-      <tr><td style="background:#0F1E14;padding:32px 40px 28px;">
-        <img src="https://canvasroutes.com/white-outline.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:20px;opacity:0.92;" />
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
-      </td></tr>
-
-      <!-- Body -->
+<body style="margin:0;padding:0;background-color:#ffffff;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ffffff;">
+  <tr><td align="center">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;">
       <tr>
-        <td style="background:#ffffff;padding:36px 40px 8px;">
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.75;color:#444;">${processed}</div>
+        <td style="padding:28px 24px 4px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#333;">${processed}</div>
         </td>
       </tr>
-
-      <!-- Signature -->
       <tr>
-        <td style="background:#ffffff;padding:0 40px 8px;">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#ebebeb;"> </td></tr>
-          </table>
+        <td style="padding:0 24px 4px;">
           ${SIG_HTML}
         </td>
       </tr>
-
       <!-- Unsubscribe — replaced per-recipient by broadcasts route.js -->
       <tr>
-        <td style="background:#ffffff;padding:0 40px 32px;">
+        <td style="padding:0 24px 32px;">
           <!-- UNSUBSCRIBE_FOOTER -->
         </td>
       </tr>
-
-      <!-- Footer -->
-      <tr><td style="background:#0F1E14;padding:16px 40px;">
-        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.3);">&copy; 2026 Canvas Routes. Montreal, QC. &nbsp;&middot;&nbsp; <a href="https://canvasroutes.com" style="color:rgba(197,168,130,0.4);text-decoration:none;">canvasroutes.com</a></p>
-      </td></tr>
-
     </table>
   </td></tr>
 </table>
@@ -268,8 +264,9 @@ function PreviewPanel({ bodyHtml, bodyEmpty, maxHeight, subject, fromEmail }) {
           </p>
         ) : (
           <div
-            style={{ fontSize: '15px', lineHeight: '1.75', color: '#444', fontFamily: 'Arial,sans-serif', marginBottom: '20px' }}
-            dangerouslySetInnerHTML={{ __html: bodyHtml }}
+            style={{ fontSize: '15px', lineHeight: '1.7', color: '#333', fontFamily: 'Arial,sans-serif', marginBottom: '20px' }}
+            /* Same processed HTML as the sent email — the preview IS the email */
+            dangerouslySetInnerHTML={{ __html: processBodyHtml(bodyHtml) }}
           />
         )}
         <Signature />
@@ -398,6 +395,9 @@ export default function BroadcastsClient() {
   const [testEmail, setTestEmail]               = useState('')
   const [testSending, setTestSending]           = useState(false)
   const [testResult, setTestResult]             = useState(null)
+  const [attachments, setAttachments]           = useState([]) // { filename, contentType, size, content(base64) }
+  const [attachErr, setAttachErr]               = useState(null)
+  const attachRef                               = useRef(null)
   const [previewExpanded, setPreviewExpanded]   = useState(false)
   const [savedTemplates, setSavedTemplates]     = useState([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
@@ -568,6 +568,33 @@ export default function BroadcastsClient() {
     return () => ctrl.abort()
   }, [audience])
 
+  // Attachments: read as base64 for the Resend API. 3 MB total keeps the
+  // request comfortably under Vercel's 4.5 MB body limit after base64 growth.
+  const MAX_ATTACH_BYTES = 3 * 1024 * 1024
+  const fmtSize = b => b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`
+  const attachmentPayload = () => attachments.map(({ filename, contentType, content }) => ({ filename, contentType, content }))
+
+  async function handleAttach(e) {
+    const files = Array.from(e.target.files || [])
+    if (attachRef.current) attachRef.current.value = ''
+    if (!files.length) return
+    setAttachErr(null)
+    const current = [...attachments]
+    for (const f of files) {
+      if (current.length >= 5) { setAttachErr('Up to 5 attachments per email.'); break }
+      if (current.reduce((s, a) => s + a.size, 0) + f.size > MAX_ATTACH_BYTES) { setAttachErr('Attachments are limited to 3 MB total.'); break }
+      const content = await new Promise(resolve => {
+        const r = new FileReader()
+        r.onload = () => resolve(String(r.result).split(',')[1] || null)
+        r.onerror = () => resolve(null)
+        r.readAsDataURL(f)
+      })
+      if (!content) { setAttachErr(`Could not read ${f.name}.`); continue }
+      current.push({ filename: f.name, contentType: f.type || 'application/octet-stream', size: f.size, content })
+    }
+    setAttachments(current)
+  }
+
   async function sendTest() {
     const email = testEmail.trim()
     if (!email.includes('@') || !email.includes('.')) return
@@ -577,7 +604,7 @@ export default function BroadcastsClient() {
       const res = await fetch('/api/admin/broadcasts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: subject.trim() || '(Test)', html: buildHtml(bodyHtml), body_html: bodyHtml, audience: 'specific_emails', specificEmails: [email], fromEmail }),
+        body: JSON.stringify({ subject: subject.trim() || '(Test)', html: buildHtml(bodyHtml), body_html: bodyHtml, audience: 'specific_emails', specificEmails: [email], fromEmail, ...(attachments.length > 0 ? { attachments: attachmentPayload() } : {}) }),
       })
       const data = await res.json().catch(() => ({}))
       setTestResult(res.ok ? 'sent' : (data.error || 'Failed.'))
@@ -615,6 +642,7 @@ export default function BroadcastsClient() {
           fromEmail,
           ...(audience === 'specific_emails' ? { specificEmails: parsedEmails } : {}),
           ...(excludeChipEmails.length > 0 ? { excludeEmails: excludeChipEmails } : {}),
+          ...(attachments.length > 0 ? { attachments: attachmentPayload() } : {}),
         }),
       })
       const data = await res.json()
@@ -625,6 +653,8 @@ export default function BroadcastsClient() {
       setBodyHtml('')
       setChipEmails([])
       setExcludeChipEmails([])
+      setAttachments([])
+      setAttachErr(null)
       setFromEmail('info@canvasroutes.com')
       setAudience('specific_emails')
       try { localStorage.removeItem(DRAFT_KEY) } catch {}  // 4. clear draft on send
@@ -686,9 +716,14 @@ export default function BroadcastsClient() {
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
       <style>{`
         .tiptap-editor { border: 0.5px solid rgba(0,0,0,0.15); background: #fff; }
-        .tiptap-editor p { margin: 0 0 0.5em; }
         .tiptap-editor:focus-within { border-color: rgba(0,0,0,0.3); }
-        .tiptap-editor .ProseMirror { min-height: 160px; }
+        /* Editor typography mirrors the sent email exactly (Arial 15px,
+           1.7 line-height, 0.75em paragraph gap) so what you type is what
+           the recipient sees — including blank lines between paragraphs */
+        .tiptap-editor .ProseMirror { min-height: 160px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.7; color: #333; }
+        .tiptap-editor p { margin: 0 0 0.75em; }
+        .tiptap-editor ul, .tiptap-editor ol { margin: 0 0 0.75em; padding-left: 1.5em; }
+        .tiptap-editor li { margin: 0 0 0.35em; }
         /* Comfortable tap targets on touch devices — the 24px toolbar buttons
            are precise enough with a mouse but fiddly with a thumb */
         @media (hover: none) {
@@ -1085,6 +1120,35 @@ export default function BroadcastsClient() {
                           <span style={{ flexShrink: 0, marginLeft: '0.75rem' }}>{getWordCount(bodyHtml)} words</span>
                         )}
                       </div>
+                    </div>
+
+                    {/* Attachments */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
+                        <L style={{ margin: 0 }}>Attachments</L>
+                        <span style={{ fontSize: '10px', color: '#ccc' }}>up to 5 files · 3 MB total</span>
+                      </div>
+                      <input ref={attachRef} type="file" multiple style={{ display: 'none' }} onChange={handleAttach} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {attachments.map((a, i) => (
+                          <span key={`${a.filename}-${i}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.04)', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '6px', padding: '4px 4px 4px 9px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#444', maxWidth: '100%' }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>📎 {a.filename}</span>
+                            <span style={{ color: '#aaa', flexShrink: 0 }}>{fmtSize(a.size)}</span>
+                            <button onClick={() => { setAttachments(p => p.filter((_, idx) => idx !== i)); setAttachErr(null) }} aria-label={`Remove ${a.filename}`}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', color: '#aaa', fontSize: '15px', lineHeight: 1, display: 'flex', alignItems: 'center' }}>×</button>
+                          </span>
+                        ))}
+                        <button type="button" onClick={() => attachRef.current?.click()}
+                          style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 12px', minHeight: '30px', border: '0.5px dashed rgba(0,0,0,0.25)', borderRadius: '6px', background: 'none', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}>
+                          + Attach file
+                        </button>
+                      </div>
+                      {attachErr && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.35rem' }}>{attachErr}</div>}
+                      {attachments.length > 0 && (
+                        <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.35rem' }}>
+                          Attachment sends go out one at a time — limited to 300 recipients per send.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
