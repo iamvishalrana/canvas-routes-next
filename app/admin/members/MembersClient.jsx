@@ -15,6 +15,18 @@ import MemberProfilePreview from '../../../components/MemberProfilePreview'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import { attendanceKey, normalizeEventName } from '../../../lib/eventMeta.js'
 
+// ─── Tier chip ────────────────────────────────────────────────────────────────
+
+function TierChip({ tier }) {
+  if (!tier) return null
+  const ic = tier === 'inner_circle'
+  return (
+    <span style={{ fontSize: '9px', letterSpacing: '0.13em', textTransform: 'uppercase', padding: '2px 7px', whiteSpace: 'nowrap', border: ic ? '0.5px solid rgba(197,168,130,0.6)' : '0.5px solid rgba(0,0,0,0.15)', color: ic ? '#8A6535' : '#999', background: ic ? 'rgba(197,168,130,0.08)' : 'transparent' }}>
+      {ic ? 'Inner Circle' : 'Routes Member'}
+    </span>
+  )
+}
+
 // ─── Member Expanded Panel ────────────────────────────────────────────────────
 
 function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingNote, noteValue, setEditingNote, setNoteValue, onSaveNote, noteErr }) {
@@ -47,11 +59,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</span>
             <Badge status={m.membership_status} />
-            {m.tier && (
-              <span style={{ fontSize: '9px', letterSpacing: '0.13em', textTransform: 'uppercase', padding: '2px 7px', border: m.tier === 'inner_circle' ? '0.5px solid rgba(197,168,130,0.6)' : '0.5px solid rgba(0,0,0,0.15)', color: m.tier === 'inner_circle' ? '#c5a882' : '#999', background: m.tier === 'inner_circle' ? 'rgba(197,168,130,0.08)' : 'transparent' }}>
-                {m.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'}
-              </span>
-            )}
+            <TierChip tier={m.tier} />
           </div>
           {memberSinceStr && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.2rem' }}>Member since {memberSinceStr}</div>}
         </div>
@@ -200,7 +208,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
 
 // ─── Members Client ───────────────────────────────────────────────────────────
 
-export default function MembersClient({ initialMembers, total, page, pageSize }) {
+export default function MembersClient({ initialMembers, total, page, pageSize, statusCounts }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [members, setMembers] = useState(initialMembers)
@@ -417,17 +425,27 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
     setTimeout(() => setInviteSuccess(false), 4000)
   }
 
+  // String() guard: cars[].year (and other garage fields) can arrive as
+  // numbers from the portal — calling .toLowerCase() on them crashed the page
+  const has = (v, q) => String(v ?? '').toLowerCase().includes(q)
+  const q = search.toLowerCase()
   const filtered = members
     .filter(m =>
       (statusFilter === 'all' || m.membership_status === statusFilter) &&
-      (!search || [m.name, m.email, m.membership_status, m.phone, m.car_make, m.car_model, m.car_year, m.instagram].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))) || (m.cars || []).some(c => [c.make, c.model, c.year, c.paint, c.license_plate].some(v => v?.toLowerCase().includes(search.toLowerCase()))))
+      (!search
+        || [m.name, m.email, m.membership_status, m.phone, m.car_make, m.car_model, m.car_year, m.instagram,
+            m.tier === 'inner_circle' ? 'inner circle' : 'routes member'].some(v => has(v, q))
+        || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
+        || (m.cars || []).some(c => [c.make, c.model, c.year, c.paint, c.license_plate].some(v => has(v, q))))
     )
     .sort((a, b) => {
       if (sort === 'name_az') return (a.name || '').localeCompare(b.name || '')
       if (sort === 'name_za') return (b.name || '').localeCompare(a.name || '')
       if (sort === 'oldest') return new Date(a.join_date || a.created_at) - new Date(b.join_date || b.created_at)
-      if (sort === 'member_num_asc') return (parseInt(a.membership_number || '9999')) - (parseInt(b.membership_number || '9999'))
-      if (sort === 'member_num_desc') return (parseInt(b.membership_number || '9999')) - (parseInt(a.membership_number || '9999'))
+      // `|| 9999` AFTER parseInt — non-numeric values produce NaN, and any NaN
+      // comparison made the whole sort order undefined
+      if (sort === 'member_num_asc') return (parseInt(a.membership_number, 10) || 9999) - (parseInt(b.membership_number, 10) || 9999)
+      if (sort === 'member_num_desc') return (parseInt(b.membership_number, 10) || 9999) - (parseInt(a.membership_number, 10) || 9999)
       return new Date(b.join_date || b.created_at) - new Date(a.join_date || a.created_at) // newest
     })
 
@@ -461,8 +479,16 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
     }).catch(() => {})
   }
 
-  const counts = { active: 0, pending: 0, suspended: 0, expired: 0 }
-  members.forEach(m => { if (counts[m.membership_status] !== undefined) counts[m.membership_status]++ })
+  // Global counts from the server; fall back to page-scoped counting only if
+  // the prop is missing (old prerendered payloads mid-deploy)
+  const counts = statusCounts || (() => {
+    const c = { active: 0, pending: 0, suspended: 0, expired: 0, inner_circle: 0 }
+    members.forEach(m => {
+      if (c[m.membership_status] !== undefined) c[m.membership_status]++
+      if (m.tier === 'inner_circle') c.inner_circle++
+    })
+    return c
+  })()
 
   if (forbidden) return (
     <div style={{ padding: '2rem', background: '#fff', border: '0.5px solid rgba(147,51,62,0.2)', fontSize: '13px', color: '#93333E' }}>
@@ -477,12 +503,13 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Members</h1>
       </div>
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
         {[
           { label: 'Total', value: total, color: '#1a1a1a' },
           { label: 'Active', value: counts.active, color: '#3B6B2F' },
           { label: 'Pending', value: counts.pending, color: '#8A6535' },
           { label: 'Suspended', value: counts.suspended, color: '#93333E' },
+          { label: 'Inner Circle', value: counts.inner_circle ?? 0, color: '#c5a882' },
         ].map(s => (
           <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.4rem' }}>
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -791,6 +818,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                             {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '1px' }}>{m.notes}</div>}
                           </div>
                           <Badge status={m.membership_status} />
+                          <TierChip tier={m.tier} />
                         </div>
                         <div style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                           <KebabMenu items={[
@@ -857,6 +885,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize })
                             #{String(m.membership_number).padStart(3, '0')}
                           </span>
                         )}
+                        <TierChip tier={m.tier} />
                       </div>
                       {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{m.notes}</div>}
                     </div>

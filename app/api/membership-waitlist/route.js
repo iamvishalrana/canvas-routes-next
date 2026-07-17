@@ -295,6 +295,11 @@ export async function POST(request) {
         error: upsertErr.message, code: upsertErr.code, details: upsertErr.details, hint: upsertErr.hint,
         email: normalEmail, tier, paymentIntentId,
       })
+      // Skip the emails too: with the row unwritten we can't claim the dedup
+      // gate, and the webhook rescue (which Stripe retries for up to 72h) will
+      // send its own applicant + admin emails — sending here as well would
+      // double-email the applicant in exactly this failure mode.
+      if (paymentIntentId) alreadyNotified = true
     }
 
     // Atomic dedup gate — exactly one caller per PI claims the notification.

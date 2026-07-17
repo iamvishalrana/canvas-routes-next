@@ -1,7 +1,7 @@
 import { after } from 'next/server'
 import { deviceType } from '../../../lib/deviceType'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
-import { captureException } from '../../../lib/sentry.js'
+import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
@@ -219,7 +219,7 @@ export async function POST(request) {
               ['PI',             pi.id],
             ]),
           }),
-        }).catch(err => captureException(err, { context: 'htm-register-admin-notify', email: normalEmail }))
+        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — htm-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'htm-register-admin-notify', email: normalEmail }))
       )
     }
 

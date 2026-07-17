@@ -2,7 +2,7 @@ import { after } from 'next/server'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { stripe } from '../../../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
-import { captureException } from '../../../../../../lib/sentry.js'
+import { captureException, captureMessage } from '../../../../../../lib/sentry.js'
 import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 import { logAdminAction } from '../../../../../../lib/adminAudit.js'
@@ -117,7 +117,7 @@ export async function POST(request, { params }) {
           subject: `Your Canvas Routes membership is approved, ${firstName}`,
           text: `Hey ${firstName},\n\nYour ${tierLabel} membership application has been approved and your payment of ${amount} has been processed.\n\nWe're setting up your account now — you'll receive a separate email shortly with your login details and everything you need to get started.\n\nWelcome to Canvas Routes.\n\nJerry`,
         }),
-      }).catch(err => captureException(err, { context: 'admin-capture-membership-email', piId })),
+      }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — admin-capture-membership-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'admin-capture-membership-email', piId })),
     ]))
   }
 
@@ -143,7 +143,7 @@ export async function POST(request, { params }) {
           html: buildWtetConfirmHtml(firstName, amount, checkinUrl, eventLabel),
           text: `Hey ${firstName},\n\nYour payment of ${amount} for ${eventLabel} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
         }),
-      }).catch(err => captureException(err, { context: 'admin-capture-confirm-email', piId })),
+      }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — admin-capture-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'admin-capture-confirm-email', piId })),
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -161,7 +161,7 @@ export async function POST(request, { params }) {
             ['PI',        piId],
           ]),
         }),
-      }).catch(err => captureException(err, { context: 'admin-capture-admin-email', piId })),
+      }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — admin-capture-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'admin-capture-admin-email', piId })),
     ]))
   }
 

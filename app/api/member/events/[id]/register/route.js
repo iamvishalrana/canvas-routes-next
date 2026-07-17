@@ -3,7 +3,7 @@ import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { stripe } from '../../../../../../lib/stripe.js'
 import { checkRateLimit } from '../../../../../../lib/rateLimit'
-import { captureException } from '../../../../../../lib/sentry'
+import { captureException, captureMessage } from '../../../../../../lib/sentry'
 import { buildEventConfirmHtml } from '../../../../../../lib/eventConfirmEmail'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail'
 
@@ -176,7 +176,7 @@ async function claimAndSendEmails({ admin, ev, eventId, user, member, isFree, am
         html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree, amountPaid, eventId, date: ev.date || null }),
         text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}${!isFree ? `. Payment: ${amountLabel}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
       }),
-    }).catch(err => captureException(err, { context: 'event-register-member-email', eventId })),
+    }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — event-register-member-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'event-register-member-email', eventId })),
     fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -192,6 +192,6 @@ async function claimAndSendEmails({ admin, ev, eventId, user, member, isFree, am
           ['Payment', amountLabel],
         ]),
       }),
-    }).catch(err => captureException(err, { context: 'event-register-admin-email', eventId })),
+    }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — event-register-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'event-register-admin-email', eventId })),
   ]))
 }

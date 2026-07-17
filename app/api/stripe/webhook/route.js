@@ -125,7 +125,7 @@ export async function POST(request) {
                     html: buildEventConfirmHtml({ firstName, eventName: evRow.name, dateDisplay, location: evRow.location || null, isFree: false, amountPaid, eventId: event_id, date: evRow.date || null }),
                     text: `Hey ${firstName},\n\nYou're registered for ${evRow.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${evRow.location ? ` at ${evRow.location}` : ''}. Payment: $${(amountPaid / 100).toFixed(2)} CAD.\n\nSee you there,\nJerry\nCanvas Routes`,
                   }),
-                }).catch(err => captureException(err, { context: 'webhook-event-reg-member-email', piId: pi.id })),
+                }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — webhook-event-reg-member-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'webhook-event-reg-member-email', piId: pi.id })),
                 fetch('https://api.resend.com/emails', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -141,7 +141,7 @@ export async function POST(request) {
                       ['Payment', `$${(amountPaid / 100).toFixed(2)} CAD`],
                     ]),
                   }),
-                }).catch(err => captureException(err, { context: 'webhook-event-reg-admin-email', piId: pi.id })),
+                }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — webhook-event-reg-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'webhook-event-reg-admin-email', piId: pi.id })),
               ]))
             }
           }
@@ -222,7 +222,7 @@ export async function POST(request) {
                   html: buildWtetConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
                   text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                 }),
-              }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),
+              }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),
             ])
           }
         }
@@ -310,7 +310,7 @@ export async function POST(request) {
                 html: buildWtetHoldHtml(firstName, amountFmt, eventLabel),
                 text: `Hey ${firstName},\n\nWe've received your registration for ${eventLabel}.\n\nYour ${amountFmt} hold is placed — your card has not been charged. We review every registration personally. If you're confirmed, the charge goes through and you'll receive full event details. If not, the hold is released with no charge.\n\nAdd jerry@canvasroutes.com to your contacts so our reply gets through.\n\nQuestions? Reply to this email.\n\nSee you on the road,\nJerry\nCanvas Routes`,
               }),
-            }).catch(err => captureException(err, { context: 'road-trip-hold-email', email: normalEmail })),
+            }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-hold-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-hold-email', email: normalEmail })),
             // Admin notification — new non-member registration awaiting review
             fetch('https://api.resend.com/emails', {
               method: 'POST',
@@ -337,7 +337,7 @@ export async function POST(request) {
                   ['PI',             pi.id],
                 ]),
               }),
-            }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
+            }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-hold-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
           ]))
         }
 
@@ -399,7 +399,7 @@ export async function POST(request) {
                   ['PI',          pi.id],
                 ]),
               }),
-            }).catch(err => captureException(err, { context: 'membership-hold-admin-email-rescue', email: normalEmail })),
+            }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — membership-hold-admin-email-rescue`, { status: r.status }) }).catch(err => captureException(err, { context: 'membership-hold-admin-email-rescue', email: normalEmail })),
           ]))
         }
         break

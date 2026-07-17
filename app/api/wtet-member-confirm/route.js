@@ -2,7 +2,7 @@ import { after } from 'next/server'
 import { createClient } from '../../../lib/supabase/server'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
-import { captureException } from '../../../lib/sentry.js'
+import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
@@ -83,7 +83,7 @@ export async function POST(request) {
         html: buildWtetConfirmHtml(firstName, amount, checkinUrl, EVENT_NAME),
         text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
       }),
-    }).catch(err => captureException(err, { context: 'wtet-member-confirm-member-email', email: normalEmail })),
+    }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — wtet-member-confirm-member-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'wtet-member-confirm-member-email', email: normalEmail })),
     fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -104,7 +104,7 @@ export async function POST(request) {
           ['PI',             pi.id],
         ]),
       }),
-    }).catch(err => captureException(err, { context: 'wtet-member-confirm-admin-email', email: normalEmail })),
+    }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — wtet-member-confirm-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'wtet-member-confirm-admin-email', email: normalEmail })),
   ]))
 
   return Response.json({ ok: true })
