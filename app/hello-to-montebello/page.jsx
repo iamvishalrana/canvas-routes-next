@@ -606,6 +606,20 @@ export default function HelloToMontebelloPage() {
           pointer-events: none;
         }
 
+        /* ── Details register CTA – periodic soft streak (reuses the date-badge
+             timing so the two never pulse at once) ── */
+        .htm-details-cta { position: relative; overflow: hidden; }
+        .htm-details-cta::after {
+          content: '';
+          position: absolute;
+          top: -20%; left: -110%;
+          width: 55%; height: 140%;
+          background: linear-gradient(105deg, transparent 15%, rgba(245,241,236,0.16) 50%, transparent 85%);
+          transform: skewX(-12deg);
+          animation: htm-date-streak 5.5s ease-in-out 3s infinite;
+          pointer-events: none;
+        }
+
         /* ── Prevent iOS input zoom (font-size must be ≥16px) — also matters in
              Instagram/Facebook in-app browsers, which inherit Safari/Chrome's
              zoom-on-focus behavior. ── */
@@ -714,6 +728,7 @@ export default function HelloToMontebelloPage() {
 
       {/* STATS BAR */}
       <div style={{background:'#F5F1EC',borderBottom:'0.5px solid rgba(0,0,0,0.07)'}}>
+        <FadeUp>
         <div className="htm-stats-bar" style={{maxWidth:'860px',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'0',padding:'1.5rem 3rem'}}>
           {[
             { num:'~300', unit:'km' },
@@ -732,6 +747,7 @@ export default function HelloToMontebelloPage() {
             </React.Fragment>
           ))}
         </div>
+        </FadeUp>
       </div>
 
       {/* DETAILS */}

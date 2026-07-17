@@ -12,7 +12,7 @@ const PASSWORD = 'montebello'
 const STOPS = [
   { label: 'Angrignon Mall — outside the SAQ', note: '8:00 AM · LaSalle', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal', lat: 45.4487767, lng: -73.6174344 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
-  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop', tag: 'Included in the fee', href: null, lat: 45.68, lng: -75.05 },
+  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: null, lat: 45.68, lng: -75.05 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Included in the fee', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
   { label: 'Chocomotive', note: 'Montebello · Chocolate workshop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6514, lng: -74.9438 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
@@ -377,6 +377,10 @@ export default function HelloToMontebelloItineraryPage() {
 
         .scroll-reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
+        /* Per-stop stagger inside the timeline — children fade in sequence once
+           the section reveals (inline transitionDelay sets the cascade) */
+        .scroll-reveal .itin-stop { opacity: 0; transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .scroll-reveal.revealed .itin-stop { opacity: 1; transform: translateY(0); }
 
         .car-wrap { animation: car-nudge 10s ease-in-out infinite; }
         .car-wrap:hover, .car-wrap:focus-within { animation-play-state: paused; }
@@ -461,7 +465,7 @@ export default function HelloToMontebelloItineraryPage() {
             <p style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', margin: 0 }}>Tap a stop to open in Maps</p>
           </div>
           {STOPS.map((stop, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: '1rem', background: stop.feature ? 'rgba(197,168,130,0.08)' : 'transparent', margin: stop.feature ? '0 -1.25rem' : 0, padding: stop.feature ? '0.5rem 1.25rem' : 0 }}>
+            <div key={i} className="itin-stop" style={{ display: 'flex', alignItems: 'stretch', gap: '1rem', transitionDelay: `${0.15 + i * 0.09}s`, background: stop.feature ? 'rgba(197,168,130,0.08)' : 'transparent', margin: stop.feature ? '0 -1.25rem' : 0, padding: stop.feature ? '0.5rem 1.25rem' : 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '14px' }}>
                 <div style={{
                   width: stop.start || stop.end || stop.feature ? '10px' : '8px',
@@ -518,7 +522,7 @@ export default function HelloToMontebelloItineraryPage() {
           <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>The Drive</h2>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {DRIVE_BULLETS.map(({ emoji, text }, i) => (
-              <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+              <li key={i} className="itin-stop" style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', transitionDelay: `${0.12 + i * 0.08}s` }}>
                 <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>{emoji}</span>
                 <span style={{ fontSize: '14px', color: '#444', lineHeight: '1.75' }}>{text}</span>
               </li>
