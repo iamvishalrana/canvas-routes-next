@@ -37,6 +37,10 @@ const CHECKS = {
   route_interest: [
     'route_id', 'email', 'name', 'phone', 'car', 'preferences', 'is_member',
   ],
+  // Admin announcements + members-portal dashboard (pinned added 2026-07-17).
+  announcements: [
+    'id', 'title', 'content', 'published', 'audience', 'pinned', 'created_at',
+  ],
 }
 
 export const dynamic = 'force-dynamic'

@@ -48,9 +48,11 @@ export default async function DashboardPage() {
   if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
-  const [{ data: member }, { data: announcements }, { data: events }, { data: application }, { data: eventRegs }, { data: routes }, { data: routeInterestRows }] = await Promise.all([
+  const [{ data: member }, { data: announcementsRaw }, { data: events }, { data: application }, { data: eventRegs }, { data: routes }, { data: routeInterestRows }] = await Promise.all([
     admin.from('members').select('*').eq('id', user.id).maybeSingle(),
-    supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(4),
+    // Fetch extra then sort pinned-first in JS — ordering by the pinned column
+    // in SQL would break the whole query until the migration runs
+    supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(12),
     admin.from('events').select('*').order('date', { ascending: true }),
     user.email
       ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle()
@@ -59,6 +61,12 @@ export default async function DashboardPage() {
     admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type').eq('is_active', true).eq('launched', false).order('sort_order', { ascending: true }),
     admin.from('route_interest').select('route_id, email'),
   ])
+
+  // Pinned announcements surface first; stable sort keeps newest-first within
+  // each group. Slice back down to the 4 the dashboard shows.
+  const announcements = (announcementsRaw || [])
+    .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+    .slice(0, 4)
 
   // Live interest counts + "have I already added my name" per route
   const routeInterestCounts = {}

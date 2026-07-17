@@ -109,6 +109,14 @@ const AUDIENCE_OPTIONS = [
 export default function AnnouncementsClient() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  const [pinning, setPinning] = useState(null)
+  const [previewItem, setPreviewItem] = useState(null)
   const [form, setForm] = useState({ title: '', content: '', published: false, audience: 'all' })
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState(null)
@@ -180,6 +188,34 @@ export default function AnnouncementsClient() {
     finally { setPublishing(null) }
   }
 
+  async function togglePin(item) {
+    if (pinning === item.id) return
+    setPinning(item.id)
+    const newPinned = !item.pinned
+    setItems(prev => prev.map(a => a.id === item.id ? { ...a, pinned: newPinned } : a))
+    try {
+      const res = await fetch(`/api/admin/announcements/${item.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pinned: newPinned }),
+      })
+      if (!res.ok) {
+        setItems(prev => prev.map(a => a.id === item.id ? { ...a, pinned: item.pinned } : a))
+        const d = await res.json().catch(() => ({}))
+        setPublishError(p => ({ ...p, [item.id]: d.error || 'Could not pin — has the pinned migration been run?' }))
+      }
+    } catch {
+      setItems(prev => prev.map(a => a.id === item.id ? { ...a, pinned: item.pinned } : a))
+      setPublishError(p => ({ ...p, [item.id]: 'Network error.' }))
+    }
+    finally { setPinning(null) }
+  }
+
+  // Prefill the New Announcement form from an existing one
+  function duplicate(item) {
+    setForm({ title: item.title, content: item.content, published: false, audience: item.audience || 'all' })
+    setPostError(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function saveEdit() {
     setSaving(true); setSaveError(null)
     try {
@@ -233,7 +269,7 @@ export default function AnnouncementsClient() {
     const matchesSearch = !announcementSearch || (a.title || '').toLowerCase().includes(announcementSearch.toLowerCase()) || (a.content || '').toLowerCase().includes(announcementSearch.toLowerCase())
     const matchesFilter = announcementFilter === 'all' || (announcementFilter === 'published' ? a.published : !a.published)
     return matchesSearch && matchesFilter
-  })
+  }).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)) // pinned first; stable sort keeps newest-first within each group
 
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
@@ -275,8 +311,8 @@ export default function AnnouncementsClient() {
       </div>
 
       {!loading && items.length > 0 && (
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center' }}>
-          <input style={{ ...inp, maxWidth: '260px' }} placeholder="Search announcements…" value={announcementSearch} onChange={e => setAnnouncementSearch(e.target.value)} />
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input style={{ ...inp, maxWidth: '260px', flex: '1 1 160px' }} placeholder="Search announcements…" value={announcementSearch} onChange={e => setAnnouncementSearch(e.target.value)} />
           <div style={{ position: 'relative' }}>
             <select style={{ ...sel, width: 'auto', paddingRight: '2rem' }} value={announcementFilter} onChange={e => setAnnouncementFilter(e.target.value)}>
               <option value="all">All</option>
@@ -327,10 +363,16 @@ export default function AnnouncementsClient() {
                 </div>
               ) : (
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
+                  {/* Stacks on mobile — content + action column side-by-side squeezed both at 390px */}
+                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'flex-start', gap: isMobile ? '0.85rem' : '1.5rem' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#1a1a1a' }}>{item.title}</div>
+                        {item.pinned && (
+                          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(138,101,53,0.45)', background: 'rgba(197,168,130,0.14)', color: '#8A6535' }}>
+                            ★ Pinned
+                          </span>
+                        )}
                         <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: item.published ? '0.5px solid rgba(59,107,47,0.3)' : '0.5px solid rgba(0,0,0,0.12)', background: item.published ? 'rgba(59,107,47,0.08)' : 'transparent', color: item.published ? '#3B6B2F' : '#bbb' }}>
                           {item.published ? 'Published' : 'Draft'}
                         </span>
@@ -351,11 +393,33 @@ export default function AnnouncementsClient() {
                         {new Date(item.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: isMobile ? 'flex-start' : 'flex-end', alignItems: 'center' }}>
+                      <button
+                        onClick={() => togglePin(item)}
+                        disabled={pinning === item.id}
+                        title={item.pinned ? 'Unpin from top' : 'Pin to top of the list and the members dashboard'}
+                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: item.pinned ? '0.5px solid rgba(138,101,53,0.5)' : '0.5px solid rgba(0,0,0,0.15)', background: item.pinned ? 'rgba(197,168,130,0.12)' : 'transparent', color: item.pinned ? '#8A6535' : '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        {pinning === item.id ? '…' : item.pinned ? '★ Pinned' : 'Pin'}
+                      </button>
+                      <button
+                        onClick={() => setPreviewItem(item)}
+                        title="Preview the email exactly as members receive it"
+                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        Preview
+                      </button>
+                      <button
+                        onClick={() => duplicate(item)}
+                        title="Copy into the New Announcement form"
+                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        Duplicate
+                      </button>
                       {/* Email button */}
                       <button
                         onClick={() => { setEmailingId(emailingId === item.id ? null : item.id); setEmailResult(p => ({ ...p, [item.id]: undefined })) }}
-                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', border: '0.5px solid rgba(197,168,130,0.5)', background: emailingId === item.id ? 'rgba(197,168,130,0.1)' : 'transparent', color: '#8A6535', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
+                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: '0.5px solid rgba(197,168,130,0.5)', background: emailingId === item.id ? 'rgba(197,168,130,0.1)' : 'transparent', color: '#8A6535', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
                       >
                         Email
                       </button>
@@ -410,6 +474,27 @@ export default function AnnouncementsClient() {
               {deleteConfirm === item.id && deleteError && <Err msg={deleteError} />}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Email preview — the exact HTML members receive, rendered in a sandboxed iframe */}
+      {previewItem && (
+        <div
+          onClick={() => setPreviewItem(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,30,20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '640px', height: 'min(80vh, 720px)', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', flexShrink: 0 }}>
+              <span style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Email preview</span>
+              <button onClick={() => setPreviewItem(null)} aria-label="Close preview" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '18px', lineHeight: 1, padding: '4px 8px' }}>×</button>
+            </div>
+            <iframe
+              title="Announcement email preview"
+              sandbox=""
+              srcDoc={buildAnnouncementEmail(previewItem.title, previewItem.content)}
+              style={{ flex: 1, width: '100%', border: 'none', background: '#EDE8E1' }}
+            />
+          </div>
         </div>
       )}
 

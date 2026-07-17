@@ -42,11 +42,16 @@ function buildEmail({ from, recipient, subject, html, unsubPageUrl, unsubApiUrl 
   const resolvedHtml = html.includes('<!-- UNSUBSCRIBE_FOOTER -->')
     ? html.replace('<!-- UNSUBSCRIBE_FOOTER -->', unsubFooter)
     : html + unsubFooter
-  const finalHtml = resolvedHtml.replace(/\{\{name\}\}/gi, recipient.name || 'there')
+  const fullName = recipient.name || 'there'
+  const firstName = (recipient.name || '').trim().split(/\s+/)[0] || 'there'
+  const personalise = s => s
+    .replace(/\{\{first_?name\}\}/gi, firstName)
+    .replace(/\{\{name\}\}/gi, fullName)
+  const finalHtml = personalise(resolvedHtml)
   return {
     from,
     to: recipient.email,
-    subject: subject.replace(/\{\{name\}\}/gi, recipient.name || 'there'),
+    subject: personalise(subject),
     html: finalHtml,
     text: htmlToPlainText(finalHtml) + `\n\nUnsubscribe: ${unsubPageUrl}`,
     headers: {

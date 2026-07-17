@@ -311,7 +311,7 @@ function Toolbar({ editor }) {
   const currentSize = editor.getAttributes('textStyle').fontSize || '15px'
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', padding: '0.5rem 0.75rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf8', alignItems: 'center' }}>
+    <div className="bc-toolbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', padding: '0.5rem 0.75rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf8', alignItems: 'center' }}>
       <select style={{ ...TSEL, width: '100px' }} value={currentFont}
         onChange={e => editor.chain().focus().setFontFamily(e.target.value).run()}>
         {FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -358,6 +358,13 @@ function Toolbar({ editor }) {
         onClick={() => editor.chain().focus().insertContent('{{name}}').run()}
       >
         {'{{name}}'}
+      </button>
+      <button
+        style={{ ...TBTN(false), fontSize: '10px', minWidth: 'auto', padding: '3px 7px', letterSpacing: '0.03em', fontFamily: 'var(--font-inter),sans-serif' }}
+        title="Insert first name only (e.g. 'Marc' instead of 'Marc-Antoine Sauvé')"
+        onClick={() => editor.chain().focus().insertContent('{{firstName}}').run()}
+      >
+        {'{{firstName}}'}
       </button>
     </div>
   )
@@ -681,6 +688,12 @@ export default function BroadcastsClient() {
         .tiptap-editor { border: 0.5px solid rgba(0,0,0,0.15); background: #fff; }
         .tiptap-editor p { margin: 0 0 0.5em; }
         .tiptap-editor:focus-within { border-color: rgba(0,0,0,0.3); }
+        .tiptap-editor .ProseMirror { min-height: 160px; }
+        /* Comfortable tap targets on touch devices — the 24px toolbar buttons
+           are precise enough with a mouse but fiddly with a thumb */
+        @media (hover: none) {
+          .bc-toolbar button, .bc-toolbar select { min-height: 32px; min-width: 30px; }
+        }
         .bc-grid {
           display: grid;
           grid-template-columns: minmax(0,1fr) minmax(0,1fr);
