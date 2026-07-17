@@ -13,10 +13,11 @@ const CATEGORIES = EXPENSE_CATEGORIES
 
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
-const EXTRACT_PROMPT = `Read this receipt or invoice and return ONLY minified JSON with exactly these keys:
-{"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"total":number|null,"category":string|null}
+const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exactly these keys:
+{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"total":number|null,"category":string|null}
 
 Rules:
+- "is_receipt" = true ONLY if the image is clearly a purchase receipt, invoice, bill, or order confirmation showing amounts paid or payable. If it is anything else — an article, a menu, a screenshot, a random document, a photo, a business card — set is_receipt to false and EVERY other key to null. Never guess values from something that is not a receipt.
 - "vendor" = the business/merchant name.
 - "date" = the transaction date in YYYY-MM-DD. If the year is missing, infer the most likely recent year.
 - "amount" = the PRE-TAX subtotal (goods/services before taxes). If only a grand total is shown with no tax lines, set "amount" to that total and leave "gst" and "qst" null.
@@ -28,7 +29,20 @@ Rules:
 function toNum(v) {
   if (v == null) return null
   const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9.\-]/g, ''))
-  return Number.isFinite(n) ? Math.round(n * 100) / 100 : null
+  if (!Number.isFinite(n)) return null
+  // Expense amounts are always positive and sane — a negative or absurd value
+  // means the model misread something; better to leave the field blank
+  if (n < 0 || n > 1000000) return null
+  return Math.round(n * 100) / 100
+}
+
+function sanitizeDate(v) {
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null
+  const d = new Date(v + 'T12:00:00')
+  if (Number.isNaN(d.getTime())) return null
+  const tomorrow = new Date(Date.now() + 86400000)
+  if (d > tomorrow || d < new Date('2015-01-01')) return null // future/ancient = misread
+  return v
 }
 
 export async function POST(request) {
@@ -73,17 +87,33 @@ export async function POST(request) {
     try { parsed = JSON.parse(text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')) }
     catch { return Response.json({ error: 'Could not read that receipt. Enter the details manually.' }, { status: 422 }) }
 
-    const date = typeof parsed.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date) ? parsed.date : null
+    // Not a receipt at all (random document, screenshot, article…) — refuse
+    // rather than force-fitting garbage into the form
+    if (parsed.is_receipt === false) {
+      return Response.json({ error: "That doesn't look like a receipt or invoice — nothing was imported. If it really is one, enter the details manually." }, { status: 422 })
+    }
+
+    const date = sanitizeDate(parsed.date)
     const category = CATEGORIES.includes(parsed.category) ? parsed.category : null
+    const amount = toNum(parsed.amount)
+    const gst = toNum(parsed.gst)
+    const qst = toNum(parsed.qst)
+    const total = toNum(parsed.total)
+
+    // A "receipt" with no usable numbers is another non-receipt signal
+    if (amount == null && total == null) {
+      return Response.json({ error: 'No amounts could be read from that image. Enter the details manually.' }, { status: 422 })
+    }
+
+    // Flag when subtotal + taxes don't reconcile with the printed total so the
+    // client can tell the admin to double-check instead of silently trusting it
+    const mismatch = amount != null && total != null && (gst != null || qst != null)
+      ? Math.abs(amount + (gst || 0) + (qst || 0) - total) > 0.02
+      : false
 
     return Response.json({
-      vendor:   typeof parsed.vendor === 'string' ? parsed.vendor.slice(0, 100) : null,
-      date,
-      amount:   toNum(parsed.amount),
-      gst:      toNum(parsed.gst),
-      qst:      toNum(parsed.qst),
-      total:    toNum(parsed.total),
-      category,
+      vendor: typeof parsed.vendor === 'string' ? parsed.vendor.slice(0, 100) : null,
+      date, amount, gst, qst, total, category, mismatch,
     })
   } catch (err) {
     captureException(err, { context: 'expenses-scan-receipt' })

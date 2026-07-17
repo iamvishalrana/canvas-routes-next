@@ -92,7 +92,9 @@ export default function ExpensesClient() {
   const [formErr, setFormErr]           = useState(null)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [scanning, setScanning]         = useState(false)
+  const [scanNotice, setScanNotice]     = useState(null) // { type: 'ok'|'warn', text }
   const [receiptName, setReceiptName]   = useState('')
+  const [filterMissing, setFilterMissing] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteErr, setDeleteErr] = useState(null)
   const [deleting, setDeleting]         = useState(null)
@@ -159,6 +161,7 @@ export default function ExpensesClient() {
     if (filterCategory !== 'all' && (e.category || '') !== filterCategory) return false
     if (dateFrom && e.expense_date < dateFrom) return false
     if (dateTo && e.expense_date > dateTo) return false
+    if (filterMissing && e.receipt_url) return false
     return true
   })
   const usedCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))].sort()
@@ -321,6 +324,30 @@ export default function ExpensesClient() {
 
   function cancelEdit() { setEditingId(null); setEditErr(null) }
 
+  // Copy an expense into the Add form — recurring purchases (fuel, coffee
+  // supplies, the same vendor every event) become a two-tap entry
+  function duplicateExpense(expense) {
+    const total = parseFloat(expense.amount || 0) + taxOf(expense)
+    taxManualRef.current = true
+    folderManualRef.current = true
+    setFolderEvent(expense.event_name || 'General')
+    setForm({
+      ...EMPTY_FORM,
+      event_name:     expense.event_name || '',
+      vendor:         expense.vendor || '',
+      paid:           total ? String(round2(total)) : '',
+      gst_amount:     expense.gst_amount ? String(expense.gst_amount) : '',
+      qst_amount:     expense.qst_amount ? String(expense.qst_amount) : '',
+      province:       expense.province || 'QC',
+      category:       expense.category || '',
+      payment_method: expense.payment_method || '',
+    })
+    setScanNotice({ type: 'ok', text: `Copied "${expense.vendor || 'expense'}" — set the date and save.` })
+    setFormErr(null)
+    setShowAdd(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   // Edit uses the stored pre-tax subtotal directly, so tax = subtotal × rate.
   function applyEditTax() {
     const p = PROVINCE_MAP[editForm.province] || PROVINCE_MAP.QC
@@ -402,13 +429,16 @@ export default function ExpensesClient() {
   async function handleScan(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    setScanning(true); setFormErr(null)
+    setScanning(true); setFormErr(null); setScanNotice(null)
     try {
       const sfd = new FormData()
       sfd.append('file', file)
       const res = await fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Scan failed.'); return }
+      setScanNotice(data.mismatch
+        ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
+        : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — $${data.total.toFixed(2)}` : ''}. Review the fields before saving.` })
 
       const total = data.total != null ? data.total
         : (data.amount != null ? round2((data.amount || 0) + (data.gst || 0) + (data.qst || 0)) : null)
@@ -469,14 +499,19 @@ export default function ExpensesClient() {
       setExpenses(prev => [data, ...prev])
       setNewIds(prev => new Set([...prev, data.id]))
       setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n }), 700)
-      // Auto-open the group this expense landed in
+      // Auto-open the year + group this expense landed in — group keys are
+      // `${year}::${name}` since the Year → Event folders rework (a bare name
+      // key silently matched nothing)
       const groupName = data.event_name?.trim() || 'General'
-      setOpenGroups(p => ({ ...p, [groupName]: true }))
+      const groupYear = String(data.expense_date || '').slice(0, 4)
+      setOpenGroups(p => ({ ...p, [`${groupYear}::${groupName}`]: true }))
+      if (groupYear) setOpenYears(p => ({ ...p, [groupYear]: true }))
       setForm(EMPTY_FORM)
       setFolderEvent('General')
       folderManualRef.current = false
       taxManualRef.current = false
       setReceiptName('')
+      setScanNotice(null)
       if (fileRef.current) fileRef.current.value = ''
     } catch { setFormErr('Network error.') }
     finally { setSubmitting(false) }
@@ -553,6 +588,13 @@ export default function ExpensesClient() {
         .exp-wrap input, .exp-wrap select, .exp-wrap textarea { font-size: 16px !important; }
         .exp-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .exp-tap { min-height: 44px; }
+        @keyframes expFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .exp-form { animation: expFadeUp 0.28s ease both; }
+        .exp-group-body { animation: expFadeUp 0.25s ease both; }
+        .exp-stat-card { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+        @media (hover: hover) {
+          .exp-stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        }
         /* Grid cells must be allowed to shrink or they force page-level scroll on iOS */
         .exp-form-grid > div { min-width: 0; }
         .exp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -584,11 +626,14 @@ export default function ExpensesClient() {
             { label: 'Total Spent',     value: fmt(grandTotal + grandTotalTax),  color: '#1a1a1a' },
             { label: 'Tax Recoverable', value: fmt(grandTotalTax),               color: '#8A6535' },
             { label: 'Expenses',        value: visibleExpenses.length,           color: '#1a1a1a' },
-            { label: 'Missing Receipts', value: missingReceiptCount,             color: missingReceiptCount > 0 ? '#93333E' : '#3B6B2F' },
+            // Tapping toggles a receipt-less-only filter so the gaps are one tap away
+            { label: filterMissing ? 'Missing Receipts · filtering' : 'Missing Receipts', value: missingReceiptCount, color: missingReceiptCount > 0 ? '#93333E' : '#3B6B2F', onClick: () => setFilterMissing(f => !f), active: filterMissing },
           ].map(s => (
-            <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem' }}>
+            <div key={s.label} className="exp-stat-card" onClick={s.onClick}
+              role={s.onClick ? 'button' : undefined}
+              style={{ background: '#fff', border: s.active ? '0.5px solid rgba(147,51,62,0.5)' : '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: s.active ? '0 2px 12px rgba(147,51,62,0.12)' : '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem', cursor: s.onClick ? 'pointer' : 'default', WebkitTapHighlightColor: 'transparent' }}>
               <div style={{ fontSize: '1.55rem', fontWeight: '300', color: s.color, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{s.value}</div>
-              <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.35rem' }}>{s.label}</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: s.active ? '#93333E' : '#999', marginTop: '0.35rem' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -608,6 +653,15 @@ export default function ExpensesClient() {
           </button>
           <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount &amp; tax.</span>
         </div>
+
+        {scanNotice && (
+          <div style={{ fontSize: '12px', lineHeight: 1.55, padding: '0.65rem 0.85rem', marginBottom: '1rem', borderRadius: '8px', animation: 'expFadeUp 0.3s ease both',
+            background: scanNotice.type === 'warn' ? 'rgba(147,51,62,0.06)' : 'rgba(59,107,47,0.07)',
+            border: scanNotice.type === 'warn' ? '0.5px solid rgba(147,51,62,0.3)' : '0.5px solid rgba(59,107,47,0.25)',
+            color: scanNotice.type === 'warn' ? '#93333E' : '#3B6B2F' }}>
+            {scanNotice.text}
+          </div>
+        )}
 
         {/* Row 1 — what & where */}
         <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.6rem', marginBottom: '0.6rem' }}>
@@ -956,7 +1010,7 @@ export default function ExpensesClient() {
                 </button>
 
                 {yearOpen && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: isMobile ? 0 : '1.5rem', marginBottom: '0.75rem' }}>
+                  <div className="exp-group-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: isMobile ? 0 : '1.5rem', marginBottom: '0.75rem' }}>
           {yg.events.map(group => {
             const gKey = `${yg.year}::${group.name}`
             const isOpen = !!openGroups[gKey]
@@ -977,7 +1031,7 @@ export default function ExpensesClient() {
                 </button>
 
                 {isOpen && (
-                  <div>
+                  <div className="exp-group-body">
                     {/* Column headers — desktop only; mobile uses card rows */}
                     {!isMobile && (
                       <div className="exp-scroll">
@@ -1001,6 +1055,10 @@ export default function ExpensesClient() {
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', alignItems: 'center' }}>
                           {!isPendingDelete && !isEditing && (
                             <>
+                              <button onClick={() => duplicateExpense(expense)} title="Copy into the Add Expense form"
+                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '7px 12px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
+                                ⧉
+                              </button>
                               <button onClick={() => startEdit(expense)}
                                 style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '7px 16px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
                                 Edit
