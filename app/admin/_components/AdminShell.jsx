@@ -40,6 +40,7 @@ const SECTIONS = [
     items: [
       { href: '/admin/announcements', label: 'Announcements' },
       { href: '/admin/broadcasts',    label: 'Broadcasts'    },
+      { href: '/admin/photos',        label: 'Photo Gallery' },
     ],
   },
   {
