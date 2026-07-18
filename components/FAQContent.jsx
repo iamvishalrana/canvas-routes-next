@@ -104,6 +104,10 @@ const SECTIONS = [
         a: 'Our Routes page lists the drives we\'re planning for the season. If a road calls to you, put your name down — it takes thirty seconds, costs nothing, and commits you to nothing. Each route needs a minimum number of cars; once enough drivers are in, we launch it and email everyone on the list with the full details and how to confirm a spot.',
       },
       {
+        q: 'Do all Canvas Routes trips use the interest list?',
+        a: 'No. The interest list on our Routes page is for our longer trips — overnight and multi-day drives we plan months ahead, where we need a minimum crew before the route makes sense to run. Our shorter day drives work differently: they\'re announced only a few weeks before they run, with no interest-gathering step at all — spots are first come, first served, with priority given to members.',
+      },
+      {
         q: 'Does expressing interest cost anything or commit me to going?',
         a: 'No and no. Expressing interest is completely free — no payment details are collected — and it isn\'t a booking or a commitment. It simply tells us you\'d be in the convoy. If your plans change, you simply don\'t confirm when the route launches.',
       },
