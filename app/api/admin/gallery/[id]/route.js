@@ -10,13 +10,35 @@ export async function PATCH(request, { params }) {
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
-  const { caption } = await request.json().catch(() => ({}))
+  const { caption, tags } = await request.json().catch(() => ({}))
 
   const supabase = createAdminClient()
-  const { data: row, error } = await supabase.from('gallery_photos')
-    .update({ caption: (caption || '').trim().slice(0, 300) || null })
-    .eq('id', id).select().single()
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  const updates = {}
+  if (caption !== undefined) updates.caption = (caption || '').trim().slice(0, 300) || null
+
+  let row
+  if (Object.keys(updates).length) {
+    const { data, error } = await supabase.from('gallery_photos').update(updates).eq('id', id).select().single()
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    row = data
+  } else {
+    const { data, error } = await supabase.from('gallery_photos').select('*').eq('id', id).single()
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    row = data
+  }
+
+  // Tags only apply to event-category photos — replace the full set each time
+  if (Array.isArray(tags) && row.category === 'event') {
+    const memberIds = [...new Set(tags.filter(Boolean))]
+    const { error: delErr } = await supabase.from('gallery_photo_tags').delete().eq('photo_id', id)
+    if (delErr) return Response.json({ error: delErr.message }, { status: 500 })
+    if (memberIds.length) {
+      const { error: insErr } = await supabase.from('gallery_photo_tags')
+        .insert(memberIds.map(memberId => ({ photo_id: id, member_id: memberId })))
+      if (insErr) return Response.json({ error: insErr.message }, { status: 500 })
+    }
+  }
+
   return Response.json(row)
 }
 

@@ -168,6 +168,11 @@ export default function MembersGallery({ albums }) {
                 {currentPhoto.caption}
               </div>
             )}
+            {currentPhoto.tags?.length > 0 && (
+              <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.75)', letterSpacing: '0.02em', marginBottom: '0.4rem' }}>
+                Featuring {currentPhoto.tags.join(', ')}
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)' }}>
                 {lightbox.photoIdx + 1} / {current.photos.length}

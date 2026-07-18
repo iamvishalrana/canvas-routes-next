@@ -1,7 +1,8 @@
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
-import MembersGallery from '../../../../components/MembersGallery'
+import { attendanceKey } from '../../../../lib/eventMeta'
+import MembersGalleryTabs from '../../../../components/MembersGalleryTabs'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Photos | Canvas Routes' } }
@@ -17,19 +18,43 @@ export default async function PhotosPage() {
   if (!adminEmails.includes(user.email)) redirect('/members/dashboard')
 
   const admin = createAdminClient()
-  const { data: photos } = await admin.from('gallery_photos')
-    .select('id, album, album_date, caption, photo_url, original_url')
-    .order('created_at', { ascending: true })
+  const [{ data: member }, { data: eventPhotos }, { data: personalPhotos }, { data: tagRows }, { data: members }] = await Promise.all([
+    admin.from('members').select('event_attendance').eq('id', user.id).maybeSingle(),
+    admin.from('gallery_photos').select('id, album, album_date, caption, photo_url, original_url')
+      .eq('category', 'event').order('created_at', { ascending: true }),
+    admin.from('gallery_photos').select('id, caption, photo_url, original_url')
+      .eq('category', 'personal').eq('member_id', user.id).order('created_at', { ascending: true }),
+    admin.from('gallery_photo_tags').select('photo_id, member_id'),
+    admin.from('members').select('id, name'),
+  ])
 
-  // Group into albums, newest event first (undated albums last)
+  // Event albums are only shown to members confirmed as attendees — the same
+  // members.event_attendance flag the admin panel already maintains post-event.
+  // Tags below are for display only ("Featuring: ...") — they never gate access.
+  const attendance = member?.event_attendance || {}
+  const nameById = new Map((members || []).map(m => [m.id, m.name]))
+  const tagsByPhoto = new Map()
+  for (const t of (tagRows || [])) {
+    if (!tagsByPhoto.has(t.photo_id)) tagsByPhoto.set(t.photo_id, [])
+    const name = nameById.get(t.member_id)
+    if (name) tagsByPhoto.get(t.photo_id).push(name)
+  }
+
   const map = new Map()
-  for (const p of (photos || [])) {
+  for (const p of (eventPhotos || [])) {
+    if (attendance[attendanceKey(p.album)] !== true) continue
     if (!map.has(p.album)) map.set(p.album, { name: p.album, date: p.album_date, photos: [] })
     const a = map.get(p.album)
-    a.photos.push({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })
+    a.photos.push({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption, tags: tagsByPhoto.get(p.id) || [] })
     if (p.album_date && !a.date) a.date = p.album_date
   }
-  const albums = [...map.values()].sort((x, y) => (y.date || '0000').localeCompare(x.date || '0000'))
+  const eventAlbums = [...map.values()].sort((x, y) => (y.date || '0000').localeCompare(x.date || '0000'))
+
+  const personalAlbum = {
+    name: 'My Car & Personal',
+    date: null,
+    photos: (personalPhotos || []).map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })),
+  }
 
   return (
     <div>
@@ -40,21 +65,10 @@ export default async function PhotosPage() {
         Photos
       </h1>
       <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.8, maxWidth: '520px', margin: '0 0 3rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-        Photos of our members and their cars from meets and drives throughout the season.
+        Event Photos from meets and drives you attended, plus your own private Car &amp; Personal folder.
       </p>
 
-      {albums.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-inter), sans-serif' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>
-            Nothing here yet
-          </div>
-          <div style={{ fontSize: '13px', color: '#999', lineHeight: 1.8, maxWidth: '380px', margin: '0 auto' }}>
-            Photos from our meets and drives will appear here after each event. Check back soon.
-          </div>
-        </div>
-      ) : (
-        <MembersGallery albums={albums} />
-      )}
+      <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} />
     </div>
   )
 }
