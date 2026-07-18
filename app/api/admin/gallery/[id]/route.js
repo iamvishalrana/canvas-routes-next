@@ -28,13 +28,14 @@ export async function DELETE(request, { params }) {
 
   const supabase = createAdminClient()
   const { data: row } = await supabase.from('gallery_photos')
-    .select('storage_path, album').eq('id', id).maybeSingle()
+    .select('storage_path, original_path, album').eq('id', id).maybeSingle()
   if (!row) return Response.json({ error: 'Photo not found.' }, { status: 404 })
 
   const { error: delErr } = await supabase.from('gallery_photos').delete().eq('id', id)
   if (delErr) return Response.json({ error: delErr.message }, { status: 500 })
 
-  if (row.storage_path) await supabase.storage.from(BUCKET).remove([row.storage_path]).catch(err =>
+  const paths = [row.storage_path, row.original_path].filter(Boolean)
+  if (paths.length) await supabase.storage.from(BUCKET).remove(paths).catch(err =>
     captureException(err, { context: 'admin-gallery-photo-delete-storage', id }))
 
   await logAdminAction(supabase, adminUser?.email, { action: 'gallery.photo_delete', entityType: 'gallery_photo', entityId: id, entityName: row.album })

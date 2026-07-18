@@ -7,6 +7,12 @@ function formatDate(d) {
   return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+function downloadName(album, idx, url) {
+  const slug = album.replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'canvas-routes'
+  const ext = (url.split('?')[0].split('.').pop() || 'jpg').toLowerCase()
+  return `${slug}-${idx + 1}.${ext}`
+}
+
 export default function MembersGallery({ albums }) {
   // lightbox: { albumIdx, photoIdx } or null
   const [lightbox, setLightbox] = useState(null)
@@ -162,8 +168,24 @@ export default function MembersGallery({ albums }) {
                 {currentPhoto.caption}
               </div>
             )}
-            <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)' }}>
-              {lightbox.photoIdx + 1} / {current.photos.length}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)' }}>
+                {lightbox.photoIdx + 1} / {current.photos.length}
+              </div>
+              {/* ?download= makes Supabase serve the file as an attachment (full-
+                  resolution original when available) instead of opening it inline */}
+              <a
+                href={`${currentPhoto.originalUrl || currentPhoto.url}?download=${downloadName(current.name, lightbox.photoIdx, currentPhoto.originalUrl || currentPhoto.url)}`}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase',
+                  color: '#F5F1EC', textDecoration: 'none',
+                  border: '0.5px solid rgba(197,168,130,0.5)', padding: '0.45rem 1rem',
+                  WebkitTapHighlightColor: 'transparent',
+                }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </a>
             </div>
           </div>
         </div>

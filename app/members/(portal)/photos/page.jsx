@@ -18,7 +18,7 @@ export default async function PhotosPage() {
 
   const admin = createAdminClient()
   const { data: photos } = await admin.from('gallery_photos')
-    .select('id, album, album_date, caption, photo_url')
+    .select('id, album, album_date, caption, photo_url, original_url')
     .order('created_at', { ascending: true })
 
   // Group into albums, newest event first (undated albums last)
@@ -26,7 +26,7 @@ export default async function PhotosPage() {
   for (const p of (photos || [])) {
     if (!map.has(p.album)) map.set(p.album, { name: p.album, date: p.album_date, photos: [] })
     const a = map.get(p.album)
-    a.photos.push({ id: p.id, url: p.photo_url, caption: p.caption })
+    a.photos.push({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })
     if (p.album_date && !a.date) a.date = p.album_date
   }
   const albums = [...map.values()].sort((x, y) => (y.date || '0000').localeCompare(x.date || '0000'))

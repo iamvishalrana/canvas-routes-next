@@ -1,10 +1,14 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { createClient } from '../../../lib/supabase/client'
 
-// Downscale large photos in the browser before upload — keeps each request well
-// under serverless body limits and storage small. Falls back to the original
-// file on any failure (the server still enforces the 10 MB cap).
+const BUCKET = 'gallery-photos'
+const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+
+// Each photo is stored twice: the untouched original (members download this)
+// and this downscaled display copy used in grids and the lightbox so browsing
+// stays fast and cheap on egress. Falls back to the original on any failure.
 async function compressImage(file) {
   try {
     let bitmap
@@ -88,24 +92,41 @@ export default function PhotosClient() {
     return [...map.values()].sort((x, y) => (y.date || '0000').localeCompare(x.date || '0000'))
   }, [photos])
 
+  // Originals upload browser → Supabase Storage directly via signed URLs
+  // (full-size photos exceed the serverless request-body limit), then the row
+  // is recorded through the API once both files are confirmed in the bucket.
   async function uploadFiles(album, albumDate, fileList) {
-    const files = Array.from(fileList || []).filter(f => f.type.startsWith('image/'))
-    if (!files.length) return
-    setUpload({ album, done: 0, total: files.length, errors: [] })
+    const all = Array.from(fileList || [])
+    const files = all.filter(f => ALLOWED[f.type])
+    const skipped = all.filter(f => !ALLOWED[f.type]).map(f => `${f.name} — unsupported format (use JPEG, PNG, or WebP; iOS converts HEIC automatically when picking from Photos)`)
+    if (!all.length) return
+    setUpload({ album, done: 0, total: files.length, errors: skipped })
+    const supabase = createClient()
     for (let i = 0; i < files.length; i++) {
+      const file = files[i]
       try {
-        const file = await compressImage(files[i])
-        const fd = new FormData()
-        fd.append('photo', file)
-        fd.append('album', album)
-        if (albumDate) fd.append('albumDate', albumDate)
-        const res = await fetch('/api/admin/gallery', { method: 'POST', body: fd })
+        if (file.size > 50 * 1024 * 1024) throw new Error('over the 50 MB per-file limit')
+        const display = await compressImage(file)
+        const urlRes = await fetch('/api/admin/gallery/upload-url', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ origExt: ALLOWED[file.type], dispExt: ALLOWED[display.type] || 'jpg' }),
+        })
+        const urls = await urlRes.json().catch(() => ({}))
+        if (!urlRes.ok) throw new Error(urls.error || `HTTP ${urlRes.status}`)
+        const [orig, disp] = await Promise.all([
+          supabase.storage.from(BUCKET).uploadToSignedUrl(urls.originalPath, urls.originalToken, file, { contentType: file.type }),
+          supabase.storage.from(BUCKET).uploadToSignedUrl(urls.displayPath, urls.displayToken, display, { contentType: display.type }),
+        ])
+        if (orig.error || disp.error) throw new Error((orig.error || disp.error).message || 'upload failed')
+        const res = await fetch('/api/admin/gallery', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ album, albumDate: albumDate || '', displayPath: urls.displayPath, originalPath: urls.originalPath }),
+        })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
         setPhotos(prev => [...prev, data])
       } catch (err) {
-        const name = files[i].name
-        setUpload(u => u ? { ...u, errors: [...u.errors, `${name} — ${err.message}`] } : u)
+        setUpload(u => u ? { ...u, errors: [...u.errors, `${file.name} — ${err.message}`] } : u)
       }
       setUpload(u => u ? { ...u, done: i + 1 } : u)
     }
@@ -222,12 +243,12 @@ export default function PhotosClient() {
             <div style={{ fontSize: '12px', color: '#555' }}>
               {upload.done < upload.total
                 ? <>Uploading to <strong>{upload.album}</strong> — {upload.done} / {upload.total}…</>
-                : <>Finished uploading to <strong>{upload.album}</strong> ({upload.total - upload.errors.length} / {upload.total} succeeded)</>}
+                : <>Finished uploading to <strong>{upload.album}</strong> ({Math.max(0, upload.total - upload.errors.length)} / {upload.total} succeeded)</>}
             </div>
             {upload.done >= upload.total && <GhostBtn small onClick={() => setUpload(null)}>Dismiss</GhostBtn>}
           </div>
           <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', marginTop: '0.6rem', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(upload.done / upload.total) * 100}%`, background: '#45643C', borderRadius: '99px', transition: 'width 0.3s ease' }} />
+            <div style={{ height: '100%', width: `${upload.total ? (upload.done / upload.total) * 100 : 100}%`, background: '#45643C', borderRadius: '99px', transition: 'width 0.3s ease' }} />
           </div>
           {upload.errors.map((e, i) => (
             <div key={i} style={{ fontSize: '11px', color: '#93333E', marginTop: '0.5rem' }}>{e}</div>
