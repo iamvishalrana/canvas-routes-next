@@ -11,6 +11,11 @@ export default async function PhotosPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/members/login')
 
+  // Not launched to members yet — admin-only preview until albums are ready.
+  // To go live: delete this block and restore the Photos links in MembersNav.
+  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
+  if (!adminEmails.includes(user.email)) redirect('/members/dashboard')
+
   const admin = createAdminClient()
   const { data: photos } = await admin.from('gallery_photos')
     .select('id, album, album_date, caption, photo_url')

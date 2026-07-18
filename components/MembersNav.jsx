@@ -56,7 +56,6 @@ export default function MembersNav({ email, isAdmin }) {
           {navLink('/members/dashboard', 'Dashboard')}
           {navLink('/members/events', 'Meets & Events')}
           {navLink('/members/routes', 'Routes')}
-          {navLink('/members/photos', 'Photos')}
           {navLink('/members/perks', 'Perks')}
           {navLink('/members/profile', 'Profile')}
           {navLink('/members/card', 'My Card')}
@@ -127,7 +126,6 @@ export default function MembersNav({ email, isAdmin }) {
         <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/dashboard' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Dashboard</Link>
         <Link href="/members/events" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname.startsWith('/members/events') ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Meets &amp; Events</Link>
         <Link href="/members/routes" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/routes' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Routes</Link>
-        <Link href="/members/photos" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/photos' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Photos</Link>
         <Link href="/members/perks" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/perks' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Perks</Link>
         <Link href="/members/profile" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/profile' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Profile</Link>
         <Link href="/members/card" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/card' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>My Card</Link>
