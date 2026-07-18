@@ -577,7 +577,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
               <h2 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(1.8rem,3vw,2.4rem)', fontWeight: 300, color: '#1a1a1a', margin: (!isMobileView || howOpen) ? '0 20px 12px 0' : 0 }}>Routes launch when the crew is ready.</h2>
               {(!isMobileView || howOpen) && (
                 <p style={{ fontSize: '12px', color: '#999', lineHeight: 1.8, margin: '0 0 32px 0', maxWidth: '680px', fontWeight: 300 }}>
-                  This applies to our longer trips — overnight and multi-day drives we plan months out. Shorter day drives are announced only a few weeks before they run: no interest list, first come first served, with priority given to members.
+                  This applies to our longer <em>routes</em> — overnight and multi-day drives we plan months out. Shorter day drives are announced only a few weeks before they run: no interest list, first come first served, with priority given to members.
                 </p>
               )}
             </div>

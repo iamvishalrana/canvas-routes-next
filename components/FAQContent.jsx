@@ -7,13 +7,17 @@ import PageLoader from './PageLoader'
 
 function renderAnswer(text) {
   if (!text) return text
-  const pattern = /(info@canvasroutes\.com|canvasroutes\.com(?:\/[^\s.,;)]*)?)/g
+  // `_word_` is a lightweight markdown-style italics marker (e.g. distinguishing
+  // generic "routes" from the "Canvas Routes" brand name in running text).
+  const pattern = /(info@canvasroutes\.com|canvasroutes\.com(?:\/[^\s.,;)]*)?|_[^_]+_)/g
   const parts = []
   let last = 0, m
   while ((m = pattern.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index))
     const raw = m[0]
-    if (raw.includes('@')) {
+    if (raw.startsWith('_') && raw.endsWith('_')) {
+      parts.push(<em key={m.index}>{raw.slice(1, -1)}</em>)
+    } else if (raw.includes('@')) {
       parts.push(<a key={m.index} href={`mailto:${raw}`} style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>{raw}</a>)
     } else {
       const path = raw === 'canvasroutes.com' ? '/' : `/${raw.replace('canvasroutes.com/', '')}`
@@ -104,8 +108,8 @@ const SECTIONS = [
         a: 'Our Routes page lists the drives we\'re planning for the season. If a road calls to you, put your name down — it takes thirty seconds, costs nothing, and commits you to nothing. Each route needs a minimum number of cars; once enough drivers are in, we launch it and email everyone on the list with the full details and how to confirm a spot.',
       },
       {
-        q: 'Do all Canvas Routes trips use the interest list?',
-        a: 'No. The interest list on our Routes page is for our longer trips — overnight and multi-day drives we plan months ahead, where we need a minimum crew before the route makes sense to run. Our shorter day drives work differently: they\'re announced only a few weeks before they run, with no interest-gathering step at all — spots are first come, first served, with priority given to members.',
+        q: 'Do all our routes use the interest list?',
+        a: 'No. The interest list on our Routes page is for our longer _routes_ — overnight and multi-day drives we plan months ahead, where we need a minimum crew before the route makes sense to run. Our shorter day drives work differently: they\'re announced only a few weeks before they run, with no interest-gathering step at all — spots are first come, first served, with priority given to members.',
       },
       {
         q: 'Does expressing interest cost anything or commit me to going?',
