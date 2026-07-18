@@ -6,6 +6,7 @@ import { captureException } from '../../../../lib/sentry'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
 import { buildAdminNotifyHtml } from '../../../../lib/adminEmail'
 import { buildRouteInterestHtml } from '../../../../lib/roadtripEmail'
+import { htmlToPlainText } from '../../../../lib/emailUnsubscribe.js'
 
 function sendEmail(payload, context) {
   return fetch('https://api.resend.com/emails', {
@@ -130,12 +131,16 @@ export async function POST(request) {
     await supabase.from('upcoming_routes').update({ threshold_notified_at: new Date().toISOString() }).eq('id', route.id)
   }
 
+  const interestConfirmHtml = buildRouteInterestHtml({ firstName: name.split(' ')[0] || '', route, interestedCount, isMember })
+
   after(() => Promise.allSettled([
     sendEmail({
       from: 'Canvas Routes <info@canvasroutes.com>',
       to: email,
+      reply_to: 'info@canvasroutes.com',
       subject: `You're on the list — ${route.name}`,
-      html: buildRouteInterestHtml({ firstName: name.split(' ')[0] || '', route, interestedCount, isMember }),
+      html: interestConfirmHtml,
+      text: htmlToPlainText(interestConfirmHtml),
     }, 'roadtrip-interest-confirm-email'),
     sendEmail({
       from: 'Canvas Routes <info@canvasroutes.com>',

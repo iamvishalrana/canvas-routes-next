@@ -3,69 +3,10 @@ import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { checkRateLimit } from '../../../../lib/rateLimit'
 import { captureMessage } from '../../../../lib/sentry'
+import { buildBulkEmail, filterUnsubscribed } from '../../../../lib/emailUnsubscribe.js'
 
 const MAX_RECIPIENTS = 2000
 const RESEND_BATCH_SIZE = 100 // Resend /emails/batch max per call
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
-
-function buildUnsubscribeFooter(email, pageUrl) {
-  return `
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:32px;">
-  <tr><td style="padding-top:16px;border-top:1px solid rgba(0,0,0,0.08);text-align:center;">
-    <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaa;margin:0;">
-      Canvas Routes &nbsp;&middot;&nbsp; Montreal, QC<br/>
-      <a href="${pageUrl}" style="color:#bbb;text-decoration:underline;">Unsubscribe</a>
-    </p>
-  </td></tr>
-</table>`
-}
-
-function htmlToPlainText(html) {
-  return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<\/tr>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
-    .replace(/&mdash;/g, '—').replace(/&ndash;/g, '–').replace(/&hellip;/g, '…')
-    .replace(/&lsquo;/g, '‘').replace(/&rsquo;/g, '’')
-    .replace(/&ldquo;/g, '“').replace(/&rdquo;/g, '”')
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
-
-function buildEmail({ from, recipient, subject, html, unsubPageUrl, unsubApiUrl, attachments }) {
-  const unsubFooter = buildUnsubscribeFooter(recipient.email, unsubPageUrl)
-  const resolvedHtml = html.includes('<!-- UNSUBSCRIBE_FOOTER -->')
-    ? html.replace('<!-- UNSUBSCRIBE_FOOTER -->', unsubFooter)
-    : html + unsubFooter
-  const fullName = recipient.name || 'there'
-  const firstName = (recipient.name || '').trim().split(/\s+/)[0] || 'there'
-  const personalise = s => s
-    .replace(/\{\{first_?name\}\}/gi, firstName)
-    .replace(/\{\{name\}\}/gi, fullName)
-  const finalHtml = personalise(resolvedHtml)
-  return {
-    from,
-    to: recipient.email,
-    subject: personalise(subject),
-    html: finalHtml,
-    text: htmlToPlainText(finalHtml) + `\n\nUnsubscribe: ${unsubPageUrl}`,
-    ...(attachments?.length ? { attachments } : {}),
-    headers: {
-      // RFC 8058: List-Unsubscribe-Post requires the URL to accept a POST with
-      // application/x-www-form-urlencoded — the API endpoint handles this.
-      // The page URL is used only for the human-visible body link.
-      'List-Unsubscribe': `<${unsubApiUrl}>, <mailto:info@canvasroutes.com?subject=unsubscribe&body=${encodeURIComponent(recipient.email)}>`,
-      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-      'Precedence': 'bulk',
-    },
-  }
-}
 
 export async function GET() {
   const adminUser = await requireAdmin()
@@ -214,16 +155,11 @@ export async function POST(request) {
 
   // Filter out anyone who has unsubscribed. Fail closed: if the list can't be
   // read we must not risk emailing people who opted out — abort before sending.
-  const { data: unsubs, error: unsubErr } = await supabase
-    .from('unsubscribed_emails')
-    .select('email')
-  if (unsubErr) {
-    captureMessage('Broadcast blocked — unsubscribe list unreadable', { error: unsubErr.message })
-    return Response.json({ error: `Could not check the unsubscribe list (${unsubErr.message}). Broadcast not sent.` }, { status: 500 })
-  }
-  if (unsubs?.length) {
-    const unsubSet = new Set(unsubs.map(u => u.email.toLowerCase()))
-    recipients = recipients.filter(r => !unsubSet.has(r.email.toLowerCase()))
+  try {
+    recipients = await filterUnsubscribed(supabase, recipients)
+  } catch (err) {
+    captureMessage('Broadcast blocked — unsubscribe list unreadable', { error: err.message })
+    return Response.json({ error: `Could not check the unsubscribe list (${err.message}). Broadcast not sent.` }, { status: 500 })
   }
 
   const totalRecipients = recipients.length
@@ -235,11 +171,8 @@ export async function POST(request) {
   let failed = 0
   const failedRecipients = []
 
-  const emailFor = recipient => {
-    const unsubPageUrl = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(recipient.email)}`
-    const unsubApiUrl  = `${SITE_URL}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}`
-    return buildEmail({ from: fromHeader, recipient, subject: subject.trim(), html, unsubPageUrl, unsubApiUrl, attachments: cleanAttachments })
-  }
+  const emailFor = recipient =>
+    buildBulkEmail({ from: fromHeader, recipient, subject: subject.trim(), html, attachments: cleanAttachments })
 
   if (cleanAttachments.length > 0) {
     // Resend's batch endpoint does NOT support attachments — send one email
