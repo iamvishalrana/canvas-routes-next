@@ -4,9 +4,7 @@ import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
-import { PRICES } from '../../../lib/prices.js'
-
-const TIER_TYPE_MAP = { 'Routes Member': 'membership_routes', 'Inner Circle': 'membership_inner_circle' }
+import { PRICES, MEMBERSHIP_TIER_TYPE } from '../../../lib/prices.js'
 
 function h(str) {
   return String(str ?? '')
@@ -201,7 +199,7 @@ export async function POST(request) {
   if (paymentIntentId && stripe) {
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
-      const expectedType = TIER_TYPE_MAP[tier]
+      const expectedType = MEMBERSHIP_TIER_TYPE[tier]
       const piEmail = pi.metadata?.email?.toLowerCase().trim()
       if (
         pi.metadata?.type !== expectedType ||
@@ -274,7 +272,7 @@ export async function POST(request) {
       stripe_payment_status: 'pending',
       // New payment cycle — clear any stale capture timestamp from a previous flow
       stripe_paid_at: null,
-      stripe_payment_type: TIER_TYPE_MAP[tier] || null,
+      stripe_payment_type: MEMBERSHIP_TIER_TYPE[tier] || null,
       // Store PI ID immediately so admin can act even if the webhook is delayed
       ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
@@ -340,7 +338,11 @@ export async function POST(request) {
           reply_to: 'info@canvasroutes.com',
           subject: `Your Canvas Routes application is in, ${firstName}`,
           html: confirmHtml(firstName, tier),
-          text: `We've got you, ${name.trim().split(' ')[0]}.\n\nYour membership interest has been received. We'll be in touch once memberships open for the 2026 season.\n\nSpots are limited — we'll reach out before we open to the public.\n\n© 2026 Canvas Routes. Montreal, QC.`,
+          // Kept in sync with confirmHtml() above — this stale copy used to say
+          // "membership interest has been received... we'll be in touch once
+          // memberships open," which contradicted the HTML (payment already
+          // authorized and held) and read like membership hadn't launched yet.
+          text: `We've got you, ${firstName}.\n\nYour application for the 2026 Canvas Routes season is in. Your payment has been authorised and held — your card has not been charged yet.\n\nWhat happens next:\n1. We review your application — every application is looked at personally, typically within a few days.\n2. You'll hear from Jerry directly at jerry@canvasroutes.com — add that address to your contacts now.\n3. If approved, your payment is captured and you're in — your members kit will be ready to collect at your first event.\n4. If not approved, your authorisation hold is released in full — no charge, no questions asked.\n\nIf you don't hear from us within a few days, please check your junk or spam folder.\n\nFollow @canvasroutes on Instagram: https://www.instagram.com/canvasroutes\n\n© 2026 Canvas Routes. Montreal, QC.`,
         }),
       }).then(r => { if (!r.ok) captureMessage(`Membership confirm email failed — ${normalEmail}`, { status: r.status }) })
         .catch(err => captureException(err, { context: 'membership-confirm-email', email: normalEmail })),

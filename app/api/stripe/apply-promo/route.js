@@ -113,6 +113,7 @@ export async function POST(request) {
     // Verify the PI belongs to the caller
     if (pi.metadata?.email?.toLowerCase().trim() !== callerEmail) {
       await releaseLock(lockKey)
+      await releaseLock(codeLockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
     // Allow promo codes on membership and road trip payments. Road trip
@@ -122,6 +123,7 @@ export async function POST(request) {
     const piType = pi.metadata?.type || ''
     if (!piType.startsWith('membership_') && !piType.startsWith('road_trip_')) {
       await releaseLock(lockKey)
+      await releaseLock(codeLockKey)
       return Response.json({ error: 'Invalid request.' }, { status: 400 })
     }
     // If the promo code has an applies_to restriction, verify the PI type is
@@ -132,11 +134,13 @@ export async function POST(request) {
       const matchesAnyRoute = allowed.includes('road_trip_any') && piType.startsWith('road_trip_')
       if (!matchesAnyRoute && !allowed.includes(piType)) {
         await releaseLock(lockKey)
+        await releaseLock(codeLockKey)
         return Response.json({ error: 'This promo code is not valid for this purchase.' }, { status: 400 })
       }
     }
     if (pi.metadata?.promo_code_id) {
       await releaseLock(lockKey)
+      await releaseLock(codeLockKey)
       return Response.json({ error: 'A promo code has already been applied.' }, { status: 400 })
     }
     const currentAmount = pi.amount
@@ -144,6 +148,7 @@ export async function POST(request) {
     // Check minimum purchase requirement
     if (promoCode.restrictions?.minimum_amount && currentAmount < promoCode.restrictions.minimum_amount) {
       await releaseLock(lockKey)
+      await releaseLock(codeLockKey)
       return Response.json({ error: `This code requires a minimum purchase of $${(promoCode.restrictions.minimum_amount / 100).toFixed(2)}.` }, { status: 400 })
     }
 

@@ -5,6 +5,7 @@ import { captureException, captureMessage } from '../../../../lib/sentry.js'
 import { buildWtetHoldHtml, buildWtetConfirmHtml } from '../../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../../lib/adminEmail.js'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail.js'
+import { MEMBERSHIP_TYPE_TIER } from '../../../../lib/prices.js'
 
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
@@ -246,12 +247,40 @@ export async function POST(request) {
         if (!normalEmail) break
 
         const supabase = createAdminClient()
+
+        // Read once, before writing anything — this snapshot both (a) seeds the
+        // registrations merge below and (b) proves whether the normal
+        // /api/membership-waitlist flow already ran (checked further down,
+        // BEFORE our own upsert writes the same registrations entry and makes
+        // that check meaningless).
+        const { data: preExisting } = await supabase.from('applications')
+          .select('registrations').eq('email', normalEmail).maybeSingle()
+        const priorRegs = preExisting?.registrations || []
+        const waitlistAlreadyRan = priorRegs.some(r => r.event === 'Canvas Routes Membership')
+
+        // Membership PIs must carry a 'Canvas Routes Membership' registrations
+        // entry — it's the ONLY place tier is read from (admin Applications tab
+        // and CSV export both do registrations?.find(r => r.event === '...')?.tier,
+        // never stripe_payment_type). Without this, an applicant whose tab closes
+        // before membership-waitlist fires shows up in admin with no tier at all.
+        const membershipTier = MEMBERSHIP_TYPE_TIER[type] // undefined for road_trip_* types
+        const existingMembershipReg = priorRegs.find(r => r.event === 'Canvas Routes Membership')
+        const registrations = membershipTier
+          ? [...priorRegs.filter(r => r.event !== 'Canvas Routes Membership'), {
+              event: 'Canvas Routes Membership',
+              tier: membershipTier,
+              registered_at: existingMembershipReg?.registered_at || new Date().toISOString(),
+              attended: existingMembershipReg?.attended ?? null,
+            }]
+          : undefined // road-trip PIs: rescue leaves registrations untouched here, unchanged behavior
+
         // Upsert with all form fields stored in PI metadata (written by create-payment-intent
         // for membership PIs) — ensures full application data is saved even if the client
         // closed the tab before /api/membership-waitlist fired.
         await supabase.from('applications').upsert({
           email:                    normalEmail,
           ...(name ? { name } : {}),
+          ...(registrations ? { registrations } : {}),
           ...(pi.metadata?.phone    ? { phone:    pi.metadata.phone }    : {}),
           ...(pi.metadata?.dob ? (() => {
             const [y, m, d] = (pi.metadata.dob || '').split('-').map(Number)
@@ -345,10 +374,7 @@ export async function POST(request) {
         // membership-waitlist sets registrations with a 'Canvas Routes Membership' entry —
         // if that entry exists the normal flow completed and we must not duplicate the emails.
         if (type?.startsWith('membership_') && process.env.RESEND_API_KEY) {
-          const { data: appRow } = await supabase.from('applications')
-            .select('registrations').eq('email', normalEmail).maybeSingle()
-          const waitlistRan = (appRow?.registrations || []).some(r => r.event === 'Canvas Routes Membership')
-          if (waitlistRan) break
+          if (waitlistAlreadyRan) break
           // Atomic claim on the same dedup column membership-waitlist uses —
           // whichever path claims this PI first sends the emails; the other
           // matches zero rows and skips. Closes the race where this webhook
