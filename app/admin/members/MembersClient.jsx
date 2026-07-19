@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
@@ -241,10 +241,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   // Sync when server re-renders with fresh paginated data after router.refresh()
   useEffect(() => { setMembers(initialMembers) }, [initialMembers])
   useRealtimeSync('members', () => router.refresh())
-  const [loading, setLoading] = useState(false)
-  const [forbidden, setForbidden] = useState(false)
   const [editing, setEditing] = useState(null)
   const [emailsCopied, setEmailsCopied] = useState(false)
+  const [phonesCopied, setPhonesCopied] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [editCars, setEditCars] = useState([])
   const [saving, setSaving] = useState(false)
@@ -258,18 +257,57 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   const [appData, setAppData] = useState(null)
   const [appLookupEmail, setAppLookupEmail] = useState('')
   const [actionError, setActionError] = useState(null)
+  // search/statusFilter/tierFilter/sort all drive a real server request (see
+  // pushQuery below) — these three are the ONLY things the server actually
+  // filters/sorts by, so results are correct across every page, not just
+  // whatever 50 members happen to be loaded right now.
   const [search, setSearch] = useState(() => searchParams.get('q') || '')
   const [expanded, setExpanded] = useState(null)
   const [previewMember, setPreviewMember] = useState(null) // member whose portal profile card is being previewed
   const [selected, setSelected] = useState(new Set())
-  const [sort, setSort] = useState('newest')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [sort, setSort] = useState(() => searchParams.get('sort') || 'newest')
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || 'all')
+  const [tierFilter, setTierFilter] = useState(() => searchParams.get('tier') || 'all')
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
   const [noteErr, setNoteErr] = useState(null)
   const [deleteMemberConfirm, setDeleteMemberConfirm] = useState(null)
   const [deleteMemberError, setDeleteMemberError] = useState(null)
   const [resendStatus, setResendStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | 'error' | errorMsg }
+  const [isPending, startTransition] = useTransition()
+  const [bulkStatus, setBulkStatus] = useState('')
+  const [bulkTier, setBulkTier] = useState('')
+  const [bulkConfirm, setBulkConfirm] = useState(null) // { field, value } awaiting yes/no
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkErr, setBulkErr] = useState(null)
+
+  // Pushes a patch of query params (page always resets to 1 unless it's the
+  // param being set) and lets the server component refetch — this is what
+  // makes search/status/tier/sort operate on ALL members, not just this page.
+  function pushQuery(patch) {
+    const next = new URLSearchParams(searchParams.toString())
+    for (const [k, v] of Object.entries(patch)) {
+      if (!v || v === 'all') next.delete(k)
+      else next.set(k, String(v))
+    }
+    if (!('page' in patch)) next.set('page', '1')
+    startTransition(() => router.push(`?${next.toString()}`))
+  }
+
+  // Debounce the free-text search so it doesn't push a request on every
+  // keystroke — 400ms after typing stops, or immediately on an empty value.
+  useEffect(() => {
+    const current = searchParams.get('q') || ''
+    if (search === current) return
+    const delay = search ? 400 : 0
+    const t = setTimeout(() => pushQuery({ q: search }), delay)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+
+  function onStatusFilterChange(v) { setStatusFilter(v); pushQuery({ status: v }) }
+  function onTierFilterChange(v) { setTierFilter(v); pushQuery({ tier: v }) }
+  function onSortChange(v) { setSort(v); pushQuery({ sort: v }) }
 
   async function lookupApplication(email) {
     if (!email?.trim() || !email.includes('@')) { setAppData(null); return }
@@ -425,29 +463,21 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
     setTimeout(() => setInviteSuccess(false), 4000)
   }
 
-  // String() guard: cars[].year (and other garage fields) can arrive as
-  // numbers from the portal — calling .toLowerCase() on them crashed the page
-  const has = (v, q) => String(v ?? '').toLowerCase().includes(q)
-  const q = search.toLowerCase()
-  const filtered = members
-    .filter(m =>
-      (statusFilter === 'all' || m.membership_status === statusFilter) &&
-      (!search
-        || [m.name, m.email, m.membership_status, m.phone, m.car_make, m.car_model, m.car_year, m.instagram,
-            m.tier === 'inner_circle' ? 'inner circle' : 'routes member'].some(v => has(v, q))
-        || (search.replace(/\D/g,'') && m.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
-        || (m.cars || []).some(c => [c.make, c.model, c.year, c.paint, c.license_plate].some(v => has(v, q))))
-    )
-    .sort((a, b) => {
-      if (sort === 'name_az') return (a.name || '').localeCompare(b.name || '')
-      if (sort === 'name_za') return (b.name || '').localeCompare(a.name || '')
-      if (sort === 'oldest') return new Date(a.join_date || a.created_at) - new Date(b.join_date || b.created_at)
-      // `|| 9999` AFTER parseInt — non-numeric values produce NaN, and any NaN
-      // comparison made the whole sort order undefined
-      if (sort === 'member_num_asc') return (parseInt(a.membership_number, 10) || 9999) - (parseInt(b.membership_number, 10) || 9999)
-      if (sort === 'member_num_desc') return (parseInt(b.membership_number, 10) || 9999) - (parseInt(a.membership_number, 10) || 9999)
-      return new Date(b.join_date || b.created_at) - new Date(a.join_date || a.created_at) // newest
-    })
+  // Search/status/tier/sort (except member #) are all applied server-side now
+  // (see page.jsx + pushQuery above) so `members` already IS the correct,
+  // globally-filtered page — no client re-filtering needed, and no risk of
+  // "no results" for someone who's just on a different page. Member-number
+  // sort is the one exception: membership_number is free-text and not
+  // reliably zero-padded, so it's re-sorted here, but only within this page.
+  const filtered = sort.startsWith('member_num')
+    ? [...members].sort((a, b) => {
+        // `|| 9999` AFTER parseInt — non-numeric values produce NaN, and any
+        // NaN comparison made the whole sort order undefined
+        const an = parseInt(a.membership_number, 10) || 9999
+        const bn = parseInt(b.membership_number, 10) || 9999
+        return sort === 'member_num_asc' ? an - bn : bn - an
+      })
+    : members
 
   function exportCSV() {
     const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : members
@@ -479,6 +509,34 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
     }).catch(() => {})
   }
 
+  function copyPhones() {
+    const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : filtered
+    const phones = source.map(m => m.phone).filter(Boolean).join(', ')
+    navigator.clipboard?.writeText(phones).then(() => {
+      setPhonesCopied(true)
+      setTimeout(() => setPhonesCopied(false), 1500)
+    }).catch(() => {})
+  }
+
+  // Bulk status/tier change for every currently-selected member — e.g.
+  // end-of-season "mark these 12 as expired" or "upgrade this group to Inner
+  // Circle" instead of opening each row individually.
+  async function bulkUpdate(field, value) {
+    setBulkBusy(true); setBulkErr(null)
+    const ids = [...selected]
+    const results = await Promise.allSettled(ids.map(id =>
+      fetch(`/api/admin/members/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: value }),
+      }).then(res => { if (!res.ok) throw new Error() })
+    ))
+    const failed = results.filter(r => r.status === 'rejected').length
+    setBulkBusy(false); setBulkConfirm(null)
+    if (failed > 0) setBulkErr(`${failed} of ${ids.length} failed to update.`)
+    setBulkStatus(''); setBulkTier('')
+    setSelected(new Set())
+    router.refresh()
+  }
+
   // Global counts from the server; fall back to page-scoped counting only if
   // the prop is missing (old prerendered payloads mid-deploy)
   const counts = statusCounts || (() => {
@@ -489,12 +547,6 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
     })
     return c
   })()
-
-  if (forbidden) return (
-    <div style={{ padding: '2rem', background: '#fff', border: '0.5px solid rgba(147,51,62,0.2)', fontSize: '13px', color: '#93333E' }}>
-      Access denied. Make sure your email is in the <code>ADMIN_EMAILS</code> environment variable.
-    </div>
-  )
 
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
@@ -573,7 +625,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
       {actionError && <Err msg={actionError} />}
 
       {selected.size > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
           <ExportButton
             filename={`members-selection`}
@@ -589,18 +641,56 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             style={{ fontSize: '10px', padding: '4px 10px', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)' }}
           />
           <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
+          <button onClick={copyPhones} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: phonesCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${phonesCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{phonesCopied ? 'Copied!' : 'Copy Phones'}</button>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={bulkStatus} onChange={e => { const v = e.target.value; setBulkStatus(v); if (v) setBulkConfirm({ field: 'membership_status', value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }) }}
+              style={{ ...sel, width: '150px', fontSize: '10px', padding: '4px 1.75rem 4px 8px' }}>
+              <option value="">Set status…</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+              <option value="expired">Expired</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={bulkTier} onChange={e => { const v = e.target.value; setBulkTier(v); if (v) setBulkConfirm({ field: 'tier', value: v, label: v === 'inner_circle' ? 'Inner Circle' : 'Routes Member' }) }}
+              style={{ ...sel, width: '150px', fontSize: '10px', padding: '4px 1.75rem 4px 8px' }}>
+              <option value="">Set tier…</option>
+              <option value="routes_member">Routes Member</option>
+              <option value="inner_circle">Inner Circle</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
           <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
         </div>
       )}
 
+      {bulkConfirm && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12px', color: '#8A6535' }}>
+            Set {bulkConfirm.field === 'tier' ? 'tier' : 'status'} to <strong>{bulkConfirm.label}</strong> for <strong>{selected.size}</strong> member{selected.size !== 1 ? 's' : ''}?
+          </span>
+          <PrimaryBtn onClick={() => bulkUpdate(bulkConfirm.field, bulkConfirm.value)} disabled={bulkBusy}>{bulkBusy ? 'Updating…' : 'Confirm'}</PrimaryBtn>
+          <GhostBtn onClick={() => { setBulkConfirm(null); setBulkStatus(''); setBulkTier('') }} disabled={bulkBusy}>Cancel</GhostBtn>
+        </div>
+      )}
+      {bulkErr && <Err msg={bulkErr} />}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>
-            {filtered.length} of {members.length} member{members.length !== 1 ? 's' : ''}
+            {members.length} of {total} member{total !== 1 ? 's' : ''}
+            {isPending && <span style={{ color: '#c5a882', marginLeft: '0.5rem' }}>· Updating…</span>}
           </div>
           {members.length > 0 && selected.size === 0 && (
             <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
               {emailsCopied ? 'Copied!' : 'Copy Emails'}
+            </button>
+          )}
+          {members.length > 0 && selected.size === 0 && (
+            <button onClick={copyPhones} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: phonesCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${phonesCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {phonesCopied ? 'Copied!' : 'Copy Phones'}
             </button>
           )}
           {filtered.length > 0 && selected.size === 0 && (
@@ -618,9 +708,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             />
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined, flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+            <select value={statusFilter} onChange={e => onStatusFilterChange(e.target.value)}
               style={{ ...sel, width: '130px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">All statuses</option>
               <option value="active">Active</option>
@@ -631,28 +721,39 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div style={{ position: 'relative', flexShrink: 0 }}>
-            <select value={sort} onChange={e => setSort(e.target.value)}
+            <select value={tierFilter} onChange={e => onTierFilterChange(e.target.value)}
+              style={{ ...sel, width: '140px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="all">All tiers</option>
+              <option value="routes_member">Routes Member</option>
+              <option value="inner_circle">Inner Circle</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={sort} onChange={e => onSortChange(e.target.value)}
               style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name_az">Name A → Z</option>
               <option value="name_za">Name Z → A</option>
-              <option value="member_num_asc">Member # ↑</option>
-              <option value="member_num_desc">Member # ↓</option>
+              <option value="member_num_asc">Member # ↑ (this page)</option>
+              <option value="member_num_desc">Member # ↓ (this page)</option>
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div style={{ position: 'relative', width: isMobile ? '100%' : '260px' }}>
-            <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, status…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, phone, car…" value={search} onChange={e => setSearch(e.target.value)} />
             {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
           </div>
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
-      ) : (
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflowX: 'auto' }}>
+      {/* No loading-spinner swap here on purpose — startTransition keeps this
+          list visible (slightly stale) during a search/filter/sort/page
+          request instead of flashing to a blank state; the small "Updating…"
+          text next to the count above is the only pending indicator. */}
+      {(
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflowX: 'auto', opacity: isPending ? 0.6 : 1, transition: 'opacity 0.15s' }}>
           {!isMobile && (
             <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.5fr 0.9fr 1fr 0.85fr 0.85fr 0.85fr', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center', minWidth: '700px' }}>
               <input type="checkbox"
@@ -981,7 +1082,11 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             total={total}
             page={page}
             pageSize={pageSize}
-            onPageChange={n => router.push(`?page=${n}`)}
+            onPageChange={n => {
+              const next = new URLSearchParams(searchParams.toString())
+              next.set('page', String(n))
+              startTransition(() => router.push(`?${next.toString()}`))
+            }}
           />
         </div>
       )}

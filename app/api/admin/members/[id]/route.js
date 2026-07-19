@@ -153,8 +153,8 @@ export async function DELETE(request, { params }) {
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const supabase = createAdminClient()
 
-  // Fetch email and photo URL before any deletion
-  const { data: member } = await supabase.from('members').select('name, email, car_photo_url, profile_photo_url').eq('id', id).maybeSingle()
+  // Fetch email and photo URLs before any deletion
+  const { data: member } = await supabase.from('members').select('name, email, car_photo_url, profile_photo_url, cars').eq('id', id).maybeSingle()
 
   // Delete auth user — cascade-deletes the members row via FK
   const { error } = await supabase.auth.admin.deleteUser(id)
@@ -169,13 +169,24 @@ export async function DELETE(request, { params }) {
     metadata: { email: member?.email || null },
   })
 
-  // Delete profile photo from storage
+  // Delete every photo this member has in storage — the flat car_photo_url/
+  // profile_photo_url mirror car 0 and the avatar, but a member can have up
+  // to 5 cars each with their own photo_url (per-car uploads, see
+  // app/api/member/photo/route.js) that were never cleaned up here before,
+  // leaking a file per extra car on every deletion.
   const photoFilename = member?.car_photo_url?.split('/').pop()?.split('?')[0]
   const avatarFilename = member?.profile_photo_url?.split('/').pop()?.split('?')[0]
-  const photoPaths = [
+  const carPhotoFilenames = (member?.cars || [])
+    .map(c => c?.photo_url?.split('/').pop()?.split('?')[0])
+    .filter(Boolean)
+  const photoPaths = [...new Set([
     ...(photoFilename ? [photoFilename] : [`${id}.jpg`, `${id}.jpeg`, `${id}.png`, `${id}.webp`]),
     ...(avatarFilename ? [avatarFilename] : [`${id}-avatar.jpg`, `${id}-avatar.jpeg`, `${id}-avatar.png`, `${id}-avatar.webp`]),
-  ]
+    ...carPhotoFilenames,
+    // Fallback guesses for per-car photos (indices 1-4) in case cars[].photo_url
+    // was somehow missing/stale — cheap to also attempt, remove() ignores 404s
+    ...[1, 2, 3, 4].flatMap(i => [`${id}-car-${i}.jpg`, `${id}-car-${i}.jpeg`, `${id}-car-${i}.png`, `${id}-car-${i}.webp`]),
+  ])]
   try { await supabase.storage.from('member-photos').remove(photoPaths) } catch {}
 
   // Delete application row by email — cascades to contacts
