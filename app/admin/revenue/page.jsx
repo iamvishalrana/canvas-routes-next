@@ -31,8 +31,11 @@ export default async function RevenuePage() {
         const charge = pi.latest_charge
         const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
         return {
+          id:                     pi.id,
+          manual:                 false,
           name:                   pi.metadata.name || '—',
           email:                  pi.metadata.email?.toLowerCase().trim() || '',
+          phone:                  pi.metadata.phone || '',
           stripe_amount_paid:     pi.amount_received,
           stripe_amount_refunded: amountRefunded,
           stripe_paid_at:         (charge && typeof charge === 'object' && charge.created)
@@ -50,7 +53,7 @@ export default async function RevenuePage() {
     const stripeEmails = new Set(rows.map(r => r.email))
     const { data: manualApps } = await supabase
       .from('applications')
-      .select('name, email, stripe_amount_paid, stripe_payment_type, stripe_paid_at')
+      .select('name, email, phone, stripe_amount_paid, stripe_payment_type, stripe_paid_at')
       .eq('stripe_payment_status', 'paid')
       .not('stripe_amount_paid', 'is', null)
     for (const a of (manualApps || [])) {
@@ -58,8 +61,11 @@ export default async function RevenuePage() {
       if (!email) continue
       if (stripeEmails.has(email)) continue
       rows.push({
+        id: null,
+        manual: true,
         name:                   a.name || '—',
         email,
+        phone:                  a.phone || '',
         stripe_amount_paid:     a.stripe_amount_paid,
         stripe_amount_refunded: 0,
         stripe_paid_at:         a.stripe_paid_at,
@@ -110,13 +116,20 @@ export default async function RevenuePage() {
     })
 
   // Recent 10 payments
-  const recentPayments = rows.slice(0, 10).map(r => ({
-    name:   r.name,
-    email:  r.email,
-    amount: ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100,
-    type:   TYPE_LABELS[r.stripe_payment_type] || r.stripe_payment_type || '—',
-    date:   r.stripe_paid_at,
-  }))
+  const toPaymentRow = r => ({
+    id:        r.id || null,
+    manual:    !!r.manual,
+    name:      r.name,
+    email:     r.email,
+    phone:     r.phone || '',
+    amount:    ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100,
+    gross:     (r.stripe_amount_paid || 0) / 100,
+    refunded:  (r.stripe_amount_refunded || 0) / 100,
+    typeKey:   r.stripe_payment_type || '',
+    type:      TYPE_LABELS[r.stripe_payment_type] || r.stripe_payment_type || '—',
+    date:      r.stripe_paid_at,
+  })
+  const recentPayments = rows.slice(0, 10).map(toPaymentRow)
 
   return (
     <RevenueClient
@@ -125,13 +138,7 @@ export default async function RevenuePage() {
       byType={byType}
       byMonth={byMonth}
       recentPayments={recentPayments}
-      payments={rows.map(r => ({
-        name:   r.name,
-        email:  r.email,
-        type:   TYPE_LABELS[r.stripe_payment_type] || r.stripe_payment_type || '—',
-        amount: ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100,
-        date:   r.stripe_paid_at,
-      }))}
+      payments={rows.map(toPaymentRow)}
     />
   )
 }

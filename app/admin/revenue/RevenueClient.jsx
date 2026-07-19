@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
@@ -19,8 +19,60 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
 }
 
+function fmtDateTime(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
+}
+
+const PI_BASE = 'https://dashboard.stripe.com/payments/'
+
+function PaymentDetailPanel({ p }) {
+  return (
+    <div style={{ padding: '1rem 1.25rem', background: 'rgba(197,168,130,0.04)', borderTop: '0.5px solid rgba(0,0,0,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem 1.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+      <div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Paid</div>
+        <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{fmtDateTime(p.date)}</div>
+      </div>
+      <div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Phone</div>
+        <div style={{ fontSize: '13px', color: p.phone ? '#1a1a1a' : '#ccc' }}>{p.phone || '—'}</div>
+      </div>
+      <div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Gross</div>
+        <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{fmt(p.gross)}</div>
+      </div>
+      {p.refunded > 0 && (
+        <div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Refunded</div>
+          <div style={{ fontSize: '13px', color: '#4040aa' }}>−{fmt(p.refunded)}</div>
+        </div>
+      )}
+      <div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Net</div>
+        <div style={{ fontSize: '13px', color: '#3B6B2F', fontWeight: '500' }}>{fmt(p.amount)}</div>
+      </div>
+      <div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Payment</div>
+        {p.manual ? (
+          <span style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 7px' }}>E-transfer</span>
+        ) : p.id ? (
+          <a href={PI_BASE + p.id} target="_blank" rel="noreferrer" style={{ fontFamily: 'monospace', fontSize: '11px', color: '#888', textDecoration: 'none', borderBottom: '0.5px solid rgba(0,0,0,0.2)' }}>
+            {p.id.slice(0, 20)}… ↗
+          </a>
+        ) : <span style={{ color: '#ccc' }}>—</span>}
+      </div>
+      <div style={{ gridColumn: '1 / -1' }}>
+        <a href={`/admin/applications?q=${encodeURIComponent(p.email)}`} style={{ fontSize: '11px', color: '#8A6535', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+          View full application →
+        </a>
+      </div>
+    </div>
+  )
+}
+
 export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType = [], byMonth = [], recentPayments = [], payments = [] }) {
   const [isMobile, setIsMobile] = useState(false)
+  const [expanded, setExpanded] = useState(null) // index of the recent payment row currently open
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check(); window.addEventListener('resize', check)
@@ -150,17 +202,23 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
           /* Cards on mobile — a five-column table only side-scrolls at 390px */
           <div style={{ padding: '0 1rem 1rem' }}>
             {recentPayments.map((p, i) => (
-              <div key={`${p.email}-${p.date}-${i}`}
-                style={{ padding: '0.75rem 0.25rem', borderTop: i > 0 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem' }}>
-                  <div style={{ fontSize: '13px', color: '#1a1a1a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                  <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(p.amount)}</div>
+              <div key={`${p.email}-${p.date}-${i}`}>
+                <div onClick={() => setExpanded(expanded === i ? null : i)}
+                  style={{ padding: '0.75rem 0.25rem', borderTop: i > 0 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem' }}>
+                    <div style={{ fontSize: '13px', color: '#1a1a1a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                    <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(p.amount)}</div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', wordBreak: 'break-all' }}>{p.email}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginTop: '3px' }}>
+                    <span style={{ fontSize: '11px', color: '#8A6535' }}>{p.type}</span>
+                    <span style={{ fontSize: '11px', color: '#bbb', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                      {fmtDate(p.date)}
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" style={{ transition: 'transform 0.2s', transform: expanded === i ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </div>
                 </div>
-                <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', wordBreak: 'break-all' }}>{p.email}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginTop: '3px' }}>
-                  <span style={{ fontSize: '11px', color: '#8A6535' }}>{p.type}</span>
-                  <span style={{ fontSize: '11px', color: '#bbb', flexShrink: 0 }}>{fmtDate(p.date)}</span>
-                </div>
+                {expanded === i && <PaymentDetailPanel p={p} />}
               </div>
             ))}
           </div>
@@ -169,6 +227,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
+                  <th style={TH}></th>
                   <th style={TH}>Name</th>
                   <th style={TH}>Email</th>
                   <th style={TH}>Type</th>
@@ -178,13 +237,26 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
               </thead>
               <tbody>
                 {recentPayments.map((p, i) => (
-                  <tr key={`${p.email}-${p.date}-${i}`}>
-                    <td style={{ ...TD, fontWeight: '400' }}>{p.name}</td>
-                    <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.email}</td>
-                    <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.type}</td>
-                    <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(p.amount)}</td>
-                    <td style={{ ...TD, textAlign: 'right', color: '#999', fontSize: '12px', whiteSpace: 'nowrap' }}>{fmtDate(p.date)}</td>
-                  </tr>
+                  <Fragment key={`${p.email}-${p.date}-${i}`}>
+                    <tr onClick={() => setExpanded(expanded === i ? null : i)}
+                      style={{ cursor: 'pointer', background: expanded === i ? 'rgba(197,168,130,0.05)' : undefined }}>
+                      <td style={{ ...TD, width: '20px', color: '#ccc' }}>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" style={{ transition: 'transform 0.2s', transform: expanded === i ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+                      </td>
+                      <td style={{ ...TD, fontWeight: '400' }}>{p.name}</td>
+                      <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.email}</td>
+                      <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.type}</td>
+                      <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(p.amount)}</td>
+                      <td style={{ ...TD, textAlign: 'right', color: '#999', fontSize: '12px', whiteSpace: 'nowrap' }}>{fmtDate(p.date)}</td>
+                    </tr>
+                    {expanded === i && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: 0, borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
+                          <PaymentDetailPanel p={p} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
