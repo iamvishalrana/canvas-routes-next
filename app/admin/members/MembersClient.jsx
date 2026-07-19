@@ -280,6 +280,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   const [bulkConfirm, setBulkConfirm] = useState(null) // { field, value } awaiting yes/no
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkErr, setBulkErr] = useState(null)
+  const [showInviteForm, setShowInviteForm] = useState(false)
 
   // Pushes a patch of query params (page always resets to 1 unless it's the
   // param being set) and lets the server component refetch — this is what
@@ -570,55 +571,63 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
         ))}
       </div>
 
-      {/* Invite */}
-      <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>Invite New Member</div>
-        <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr 160px 160px auto', gap: '0.75rem', alignItems: 'end' }}>
-          <div>
-            <L>Full Name</L>
-            <input style={inp} value={inviteForm.name} onChange={e => { setInviteForm(p => ({ ...p, name: e.target.value })); setInviteConfirm(false) }} placeholder="Name" />
-          </div>
-          <div>
-            <L>Email *</L>
-            <input style={inp} type="email" value={inviteForm.email}
-              onChange={e => { setInviteForm(p => ({ ...p, email: e.target.value })); setInviteConfirm(false); if (appData) setAppData(null) }}
-              onBlur={e => lookupApplication(e.target.value)}
-              placeholder="email@example.com" />
-          </div>
-          <div>
-            <L>Initial Status</L>
-            <SelectWrap value={inviteForm.membership_status} onChange={e => { setInviteForm(p => ({ ...p, membership_status: e.target.value })); setInviteConfirm(false) }} options={STATUS_OPTIONS} />
-          </div>
-          <div>
-            <L>Tier</L>
-            <div style={{ position: 'relative' }}>
-              <select style={sel} value={inviteForm.tier} onChange={e => { setInviteForm(p => ({ ...p, tier: e.target.value })); setInviteConfirm(false) }}>
-                <option value="routes_member">Routes Member</option>
-                <option value="inner_circle">Inner Circle</option>
-              </select>
-              <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          {inviteConfirm ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
-              <span style={{ fontSize: '12px', color: '#8A6535' }}>Send invite to <strong>{inviteForm.email}</strong>?</span>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Confirm'}</PrimaryBtn>
-                <GhostBtn type="button" onClick={() => setInviteConfirm(false)}>Cancel</GhostBtn>
+      {/* Invite — collapsed by default; the form only really matters when someone's actively adding a member */}
+      <div style={{ marginBottom: '2rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+        <button type="button" onClick={() => setShowInviteForm(v => !v)}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.75rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888' }}>Invite New Member</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s', transform: showInviteForm ? 'rotate(180deg)' : 'none', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        {showInviteForm && (
+          <div className="admin-panel-enter" style={{ padding: '0 1.75rem 1.75rem' }}>
+            <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr 160px 160px auto', gap: '0.75rem', alignItems: 'end' }}>
+              <div>
+                <L>Full Name</L>
+                <input style={inp} value={inviteForm.name} onChange={e => { setInviteForm(p => ({ ...p, name: e.target.value })); setInviteConfirm(false) }} placeholder="Name" />
               </div>
-            </div>
-          ) : (
-            <PrimaryBtn type="submit" disabled={inviting}>Send Invite</PrimaryBtn>
-          )}
-        </form>
-        {appData && (
-          <div style={{ marginTop: '0.75rem', fontSize: '12px', color: '#3B6B2F', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.25)', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            Application found — <strong>{appData.name}</strong>{appData.car_year ? ` · ${appData.car_year} ${appData.car_model}` : ''}{appData.dob_month ? ` · DOB ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][appData.dob_month - 1]} ${appData.dob_day}${appData.dob_year ? `, ${appData.dob_year}` : ''}` : ''}. Profile will be pre-populated on invite.
+              <div>
+                <L>Email *</L>
+                <input style={inp} type="email" value={inviteForm.email}
+                  onChange={e => { setInviteForm(p => ({ ...p, email: e.target.value })); setInviteConfirm(false); if (appData) setAppData(null) }}
+                  onBlur={e => lookupApplication(e.target.value)}
+                  placeholder="email@example.com" />
+              </div>
+              <div>
+                <L>Initial Status</L>
+                <SelectWrap value={inviteForm.membership_status} onChange={e => { setInviteForm(p => ({ ...p, membership_status: e.target.value })); setInviteConfirm(false) }} options={STATUS_OPTIONS} />
+              </div>
+              <div>
+                <L>Tier</L>
+                <div style={{ position: 'relative' }}>
+                  <select style={sel} value={inviteForm.tier} onChange={e => { setInviteForm(p => ({ ...p, tier: e.target.value })); setInviteConfirm(false) }}>
+                    <option value="routes_member">Routes Member</option>
+                    <option value="inner_circle">Inner Circle</option>
+                  </select>
+                  <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+              {inviteConfirm ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
+                  <span style={{ fontSize: '12px', color: '#8A6535' }}>Send invite to <strong>{inviteForm.email}</strong>?</span>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Confirm'}</PrimaryBtn>
+                    <GhostBtn type="button" onClick={() => setInviteConfirm(false)}>Cancel</GhostBtn>
+                  </div>
+                </div>
+              ) : (
+                <PrimaryBtn type="submit" disabled={inviting}>Send Invite</PrimaryBtn>
+              )}
+            </form>
+            {appData && (
+              <div style={{ marginTop: '0.75rem', fontSize: '12px', color: '#3B6B2F', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.25)', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6B2F" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Application found — <strong>{appData.name}</strong>{appData.car_year ? ` · ${appData.car_year} ${appData.car_model}` : ''}{appData.dob_month ? ` · DOB ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][appData.dob_month - 1]} ${appData.dob_day}${appData.dob_year ? `, ${appData.dob_year}` : ''}` : ''}. Profile will be pre-populated on invite.
+              </div>
+            )}
+            <Err msg={inviteError} />
+            <Success msg={inviteSuccess ? 'Invite sent successfully.' : null} />
           </div>
         )}
-        <Err msg={inviteError} />
-        <Success msg={inviteSuccess ? 'Invite sent successfully.' : null} />
       </div>
 
       {/* Member List */}
@@ -921,9 +930,17 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                           <Badge status={m.membership_status} />
                           <TierChip tier={m.tier} />
                         </div>
-                        <div style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => setPreviewMember(m)}
+                            title="Preview member profile card"
+                            aria-label="Preview member profile card"
+                            className="admin-btn"
+                            style={{ width: '30px', height: '30px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7 17c1.2-2 3-3 5-3s3.8 1 5 3"/></svg>
+                          </button>
                           <KebabMenu items={[
-                            { label: 'Preview', onClick: () => setPreviewMember(m) },
                             { label: 'Edit', onClick: () => startEdit(m) },
                             { label: 'Delete', danger: true, onClick: () => { setDeleteMemberConfirm(m.id); setDeleteMemberError(null) } },
                           ]} />
