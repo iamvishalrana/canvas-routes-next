@@ -40,7 +40,11 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
   const pastEvents = events.filter(ev => new Date(ev.date) <= today)
   const attendedCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === true).length
   const noShowCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === false).length
-  const naCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === 'na').length
+  // N/A is the catch-all, not just an explicit 'na' — attendance is opt-in,
+  // so anything not explicitly marked attended/no-show counts as N/A. Keeps
+  // this always summing to pastEvents.length instead of leaving some past
+  // events uncounted in any bucket.
+  const naCount = pastEvents.length - attendedCount - noShowCount
   const upcomingCount = events.filter(ev => new Date(ev.date) > today).length
   const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}${m.dob_year ? `, ${m.dob_year}` : ''}` : null
 
