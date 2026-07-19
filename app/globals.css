@@ -622,18 +622,35 @@ html { -webkit-text-size-adjust: 100%; }
   to   { transform: rotate(360deg); }
 }
 
-/* Admin animations */
+/* Admin animations — opacity-only, deliberately no `transform`.
+   These all use animation-fill-mode: forwards or both (.admin-page-enter,
+   .admin-panel-enter, .admin-nav-item, etc), which keeps the animation
+   "active" on the element forever after it finishes. Once transform is
+   part of a forwards-filled animation, Chromium continues reporting a
+   resolved matrix from getComputedStyle even when the keyframe's declared
+   endpoint is the literal `none` keyword — tested directly 2026-07-19,
+   `to { transform: none }` under `forwards` still established a containing
+   block for position:fixed descendants, identical to translateY(0). Only
+   removing `transform` from the animation entirely avoids this. Since
+   .admin-page-enter wraps every admin page's entire content — including
+   every ConfirmDialog/ExportModal/etc rendered inside — this was centering
+   every admin modal against the full scrollable page height instead of the
+   viewport, landing below the fold on any page taller than one screen
+   (reported on both desktop and mobile, since it has nothing to do with
+   touch). If you want a slide-in flourish back, animate it via a plain
+   inline style that's removed after the transition (like PullToRefresh.jsx
+   does), never via a fill-forwards/both CSS animation. */
 @keyframes adminFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes adminSlideDown {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes adminRowIn {
-  from { opacity: 0; transform: translateX(-4px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes adminShimmer {
   0%   { background-position: -400px 0; }
@@ -644,8 +661,8 @@ html { -webkit-text-size-adjust: 100%; }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes adminSidebarIn {
-  from { opacity: 0; transform: translateX(-16px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes adminActivePulse {
   0%   { background: rgba(197,168,130,0.18); }
@@ -732,8 +749,8 @@ html { -webkit-text-size-adjust: 100%; }
   to   { opacity: 1; }
 }
 @keyframes adminModalIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .admin-modal-overlay {
   animation: adminOverlayIn 0.18s ease-out forwards;

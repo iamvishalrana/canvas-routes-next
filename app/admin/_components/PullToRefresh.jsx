@@ -103,7 +103,16 @@ export default function PullToRefresh({ onRefresh, children }) {
         </div>
       )}
       <div style={{
-        transform: `translateY(${refreshing ? PULL_THRESHOLD : pullDistance}px)`,
+        // Only set `transform` while actually mid-gesture. ANY non-`none`
+        // transform value on an ancestor — even translateY(0px) at rest —
+        // makes it the containing block for `position: fixed` descendants,
+        // so every admin modal (ConfirmDialog, ExportModal, etc.) rendered
+        // anywhere inside {children} would center against this wrapper's
+        // full scrollable height instead of the viewport, landing well
+        // below the fold on any page taller than one screen. Omitting the
+        // property entirely at rest restores normal fixed-position
+        // behavior relative to the viewport.
+        ...(pullDistance || refreshing ? { transform: `translateY(${refreshing ? PULL_THRESHOLD : pullDistance}px)` } : {}),
         transition: pulling.current ? 'none' : 'transform 0.2s ease',
       }}>
         {children}
