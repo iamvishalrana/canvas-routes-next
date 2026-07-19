@@ -386,6 +386,13 @@ export async function POST(request) {
             .or(`waitlist_notified_pi.is.null,waitlist_notified_pi.neq.${pi.id}`)
             .select('id')
           if (!claimErr && (claimRows || []).length === 0) break
+          // Distinct, queryable signal separate from the rescue email itself —
+          // lets rescue frequency be tracked in Sentry over time (a spike here
+          // usually means more 3DS-redirect traffic, e.g. Instagram/Facebook
+          // in-app browsers — see the useEffect in MembershipContent.jsx that
+          // re-POSTs membership-waitlist after such a redirect) rather than
+          // only being visible via this one-off email landing in an inbox.
+          captureMessage('Membership webhook rescue fired — normal flow did not win the race', { email: normalEmail, type, piId: pi.id })
           const firstName  = (name || '').trim().split(' ')[0] || 'there'
           const tierLabel  = type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
           const amountFmt  = `$${(amountHeld / 100).toFixed(2)} CAD`
