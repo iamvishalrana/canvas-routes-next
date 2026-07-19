@@ -239,7 +239,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
       )}
 
       <button type="submit" disabled={!stripe || paying}
-        style={{width:'100%',padding:'1.05rem',background:paying?'rgba(69,100,60,0.5)':'#45643c',border:'none',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',fontWeight:'700',cursor:paying?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',transition:'background 0.2s',marginBottom:'0.85rem'}}>
+        style={{width:'100%',padding:'1.05rem',background:paying?'rgba(15,30,20,0.5)':'#0F1E14',border:'none',color:'#c5a882',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',fontWeight:'700',cursor:paying?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',transition:'background 0.2s',marginBottom:'0.85rem'}}>
         {paying ? (
           <>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin 1s linear infinite'}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -1322,7 +1322,7 @@ export default function HelloToMontebelloPage() {
                 )}
 
                 <button type="submit" disabled={status==='loading' || (alreadyRegistered && !!memberProfile)}
-                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'rgba(69,100,60,0.5)':'#45643c',color:'#F5F1EC',border:'none',marginBottom:'1rem',opacity:(alreadyRegistered&&!!memberProfile)?0.5:1}}>
+                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'rgba(15,30,20,0.5)':'#0F1E14',color:'#c5a882',border:'none',marginBottom:'1rem',opacity:(alreadyRegistered&&!!memberProfile)?0.5:1}}>
                   {status==='loading' ? 'Setting up payment…' : memberProfile ? 'Secure your spot — $179' : form.isMember === 'no' ? `Continue to payment — $${price}` : 'Continue to payment'}
                 </button>
 

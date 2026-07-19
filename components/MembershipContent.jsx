@@ -326,7 +326,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 
       {/* Pay button */}
       <button type="submit" disabled={!stripe || paying}
-        style={{ width: '100%', padding: '1.05rem', background: paying ? 'rgba(69,100,60,0.5)' : '#45643c', border: 'none', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'background 0.2s', marginBottom: '0.85rem' }}>
+        style={{ width: '100%', padding: '1.05rem', background: paying ? 'rgba(15,30,20,0.5)' : '#0F1E14', border: 'none', color: '#c5a882', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: '600', cursor: paying ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'background 0.2s', marginBottom: '0.85rem' }}>
         {paying ? (
           <>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -1048,7 +1048,7 @@ export default function MembershipContent() {
                       <button type="button" onClick={() => set('tier', 'Routes Member')} style={{
                         padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
                         background: sel ? '#1B2F1F' : '#1e3324',
-                        borderLeft: sel ? '2px solid rgba(140,210,120,0.7)' : '2px solid rgba(140,210,120,0.15)',
+                        borderLeft: sel ? '2px solid rgba(197,168,130,0.85)' : '2px solid rgba(197,168,130,0.15)',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
@@ -1056,11 +1056,11 @@ export default function MembershipContent() {
                             <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter),sans-serif' }}>Events, routes, community &amp; perks</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                            <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(245,241,236,0.5)', lineHeight: 1 }}>$99</div>
+                            <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? '#c5a882' : 'rgba(245,241,236,0.5)', lineHeight: 1 }}>$99</div>
                             <div style={{ fontSize: '9px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
                           </div>
                         </div>
-                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(140,210,120,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                       </button>
                     )
                   })()}
@@ -1072,19 +1072,19 @@ export default function MembershipContent() {
                       <button type="button" onClick={() => set('tier', 'Inner Circle')} style={{
                         padding: '1.25rem 1.5rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', position: 'relative', border: 'none',
                         background: sel ? '#0F1E14' : '#152318',
-                        borderLeft: sel ? '2px solid rgba(140,210,120,0.7)' : '2px solid rgba(197,168,130,0.2)',
+                        borderLeft: sel ? '2px solid rgba(197,168,130,0.85)' : '2px solid rgba(197,168,130,0.2)',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div>
-                            <div style={{ fontSize: '14px', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.8)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Inner Circle</div>
+                            <div style={{ fontSize: '14px', color: sel ? '#c5a882' : 'rgba(197,168,130,0.8)', fontWeight: '500', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '3px' }}>Inner Circle</div>
                             <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter),sans-serif' }}>Everything in Routes, plus exclusive access &amp; $50 route credit</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                            <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? 'rgba(140,210,120,0.9)' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
+                            <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? '#c5a882' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
                             <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
                           </div>
                         </div>
-                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(140,210,120,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                       </button>
                     )
                   })()}
@@ -1156,7 +1156,7 @@ export default function MembershipContent() {
               {submitError && <div style={{ fontSize: '12px', color: '#d06070', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{submitError}</div>}
 
               <button type="submit" disabled={status === 'loading'} style={{
-                width: '100%', padding: '1.1rem', background: '#45643c',
+                width: '100%', padding: '1.1rem', background: '#0F1E14',
                 border: 'none', color: '#c5a882',
                 fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
                 fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500',
