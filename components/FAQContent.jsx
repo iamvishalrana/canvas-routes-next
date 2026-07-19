@@ -963,6 +963,30 @@ export default function FAQContent() {
         @media (prefers-reduced-motion: reduce) {
           .cr-fade { opacity: 1; transform: none; transition: none; }
         }
+
+        /* isMobile is a JS/useEffect value — it defaults to false (desktop) on
+           first render and only flips after mount. On a slow connection the
+           JS bundle can take long enough to load that this default desktop
+           state is visibly painted before it self-corrects (reported 2026-07-19:
+           the desktop F40 car briefly showed on mobile). CSS media queries are
+           applied at first paint regardless of JS/hydration timing, so the
+           car's frame size/position and its two visual variants are driven by
+           viewport width here, not by the isMobile variable — eliminating the
+           flash outright instead of just racing it. */
+        .faq-car {
+          width: 46px; height: 21px; margin-left: -23px; margin-top: -10.5px; z-index: 55;
+        }
+        @media (max-width: 767px) {
+          .faq-car { width: 65px; height: 26px; margin-left: -33px; margin-top: -26px; z-index: 101; }
+        }
+        .faq-desktop-only { display: block; }
+        .faq-car-mobile-visual { display: none; }
+        .faq-car-desktop-visual { display: flex; }
+        @media (max-width: 767px) {
+          .faq-desktop-only { display: none !important; }
+          .faq-car-mobile-visual { display: flex; }
+          .faq-car-desktop-visual { display: none; }
+        }
       `}</style>
 
       {/* Road — in page flow, scrolls with content */}
@@ -976,19 +1000,18 @@ export default function FAQContent() {
       {/* Fixed tire marks */}
       <svg ref={tireMarksSvg} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }} />
 
-      {/* Fixed car */}
-      <div ref={carRef} style={{
+      {/* Fixed car — size/position/z-index driven by CSS (.faq-car), not the
+          isMobile JS variable, so viewport width decides at first paint
+          instead of racing a post-hydration effect (see the style block above) */}
+      <div ref={carRef} className="faq-car" style={{
         position: 'fixed', top: 0, left: 0,
-        width:       isMobile ? '65px'    : '46px',
-        height:      isMobile ? '26px'    : '21px',
-        marginLeft:  isMobile ? '-33px'   : '-23px',
-        marginTop:   isMobile ? '-26px'   : '-10.5px',
         willChange: 'transform', pointerEvents: 'none',
-        zIndex: isMobile ? (menuOpen ? 98 : 101) : 55, opacity: 0, overflow: 'visible',
+        ...(isMobile && menuOpen ? { zIndex: 98 } : {}),
+        opacity: 0, overflow: 'visible',
       }}>
         {/* Speech bubble — desktop only, shown on fast scroll */}
         {!isMobile && (
-          <div ref={speechRef} style={{
+          <div className="faq-desktop-only" ref={speechRef} style={{
             position: 'absolute',
             left: 'calc(100% + 10px)',
             top: '-20px',
@@ -1017,7 +1040,7 @@ export default function FAQContent() {
         )}
         {/* Question marks — desktop only */}
         {!isMobile && (
-          <div ref={qmarksRef}>
+          <div className="faq-desktop-only" ref={qmarksRef}>
           {[
             { top: '-26px', left: '2px',  delay: '0s'     },
             { top: '-34px', left: '17px', delay: '0.93s'  },
@@ -1036,10 +1059,12 @@ export default function FAQContent() {
           ))}
           </div>
         )}
-        <div ref={carInnerRef} style={{ position: 'relative', width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {isMobile ? (
-            /* ── Mobile: car photo 65×26 + exhaust overlay ── */
-            <>
+        <div ref={carInnerRef} style={{ position: 'relative', width: '100%', height: '100%', transformOrigin: '50% 50%', willChange: 'transform' }}>
+          {/* Both visuals render unconditionally — CSS media query (not the
+              isMobile JS variable) decides which one paints, so there's no
+              window where the wrong car type can flash on the wrong viewport */}
+          <div className="faq-car-mobile-visual" style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
+            {/* ── Mobile: car photo 65×26 + exhaust overlay ── */}
               <Image src="/IMG_5513.png" alt="" width={65} height={26} style={{ objectFit: 'contain', display: 'block' }} priority unoptimized />
               <svg style={{ position: 'absolute', top: 0, left: 0, width: '65px', height: '26px', overflow: 'visible', pointerEvents: 'none' }}>
                 {[0, 0.42, 0.84].map(d => (
@@ -1047,9 +1072,9 @@ export default function FAQContent() {
                     style={{ animation: 'faq-exhaust 1.2s ease-out infinite', animationDelay: `${d}s`, transformBox: 'fill-box', transformOrigin: 'center' }} />
                 ))}
               </svg>
-            </>
-          ) : (
-            /* ── Desktop: F40 top-down view ── */
+          </div>
+          <div className="faq-car-desktop-visual" style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
+            {/* ── Desktop: F40 top-down view ── */}
             <svg viewBox="0 0 56 26" width="46" height="21" style={{ display: 'block', overflow: 'visible' }}>
             <polygon ref={faqBeam1Ref} points="53,4.75 257,-55 257,28"   fill="rgba(197,168,130,0.38)" style={{ opacity: 0, transition: 'opacity 0.04s' }} />
             <polygon ref={faqBeam2Ref} points="53,21.25 257,-4 257,77"  fill="rgba(197,168,130,0.38)" style={{ opacity: 0, transition: 'opacity 0.04s' }} />
@@ -1092,13 +1117,13 @@ export default function FAQContent() {
             <rect ref={faqHL1Ref} x="49" y="1"    width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
             <rect ref={faqHL2Ref} x="49" y="17.5" width="6.5" height="7.5" rx="1.5" fill="rgba(255,250,195,0.9)" stroke="rgba(80,60,0,0.3)" strokeWidth="0.4" />
           </svg>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Section label — outside carRef so it doesn't oscillate with the car's sine path */}
       {!isMobile && (
-        <span ref={sectionLabelRef} style={{
+        <span className="faq-desktop-only" ref={sectionLabelRef} style={{
           position: 'fixed', top: 0, left: 'calc(8vw + 37px)',
           transform: 'translateY(-50%)',
           whiteSpace: 'nowrap',
