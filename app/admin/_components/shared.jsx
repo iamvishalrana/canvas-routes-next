@@ -214,6 +214,12 @@ export function ToggleSwitch({ checked, onChange, disabled, label }) {
   )
 }
 
+// value: true (attended) | false (no-show) | 'na' (not eligible — event
+// predates them, tier-restricted, etc.) | null (not marked yet). 'na' is a
+// plain string sentinel, never confused with the false/no-show boolean —
+// every read of .attended / event_attendance elsewhere in the app uses a
+// strict === true / === false comparison, so 'na' safely falls through as
+// "not counted" anywhere that isn't this toggle itself.
 export function AttendanceToggle({ value, onChange, disabled }) {
   const seg = (active, color, border, bg, label, newVal) => (
     <button type="button" onClick={() => onChange(active ? null : newVal)} disabled={disabled}
@@ -222,9 +228,10 @@ export function AttendanceToggle({ value, onChange, disabled }) {
     </button>
   )
   return (
-    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
       {seg(value === true,  '#3B6B2F', '#3B6B2F',             'rgba(59,107,47,0.1)',  '✓ Attended', true)}
       {seg(value === false, '#93333E', 'rgba(147,51,62,0.4)', 'rgba(147,51,62,0.08)', '✗ No-show',  false)}
+      {seg(value === 'na',  '#777',    'rgba(0,0,0,0.3)',     'rgba(0,0,0,0.06)',     'N/A',        'na')}
     </div>
   )
 }

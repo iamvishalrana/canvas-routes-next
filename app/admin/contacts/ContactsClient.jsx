@@ -846,16 +846,17 @@ export default function ContactsClient() {
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
                         const isPast = eventDate ? new Date(eventDate) <= today : true
-                        const isNA = isPast && reg !== null && reg.registered_at === null && reg.attended === null
+                        // Previously auto-detected as a plain "N/A" label (a registration
+                        // placeholder with no registered_at/attended ever set) — now just
+                        // the toggle's starting position, since N/A is a real, clickable
+                        // state an admin can set/change on any event, not just this one
+                        // narrow data shape.
+                        const wasAutoNA = reg !== null && reg.registered_at === null && reg.attended === null
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
-                            {isNA ? (
-                              <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>N/A</span>
-                            ) : isPast ? (
-                              <>
-                                <AttendanceToggle value={reg?.attended ?? null} onChange={v => toggleAttended(c.contact_id, eventName, v)} />
-                              </>
+                            {isPast ? (
+                              <AttendanceToggle value={reg?.attended ?? (wasAutoNA ? 'na' : null)} onChange={v => toggleAttended(c.contact_id, eventName, v)} />
                             ) : (
                               <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
                             )}

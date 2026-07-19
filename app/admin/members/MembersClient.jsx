@@ -40,6 +40,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
   const pastEvents = events.filter(ev => new Date(ev.date) <= today)
   const attendedCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === true).length
   const noShowCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === false).length
+  const naCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === 'na').length
   const upcomingCount = events.filter(ev => new Date(ev.date) > today).length
   const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}${m.dob_year ? `, ${m.dob_year}` : ''}` : null
 
@@ -141,6 +142,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
               <span style={{ fontSize: '11px', color: attendedCount > 0 ? '#3B6B2F' : '#bbb' }}>{attendedCount} attended</span>
               <span style={{ color: '#ddd' }}>·</span>
               <span style={{ fontSize: '11px', color: noShowCount > 0 ? '#93333E' : '#bbb' }}>{noShowCount} no-show</span>
+              {naCount > 0 && <><span style={{ color: '#ddd' }}>·</span><span style={{ fontSize: '11px', color: '#999' }}>{naCount} n/a</span></>}
               {upcomingCount > 0 && <><span style={{ color: '#ddd' }}>·</span><span style={{ fontSize: '11px', color: '#bbb' }}>{upcomingCount} upcoming</span></>}
             </div>
           )}
