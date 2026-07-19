@@ -195,6 +195,14 @@ export async function POST(request) {
   const fullCar = [carMake, carModel].filter(Boolean).join(' ')
   const normalEmail = email.toLowerCase().trim()
 
+  // Stripe's PI status is the source of truth for stripe_payment_status — never
+  // hardcode 'pending' below. If the webhook's requires_capture rescue already
+  // ran (it can race ahead of this route on nothing more than normal network
+  // latency, not just a closed tab), this route firing afterward must not
+  // downgrade an already-'authorized' row back to 'pending' and hide the admin
+  // Capture button. Falls back to 'pending' only if verification is skipped/fails.
+  let stripePaymentStatus = 'pending'
+
   // Verify the PaymentIntent belongs to this user and matches the submitted tier
   if (paymentIntentId && stripe) {
     try {
@@ -209,6 +217,7 @@ export async function POST(request) {
         captureMessage('Membership waitlist PI verification failed', { piId: paymentIntentId, piEmail, normalEmail, piType: pi.metadata?.type, expectedType, piStatus: pi.status })
         return Response.json({ error: 'Payment verification failed. Please contact support.' }, { status: 400 })
       }
+      stripePaymentStatus = pi.status === 'succeeded' ? 'paid' : 'authorized'
       // Reject if the amount doesn't reconcile with the tier price. apply-promo
       // records discount_amount in PI metadata, so amount + discount must add
       // back up to the canonical price — validates any legitimate discount
@@ -249,7 +258,16 @@ export async function POST(request) {
       }).catch(() => {})
     }
 
-    const membershipReg = { event: 'Canvas Routes Membership', tier, registered_at: new Date().toISOString(), attended: null }
+    // Preserve the existing entry's registered_at/attended if the webhook rescue
+    // (or a prior call to this same route) already created it — don't let a
+    // late-arriving duplicate call reset the original registration timestamp.
+    const existingMembershipReg = (existing?.registrations || []).find(r => r.event === 'Canvas Routes Membership')
+    const membershipReg = {
+      event: 'Canvas Routes Membership',
+      tier,
+      registered_at: existingMembershipReg?.registered_at || new Date().toISOString(),
+      attended: existingMembershipReg?.attended ?? null,
+    }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== 'Canvas Routes Membership')
     const registrations = [...prevRegs, membershipReg]
 
@@ -269,8 +287,9 @@ export async function POST(request) {
       more: more || null,
       referred_by: referredBy?.trim() || null,
       registrations,
-      stripe_payment_status: 'pending',
-      // New payment cycle — clear any stale capture timestamp from a previous flow
+      stripe_payment_status: stripePaymentStatus,
+      // Clear any stale capture timestamp from a previous flow — safe here since
+      // this route only ever runs pre-capture (authorized/pending), never after
       stripe_paid_at: null,
       stripe_payment_type: MEMBERSHIP_TIER_TYPE[tier] || null,
       // Store PI ID immediately so admin can act even if the webhook is delayed
