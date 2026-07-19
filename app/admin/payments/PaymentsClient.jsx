@@ -123,10 +123,10 @@ function Actions({ r, ctx }) {
   if (isAuthorized) {
     if (authorizedAction === r.stripe_payment_intent_id) {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: '230px' }}>
           <div style={{ fontSize: '11px', color: '#1a1a1a' }}>Capture ${((r.stripe_amount_paid || 0) / 100).toFixed(2)} or cancel hold?</div>
           {authorizedErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#93333E' }}>{authorizedErr[r.stripe_payment_intent_id]}</div>}
-          <div style={{ display: 'flex', gap: '0.35rem' }}>
+          <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
             <GhostBtn small onClick={() => doCapture(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>
               {authorizedBusy === r.stripe_payment_intent_id ? '…' : 'Capture'}
             </GhostBtn>

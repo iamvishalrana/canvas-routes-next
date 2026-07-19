@@ -345,7 +345,7 @@ export default function PhotosClient() {
   )
 
   return (
-    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', maxWidth: '1100px', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }}>
       <style>{`
         @keyframes phFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .ph-body { animation: phFadeUp 0.25s ease both; }

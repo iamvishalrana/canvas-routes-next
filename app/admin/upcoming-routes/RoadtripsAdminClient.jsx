@@ -234,7 +234,7 @@ export default function RoadtripsAdminClient() {
   const totalInterest = routes.reduce((s, r) => s + (r.interested_count || 0), 0)
 
   return (
-    <div className="rta-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)', maxWidth: '860px' }}>
+    <div className="rta-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)' }}>
       <style>{`
         .rta-wrap input, .rta-wrap select, .rta-wrap textarea { font-size: 16px !important; }
         .rta-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

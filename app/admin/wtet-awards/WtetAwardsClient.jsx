@@ -83,7 +83,7 @@ export default function WtetAwardsClient() {
   if (!data) return <div style={{ padding: '1.5rem', fontSize: '13px', color: '#93333E' }}>Failed to load.</div>
 
   return (
-    <div style={{ padding: '1.5rem', maxWidth: '760px' }}>
+    <div style={{ padding: '1.5rem' }}>
       <p style={{ fontSize: '12px', color: '#888', margin: '0 0 1.5rem' }}>
         Public ballot: <a href="/wtet-awards" target="_blank" rel="noreferrer" style={{ color: '#8A6535' }}>canvasroutes.com/wtet-awards</a>
       </p>

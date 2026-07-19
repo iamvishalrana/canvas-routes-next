@@ -571,7 +571,7 @@ export default function ExpensesClient() {
   const subtotalNum = round2(paidNum - gstNum - qstNum)
 
   return (
-    <div className="exp-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)', maxWidth: '900px' }}>
+    <div className="exp-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)' }}>
       <style>{`
         @keyframes expFadeIn {
           from { opacity: 0; transform: translateY(-6px); }
