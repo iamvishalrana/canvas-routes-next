@@ -10,6 +10,15 @@ import {
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
+// The tier the customer actually paid for lives on stripe_payment_type
+// (set directly from the Stripe PI's metadata at checkout) — no need to make
+// an admin re-pick it after capture when we already know which one they chose.
+function tierFromPaymentType(stripe_payment_type) {
+  if (stripe_payment_type === 'membership_inner_circle') return 'inner_circle'
+  if (stripe_payment_type === 'membership_routes') return 'routes_member'
+  return null
+}
+
 // ─── InfoCell — defined at module level to avoid remount on every render ────────
 
 function InfoCell({ label, value, copyable }) {
@@ -246,7 +255,15 @@ export default function ApplicationsClient() {
       const res = await fetch(`/api/admin/applications/${a.id}/capture`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) { setCaptureErr(p => ({ ...p, [a.id]: data.error || 'Capture failed.' })); return }
-      setApps(prev => prev.map(x => x.id === a.id ? { ...x, stripe_payment_status: 'paid' } : x))
+      const captured = { ...a, stripe_payment_status: 'paid' }
+      setApps(prev => prev.map(x => x.id === a.id ? captured : x))
+      // Go straight to the invite confirmation using the tier they actually
+      // paid for — only fall back to the manual Routes/Inner Circle picker
+      // if this application has no recognizable membership payment type
+      // (e.g. a pre-Stripe or manually created row).
+      const knownTier = tierFromPaymentType(a.stripe_payment_type)
+      if (knownTier) setInviteTierConfirm({ app: captured, tier: knownTier })
+      else setAppTierPick(a.id)
     } catch { setCaptureErr(p => ({ ...p, [a.id]: 'Network error.' })) }
     finally { setCapturing(null) }
   }
