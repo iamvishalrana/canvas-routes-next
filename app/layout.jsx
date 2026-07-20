@@ -3,6 +3,7 @@ import CookieBanner from '../components/CookieBanner'
 import RouteTracker from '../components/RouteTracker'
 import BackToTop from '../components/BackToTop'
 import ImageProtection from '../components/ImageProtection'
+import { LanguageProvider } from '../lib/i18n/LanguageContext'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -188,9 +189,11 @@ export default function RootLayout({ children }) {
         <CookieBanner />
         <BackToTop />
         <ImageProtection />
-        <div style={{ overflowX: 'hidden' }}>
-          {children}
-        </div>
+        <LanguageProvider>
+          <div style={{ overflowX: 'hidden' }}>
+            {children}
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   )

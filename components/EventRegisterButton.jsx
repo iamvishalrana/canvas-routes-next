@@ -5,6 +5,8 @@ import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { MONTREAL_TZ } from '../lib/mtlTime'
 import { computeTax } from '../lib/tax'
+import { useLanguage } from '../lib/i18n/LanguageContext'
+import { eventRegisterT } from '../lib/i18n/eventRegister'
 
 let _stripePromise = null
 function getStripe() {
@@ -15,6 +17,8 @@ function getStripe() {
 }
 
 function RegistrationConfirmPopup({ eventName, onClose }) {
+  const { lang } = useLanguage()
+  const t = eventRegisterT[lang]
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -50,7 +54,7 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
         </div>
 
         <div style={{ fontSize: '8px', letterSpacing: '0.32em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.75rem' }}>
-          You&apos;re registered
+          {t.registeredBadge}
         </div>
 
         <h2 style={{
@@ -62,7 +66,7 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
         </h2>
 
         <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, marginBottom: '2rem' }}>
-          A confirmation email is on its way. We&apos;ll see you there.
+          {t.confirmationBody}
         </p>
 
         <button
@@ -75,7 +79,7 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
             cursor: 'pointer',
           }}
         >
-          Close
+          {t.close}
         </button>
       </div>
     </div>
@@ -83,6 +87,8 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
 }
 
 function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFail }) {
+  const { lang } = useLanguage()
+  const t = eventRegisterT[lang]
   const stripe = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
@@ -104,7 +110,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
       confirmParams: { return_url: window.location.href },
     })
     if (stripeErr) { setError(stripeErr.message); setPayingState(false); return }
-    if (!paymentIntent) { setError('Payment did not complete. Please try again.'); setPayingState(false); return }
+    if (!paymentIntent) { setError(t.paymentNotCompleted); setPayingState(false); return }
 
     const res = await fetch(`/api/member/events/${event.id}/register`, {
       method: 'POST',
@@ -115,7 +121,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
     setPayingState(false)
     if (!res.ok) {
       if (data.refunded) {
-        setError((data.error || 'This event is at capacity.') + ' Your payment has been refunded — nothing was charged.')
+        setError((data.error || t.eventAtCapacity) + t.refundedNotice)
       } else {
         onPaySuccessRegFail?.(paymentIntent.id)
       }
@@ -145,7 +151,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
             opacity: paying ? 0.6 : 1,
           }}
         >
-          {paying ? 'Processing…' : `Pay $${(computeTax(event.member_price || 0).total / 100).toFixed(2)}`}
+          {paying ? t.processing : t.pay((computeTax(event.member_price || 0).total / 100).toFixed(2))}
         </button>
         <button
           type="button"
@@ -158,7 +164,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
             cursor: 'pointer',
           }}
         >
-          Cancel
+          {t.cancel}
         </button>
       </div>
     </form>
@@ -166,6 +172,8 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
 }
 
 export default function EventRegisterButton({ event, isRegistered, memberTier, compact = false, onRegistrationComplete }) {
+  const { lang } = useLanguage()
+  const t = eventRegisterT[lang]
   const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
   const [clientSecret, setClientSecret] = useState(null)
@@ -195,7 +203,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   if (regClosed) {
     return (
       <span style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(0,0,0,0.12)', padding: compact ? '2px 8px' : '0.45rem 1rem' }}>
-        Registration Closed
+        {t.registrationClosed}
       </span>
     )
   }
@@ -210,28 +218,28 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         background: 'rgba(59,107,47,0.04)',
       }}>
         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Registered
+        {t.registered}
       </span>
     )
   }
 
   if (regNotYetOpen && !regOpen) {
-    const dateStr = opensAt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })
-    const timeStr = opensAt.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
+    const dateStr = opensAt.toLocaleDateString(t.locale, { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })
+    const timeStr = opensAt.toLocaleTimeString(t.locale, { hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
     return (
       <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.3)', padding: compact ? '2px 8px' : '0.45rem 1rem', background: 'rgba(197,168,130,0.04)' }}>
-        Opens {dateStr} at {timeStr}
+        {t.opensAt(dateStr, timeStr)}
       </span>
     )
   }
 
   if (inPriorityWindow && !isInnerCircle) {
     const windowEnd = new Date(event.priority_window_end)
-    const dateStr = windowEnd.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })
-    const timeStr = windowEnd.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
+    const dateStr = windowEnd.toLocaleDateString(t.locale, { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })
+    const timeStr = windowEnd.toLocaleTimeString(t.locale, { hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
     return (
       <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', border: '0.5px solid rgba(197,168,130,0.3)', padding: compact ? '2px 8px' : '0.45rem 1rem', background: 'rgba(197,168,130,0.04)' }}>
-        Opens {dateStr} at {timeStr}
+        {t.opensAt(dateStr, timeStr)}
       </span>
     )
   }
@@ -239,7 +247,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
   if (chargedButFailed) {
     return (
       <div style={{ fontSize: '12px', color: '#93333E', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, padding: '0.6rem 0.75rem', background: 'rgba(147,51,62,0.05)', border: '0.5px solid rgba(147,51,62,0.2)', maxWidth: '380px' }}>
-        Your payment was taken but registration didn&apos;t complete. Please contact us with reference: <strong>{chargedButFailed}</strong>
+        {t.chargedButFailed} <strong>{chargedButFailed}</strong>
       </div>
     )
   }
@@ -255,12 +263,12 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
       try {
         const res = await fetch(`/api/member/events/${event.id}/free-register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
         const data = await res.json().catch(() => ({}))
-        if (!res.ok) { setRegError(data.error || 'Registration failed.'); return }
+        if (!res.ok) { setRegError(data.error || t.registrationFailed); return }
         setDone(true)
         setConfirmedName(event.name)
         onRegistrationComplete?.()
       } catch {
-        setRegError('Network error — please try again.')
+        setRegError(t.networkError)
       } finally {
         setRegistering(false)
       }
@@ -274,19 +282,19 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
         body: JSON.stringify({ eventId: event.id }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setPiError(data.error || 'Could not start registration.'); return }
+      if (!res.ok) { setPiError(data.error || t.couldNotStartRegistration); return }
       setClientSecret(data.clientSecret)
       setModalOpen(true)
     } catch {
-      setPiError('Network error — please try again.')
+      setPiError(t.networkError)
     } finally {
       setLoadingPI(false)
     }
   }
 
   const btnLabel = isFree
-    ? (registering ? 'Registering…' : 'Register — Free')
-    : (loadingPI ? 'Loading…' : `Register — $${(computeTax(event.member_price || 0).total / 100).toFixed(2)}`)
+    ? (registering ? t.registering : t.registerFree)
+    : (loadingPI ? t.loading : t.register((computeTax(event.member_price || 0).total / 100).toFixed(2)))
 
   return (
     <>
@@ -330,7 +338,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
           }}>
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter)', marginBottom: '0.4rem' }}>
-                Event Registration
+                {t.eventRegistration}
               </div>
               <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.2, marginBottom: '0.3rem' }}>
                 {event.name}
@@ -339,24 +347,24 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
                 <div style={{ fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter)' }}>{event.date_display || event.date}</div>
               )}
               <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#777', fontFamily: 'var(--font-inter)' }}>Member price</span>
+                <span style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#777', fontFamily: 'var(--font-inter)' }}>{t.memberPrice}</span>
                 <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.4rem', fontWeight: '300', color: '#1a1a1a' }}>
                   ${(computeTax(event.member_price || 0).total / 100).toFixed(2)} CAD
                 </span>
               </div>
               {(() => {
-                const t = computeTax(event.member_price || 0)
+                const tax = computeTax(event.member_price || 0)
                 const fmt = c => (c / 100).toFixed(2)
                 return (
                   <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', fontFamily: 'var(--font-inter)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>Subtotal</span><span>${fmt(t.subtotal)}</span></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>GST (5%)</span><span>${fmt(t.gst)}</span></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>QST (9.975%)</span><span>${fmt(t.qst)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>{t.subtotal}</span><span>${fmt(tax.subtotal)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>{t.gst}</span><span>${fmt(tax.gst)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>{t.qst}</span><span>${fmt(tax.qst)}</span></div>
                   </div>
                 )
               })()}
             </div>
-            <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
+            <Elements key={lang} stripe={getStripe()} options={{ clientSecret, locale: lang === 'fr' ? 'fr-CA' : 'en', appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
               <PayForm
                 event={event}
                 onSuccess={() => {
