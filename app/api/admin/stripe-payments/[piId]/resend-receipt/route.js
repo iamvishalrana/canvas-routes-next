@@ -54,7 +54,7 @@ export async function POST(request, { params }) {
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: email,
         subject: `Your Canvas Routes receipt — ${itemLabel}`,
-        html: buildReceiptHtml({ firstName, itemLabel, subtotal, discount, gst, qst, total, paidAt, receiptId: pi.id.slice(-10) }),
+        html: buildReceiptHtml({ firstName, billedToName: pi.metadata?.name || null, billedToEmail: pi.metadata?.email || null, itemLabel, subtotal, discount, gst, qst, total, paidAt, receiptId: pi.id.slice(-10) }),
       }),
     })
     if (!res.ok) {

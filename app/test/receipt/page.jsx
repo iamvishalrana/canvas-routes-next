@@ -7,6 +7,8 @@ export default function ReceiptPreviewPage() {
   const t = computeTax(9900) // sample: $99 Routes Member membership
   const html = buildReceiptHtml({
     firstName: 'Jordan',
+    billedToName: 'Jordan Whitfield',
+    billedToEmail: 'jordan@example.com',
     itemLabel: 'Routes Member Membership',
     subtotal: t.subtotal,
     discount: 0,
