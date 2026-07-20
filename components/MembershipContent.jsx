@@ -589,7 +589,7 @@ export default function MembershipContent() {
         input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.28); }
       `}</style>
 
-      <SiteNav ctaLabel={t.navCtaLabel} showLangToggle
+      <SiteNav ctaLabel={t.navCtaLabel}
       banner={<>{t.bannerBefore} <strong>FOUNDING</strong> {t.bannerAfter} <span style={{ opacity: 0.6, marginLeft: '0.3rem' }}>→</span></>}
       bannerHref="#register" />
 

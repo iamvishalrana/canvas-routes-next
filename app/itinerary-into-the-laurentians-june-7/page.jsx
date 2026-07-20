@@ -566,7 +566,7 @@ export default function DrivePage() {
         </div>
 
       </div>
-      <SiteFooter />
+      <SiteFooter hideLangToggle />
     </div>
   )
 }

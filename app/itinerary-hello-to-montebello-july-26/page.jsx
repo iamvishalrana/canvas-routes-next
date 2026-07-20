@@ -642,7 +642,7 @@ export default function HelloToMontebelloItineraryPage() {
           </div>
         </div>
       )}
-      <SiteFooter />
+      <SiteFooter hideLangToggle />
     </div>
   )
 }

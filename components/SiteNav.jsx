@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '../lib/supabase/client'
-import LanguageToggle from './LanguageToggle'
 
 // Single source of truth for the standard nav — every page that doesn't need
 // custom in-page-scroll links (see app/page.jsx) should rely on this default
@@ -29,7 +28,7 @@ export const DEFAULT_NAV_LINKS = [
  *              shift down by exactly that amount — nothing hardcoded.
  *   bannerHref – optional link target if the banner should be clickable
  */
-export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become a Member', onMenuChange, banner, bannerHref, showLangToggle = false }) {
+export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become a Member', onMenuChange, banner, bannerHref }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const bannerRef = useRef(null)
   const [bannerHeight, setBannerHeight] = useState(0)
@@ -104,10 +103,6 @@ export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become 
               : <Link key={i} href={l.href} style={linkStyle}>{l.label}</Link>
           )}
         </div>
-
-        {/* Language toggle — not hidden by the mobile nav-cta breakpoint, stays
-            visible next to the hamburger so it doesn't require opening the menu */}
-        {showLangToggle && <LanguageToggle style={{ marginRight: '0.85rem', flexShrink: 0 }} />}
 
         {/* Desktop CTA — hidden on mobile by globals.css */}
         <div className="nav-cta">

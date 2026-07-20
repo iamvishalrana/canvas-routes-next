@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import LanguageFooterDropdown from './LanguageFooterDropdown'
 
 const COLS = [
   {
@@ -26,7 +27,7 @@ const COLS = [
   },
 ]
 
-export default function SiteFooter() {
+export default function SiteFooter({ hideLangToggle = false }) {
   return (
     <footer style={{
       background: '#0F1E14',
@@ -134,6 +135,7 @@ export default function SiteFooter() {
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.25)'}>
             Manage cookies
           </button>
+          {!hideLangToggle && <LanguageFooterDropdown />}
         </div>
       </div>
     </footer>

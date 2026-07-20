@@ -701,7 +701,7 @@ export default function HelloToMontebelloPage() {
         }
       `}</style>
 
-      <SiteNav showLangToggle />
+      <SiteNav />
 
       {/* HERO */}
       <section className="htm-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/montebello-hero.jpg')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>

@@ -904,7 +904,7 @@ export default function EasternTownshipsPage() {
           </div>
         </div>
       )}
-      <SiteFooter />
+      <SiteFooter hideLangToggle />
     </div>
   )
 }

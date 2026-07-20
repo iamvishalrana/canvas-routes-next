@@ -685,7 +685,7 @@ export default function WtetPage() {
         }
       `}</style>
 
-      <SiteNav showLangToggle />
+      <SiteNav />
 
       {/* HERO */}
       <section className="wtet-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/wtet.png')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
