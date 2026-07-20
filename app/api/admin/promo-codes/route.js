@@ -11,7 +11,18 @@ export async function GET() {
 
   try {
     const promoCodes = await stripe.promotionCodes.list({ limit: 100, expand: ['data.coupon'] })
-    return Response.json(promoCodes.data)
+
+    // Stripe's own times_redeemed never increments in this integration (we
+    // never use Checkout/Invoices) — override it with the real count from
+    // promo_redemptions, written whenever a payment with this code actually
+    // succeeds (lib/paymentLedger.js).
+    const supabase = createAdminClient()
+    const { data: redemptions } = await supabase.from('promo_redemptions').select('promo_code_id')
+    const counts = {}
+    for (const r of (redemptions || [])) counts[r.promo_code_id] = (counts[r.promo_code_id] || 0) + 1
+
+    const enriched = promoCodes.data.map(pc => ({ ...pc, times_redeemed: counts[pc.id] || 0 }))
+    return Response.json(enriched)
   } catch (err) {
     captureException(err, { context: 'admin-promo-codes-list' })
     return Response.json({ error: 'Failed to fetch promo codes.' }, { status: 500 })

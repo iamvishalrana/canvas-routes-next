@@ -203,7 +203,7 @@ export default function RoutesPage() {
           {/* Price block */}
           <div style={{border:"0.5px solid rgba(0,0,0,0.12)",padding:"1.8rem",marginBottom:"1.5rem",background:"#F5F1EC",display:"flex",alignItems:"baseline",gap:"1rem",flexWrap:"wrap"}}>
             <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3rem",fontWeight:"300",color:"#1a1a1a",lineHeight:"1"}}>$200</div>
-            <div style={{fontSize:"13px",color:"#888",letterSpacing:"0.04em"}}>per car — up to 2 people</div>
+            <div style={{fontSize:"13px",color:"#888",letterSpacing:"0.04em"}}>per car — up to 2 people + tax</div>
           </div>
 
           {/* Notes */}
@@ -303,7 +303,7 @@ export default function RoutesPage() {
             <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
                 <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)"}}>Price</div>
-                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"13px",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.02em"}}>per car · 2 people</span></div>
+                <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.6rem",fontWeight:"300",color:"#F5F1EC"}}>$200 <span style={{fontSize:"13px",color:"rgba(245,241,236,0.4)",fontFamily:"var(--font-inter),sans-serif",letterSpacing:"0.02em"}}>per car · 2 people + tax</span></div>
               </div>
               <div style={{height:"0.5px",background:"rgba(197,168,130,0.1)"}} />
               <div className="reg-box-row" style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:"0.5rem"}}>
@@ -599,7 +599,7 @@ export default function RoutesPage() {
 
                 {/* Payment note */}
                 <div style={{marginBottom:"2.5rem",padding:"1rem 1.2rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"rgba(197,168,130,0.06)"}}>
-                  <div style={{fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#7B5B2E",marginBottom:"0.4rem"}}>Payment — $200 per car</div>
+                  <div style={{fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"#7B5B2E",marginBottom:"0.4rem"}}>Payment — $200 + tax per car</div>
                   <div style={{fontSize:"13px",color:"#555",lineHeight:"1.7"}}>Payment details will be sent in your confirmation email.</div>
                 </div>
 
@@ -611,7 +611,7 @@ export default function RoutesPage() {
                 <button type="submit" disabled={status === 'loading'}
                   className="btn-push join-submit-btn"
                   style={{display:"block",width:"100%",padding:"1.1rem",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",cursor:status==='loading'?'wait':'pointer',fontFamily:"var(--font-inter),sans-serif",marginBottom:"1rem"}}>
-                  {status === 'loading' ? 'Submitting...' : 'Apply — $200 per car'}
+                  {status === 'loading' ? 'Submitting...' : 'Apply — $200 + tax per car'}
                 </button>
                 {status === 'error' && <div style={{fontSize:"12px",color:"#93333E",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
 

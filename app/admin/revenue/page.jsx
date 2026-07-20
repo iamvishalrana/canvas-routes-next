@@ -75,6 +75,20 @@ export default async function RevenuePage() {
     rows.sort((a, b) => new Date(b.stripe_paid_at || 0) - new Date(a.stripe_paid_at || 0))
   } catch {}
 
+  // Tax breakdown, keyed by PI id — only present for payments made after the
+  // ledger shipped; older payments simply show no breakdown.
+  let receiptsByPi = {}
+  try {
+    const supabase = createAdminClient()
+    const piIds = rows.map(r => r.id).filter(Boolean)
+    if (piIds.length > 0) {
+      const { data: receipts } = await supabase.from('payment_receipts')
+        .select('stripe_payment_intent_id, subtotal_amount, gst_amount, qst_amount, discount_amount')
+        .in('stripe_payment_intent_id', piIds)
+      if (receipts) for (const r of receipts) receiptsByPi[r.stripe_payment_intent_id] = r
+    }
+  } catch {}
+
   const totalGross    = rows.reduce((sum, r) => sum + (r.stripe_amount_paid || 0), 0) / 100
   const totalRefunded = rows.reduce((sum, r) => sum + (r.stripe_amount_refunded || 0), 0) / 100
   const totalRevenue  = totalGross - totalRefunded
@@ -116,19 +130,26 @@ export default async function RevenuePage() {
     })
 
   // Recent 10 payments
-  const toPaymentRow = r => ({
-    id:        r.id || null,
-    manual:    !!r.manual,
-    name:      r.name,
-    email:     r.email,
-    phone:     r.phone || '',
-    amount:    ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100,
-    gross:     (r.stripe_amount_paid || 0) / 100,
-    refunded:  (r.stripe_amount_refunded || 0) / 100,
-    typeKey:   r.stripe_payment_type || '',
-    type:      TYPE_LABELS[r.stripe_payment_type] || r.stripe_payment_type || '—',
-    date:      r.stripe_paid_at,
-  })
+  const toPaymentRow = r => {
+    const receipt = r.id ? receiptsByPi[r.id] : null
+    return {
+      id:        r.id || null,
+      manual:    !!r.manual,
+      name:      r.name,
+      email:     r.email,
+      phone:     r.phone || '',
+      amount:    ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100,
+      gross:     (r.stripe_amount_paid || 0) / 100,
+      refunded:  (r.stripe_amount_refunded || 0) / 100,
+      typeKey:   r.stripe_payment_type || '',
+      type:      TYPE_LABELS[r.stripe_payment_type] || r.stripe_payment_type || '—',
+      date:      r.stripe_paid_at,
+      taxSubtotal: receipt?.subtotal_amount != null ? receipt.subtotal_amount / 100 : null,
+      taxGst:      receipt?.gst_amount != null ? receipt.gst_amount / 100 : null,
+      taxQst:      receipt?.qst_amount != null ? receipt.qst_amount / 100 : null,
+      taxDiscount: receipt?.discount_amount ? receipt.discount_amount / 100 : null,
+    }
+  }
   const recentPayments = rows.slice(0, 10).map(toPaymentRow)
 
   return (

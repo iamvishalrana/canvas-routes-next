@@ -5,6 +5,7 @@ import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
+import { computeTax } from '../../../lib/tax.js'
 
 const EVENT_NAME = 'Hello to Montebello — July 26, 2026'
 const MEMBER_PRICE_CENTS    = 17900 // $179 CAD
@@ -135,9 +136,10 @@ export async function POST(request) {
   }
 
   // Create Stripe PaymentIntent — manual capture (hold only)
+  const { total: totalWithTax } = computeTax(amountCents)
   try {
     const pi = await stripe.paymentIntents.create({
-      amount: amountCents,
+      amount: totalWithTax,
       currency: 'cad',
       receipt_email: normalEmail,
       metadata: {
@@ -208,7 +210,7 @@ export async function POST(request) {
               ['Phone',          phone || '—'],
               ['DOB',            dob_month ? `${dob_month}/${dob_day}${dob_year ? `/${dob_year}` : ''}` : '—'],
               ['Instagram',      instagram ? `@${instagram.replace(/^@+/, '')}` : '—'],
-              ['Amount',         `$${(amountCents / 100).toFixed(2)} CAD (hold)`],
+              ['Amount',         `$${(totalWithTax / 100).toFixed(2)} CAD incl. tax (hold)`],
               ['Car year',       year.trim()],
               ['Car',            fullCarModel],
               ['Passengers',     passengers],

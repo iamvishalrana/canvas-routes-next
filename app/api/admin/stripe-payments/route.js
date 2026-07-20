@@ -40,9 +40,21 @@ export async function GET() {
     }
   }
 
+  // Tax breakdown, keyed by PI id — only present for payments made after the
+  // ledger shipped; older payments simply show no breakdown.
+  const piIds = canvasPIs.map(pi => pi.id)
+  let receiptsByPi = {}
+  if (piIds.length > 0) {
+    const { data: receipts } = await supabase.from('payment_receipts')
+      .select('stripe_payment_intent_id, subtotal_amount, gst_amount, qst_amount, discount_amount, total_amount')
+      .in('stripe_payment_intent_id', piIds)
+    if (receipts) for (const r of receipts) receiptsByPi[r.stripe_payment_intent_id] = r
+  }
+
   const records = canvasPIs.map(pi => {
     const email = pi.metadata.email?.toLowerCase().trim() || ''
     const app = appsByEmail[email] || null
+    const receipt = receiptsByPi[pi.id] || null
 
     // Determine normalized status and refund amount
     let stripe_payment_status
@@ -88,6 +100,10 @@ export async function GET() {
       wallet:      card?.wallet?.type || null, // apple_pay / google_pay
       receipt_url: (charge && typeof charge === 'object') ? (charge.receipt_url || null) : null,
       metadata:    pi.metadata || {},
+      tax_subtotal: receipt?.subtotal_amount ?? null,
+      tax_gst:      receipt?.gst_amount ?? null,
+      tax_qst:      receipt?.qst_amount ?? null,
+      tax_discount: receipt?.discount_amount ?? null,
     }
   })
 

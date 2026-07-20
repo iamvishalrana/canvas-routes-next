@@ -711,11 +711,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                     </div>
                     {r.price_per_car != null && r.price_per_car !== '' ? (
                       <div style={{ fontSize: '12px', color: '#8a6535', marginBottom: '18px', letterSpacing: '0.02em' }}>
-                        <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#1a1a1a', letterSpacing: '0.03em' }}>${Number(r.price_per_car).toFixed(Number.isInteger(Number(r.price_per_car)) ? 0 : 2)}</span> per car
+                        <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#1a1a1a', letterSpacing: '0.03em' }}>${Number(r.price_per_car).toFixed(Number.isInteger(Number(r.price_per_car)) ? 0 : 2)}</span> per car + tax
                       </div>
                     ) : r.price_range && (
                       <div style={{ fontSize: '12px', color: '#999', marginBottom: '18px', letterSpacing: '0.02em' }}>
-                        <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#8a6535', letterSpacing: '0.03em' }}>{r.price_range}</span> <span style={{ fontSize: '10px' }}>est. for 2 per car — confirmed at launch</span>
+                        <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '19px', color: '#8a6535', letterSpacing: '0.03em' }}>{r.price_range}</span> <span style={{ fontSize: '10px' }}>+ tax · est. for 2 per car — confirmed at launch</span>
                       </div>
                     )}
                     {r.itinerary && (

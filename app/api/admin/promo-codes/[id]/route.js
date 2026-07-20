@@ -18,35 +18,47 @@ export async function PATCH(request, { params }) {
   if (body.action === 'edit') {
     try {
       const existing = await stripe.promotionCodes.retrieve(id, { expand: ['coupon'] })
-      // Guard: new max_redemptions must not be below times already redeemed
+      // Guard: new max_redemptions must not be below times already redeemed.
+      // Stripe's own times_redeemed never increments in this integration —
+      // use the real count from promo_redemptions instead.
       if (body.maxRedemptions) {
+        const { count: timesRedeemed } = await createAdminClient().from('promo_redemptions')
+          .select('id', { count: 'exact', head: true }).eq('promo_code_id', id)
         const newMax = parseInt(body.maxRedemptions, 10)
-        if (newMax < (existing.times_redeemed ?? 0)) {
+        if (newMax < (timesRedeemed ?? 0)) {
           return Response.json({
-            error: `Max uses cannot be less than the ${existing.times_redeemed} time${existing.times_redeemed !== 1 ? 's' : ''} this code has already been redeemed.`,
+            error: `Max uses cannot be less than the ${timesRedeemed} time${timesRedeemed !== 1 ? 's' : ''} this code has already been redeemed.`,
           }, { status: 400 })
         }
       }
-      // Create the new code FIRST — if this fails the old code is still active (no data loss)
-      const newCode = await stripe.promotionCodes.create({
-        coupon: existing.coupon.id,
-        code: existing.code,
-        ...(body.maxRedemptions ? { max_redemptions: parseInt(body.maxRedemptions, 10) } : {}),
-        // Use end-of-day UTC so codes don't expire at midnight start-of-day
-        ...(body.expiresAt ? { expires_at: Math.floor(new Date(body.expiresAt).getTime() / 1000) + 86399 } : {}),
-        // Preserve the minimum-purchase restriction — without this, editing
-        // max uses or expiry silently strips it from the recreated code
-        ...(existing.restrictions?.minimum_amount ? {
-          restrictions: {
-            minimum_amount: existing.restrictions.minimum_amount,
-            minimum_amount_currency: existing.restrictions.minimum_amount_currency || 'cad',
-          },
-        } : {}),
-        // Preserve applies_to and any other metadata from the original code
-        metadata: existing.metadata || {},
-      }, { expand: ['coupon'] })
-      // Only deactivate the old code after the new one is confirmed created
+      // Deactivate the old code FIRST — Stripe enforces `code` uniqueness among
+      // currently-active codes, so creating the new one (same code string)
+      // while the old one is still active would be rejected. If creation then
+      // fails, reactivate the old code so nothing is lost.
       await stripe.promotionCodes.update(id, { active: false })
+      let newCode
+      try {
+        newCode = await stripe.promotionCodes.create({
+          coupon: existing.coupon.id,
+          code: existing.code,
+          ...(body.maxRedemptions ? { max_redemptions: parseInt(body.maxRedemptions, 10) } : {}),
+          // Use end-of-day UTC so codes don't expire at midnight start-of-day
+          ...(body.expiresAt ? { expires_at: Math.floor(new Date(body.expiresAt).getTime() / 1000) + 86399 } : {}),
+          // Preserve the minimum-purchase restriction — without this, editing
+          // max uses or expiry silently strips it from the recreated code
+          ...(existing.restrictions?.minimum_amount ? {
+            restrictions: {
+              minimum_amount: existing.restrictions.minimum_amount,
+              minimum_amount_currency: existing.restrictions.minimum_amount_currency || 'cad',
+            },
+          } : {}),
+          // Preserve applies_to and any other metadata from the original code
+          metadata: existing.metadata || {},
+        }, { expand: ['coupon'] })
+      } catch (createErr) {
+        await stripe.promotionCodes.update(id, { active: true }).catch(() => {})
+        throw createErr
+      }
       await logAdminAction(createAdminClient(), adminUser?.email, { action: 'promo.edit', entityType: 'promo_code', entityId: id, entityName: existing.code })
       return Response.json({ oldId: id, newCode })
     } catch (err) {

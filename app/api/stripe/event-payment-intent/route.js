@@ -4,6 +4,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 import { MONTREAL_TZ } from '../../../../lib/mtlTime'
+import { computeTax } from '../../../../lib/tax.js'
 
 export async function POST(request) {
   if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
@@ -68,8 +69,9 @@ export async function POST(request) {
     return Response.json({ error: 'You are already registered for this event.' }, { status: 400 })
   }
 
-  const amount = ev.member_price || 0
-  if (amount === 0) return Response.json({ error: 'Use the free registration endpoint.' }, { status: 400 })
+  const subtotal = ev.member_price || 0
+  if (subtotal === 0) return Response.json({ error: 'Use the free registration endpoint.' }, { status: 400 })
+  const { total } = computeTax(subtotal)
 
   // Cancel any lingering pending PI before creating a new one (CLAUDE.md rule #2)
   if (existing?.stripe_payment_intent_id) {
@@ -78,7 +80,7 @@ export async function POST(request) {
 
   try {
     const pi = await stripe.paymentIntents.create({
-      amount,
+      amount: total,
       currency: 'cad',
       receipt_email: user.email,
       metadata: {
@@ -89,6 +91,7 @@ export async function POST(request) {
         email: user.email || '',
         name: member.name || '',
         tier: member.tier || 'routes_member',
+        original_amount: String(subtotal), // pre-tax subtotal
       },
       description: `Canvas Routes — ${ev.name}`,
       automatic_payment_methods: { enabled: true },
@@ -101,11 +104,11 @@ export async function POST(request) {
       name: member.name || '',
       stripe_payment_intent_id: pi.id,
       stripe_payment_status: 'pending',
-      amount_paid: amount,
+      amount_paid: total,
     }, { onConflict: 'event_id,member_id' })
     if (pendingErr) captureException(pendingErr, { context: 'event-payment-intent-pending-row', piId: pi.id })
 
-    return Response.json({ clientSecret: pi.client_secret, amount })
+    return Response.json({ clientSecret: pi.client_secret, amount: total })
   } catch (err) {
     captureException(err, { context: 'event-payment-intent', eventId })
     return Response.json({ error: 'Failed to initialise payment.' }, { status: 500 })

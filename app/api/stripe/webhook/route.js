@@ -6,6 +6,7 @@ import { buildWtetHoldHtml, buildWtetConfirmHtml } from '../../../../lib/wtetEma
 import { buildAdminNotifyHtml } from '../../../../lib/adminEmail.js'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail.js'
 import { MEMBERSHIP_TYPE_TIER } from '../../../../lib/prices.js'
+import { recordPaymentSuccess } from '../../../../lib/paymentLedger.js'
 
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
@@ -49,6 +50,11 @@ export async function POST(request) {
         }
 
         const supabase = createAdminClient()
+
+        // Revenue ledger + branded tax receipt — idempotent (upsert by PI id,
+        // claimed send), safe to call unconditionally regardless of type or
+        // whether the admin capture route already handled this same PI.
+        await recordPaymentSuccess(supabase, pi)
 
         if (type === 'event_registration' && event_id && member_id) {
           const { data: memberExists } = await supabase.from('members').select('id').eq('id', member_id).maybeSingle()

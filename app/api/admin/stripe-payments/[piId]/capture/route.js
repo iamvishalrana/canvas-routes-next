@@ -6,6 +6,7 @@ import { captureException, captureMessage } from '../../../../../../lib/sentry.j
 import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 import { logAdminAction } from '../../../../../../lib/adminAudit.js'
+import { recordPaymentSuccess } from '../../../../../../lib/paymentLedger.js'
 
 export async function POST(request, { params }) {
   const admin = await requireAdmin()
@@ -98,6 +99,10 @@ export async function POST(request, { params }) {
     entityName: app.name || app.email,
     metadata: { amount: pi.amount, email: app.email },
   })
+
+  // Revenue ledger + branded tax receipt — idempotent, safe alongside the
+  // webhook's own call to the same function for this PI.
+  await recordPaymentSuccess(supabase, pi)
 
   // Send emails — WTET confirmation or membership approval notification
   if (process.env.RESEND_API_KEY && pi.metadata?.type?.startsWith('membership_')) {

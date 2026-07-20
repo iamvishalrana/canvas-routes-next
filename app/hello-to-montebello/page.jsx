@@ -8,6 +8,7 @@ import SiteFooter from '../../components/SiteFooter'
 import FadeUp from '../../components/FadeUp'
 import SiteNav from '../../components/SiteNav'
 import PageLoader from '../../components/PageLoader'
+import { computeTax } from '../../lib/tax'
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -48,9 +49,19 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
   const [promoApplying, setPromoApplying] = useState(false)
   const [promoError, setPromoError] = useState(null)
   const [promoResult, setPromoResult] = useState(null) // { discountedAmount, originalAmount, percentOff, amountOff }
+  const [removingPromo, setRemovingPromo] = useState(false)
 
   const paymentIntentId = clientSecret?.split('_secret_')[0]
-  const displayPrice = promoResult ? (promoResult.discountedAmount / 100).toFixed(2) : `${price}.00`
+  const subtotalCents = Math.round(price * 100)
+  // apply-promo returns subtotal/gst/qst/tax alongside discountedAmount once a
+  // promo is applied — use those exact server-computed figures rather than
+  // recomputing tax on a discounted price client-side.
+  const taxBreakdown = promoResult
+    ? { subtotal: promoResult.subtotal, gst: promoResult.gst, qst: promoResult.qst, total: promoResult.discountedAmount }
+    : computeTax(subtotalCents)
+  const displayPrice = (taxBreakdown.total / 100).toFixed(2)
+  const originalTotal = computeTax(subtotalCents).total
+  const fmt = cents => (cents / 100).toFixed(2)
 
   async function applyPromo() {
     if (!promoInput.trim() || !paymentIntentId) return
@@ -72,7 +83,8 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
   }
 
   async function removePromo() {
-    if (!paymentIntentId) return
+    if (!paymentIntentId || removingPromo) return
+    setRemovingPromo(true)
     try {
       const res = await fetch('/api/stripe/apply-promo', {
         method: 'POST',
@@ -80,7 +92,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
         body: JSON.stringify({ remove: true, paymentIntentId, email }),
       })
       if (res.ok) {
-        const original = promoResult?.originalAmount ?? price * 100
+        const original = promoResult?.originalAmount ?? originalTotal
         setPromoResult(null)
         if (elements) await elements.update({ amount: original })
       } else {
@@ -88,6 +100,8 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
       }
     } catch {
       setPromoError('Could not remove promo code. Please try again.')
+    } finally {
+      setRemovingPromo(false)
     }
   }
 
@@ -150,7 +164,7 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
       <div style={{padding:'0.75rem 1rem',background:isMember?'rgba(59,107,47,0.06)':'rgba(197,168,130,0.08)',border:`0.5px solid ${isMember?'rgba(59,107,47,0.25)':'rgba(197,168,130,0.3)'}`,marginBottom:'1.5rem'}}>
         <div style={{fontSize:'11px',color:isMember?'#3B6B2F':'#7B5B2E',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>
           {isMember
-            ? <><strong style={{fontWeight:'500'}}>Member rate — $179 CAD · per car, up to 2 people.</strong> Payment is charged immediately. Your spot is confirmed as soon as it clears.</>
+            ? <><strong style={{fontWeight:'500'}}>Member rate — ${displayPrice} CAD · per car, up to 2 people.</strong> Payment is charged immediately. Your spot is confirmed as soon as it clears.</>
             : <><strong style={{fontWeight:'500'}}>How it works:</strong> Your card will be authorized for ${displayPrice} <span style={{opacity:0.7}}>(per car · up to 2 people)</span> but <em>not charged</em> yet. We review each registration manually and charge only when your spot is confirmed. If we can&apos;t place you, the hold is released in full.</>
           }
         </div>
@@ -167,14 +181,19 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
           <div className="htm-order-price" style={{textAlign:'right',flexShrink:0}}>
             {promoResult ? (
               <>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.1rem',fontWeight:'400',color:'#bbb',lineHeight:1,letterSpacing:'0.03em',textDecoration:'line-through'}}>${price}.00</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.1rem',fontWeight:'400',color:'#bbb',lineHeight:1,letterSpacing:'0.03em',textDecoration:'line-through'}}>${fmt(originalTotal)}</div>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#3B6B2F',lineHeight:1,letterSpacing:'0.03em'}}>${displayPrice}</div>
               </>
             ) : (
-              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>${price}.00</div>
+              <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.8rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.03em'}}>${displayPrice}</div>
             )}
             <div style={{fontSize:'10px',color:'#aaa',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>CAD · per car · up to 2 people</div>
           </div>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:'0.2rem',padding:'0.65rem 0',marginBottom:'0.6rem',borderTop:'0.5px solid rgba(0,0,0,0.06)',fontFamily:'var(--font-inter),sans-serif'}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'#888'}}><span>Subtotal</span><span>${fmt(taxBreakdown.subtotal)}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'#888'}}><span>GST (5%)</span><span>${fmt(taxBreakdown.gst)}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'#888'}}><span>QST (9.975%)</span><span>${fmt(taxBreakdown.qst)}</span></div>
         </div>
         {[
           'Lunch at Aux Chantignoles — Fairmont Le Château Montebello',
@@ -197,11 +216,11 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
                 ✓ {promoResult.percentOff ? `${promoResult.percentOff}% off` : `$${(promoResult.amountOff/100).toFixed(2)} off`} applied
               </div>
               <div style={{fontSize:'11px',color:'#888',marginTop:'1px',fontFamily:'var(--font-inter),sans-serif'}}>
-                ${price}.00 → ${displayPrice} CAD
+                ${fmt(originalTotal)} → ${displayPrice} CAD
               </div>
             </div>
-            <button type="button" onClick={removePromo} style={{background:'none',border:'none',fontSize:'11px',color:'#aaa',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textDecoration:'underline',textUnderlineOffset:'2px',padding:0}}>
-              Remove
+            <button type="button" onClick={removePromo} disabled={removingPromo} style={{background:'none',border:'none',fontSize:'11px',color:'#aaa',cursor:removingPromo?'wait':'pointer',fontFamily:'var(--font-inter),sans-serif',textDecoration:'underline',textUnderlineOffset:'2px',padding:0,opacity:removingPromo?0.6:1}}>
+              {removingPromo ? 'Removing…' : 'Remove'}
             </button>
           </div>
         ) : (
@@ -767,7 +786,7 @@ export default function HelloToMontebelloPage() {
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
               </div>
             </div>
-            <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>2 people per car</div>
+            <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>2 people per car · + tax</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
             {[
@@ -891,7 +910,7 @@ export default function HelloToMontebelloPage() {
                   <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'rgba(245,241,236,0.6)',letterSpacing:'0.04em'}}>$199 <span style={{fontSize:'11px',color:'rgba(245,241,236,0.35)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>non-members</span></span>
                 </div>
               </div>
-              <div style={{fontSize:'11px',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>per car · up to 2 people</div>
+              <div style={{fontSize:'11px',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>per car · up to 2 people · + tax</div>
               <div style={{height:'0.5px',background:'rgba(197,168,130,0.1)'}} />
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>Registration</div>
@@ -934,7 +953,7 @@ export default function HelloToMontebelloPage() {
                   <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.7rem,6vw,2.2rem)',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>You&apos;re in.</div>
                   <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
                   <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto 1rem'}}>
-                    Your $179 payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{memberProfile?.email || form.email}</strong>.
+                    Your payment is confirmed. A confirmation email is on its way to <strong style={{color:'#1a1a1a',fontWeight:'500'}}>{memberProfile?.email || form.email}</strong>.
                   </p>
                   <p style={{fontSize:'0.85rem',color:'#aaa',lineHeight:'1.8',maxWidth:'380px',margin:'0 auto 2rem'}}>
                     We&apos;ll send the full itinerary and everything you need closer to July 26.
@@ -1033,7 +1052,7 @@ export default function HelloToMontebelloPage() {
                 <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 1.5rem'}} />
                 <p style={{fontSize:'14px',color:'#777',lineHeight:'1.8',maxWidth:'420px',margin:'0 auto',fontFamily:'var(--font-inter),sans-serif'}}>
                   {memberProfile
-                    ? 'Your profile is pre-filled. Confirm your details and your $179 will be charged immediately — spot secured on payment.'
+                    ? 'Your profile is pre-filled. Confirm your details and your $179 + tax will be charged immediately — spot secured on payment.'
                     : 'Fill in your details and authorize a hold on your card. We review every registration — your card is only charged once your spot is confirmed.'}
                 </p>
               </div>
@@ -1049,8 +1068,8 @@ export default function HelloToMontebelloPage() {
                     </div>
                     <div className="htm-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
                       {[
-                        {val:'yes', price:'$179', label:'Member rate', sublabel:'Canvas Routes member'},
-                        {val:'no',  price:'$199', label:'Standard rate', sublabel:'Not a member'},
+                        {val:'yes', price:'$179', label:'Member rate', sublabel:'+ tax · Canvas Routes member'},
+                        {val:'no',  price:'$199', label:'Standard rate', sublabel:'+ tax · Not a member'},
                       ].map(({val, price: p, label, sublabel}) => {
                         const sel = form.isMember === val
                         return (
@@ -1071,7 +1090,7 @@ export default function HelloToMontebelloPage() {
                 {memberProfile && (
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0.9rem 1.1rem',background:'rgba(59,107,47,0.06)',border:'0.5px solid rgba(59,107,47,0.22)',marginBottom:'1.5rem'}}>
                     <div>
-                      <div style={{fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>Member rate · $179</div>
+                      <div style={{fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>Member rate · $179 + tax</div>
                       <div style={{fontSize:'14px',color:'#1a1a1a',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>{memberProfile.name}</div>
                       <div style={{fontSize:'12px',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>{memberProfile.email}</div>
                     </div>
@@ -1084,7 +1103,7 @@ export default function HelloToMontebelloPage() {
                   <div style={{padding:'1.5rem',background:'#0F1E14',marginBottom:'1rem'}}>
                     <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.7)',marginBottom:'0.6rem',fontFamily:'var(--font-inter),sans-serif'}}>Log in for the member rate</div>
                     <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
-                      Log in to your Canvas Routes account and your details will be pre-filled automatically at $179.
+                      Log in to your Canvas Routes account and your details will be pre-filled automatically at $179 + tax.
                     </p>
                     <a href={`/members/login?redirect=${encodeURIComponent('/hello-to-montebello')}`}
                       style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
@@ -1297,13 +1316,13 @@ export default function HelloToMontebelloPage() {
                 <div style={{marginBottom:'2.5rem',padding:'1rem 1.2rem',border:`0.5px solid ${memberProfile?'rgba(59,107,47,0.2)':'rgba(0,0,0,0.12)'}`,background:memberProfile?'rgba(59,107,47,0.05)':'rgba(197,168,130,0.06)'}}>
                   {memberProfile ? (
                     <>
-                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.4rem'}}>Member rate — $179 per car · up to 2 people</div>
-                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>Your $179 will be charged immediately. Your spot is confirmed as soon as the payment clears.</div>
+                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.4rem'}}>Member rate — $179 + tax per car · up to 2 people</div>
+                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>Your $179 + tax will be charged immediately. Your spot is confirmed as soon as the payment clears.</div>
                     </>
                   ) : (
                     <>
-                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — ${price} per car · up to 2 people</div>
-                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a ${price} hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
+                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#7B5B2E',marginBottom:'0.4rem'}}>Authorization — ${price} + tax per car · up to 2 people</div>
+                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>You&apos;ll authorize a ${price} + tax hold on your card — nothing is charged yet. We review each registration manually and only capture payment once your spot is confirmed.</div>
                     </>
                   )}
                 </div>
@@ -1323,7 +1342,7 @@ export default function HelloToMontebelloPage() {
 
                 <button type="submit" disabled={status==='loading' || (alreadyRegistered && !!memberProfile)}
                   style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'rgba(15,30,20,0.5)':'#0F1E14',color:'#c5a882',border:'none',marginBottom:'1rem',opacity:(alreadyRegistered&&!!memberProfile)?0.5:1}}>
-                  {status==='loading' ? 'Setting up payment…' : memberProfile ? 'Secure your spot — $179' : form.isMember === 'no' ? `Continue to payment — $${price}` : 'Continue to payment'}
+                  {status==='loading' ? 'Setting up payment…' : memberProfile ? 'Secure your spot — $179 + tax' : form.isMember === 'no' ? `Continue to payment — $${price} + tax` : 'Continue to payment'}
                 </button>
 
                 </>}

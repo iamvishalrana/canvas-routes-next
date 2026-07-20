@@ -5,6 +5,7 @@ import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { PRICES, MEMBERSHIP_TIER_TYPE } from '../../../lib/prices.js'
+import { computeTax } from '../../../lib/tax.js'
 
 function h(str) {
   return String(str ?? '')
@@ -218,14 +219,17 @@ export async function POST(request) {
         return Response.json({ error: 'Payment verification failed. Please contact support.' }, { status: 400 })
       }
       stripePaymentStatus = pi.status === 'succeeded' ? 'paid' : 'authorized'
-      // Reject if the amount doesn't reconcile with the tier price. apply-promo
-      // records discount_amount in PI metadata, so amount + discount must add
-      // back up to the canonical price — validates any legitimate discount
-      // exactly (the old below-50%-of-price heuristic rejected valid promo
-      // codes over 50% off AFTER the card was already authorized).
+      // Reject if the amount doesn't reconcile with the tier price. pi.amount
+      // is tax-inclusive (subtotal + GST + QST), so the expected total must be
+      // derived the same way apply-promo derives it: discount off the pre-tax
+      // subtotal, then recompute tax — comparing pi.amount directly against
+      // the pre-tax PRICES[type] (as before tax existed) would always pass
+      // trivially and stop catching genuinely wrong amounts.
       const discount = parseInt(pi.metadata?.discount_amount || '0', 10) || 0
-      if (pi.amount + discount < (PRICES[expectedType] ?? 0)) {
-        captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, discount, expected: PRICES[expectedType] })
+      const expectedSubtotal = Math.max(0, (PRICES[expectedType] ?? 0) - discount)
+      const { total: expectedTotal } = computeTax(expectedSubtotal)
+      if (pi.amount < expectedTotal) {
+        captureMessage('Membership waitlist PI amount too low', { piId: paymentIntentId, amount: pi.amount, discount, expected: expectedTotal })
         return Response.json({ error: 'Payment amount invalid. Please contact support.' }, { status: 400 })
       }
     } catch (err) {

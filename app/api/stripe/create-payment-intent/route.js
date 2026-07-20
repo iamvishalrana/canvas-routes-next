@@ -2,6 +2,7 @@ import { stripe } from '../../../../lib/stripe.js'
 import { checkRateLimit } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 import { PRICES } from '../../../../lib/prices.js'
+import { computeTax } from '../../../../lib/tax.js'
 
 const VALID_TYPES = Object.keys(PRICES)
 
@@ -38,10 +39,11 @@ export async function POST(request) {
   }
 
   const isMembership = type.startsWith('membership_')
+  const { total } = computeTax(PRICES[type])
 
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount:   PRICES[type],
+      amount:   total,
       currency: 'cad',
       receipt_email: email,
       metadata: {
@@ -49,6 +51,7 @@ export async function POST(request) {
         email:      email.toLowerCase().trim(),
         name:       name.trim(),
         event_name: eventName || '',
+        original_amount: String(PRICES[type]), // pre-tax subtotal — apply-promo discounts off this, never off `amount`
         // Membership-only fields stored so webhook can rescue form data on tab-close
         ...(isMembership ? {
           phone:       phone    || '',

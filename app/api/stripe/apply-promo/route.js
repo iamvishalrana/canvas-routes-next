@@ -2,6 +2,8 @@ import { stripe } from '../../../../lib/stripe.js'
 import { checkRateLimit, acquireLock, releaseLock } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 import { PRICES } from '../../../../lib/prices.js'
+import { computeTax } from '../../../../lib/tax.js'
+import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export async function POST(request) {
   if (!stripe) {
@@ -33,25 +35,34 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  // Remove promo: reset to canonical price — use original_amount from metadata when available
+  // Remove promo: reset to canonical price — use original_amount (pre-tax subtotal)
+  // from metadata when available, then re-add tax on top.
   if (remove) {
+    const removeLockKey = `promo:${paymentIntentId}`
+    const removeLocked = await acquireLock(removeLockKey, 10)
+    if (!removeLocked) return Response.json({ error: 'Another request is in progress. Please try again.' }, { status: 409 })
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
       if (pi.metadata?.email?.toLowerCase().trim() !== callerEmail) {
+        await releaseLock(removeLockKey)
         return Response.json({ error: 'Invalid request.' }, { status: 400 })
       }
-      const canonicalAmount = pi.metadata?.original_amount
+      const baseSubtotal = pi.metadata?.original_amount
         ? parseInt(pi.metadata.original_amount, 10)
         : PRICES[pi.metadata?.type]
-      if (!canonicalAmount) {
+      if (!baseSubtotal) {
+        await releaseLock(removeLockKey)
         return Response.json({ error: 'Invalid request.' }, { status: 400 })
       }
+      const { gst, qst, tax, total: canonicalAmount } = computeTax(baseSubtotal)
       await stripe.paymentIntents.update(paymentIntentId, {
         amount: canonicalAmount,
         metadata: { ...pi.metadata, promo_code_id: '', discount_amount: '' },
       })
-      return Response.json({ success: true, originalAmount: canonicalAmount })
+      await releaseLock(removeLockKey)
+      return Response.json({ success: true, originalAmount: canonicalAmount, subtotal: baseSubtotal, gst, qst, tax })
     } catch (err) {
+      try { await releaseLock(removeLockKey) } catch {}
       captureException(err, { context: 'stripe-remove-promo', paymentIntentId })
       return Response.json({ error: 'Failed to remove promo code.' }, { status: 500 })
     }
@@ -92,6 +103,27 @@ export async function POST(request) {
     if (!coupon.valid) {
       await releaseLock(codeLockKey)
       return Response.json({ error: 'This promo code is no longer valid.' }, { status: 400 })
+    }
+
+    // Enforce max_redemptions ourselves — this integration never uses Stripe
+    // Checkout/Invoices, so Stripe's own promotion-code times_redeemed counter
+    // never increments. promo_redemptions is written once a payment actually
+    // succeeds (lib/paymentLedger.js), so this count reflects real usage.
+    if (promoCode.max_redemptions) {
+      try {
+        const supabase = createAdminClient()
+        const { count } = await supabase.from('promo_redemptions')
+          .select('id', { count: 'exact', head: true })
+          .eq('promo_code_id', promoCode.id)
+        if ((count ?? 0) >= promoCode.max_redemptions) {
+          await releaseLock(codeLockKey)
+          return Response.json({ error: 'This promo code has reached its usage limit.' }, { status: 400 })
+        }
+      } catch (err) {
+        captureException(err, { context: 'stripe-apply-promo-redemption-count', code })
+        // fail closed is too strict for a DB hiccup on a non-security-critical
+        // count — fall through and let Stripe's own validity checks stand
+      }
     }
 
     // Acquire a per-PI lock to prevent concurrent apply calls stacking two discounts
@@ -143,28 +175,39 @@ export async function POST(request) {
       await releaseLock(codeLockKey)
       return Response.json({ error: 'A promo code has already been applied.' }, { status: 400 })
     }
-    const currentAmount = pi.amount
+    const currentAmount = pi.amount // tax-inclusive, no discount applied yet (anti-stacking guard above)
 
-    // Check minimum purchase requirement
+    // Check minimum purchase requirement — compared against the tax-inclusive
+    // amount the customer would otherwise pay, matching what they see on screen.
     if (promoCode.restrictions?.minimum_amount && currentAmount < promoCode.restrictions.minimum_amount) {
       await releaseLock(lockKey)
       await releaseLock(codeLockKey)
       return Response.json({ error: `This code requires a minimum purchase of $${(promoCode.restrictions.minimum_amount / 100).toFixed(2)}.` }, { status: 400 })
     }
 
-    // Calculate discounted amount
-    let discountedAmount
+    // Discount off the pre-tax subtotal, never off pi.amount — pi.amount already
+    // includes tax, and discounting it directly would both discount the tax
+    // portion itself and leave GST/QST stale relative to the new price.
+    const baseSubtotal = pi.metadata?.original_amount ? parseInt(pi.metadata.original_amount, 10) : PRICES[piType]
+    if (!baseSubtotal) {
+      await releaseLock(lockKey)
+      await releaseLock(codeLockKey)
+      return Response.json({ error: 'Invalid request.' }, { status: 400 })
+    }
+
+    let discountedSubtotal
     if (coupon.percent_off) {
-      discountedAmount = Math.max(50, Math.round(currentAmount * (1 - coupon.percent_off / 100)))
+      discountedSubtotal = Math.max(50, Math.round(baseSubtotal * (1 - coupon.percent_off / 100)))
     } else if (coupon.amount_off) {
-      discountedAmount = Math.max(50, currentAmount - coupon.amount_off) // Stripe minimum is 50 cents
+      discountedSubtotal = Math.max(50, baseSubtotal - coupon.amount_off) // Stripe minimum is 50 cents
     } else {
       await releaseLock(lockKey)
       await releaseLock(codeLockKey)
       return Response.json({ error: 'Unsupported coupon type.' }, { status: 400 })
     }
 
-    const discountAmount = currentAmount - discountedAmount
+    const discountAmount = baseSubtotal - discountedSubtotal
+    const { gst, qst, tax, total: discountedAmount } = computeTax(discountedSubtotal)
 
     // Update the payment intent in-place and record the applied promo to prevent stacking
     await stripe.paymentIntents.update(paymentIntentId, {
@@ -177,6 +220,10 @@ export async function POST(request) {
     return Response.json({
       discountedAmount,
       originalAmount: currentAmount,
+      subtotal: discountedSubtotal,
+      gst,
+      qst,
+      tax,
       percentOff: coupon.percent_off ?? null,
       amountOff: coupon.amount_off ?? null,
       promoCodeId: promoCode.id,

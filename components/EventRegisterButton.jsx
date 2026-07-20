@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { MONTREAL_TZ } from '../lib/mtlTime'
+import { computeTax } from '../lib/tax'
 
 let _stripePromise = null
 function getStripe() {
@@ -144,7 +145,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
             opacity: paying ? 0.6 : 1,
           }}
         >
-          {paying ? 'Processing…' : `Pay $${((event.member_price || 0) / 100).toFixed(2)}`}
+          {paying ? 'Processing…' : `Pay $${(computeTax(event.member_price || 0).total / 100).toFixed(2)}`}
         </button>
         <button
           type="button"
@@ -285,7 +286,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
 
   const btnLabel = isFree
     ? (registering ? 'Registering…' : 'Register — Free')
-    : (loadingPI ? 'Loading…' : `Register — $${((event.member_price) / 100).toFixed(2)}`)
+    : (loadingPI ? 'Loading…' : `Register — $${(computeTax(event.member_price || 0).total / 100).toFixed(2)}`)
 
   return (
     <>
@@ -340,9 +341,20 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
               <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#777', fontFamily: 'var(--font-inter)' }}>Member price</span>
                 <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.4rem', fontWeight: '300', color: '#1a1a1a' }}>
-                  ${((event.member_price || 0) / 100).toFixed(2)} CAD
+                  ${(computeTax(event.member_price || 0).total / 100).toFixed(2)} CAD
                 </span>
               </div>
+              {(() => {
+                const t = computeTax(event.member_price || 0)
+                const fmt = c => (c / 100).toFixed(2)
+                return (
+                  <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', fontFamily: 'var(--font-inter)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>Subtotal</span><span>${fmt(t.subtotal)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>GST (5%)</span><span>${fmt(t.gst)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>QST (9.975%)</span><span>${fmt(t.qst)}</span></div>
+                  </div>
+                )
+              })()}
             </div>
             <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
               <PayForm

@@ -41,6 +41,30 @@ function PaymentDetailPanel({ p }) {
         <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Gross</div>
         <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{fmt(p.gross)}</div>
       </div>
+      {p.taxSubtotal != null && (
+        <div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Subtotal</div>
+          <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{fmt(p.taxSubtotal)}</div>
+        </div>
+      )}
+      {p.taxDiscount > 0 && (
+        <div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Discount</div>
+          <div style={{ fontSize: '13px', color: '#4040aa' }}>−{fmt(p.taxDiscount)}</div>
+        </div>
+      )}
+      {p.taxGst != null && (
+        <div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>GST</div>
+          <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{fmt(p.taxGst)}</div>
+        </div>
+      )}
+      {p.taxQst != null && (
+        <div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>QST</div>
+          <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{fmt(p.taxQst)}</div>
+        </div>
+      )}
       {p.refunded > 0 && (
         <div>
           <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Refunded</div>

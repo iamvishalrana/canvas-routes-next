@@ -9,6 +9,7 @@ import { loadStripe } from '@stripe/stripe-js/pure'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { User, Mail, Phone, Car, Share2, Calendar } from 'lucide-react'
 import { captureException } from '../lib/sentry'
+import { computeTax } from '../lib/tax'
 
 let _stripePromise = null
 function getStripe() {
@@ -127,9 +128,14 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
 
   const paymentIntentId = clientSecret?.split('_secret_')[0]
   const originalAmountCents = Math.round(parseFloat(price) * 100) || 0
-  const displayPrice = promoApplied
-    ? ((promoApplied.discountedAmount ?? 0) / 100).toFixed(2)
-    : parseFloat(price).toFixed(2)
+  // apply-promo returns subtotal/gst/qst/tax alongside discountedAmount once a
+  // promo is applied — use those exact server-computed figures rather than
+  // recomputing tax on a discounted price client-side.
+  const taxBreakdown = promoApplied
+    ? { subtotal: promoApplied.subtotal, gst: promoApplied.gst, qst: promoApplied.qst, total: promoApplied.discountedAmount }
+    : computeTax(originalAmountCents)
+  const displayPrice = ((taxBreakdown.total ?? 0) / 100).toFixed(2)
+  const fmt = cents => ((cents ?? 0) / 100).toFixed(2)
 
   async function handleApplyPromo() {
     if (!promoInput.trim()) return
@@ -263,6 +269,11 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
             <div style={{ fontSize: '1.8rem', fontWeight: '400', color: '#1a1a1a', lineHeight: 1, fontFamily: 'var(--font-bebas),sans-serif' }}>${displayPrice}</div>
             <div style={{ fontSize: '10px', color: '#aaa', marginTop: '0.2rem', fontFamily: 'var(--font-inter),sans-serif' }}>CAD / season</div>
           </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', padding: '0.75rem 0', marginBottom: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)', fontFamily: 'var(--font-inter),sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>Subtotal</span><span>${fmt(taxBreakdown.subtotal)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>GST (5%)</span><span>${fmt(taxBreakdown.gst)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}><span>QST (9.975%)</span><span>${fmt(taxBreakdown.qst)}</span></div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           {perks.map((p, i) => (
@@ -692,7 +703,7 @@ export default function MembershipContent() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
                     <span style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: 'clamp(3rem,5.5vw,4.2rem)', fontWeight: '400', color: '#F5F1EC', lineHeight: 1 }}>$99</span>
-                    <span style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', paddingBottom: '0.4rem' }}>CAD</span>
+                    <span style={{ ...SMALL, color: 'rgba(245,241,236,0.55)', paddingBottom: '0.4rem' }}>CAD + tax</span>
                   </div>
                   <div style={{ ...SMALL, color: 'rgba(245,241,236,0.4)', marginBottom: '2rem' }}>per season</div>
                   <div style={{ height: '0.5px', background: 'rgba(245,241,236,0.08)', marginBottom: '1.25rem' }} />
@@ -726,7 +737,7 @@ export default function MembershipContent() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', marginBottom: '0.3rem' }}>
                     <span style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: 'clamp(3rem,5.5vw,4.2rem)', fontWeight: '400', color: '#c5a882', lineHeight: 1 }}>$249</span>
-                    <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.4rem' }}>CAD</span>
+                    <span style={{ ...SMALL, color: 'rgba(197,168,130,0.75)', paddingBottom: '0.4rem' }}>CAD + tax</span>
                   </div>
                   <div style={{ ...SMALL, color: 'rgba(245,241,236,0.4)', marginBottom: '2rem' }}>per season</div>
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)', marginBottom: '1.25rem' }} />
@@ -1057,7 +1068,7 @@ export default function MembershipContent() {
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
                             <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? '#c5a882' : 'rgba(245,241,236,0.5)', lineHeight: 1 }}>$99</div>
-                            <div style={{ fontSize: '9px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                            <div style={{ fontSize: '9px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season + tax</div>
                           </div>
                         </div>
                         {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
@@ -1081,7 +1092,7 @@ export default function MembershipContent() {
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
                             <div style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.9rem', fontWeight: '400', color: sel ? '#c5a882' : 'rgba(197,168,130,0.5)', lineHeight: 1 }}>$249</div>
-                            <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season</div>
+                            <div style={{ fontSize: '9px', color: 'rgba(197,168,130,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>CAD / season + tax</div>
                           </div>
                         </div>
                         {sel && <svg style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}

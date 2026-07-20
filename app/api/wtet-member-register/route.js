@@ -4,6 +4,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { captureException } from '../../../lib/sentry.js'
+import { computeTax } from '../../../lib/tax.js'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 const MEMBER_PRICE_CENTS = 17900 // $179 CAD
@@ -135,9 +136,10 @@ export async function POST(request) {
   }
 
   // Create Stripe PI — immediate capture for members (vetted, no manual review needed)
+  const { total: memberTotalWithTax } = computeTax(MEMBER_PRICE_CENTS)
   try {
     const pi = await stripe.paymentIntents.create({
-      amount: MEMBER_PRICE_CENTS,
+      amount: memberTotalWithTax,
       currency: 'cad',
       receipt_email: normalEmail,
       metadata: {
