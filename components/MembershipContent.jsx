@@ -234,7 +234,10 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
     }
 
     payingRef.current = false
-    onSuccess()
+    // Pass the true final charged amount (tax-inclusive, and net of any promo
+    // discount) up for ad-pixel Purchase tracking — a hardcoded pre-tax price
+    // would under-report real revenue to Meta/etc.
+    onSuccess(parseFloat(displayPrice))
   }
 
   const TIER_PERKS = {
@@ -416,7 +419,11 @@ export default function MembershipContent() {
       localStorage.removeItem('membership_form_pending')
       if (saved) {
         const { form: savedForm, countryCode: savedCode } = JSON.parse(saved)
-        purchasePriceRef.current = savedForm.tier === 'Inner Circle' ? 249 : 99
+        // Tax-inclusive fallback for the 3DS-redirect path — the page has fully
+        // reloaded by this point so any promo discount that was applied isn't
+        // recoverable here, but this is still far more accurate than the raw
+        // pre-tax price.
+        purchasePriceRef.current = computeTax(savedForm.tier === 'Inner Circle' ? 24900 : 9900).total / 100
         fetch('/api/membership-waitlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -547,7 +554,9 @@ export default function MembershipContent() {
       if (!res.ok) throw new Error(data.error || 'Failed to initialise payment.')
       if (!data.clientSecret) throw new Error('Payment could not be initialised. Please try again.')
       try { localStorage.setItem('membership_form_pending', JSON.stringify({ form, countryCode })) } catch {}
-      purchasePriceRef.current = form.tier === 'Inner Circle' ? 249 : 99
+      // Tax-inclusive default — overwritten with the exact final amount (incl.
+      // any promo discount) once payment actually succeeds, see onSuccess below.
+      purchasePriceRef.current = computeTax(form.tier === 'Inner Circle' ? 24900 : 9900).total / 100
       lastPiIdRef.current = data.clientSecret.split('_secret_')[0]
       setClientSecret(data.clientSecret)  // set before paymentStep so Elements renders with a valid secret
       setPaymentStep(true)
@@ -901,7 +910,7 @@ export default function MembershipContent() {
                 price={form.tier === 'Inner Circle' ? '249' : '99'}
                 clientSecret={clientSecret}
                 countryCode={countryCode}
-                onSuccess={() => setStatus('success')}
+                onSuccess={finalAmount => { if (finalAmount) purchasePriceRef.current = finalAmount; setStatus('success') }}
                 onBack={() => { setPaymentStep(false); setClientSecret(null) }}
               />
             </Elements>
@@ -1176,7 +1185,7 @@ export default function MembershipContent() {
                 cursor: status === 'loading' ? 'wait' : 'pointer', opacity: status === 'loading' ? 0.5 : 1,
                 transition: 'all 0.2s',
               }}>
-                {status === 'loading' ? 'Processing…' : `Continue to Payment${form.tier ? ` — $${form.tier === 'Inner Circle' ? '249' : '99'}` : ''}`}
+                {status === 'loading' ? 'Processing…' : `Continue to Payment${form.tier ? ` — $${form.tier === 'Inner Circle' ? '249' : '99'} + tax` : ''}`}
               </button>
             </form>
           )}
