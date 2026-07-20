@@ -238,7 +238,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
   }
 
   const TIER_PERKS = {
-    'Inner Circle': ['First access window on all events', '$50 route credit on next two routes', 'Special discount on each paid event', 'Inner Circle curated members kit'],
+    'Inner Circle': ['First access window on all events', '$50 route credit on one of your next two routes', 'Special discount on each paid event', 'Inner Circle curated members kit'],
     'Routes Member': ['Priority registration for all events', 'Discount on each paid event', 'Members-only events throughout the season', 'Canvas Routes members kit'],
   }
   const perks = TIER_PERKS[tier] || TIER_PERKS['Routes Member']
@@ -877,6 +877,7 @@ export default function MembershipContent() {
                       border: '0.5px solid #0F1E14',
                       boxShadow: 'none',
                       color: '#0F1E14',
+                      backgroundColor: '#F5F1EC',
                     },
                     '.TabIcon--selected': {
                       fill: '#0F1E14',
