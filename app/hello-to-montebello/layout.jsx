@@ -1,21 +1,24 @@
-const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Hello+to+Montebello&date=August+1%2C+2026&bg=/montebello-hero.jpg'
+// Name says "Name — Year" only, never the exact date (site convention) — the
+// og image's `date` param prints directly onto the shared preview image, so
+// it counts as part of the name/link, not page body copy.
+const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Hello+to+Montebello&date=2026&bg=/montebello-hero.jpg'
 
 export const metadata = {
-  title: 'Hello to Montebello — August 1, 2026',
+  title: 'Hello to Montebello — 2026',
   description: 'A curated convoy route from Montreal to Fairmont Le Château Montebello — August 1, 2026. Meet at Angrignon Mall, regroup at Porte du Nord, coffee at L\'Atelier des Deux P, and lunch at Aux Chantignoles inside the largest log château in the world. $199 members / $225.',
   keywords: 'Montebello route Montreal, Fairmont Le Château Montebello drive, Canvas Routes route, curated driving event Quebec, scenic drive Outaouais, convoy drive Quebec, car route Montreal, Aux Chantignoles lunch drive',
   alternates: { canonical: 'https://canvasroutes.com/hello-to-montebello' },
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',
-    title: 'Hello to Montebello — August 1, 2026 | Canvas Routes',
+    title: 'Hello to Montebello — 2026 | Canvas Routes',
     description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee at L\'Atelier des Deux P, lunch at Aux Chantignoles, chocolate at Chocomotive. $199 members / $225.',
     url: 'https://canvasroutes.com/hello-to-montebello',
-    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Hello to Montebello — Canvas Routes Route August 1 2026' }],
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Hello to Montebello — Canvas Routes Route 2026' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Hello to Montebello — August 1, 2026 | Canvas Routes',
+    title: 'Hello to Montebello — 2026 | Canvas Routes',
     description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee stop, lunch at Aux Chantignoles, chocolate at Chocomotive. $199 members / $225.',
     images: [OG_IMAGE],
   },

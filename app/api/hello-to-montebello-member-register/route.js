@@ -6,11 +6,13 @@ import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { captureException } from '../../../lib/sentry.js'
 import { computeTax } from '../../../lib/tax.js'
 
-const EVENT_NAME = 'Hello to Montebello — August 1, 2026'
-// Date changed from July 26 to August 1 — matched against too so anyone who
-// registered before the change is still recognized (and their entry gets
-// replaced, not duplicated) instead of silently creating a second registrations[] row.
-const OLD_EVENT_NAME = 'Hello to Montebello — July 26, 2026'
+// Route/itinerary names say "Name — Year" only, never the exact date (site convention).
+const EVENT_NAME = 'Hello to Montebello — 2026'
+// Prior canonical names (exact-date, then a first year-only pass) — matched
+// against too so anyone who registered before either rename is still
+// recognized (and their entry gets replaced, not duplicated) instead of
+// silently creating a second registrations[] row.
+const OLD_EVENT_NAMES = ['Hello to Montebello — July 26, 2026', 'Hello to Montebello — August 1, 2026']
 const MEMBER_PRICE_CENTS = 19900 // $199 CAD
 
 export async function GET() {
@@ -27,7 +29,7 @@ export async function GET() {
       .eq('email', user.email.toLowerCase())
       .maybeSingle()
 
-    const htmReg = (reg?.registrations || []).find(r => r.event === EVENT_NAME || r.event === OLD_EVENT_NAME)
+    const htmReg = (reg?.registrations || []).find(r => r.event === EVENT_NAME || OLD_EVENT_NAMES.includes(r.event))
     const status = reg?.stripe_payment_status || null
     const alreadyRegistered = htmReg && ['authorized', 'paid'].includes(status)
 
@@ -76,7 +78,7 @@ export async function POST(request) {
     .eq('email', normalEmail)
     .maybeSingle()
 
-  const existingHtm = (existing?.registrations || []).find(r => r.event === EVENT_NAME || r.event === OLD_EVENT_NAME)
+  const existingHtm = (existing?.registrations || []).find(r => r.event === EVENT_NAME || OLD_EVENT_NAMES.includes(r.event))
   if (existingHtm && ['authorized', 'paid'].includes(existing?.stripe_payment_status)) {
     return Response.json({ error: 'You have already registered for this event.' }, { status: 400 })
   }
@@ -97,13 +99,13 @@ export async function POST(request) {
 
   // Save to DB as pending
   try {
-    const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME || r.event === OLD_EVENT_NAME)
+    const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME || OLD_EVENT_NAMES.includes(r.event))
     const newReg = {
       event: EVENT_NAME,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
     }
-    const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME && r.event !== OLD_EVENT_NAME)
+    const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME && !OLD_EVENT_NAMES.includes(r.event))
     const registrations = [...prevRegs, newReg]
 
     const { data: appData, error: upsertErr } = await admin.from('applications').upsert({

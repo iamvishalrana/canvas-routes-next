@@ -7,7 +7,8 @@ import { checkRateLimit } from '../../../lib/rateLimit.js'
 import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 
-const EVENT_NAME = 'Hello to Montebello — August 1, 2026'
+// Route/itinerary names say "Name — Year" only, never the exact date (site convention).
+const EVENT_NAME = 'Hello to Montebello — 2026'
 
 // Called by the Hello to Montebello page immediately after
 // stripe.confirmPayment() succeeds for members. Reuses buildWtetConfirmHtml
