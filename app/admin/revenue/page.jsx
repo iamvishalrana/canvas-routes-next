@@ -16,7 +16,7 @@ const TYPE_LABELS = {
   road_trip_member:        'Route (Member)',
   road_trip_inner_circle:  'Route (Inner Circle)',
   road_trip_wtet:          'WTET — July 5, 2026',
-  'road_trip_hello-to-montebello': 'Hello to Montebello — July 26, 2026',
+  'road_trip_hello-to-montebello': 'Hello to Montebello — August 1, 2026',
   event_registration:      'Event Registration',
 }
 

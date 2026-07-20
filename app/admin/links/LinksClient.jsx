@@ -234,7 +234,7 @@ export default function LinksClient() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.6rem', marginBottom: '0.75rem' }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <L>Event Name *</L>
-              <input style={inp} placeholder="Hello to Montebello — July 26, 2026" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required maxLength={120} />
+              <input style={inp} placeholder="Hello to Montebello — August 1, 2026" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required maxLength={120} />
             </div>
             <div>
               <L>Type</L>

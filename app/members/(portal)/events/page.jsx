@@ -40,7 +40,7 @@ export default async function EventsPage() {
   // WTET registrations live in applications (not event_registrations) — map payment type to event name
   const ROAD_TRIP_TYPE_TO_NAME = {
     'road_trip_wtet': 'Whips to Eastern Townships — July 5, 2026',
-    'road_trip_hello-to-montebello': 'Hello to Montebello — July 26, 2026',
+    'road_trip_hello-to-montebello': 'Hello to Montebello — August 1, 2026',
   }
   const paidRoadTripEventName = (['paid', 'authorized'].includes(application?.stripe_payment_status) && application?.stripe_payment_type)
     ? (ROAD_TRIP_TYPE_TO_NAME[application.stripe_payment_type] || null)

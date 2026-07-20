@@ -13,7 +13,7 @@ const STOPS = [
   { label: 'Angrignon Mall — outside the SAQ', note: '8:00 AM · LaSalle', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal', lat: 45.4487767, lng: -73.6174344 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: null, lat: 45.68, lng: -75.05 },
-  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Included in the fee', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
+  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & parking included', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
   { label: 'Chocomotive', note: 'Montebello · Chocolate workshop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6514, lng: -74.9438 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
 ]
@@ -27,7 +27,7 @@ const PARTICIPANTS = [
 const DRIVE_BULLETS = [
   { emoji: '🛣️', text: 'We meet at 8:00 AM outside the SAQ at Angrignon Mall, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside.' },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
-  { emoji: '🏰', text: 'Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars parked out front for the afternoon.' },
+  { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars parked out front for the afternoon. Lunch is the Wednesday Table d'Hôte: rotini salad with pesto, green olives, balsamic and grilled chicken, or squash ravioli in a cheese and sage sauce (vegetarian option). Tax, gratuity, and parking are all covered by Canvas Routes." },
   { emoji: '🍫', text: "A short walk to Chocomotive, an artisan chocolate workshop housed in Montebello's old train station, for something sweet before the drive home." },
   { emoji: '🏁', text: 'After Montebello, the group splits — Autoroute 50 for those ready to head straight home, or the same backroads for anyone who wants more road. One last regroup at Porte du Nord before everyone splits off.' },
 ]
@@ -298,7 +298,7 @@ export default function HelloToMontebelloItineraryPage() {
             Hello to Montebello
           </h1>
           <div className="gate-date" style={{ display: 'inline-block', padding: '0.4rem 1.1rem', border: '1px solid rgba(197,168,130,0.5)', background: 'rgba(197,168,130,0.09)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#F5F1EC', marginBottom: '1.5rem' }}>
-            Sunday · July 26, 2026
+            Saturday · August 1, 2026
           </div>
           <div className="gate-tags" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.75rem' }}>
             {['Château Lunch', 'Coffee Stop', 'Chocolaterie'].map(tag => (

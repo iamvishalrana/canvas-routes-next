@@ -7,9 +7,13 @@ import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
 
-const EVENT_NAME = 'Hello to Montebello — July 26, 2026'
-const MEMBER_PRICE_CENTS    = 17900 // $179 CAD
-const NONMEMBER_PRICE_CENTS = 19900 // $199 CAD
+const EVENT_NAME = 'Hello to Montebello — August 1, 2026'
+// Date changed from July 26 to August 1 — matched against too so anyone who
+// registered before the change is still recognized (and their entry gets
+// replaced, not duplicated) instead of silently creating a second registrations[] row.
+const OLD_EVENT_NAME = 'Hello to Montebello — July 26, 2026'
+const MEMBER_PRICE_CENTS    = 19900 // $199 CAD
+const NONMEMBER_PRICE_CENTS = 22500 // $225 CAD
 
 export async function POST(request) {
   if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
@@ -87,13 +91,13 @@ export async function POST(request) {
     const { data: existingData } = await supabase.from('applications').select('id, registrations, stripe_payment_intent_id').eq('email', normalEmail).maybeSingle()
     existing = existingData
 
-    const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
+    const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME || r.event === OLD_EVENT_NAME)
     const newReg = {
       event: EVENT_NAME,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
     }
-    const registrations = [...(existing?.registrations || []).filter(r => r.event !== EVENT_NAME), newReg]
+    const registrations = [...(existing?.registrations || []).filter(r => r.event !== EVENT_NAME && r.event !== OLD_EVENT_NAME), newReg]
 
     const { data: appData, error: upsertErr } = await supabase.from('applications').upsert({
       device_type: deviceType(request),

@@ -318,15 +318,15 @@ export default function HelloToMontebelloPage() {
   useEffect(() => {
     if (!window.fbq) return
     if (status === 'payment') {
-      window.fbq('track', 'InitiateCheckout', { value: wasMemberRef.current ? 179 : 199, currency: 'CAD', num_items: 1 })
+      window.fbq('track', 'InitiateCheckout', { value: wasMemberRef.current ? 199 : 225, currency: 'CAD', num_items: 1 })
     }
     if (status === 'success') {
-      window.fbq('track', 'Purchase', { value: wasMemberRef.current ? 179 : 199, currency: 'CAD' })
+      window.fbq('track', 'Purchase', { value: wasMemberRef.current ? 199 : 225, currency: 'CAD' })
     }
   }, [status])
 
   useEffect(() => {
-    const EVENT = new Date('2026-07-26T12:00:00Z') // 8 AM EDT
+    const EVENT = new Date('2026-08-01T12:00:00Z') // 8 AM EDT
     function tick() {
       const diff = EVENT - new Date()
       if (diff <= 0) { setCountdown(null); return }
@@ -448,7 +448,7 @@ export default function HelloToMontebelloPage() {
     return { width:'100%', padding:'0.9rem 1.2rem', border, background, boxShadow, fontSize:'13px', fontFamily:'var(--font-inter),sans-serif', outline:'none', color:'#1a1a1a', transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s', WebkitAppearance:'none', MozAppearance:'none', appearance:'none' }
   }
 
-  const price = form.isMember === 'yes' ? 179 : 199
+  const price = form.isMember === 'yes' ? 199 : 225
 
   function validate() {
     const e = {}
@@ -776,12 +776,12 @@ export default function HelloToMontebelloPage() {
             <div className="htm-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap'}}>
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>{t.priceMembersLabel}</div>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$179</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
               </div>
               <div className="price-divider" style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>{t.priceNonMembersLabel}</div>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$225</div>
               </div>
             </div>
             <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>{t.perCarUpTo2PlusTax}</div>
@@ -815,7 +815,7 @@ export default function HelloToMontebelloPage() {
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
             className="htm-details-cta"
             style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#45643c',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
-            {t.registerFrom('179')}
+            {t.registerFrom('199')}
           </a>
           </FadeUp>
         </div>
@@ -893,8 +893,8 @@ export default function HelloToMontebelloPage() {
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>{t.priceEyebrow}</div>
                 <div style={{display:'flex',gap:'1.5rem',alignItems:'baseline',flexWrap:'wrap'}}>
-                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'#c5a882',letterSpacing:'0.04em'}}>$179 <span style={{fontSize:'11px',color:'rgba(197,168,130,0.55)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.membersWord}</span></span>
-                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'rgba(245,241,236,0.6)',letterSpacing:'0.04em'}}>$199 <span style={{fontSize:'11px',color:'rgba(245,241,236,0.35)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.nonMembersWord}</span></span>
+                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'#c5a882',letterSpacing:'0.04em'}}>$199 <span style={{fontSize:'11px',color:'rgba(197,168,130,0.55)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.membersWord}</span></span>
+                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'rgba(245,241,236,0.6)',letterSpacing:'0.04em'}}>$225 <span style={{fontSize:'11px',color:'rgba(245,241,236,0.35)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.nonMembersWord}</span></span>
                 </div>
               </div>
               <div style={{fontSize:'11px',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>{t.perCarUpTo2PlusTaxAlt}</div>
@@ -1041,7 +1041,7 @@ export default function HelloToMontebelloPage() {
                 <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto 1.5rem'}} />
                 <p style={{fontSize:'14px',color:'#777',lineHeight:'1.8',maxWidth:'420px',margin:'0 auto',fontFamily:'var(--font-inter),sans-serif'}}>
                   {memberProfile
-                    ? t.memberFormIntro('179')
+                    ? t.memberFormIntro('199')
                     : t.nonMemberFormIntro}
                 </p>
               </div>
@@ -1057,8 +1057,8 @@ export default function HelloToMontebelloPage() {
                     </div>
                     <div className="htm-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
                       {[
-                        {val:'yes', price:'$179', label:t.memberRateLabel, sublabel:t.memberRateSublabel},
-                        {val:'no',  price:'$199', label:t.standardRateLabel, sublabel:t.standardRateSublabel},
+                        {val:'yes', price:'$199', label:t.memberRateLabel, sublabel:t.memberRateSublabel},
+                        {val:'no',  price:'$225', label:t.standardRateLabel, sublabel:t.standardRateSublabel},
                       ].map(({val, price: p, label, sublabel}) => {
                         const sel = form.isMember === val
                         return (
@@ -1079,7 +1079,7 @@ export default function HelloToMontebelloPage() {
                 {memberProfile && (
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0.9rem 1.1rem',background:'rgba(59,107,47,0.06)',border:'0.5px solid rgba(59,107,47,0.22)',marginBottom:'1.5rem'}}>
                     <div>
-                      <div style={{fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>{t.memberRateLabel} · $179 + tax</div>
+                      <div style={{fontSize:'10px',letterSpacing:'0.16em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.2rem',fontFamily:'var(--font-inter),sans-serif'}}>{t.memberRateLabel} · $199 + tax</div>
                       <div style={{fontSize:'14px',color:'#1a1a1a',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>{memberProfile.name}</div>
                       <div style={{fontSize:'12px',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>{memberProfile.email}</div>
                     </div>
@@ -1092,7 +1092,7 @@ export default function HelloToMontebelloPage() {
                   <div style={{padding:'1.5rem',background:'#0F1E14',marginBottom:'1rem'}}>
                     <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.7)',marginBottom:'0.6rem',fontFamily:'var(--font-inter),sans-serif'}}>{t.logInForMemberRate}</div>
                     <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
-                      {t.logInForMemberRateBody('179')}
+                      {t.logInForMemberRateBody('199')}
                     </p>
                     <a href={`/members/login?redirect=${encodeURIComponent('/hello-to-montebello')}`}
                       style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
@@ -1303,8 +1303,8 @@ export default function HelloToMontebelloPage() {
                 <div style={{marginBottom:'2.5rem',padding:'1rem 1.2rem',border:`0.5px solid ${memberProfile?'rgba(59,107,47,0.2)':'rgba(0,0,0,0.12)'}`,background:memberProfile?'rgba(59,107,47,0.05)':'rgba(197,168,130,0.06)'}}>
                   {memberProfile ? (
                     <>
-                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.4rem'}}>{t.memberPaymentNoteTitle('179')}</div>
-                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>{t.memberPaymentNoteBody('179')}</div>
+                      <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#3B6B2F',marginBottom:'0.4rem'}}>{t.memberPaymentNoteTitle('199')}</div>
+                      <div style={{fontSize:'13px',color:'#555',lineHeight:'1.7'}}>{t.memberPaymentNoteBody('199')}</div>
                     </>
                   ) : (
                     <>
@@ -1329,7 +1329,7 @@ export default function HelloToMontebelloPage() {
 
                 <button type="submit" disabled={status==='loading' || (alreadyRegistered && !!memberProfile)}
                   style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'rgba(15,30,20,0.5)':'#0F1E14',color:'#c5a882',border:'none',marginBottom:'1rem',opacity:(alreadyRegistered&&!!memberProfile)?0.5:1}}>
-                  {status==='loading' ? t.settingUpPayment : memberProfile ? t.secureYourSpot('179') : form.isMember === 'no' ? t.continueToPayment(price) : t.continueToPaymentPlain}
+                  {status==='loading' ? t.settingUpPayment : memberProfile ? t.secureYourSpot('199') : form.isMember === 'no' ? t.continueToPayment(price) : t.continueToPaymentPlain}
                 </button>
 
                 </>}
