@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS public.payment_receipts (
   created_at                TIMESTAMPTZ  DEFAULT now()
 );
 ALTER TABLE public.payment_receipts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.payment_receipts
+DROP POLICY IF EXISTS "block_direct_client_access" ON public.payment_receipts;
+CREATE POLICY "block_direct_client_access" ON public.payment_receipts
   USING (false) WITH CHECK (false);
 
 -- 2. Real promo-code redemption tracking. This integration never uses Stripe
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.promo_redemptions (
   redeemed_at               TIMESTAMPTZ  DEFAULT now()
 );
 ALTER TABLE public.promo_redemptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "block_direct_client_access" ON public.promo_redemptions
+DROP POLICY IF EXISTS "block_direct_client_access" ON public.promo_redemptions;
+CREATE POLICY "block_direct_client_access" ON public.promo_redemptions
   USING (false) WITH CHECK (false);
 CREATE INDEX IF NOT EXISTS promo_redemptions_promo_code_id_idx ON public.promo_redemptions(promo_code_id);
