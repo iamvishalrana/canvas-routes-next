@@ -1,7 +1,7 @@
 import { captureException, captureMessage } from '../../../../lib/sentry.js'
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { checkRateLimit } from '../../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
 
 function resetHtml({ actionLink }) {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -41,8 +41,7 @@ function resetHtml({ actionLink }) {
 }
 
 export async function POST(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }

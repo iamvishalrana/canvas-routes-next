@@ -2,7 +2,7 @@ import { createClient } from '../../../lib/supabase/server'
 import { deviceType } from '../../../lib/deviceType'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
-import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { captureException } from '../../../lib/sentry.js'
 import { computeTax } from '../../../lib/tax.js'
 
@@ -51,8 +51,7 @@ export async function POST(request) {
     }
   } catch { /* allow through if events table unavailable */ }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
+  const ip = getClientIp(request)
   if (ip && await checkRateLimit(ip, 10, 60)) {
     return Response.json({ error: 'Too many requests.' }, { status: 429 })
   }

@@ -1,5 +1,5 @@
 import { createAdminClient } from '../../../../lib/supabase/admin.js'
-import { checkRateLimit } from '../../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
 import { normalizeEmail } from '../../../../lib/normalizeEmail.js'
 import { normalizeEventName } from '../../../../lib/eventMeta.js'
 import { isWtetEventName } from '../../../../lib/wtetRegistrationContent.js'
@@ -12,8 +12,7 @@ export const runtime = 'nodejs'
 // record (so we know who "self" is for the self-vote block), their eligible
 // ballot candidates, whether voting is currently open, and any existing vote.
 export async function POST(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 15, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
 
   let body

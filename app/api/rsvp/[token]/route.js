@@ -1,6 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail'
 
 async function getEvent(supabase, eventName) {
@@ -15,7 +15,7 @@ async function getEvent(supabase, eventName) {
 }
 
 export async function GET(request, { params }) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim()
+  const ip = getClientIp(request)
   if (ip && await checkRateLimit(ip, 60, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   const { token } = await params
@@ -48,7 +48,7 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim()
+  const ip = getClientIp(request)
   if (ip && await checkRateLimit(ip, 20, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   const { token } = await params

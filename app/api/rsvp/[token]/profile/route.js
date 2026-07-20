@@ -1,9 +1,9 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
-import { checkRateLimit } from '../../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { findWtetPhoto } from '../../../../../lib/wtetParticipants'
 
 export async function GET(request, { params }) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 60, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   const { token } = await params
@@ -51,7 +51,7 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 20, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   const { token } = await params

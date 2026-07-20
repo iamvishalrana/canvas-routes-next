@@ -1,7 +1,7 @@
 import { after } from 'next/server'
 import { deviceType } from '../../../../lib/deviceType'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
 import { buildAdminNotifyHtml } from '../../../../lib/adminEmail'
@@ -17,7 +17,7 @@ function sendEmail(payload, context) {
 }
 
 export async function POST(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   let body

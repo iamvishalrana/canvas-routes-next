@@ -1,5 +1,5 @@
 import { captureException, captureMessage } from '../../../lib/sentry.js'
-import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 
 function h(str) {
   return String(str ?? '')
@@ -133,7 +133,7 @@ function confirmHtml({ name, business }) {
 
 export async function POST(req) {
   if (!process.env.RESEND_API_KEY) return Response.json({ error: 'Service unavailable.' }, { status: 503 })
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(req)
   const limited = await checkRateLimit(`partners:${ip}`, 5, 3600)
   if (limited) return Response.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 })
 

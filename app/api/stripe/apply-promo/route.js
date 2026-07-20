@@ -1,5 +1,5 @@
 import { stripe } from '../../../../lib/stripe.js'
-import { checkRateLimit, acquireLock, releaseLock } from '../../../../lib/rateLimit.js'
+import { checkRateLimit, acquireLock, releaseLock, getClientIp } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 import { PRICES } from '../../../../lib/prices.js'
 import { computeTax } from '../../../../lib/tax.js'
@@ -10,8 +10,7 @@ export async function POST(request) {
     return Response.json({ error: 'Payments not configured.' }, { status: 503 })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
+  const ip = getClientIp(request)
     || 'unknown'
   if (await checkRateLimit(ip)) {
     return Response.json({ error: 'Too many requests.' }, { status: 429 })

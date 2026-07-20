@@ -1,11 +1,11 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { normalizeWtetLunch } from '../../../../lib/wtetRegistrationContent'
 
 export async function GET(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const supabase = createAdminClient()
 
@@ -58,7 +58,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
   const body = await request.json()
   const supabase = createAdminClient()

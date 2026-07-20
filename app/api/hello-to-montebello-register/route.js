@@ -1,6 +1,6 @@
 import { after } from 'next/server'
 import { deviceType } from '../../../lib/deviceType'
-import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
@@ -20,8 +20,7 @@ const NONMEMBER_PRICE_CENTS = 22500 // $225 CAD
 export async function POST(request) {
   if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
+  const ip = getClientIp(request)
   if (ip && await checkRateLimit(ip, 10, 60)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }

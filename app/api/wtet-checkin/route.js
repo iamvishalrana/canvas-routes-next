@@ -1,5 +1,5 @@
 import { createAdminClient } from '../../../lib/supabase/admin.js'
-import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch, isWtetEventName } from '../../../lib/wtetRegistrationContent.js'
 import { normalizeEmail } from '../../../lib/normalizeEmail.js'
 import { normalizeEventName } from '../../../lib/eventMeta.js'
@@ -10,8 +10,7 @@ export const runtime = 'nodejs'
 // same token already emailed in the "Complete Early Check-in" button, so it now
 // also carries the waiver + lunch sections — one link, one page, all three items.
 export async function GET(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 15, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
 
   const { searchParams } = new URL(request.url)
@@ -52,8 +51,7 @@ export async function GET(request) {
 
 // POST body: { token?, email?, dietary, whatsapp, passengers_list } — needs one of token/email
 export async function POST(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
 
   let body

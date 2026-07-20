@@ -1,13 +1,13 @@
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 
 const UPLOAD_PASSWORD = 'laurentians'
 const MAX_BYTES = 15 * 1024 * 1024 // 15MB
 
 export async function POST(request) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim() || 'unknown'
+    const ip = getClientIp(request)
     // Tight limit — this is a single-purpose upload gated only by a shared
     // password, so keep brute-forcing it impractical.
     if (await checkRateLimit(ip, 5, 60)) return Response.json({ error: 'Too many attempts. Please try again in a minute.' }, { status: 429 })

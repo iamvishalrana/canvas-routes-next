@@ -1,6 +1,6 @@
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { deviceType } from '../../../lib/deviceType'
-import { checkRateLimit } from '../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
 function h(str) {
@@ -120,8 +120,7 @@ export async function POST(request) {
     return Response.json({ error: 'Service unavailable' }, { status: 503 })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
+  const ip = getClientIp(request)
   if (ip && await checkRateLimit(ip)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }

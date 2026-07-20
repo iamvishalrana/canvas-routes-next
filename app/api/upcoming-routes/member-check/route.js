@@ -1,12 +1,12 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
 
 // Live check while typing in the interest sheet: does this email belong to a
 // member account? Boolean only — same low-sensitivity stance as the event
 // check-in lookups. Rate-limited against enumeration sweeps.
 export async function POST(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 20, 60)) return Response.json({ member: false })
 
   let body

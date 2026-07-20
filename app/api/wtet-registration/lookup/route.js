@@ -1,5 +1,5 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
 import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch, isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
@@ -8,8 +8,7 @@ import { normalizeEmail } from '../../../../lib/normalizeEmail'
 // Email-only lookup, no code/link sent. Rate-limited per IP to slow down
 // enumeration — accepted tradeoff for a low-stakes single-event lookup.
 export async function POST(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 15, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
 
   let body

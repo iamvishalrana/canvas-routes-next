@@ -1,12 +1,12 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 
 const REPO = 'iamvishalrana/canvas-routes-next'
 const WORKFLOW = 'health-check.yml'
 
 export async function GET(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
   const token = process.env.GITHUB_WORKFLOW_TOKEN
@@ -38,7 +38,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
   const token = process.env.GITHUB_WORKFLOW_TOKEN

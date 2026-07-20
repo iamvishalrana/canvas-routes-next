@@ -1,5 +1,5 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
-import { checkRateLimit } from '../../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
 
@@ -7,8 +7,7 @@ import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
 // WTET check-in lookup this is modeled on.
 export async function POST(request, { params }) {
   const { eventId } = await params
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 15, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
 
   let body

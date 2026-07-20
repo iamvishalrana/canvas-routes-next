@@ -1,7 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
-import { checkRateLimit } from '../../../../lib/rateLimit'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { captureMessage } from '../../../../lib/sentry'
 import { buildBulkEmail, filterUnsubscribed } from '../../../../lib/emailUnsubscribe.js'
 
@@ -41,7 +41,7 @@ export async function DELETE(request) {
 export async function POST(request) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
   const { subject, html, body_html, audience, specificEmails, excludeEmails, fromEmail, attachments } = await request.json()

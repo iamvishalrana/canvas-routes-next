@@ -1,7 +1,7 @@
 import { stripe } from '../../../../lib/stripe.js'
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { checkRateLimit } from '../../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 import { computeTax } from '../../../../lib/tax.js'
@@ -13,8 +13,7 @@ export async function POST(request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
+  const ip = getClientIp(request)
     || 'unknown'
   if (await checkRateLimit(ip)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 

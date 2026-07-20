@@ -1,5 +1,5 @@
 import { createAdminClient } from '../../../../lib/supabase/admin.js'
-import { checkRateLimit } from '../../../../lib/rateLimit.js'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
 import { normalizeEmail } from '../../../../lib/normalizeEmail.js'
 import { normalizeEventName } from '../../../../lib/eventMeta.js'
 import { isWtetEventName } from '../../../../lib/wtetRegistrationContent.js'
@@ -11,8 +11,7 @@ export const runtime = 'nodejs'
 // POST { email, most_beautiful, best_driver, best_energy } — one ballot per
 // registrant email, upserted on resubmit so people can fix a mis-click.
 export async function POST(request) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
 
   let body
