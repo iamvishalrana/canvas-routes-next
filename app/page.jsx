@@ -9,6 +9,9 @@ import SiteNav from '../components/SiteNav'
 import { ROUTE_PHOTOS, ACCENT_BGS } from '../components/UpcomingRoadtrips'
 import PastRouteRecapModal from '../components/PastRouteRecapModal'
 import { getConsent } from '../lib/consent'
+import { useLanguage } from '../lib/i18n/LanguageContext'
+import { homepageT } from '../lib/i18n/homepage'
+import { routesT } from '../lib/i18n/routes'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -52,41 +55,20 @@ function formatEventDate(isoDate) {
   } catch { return isoDate }
 }
 
+// Image/link data only — text content (meta/title/sub/tags/imgAlt) comes from
+// homepageT[lang].pastEvents, keyed the same, and is merged in at render time.
 const PAST_EVENTS = {
-  'Cars & Coffee': {
-    img: '/cc-page.jpg', imgAlt: 'Cars & Coffee event poster', imgPos: 'top',
-    meta: 'Montreal · May 9, 2026', title: 'Cars & Coffee',
-    sub: 'Good cars. Great coffee. Better people.',
-    tags: ['09:30 – 12:00 PM', 'Open to all', 'Free entry'],
-  },
-  'Grand Prix Weekend - Cars, Coffee & Cruise': {
-    img: null,
-    meta: 'Montreal · May 23, 2026', title: 'Grand Prix Weekend',
-    sub: 'Cars, Coffee & Cruise — GP Weekend.',
-    tags: ['May 23, 2026', 'Exotics & Classics', 'Open to all'],
-  },
-  'Into the Laurentians': {
-    img: '/june7-poster.jpg', imgAlt: 'Into the Laurentians route', imgPos: 'top',
-    meta: 'Mont-Tremblant · June 7, 2026', title: 'Into the Laurentians',
-    sub: 'First Route — Canvas Routes.',
-    tags: ['June 7, 2026', 'Route', 'Members Only'],
-    routeHref: '/itinerary-into-the-laurentians-june-7',
-  },
-  'Cars, Coffee & Dad Jokes': {
-    img: '/CCD.png', imgAlt: 'Cars, Coffee & Dad Jokes poster', imgPos: 'top',
-    meta: 'LaSalle · June 20, 2026', title: 'Cars, Coffee & Dad Jokes',
-    sub: "Father's Day Weekend Special.",
-    tags: ['09:30 – 12:00 PM', 'Open to all', 'Free entry'],
-  },
-  'Whips to Eastern Townships': {
-    img: '/wtet.png', imgAlt: 'Whips to Eastern Townships poster', imgPos: 'top',
-    meta: 'Montreal · July 5, 2026', title: 'Whips to Eastern Townships',
-    sub: 'Wine country backroads and mountain passes.',
-    tags: ['July 5, 2026', 'Route', 'Members Only'],
-  },
+  'Cars & Coffee': { img: '/cc-page.jpg', imgPos: 'top' },
+  'Grand Prix Weekend - Cars, Coffee & Cruise': { img: null },
+  'Into the Laurentians': { img: '/june7-poster.jpg', imgPos: 'top', routeHref: '/itinerary-into-the-laurentians-june-7' },
+  'Cars, Coffee & Dad Jokes': { img: '/CCD.png', imgPos: 'top' },
+  'Whips to Eastern Townships': { img: '/wtet.png', imgPos: 'top' },
 }
 
 export default function Home() {
+  const { lang } = useLanguage()
+  const t = homepageT[lang]
+  const rt = routesT[lang]
   const [form, setForm] = useState({ registerFor:'', name:'', email:'', year:'', carMake:'', carModel:'', dob_month:'', dob_day:'', dob_year:'', phone:'', instagram:'', more:'', source:'', downtown_cruise:'' })
   const [errors, setErrors] = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
@@ -429,13 +411,13 @@ export default function Home() {
     <div style={{background:"#F5F1EC",fontFamily:"var(--font-inter),sans-serif",color:"#1a1a1a"}}>
 
       <SiteNav
-        ctaLabel={membershipLive ? 'Become a Member' : 'Join'}
+        ctaLabel={membershipLive ? t.navCtaMember : t.navCtaJoin}
         links={[
-          { href:'#about',   label:'About Us', onClick: e => { e.preventDefault(); smoothScroll('about') } },
-          { href:'/routes',  label:'Routes' },
-          { href:'#events',  label:'Events',   onClick: e => { e.preventDefault(); smoothScroll('events') } },
-          { href:'#contact', label:'Contact',  onClick: e => { e.preventDefault(); smoothScroll('contact') } },
-          { href:'/faq',     label:'FAQ' },
+          { href:'#about',   label:t.navAboutUs, onClick: e => { e.preventDefault(); smoothScroll('about') } },
+          { href:'/routes',  label:t.navRoutes },
+          { href:'#events',  label:t.navEvents,   onClick: e => { e.preventDefault(); smoothScroll('events') } },
+          { href:'#contact', label:t.navContact,  onClick: e => { e.preventDefault(); smoothScroll('contact') } },
+          { href:'/faq',     label:t.navFaq },
         ]}
       />
 
@@ -444,7 +426,7 @@ export default function Home() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="The 2026 routes are open for interest"
+          aria-label={t.popupAriaLabel}
           style={{
             position: 'fixed', inset: 0, zIndex: 999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -470,7 +452,7 @@ export default function Home() {
               {/* Close — 44px target for iOS */}
               <button
                 onClick={dismissRoutesPopup}
-                aria-label="Close"
+                aria-label={t.popupClose}
                 style={{
                   position: 'absolute', top: '0.4rem', right: '0.4rem',
                   background: 'none', border: 'none', cursor: 'pointer',
@@ -490,7 +472,7 @@ export default function Home() {
                 fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
                 color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem',
               }}>
-                Canvas Routes · 2026 Season
+                {t.popupEyebrow}
               </div>
 
               {/* Heading */}
@@ -499,7 +481,7 @@ export default function Home() {
                 fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1,
                 margin: '0 0 0.6rem',
               }}>
-                The roads are calling<br />for 2026.
+                {t.popupTitle}<br />{t.popupTitleLine2}
               </h2>
 
               {/* Sub */}
@@ -508,7 +490,7 @@ export default function Home() {
                 fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic',
                 marginBottom: '1.25rem',
               }}>
-                Charlevoix to the Cabot Trail
+                {t.popupSub}
               </div>
 
               {/* Divider */}
@@ -519,7 +501,7 @@ export default function Home() {
                 fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8',
                 fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem',
               }}>
-                Five drives from Montreal are gathering their crews. Express your interest — no payment, no commitment — and each route launches the moment enough drivers are in.
+                {t.popupBody}
               </p>
 
               {/* Route names */}
@@ -546,7 +528,7 @@ export default function Home() {
                 onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
                 onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
               >
-                See the 2026 routes →
+                {t.popupCta} →
               </a>
 
               {/* Soft dismiss */}
@@ -561,7 +543,7 @@ export default function Home() {
                   WebkitTapHighlightColor: 'transparent',
                 }}
               >
-                Maybe later
+                {t.popupMaybeLater}
               </button>
             </div>
           </div>
@@ -597,20 +579,20 @@ export default function Home() {
             .join-label-mobile  { display: inline; }
           }
         `}</style>
-        <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",animation:"cr-fade-up 0.65s ease both",animationDelay:"100ms"}}><MapPin size={12} strokeWidth={1.5} />Montreal · Est. 2025</div>
+        <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",animation:"cr-fade-up 0.65s ease both",animationDelay:"100ms"}}><MapPin size={12} strokeWidth={1.5} />{t.heroLocation}</div>
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem",animation:"cr-fade-in 0.6s ease both",animationDelay:"280ms"}}></div>
         <div style={{animation:"cr-fade-up 0.75s ease both",animationDelay:"380ms"}}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-color.svg" alt="Canvas Routes" className="hero-logo" />
         </div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"0 auto 1.5rem",animation:"cr-fade-in 0.5s ease both",animationDelay:"600ms"}}></div>
-        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em",animation:"cr-fade-up 0.65s ease both",animationDelay:"680ms"}}>The Community. The Routes. The Canvas.</div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:"#444",marginBottom:"3rem",letterSpacing:"0.02em",animation:"cr-fade-up 0.65s ease both",animationDelay:"680ms"}}>{t.heroTagline}</div>
         <div className="hero-buttons" style={{animation:"cr-fade-up 0.65s ease both",animationDelay:"820ms"}}>
-          <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}><span className="join-label-desktop">Join</span><span className="join-label-mobile">Become a Member</span></Link>
-          <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #93333E",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",textDecoration:"none",background:"transparent"}}>About Us</a>
+          <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}><span className="join-label-desktop">{t.heroJoin}</span><span className="join-label-mobile">{t.heroBecomeMember}</span></Link>
+          <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }} className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",border:"1px solid #93333E",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",textDecoration:"none",background:"transparent"}}>{t.heroAboutUs}</a>
         </div>
         <a href="#about" onClick={e => { e.preventDefault(); smoothScroll('about') }}
-          aria-label="Scroll down"
+          aria-label={t.heroScrollDown}
           className={`hero-scroll-arrow${showStickyCta ? ' hero-scroll-arrow--hidden' : ''}`}
           style={{animation:"cr-fade-in 0.6s ease both",animationDelay:"1100ms"}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -625,18 +607,18 @@ export default function Home() {
         <div className="about-grid">
           <FadeUp>
             <div>
-              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>About Us</div>
-              <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>Driving is an <em style={{color:"#93333E"}}>art form.</em><br/>We treat it like one.</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>{t.aboutEyebrow}</div>
+              <div className="section-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",lineHeight:"1.2",color:"#1a1a1a",marginBottom:"1.5rem"}}>{t.aboutTitlePre} <em style={{color:"#93333E"}}>{t.aboutTitleArt}</em><br/>{t.aboutTitleRest}</div>
               <div style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",maxWidth:"520px",marginBottom:"1.5rem"}}>
-                <strong style={{color:"#1a1a1a",fontWeight:"500"}}>We are driving enthusiasts before car enthusiasts.</strong> Canvas Routes was born from a simple idea — that driving should be more than just getting from A to B. We are not a show-and-tell club. We drive. The best roads deserve the best company, and great cars are meant to be experienced, not just owned.
+                <strong style={{color:"#1a1a1a",fontWeight:"500"}}>{t.aboutBody1Bold}</strong>{t.aboutBody1Rest}
                 <br/><br/>
-                Based in Montreal, we take the best roads in Quebec, Ontario, Vermont, Maine and New York — and fill them with people who actually care about the drive. Every route is hand-picked. Every detail is considered. Every event ends with you already thinking about the next one.
+                {t.aboutBody2}
                 <br/><br/>
-                Canvas Routes is for those who understand that a great car deserves great roads. If you've chosen your car for the way it makes you feel — the sound, the handling, the experience — you're exactly who we built this for.
+                {t.aboutBody3}
               </div>
               <div style={{display:"flex",gap:"1rem",flexWrap:"wrap"}}>
-                <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #3B6B2F",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",textDecoration:"none"}}>Car Meets</a>
-                <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #93333E",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",textDecoration:"none"}}>Routes</a>
+                <a href="#meets" onClick={e => { e.preventDefault(); smoothScroll('meets') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #3B6B2F",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",textDecoration:"none"}}>{t.aboutCarMeets}</a>
+                <a href="#routes" onClick={e => { e.preventDefault(); smoothScroll('routes') }} style={{display:"inline-block",padding:"0.75rem 1.8rem",border:"1px solid #93333E",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",textDecoration:"none"}}>{t.aboutRoutes}</a>
               </div>
             </div>
           </FadeUp>
@@ -651,8 +633,8 @@ export default function Home() {
       <section id="meets" style={{background:"#F5F1EC",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
         <button onClick={() => setMeetsOpen(!meetsOpen)} className="expand-btn btn-push" aria-expanded={meetsOpen} aria-controls="meets-content">
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:"0.4rem"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888"}}>Community</div>
-            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>Car Meets</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888"}}>{t.meetsEyebrow}</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>{t.meetsTitle}</div>
           </div>
           <div className="expand-plus" style={{transform:meetsOpen?"rotate(45deg)":"rotate(0deg)"}}>+</div>
         </button>
@@ -661,21 +643,21 @@ export default function Home() {
             <div className="expand-grid">
               <div>
                 <p style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",marginBottom:"2rem"}}>
-                  Our car meets are where the community comes together — great cars, genuine conversation, and the kind of energy that doesn't need to be manufactured. First time or fifth time, the vibe is the same.
+                  {t.meetsIntro}
                 </p>
                 <div className="meets-cards-grid">
                   <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1",boxShadow:"0 3px 16px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04)"}}>
-                    <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",marginBottom:"0.8rem"}}>Open Meets</div>
-                    <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Everyone welcome</div>
-                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>No membership required — just show up. Meet people who get it, see what Canvas Routes is about, and find out why people keep coming back. The format changes, the energy doesn't.</p>
+                    <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#3B6B2F",marginBottom:"0.8rem"}}>{t.meetsOpenLabel}</div>
+                    <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>{t.meetsOpenTitle}</div>
+                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>{t.meetsOpenBody}</p>
                   </div>
                   <div style={{padding:"1.5rem",border:"0.5px solid rgba(0,0,0,0.12)",background:"#EDE8E1",boxShadow:"0 3px 16px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04)"}}>
-                    <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",marginBottom:"0.8rem"}}>Private Meets</div>
-                    <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>Members only</div>
-                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>Exclusive to Canvas Routes members. Private venues, a tighter group, and a different kind of evening. Members are notified directly when one is announced — these don't get advertised.</p>
+                    <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#93333E",marginBottom:"0.8rem"}}>{t.meetsPrivateLabel}</div>
+                    <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.2rem",color:"#1a1a1a",marginBottom:"0.8rem"}}>{t.meetsPrivateTitle}</div>
+                    <p style={{fontSize:"0.85rem",lineHeight:"1.7",color:"#555"}}>{t.meetsPrivateBody}</p>
                   </div>
                 </div>
-                <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
+                <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>{t.meetsJoin}</Link>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:"4px",minHeight:"300px",overflow:"hidden"}}>
                 <div style={{flex:1,minHeight:"180px",backgroundImage:"url('/events/cc-may9-overview.jpeg')",backgroundSize:"cover",backgroundPosition:"center top"}} onContextMenu={e=>e.preventDefault()} />
@@ -690,8 +672,8 @@ export default function Home() {
       <section id="routes" style={{background:"#F5F1EC",borderTop:"0.5px solid rgba(0,0,0,0.08)"}}>
         <button onClick={() => setRoutesOpen(!routesOpen)} className="expand-btn btn-push" aria-expanded={routesOpen} aria-controls="routes-content">
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:"0.4rem"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888"}}>Experiences</div>
-            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>Routes</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888"}}>{t.routesEyebrow}</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.2rem",fontWeight:"300",color:"#1a1a1a"}}>{t.routesTitle}</div>
           </div>
           <div className="expand-plus" style={{transform:routesOpen?"rotate(45deg)":"rotate(0deg)"}}>+</div>
         </button>
@@ -700,22 +682,22 @@ export default function Home() {
             <div className="expand-grid">
               <div>
                 <p style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",marginBottom:"1.5rem"}}>
-                  Our routes are designed for those who drive not just to arrive, but to <em>feel something</em>. Every drive is hand-curated — from the road itself to where it takes you. Expect winding roads through North America's most stunning landscapes, stops at local and premium dining, wineries, golf courses, and even overnight adventures for those who want to go further.
+                  {t.routesBody1Pre} <em>{t.routesBody1Em}</em>{t.routesBody1Post}
                 </p>
                 <p style={{fontSize:"0.95rem",lineHeight:"1.9",color:"#555",marginBottom:"2rem"}}>
-                  At the heart of every route are the backroads — the kind that reward a driver-focused car. The twists, the elevation changes, the open stretches where the car finally gets to breathe. That's what we build our drives around.
+                  {t.routesBody2}
                 </p>
                 <div style={{marginBottom:"2rem"}}>
-                  <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Where we go</div>
+                  <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>{t.whereWeGo}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:"0.6rem"}}>
-                    {["Wineries","Golf Courses","Local Eats","Premium Dining","Overnight Trips","Scenic Backroads"].map((tag,i) => (
+                    {t.tags.map((tag,i) => (
                       <span key={i} style={{padding:"0.4rem 1rem",border:"0.5px solid rgba(0,0,0,0.2)",fontSize:"12px",letterSpacing:"0.05em",color:"#555"}}>{tag}</span>
                     ))}
                   </div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:"1rem",flexWrap:"wrap"}}>
-                  <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",background:"#0F1E14",color:"#F5F1EC"}}>2026 Routes — Express Interest →</Link>
-                  <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>Join</Link>
+                  <Link href="/routes" className="btn-push" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",background:"#0F1E14",color:"#F5F1EC"}}>{t.routesExpressInterest} →</Link>
+                  <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"0.9rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none"}}>{t.routesJoin}</Link>
                 </div>
               </div>
               <div style={{background:"#D9D2C7",minHeight:"300px",overflow:"hidden",position:"relative"}}>
@@ -731,9 +713,9 @@ export default function Home() {
       <section id="events" style={{background:"#0F1E14",padding:"6rem 3rem"}}>
         <FadeUp>
           <div style={{textAlign:"center",marginBottom:"4rem"}}>
-            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>2026 Season</div>
-            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Meets &amp; Events</div>
-            <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>Exclusive to members and invited guests</div>
+            <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#666",marginBottom:"1rem"}}>{t.eventsEyebrow}</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>{t.eventsTitle}</div>
+            <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>{t.eventsSub}</div>
           </div>
         </FadeUp>
         <div className="events-grid">
@@ -749,7 +731,7 @@ export default function Home() {
                 _sortDate: ev.date || ev.date_display, tripLength: ev.trip_length || null,
               }
               return past
-                ? { ...shared, type: 'Past Event', past: true }
+                ? { ...shared, type: t.pastEventBadge, past: true }
                 : {
                     ...shared, type: ev.type,
                     registration_url: ev.registration_url || null,
@@ -779,27 +761,27 @@ export default function Home() {
               <div style={{fontSize:"12px",color:e.past?"rgba(245,241,236,0.4)":"#5A4A38",marginBottom:e.teaser?"0.75rem":"1.5rem"}}>{e.loc}</div>
               {e.teaser && <p style={{fontSize:"12px",color:"#7A6A58",lineHeight:"1.65",marginBottom:"1.25rem"}}>{e.teaser}</p>}
               {e.past
-                ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Recap <span style={{fontSize:"13px"}}>→</span></div>
+                ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(197,168,130,0.7)",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>{t.viewRecap} <span style={{fontSize:"13px"}}>→</span></div>
                 : e.inviteOnly
-                  ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#93333E",paddingBottom:"2px",display:"inline-block"}}>Invite Only</div>
+                  ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#93333E",paddingBottom:"2px",display:"inline-block"}}>{t.inviteOnly}</div>
                   : e.membersOnly
-                  ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",border:"0.5px solid rgba(59,107,47,0.35)",padding:"3px 10px",display:"inline-block",background:"rgba(59,107,47,0.06)"}}>Members Only</div>
+                  ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",border:"0.5px solid rgba(59,107,47,0.35)",padding:"3px 10px",display:"inline-block",background:"rgba(59,107,47,0.06)"}}>{t.membersOnly}</div>
                   : (e.registration_opens_at && !e.photo_url) ? (() => {
                       const now = new Date()
                       const opens = new Date(e.registration_opens_at)
                       const closes = e.registration_closes_at ? new Date(e.registration_closes_at) : null
                       const isOpen = now >= opens && (!closes || now <= closes)
-                      if (isOpen) return <Link href={e.registration_url || "/members/events"} style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",border:"0.5px solid rgba(59,107,47,0.35)",padding:"3px 10px",display:"inline-block",background:"rgba(59,107,47,0.06)",textDecoration:"none"}}>Register →</Link>
-                      if (now < opens) return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Registration opens {opens.toLocaleDateString('en-CA', {month:'short',day:'numeric',timeZone:'America/Toronto'})}</div>
-                      return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#999",paddingBottom:"2px",display:"inline-block"}}>Registration Closed</div>
+                      if (isOpen) return <Link href={e.registration_url || "/members/events"} style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#3B6B2F",border:"0.5px solid rgba(59,107,47,0.35)",padding:"3px 10px",display:"inline-block",background:"rgba(59,107,47,0.06)",textDecoration:"none"}}>{t.register} →</Link>
+                      if (now < opens) return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>{t.registrationOpens(opens.toLocaleDateString(lang === 'fr' ? 'fr-CA' : 'en-CA', {month:'short',day:'numeric',timeZone:'America/Toronto'}))}</div>
+                      return <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#999",paddingBottom:"2px",display:"inline-block"}}>{t.registrationClosed}</div>
                     })()
                   : (e.registration_url && !e.photo_url)
-                    ? <Link href={e.registration_url} style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#c5a882",border:"0.5px solid rgba(197,168,130,0.45)",padding:"3px 10px",display:"inline-block",background:"rgba(197,168,130,0.06)",textDecoration:"none"}}>Registration Open · Register →</Link>
+                    ? <Link href={e.registration_url} style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#c5a882",border:"0.5px solid rgba(197,168,130,0.45)",padding:"3px 10px",display:"inline-block",background:"rgba(197,168,130,0.06)",textDecoration:"none"}}>{t.registrationOpenRegister} →</Link>
                   : e.photo_url
-                    ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B5B2E",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>View Details <span style={{fontSize:"13px"}}>→</span></div>
+                    ? <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7B5B2E",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>{t.viewDetails} <span style={{fontSize:"13px"}}>→</span></div>
                     : e.href
-                    ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#93333E",border:"0.5px solid #93333E",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>View Details</Link>
-                    : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>Details coming soon</div>
+                    ? <Link href={e.href} className="btn-push" style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#93333E",border:"0.5px solid #93333E",padding:"0.4rem 1rem",background:"transparent",cursor:"pointer",fontFamily:"var(--font-inter),sans-serif",textDecoration:"none",display:"inline-block"}}>{t.viewDetails}</Link>
+                    : <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7A6A58",paddingBottom:"2px",display:"inline-block"}}>{t.detailsComingSoon}</div>
               }
             </div>
             </FadeUp>
@@ -814,8 +796,8 @@ export default function Home() {
         <div style={{marginTop:"5rem"}}>
           <FadeUp>
             <div style={{textAlign:"center",marginBottom:"3rem"}}>
-              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>Routes</div>
-              <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>No payment, no commitment — we'll email you the moment one launches</div>
+              <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#F5F1EC",marginBottom:"0.5rem"}}>{t.routesSectionTitle}</div>
+              <div style={{fontSize:"0.85rem",color:"#888",letterSpacing:"0.05em"}}>{t.routesSectionSub}</div>
             </div>
           </FadeUp>
           {(() => {
@@ -838,7 +820,7 @@ export default function Home() {
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)"}} />
                         {r._past ? (
                           <div style={{position:"absolute",bottom:"12px",left:"12px",background:"rgba(90,90,90,0.85)",padding:"4px 10px"}}>
-                            <span style={{fontSize:"9px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#F5F1EC",fontWeight:600}}>Past Route · {r.month_label}</span>
+                            <span style={{fontSize:"9px",letterSpacing:"0.16em",textTransform:"uppercase",color:"#F5F1EC",fontWeight:600}}>{rt.pastRouteBadge(r.month_label)}</span>
                           </div>
                         ) : (
                           <>
@@ -846,7 +828,7 @@ export default function Home() {
                               <span style={{fontSize:"9px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",fontWeight:500}}>{r.month_label}</span>
                             </div>
                             <div style={{position:"absolute",top:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(255,255,255,0.08)"}}>
-                              <span style={{fontSize:"9px",color:"rgba(245,241,236,0.6)",letterSpacing:"0.1em"}}>{r.interested_count} interested</span>
+                              <span style={{fontSize:"9px",color:"rgba(245,241,236,0.6)",letterSpacing:"0.1em"}}>{rt.interestedCount(r.interested_count)}</span>
                             </div>
                           </>
                         )}
@@ -855,7 +837,7 @@ export default function Home() {
                         <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.4rem",fontWeight:"300",color:r._past?"#555":"#1A1008",marginBottom:"0.35rem"}}>{r.name}</div>
                         <div style={{fontSize:"11px",color:r._past?"#bbb":"#999",marginBottom:"0.9rem",letterSpacing:"0.04em"}}>{r.destination}</div>
                         <div style={{fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:r._past?"#999":"#3B6B2F",display:"inline-flex",alignItems:"center",gap:"0.4rem"}}>
-                          {r._past ? 'View Recap' : 'View Route'} <span style={{fontSize:"13px"}}>→</span>
+                          {r._past ? rt.viewRecap : t.viewRoute} <span style={{fontSize:"13px"}}>→</span>
                         </div>
                       </div>
                     </Link>
@@ -865,14 +847,14 @@ export default function Home() {
             ) : (
               <FadeUp>
                 <div style={{textAlign:"center",fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(1.8rem,4vw,2.3rem)",fontWeight:"300",color:"#F5F1EC"}}>
-                  New routes are being planned for 2026
+                  {t.newRoutesPlanned}
                 </div>
               </FadeUp>
             )
           })()}
           <FadeUp delay={200}>
             <div style={{textAlign:"center",marginTop:"3rem"}}>
-              <Link href="/routes" className="btn-push gold-outline-cta" style={{display:"inline-block",padding:"0.95rem 2.75rem",background:"transparent",border:"1px solid #c5a882",color:"#c5a882",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>Explore All Routes →</Link>
+              <Link href="/routes" className="btn-push gold-outline-cta" style={{display:"inline-block",padding:"0.95rem 2.75rem",background:"transparent",border:"1px solid #c5a882",color:"#c5a882",fontSize:"11px",letterSpacing:"0.18em",textTransform:"uppercase",fontWeight:"600",textDecoration:"none"}}>{t.exploreAllRoutes} →</Link>
             </div>
           </FadeUp>
         </div>
@@ -919,7 +901,7 @@ export default function Home() {
 
           {/* Title */}
           <div style={{padding:"0 2rem",marginBottom:"2rem",display:"flex",alignItems:"flex-end",justifyContent:"space-between",maxWidth:"1200px",margin:"0 auto 2rem"}}>
-            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(2rem,4vw,3rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:1,letterSpacing:"-0.01em"}}>Gallery</div>
+            <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"clamp(2rem,4vw,3rem)",fontWeight:"300",color:"#F5F1EC",lineHeight:1,letterSpacing:"-0.01em"}}>{t.gallery}</div>
             <a href="https://www.instagram.com/canvasroutes" target="_blank" rel="noopener noreferrer"
               style={{display:"inline-flex",alignItems:"center",gap:"0.45rem",fontSize:"10px",letterSpacing:"0.18em",textTransform:"uppercase",color:"rgba(197,168,130,0.55)",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",flexShrink:0}}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
@@ -943,10 +925,10 @@ export default function Home() {
       {/* CONTACT */}
       <section id="contact" style={{background:"#EDE8E1",padding:"6rem 3rem",textAlign:"center"}}>
         <FadeUp>
-        <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>Get in touch</div>
-        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>Let's talk <em style={{color:"#93333E"}}>routes.</em></div>
+        <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>{t.getInTouch}</div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.2"}}>{t.letsTalkPre} <em style={{color:"#93333E"}}>{t.letsTalkEm}</em></div>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem auto"}}></div>
-        <p style={{fontSize:"0.95rem",lineHeight:"1.8",color:"#555",maxWidth:"420px",margin:"0 auto 3rem"}}>Have a question, a partnership idea, or just want to know more? Reach out — we'd love to hear from you.</p>
+        <p style={{fontSize:"0.95rem",lineHeight:"1.8",color:"#555",maxWidth:"420px",margin:"0 auto 3rem"}}>{t.contactBody}</p>
         </FadeUp>
         <div className="contact-links" style={{flexDirection:"column",alignItems:"center",gap:"1.5rem"}}>
           <div style={{display:"flex",gap:"3rem",justifyContent:"center",flexWrap:"wrap"}}>
@@ -959,7 +941,7 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",marginBottom:"0.3rem"}}>Instagram</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",marginBottom:"0.3rem"}}>{t.instagram}</div>
               <div style={{fontSize:"0.95rem",color:"#1a1a1a"}}>@canvasroutes</div>
             </div>
           </a>
@@ -970,7 +952,7 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",marginBottom:"0.3rem"}}>Facebook</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",marginBottom:"0.3rem"}}>{t.facebook}</div>
               <div style={{fontSize:"0.95rem",color:"#1a1a1a"}}>Canvas Routes</div>
             </div>
           </a>
@@ -984,7 +966,7 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",marginBottom:"0.3rem"}}>Email</div>
+              <div style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",marginBottom:"0.3rem"}}>{t.email}</div>
               <div style={{fontSize:"0.95rem",color:"#1a1a1a"}}>info@canvasroutes.com</div>
             </div>
           </a>
@@ -996,30 +978,30 @@ export default function Home() {
       <section id="join" style={{textAlign:"center",padding:"8rem 2rem",background:"#F5F1EC"}}>
         <FadeUp>
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem"}}></div>
-        <div className="join-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>Reserve your<br/>seat at the wheel.</div>
+        <div className="join-title" style={{fontFamily:"var(--font-cormorant),serif",fontSize:"3.5rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"1rem",lineHeight:"1.1"}}>{t.joinTitle}<br/>{t.joinTitleLine2}</div>
         </FadeUp>
 
         {membershipLive ? (
           <div style={{marginBottom:"3rem"}}>
-            <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"420px",margin:"1rem auto 2rem",lineHeight:"1.7"}}>Season 2026 memberships are now open. Apply online — limited spots available.</p>
-            <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"1.1rem 3rem",fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",textDecoration:"none"}}>Apply for Membership</Link>
+            <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"420px",margin:"1rem auto 2rem",lineHeight:"1.7"}}>{t.joinLiveBody}</p>
+            <Link href="/membership" className="btn-push btn-waitlist" style={{display:"inline-block",padding:"1.1rem 3rem",fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",textDecoration:"none"}}>{t.joinApply}</Link>
           </div>
         ) : (
-          <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>Season 2026 memberships open tonight at 7 PM. Leave your details and we'll be in touch.</p>
+          <p style={{fontSize:"0.9rem",color:"#777",maxWidth:"400px",margin:"1rem auto 3rem",lineHeight:"1.7"}}>{t.joinNotLiveBody}</p>
         )}
 
         {/* NOT READY TO JOIN — links out to /notify */}
         <div style={{width:"40px",height:"1px",background:"rgba(197,168,130,0.35)",margin:"3.5rem auto 2rem"}}></div>
-        <div style={{fontSize:"10px",letterSpacing:"0.26em",textTransform:"uppercase",color:"#bbb",marginBottom:"0.75rem",fontFamily:"var(--font-inter),sans-serif"}}>Not ready to join?</div>
-        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.5rem",fontStyle:"italic",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.75rem"}}>Get notified about future events.</div>
+        <div style={{fontSize:"10px",letterSpacing:"0.26em",textTransform:"uppercase",color:"#bbb",marginBottom:"0.75rem",fontFamily:"var(--font-inter),sans-serif"}}>{t.notReadyToJoin}</div>
+        <div style={{fontFamily:"var(--font-cormorant),serif",fontSize:"1.5rem",fontStyle:"italic",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.75rem"}}>{t.getNotified}</div>
         <p style={{fontSize:"0.85rem",color:"#888",maxWidth:"420px",margin:"0 auto 1.25rem",lineHeight:"1.7"}}>
-          We&rsquo;ll email you when new meets and routes are announced — no membership required.
+          {t.notifyBody}
         </p>
         <p style={{fontSize:"0.8rem",color:"#8A6535",maxWidth:"420px",margin:"0 auto 2rem",lineHeight:"1.7"}}>
-          Priority for events is always given to Canvas Routes members — non-member spots are limited.
+          {t.notifyPriority}
         </p>
         <Link href="/notify" style={{display:"inline-block",padding:"1rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",background:"transparent",border:"1px solid #c5a882",color:"#8A6535",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
-          Notify Me
+          {t.notifyMe}
         </Link>
       </section>
 
@@ -1027,7 +1009,10 @@ export default function Home() {
 
       {/* PAST EVENT MODAL */}
       {pastModalEvent && (() => {
-          const d = PAST_EVENTS[pastModalEvent.name] || { meta: pastModalEvent.date, title: pastModalEvent.name, sub: pastModalEvent.loc || null, tags: pastModalEvent.type ? [pastModalEvent.type] : [], img: pastModalEvent.photo_url || null }
+          const basePastEvent = PAST_EVENTS[pastModalEvent.name]
+          const d = basePastEvent
+            ? { ...basePastEvent, ...t.pastEvents[pastModalEvent.name] }
+            : { meta: pastModalEvent.date, title: pastModalEvent.name, sub: pastModalEvent.loc || null, tags: pastModalEvent.type ? [pastModalEvent.type] : [], img: pastModalEvent.photo_url || null }
           return (
             <div
               key="past-modal"
@@ -1063,17 +1048,17 @@ export default function Home() {
                     <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>{pastModalEvent.teaser}</div>
                   ) : (
                     <div style={{fontSize:"12px",color:"rgba(245,241,236,0.55)",lineHeight:"1.75"}}>
-                      To see photos &amp; videos from this event, follow us on{' '}
-                      <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Instagram</a>
-                      {' '}and{' '}
-                      <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>Facebook</a>.
+                      {t.pastEventFollowPre}{' '}
+                      <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>{t.instagram}</a>
+                      {' '}{t.pastEventFollowMid}{' '}
+                      <a href="https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{color:"#c5a882",textDecoration:"none",borderBottom:"0.5px solid rgba(197,168,130,0.45)"}}>{t.facebook}</a>.
                     </div>
                   )}
                   {/* Register CTA for current (non-past) events with a registration URL */}
                   {!pastModalEvent.past && pastModalEvent.registration_url && (
                     <div style={{marginTop:"1.5rem"}}>
                       <Link href={pastModalEvent.registration_url} className="gold-outline-cta" style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",background:"transparent",border:"1px solid #c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
-                        Register
+                        {t.register}
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                       </Link>
                     </div>
@@ -1081,7 +1066,7 @@ export default function Home() {
                   {d.routeHref && (
                     <div style={{marginTop:"1.5rem"}}>
                       <Link href={d.routeHref} className="gold-outline-cta" style={{display:"inline-flex",alignItems:"center",gap:"0.5rem",fontSize:"10px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",background:"transparent",border:"1px solid #c5a882",padding:"0.75rem 1.5rem",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif",fontWeight:"500"}}>
-                        View Route
+                        {t.viewRoute}
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                       </Link>
                     </div>
@@ -1096,7 +1081,7 @@ export default function Home() {
       {/* STICKY MOBILE CTA */}
       <div className={`sticky-cta${showStickyCta ? ' sticky-cta--visible' : ''}`} style={cookieBannerVisible ? {bottom:'var(--cookie-banner-height, 80px)'} : {}}>
         <Link href="/membership" className="btn-push btn-waitlist" style={{display:"block",width:"100%",padding:"1rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",textDecoration:"none",textAlign:"center"}}>
-          Become a Member
+          {t.stickyCtaBecomeMember}
         </Link>
       </div>
 

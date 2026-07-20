@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '../lib/supabase/client'
+import { useLanguage } from '../lib/i18n/LanguageContext'
+import { navT } from '../lib/i18n/nav'
 
 // Single source of truth for the standard nav — every page that doesn't need
 // custom in-page-scroll links (see app/page.jsx) should rely on this default
@@ -29,6 +31,8 @@ export const DEFAULT_NAV_LINKS = [
  *   bannerHref – optional link target if the banner should be clickable
  */
 export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become a Member', onMenuChange, banner, bannerHref }) {
+  const { lang } = useLanguage()
+  const nt = navT[lang]
   const [menuOpen, setMenuOpen] = useState(false)
   const bannerRef = useRef(null)
   const [bannerHeight, setBannerHeight] = useState(0)
@@ -113,24 +117,24 @@ export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become 
                 fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
                 color: '#999', textAlign: 'center', fontFamily: 'var(--font-inter),sans-serif',
               }}>
-                {member.firstName || 'Member'}
+                {member.firstName || nt.memberFallback}
               </span>
               {/* Two buttons — exact same layout as Membership + Members Login */}
-              <Link href="/members/dashboard" className="nav-join">Dashboard</Link>
+              <Link href="/members/dashboard" className="nav-join">{nt.dashboard}</Link>
               <button onClick={signOut} className="nav-members" style={{ cursor: 'pointer' }}>
-                Sign out
+                {nt.signOut}
               </button>
             </>
           ) : (
             <>
               <Link href="/membership" className="nav-join">{ctaLabel}</Link>
-              <Link href="/members/login" className="nav-members">Members Login</Link>
+              <Link href="/members/login" className="nav-members">{nt.membersLogin}</Link>
             </>
           )}
         </div>
 
         <button className="hamburger btn-push" onClick={() => toggleMenu(!menuOpen)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
+          aria-label={menuOpen ? nt.closeMenu : nt.openMenu} aria-expanded={menuOpen}>
           <span /><span /><span />
         </button>
       </nav>
@@ -144,20 +148,20 @@ export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become 
         )}
         {member ? (
           <>
-            <Link href="/members/dashboard" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>Dashboard</Link>
-            <Link href="/members/profile"   onClick={() => toggleMenu(false)} style={{ color: '#555' }}>Profile</Link>
-            <Link href="/members/events"    onClick={() => toggleMenu(false)} style={{ color: '#555' }}>Events</Link>
+            <Link href="/members/dashboard" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>{nt.dashboard}</Link>
+            <Link href="/members/profile"   onClick={() => toggleMenu(false)} style={{ color: '#555' }}>{nt.profile}</Link>
+            <Link href="/members/events"    onClick={() => toggleMenu(false)} style={{ color: '#555' }}>{nt.events}</Link>
             <button
               onClick={() => { toggleMenu(false); signOut() }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 0, fontSize: '13px', color: '#93333E', fontWeight: '500', textAlign: 'left' }}
             >
-              Sign out
+              {nt.signOut}
             </button>
           </>
         ) : (
           <>
             <Link href="/membership" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>{ctaLabel}</Link>
-            <Link href="/members/login" onClick={() => toggleMenu(false)} style={{ color: '#93333E', fontWeight: '500' }}>Members Login</Link>
+            <Link href="/members/login" onClick={() => toggleMenu(false)} style={{ color: '#93333E', fontWeight: '500' }}>{nt.membersLogin}</Link>
           </>
         )}
       </div>
