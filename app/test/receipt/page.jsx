@@ -14,6 +14,7 @@ export default function ReceiptPreviewPage() {
     qst: t.qst,
     total: t.total,
     paidAt: new Date().toISOString(),
+    receiptId: 'pi_3QxK9L2eA1B7fH3c0Fj2Xk9'.slice(-10),
   })
 
   return (
