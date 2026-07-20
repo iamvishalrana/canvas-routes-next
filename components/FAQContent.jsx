@@ -4,6 +4,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import SiteNav from './SiteNav'
 import PageLoader from './PageLoader'
+import LanguageFooterDropdown from './LanguageFooterDropdown'
+import { useLanguage } from '../lib/i18n/LanguageContext'
+import { faqT } from '../lib/i18n/faq'
 
 function renderAnswer(text) {
   if (!text) return text
@@ -29,201 +32,9 @@ function renderAnswer(text) {
   return parts.length === 1 && typeof parts[0] === 'string' ? text : parts
 }
 
-const SECTIONS = [
-  {
-    title: 'About',
-    items: [
-      {
-        q: 'What is Canvas Routes?',
-        a: 'Canvas Routes is a Montreal-based automotive community built around curated car meets, scenic routes and convoy adventures across North America and beyond. The passion for the road matters more than the badge on your car, though we do maintain a performance and luxury standard across all our events.',
-      },
-      {
-        q: 'Who is Canvas Routes for?',
-        a: 'Anyone who genuinely loves to drive. Not to be seen, not to park and pose — but to actually get out and experience the road. Our community brings together enthusiasts of all backgrounds who share a respect for the drive, the machine and the people around them.',
-      },
-      {
-        q: 'Are you a car club?',
-        a: 'Yes — a car club built around the drivers. Cars are the common thread, but the real heart of Canvas Routes is the person behind the wheel. Someone who chose their car with intention and would rather be out on the road than standing next to it. If that sounds like you, you belong here.',
-      },
-      {
-        q: 'Where are you based?',
-        a: 'Montreal, Quebec. All current events depart from Montreal or the greater Montreal area. We are a young and growing community with ambitions that stretch across Quebec, Ontario, Vermont, Maine, New York and beyond.',
-      },
-      {
-        q: 'How do I stay updated on upcoming events?',
-        a: 'Follow us on Instagram @canvasroutes and on Facebook. All event announcements drop there first. You can also register at canvasroutes.com to be on our list.',
-      },
-      {
-        q: 'I registered — what should I expect?',
-        a: 'All Canvas Routes communication happens by email — confirmations, event details, payment information and updates are all sent directly to your inbox. Please check your junk or spam folder as our emails can sometimes land there. We recommend adding info@canvasroutes.com to your contacts so nothing gets missed.',
-      },
-    ],
-  },
-  {
-    title: 'Meets',
-    items: [
-      {
-        q: 'What kind of meets does Canvas Routes host?',
-        a: 'Our main format is Cars and Coffee — a curated invite-only morning meet at a premium venue in Montreal. Great cars, great coffee, great people. We also host themed and seasonal meets throughout the year, but Cars and Coffee is the heartbeat of what we do.',
-      },
-      {
-        q: 'What is a Canvas Routes Cars and Coffee?',
-        a: 'A curated invite-only morning meet at a premium venue in Montreal. Great cars, great coffee, great people. No entry fee, no judging — just a morning worth waking up for.',
-      },
-      {
-        q: 'How do I get an invite?',
-        a: 'Register at canvasroutes.com. All registrations are personally reviewed and confirmed. This is not a first come first served event — we take care with every registration to make sure the right fit is there.',
-      },
-      {
-        q: 'Is there a cost to attend?',
-        a: 'No. Cars and Coffee events are completely free. Canvas Routes provides complimentary coffee for all registered cars.',
-      },
-      {
-        q: 'What kind of cars show up?',
-        a: 'A mix of exotics, classics, performance cars and enthusiast builds. Themed events give preference to specific categories but all passionate enthusiasts are welcome.',
-      },
-      {
-        q: 'What if it rains?',
-        a: 'Rain or shine we go ahead — meets have a great energy regardless of the weather. We only postpone in the case of severe weather. You will always be notified in advance if anything changes.',
-      },
-      {
-        q: 'Can I bring a friend or spectator?',
-        a: 'Absolutely. If they have a car they love, have them register at canvasroutes.com. Spectators are also welcome to come and enjoy the morning.',
-      },
-      {
-        q: 'What are the rules?',
-        a: 'No revving, no burnouts, no aggressive driving at any time. We are guests of our venue partners and neighbours of the communities we meet in. Respect the space, respect the cars around you and bring the right energy.',
-      },
-    ],
-  },
-  {
-    title: 'Routes',
-    items: [
-      {
-        q: 'What is a Canvas Routes route?',
-        a: 'A fully planned curated convoy through some of the most scenic backroads in North America. Every detail is handled — an early meetup, a guided drive with a lead car the entire route, curated stops along the way, a hosted lunch, and personal photography and video coverage of your car on the road. All you bring is your car and your energy.',
-      },
-      {
-        q: 'How does expressing interest in an upcoming route work?',
-        a: 'Our Routes page lists the drives we\'re planning for the season. If a road calls to you, put your name down — it takes thirty seconds, costs nothing, and commits you to nothing. Each route needs a minimum number of cars; once enough drivers are in, we launch it and email everyone on the list with the full details and how to confirm a spot.',
-      },
-      {
-        q: 'Do all our routes use the interest list?',
-        a: 'No. The interest list on our Routes page is for our longer _routes_ — overnight and multi-day drives we plan months ahead, where we need a minimum crew before the route makes sense to run. Our shorter day drives work differently: they\'re announced only a few weeks before they run, with no interest-gathering step at all — spots are first come, first served, with priority given to members.',
-      },
-      {
-        q: 'Does expressing interest cost anything or commit me to going?',
-        a: 'No and no. Expressing interest is completely free — no payment details are collected — and it isn\'t a booking or a commitment. It simply tells us you\'d be in the convoy. If your plans change, you simply don\'t confirm when the route launches.',
-      },
-      {
-        q: 'When do I pay for a route?',
-        a: 'Only after a route officially launches. When we hit the crew we need, everyone on the interest list gets a launch email with the per-car fee — set by the route\'s distance, stops, and any overnight stays — and instructions to confirm your spot. Nothing is charged before then.',
-      },
-      {
-        q: 'What happens if a route doesn\'t reach its target?',
-        a: 'It gets postponed to a future season rather than run half-empty — a Canvas Routes convoy only rolls out when the crew is right. Your name stays on the list, and you\'ll be the first to hear when that route comes back around.',
-      },
-      {
-        q: 'Do members get priority on upcoming routes?',
-        a: 'Yes. When a route launches, members get priority as spots are confirmed, and expressing interest from the members portal fills in your details automatically. If you use an email tied to a member account, we\'ll ask you to log in first so your registration carries that priority.',
-      },
-      {
-        q: 'Why do you ask about budget, dates, and activities when I express interest?',
-        a: 'Because the crew shapes the trip. Your preferences — budget range, dates that work, hotel style, the things you\'d want to do along the way — feed directly into how we plan the route, where we stay, and what makes the itinerary. Every one of those questions is optional, and none of them commit you to anything.',
-      },
-      {
-        q: 'What kind of roads can I expect?',
-        a: 'We plan every route to avoid highways as much as possible. After the first regroup stop we take nothing but backroads all the way to the destination. Every route is personally mapped and scouted before the trip. Expect winding two-lane roads, elevation changes, lake views and long sweeping corners.',
-      },
-      {
-        q: 'How do you choose your routes?',
-        a: 'Every route we run has been driven by us — multiple times. Before anything is announced, we go out and scout the full road ourselves: every turn, every stop, every restaurant, every viewpoint. We drive it in different conditions, time the segments, eat the food, and only sign off on a route once there are zero question marks left. By the time you show up, every detail has already been figured out.',
-      },
-      {
-        q: 'Do I find out the route in advance?',
-        a: 'The full itinerary is shared privately with confirmed participants ahead of the trip. We generally keep the specific stops and roads a surprise — part of the Canvas Routes experience is the discovery along the way.',
-      },
-      {
-        q: 'What is included in the route fee?',
-        a: 'The fee covers a guided convoy with a lead car the entire route, a hosted lunch stop, and personal photography and video coverage of your car on the road. Some routes add a curated stop of their own — a winery, a scenic overlook, free time in a village — the specifics are always laid out in the launch email and the private itinerary page. Parking fees (if needed) and your car\'s gas are not included.',
-      },
-      {
-        q: 'Can I bring a passenger?',
-        a: 'Yes — the base fee covers two people per car. Additional passengers are charged separately. Children are welcome and we offer tiered pricing depending on age.',
-      },
-      {
-        q: 'Do I need to sign a waiver?',
-        a: 'Yes. All route participants are required to sign a Canvas Routes participant waiver before the event. This is sent to you upon confirmation of your spot.',
-      },
-      {
-        q: 'What is your cancellation and refund policy?',
-        a: 'Generally, any fee paid to Canvas Routes is fully refundable. That said, it can vary depending on the type of event or trip and how close to the date the cancellation is made. If you need to cancel, reach out directly — we will always do our best to work with you.',
-      },
-      {
-        q: 'Are routes open to non-members?',
-        a: 'Yes — Canvas Routes routes are not exclusive to members. Anyone can register for an upcoming route. Members simply get priority access during a dedicated registration window before spots open to the public, and benefit from preferred member pricing on every route.',
-      },
-      {
-        q: 'How do I register and pay?',
-        a: 'Registration is handled through canvasroutes.com. Spots are strictly limited and confirmed on a first paid basis. Registration deadlines apply for each event.',
-      },
-    ],
-  },
-  {
-    title: 'Overnight & Long Distance',
-    items: [
-      {
-        q: 'Do you organize overnight trips?',
-        a: 'Yes — overnight and multi-day convoy adventures are a core part of Canvas Routes. We have overnight trips planned for this season and longer expeditions in the works beyond that.',
-      },
-      {
-        q: 'What is the Canvas Routes flagship route?',
-        a: 'The Cabot Trail in Nova Scotia — a full convoy from Montreal to Cape Breton, one of the greatest driving roads in North America. It is on the table for this season: head to canvasroutes.com/routes and express your interest — the route launches once enough drivers are in.',
-      },
-      {
-        q: 'How far do your routes go?',
-        a: 'Our routes span North America — scenic backroads through the northeast, longer expeditions further afield, and overnight adventures for those who want to go further. The road has no limits and neither do we.',
-      },
-    ],
-  },
-  {
-    title: 'Membership',
-    items: [
-      {
-        q: 'Is membership open now?',
-        a: 'Yes — Canvas Routes membership is open for the 2026 season. Apply at canvasroutes.com/membership. Every application is reviewed personally and spots are limited.',
-      },
-      {
-        q: 'What does membership include?',
-        a: 'Priority registration for all events and routes, preferred member pricing on every route, access to members-only events, partner discounts, a Canvas Routes members kit and more. Inner Circle members receive additional exclusive perks and an extended season through November.',
-      },
-      {
-        q: 'How much does membership cost?',
-        a: 'Routes Member is $99 CAD per season. Inner Circle is $249 CAD per season. Full details and benefits at canvasroutes.com/membership.',
-      },
-      {
-        q: 'What is the difference between Routes Member and Inner Circle?',
-        a: 'Routes Member gives you full access to every Canvas Routes event and route with priority registration and preferred pricing all season. Inner Circle includes everything in Routes Member plus 48hr exclusive early access to all events, a $70 route credit, a professional car photoshoot on a route, exclusive partner discounts, and a Canvas Routes cap.',
-      },
-      {
-        q: 'Are there events exclusive to members?',
-        a: 'Yes. Alongside our open events, Canvas Routes runs a calendar of members-only experiences throughout the season — exclusive cruises, private gatherings, and routes that are not open to the public. These are part of what makes membership worthwhile.',
-      },
-      {
-        q: 'How is my application reviewed?',
-        a: 'Every application is read personally. We look at the car, the person, and what they bring to the community. There is no algorithm — just a genuine review. You will hear back by email.',
-      },
-      {
-        q: 'What happens if my application is declined?',
-        a: 'If your application is not approved, your payment is refunded in full — no charge is made. You are welcome to reapply in a future season.',
-      },
-      {
-        q: 'Can I cancel my membership?',
-        a: 'Membership fees are non-refundable once the season has begun. If you are approved but choose not to proceed before the season starts, contact us at info@canvasroutes.com as soon as possible.',
-      },
-    ],
-  },
-]
+// FAQ content (questions/answers/section titles) lives in lib/i18n/faq.js —
+// pulled in per-render as `SECTIONS = t.sections` inside FAQContent() below,
+// since it needs the current language.
 
 // ── Scroll-car constants (same geometry as test page) ────────────────────────
 const C_STEPS = 500
@@ -345,6 +156,9 @@ function AccordionItem({ item, isOpen, onToggle }) {
 }
 
 export default function FAQContent() {
+  const { lang } = useLanguage()
+  const t = faqT[lang]
+  const SECTIONS = t.sections
   const [open, setOpen]       = useState({})
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -929,7 +743,7 @@ export default function FAQContent() {
         if (carRef.current) carRef.current.style.opacity = '0'
       }
     }
-  }, [isMobile])
+  }, [isMobile, lang])
   // ────────────────────────────────────────────────────────────────────────────
 
   function toggle(key) {
@@ -1031,7 +845,7 @@ export default function FAQContent() {
             transformOrigin: 'left center',
             boxShadow: '0 2px 12px rgba(0,0,0,0.09)',
           }}>
-            SLOW DOWN! SLOW DOWN!
+            {t.slowDown}
             {/* Tail border */}
             <span style={{ position:'absolute', left:'-7px', top:'50%', transform:'translateY(-50%)', width:0, height:0, borderTop:'5px solid transparent', borderBottom:'5px solid transparent', borderRight:'7px solid rgba(197,168,130,0.5)' }} />
             {/* Tail fill */}
@@ -1149,16 +963,16 @@ export default function FAQContent() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)' }} />
         <div ref={fadeHeroLabelRef} style={{ position: 'relative', zIndex: 1, fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', marginBottom: '2rem', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
           <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.5)' }} />
-          Canvas Routes
+          {t.heroEyebrow}
           <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.5)' }} />
         </div>
         <h1 ref={fadeHeroH1Ref} style={{ position: 'relative', zIndex: 1, fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3rem,6.5vw,5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em', textShadow: '0 2px 16px rgba(0,0,0,0.7)' }}>
-          Frequently Asked<br />
-          <em style={{ fontStyle: 'italic', color: '#F5F1EC' }}>Questions</em>
+          {t.heroTitleLine1}<br />
+          <em style={{ fontStyle: 'italic', color: '#F5F1EC' }}>{t.heroTitleEm}</em>
         </h1>
         <div ref={fadeHeroDividerRef} style={{ position: 'relative', zIndex: 1, width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.75rem' }} />
         <p ref={fadeHeroSubtitleRef} style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: 'rgba(245,241,236,0.65)', maxWidth: '360px', margin: '0 auto', lineHeight: '1.9', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.01em', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
-          From your first meet to the open road — answered.
+          {t.heroSubtitle}
         </p>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.25),transparent)' }} />
       </section>
@@ -1204,11 +1018,11 @@ export default function FAQContent() {
       <div ref={ctaSectionRef} style={{ background: '#0F1E14', position: 'relative', zIndex: 6, textAlign: 'center', padding: 'clamp(3rem,6vw,5rem) 2rem' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.45),transparent)' }} />
         <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.8rem,3.5vw,2.4rem)', fontWeight: '300', color: '#F5F1EC', marginBottom: '0.75rem', lineHeight: 1.2 }}>
-          Still have questions?
+          {t.ctaTitle}
         </div>
         <div style={{ width: '28px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.25rem' }} />
         <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.5)', lineHeight: '1.85', maxWidth: '340px', margin: '0 auto 1.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-          Reach out at{' '}
+          {t.ctaReachOut}{' '}
           <a href="mailto:info@canvasroutes.com" style={{ color: '#c5a882', textDecoration: 'none' }}>info@canvasroutes.com</a>
         </p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
@@ -1232,11 +1046,12 @@ export default function FAQContent() {
 
       {/* Footer */}
       <div ref={footerRef} style={{ position: 'relative', zIndex: 6, padding: '2rem clamp(1.25rem,5vw,2.5rem)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <p style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>© 2026 Canvas Routes. Montreal, QC.</p>
-        <div style={{ display: 'flex', gap: '1.25rem' }}>
-          <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Privacy Policy</Link>
-          <Link href="/terms" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Terms</Link>
-          <Link href="/partners" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>Partner with us</Link>
+        <p style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>{t.footerCopyright}</p>
+        <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Link href="/privacy" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>{t.footerPrivacy}</Link>
+          <Link href="/terms" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>{t.footerTerms}</Link>
+          <Link href="/partners" style={{ fontSize: '11px', color: '#aaa', textDecoration: 'none' }}>{t.footerPartner}</Link>
+          <LanguageFooterDropdown theme="light" />
         </div>
       </div>
 
