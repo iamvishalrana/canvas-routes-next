@@ -7,10 +7,14 @@ import PageLoader from '../../components/PageLoader'
 const PASSWORD = 'montebello'
 
 // Only real venues so this one array can drive both the itinerary timeline
-// and the map markers. lat/lng for the meetup point and Fairmont come from
-// Jerry's traced My Maps route (see routePath.js); the rest are estimates.
+// and the map markers. lat/lng for Fairmont comes from Jerry's traced My Maps
+// route (see routePath.js). The meetup point moved to Rona Carrefour Laval —
+// its lat/lng below is an estimate from the store's public street address
+// (3065 Boulevard le Carrefour, Laval, QC H7T 1C7), NOT independently
+// verified against a traced route — confirm/correct the pin before relying
+// on it for real navigation. The rest of the stops are estimates too.
 const STOPS = [
-  { label: 'Angrignon Mall — outside the SAQ', note: '8:00 AM · LaSalle', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=2500+Boulevard+Angrignon+Montreal', lat: 45.4487767, lng: -73.6174344 },
+  { label: 'Rona — Carrefour Laval', note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=3065+Boulevard+le+Carrefour+Laval+QC', lat: 45.5762, lng: -73.7530 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: null, lat: 45.68, lng: -75.05 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & parking included', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
@@ -25,11 +29,11 @@ const PARTICIPANTS = [
 ]
 
 const DRIVE_BULLETS = [
-  { emoji: '🛣️', text: 'We meet at 8:00 AM outside the SAQ at Angrignon Mall, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside.' },
+  { emoji: '🛣️', text: 'We meet at 9:00 AM at Rona, Carrefour Laval, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside.' },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
   { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars parked out front for the afternoon. Lunch is the Wednesday Table d'Hôte: rotini salad with pesto, green olives, balsamic and grilled chicken, or squash ravioli in a cheese and sage sauce (vegetarian option). Tax, gratuity, and parking are all covered by Canvas Routes." },
   { emoji: '🍫', text: "A short walk to Chocomotive, an artisan chocolate workshop housed in Montebello's old train station, for something sweet before the drive home." },
-  { emoji: '🏁', text: 'After Montebello, the group splits — Autoroute 50 for those ready to head straight home, or the same backroads for anyone who wants more road. One last regroup at Porte du Nord before everyone splits off.' },
+  { emoji: '🏁', text: 'After Montebello, the convoy drives back together — same route, same group — to Porte du Nord for one last regroup before everyone heads home.' },
 ]
 
 const CONVOY_RULES = [
@@ -434,8 +438,8 @@ export default function HelloToMontebelloItineraryPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
-              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>8:00 AM · Angrignon Mall — outside the SAQ</p>
-              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>LaSalle, QC</p>
+              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>9:00 AM · Rona, Carrefour Laval</p>
+              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>Laval, QC</p>
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
               <h2 style={{ ...SECTION_LABEL, color: '#93333E', marginBottom: '5px', fontWeight: '600' }}>Contact</h2>

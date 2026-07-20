@@ -5,7 +5,7 @@ const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Hello+to+Mont
 
 export const metadata = {
   title: 'Hello to Montebello — 2026',
-  description: 'A curated convoy route from Montreal to Fairmont Le Château Montebello — August 1, 2026. Meet at Angrignon Mall, regroup at Porte du Nord, coffee at L\'Atelier des Deux P, and lunch at Aux Chantignoles inside the largest log château in the world. $199 members / $225.',
+  description: 'A curated convoy route from Montreal to Fairmont Le Château Montebello — August 1, 2026. Meet in Laval, regroup at Porte du Nord, coffee at L\'Atelier des Deux P, and lunch at Aux Chantignoles inside the largest log château in the world. $199 members / $225.',
   keywords: 'Montebello route Montreal, Fairmont Le Château Montebello drive, Canvas Routes route, curated driving event Quebec, scenic drive Outaouais, convoy drive Quebec, car route Montreal, Aux Chantignoles lunch drive',
   alternates: { canonical: 'https://canvasroutes.com/hello-to-montebello' },
   openGraph: {

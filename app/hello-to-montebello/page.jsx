@@ -326,7 +326,7 @@ export default function HelloToMontebelloPage() {
   }, [status])
 
   useEffect(() => {
-    const EVENT = new Date('2026-08-01T12:00:00Z') // 8 AM EDT
+    const EVENT = new Date('2026-08-01T13:00:00Z') // 9 AM EDT
     function tick() {
       const diff = EVENT - new Date()
       if (diff <= 0) { setCountdown(null); return }
@@ -776,15 +776,15 @@ export default function HelloToMontebelloPage() {
             <div className="htm-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap'}}>
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>{t.priceMembersLabel}</div>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$199 <span style={{fontSize:'0.95rem',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.02em'}}>{t.plusTax}</span></div>
               </div>
               <div className="price-divider" style={{width:'1px',height:'52px',background:'rgba(0,0,0,0.1)',alignSelf:'center'}} />
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#888',fontFamily:'var(--font-inter),sans-serif'}}>{t.priceNonMembersLabel}</div>
-                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$225</div>
+                <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>$225 <span style={{fontSize:'0.95rem',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.02em'}}>{t.plusTax}</span></div>
               </div>
             </div>
-            <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>{t.perCarUpTo2PlusTax}</div>
+            <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>{t.perCarLabel}</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
             {et.routeNotes.map((note, i) => (
@@ -893,11 +893,11 @@ export default function HelloToMontebelloPage() {
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>{t.priceEyebrow}</div>
                 <div style={{display:'flex',gap:'1.5rem',alignItems:'baseline',flexWrap:'wrap'}}>
-                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'#c5a882',letterSpacing:'0.04em'}}>$199 <span style={{fontSize:'11px',color:'rgba(197,168,130,0.55)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.membersWord}</span></span>
-                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'rgba(245,241,236,0.6)',letterSpacing:'0.04em'}}>$225 <span style={{fontSize:'11px',color:'rgba(245,241,236,0.35)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.nonMembersWord}</span></span>
+                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'#c5a882',letterSpacing:'0.04em'}}>$199 <span style={{fontSize:'11px',color:'rgba(197,168,130,0.55)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.plusTax} · {t.membersWord}</span></span>
+                  <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.7rem',fontWeight:'400',color:'rgba(245,241,236,0.6)',letterSpacing:'0.04em'}}>$225 <span style={{fontSize:'11px',color:'rgba(245,241,236,0.35)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.06em'}}>{t.plusTax} · {t.nonMembersWord}</span></span>
                 </div>
               </div>
-              <div style={{fontSize:'11px',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>{t.perCarUpTo2PlusTaxAlt}</div>
+              <div style={{fontSize:'11px',color:'rgba(197,168,130,0.45)',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>{t.perCarLabelAlt}</div>
               <div style={{height:'0.5px',background:'rgba(197,168,130,0.1)'}} />
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>{t.registrationLabel}</div>
@@ -1057,14 +1057,14 @@ export default function HelloToMontebelloPage() {
                     </div>
                     <div className="htm-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
                       {[
-                        {val:'yes', price:'$199', label:t.memberRateLabel, sublabel:t.memberRateSublabel},
-                        {val:'no',  price:'$225', label:t.standardRateLabel, sublabel:t.standardRateSublabel},
+                        {val:'yes', price:'$199', label:t.memberRateLabel, sublabel:t.memberOnlyLabel},
+                        {val:'no',  price:'$225', label:t.standardRateLabel, sublabel:t.nonMemberOnlyLabel},
                       ].map(({val, price: p, label, sublabel}) => {
                         const sel = form.isMember === val
                         return (
                           <button key={val} type="button" onClick={() => updateForm('isMember', val)}
                             style={{padding:'1.1rem 1.25rem',border:`1.5px solid ${sel?'#c5a882':errors.isMember?'#93333E':'rgba(0,0,0,0.14)'}`,background:sel?'rgba(197,168,130,0.08)':'#fff',cursor:'pointer',fontFamily:'var(--font-inter),sans-serif',textAlign:'left',transition:'all 0.15s',display:'flex',flexDirection:'column',gap:'0.3rem'}}>
-                            <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.6rem',letterSpacing:'0.04em',color:sel?'#1a1a1a':'#888',lineHeight:1}}>{p}</span>
+                            <span style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.6rem',letterSpacing:'0.04em',color:sel?'#1a1a1a':'#888',lineHeight:1}}>{p} <span style={{fontSize:'0.6rem',fontFamily:'var(--font-inter),sans-serif',color:sel?'#999':'#ccc'}}>{t.plusTax}</span></span>
                             <span style={{fontSize:'11px',fontWeight:'500',color:sel?'#1a1a1a':'#aaa',letterSpacing:'0.04em'}}>{label}</span>
                             <span style={{fontSize:'10px',color:sel?'#888':'#ccc',letterSpacing:'0.02em'}}>{sublabel}</span>
                           </button>
