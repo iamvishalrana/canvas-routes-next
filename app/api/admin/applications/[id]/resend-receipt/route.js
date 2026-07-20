@@ -56,7 +56,7 @@ export async function POST(request, { params }) {
       body: JSON.stringify({
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: app.email,
-        subject: `Your Canvas Routes receipt — ${itemLabel}`,
+        subject: `Votre reçu Canvas Routes / Your Canvas Routes receipt — ${itemLabel}`,
         html: buildReceiptHtml({ firstName, billedToName: pi.metadata?.name || app.name || null, billedToEmail: app.email || null, itemLabel, subtotal, discount, gst, qst, total, paidAt, receiptId: piId.slice(-10) }),
       }),
     })
