@@ -553,8 +553,9 @@ export default function MembershipContent() {
       setPaymentStep(true)
       setStatus(null)
       submittingRef.current = false  // allow re-entry if user goes back
-      // Scroll to top of payment form on step change
-      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50)
+      // Scroll to the top of the payment form's section — not the page top,
+      // which is far above this form and left users to manually scroll back down
+      setTimeout(() => document.getElementById('register')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
     } catch (err) {
       captureException(err, { context: 'membership-handleSubmit', email: form.email })
       setSubmitError(err.message || 'Something went wrong. Please try again.')
