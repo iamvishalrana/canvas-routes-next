@@ -1,7 +1,9 @@
-// Name says "Name — Year" only, never the exact date (site convention) — the
-// og image's `date` param prints directly onto the shared preview image, so
-// it counts as part of the name/link, not page body copy.
-const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Hello+to+Montebello&date=2026&bg=/montebello-itinerary.jpg'
+// Share preview uses the actual hero photo directly (no generated text-overlay
+// image) — matches its real 1400x788 dimensions. Title format is an
+// intentional HTM-specific exception (month + day, no year), matching the
+// public registration page — the general site convention is "Name — Year"
+// only for every other route/event.
+const HERO_IMAGE = 'https://canvasroutes.com/montebello-itinerary.jpg'
 
 export const metadata = {
   title: 'Hello to Montebello — Private Itinerary',
@@ -11,15 +13,15 @@ export const metadata = {
     type: 'website',
     siteName: 'Canvas Routes',
     url: 'https://canvasroutes.com/itinerary-hello-to-montebello-july-26',
-    title: 'Hello to Montebello — 2026',
+    title: 'Hello to Montebello — August 1',
     description: 'Your route and itinerary for the Canvas Routes drive to Fairmont Le Château Montebello.',
-    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Hello to Montebello — Canvas Routes' }],
+    images: [{ url: HERO_IMAGE, width: 1400, height: 788, alt: 'Hello to Montebello — Canvas Routes' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Hello to Montebello — 2026',
+    title: 'Hello to Montebello — August 1',
     description: 'Your route and itinerary for the Canvas Routes drive to Fairmont Le Château Montebello.',
-    images: [OG_IMAGE],
+    images: [HERO_IMAGE],
   },
 }
 

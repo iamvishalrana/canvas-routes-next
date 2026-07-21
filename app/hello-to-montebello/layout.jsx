@@ -1,26 +1,27 @@
-// Name says "Name — Year" only, never the exact date (site convention) — the
-// og image's `date` param prints directly onto the shared preview image, so
-// it counts as part of the name/link, not page body copy.
-const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Hello+to+Montebello&date=2026&bg=/montebello-hero.jpg'
+// Share preview uses the actual hero photo directly (no generated text-overlay
+// image) — matches its real 1400x788 dimensions. Title format here is an
+// intentional HTM-specific exception (month + day, no year) — the general
+// site convention is "Name — Year" only for every other route/event.
+const HERO_IMAGE = 'https://canvasroutes.com/montebello-hero.jpg'
 
 export const metadata = {
-  title: 'Hello to Montebello — 2026',
+  title: 'Hello to Montebello — August 1',
   description: 'A curated convoy route from Montreal to Fairmont Le Château Montebello — August 1, 2026. Meet in Laval, regroup at Porte du Nord, coffee at L\'Atelier des Deux P, and lunch at Aux Chantignoles inside the largest log château in the world. $199 members / $225.',
   keywords: 'Montebello route Montreal, Fairmont Le Château Montebello drive, Canvas Routes route, curated driving event Quebec, scenic drive Outaouais, convoy drive Quebec, car route Montreal, Aux Chantignoles lunch drive',
   alternates: { canonical: 'https://canvasroutes.com/hello-to-montebello' },
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',
-    title: 'Hello to Montebello — 2026 | Canvas Routes',
+    title: 'Hello to Montebello — August 1 | Canvas Routes',
     description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee at L\'Atelier des Deux P, lunch at Aux Chantignoles, chocolate at Chocomotive. $199 members / $225.',
     url: 'https://canvasroutes.com/hello-to-montebello',
-    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Hello to Montebello — Canvas Routes Route 2026' }],
+    images: [{ url: HERO_IMAGE, width: 1400, height: 788, alt: 'Hello to Montebello — Canvas Routes Route' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Hello to Montebello — 2026 | Canvas Routes',
+    title: 'Hello to Montebello — August 1 | Canvas Routes',
     description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee stop, lunch at Aux Chantignoles, chocolate at Chocomotive. $199 members / $225.',
-    images: [OG_IMAGE],
+    images: [HERO_IMAGE],
   },
 }
 
@@ -33,7 +34,7 @@ const eventSchema = {
   eventStatus: 'https://schema.org/EventScheduled',
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
   description: 'A curated convoy from Montreal to Fairmont Le Château Montebello — coffee at L\'Atelier des Deux P in Amherst, lunch at Aux Chantignoles inside the largest log château in the world, and a stop at Chocomotive before the drive home.',
-  image: OG_IMAGE,
+  image: HERO_IMAGE,
   url: 'https://canvasroutes.com/hello-to-montebello',
   location: {
     '@type': 'Place',
