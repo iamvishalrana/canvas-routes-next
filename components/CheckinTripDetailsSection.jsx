@@ -137,7 +137,7 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
               {t.addPassengerBtn}
             </button>
           )}
-          <p style={{ fontSize: '12px', color: '#bbb', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.passengersHint}</p>
+          <p style={{ fontSize: '12px', color: '#888', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.passengersHint}</p>
         </div>
 
         <div>
@@ -148,7 +148,7 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
         <div>
           <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>{t.whatsappLabel}</label>
           <input type="tel" autoComplete="tel" inputMode="tel" className="wtetci-input" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder={t.whatsappPlaceholder} style={inp} />
-          <p style={{ fontSize: '12px', color: '#aaa', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.whatsappHint}</p>
+          <p style={{ fontSize: '12px', color: '#888', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.whatsappHint}</p>
         </div>
 
         {submitError && <div className="wtetci-fade-in" style={{ fontSize: '13px', color: '#93333E', padding: '0.75rem 1rem', background: 'rgba(147,51,62,0.05)', border: '0.5px solid rgba(147,51,62,0.2)' }}>{submitError}</div>}

@@ -93,7 +93,7 @@ export default function CheckinWaiverSection({ waiverText, waiverTextFr, identif
           <div style={{ marginBottom: '0.5rem' }}>
             {t.signedByOn} {new Date(waiver.signed_at).toLocaleDateString(checkinDateLocale(lang), { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}.
           </div>
-          <div style={{ fontSize: '12px', color: '#aaa' }}>{t.waiverLockedNote}</div>
+          <div style={{ fontSize: '12px', color: '#888' }}>{t.waiverLockedNote}</div>
         </div>
       </SectionCard>
     )
@@ -138,12 +138,12 @@ export default function CheckinWaiverSection({ waiverText, waiverTextFr, identif
               background: 'rgba(197,168,130,0.03)',
             }}
           />
-          <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>{t.signatureHint}</div>
+          <div style={{ fontSize: '10px', color: '#888', marginTop: '0.3rem' }}>{t.signatureHint}</div>
         </div>
 
         <div>
           <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.6rem' }}>{t.vehicleHeader}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '0.6rem' }}>
             <div><label style={label}>{t.yearLabel}</label><input type="text" className="wtetci-input" value={vehicleYear} onChange={e => setVehicleYear(e.target.value)} style={inp} /></div>
             <div><label style={label}>{t.makeLabel}</label><input type="text" className="wtetci-input" value={vehicleMake} onChange={e => setVehicleMake(e.target.value)} style={inp} /></div>
             <div><label style={label}>{t.modelLabel}</label><input type="text" className="wtetci-input" value={vehicleModel} onChange={e => setVehicleModel(e.target.value)} style={inp} /></div>
@@ -160,7 +160,7 @@ export default function CheckinWaiverSection({ waiverText, waiverTextFr, identif
                 {t.bringingPassengers}
               </label>
             )}
-            <p style={{ fontSize: '11px', color: '#aaa', lineHeight: 1.6, margin: hasPassengers ? '0 0 0.75rem' : 0 }}>{t.bringingPassengersHint}</p>
+            <p style={{ fontSize: '11px', color: '#888', lineHeight: 1.6, margin: hasPassengers ? '0 0 0.75rem' : 0 }}>{t.bringingPassengersHint}</p>
             {hasPassengers && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="wtetci-fade-in">
                 {passengers.map((p, i) => (

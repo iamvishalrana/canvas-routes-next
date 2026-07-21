@@ -69,10 +69,10 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
             </div>
           ))}
           {lunchLocked ? (
-            <div style={{ fontSize: '12px', color: '#aaa', marginTop: '0.5rem' }}>{t.lunchLockedNote}</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '0.5rem' }}>{t.lunchLockedNote}</div>
           ) : (
             <>
-              {cutoffStr && <div style={{ fontSize: '12px', color: '#aaa', margin: '0.5rem 0 0.75rem' }}>{t.lunchChangeUntil(cutoffStr)}</div>}
+              {cutoffStr && <div style={{ fontSize: '12px', color: '#888', margin: '0.5rem 0 0.75rem' }}>{t.lunchChangeUntil(cutoffStr)}</div>}
               <button onClick={() => setEditing(true)} className="wtetci-btn-ghost" style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.5rem 1.1rem', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#666', cursor: 'pointer' }}>{t.changeSelectionBtn}</button>
             </>
           )}
