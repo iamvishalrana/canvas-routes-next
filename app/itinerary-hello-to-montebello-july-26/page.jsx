@@ -20,7 +20,7 @@ const STOPS = [
   { label: 'Rona — Carrefour Laval', note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=3065+Boulevard+le+Carrefour+Laval+QC', lat: 45.5762, lng: -73.7530 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: null, lat: 45.68, lng: -75.05 },
-  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & parking included', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
+  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
   { label: 'Stroll around Montebello', note: 'Suggestions: Chocomotive · Lieu historique national du Manoir-Papineau', href: null, lat: 45.6514, lng: -74.9438 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
 ]
@@ -34,7 +34,7 @@ const PARTICIPANTS = [
 const DRIVE_BULLETS = [
   { emoji: '🛣️', text: 'We meet at 9:00 AM at Rona, Carrefour Laval, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside.' },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
-  { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars parked out front for the afternoon. Lunch is a three-course Wednesday Table d'Hôte. Tax, gratuity, and parking are all covered by Canvas Routes — drinks are not included." },
+  { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars self-park together in a display area out front for the afternoon. Lunch is a three-course Wednesday Table d'Hôte. Tax, gratuity, and parking are all covered by Canvas Routes — drinks are not included." },
   { emoji: '🍫', text: 'A stroll around Montebello before the drive home — we suggest Chocomotive, an artisan chocolate workshop in the old train station, and/or the Lieu historique national du Manoir-Papineau.' },
   { emoji: '🏁', text: 'After Montebello, the convoy drives back together — same route, same group — to Porte du Nord for one last regroup before everyone heads home.' },
 ]
