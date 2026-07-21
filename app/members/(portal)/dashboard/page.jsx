@@ -58,7 +58,7 @@ export default async function DashboardPage() {
       ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle()
       : Promise.resolve({ data: null }),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
-    admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type').eq('is_active', true).eq('launched', false).order('sort_order', { ascending: true }),
+    admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type, launched, photo_url, registration_url').eq('is_active', true).order('sort_order', { ascending: true }),
     admin.from('route_interest').select('route_id, email'),
   ])
 
@@ -75,7 +75,13 @@ export default async function DashboardPage() {
     routeInterestCounts[r.route_id] = (routeInterestCounts[r.route_id] || 0) + 1
     if (user.email && r.email === user.email.toLowerCase()) myRouteIds.add(r.route_id)
   }
-  const upcomingRoutes = (routes || []).map(r => ({ ...r, interested_count: routeInterestCounts[r.id] || 0, registered: myRouteIds.has(r.id) }))
+  // Once a route launches it moves out of the "gathering interest" list and
+  // into a prominent banner at the top of the dashboard instead — members
+  // shouldn't have to go dig through /members/routes to find it.
+  const launchedRoutes = (routes || []).filter(r => r.launched && r.registration_url)
+  const upcomingRoutes = (routes || [])
+    .filter(r => !r.launched)
+    .map(r => ({ ...r, interested_count: routeInterestCounts[r.id] || 0, registered: myRouteIds.has(r.id) }))
 
   const eventRegMap = {}
   for (const r of (eventRegs || [])) eventRegMap[r.event_id] = r.stripe_payment_status
@@ -309,6 +315,35 @@ export default async function DashboardPage() {
           )}
         </div>
       </header>
+
+      {launchedRoutes.length > 0 && (
+        <FadeUp>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
+            {launchedRoutes.map(r => (
+              <Link key={r.id} href={r.registration_url} style={{ display: 'block', textDecoration: 'none', position: 'relative', overflow: 'hidden', background: '#0F1E14', border: '0.5px solid rgba(197,168,130,0.4)' }}>
+                {r.photo_url && (
+                  <div style={{ position: 'absolute', inset: 0 }}>
+                    <img src={r.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(15,30,20,0.94) 25%, rgba(15,30,20,0.55) 100%)' }} />
+                  </div>
+                )}
+                <div style={{ position: 'relative', padding: '1.5rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                      Registration Open
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.2 }}>{r.name}</div>
+                    <div style={{ fontSize: '12px', color: 'rgba(245,241,236,0.6)', marginTop: '0.3rem', fontFamily: 'var(--font-inter), sans-serif' }}>{r.destination} · {r.month_label}</div>
+                  </div>
+                  <span style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#0F1E14', background: '#F5F1EC', padding: '0.65rem 1.4rem', flexShrink: 0, fontWeight: '600', fontFamily: 'var(--font-inter), sans-serif', whiteSpace: 'nowrap' }}>
+                    Register Now →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </FadeUp>
+      )}
 
       {missingProfileFields.length > 0 && (
         <FadeUp>
