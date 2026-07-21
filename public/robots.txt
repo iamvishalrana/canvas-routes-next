@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /admin/
+Disallow: /members/
+Disallow: /test/
 
 Sitemap: https://canvasroutes.com/sitemap.xml
