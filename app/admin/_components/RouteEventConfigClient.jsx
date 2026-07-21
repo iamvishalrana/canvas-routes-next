@@ -86,6 +86,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [participants, setParticipants] = useState([])
   const [showLunchConfig, setShowLunchConfig] = useState(false)
   const [showAwardsConfig, setShowAwardsConfig] = useState(false)
+  const [showWaiverText, setShowWaiverText] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -228,25 +229,31 @@ export default function RouteEventConfigClient({ eventId }) {
         <div style={{ padding: '1.25rem 1.5rem' }}>
           <CheckinEnabledToggle form={form} setForm={setForm} save={save} eventId={eventId} />
 
-          <L>Waiver Text (English)</L>
-          <textarea style={{ ...smallTextarea, marginBottom: '0.65rem' }}
-            value={form.checkin_waiver_text}
-            onChange={e => setForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
-            placeholder="Paste the liability waiver text participants will read and agree to…" />
-          <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
-          <textarea style={smallTextarea}
-            value={form.checkin_waiver_text_fr}
-            onChange={e => setForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
-            placeholder="Collez le texte de la décharge en français…" />
+          <GhostBtn small onClick={() => setShowWaiverText(v => !v)}>{showWaiverText ? 'Hide Waiver Text' : 'Edit Waiver Text'}</GhostBtn>
 
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '1.1rem' }}>
-            <PrimaryBtn small disabled={saving} onClick={() => save({
-              checkin_waiver_text: form.checkin_waiver_text,
-              checkin_waiver_text_fr: form.checkin_waiver_text_fr,
-            })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
-            {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
-          </div>
-          <Err msg={saveError} />
+          {showWaiverText && (
+            <div style={{ marginTop: '1rem' }}>
+              <L>Waiver Text (English)</L>
+              <textarea style={{ ...smallTextarea, marginBottom: '0.65rem' }}
+                value={form.checkin_waiver_text}
+                onChange={e => setForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
+                placeholder="Paste the liability waiver text participants will read and agree to…" />
+              <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
+              <textarea style={smallTextarea}
+                value={form.checkin_waiver_text_fr}
+                onChange={e => setForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
+                placeholder="Collez le texte de la décharge en français…" />
+
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '1.1rem' }}>
+                <PrimaryBtn small disabled={saving} onClick={() => save({
+                  checkin_waiver_text: form.checkin_waiver_text,
+                  checkin_waiver_text_fr: form.checkin_waiver_text_fr,
+                })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
+                {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+              </div>
+              <Err msg={saveError} />
+            </div>
+          )}
 
           {form.checkin_enabled && (form.checkin_sections || []).includes('waiver') && (
             <div style={{ marginTop: '2rem' }}>

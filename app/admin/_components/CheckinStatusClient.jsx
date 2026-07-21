@@ -89,6 +89,24 @@ export default function CheckinStatusClient({ eventId }) {
   const [viewingWaiver, setViewingWaiver] = useState(null)
   const [resetConfirm, setResetConfirm] = useState(null) // `${email}:${section}`
   const [resetBusy, setResetBusy] = useState(null)
+  const [reminding, setReminding] = useState(null) // 'all' | email | null
+  const [remindResult, setRemindResult] = useState(null) // { email or 'all', count }
+
+  async function sendReminders(emails) {
+    const key = emails ? emails[0] : 'all'
+    setReminding(key); setActionError(null); setRemindResult(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/remind`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(emails ? { emails } : {}),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Failed to send reminders.'); return }
+      setRemindResult({ key, count: d.sentCount })
+      setTimeout(() => setRemindResult(null), 4000)
+    } catch { setActionError('Network error.') }
+    finally { setReminding(null) }
+  }
 
   async function resetSection(email, section) {
     const key = `${email}:${section}`
@@ -216,6 +234,7 @@ export default function CheckinStatusClient({ eventId }) {
   const lunchCount = participants.filter(p => p.lunch?.length > 0).length
   const fullyDoneCount = participants.filter(p => (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0)).length
   const total = participants.length
+  const incompleteCount = total - fullyDoneCount
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
   if (!event) return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#93333E' }}>Failed to load.</div>
@@ -292,9 +311,15 @@ export default function CheckinStatusClient({ eventId }) {
           </button>
         ))}
         <span style={{ fontSize: '11px', color: '#aaa' }}>{filtered.length} of {total}</span>
+        {incompleteCount > 0 && (
+          <button type="button" onClick={() => sendReminders(null)} disabled={reminding === 'all'}
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: '0.5px solid rgba(147,51,62,0.35)', background: 'transparent', color: '#93333E', cursor: reminding === 'all' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: total > 0 ? 'auto' : 0 }}>
+            {reminding === 'all' ? 'Sending…' : remindResult?.key === 'all' ? `✓ Sent to ${remindResult.count}` : `Email Reminder (${incompleteCount})`}
+          </button>
+        )}
         {total > 0 && (
           <button type="button" onClick={exportRegistrantsCSV}
-            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: incompleteCount > 0 ? 0 : 'auto' }}>
             Export CSV
           </button>
         )}
@@ -457,24 +482,32 @@ export default function CheckinStatusClient({ eventId }) {
                   )}
                   {p.paymentStatus !== 'authorized' && (
                     <div style={{ padding: '0 1.25rem 1.1rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
-                      {removeConfirm === p.email ? (
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '11px', color: '#93333E' }}>Remove {p.name || p.email} from this event's registrants?</span>
-                          <button type="button" onClick={() => removeRegistrant(p.email)} disabled={removingEmail === p.email}
-                            style={{ padding: '0.5rem 1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.4)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: removingEmail === p.email ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                            {removingEmail === p.email ? 'Removing…' : 'Yes, remove'}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {!((!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0)) && (
+                          <button type="button" onClick={() => sendReminders([p.email])} disabled={reminding === p.email}
+                            style={{ padding: '0.5rem 1.1rem', background: 'transparent', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.5)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: reminding === p.email ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            {reminding === p.email ? 'Sending…' : remindResult?.key === p.email ? '✓ Sent' : 'Resend Check-in Email'}
                           </button>
-                          <button type="button" onClick={() => setRemoveConfirm(null)}
-                            style={{ padding: '0.5rem 1rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                            Cancel
+                        )}
+                        {removeConfirm === p.email ? (
+                          <>
+                            <span style={{ fontSize: '11px', color: '#93333E' }}>Remove {p.name || p.email} from this event's registrants?</span>
+                            <button type="button" onClick={() => removeRegistrant(p.email)} disabled={removingEmail === p.email}
+                              style={{ padding: '0.5rem 1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.4)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: removingEmail === p.email ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              {removingEmail === p.email ? 'Removing…' : 'Yes, remove'}
+                            </button>
+                            <button type="button" onClick={() => setRemoveConfirm(null)}
+                              style={{ padding: '0.5rem 1rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button type="button" onClick={() => setRemoveConfirm(p.email)}
+                            style={{ padding: '0.5rem 1.1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            Remove Registrant
                           </button>
-                        </div>
-                      ) : (
-                        <button type="button" onClick={() => setRemoveConfirm(p.email)}
-                          style={{ padding: '0.5rem 1.1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                          Remove Registrant
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
                   )}
                   </>
