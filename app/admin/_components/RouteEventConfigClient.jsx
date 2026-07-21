@@ -85,6 +85,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [saved, setSaved] = useState(false)
   const [participants, setParticipants] = useState([])
   const [showLunchConfig, setShowLunchConfig] = useState(false)
+  const [showAwardsConfig, setShowAwardsConfig] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -104,6 +105,7 @@ export default function RouteEventConfigClient({ eventId }) {
         checkin_lunch_intro: cEv.checkin_lunch_intro || '',
         awards_categories: aEv.awards_categories || [],
         awards_ineligible_names: aEv.awards_ineligible_names || [],
+        awards_slug: aEv.awards_slug || '',
       })
       setParticipants(Array.isArray(checkinData?.participants) ? checkinData.participants : [])
     }).finally(() => setLoading(false))
@@ -358,45 +360,57 @@ export default function RouteEventConfigClient({ eventId }) {
         <div>
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
             <div style={{ fontSize: '12px', color: '#888', marginBottom: '1.1rem', overflowWrap: 'anywhere' }}>
-              Public voting page: <a href={`/awards/${eventId}`} target="_blank" rel="noreferrer" style={{ color: '#0F1E14', textDecoration: 'underline' }}>canvasroutes.com/awards/{eventId}</a>
+              Public voting page: <a href={`/awards/${form.awards_slug || eventId}`} target="_blank" rel="noreferrer" style={{ color: '#0F1E14', textDecoration: 'underline' }}>canvasroutes.com/awards/{form.awards_slug || eventId}</a>
             </div>
-            <L>Categories</L>
-            {(form.awards_categories || []).map((cat, ci) => (
-              <div key={cat.id || ci} style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '0.7rem', marginBottom: '0.5rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                  <input style={inp} placeholder="Category label (e.g. Most Beautiful Car)" value={cat.label || ''}
-                    onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, label: e.target.value } : c) }))} />
-                  <input type="number" min="0" style={inp} placeholder="$ off" value={cat.discount_pct ?? ''}
-                    onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, discount_pct: e.target.value === '' ? null : parseInt(e.target.value) } : c) }))} />
-                  <DangerBtn small onClick={() => setForm(p => ({ ...p, awards_categories: p.awards_categories.filter((_, i2) => i2 !== ci) }))}>Remove</DangerBtn>
+
+            <GhostBtn small onClick={() => setShowAwardsConfig(v => !v)}>{showAwardsConfig ? 'Hide Categories' : 'Edit Categories'}</GhostBtn>
+
+            {showAwardsConfig && (
+              <div style={{ marginTop: '1rem' }}>
+                <L>Custom Link (optional — e.g. htm-2026, instead of the long default URL)</L>
+                <input style={{ ...inp, maxWidth: '260px', marginBottom: '1rem' }} placeholder="htm-2026" value={form.awards_slug}
+                  onChange={e => setForm(p => ({ ...p, awards_slug: e.target.value }))} />
+
+                <L>Categories</L>
+                {(form.awards_categories || []).map((cat, ci) => (
+                  <div key={cat.id || ci} style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '0.7rem', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                      <input style={smallInput} placeholder="Category label (e.g. Most Beautiful Car)" value={cat.label || ''}
+                        onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, label: e.target.value } : c) }))} />
+                      <input type="number" min="0" style={smallInput} placeholder="$ off" value={cat.discount_pct ?? ''}
+                        onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, discount_pct: e.target.value === '' ? null : parseInt(e.target.value) } : c) }))} />
+                      <DangerBtn small onClick={() => setForm(p => ({ ...p, awards_categories: p.awards_categories.filter((_, i2) => i2 !== ci) }))}>Remove</DangerBtn>
+                    </div>
+                    <textarea style={{ ...smallTextarea, height: '50px' }} placeholder="Short description shown to voters (optional)" value={cat.body || ''}
+                      onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, body: e.target.value } : c) }))} />
+                  </div>
+                ))}
+                <GhostBtn small onClick={() => setForm(p => ({
+                  ...p,
+                  awards_categories: [...(p.awards_categories || []), { id: `cat_${Date.now()}_${p.awards_categories?.length || 0}`, label: '', body: '', discount_pct: null }],
+                }))}>
+                  + Add Category
+                </GhostBtn>
+
+                <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <L>Ineligible Names</L>
+                  <input style={inp} placeholder="e.g. Jerry — separate with commas"
+                    value={(form.awards_ineligible_names || []).join(', ')}
+                    onChange={e => setForm(p => ({ ...p, awards_ineligible_names: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} />
+                  <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem' }}>These names are excluded from every candidate list — e.g. the event organizer.</div>
                 </div>
-                <textarea style={{ ...smallTextarea, height: '50px' }} placeholder="Short description shown to voters (optional)" value={cat.body || ''}
-                  onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, body: e.target.value } : c) }))} />
+
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <PrimaryBtn small disabled={saving} onClick={() => save({
+                    awards_categories: form.awards_categories,
+                    awards_ineligible_names: form.awards_ineligible_names,
+                    awards_slug: form.awards_slug,
+                  })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
+                  {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+                </div>
+                <Err msg={saveError} />
               </div>
-            ))}
-            <GhostBtn small onClick={() => setForm(p => ({
-              ...p,
-              awards_categories: [...(p.awards_categories || []), { id: `cat_${Date.now()}_${p.awards_categories?.length || 0}`, label: '', body: '', discount_pct: null }],
-            }))}>
-              + Add Category
-            </GhostBtn>
-
-            <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-              <L>Ineligible Names</L>
-              <input style={inp} placeholder="e.g. Jerry — separate with commas"
-                value={(form.awards_ineligible_names || []).join(', ')}
-                onChange={e => setForm(p => ({ ...p, awards_ineligible_names: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} />
-              <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem' }}>These names are excluded from every candidate list — e.g. the event organizer.</div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              <PrimaryBtn small disabled={saving} onClick={() => save({
-                awards_categories: form.awards_categories,
-                awards_ineligible_names: form.awards_ineligible_names,
-              })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
-              {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
-            </div>
-            <Err msg={saveError} />
+            )}
           </div>
 
           <AwardsTallyClient eventId={eventId} />

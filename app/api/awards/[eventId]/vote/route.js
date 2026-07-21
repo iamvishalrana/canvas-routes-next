@@ -4,11 +4,12 @@ import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant, listEventCandidates } from '../../../../../lib/eventCheckinShared'
 
 function norm(s) { return (s || '').toLowerCase().trim() }
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // POST { email, picks: { [categoryId]: candidateName } } — one ballot per
 // registrant email per event, upserted on resubmit.
 export async function POST(request, { params }) {
-  const { eventId } = await params
+  const { eventId: idOrSlug } = await params
   const ip = getClientIp(request)
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 })
 
@@ -26,8 +27,9 @@ export async function POST(request, { params }) {
   const admin = createAdminClient()
   const { data: event } = await admin.from('events')
     .select('id, name, awards_enabled, awards_categories, awards_ineligible_names')
-    .eq('id', eventId).maybeSingle()
+    .eq(UUID_RE.test(idOrSlug) ? 'id' : 'awards_slug', idOrSlug).maybeSingle()
   if (!event || !event.awards_enabled) return Response.json({ error: 'Voting is closed.' }, { status: 400 })
+  const eventId = event.id
 
   const registrant = await findEventRegistrant(admin, eventId, event.name, email)
   if (!registrant) return Response.json({ error: 'Not found' }, { status: 404 })

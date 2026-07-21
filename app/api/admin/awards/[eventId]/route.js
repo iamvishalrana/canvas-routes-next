@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
 
   const admin = createAdminClient()
   const { data: event, error: eventErr } = await admin.from('events')
-    .select('id, name, awards_enabled, awards_categories, awards_ineligible_names')
+    .select('id, name, awards_enabled, awards_categories, awards_ineligible_names, awards_slug')
     .eq('id', eventId).maybeSingle()
   if (eventErr || !event) return Response.json({ error: 'Event not found' }, { status: 404 })
 

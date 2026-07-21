@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from './useRealtimeSync'
 import GenericWaiverViewerModal from './GenericWaiverViewerModal'
+import { CopyBtn } from './shared'
 
 const SECTION_LABEL_MAP = { trip_details: 'Trip Details', waiver: 'Waiver', lunch: 'Lunch' }
 
@@ -88,15 +89,6 @@ export default function CheckinStatusClient({ eventId }) {
   const [viewingWaiver, setViewingWaiver] = useState(null)
   const [resetConfirm, setResetConfirm] = useState(null) // `${email}:${section}`
   const [resetBusy, setResetBusy] = useState(null)
-  const [copiedEmail, setCopiedEmail] = useState(null)
-
-  function copyEmail(email) {
-    if (!navigator?.clipboard?.writeText) return
-    navigator.clipboard.writeText(email).then(() => {
-      setCopiedEmail(email)
-      setTimeout(() => setCopiedEmail(null), 1500)
-    }).catch(() => {})
-  }
 
   async function resetSection(email, section) {
     const key = `${email}:${section}`
@@ -328,12 +320,9 @@ export default function CheckinStatusClient({ eventId }) {
                 >
                   <div style={{ minWidth: 0, flex: '1 1 200px' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.name || '—'}</div>
-                    <div style={{ fontSize: '11px', color: '#999', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={{ fontSize: '11px', color: '#999', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
                       {p.email}
-                      <button type="button" onClick={e => { e.stopPropagation(); copyEmail(p.email) }}
-                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: copiedEmail === p.email ? '#3B6B2F' : '#ccc', fontSize: '10px' }}>
-                        {copiedEmail === p.email ? '✓ Copied' : 'Copy'}
-                      </button>
+                      <CopyBtn value={p.email} />
                     </div>
                   </div>
                   {[p.registration?.carYear, p.registration?.carMake, p.registration?.carModel].filter(Boolean).length > 0 && (
