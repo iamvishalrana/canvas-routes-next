@@ -1,6 +1,6 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 
-const PUBLIC_KEYS = ['homepage_banner', 'event_page_url', 'event_registration_open', 'event_closed_message']
+const PUBLIC_KEYS = ['homepage_banner', 'event_page_url', 'event_registration_open', 'event_closed_message', 'routes_popup_enabled', 'routes_popup_mode', 'routes_popup_route_slug']
 
 export async function GET() {
   try {

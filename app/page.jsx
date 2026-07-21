@@ -116,10 +116,18 @@ export default function Home() {
       .then(s => {
         if (s.homepage_banner) setHomepageBanner(s.homepage_banner)
         if (s.event_page_url) setEventPageUrl(s.event_page_url)
+        // Default stays on/general — matches this popup's pre-existing
+        // always-on behavior before the admin toggle existed.
+        setRoutesPopupEnabled(s.routes_popup_enabled !== 'false')
+        if (s.routes_popup_mode === 'specific') setRoutesPopupMode('specific')
+        if (s.routes_popup_route_slug) setRoutesPopupRouteSlug(s.routes_popup_route_slug)
       })
       .catch(() => {})
   }, [])
   const [showRoutesPopup, setShowRoutesPopup] = useState(false)
+  const [routesPopupEnabled, setRoutesPopupEnabled] = useState(true)
+  const [routesPopupMode, setRoutesPopupMode] = useState('general')
+  const [routesPopupRouteSlug, setRoutesPopupRouteSlug] = useState('')
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
   const [homepageBanner, setHomepageBanner] = useState(null)
@@ -133,14 +141,17 @@ export default function Home() {
 
   // 2026 Routes popup — nudges every visitor toward /routes to express interest.
   // Shown once per session (sessionStorage) after a short delay so the hero
-  // paints first and the popup doesn't feel like an ambush.
+  // paints first and the popup doesn't feel like an ambush. Admin-togglable
+  // (Settings → Routes Popup) — defaults to on/general so behavior is
+  // unchanged for anyone who hasn't touched the setting.
   useEffect(() => {
+    if (!routesPopupEnabled) { setShowRoutesPopup(false); return }
     // Storage access can throw in strict in-app browsers / private modes —
     // never let that take down the homepage.
     try { if (sessionStorage.getItem('routes_popup_seen')) return } catch {}
     const t = setTimeout(() => setShowRoutesPopup(true), 1600)
     return () => clearTimeout(t)
-  }, [])
+  }, [routesPopupEnabled])
 
   function dismissRoutesPopup() {
     setShowRoutesPopup(false)
@@ -421,12 +432,20 @@ export default function Home() {
         ]}
       />
 
-      {/* 2026 ROUTES POPUP — leads every visitor to /routes to express interest */}
-      {showRoutesPopup && (
+      {/* 2026 ROUTES POPUP — leads every visitor to /routes to express interest.
+          Admin-configurable: general (all routes) or featuring one specific
+          route by slug (Settings → Routes Popup). Falls back to general if
+          "specific" mode is on but the chosen route can't be found (deleted,
+          or teaserRoutes hasn't loaded yet). */}
+      {showRoutesPopup && (() => {
+        const featuredRoute = routesPopupMode === 'specific'
+          ? teaserRoutes.find(r => r.slug === routesPopupRouteSlug)
+          : null
+        return (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={t.popupAriaLabel}
+          aria-label={featuredRoute ? t.popupSpecificAriaLabel : t.popupAriaLabel}
           style={{
             position: 'fixed', inset: 0, zIndex: 999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -472,7 +491,7 @@ export default function Home() {
                 fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
                 color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem',
               }}>
-                {t.popupEyebrow}
+                {featuredRoute ? t.popupSpecificEyebrow : t.popupEyebrow}
               </div>
 
               {/* Heading */}
@@ -481,7 +500,7 @@ export default function Home() {
                 fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1,
                 margin: '0 0 0.6rem',
               }}>
-                {t.popupTitle}<br />{t.popupTitleLine2}
+                {featuredRoute ? featuredRoute.name : <>{t.popupTitle}<br />{t.popupTitleLine2}</>}
               </h2>
 
               {/* Sub */}
@@ -490,7 +509,7 @@ export default function Home() {
                 fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic',
                 marginBottom: '1.25rem',
               }}>
-                {t.popupSub}
+                {featuredRoute ? featuredRoute.destination : t.popupSub}
               </div>
 
               {/* Divider */}
@@ -501,16 +520,16 @@ export default function Home() {
                 fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8',
                 fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem',
               }}>
-                {t.popupBody}
+                {featuredRoute ? t.popupSpecificBody : t.popupBody}
               </p>
 
-              {/* Route names */}
+              {/* Route names (general) / month label (specific) */}
               <div style={{
                 fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
                 color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif',
                 lineHeight: 2, margin: '0 0 1.5rem',
               }}>
-                Charlevoix · Gaspésie · Tobermory · Calabogie · Cabot Trail
+                {featuredRoute ? featuredRoute.month_label : 'Charlevoix · Gaspésie · Tobermory · Calabogie · Cabot Trail'}
               </div>
 
               {/* CTA — full-width on mobile */}
@@ -528,7 +547,7 @@ export default function Home() {
                 onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
                 onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
               >
-                {t.popupCta} →
+                {featuredRoute ? t.popupSpecificCta : t.popupCta} →
               </a>
 
               {/* Soft dismiss */}
@@ -548,7 +567,8 @@ export default function Home() {
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* HOMEPAGE ANNOUNCEMENT BANNER */}
       {homepageBanner && (

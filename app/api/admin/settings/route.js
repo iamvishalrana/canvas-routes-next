@@ -34,6 +34,9 @@ export async function PATCH(request) {
     'homepage_banner',
     'event_page_url',
     'wtet_awards_open',
+    'routes_popup_enabled',
+    'routes_popup_mode',
+    'routes_popup_route_slug',
   ]
   if (!ALLOWED_KEYS.includes(key)) return Response.json({ error: 'Unknown setting key.' }, { status: 400 })
 
