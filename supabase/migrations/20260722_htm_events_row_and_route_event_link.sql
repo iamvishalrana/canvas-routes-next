@@ -26,7 +26,10 @@ WITH new_event AS (
     'Route', 'Same Day',
     'https://canvasroutes.com/hello-to-montebello', 19900, true, true,
     true, ARRAY['trip_details','waiver','lunch'], 2,
-    '[{"id":"rotini","name":"Rotini salad with pesto & grilled chicken","description":"Rotini pasta salad with pesto, green olives, balsamic, and grilled chicken."},{"id":"ravioli","name":"Squash ravioli (vegetarian)","description":"Squash ravioli in a cheese and sage sauce."}]'::jsonb,
+    jsonb_build_array(
+      jsonb_build_object('id', 'rotini', 'name', 'Rotini salad with pesto & grilled chicken', 'description', 'Rotini pasta salad with pesto, green olives, balsamic, and grilled chicken.'),
+      jsonb_build_object('id', 'ravioli', 'name', 'Squash ravioli (vegetarian)', 'description', 'Squash ravioli in a cheese and sage sauce.')
+    ),
     'PARTICIPANT LIABILITY WAIVER & RELEASE OF CLAIMS
 Hello to Montebello Road Trip — August 1, 2026
 Montreal to Fairmont Le Château Montebello — Private Invite-Only Convoy
@@ -123,7 +126,11 @@ This Agreement constitutes the entire agreement between the Participant and Év�
 
 BY SIGNING BELOW, THE PARTICIPANT CONFIRMS THAT THEY HAVE READ AND UNDERSTOOD THIS WAIVER IN ITS ENTIRETY AND VOLUNTARILY AGREE TO ITS TERMS.',
     true,
-    '[{"id":"best_energy","label":"Most Entertaining Person/Car","body":"The \"main character energy\" award. Loud pipes, bigger personality, showed up and instantly became the plot of the day. This is for the car-and-driver combo that brought the chaos — the good kind — and had everyone buzzing at every single stop. Who couldn''t you look away from?","discount_pct":40},{"id":"most_beautiful","label":"Most Beautiful Car","body":"The \"okay wow\" award. This one''s got nothing to do with horsepower or lap times — it''s pure curb appeal. Which car made you stop mid-sentence and just stare? The one that got every phone out at every stop. Vote for the ride that was simply too good-looking to ignore.","discount_pct":25},{"id":"best_driver","label":"Best Driver","body":"The \"never spilled my coffee\" award. Not the fastest — the smoothest. Who held their line, read the road, and made the whole convoy feel effortless to follow, corner after corner? Vote for the driver you''d trust to drive your own car blindfolded (please don''t actually try that).","discount_pct":15}]'::jsonb,
+    jsonb_build_array(
+      jsonb_build_object('id', 'best_energy', 'label', 'Most Entertaining Person/Car', 'body', 'The "main character energy" award. Loud pipes, bigger personality, showed up and instantly became the plot of the day. This is for the car-and-driver combo that brought the chaos — the good kind — and had everyone buzzing at every single stop. Who couldn''t you look away from?', 'discount_pct', 40),
+      jsonb_build_object('id', 'most_beautiful', 'label', 'Most Beautiful Car', 'body', 'The "okay wow" award. This one''s got nothing to do with horsepower or lap times — it''s pure curb appeal. Which car made you stop mid-sentence and just stare? The one that got every phone out at every stop. Vote for the ride that was simply too good-looking to ignore.', 'discount_pct', 25),
+      jsonb_build_object('id', 'best_driver', 'label', 'Best Driver', 'body', 'The "never spilled my coffee" award. Not the fastest — the smoothest. Who held their line, read the road, and made the whole convoy feel effortless to follow, corner after corner? Vote for the driver you''d trust to drive your own car blindfolded (please don''t actually try that).', 'discount_pct', 15)
+    ),
     ARRAY['Jerry']
   WHERE NOT EXISTS (SELECT 1 FROM public.events WHERE name = 'Hello to Montebello' AND type = 'Route')
   RETURNING id
