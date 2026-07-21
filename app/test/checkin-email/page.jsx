@@ -10,6 +10,7 @@ export default function CheckinCompleteEmailPreviewPage() {
     emergency_contact: { name: 'Sam Whitfield', phone: '+1 514 555 0100' },
     passengers: [{ name: 'Sam Whitfield', age: '31' }],
     waiver_text_snapshot: 'PARTICIPANT LIABILITY WAIVER & RELEASE OF CLAIMS\nHello to Montebello Road Trip — August 1, 2026\n\n(Full waiver text appears here exactly as signed.)',
+    waiver_text_snapshot_fr: 'DÉCHARGE DE RESPONSABILITÉ ET RENONCIATION À RECOURS DU PARTICIPANT\nRoad Trip Hello to Montebello — 1er août 2026\n\n(Le texte complet de la décharge apparaît ici tel que signé.)',
   })
 
   return (

@@ -77,6 +77,7 @@ export default function RoadtripsAdminClient() {
   const [editErr, setEditErr]     = useState(null)
   const [expanded, setExpanded]   = useState({})
   const [showEventPanel, setShowEventPanel] = useState({}) // route id -> bool, registrants/check-in/awards
+  const [showPopupCard, setShowPopupCard] = useState(false) // collapsed by default
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [launchFor, setLaunchFor] = useState(null) // route id
   const [launchMsg, setLaunchMsg] = useState('')
@@ -346,10 +347,19 @@ export default function RoadtripsAdminClient() {
         <p style={{ fontSize: '12px', color: '#999', marginTop: '0.5rem' }}>Shown on <a href="/routes" target="_blank" rel="noreferrer" style={{ color: '#c5a882' }}>canvasroutes.com/routes</a>. {routes.length} route{routes.length !== 1 ? 's' : ''} · {totalInterest} total interested.</p>
       </div>
 
-      {/* Homepage popup */}
+      {/* Homepage popup — collapsed by default, click the header to expand */}
       <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Homepage Popup</div>
+        <button type="button" onClick={() => setShowPopupCard(p => !p)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: showPopupCard ? '1rem' : 0 }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999' }}>Homepage Popup</span>
+          <span style={{ fontSize: '10px', color: '#c5a882', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            {showPopupCard ? 'Hide' : 'Show'}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: showPopupCard ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}><polyline points="6 9 12 15 18 9" /></svg>
+          </span>
+        </button>
 
+        {showPopupCard && (
+        <>
         <PopupToggle
           label="Show Routes Popup"
           description="The homepage popup nudging visitors toward the Routes page. Shown once per session, a couple seconds after the page loads."
@@ -421,6 +431,8 @@ export default function RoadtripsAdminClient() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Add form */}

@@ -6,7 +6,7 @@ import CheckinTripDetailsSection from '../../../components/CheckinTripDetailsSec
 import CheckinWaiverSection from '../../../components/CheckinWaiverSection'
 import CheckinLunchSection from '../../../components/CheckinLunchSection'
 import { CHECKIN_T } from '../../../lib/genericCheckinContent'
-import { HTM_WAIVER_TEXT, HTM_LUNCH_OPTIONS } from '../../../lib/htmAwardsWaiverContent'
+import { HTM_WAIVER_TEXT, HTM_WAIVER_TEXT_FR, HTM_LUNCH_OPTIONS } from '../../../lib/htmAwardsWaiverContent'
 import { useLanguage } from '../../../lib/i18n/LanguageContext'
 
 function LangToggle() {
@@ -97,6 +97,7 @@ export default function CheckinPreviewPage() {
 
         <CheckinWaiverSection
           waiverText={HTM_WAIVER_TEXT}
+          waiverTextFr={HTM_WAIVER_TEXT_FR}
           identifier={identifier}
           waiver={null}
           carYear="2022"

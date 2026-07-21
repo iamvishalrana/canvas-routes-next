@@ -18,7 +18,10 @@ function emptyPassenger() { return { name: '', age: '' } }
 // Trip Details, if that section ran first — pre-fills this section instead
 // of asking for the same names again, while staying editable in case the
 // people riding along changed since.
-export default function CheckinWaiverSection({ waiverText, identifier, waiver, carYear, carMake, carModel, maxPassengers, tripPassengers, onSaved }) {
+// waiverText/waiverTextFr: the liability waiver always shows both languages
+// together, regardless of the page's own language toggle — a Quebec waiver
+// convention, not something that swaps based on the reader's chosen language.
+export default function CheckinWaiverSection({ waiverText, waiverTextFr, identifier, waiver, carYear, carMake, carModel, maxPassengers, tripPassengers, onSaved }) {
   const { lang } = useLanguage()
   const t = CHECKIN_T[lang]
   const [fullName, setFullName] = useState('')
@@ -97,9 +100,18 @@ export default function CheckinWaiverSection({ waiverText, identifier, waiver, c
   }
 
   return (
-    <SectionCard title={t.waiverTitle} done={false} delay={90} doneLabel={t.waiverDoneLabel} pendingLabel={t.waiverPendingLabel}>
+    <SectionCard
+      title={<>{t.waiverTitle}{waiverTextFr && <span style={{ textTransform: 'none', letterSpacing: 'normal', color: '#bbb', fontWeight: '400' }}> — {t.frenchVersionNote}</span>}</>}
+      done={false} delay={90} doneLabel={t.waiverDoneLabel} pendingLabel={t.waiverPendingLabel}
+    >
       <div className="wtetci-card" style={{ maxHeight: '260px', overflowY: 'auto', border: '0.5px solid rgba(0,0,0,0.1)', padding: '1rem 1.1rem', background: '#fafaf8', fontSize: '12px', color: '#555', lineHeight: 1.75, whiteSpace: 'pre-wrap', marginBottom: '1.25rem' }}>
         {waiverText}
+        {waiverTextFr && (
+          <>
+            <div style={{ height: '1px', background: 'rgba(0,0,0,0.1)', margin: '1.25rem 0' }} />
+            {waiverTextFr}
+          </>
+        )}
       </div>
 
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
@@ -140,10 +152,14 @@ export default function CheckinWaiverSection({ waiverText, identifier, waiver, c
 
         {maxExtra > 0 && (
           <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#666', marginBottom: '0.35rem' }}>
-              <input type="checkbox" checked={hasPassengers} onChange={e => { setHasPassengers(e.target.checked); if (e.target.checked && passengers.length === 0) setPassengers([emptyPassenger()]) }} style={{ width: '14px', height: '14px', accentColor: '#45643c' }} />
-              {t.bringingPassengers}
-            </label>
+            {prefilledExtra.length > 0 ? (
+              <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem' }}>{t.bringingPassengers}</div>
+            ) : (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#666', marginBottom: '0.35rem' }}>
+                <input type="checkbox" checked={hasPassengers} onChange={e => { setHasPassengers(e.target.checked); if (e.target.checked && passengers.length === 0) setPassengers([emptyPassenger()]) }} style={{ width: '14px', height: '14px', accentColor: '#45643c' }} />
+                {t.bringingPassengers}
+              </label>
+            )}
             <p style={{ fontSize: '11px', color: '#aaa', lineHeight: 1.6, margin: hasPassengers ? '0 0 0.75rem' : 0 }}>{t.bringingPassengersHint}</p>
             {hasPassengers && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="wtetci-fade-in">

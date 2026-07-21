@@ -158,6 +158,7 @@ function CheckinContent() {
           {hasWaiver && (
             <CheckinWaiverSection
               waiverText={data.waiverText}
+              waiverTextFr={data.waiverTextFr}
               identifier={identifier}
               waiver={data.waiver}
               carYear={data.carYear}

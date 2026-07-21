@@ -426,6 +426,7 @@ export default function EventsClient() {
       checkin_max_passengers: item.checkin_max_passengers || 2,
       checkin_lunch_options: item.checkin_lunch_options || [],
       checkin_waiver_text: item.checkin_waiver_text || '',
+      checkin_waiver_text_fr: item.checkin_waiver_text_fr || '',
       checkin_lunch_cutoff: item.checkin_lunch_cutoff || '',
       awards_enabled: item.awards_enabled || false,
       awards_categories: item.awards_categories || [],
@@ -1690,11 +1691,16 @@ export default function EventsClient() {
 
                             {(editForm.checkin_sections || []).includes('waiver') && (
                               <div style={{ marginBottom: '1.1rem' }}>
-                                <L>Waiver Text</L>
-                                <textarea style={{ ...inp, height: '140px', resize: 'vertical' }}
+                                <L>Waiver Text (English)</L>
+                                <textarea style={{ ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical', marginBottom: '0.65rem' }}
                                   value={editForm.checkin_waiver_text}
                                   onChange={e => setEditForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
                                   placeholder="Paste the liability waiver text participants will read and agree to…" />
+                                <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
+                                <textarea style={{ ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }}
+                                  value={editForm.checkin_waiver_text_fr}
+                                  onChange={e => setEditForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
+                                  placeholder="Collez le texte de la décharge en français…" />
                               </div>
                             )}
 

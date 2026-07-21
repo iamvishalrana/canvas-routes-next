@@ -9,7 +9,7 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
-  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'trip_length', 'checkin_enabled', 'checkin_sections', 'checkin_max_passengers', 'checkin_lunch_options', 'checkin_waiver_text', 'checkin_lunch_cutoff', 'awards_enabled', 'awards_categories', 'awards_ineligible_names']
+  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'trip_length', 'checkin_enabled', 'checkin_sections', 'checkin_max_passengers', 'checkin_lunch_options', 'checkin_waiver_text', 'checkin_waiver_text_fr', 'checkin_lunch_cutoff', 'awards_enabled', 'awards_categories', 'awards_ineligible_names']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if ('member_price' in update && update.member_price != null && update.member_price < 0)
@@ -30,6 +30,7 @@ export async function PATCH(request, { params }) {
   if ('checkin_max_passengers' in update) update.checkin_max_passengers = parseInt(update.checkin_max_passengers) || 2
   if ('checkin_lunch_options' in update) update.checkin_lunch_options = Array.isArray(update.checkin_lunch_options) ? update.checkin_lunch_options : []
   if ('checkin_waiver_text' in update) update.checkin_waiver_text = update.checkin_waiver_text || null
+  if ('checkin_waiver_text_fr' in update) update.checkin_waiver_text_fr = update.checkin_waiver_text_fr || null
   if ('checkin_lunch_cutoff' in update) update.checkin_lunch_cutoff = update.checkin_lunch_cutoff || null
   if ('awards_enabled' in update) update.awards_enabled = Boolean(update.awards_enabled)
   if ('awards_categories' in update) update.awards_categories = Array.isArray(update.awards_categories) ? update.awards_categories : []

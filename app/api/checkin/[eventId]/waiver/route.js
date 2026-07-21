@@ -31,7 +31,7 @@ export async function POST(request, { params }) {
 
   const admin = createAdminClient()
   const { data: event } = await admin.from('events')
-    .select('id, name, checkin_enabled, checkin_max_passengers, checkin_waiver_text')
+    .select('id, name, checkin_enabled, checkin_max_passengers, checkin_waiver_text, checkin_waiver_text_fr')
     .eq('id', eventId).maybeSingle()
   if (!event || !event.checkin_enabled) return Response.json({ error: 'Check-in is not available for this event.' }, { status: 404 })
 
@@ -59,6 +59,7 @@ export async function POST(request, { params }) {
     full_name: fullName.trim(),
     agreed: true,
     waiver_text_snapshot: event.checkin_waiver_text || null,
+    waiver_text_snapshot_fr: event.checkin_waiver_text_fr || null,
     vehicle: { year: vehicleYear?.trim() || null, make: vehicleMake?.trim() || null, model: vehicleModel?.trim() || null },
     passengers: cleanPassengers,
     emergency_contact: { name: emergencyContactName.trim(), phone: emergencyContactPhone.trim() },
