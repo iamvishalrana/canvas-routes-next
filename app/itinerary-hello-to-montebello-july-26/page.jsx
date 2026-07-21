@@ -21,7 +21,7 @@ const STOPS = [
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: null, lat: 45.68, lng: -75.05 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & parking included', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
-  { label: 'Chocomotive', note: 'Montebello · Chocolate workshop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6514, lng: -74.9438 },
+  { label: 'Stroll around Montebello', note: 'Suggestions: Chocomotive · Lieu historique national du Manoir-Papineau', href: null, lat: 45.6514, lng: -74.9438 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
 ]
 
@@ -35,7 +35,7 @@ const DRIVE_BULLETS = [
   { emoji: '🛣️', text: 'We meet at 9:00 AM at Rona, Carrefour Laval, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside.' },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
   { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars parked out front for the afternoon. Lunch is a three-course Wednesday Table d'Hôte. Tax, gratuity, and parking are all covered by Canvas Routes — drinks are not included." },
-  { emoji: '🍫', text: "A short walk to Chocomotive, an artisan chocolate workshop housed in Montebello's old train station, for something sweet before the drive home." },
+  { emoji: '🍫', text: 'A stroll around Montebello before the drive home — we suggest Chocomotive, an artisan chocolate workshop in the old train station, and/or the Lieu historique national du Manoir-Papineau.' },
   { emoji: '🏁', text: 'After Montebello, the convoy drives back together — same route, same group — to Porte du Nord for one last regroup before everyone heads home.' },
 ]
 
@@ -267,7 +267,7 @@ export default function HelloToMontebelloItineraryPage() {
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
-      setErrMsg('Enter your registered email address, or the shared password.')
+      setErrMsg('Please enter a valid email address.')
       return
     }
     setChecking(true)
@@ -371,7 +371,7 @@ export default function HelloToMontebelloItineraryPage() {
           <div className="gate-divider" style={{ width: '34px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.75rem' }} />
           <div className="gate-body">
             <p style={{ color: 'rgba(197,168,130,0.65)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', margin: '0 0 0.85rem' }}>Participants only</p>
-            <p style={{ color: 'rgba(245,241,236,0.55)', fontSize: '12.5px', lineHeight: '1.7', margin: '0 0 1.75rem' }}>Enter your registered email address, or the password shared with confirmed registrants.</p>
+            <p style={{ color: 'rgba(245,241,236,0.55)', fontSize: '12.5px', lineHeight: '1.7', margin: '0 0 1.75rem' }}>Enter the email address you registered with.</p>
           </div>
           <form onSubmit={submit} className="gate-form">
             <div style={{ marginBottom: '0.85rem' }}>
@@ -379,7 +379,7 @@ export default function HelloToMontebelloItineraryPage() {
                 className="gate-input"
                 value={email}
                 onChange={e => { setEmail(e.target.value); setErrMsg(null) }}
-                placeholder="Email or password"
+                placeholder="Email"
                 type="text"
                 inputMode="email"
                 autoComplete="email"
@@ -516,6 +516,28 @@ export default function HelloToMontebelloItineraryPage() {
           </div>
         </div>
 
+        {/* Convoy Rules */}
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <button
+            onClick={() => setRulesOpen(o => !o)}
+            aria-expanded={rulesOpen}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+          >
+            <h2 style={{ ...SECTION_LABEL, margin: 0 }}>Convoy Rules</h2>
+            <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? '▲ Close' : '▼ Read'}</span>
+          </button>
+          {rulesOpen && (
+            <ol style={{ margin: '1.25rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {CONVOY_RULES.map((rule, i) => (
+                <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                  <span aria-hidden="true" style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
         {/* Itinerary */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ marginBottom: '1.5rem' }}>
@@ -625,28 +647,6 @@ export default function HelloToMontebelloItineraryPage() {
               </div>
             ))}
           </div>
-        </section>
-
-        {/* Convoy Rules */}
-        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <button
-            onClick={() => setRulesOpen(o => !o)}
-            aria-expanded={rulesOpen}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
-          >
-            <h2 style={{ ...SECTION_LABEL, margin: 0 }}>Convoy Rules</h2>
-            <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? '▲ Close' : '▼ Read'}</span>
-          </button>
-          {rulesOpen && (
-            <ol style={{ margin: '1.25rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {CONVOY_RULES.map((rule, i) => (
-                <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                  <span aria-hidden="true" style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
-                  <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
-                </li>
-              ))}
-            </ol>
-          )}
         </section>
 
         {/* Map */}
