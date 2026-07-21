@@ -293,6 +293,8 @@ export default function EventsClient() {
   const [deleteEventConfirm, setDeleteEventConfirm] = useState(null)
   const [deleteEventError, setDeleteEventError] = useState({})
 
+  const [showWaiverText, setShowWaiverText] = useState(false)
+
   // Registrants (members who paid)
   const [showRegistrants, setShowRegistrants] = useState(null)
   const [registrantsData, setRegistrantsData] = useState({})
@@ -1681,26 +1683,23 @@ export default function EventsClient() {
                               </div>
                             </div>
 
-                            {(editForm.checkin_sections || []).includes('trip_details') && (
-                              <div style={{ marginBottom: '1.1rem', maxWidth: '220px' }}>
-                                <L>Max Passengers Per Car</L>
-                                <input type="number" min="1" max="10" style={inp} value={editForm.checkin_max_passengers}
-                                  onChange={e => setEditForm(p => ({ ...p, checkin_max_passengers: e.target.value }))} />
-                              </div>
-                            )}
-
                             {(editForm.checkin_sections || []).includes('waiver') && (
                               <div style={{ marginBottom: '1.1rem' }}>
-                                <L>Waiver Text (English)</L>
-                                <textarea style={{ ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical', marginBottom: '0.65rem' }}
-                                  value={editForm.checkin_waiver_text}
-                                  onChange={e => setEditForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
-                                  placeholder="Paste the liability waiver text participants will read and agree to…" />
-                                <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
-                                <textarea style={{ ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }}
-                                  value={editForm.checkin_waiver_text_fr}
-                                  onChange={e => setEditForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
-                                  placeholder="Collez le texte de la décharge en français…" />
+                                <GhostBtn small onClick={() => setShowWaiverText(v => !v)}>{showWaiverText ? 'Hide Waiver Text' : 'Edit Waiver Text'}</GhostBtn>
+                                {showWaiverText && (
+                                  <div style={{ marginTop: '0.75rem' }}>
+                                    <L>Waiver Text (English)</L>
+                                    <textarea style={{ ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical', marginBottom: '0.65rem' }}
+                                      value={editForm.checkin_waiver_text}
+                                      onChange={e => setEditForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
+                                      placeholder="Paste the liability waiver text participants will read and agree to…" />
+                                    <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
+                                    <textarea style={{ ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }}
+                                      value={editForm.checkin_waiver_text_fr}
+                                      onChange={e => setEditForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
+                                      placeholder="Collez le texte de la décharge en français…" />
+                                  </div>
+                                )}
                               </div>
                             )}
 

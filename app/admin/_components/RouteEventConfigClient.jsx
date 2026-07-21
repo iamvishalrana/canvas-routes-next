@@ -36,6 +36,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
+  const [showWaiverText, setShowWaiverText] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -48,7 +49,6 @@ export default function RouteEventConfigClient({ eventId }) {
       setForm({
         checkin_enabled: !!cEv.checkin_enabled,
         checkin_sections: cEv.checkin_sections || [],
-        checkin_max_passengers: cEv.checkin_max_passengers || 2,
         checkin_waiver_text: cEv.checkin_waiver_text || '',
         checkin_waiver_text_fr: cEv.checkin_waiver_text_fr || '',
         checkin_lunch_cutoff: cEv.checkin_lunch_cutoff ? cEv.checkin_lunch_cutoff.slice(0, 16) : '',
@@ -116,26 +116,23 @@ export default function RouteEventConfigClient({ eventId }) {
                   </div>
                 </div>
 
-                {(form.checkin_sections || []).includes('trip_details') && (
-                  <div style={{ marginBottom: '1rem', maxWidth: '180px' }}>
-                    <L>Max Passengers Per Car</L>
-                    <input type="number" min="1" max="10" style={inp} value={form.checkin_max_passengers}
-                      onChange={e => setForm(p => ({ ...p, checkin_max_passengers: e.target.value }))} />
-                  </div>
-                )}
-
                 {(form.checkin_sections || []).includes('waiver') && (
                   <div style={{ marginBottom: '1rem' }}>
-                    <L>Waiver Text (English)</L>
-                    <textarea style={{ ...smallTextarea, marginBottom: '0.65rem' }}
-                      value={form.checkin_waiver_text}
-                      onChange={e => setForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
-                      placeholder="Paste the liability waiver text participants will read and agree to…" />
-                    <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
-                    <textarea style={smallTextarea}
-                      value={form.checkin_waiver_text_fr}
-                      onChange={e => setForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
-                      placeholder="Collez le texte de la décharge en français…" />
+                    <GhostBtn small onClick={() => setShowWaiverText(v => !v)}>{showWaiverText ? 'Hide Waiver Text' : 'Edit Waiver Text'}</GhostBtn>
+                    {showWaiverText && (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <L>Waiver Text (English)</L>
+                        <textarea style={{ ...smallTextarea, marginBottom: '0.65rem' }}
+                          value={form.checkin_waiver_text}
+                          onChange={e => setForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
+                          placeholder="Paste the liability waiver text participants will read and agree to…" />
+                        <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
+                        <textarea style={smallTextarea}
+                          value={form.checkin_waiver_text_fr}
+                          onChange={e => setForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
+                          placeholder="Collez le texte de la décharge en français…" />
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -144,7 +141,7 @@ export default function RouteEventConfigClient({ eventId }) {
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.5rem' }}>
               <PrimaryBtn small disabled={saving} onClick={() => save({
                 checkin_sections: form.checkin_sections,
-                checkin_max_passengers: form.checkin_max_passengers,
+                checkin_max_passengers: 2, // always 2 per car — not admin-configurable
                 checkin_waiver_text: form.checkin_waiver_text,
                 checkin_waiver_text_fr: form.checkin_waiver_text_fr,
               })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
