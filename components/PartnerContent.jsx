@@ -4,23 +4,13 @@ import Link from 'next/link'
 import SiteFooter from './SiteFooter'
 import SiteNav from './SiteNav'
 import PageLoader from './PageLoader'
+import { useLanguage } from '../lib/i18n/LanguageContext'
+import { partnersT } from '../lib/i18n/partners'
 
-const PARTNER_TYPES = [
-  'Cafe or Restaurant',
-  'Bar or Lounge',
-  'Photography or Videography',
-  'Media or Content',
-  'Automotive',
-  'Car Care & Product Brand',
-  'Hotel or Hospitality',
-  'Retail or Lifestyle brand',
-  'Other',
-]
-
-const CATEGORIES = [
+// Icons only — text for each entry comes from partnersT[lang].categories[i]
+// (matched by array index).
+const CATEGORY_ICONS = [
   {
-    name: 'Cafes & Restaurants',
-    body: 'Cars & Coffee venues, route breakfast stops, group lunches and farewell drinks. The places we eat and drink are as curated as the roads we drive.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
@@ -28,8 +18,6 @@ const CATEGORIES = [
     ),
   },
   {
-    name: 'Photography & Media',
-    body: 'Event coverage, route photography, videography and content creation. We document every drive — the right creative partnership amplifies both of us.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
@@ -37,8 +25,6 @@ const CATEGORIES = [
     ),
   },
   {
-    name: 'Automotive',
-    body: 'Dealers, performance shops, tuners and accessories. Our members are informed buyers — they research, they ask questions, and they spend on what they trust.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v10a2 2 0 0 1-2 2h-2"/><circle cx="9" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>
@@ -46,8 +32,6 @@ const CATEGORIES = [
     ),
   },
   {
-    name: 'Car Care & Product Brands',
-    body: 'Detailing products, tire brands, engine oil and performance chemicals — Meguiar\'s, Chemical Guys, Michelin, Pirelli, Mobil 1 and the like. Our members know exactly what\'s on their car and what goes into it.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -55,8 +39,6 @@ const CATEGORIES = [
     ),
   },
   {
-    name: 'Hospitality',
-    body: 'Hotels, chalets, lodges and experiences for overnight and multi-day adventures. As Canvas Routes grows beyond day trips, the right hospitality partners travel with us.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
@@ -64,48 +46,12 @@ const CATEGORIES = [
     ),
   },
   {
-    name: 'Brands & Lifestyle',
-    body: 'Premium apparel, spirits, accessories, watches — brands with the right fit. Canvas Routes attracts a specific kind of person. If your brand resonates with them, it belongs here.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
       </svg>
     ),
   },
-]
-
-const TRACKS = [
-  {
-    label: '01',
-    heading: 'Event Partner',
-    body: 'Your brand at every Canvas Routes Cars & Coffee — the invite-only morning meets that define our season. Sampling, display, signage, or simply the right name in the right room. Every attendee came because they wanted to be there.',
-    points: ['Brand presence at Cars & Coffee events', 'Product sampling or display', 'Social mention and event coverage', 'Access to a curated, engaged audience'],
-  },
-  {
-    label: '02',
-    heading: 'Route Partner',
-    body: 'Be woven into a Canvas Routes route — as a breakfast stop, destination, product supplied on the route, or named sponsor of the convoy itself. Every route is photographed and documented. Your partnership lives long after the drive ends.',
-    points: ['Named presence on a curated route', 'Featured in route photography and media', 'Breakfast, lunch, or destination stop', 'Product placement throughout the day'],
-  },
-  {
-    label: '03',
-    heading: 'Member Partner',
-    body: 'An exclusive discount or perk built directly into the Canvas Routes membership — available to every Routes Member and Inner Circle member from day one of their season. Ongoing, recurring exposure to people who chose to invest in this community.',
-    points: ['Exclusive member discount or offer', 'Listed in the Canvas Routes member benefits', 'Promoted at every onboarding and event', 'Renewed each season with the membership'],
-  },
-]
-
-const STEPS = [
-  { n: '1', heading: 'Reach out', body: 'Fill in the form below with your business and how you\'d like to get involved. No deck required — just tell us who you are.' },
-  { n: '2', heading: 'We connect', body: 'We review every inquiry personally. If there\'s a fit, we\'ll set up a quick conversation to talk through the right kind of partnership.' },
-  { n: '3', heading: 'Season begins', body: 'We build a custom plan around your goals and activate it at your first Canvas Routes event. From there it runs with us for the season.' },
-]
-
-const PILLARS = [
-  { stat: 'Invite-only', label: 'Every event is personally curated — no open registration, no walk-ins' },
-  { stat: 'Montreal', label: 'Based in Quebec, with routes stretching across North America' },
-  { stat: 'All season', label: 'Events, routes and content running from spring through fall' },
-  { stat: 'Community', label: 'People who chose their car with intention and stay fiercely loyal' },
 ]
 
 function inputStyle(err) {
@@ -121,6 +67,8 @@ function inputStyle(err) {
 }
 
 export default function PartnerContent() {
+  const { lang } = useLanguage()
+  const t = partnersT[lang]
   const [form, setForm] = useState({ _hp: '', name: '', business: '', city: '', type: '', email: '', phone: '', message: '' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState(null)
@@ -142,12 +90,12 @@ export default function PartnerContent() {
 
   function validate() {
     const e = {}
-    if (!form.name.trim()) e.name = 'Required'
-    if (!form.business.trim()) e.business = 'Required'
-    if (!form.city.trim()) e.city = 'Required'
-    if (!form.type) e.type = 'Required'
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Valid email required'
-    if (!form.message.trim()) e.message = 'Required'
+    if (!form.name.trim()) e.name = t.form.required
+    if (!form.business.trim()) e.business = t.form.required
+    if (!form.city.trim()) e.city = t.form.required
+    if (!form.type) e.type = t.form.required
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = t.form.validEmailRequired
+    if (!form.message.trim()) e.message = t.form.required
     return e
   }
 
@@ -169,10 +117,10 @@ export default function PartnerContent() {
         setErrors({})
         setPhoneOptOut(false)
       }
-      else { setStatus('error'); setServerError(data.error || 'Something went wrong. Please try again.') }
+      else { setStatus('error'); setServerError(data.error || t.form.genericError) }
     } catch {
       setStatus('error')
-      setServerError('Connection error. Please check your network and try again.')
+      setServerError(t.form.connectionError)
     }
   }
 
@@ -205,11 +153,11 @@ export default function PartnerContent() {
           <span style={{ display: 'inline-block', width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.5)' }} />
         </div>
         <h1 style={{ position: 'relative', zIndex: 1, fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(3.2rem,7vw,5.5rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.0, marginBottom: '1.5rem', letterSpacing: '-0.02em', textShadow: '0 2px 16px rgba(0,0,0,0.7)' }}>
-          Be part of<br /><em style={{ fontStyle: 'italic' }}>the drive.</em>
+          {t.hero.titleLine1}<br /><em style={{ fontStyle: 'italic' }}>{t.hero.titleLine2}</em>
         </h1>
         <div style={{ position: 'relative', zIndex: 1, width: '40px', height: '0.5px', background: 'rgba(197,168,130,0.6)', margin: '0 auto 1.75rem' }} />
         <p style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: 'rgba(245,241,236,0.65)', maxWidth: '420px', margin: '0 auto', lineHeight: '1.9', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.01em', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
-          Reach Montreal's most intentional drivers — at events, on the road, and everywhere in between.
+          {t.hero.subtitle}
         </p>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.25),transparent)' }} />
       </section>
@@ -217,8 +165,8 @@ export default function PartnerContent() {
       {/* ── Pillars bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: '0.5px solid rgba(197,168,130,0.2)', background: '#F5F1EC' }}>
         <div style={{ maxWidth: '1080px', margin: '0 auto', padding: '0 clamp(1.5rem,6vw,5rem)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))' }}>
-          {PILLARS.map((p, i) => (
-            <div key={i} style={{ padding: 'clamp(1.75rem,3vw,2.5rem) 1rem', borderRight: i < PILLARS.length - 1 ? '0.5px solid rgba(197,168,130,0.2)' : 'none', textAlign: 'center' }}>
+          {t.pillars.map((p, i) => (
+            <div key={i} style={{ padding: 'clamp(1.75rem,3vw,2.5rem) 1rem', borderRight: i < t.pillars.length - 1 ? '0.5px solid rgba(197,168,130,0.2)' : 'none', textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.4rem,2.5vw,1.8rem)', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.5rem', lineHeight: 1.1 }}>{p.stat}</div>
               <div style={{ fontSize: '12px', color: '#888', lineHeight: '1.6', fontFamily: 'var(--font-inter),sans-serif' }}>{p.label}</div>
             </div>
@@ -230,17 +178,17 @@ export default function PartnerContent() {
       <section style={{ padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,6vw,5rem)', maxWidth: '1080px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 'clamp(2rem,5vw,5rem)', alignItems: 'start' }}>
           <div>
-            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>Who we are</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.community.eyebrow}</div>
             <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.15, margin: 0, letterSpacing: '-0.01em' }}>
-              A community built<br />around the road.
+              {t.community.headingLine1}<br />{t.community.headingLine2}
             </h2>
           </div>
           <div style={{ paddingTop: '0.5rem' }}>
             <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.9', margin: '0 0 1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Canvas Routes is a Montreal-based automotive community organizing invite-only Cars & Coffee events, curated convoy routes, and overnight adventures across Quebec and beyond. Every event is deliberately small and every registration personally reviewed.
+              {t.community.para1}
             </p>
             <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.9', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>
-              A Canvas Routes partnership puts your brand in front of that audience — not as an ad, but as part of the experience. The people who show up chose their car with intention. They are attentive, engaged, and loyal to brands that align with what they value.
+              {t.community.para2}
             </p>
           </div>
         </div>
@@ -249,17 +197,13 @@ export default function PartnerContent() {
       {/* ── Our audience ──────────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,6vw,5rem)', maxWidth: '1080px', margin: '0 auto' }}>
         <div style={{ marginBottom: 'clamp(2.5rem,5vw,4rem)' }}>
-          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>The audience</div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.audienceHeader.eyebrow}</div>
           <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.15, margin: '0 0 0', letterSpacing: '-0.01em' }}>
-            Who you're reaching.
+            {t.audienceHeader.heading}
           </h2>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 'clamp(2rem,4vw,3.5rem)' }}>
-          {[
-            { heading: 'Intentional buyers', body: 'Canvas Routes members chose their car specifically. They research, they compare, and they invest — in their machine and in everything around it. They do not buy impulsively and they do not forget a brand that earns their trust.' },
-            { heading: 'Influential network', body: 'Word of mouth is how Canvas Routes grows. Members bring other members. A recommendation from someone in this community carries weight. A brand that resonates here spreads through a network that is hard to buy into any other way.' },
-            { heading: 'Across Quebec and beyond', body: 'Based in Montreal with events stretching across Quebec, Ontario, Vermont and Nova Scotia. The Canvas Routes community is growing and so is the geographic reach of every partnership.' },
-          ].map(item => (
+          {t.audience.map(item => (
             <div key={item.heading}>
               <div style={{ width: '24px', height: '0.5px', background: 'rgba(197,168,130,0.6)', marginBottom: '1.25rem' }} />
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.25rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.8rem', lineHeight: 1.2 }}>{item.heading}</div>
@@ -277,15 +221,15 @@ export default function PartnerContent() {
       {/* ── Who we work with ──────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,6vw,5rem)', maxWidth: '1080px', margin: '0 auto' }}>
         <div style={{ marginBottom: 'clamp(2.5rem,5vw,4rem)' }}>
-          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>Partner types</div>
-          <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.15, margin: 0, letterSpacing: '-0.01em' }}>Who we work with.</h2>
+          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.categoriesHeader.eyebrow}</div>
+          <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.15, margin: 0, letterSpacing: '-0.01em' }}>{t.categoriesHeader.heading}</h2>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.5px', background: 'rgba(197,168,130,0.2)' }}>
-          {CATEGORIES.map((cat) => (
-            <div key={cat.name} style={{ background: '#F5F1EC', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
+          {CATEGORY_ICONS.map((cat, i) => (
+            <div key={i} style={{ background: '#F5F1EC', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
               <div style={{ color: 'rgba(197,168,130,0.85)', marginBottom: '1.1rem' }}>{cat.icon}</div>
-              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.35rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.2 }}>{cat.name}</div>
-              <p style={{ fontSize: '13.5px', color: '#666', lineHeight: '1.8', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>{cat.body}</p>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.35rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.2 }}>{t.categories[i].name}</div>
+              <p style={{ fontSize: '13.5px', color: '#666', lineHeight: '1.8', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>{t.categories[i].body}</p>
             </div>
           ))}
         </div>
@@ -296,11 +240,11 @@ export default function PartnerContent() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.4),transparent)' }} />
         <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
           <div style={{ marginBottom: 'clamp(2.5rem,5vw,4rem)' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>How to partner</div>
-            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, margin: 0, letterSpacing: '-0.01em' }}>Three ways to get involved.</h2>
+            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.6)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.tracksHeader.eyebrow}</div>
+            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, margin: 0, letterSpacing: '-0.01em' }}>{t.tracksHeader.heading}</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.5px', background: 'rgba(197,168,130,0.1)' }}>
-            {TRACKS.map((track) => (
+            {t.tracks.map((track) => (
               <div key={track.label} style={{ background: '#0F1E14', padding: 'clamp(1.75rem,3vw,2.5rem)' }}>
                 <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.25rem' }}>{track.label}</div>
                 <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.45rem', fontWeight: '400', fontStyle: 'italic', color: '#F5F1EC', marginBottom: '1rem', lineHeight: 1.2 }}>{track.heading}</div>
@@ -323,16 +267,16 @@ export default function PartnerContent() {
       {/* ── How it works ─────────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(4rem,8vw,7rem) clamp(1.5rem,6vw,5rem)', maxWidth: '1080px', margin: '0 auto' }}>
         <div style={{ marginBottom: 'clamp(2.5rem,5vw,4rem)' }}>
-          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>The process</div>
-          <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.15, margin: 0, letterSpacing: '-0.01em' }}>Simple to start.</h2>
+          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.stepsHeader.eyebrow}</div>
+          <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2rem,3.5vw,2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.15, margin: 0, letterSpacing: '-0.01em' }}>{t.stepsHeader.heading}</h2>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 'clamp(2rem,4vw,3rem)', position: 'relative' }}>
-          {STEPS.map((step, i) => (
+          {t.steps.map((step, i) => (
             <div key={step.n} style={{ position: 'relative' }}>
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '3.5rem', fontWeight: '300', color: 'rgba(197,168,130,0.18)', lineHeight: 1, marginBottom: '1.25rem', letterSpacing: '-0.02em' }}>{step.n}</div>
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.35rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.75rem', lineHeight: 1.2 }}>{step.heading}</div>
               <p style={{ fontSize: '13.5px', color: '#666', lineHeight: '1.85', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>{step.body}</p>
-              {i < STEPS.length - 1 && (
+              {i < t.steps.length - 1 && (
                 <div style={{ display: 'none', position: 'absolute', top: '2rem', right: '-1rem', width: '2rem', height: '0.5px', background: 'rgba(197,168,130,0.3)' }} />
               )}
             </div>
@@ -346,13 +290,13 @@ export default function PartnerContent() {
 
           {/* Left — heading + contact details */}
           <div style={{ maxWidth: '340px' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>Get in touch</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.contact.eyebrow}</div>
             <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(2.2rem,4vw,3rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
-              Let's build<br /><em style={{ fontStyle: 'italic' }}>something together.</em>
+              {t.contact.headingLine1}<br /><em style={{ fontStyle: 'italic' }}>{t.contact.headingLine2}</em>
             </h2>
             <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.5)', marginBottom: '1.5rem' }} />
             <p style={{ fontSize: '14px', color: '#888', lineHeight: '1.9', margin: '0 0 2.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-              Tell us about your business and how you'd like to get involved. We review every inquiry personally and respond within a few days.
+              {t.contact.intro}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {[
@@ -378,9 +322,9 @@ export default function PartnerContent() {
             {status === 'success' ? (
               <div style={{ textAlign: 'center', padding: '2rem 0' }}>
                 <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.55)', margin: '0 auto 1.75rem' }} />
-                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>Message received.</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>{t.form.successTitle}</div>
                 <p style={{ fontSize: '13.5px', color: '#888', lineHeight: '1.85', margin: 0, fontFamily: 'var(--font-inter),sans-serif' }}>
-                  Thanks for reaching out. We'll be in touch within a few days.
+                  {t.form.successBody}
                 </p>
               </div>
             ) : (
@@ -389,19 +333,19 @@ export default function PartnerContent() {
 
                 {/* Business name — prominent, full width */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: errors.business ? 'rgba(180,60,60,0.8)' : 'rgba(197,168,130,0.9)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>Business name<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
+                  <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: errors.business ? 'rgba(180,60,60,0.8)' : 'rgba(197,168,130,0.9)', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif', fontWeight: '500' }}>{t.form.businessName}<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                   <input type="text" autoComplete="organization" value={form.business} onChange={e => setField('business', e.target.value)} maxLength={150}
                     style={{ width: '100%', padding: '0.95rem 1rem', background: 'transparent', border: `0.5px solid ${errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                     onBlur={e => e.target.style.borderColor = errors.business ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
-                  {errors.business && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span>}
+                  {errors.business && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>{errors.business}</span>}
                 </div>
 
                 {/* Your name + City */}
                 <div className="pt-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   {[
-                    { key: 'name', label: 'Your name', type: 'text', autoComplete: 'name' },
-                    { key: 'city', label: 'City / Town', type: 'text', autoComplete: 'address-level2' },
+                    { key: 'name', label: t.form.yourName, type: 'text', autoComplete: 'name' },
+                    { key: 'city', label: t.form.city, type: 'text', autoComplete: 'address-level2' },
                   ].map(f => (
                     <div key={f.key}>
                       <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors[f.key] ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{f.label}<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
@@ -409,7 +353,7 @@ export default function PartnerContent() {
                         style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                         onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                         onBlur={e => e.target.style.borderColor = errors[f.key] ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
-                      {errors[f.key] && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span>}
+                      {errors[f.key] && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>{errors[f.key]}</span>}
                     </div>
                   ))}
                 </div>
@@ -417,35 +361,35 @@ export default function PartnerContent() {
                 {/* Type + Email */}
                 <div className="pt-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.type ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Type of business<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
+                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.type ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.form.typeOfBusiness}<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                     <select value={form.type} onChange={e => setField('type', e.target.value)}
                       style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.type ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: form.type ? '#1a1a1a' : '#aaa', outline: 'none', boxSizing: 'border-box', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.85rem center', cursor: 'pointer', transition: 'border-color 0.18s' }}
                       onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                       onBlur={e => e.target.style.borderColor = errors.type ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}>
-                      <option value="">Select a type</option>
-                      {PARTNER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      <option value="">{t.form.selectType}</option>
+                      {t.partnerTypes.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                     </select>
-                    {errors.type && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span>}
+                    {errors.type && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>{errors.type}</span>}
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.email ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email address<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
+                    <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.email ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.form.emailAddress}<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                     <input type="email" autoComplete="email" value={form.email} onChange={e => setField('email', e.target.value)}
                       style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.email ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s' }}
                       onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                       onBlur={e => e.target.style.borderColor = errors.email ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
-                    {errors.email && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Valid email required</span>}
+                    {errors.email && <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>{errors.email}</span>}
                   </div>
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>Phone number</label>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.form.phoneNumber}</label>
                   {phoneOptOut ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 1rem', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-                      <span style={{ fontSize: '13.5px', color: '#aaa', flex: 1, fontFamily: 'var(--font-inter),sans-serif' }}>Phone not provided</span>
+                      <span style={{ fontSize: '13.5px', color: '#aaa', flex: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{t.form.phoneNotProvided}</span>
                       <button type="button" onClick={() => setPhoneOptOut(false)}
                         style={{ background: 'none', border: 'none', padding: '0.4rem 0.25rem', fontSize: '11px', color: '#888', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
-                        Add number
+                        {t.form.addNumber}
                       </button>
                     </div>
                   ) : (
@@ -457,7 +401,7 @@ export default function PartnerContent() {
                         onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.14)'} />
                       <button type="button" onClick={() => { setPhoneOptOut(true); setField('phone', '') }}
                         style={{ background: 'none', border: 'none', padding: '0.5rem 0', fontSize: '11px', color: '#aaa', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>
-                        Prefer not to share my number
+                        {t.form.preferNotShare}
                       </button>
                     </>
                   )}
@@ -465,14 +409,14 @@ export default function PartnerContent() {
 
                 {/* Message */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.message ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>How you'd like to partner<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: errors.message ? 'rgba(180,60,60,0.8)' : '#aaa', marginBottom: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{t.form.howPartner}<span style={{ color: '#b04040', marginLeft: '3px' }}>*</span></label>
                   <textarea rows={4} value={form.message} onChange={e => setField('message', e.target.value)} maxLength={1000}
-                    placeholder="Tell us about your business and what a partnership might look like…"
+                    placeholder={t.form.messagePlaceholder}
                     style={{ width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: `0.5px solid ${errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'}`, fontSize: '13.5px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: '110px', lineHeight: '1.75', transition: 'border-color 0.18s' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(197,168,130,0.65)'}
                     onBlur={e => e.target.style.borderColor = errors.message ? 'rgba(180,60,60,0.45)' : 'rgba(0,0,0,0.14)'} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
-                    {errors.message ? <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>Required</span> : <span />}
+                    {errors.message ? <span style={{ fontSize: '11px', color: 'rgba(180,60,60,0.8)', fontFamily: 'var(--font-inter),sans-serif' }}>{errors.message}</span> : <span />}
                     <span style={{ fontSize: '10px', color: form.message.length > 900 ? 'rgba(180,60,60,0.7)' : '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>{form.message.length}/1000</span>
                   </div>
                 </div>
@@ -481,7 +425,7 @@ export default function PartnerContent() {
 
                 <button type="submit" disabled={status === 'loading'}
                   style={{ width: '100%', padding: '1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: status === 'loading' ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-                  {status === 'loading' ? 'Sending…' : 'Send Inquiry'}
+                  {status === 'loading' ? t.form.sending : t.form.sendInquiry}
                 </button>
               </form>
             )}
