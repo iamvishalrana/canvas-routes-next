@@ -218,6 +218,22 @@ export default function RoadtripsAdminClient() {
     } catch {} finally { setBusyId(null) }
   }
 
+  // Gates hello-to-montebello-register / hello-to-montebello-member-register
+  // (and the equivalent per-route registration pages as they're added) —
+  // separate from is_active, which only controls whether the route's tile
+  // shows up in listings at all.
+  async function toggleRegistrationOpen(r) {
+    setBusyId(r.id)
+    try {
+      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_open: !(r.registration_open !== false) }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
+    } catch {} finally { setBusyId(null) }
+  }
+
   async function del(id) {
     setBusyId(id)
     try {
@@ -484,6 +500,7 @@ export default function RoadtripsAdminClient() {
                       {r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Past</span>}
                       {r.launched && !r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Launched</span>}
                       {!r.is_active && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '99px' }}>Hidden</span>}
+                      {r.launched && r.registration_open === false && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Registration Closed</span>}
                     </div>
                     <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>{r.destination} · {r.month_label} · {r.duration_label || '—'} · {r.distance_label || '—'}</div>
                   </div>
@@ -519,6 +536,11 @@ export default function RoadtripsAdminClient() {
                   <GhostBtn small onClick={() => setExpanded(p => ({ ...p, [r.id]: !p[r.id] }))}>{isOpen ? 'Collapse' : `Interested (${r.interested_count})`}</GhostBtn>
                   <GhostBtn small onClick={() => (isEditing ? setEditId(null) : startEdit(r))}>{isEditing ? 'Close' : 'Edit'}</GhostBtn>
                   <GhostBtn small onClick={() => toggleActive(r)} disabled={busyId === r.id}>{r.is_active ? 'Hide from site' : 'Show on site'}</GhostBtn>
+                  {r.launched && (
+                    <GhostBtn small onClick={() => toggleRegistrationOpen(r)} disabled={busyId === r.id}>
+                      {r.registration_open === false ? 'Reopen registration' : 'Close registration'}
+                    </GhostBtn>
+                  )}
                   <GhostBtn small onClick={() => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }} disabled={r.interested_count === 0}>Email</GhostBtn>
                   <GhostBtn small onClick={() => exportRouteCSV(r)} disabled={r.interested_count === 0}>Export CSV</GhostBtn>
                   {!r.launched && !r.is_past && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}

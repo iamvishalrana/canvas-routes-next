@@ -978,7 +978,10 @@ export default function WtetPage() {
                 stripe={getStripe()}
                 options={{
                   mode: 'payment',
-                  amount: price * 100,
+                  // Tax-inclusive — wallet buttons (Apple Pay/Google Pay) render this
+                  // amount in their own native sheet, and it must match what's
+                  // actually charged (the PI itself is created with tax included).
+                  amount: computeTax(price * 100).total,
                   currency: 'cad',
                   locale: lang === 'fr' ? 'fr-CA' : 'en',
                   // Members pay immediately (automatic capture); non-members get an auth hold.

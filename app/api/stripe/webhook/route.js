@@ -304,6 +304,13 @@ export async function POST(request) {
           ...(pi.metadata?.referred_by ? { referred_by: pi.metadata.referred_by } : {}),
           ...(pi.metadata?.car_paint   ? { car_paint:   pi.metadata.car_paint }   : {}),
           ...(pi.metadata?.more        ? { more:        pi.metadata.more }        : {}),
+          // Road-trip-specific fields (WTET, Hello to Montebello) — were being
+          // silently dropped on rescue even though they're always in PI metadata,
+          // the same class of bug rule 21 documents for referred_by.
+          ...(pi.metadata?.passengers    ? { passengers:    pi.metadata.passengers }    : {}),
+          ...(pi.metadata?.has_children  ? { has_children:  pi.metadata.has_children }  : {}),
+          ...(pi.metadata?.children_ages ? { children_ages: pi.metadata.children_ages } : {}),
+          ...(pi.metadata?.instagram     ? { instagram:     pi.metadata.instagram }     : {}),
           stripe_payment_intent_id: pi.id,
           stripe_payment_status:    'authorized',
           stripe_amount_paid:       amountHeld,

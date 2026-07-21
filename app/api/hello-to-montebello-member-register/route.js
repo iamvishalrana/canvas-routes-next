@@ -47,14 +47,16 @@ export async function POST(request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Check registration open — members respect the same gate as the public form
+  // Check registration open — members respect the same gate as the public form.
+  // HTM lives in upcoming_routes (not events — its events row was removed when
+  // it moved into Routes admin), so the gate reads from there.
   try {
     const adminCheck = createAdminClient()
-    const { data: ev } = await adminCheck.from('events').select('registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
-    if (ev && ev.registration_enabled === false) {
+    const { data: route } = await adminCheck.from('upcoming_routes').select('registration_open').eq('slug', 'hello-to-montebello').maybeSingle()
+    if (route && route.registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
-  } catch { /* allow through if events table unavailable */ }
+  } catch { /* allow through if upcoming_routes unavailable */ }
 
   const ip = getClientIp(request)
   if (ip && await checkRateLimit(ip, 10, 60)) {

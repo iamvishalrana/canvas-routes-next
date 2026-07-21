@@ -71,6 +71,7 @@ export async function POST(request) {
     photo_url: (body.photo_url || '').trim() || null,
     recap_href: (body.recap_href || '').trim() || null,
     registration_url: (body.registration_url || '').trim() || null,
+    registration_open: body.registration_open !== false,
   }).select('*').single()
   if (error) {
     if (error.code === '23505') return Response.json({ error: 'A route with that slug already exists.' }, { status: 409 })

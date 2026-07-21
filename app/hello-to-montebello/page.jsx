@@ -342,14 +342,16 @@ export default function HelloToMontebelloPage() {
   }, [])
 
   useEffect(() => {
-    // Read registration status from the events table (toggled via admin Events → Reg toggle)
-    fetch('/api/public/events')
+    // Read registration status from upcoming_routes (toggled via admin Routes →
+    // Registration Open). HTM lives there, not in events — its events row was
+    // removed when it moved into Routes admin.
+    fetch('/api/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
-      .then(events => {
-        const ev = events.find(e => e.name?.toLowerCase().includes('hello to montebello'))
-        if (ev) {
-          if (ev.registration_enabled === false) setMemberRegOpen(false)
-          if (ev.public_registration_enabled === false) setRegOpen(false)
+      .then(routes => {
+        const route = routes.find(r => r.slug === 'hello-to-montebello')
+        if (route && route.registration_open === false) {
+          setMemberRegOpen(false)
+          setRegOpen(false)
         }
       })
       .catch(() => {})
@@ -985,7 +987,10 @@ export default function HelloToMontebelloPage() {
                 stripe={getStripe()}
                 options={{
                   mode: 'payment',
-                  amount: price * 100,
+                  // Tax-inclusive — wallet buttons (Apple Pay/Google Pay) render this
+                  // amount in their own native sheet, and it must match what's
+                  // actually charged (the PI itself is created with tax included).
+                  amount: computeTax(price * 100).total,
                   currency: 'cad',
                   locale: lang === 'fr' ? 'fr-CA' : 'en',
                   // Members pay immediately (automatic capture); non-members get an auth hold.

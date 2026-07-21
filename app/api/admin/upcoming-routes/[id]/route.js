@@ -2,7 +2,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 
-const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug', 'is_past', 'cars_rolled_out', 'photo_url', 'recap_href', 'launched', 'registration_url']
+const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug', 'is_past', 'cars_rolled_out', 'photo_url', 'recap_href', 'launched', 'registration_url', 'registration_open']
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })

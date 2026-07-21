@@ -30,14 +30,16 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  // Check registration open via events table (Reg toggle in admin Events section)
+  // Check registration open — Registration Open toggle in admin Routes section.
+  // HTM lives in upcoming_routes (not events — its events row was removed when
+  // it moved into Routes admin), so the gate reads from there.
   try {
     const supabase = createAdminClient()
-    const { data: ev } = await supabase.from('events').select('public_registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
-    if (ev && ev.public_registration_enabled === false) {
+    const { data: route } = await supabase.from('upcoming_routes').select('registration_open').eq('slug', 'hello-to-montebello').maybeSingle()
+    if (route && route.registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
-  } catch { /* allow through if events table unavailable */ }
+  } catch { /* allow through if upcoming_routes unavailable */ }
 
   const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, _hp, _health_check } = body
   if (_hp) return Response.json({ success: true, clientSecret: null })
