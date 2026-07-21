@@ -19,7 +19,7 @@ const ROUTE_SLUG = 'hello-to-montebello'
 const STOPS = [
   { label: 'Rona — Carrefour Laval', note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=3065+Boulevard+le+Carrefour+Laval+QC', lat: 45.5762, lng: -73.7530 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
-  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: null, lat: 45.68, lng: -75.05 },
+  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 45.68, lng: -75.05 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
   { label: 'Stroll around Montebello', note: 'Suggestions: Chocomotive · Lieu historique national du Manoir-Papineau', href: null, lat: 45.6514, lng: -74.9438 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
@@ -364,7 +364,7 @@ export default function HelloToMontebelloItineraryPage() {
             Saturday · August 1, 2026
           </div>
           <div className="gate-tags" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.75rem' }}>
-            {['Château Lunch', 'Coffee Stop', 'Chocolaterie'].map(tag => (
+            {['Château Lunch', 'Coffee Stop', 'Montebello Stroll'].map(tag => (
               <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', border: '0.5px solid rgba(197,168,130,0.25)', padding: '3px 9px' }}>{tag}</span>
             ))}
           </div>
@@ -478,7 +478,7 @@ export default function HelloToMontebelloItineraryPage() {
           <h1 style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Hello to Montebello</h1>
           <p style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>Sunday · July 26, 2026</p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
-            {['Château Lunch', 'Coffee Stop', 'Chocolaterie'].map(tag => (
+            {['Château Lunch', 'Coffee Stop', 'Montebello Stroll'].map(tag => (
               <span key={tag} style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '4px 12px' }}>{tag}</span>
             ))}
           </div>

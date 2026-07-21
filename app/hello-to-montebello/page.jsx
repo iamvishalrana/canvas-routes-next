@@ -823,8 +823,8 @@ export default function HelloToMontebelloPage() {
 
       {/* ITINERARY */}
       <section className="htm-itinerary" style={{position:'relative',padding:'6rem 2rem 7rem',overflow:'hidden',backgroundImage:"url('/Convoy.png')",backgroundSize:'cover',backgroundPosition:'center 40%'}}>
-        <div style={{position:'absolute',inset:0,background:'rgba(8,16,10,0.72)',zIndex:1}} />
-        <div style={{maxWidth:'560px',margin:'0 auto',position:'relative',zIndex:2}}>
+        <div style={{position:'absolute',inset:0,background:'rgba(8,16,10,0.78)',zIndex:1}} />
+        <div style={{maxWidth:'560px',margin:'0 auto',position:'relative',zIndex:2,textShadow:'0 2px 10px rgba(0,0,0,0.55)'}}>
           <FadeUp>
             <div style={{textAlign:'center',marginBottom:'4rem'}}>
               <div style={{fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem'}}>{et.itineraryDate}</div>
