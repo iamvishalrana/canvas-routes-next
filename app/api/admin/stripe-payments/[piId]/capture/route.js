@@ -145,7 +145,7 @@ export async function POST(request, { params }) {
     // events row from upcoming_routes by slug.
     const checkinUrl = pi.metadata?.type === 'road_trip_wtet'
       ? `https://canvasroutes.com/wtet/checkin?t=${piId}`
-      : await getRouteCheckinUrl(supabase, pi.metadata?.type)
+      : await getRouteCheckinUrl(supabase, pi.metadata?.type, email)
 
     after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {

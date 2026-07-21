@@ -226,7 +226,7 @@ export async function POST(request) {
             // (including HTM) is on the generic system.
             const checkinUrl = type === 'road_trip_wtet'
               ? `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
-              : await getRouteCheckinUrl(supabase, type)
+              : await getRouteCheckinUrl(supabase, type, normalEmail)
             await Promise.all([
               fetch('https://api.resend.com/emails', {
                 method: 'POST',

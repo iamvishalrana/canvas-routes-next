@@ -3,8 +3,11 @@ import { useState, useEffect, useRef } from 'react'
 import { ROUTE_PATH } from './routePath'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
+import { captureException } from '../../lib/sentry'
+import { normalizeEmail } from '../../lib/normalizeEmail'
 
 const PASSWORD = 'montebello'
+const ROUTE_SLUG = 'hello-to-montebello'
 
 // Only real venues so this one array can drive both the itinerary timeline
 // and the map markers. lat/lng for Fairmont comes from Jerry's traced My Maps
@@ -209,9 +212,9 @@ function RouteMap({ stops }) {
 
 export default function HelloToMontebelloItineraryPage() {
   const [authed, setAuthed] = useState(false)
-  const [pw, setPw] = useState('')
-  const [showPw, setShowPw] = useState(false)
-  const [err, setErr] = useState(false)
+  const [email, setEmail] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [errMsg, setErrMsg] = useState(null)
   const [checked, setChecked] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [selectedCar, setSelectedCar] = useState(null)
@@ -238,20 +241,76 @@ export default function HelloToMontebelloItineraryPage() {
   }, [authed])
 
   useEffect(() => {
-    const urlPw = new URLSearchParams(window.location.search).get('pw')
+    const params = new URLSearchParams(window.location.search)
+    const urlPw = params.get('pw')
     if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
-    if (localStorage.getItem('htm_itinerary_auth') === '1') setAuthed(true)
+    if (localStorage.getItem('htm_itinerary_auth') === '1') { setAuthed(true); setChecked(true); return }
     setChecked(true)
+
+    // Handoff from the check-in page's personalized link — re-verify
+    // automatically so they don't have to retype the email they just used.
+    const urlEmail = params.get('email')
+    if (urlEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(urlEmail)) {
+      setEmail(urlEmail)
+      submit(null, urlEmail)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function submit(e) {
-    e.preventDefault()
-    if (pw.trim().toLowerCase() === PASSWORD.toLowerCase()) {
+  async function submit(e, emailOverride) {
+    e?.preventDefault()
+    setErrMsg(null)
+    const entered = normalizeEmail(emailOverride ?? email)
+    if (entered === PASSWORD.toLowerCase()) {
       localStorage.setItem('htm_itinerary_auth', '1')
       setAuthed(true)
-    } else {
-      setErr(true)
-      setPw('')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+      setErrMsg('Enter your registered email address, or the shared password.')
+      return
+    }
+    setChecking(true)
+    try {
+      const idRes = await fetch(`/api/route-event-id/${ROUTE_SLUG}`)
+      const idData = await idRes.json().catch(() => ({}))
+      if (!idRes.ok || !idData.eventId) throw new Error('route-event-id lookup failed')
+
+      const res = await fetch(`/api/checkin/${idData.eventId}/lookup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: entered }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        if (res.status === 404) {
+          setErrMsg("We couldn't find a registration matching that email.")
+        } else {
+          setErrMsg(data.error || 'Something went wrong. Please try again.')
+          captureException(new Error(`htm-itinerary-gate lookup failed: HTTP ${res.status}`), { context: 'htm-itinerary-gate-lookup', status: res.status, serverError: data.error })
+        }
+        setChecking(false)
+        return
+      }
+
+      const passengersList = data.tripDetails?.passengers_list || []
+      const sections = data.sections || []
+      const hasTrip = sections.includes('trip_details')
+      const hasWaiver = sections.includes('waiver')
+      const hasLunch = sections.includes('lunch')
+      const allDone = (!hasTrip || !!data.tripDetails) && (!hasWaiver || !!data.waiver)
+        && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
+
+      if (allDone) {
+        localStorage.setItem('htm_itinerary_auth', '1')
+        setAuthed(true)
+      } else {
+        window.location.href = `/checkin/${idData.eventId}?email=${encodeURIComponent(entered)}`
+      }
+    } catch (err) {
+      captureException(err, { context: 'htm-itinerary-gate-lookup-network' })
+      setErrMsg('Something went wrong. Please try again.')
+      setChecking(false)
     }
   }
 
@@ -312,41 +371,36 @@ export default function HelloToMontebelloItineraryPage() {
           <div className="gate-divider" style={{ width: '34px', height: '0.5px', background: 'rgba(197,168,130,0.5)', margin: '0 auto 1.75rem' }} />
           <div className="gate-body">
             <p style={{ color: 'rgba(197,168,130,0.65)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', margin: '0 0 0.85rem' }}>Participants only</p>
-            <p style={{ color: 'rgba(245,241,236,0.55)', fontSize: '12.5px', lineHeight: '1.7', margin: '0 0 1.75rem' }}>Enter the password shared with confirmed registrants.</p>
+            <p style={{ color: 'rgba(245,241,236,0.55)', fontSize: '12.5px', lineHeight: '1.7', margin: '0 0 1.75rem' }}>Enter your registered email address, or the password shared with confirmed registrants.</p>
           </div>
           <form onSubmit={submit} className="gate-form">
-            <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
+            <div style={{ marginBottom: '0.85rem' }}>
               <input
                 className="gate-input"
-                value={pw}
-                onChange={e => { setPw(e.target.value); setErr(false) }}
-                placeholder="Password"
-                type={showPw ? 'text' : 'password'}
-                autoComplete="off"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setErrMsg(null) }}
+                placeholder="Email or password"
+                type="text"
+                inputMode="email"
+                autoComplete="email"
                 style={{
-                  display: 'block', width: '100%', padding: '0.95rem 2.75rem 0.95rem 1rem',
+                  display: 'block', width: '100%', padding: '0.95rem 1rem',
                   background: 'rgba(255,255,255,0.05)',
-                  border: `0.5px solid ${err ? '#c0526a' : 'rgba(255,255,255,0.16)'}`,
+                  border: `0.5px solid ${errMsg ? '#c0526a' : 'rgba(255,255,255,0.16)'}`,
                   color: '#F5F1EC', fontSize: '15px', outline: 'none',
                   fontFamily: 'Georgia, serif', textAlign: 'center', letterSpacing: '0.02em',
                   transition: 'border-color 0.2s ease, background 0.2s ease',
                 }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPw(p => !p)}
-                style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: '12px', letterSpacing: '0.06em', padding: '4px' }}
-              >
-                {showPw ? 'Hide' : 'Show'}
-              </button>
             </div>
-            {err && <p style={{ color: '#e2919f', fontSize: '11px', letterSpacing: '0.04em', lineHeight: '1.6', marginBottom: '0.85rem' }}>Incorrect password</p>}
+            {errMsg && <p style={{ color: '#e2919f', fontSize: '11px', letterSpacing: '0.04em', lineHeight: '1.6', marginBottom: '0.85rem' }}>{errMsg}</p>}
             <button
               type="submit"
+              disabled={checking}
               className="gate-submit-btn"
-              style={{ width: '100%', padding: '0.95rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'sans-serif', fontWeight: '700' }}
+              style={{ width: '100%', padding: '0.95rem', background: '#c5a882', color: '#0F1E14', border: 'none', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: checking ? 'wait' : 'pointer', fontFamily: 'sans-serif', fontWeight: '700', opacity: checking ? 0.7 : 1, transition: 'opacity 0.2s ease' }}
             >
-              Continue
+              {checking ? 'Checking…' : 'Continue'}
             </button>
           </form>
         </div>

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, Suspense } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import SiteNav from '../../../components/SiteNav'
 import SiteFooter from '../../../components/SiteFooter'
 import CheckinTripDetailsSection from '../../../components/CheckinTripDetailsSection'
@@ -39,6 +39,7 @@ const label = { display: 'block', fontSize: '9px', letterSpacing: '0.15em', text
 
 function CheckinContent() {
   const { eventId } = useParams()
+  const searchParams = useSearchParams()
   const { lang } = useLanguage()
   const t = CHECKIN_T[lang]
 
@@ -47,10 +48,20 @@ function CheckinContent() {
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
-  async function verify(e) {
+  const autoSubmitted = useRef(false)
+  useEffect(() => {
+    const prefillEmail = searchParams.get('email')
+    if (autoSubmitted.current || !prefillEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefillEmail)) return
+    autoSubmitted.current = true
+    setEmail(prefillEmail)
+    verify(null, prefillEmail)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function verify(e, emailOverride) {
     e?.preventDefault()
     setError(null)
-    const targetEmail = normalizeEmail(email)
+    const targetEmail = normalizeEmail(emailOverride ?? email)
     if (!targetEmail || !targetEmail.includes('@')) { setError(t.invalidEmailError); return }
     setStatus('loading')
     try {

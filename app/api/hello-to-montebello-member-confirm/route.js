@@ -78,7 +78,7 @@ export async function POST(request) {
 
   if (!process.env.RESEND_API_KEY || !claimedRows?.length) return Response.json({ ok: true })
 
-  const checkinUrl = await getRouteCheckinUrl(admin, 'road_trip_hello-to-montebello').catch(() => null)
+  const checkinUrl = await getRouteCheckinUrl(admin, 'road_trip_hello-to-montebello', normalEmail).catch(() => null)
 
   // Fire emails after response — after() keeps the function alive until both fetches settle.
   after(() => Promise.allSettled([
