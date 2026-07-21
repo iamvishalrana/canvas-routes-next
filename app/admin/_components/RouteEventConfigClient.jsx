@@ -235,6 +235,9 @@ export default function RouteEventConfigClient({ eventId }) {
       {tab === 'awards' && (
         <div>
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: '12px', color: '#888', marginBottom: '1.1rem', overflowWrap: 'anywhere' }}>
+              Public voting page: <a href={`/awards/${eventId}`} target="_blank" rel="noreferrer" style={{ color: '#0F1E14', textDecoration: 'underline' }}>canvasroutes.com/awards/{eventId}</a>
+            </div>
             <L>Categories</L>
             {(form.awards_categories || []).map((cat, ci) => (
               <div key={cat.id || ci} style={{ border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '0.7rem', marginBottom: '0.5rem' }}>

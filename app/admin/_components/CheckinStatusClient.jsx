@@ -37,6 +37,45 @@ export default function CheckinStatusClient({ eventId }) {
   const [busyId, setBusyId] = useState(null)
   const [declineConfirm, setDeclineConfirm] = useState(null) // application id
   const [actionError, setActionError] = useState(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [addName, setAddName] = useState('')
+  const [addEmail, setAddEmail] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState(null)
+  const [removeConfirm, setRemoveConfirm] = useState(null) // email
+  const [removingEmail, setRemovingEmail] = useState(null)
+
+  async function addRegistrant(e) {
+    e.preventDefault()
+    setAdding(true); setAddError(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/registrants`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: addName, email: addEmail }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setAddError(d.error || 'Failed to add registrant.'); return }
+      setAddName(''); setAddEmail(''); setShowAddForm(false)
+      load()
+    } catch { setAddError('Network error.') }
+    finally { setAdding(false) }
+  }
+
+  async function removeRegistrant(email) {
+    setRemovingEmail(email); setActionError(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/registrants`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Failed to remove registrant.'); return }
+      setRemoveConfirm(null)
+      setExpandedEmail(prev => prev === email ? null : prev)
+      load()
+    } catch { setActionError('Network error.') }
+    finally { setRemovingEmail(null) }
+  }
 
   async function capturePayment(applicationId) {
     setBusyId(applicationId); setActionError(null)
@@ -133,6 +172,27 @@ export default function CheckinStatusClient({ eventId }) {
             <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', fontWeight: '400', color: lunchCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{lunchCount}<span style={{ fontSize: '1rem', color: '#ccc' }}>/{total}</span></div>
             <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Lunch selected</div>
           </div>
+        )}
+      </div>
+
+      <div style={{ marginBottom: '1.1rem' }}>
+        <button type="button" onClick={() => setShowAddForm(v => !v)}
+          style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 12px', borderRadius: '8px', border: '0.5px solid rgba(59,107,47,0.4)', background: showAddForm ? '#3B6B2F' : 'rgba(59,107,47,0.06)', color: showAddForm ? '#fff' : '#3B6B2F', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+          {showAddForm ? 'Cancel' : '+ Add Registrant'}
+        </button>
+        {showAddForm && (
+          <form onSubmit={addRegistrant} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' }}>
+            <input value={addName} onChange={e => setAddName(e.target.value)} placeholder="Name" required
+              style={{ padding: '0.5rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', flex: '1 1 160px', maxWidth: '220px' }} />
+            <input value={addEmail} onChange={e => setAddEmail(e.target.value)} placeholder="Email" type="email" required
+              style={{ padding: '0.5rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', flex: '1 1 200px', maxWidth: '260px' }} />
+            <button type="submit" disabled={adding}
+              style={{ padding: '0.5rem 1.1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: adding ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {adding ? 'Adding…' : 'Add'}
+            </button>
+            {addError && <div style={{ fontSize: '11px', color: '#93333E', width: '100%' }}>{addError}</div>}
+            <div style={{ fontSize: '10.5px', color: '#aaa', width: '100%' }}>Added registrants are marked as confirmed — for walk-ins, comps, or anyone who registered outside the normal flow.</div>
+          </form>
         )}
       </div>
 
@@ -277,6 +337,28 @@ export default function CheckinStatusClient({ eventId }) {
                           </button>
                         )}
                       </div>
+                    </div>
+                  )}
+                  {p.paymentStatus !== 'authorized' && (
+                    <div style={{ padding: '0 1.25rem 1.1rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                      {removeConfirm === p.email ? (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', color: '#93333E' }}>Remove {p.name || p.email} from this event's registrants?</span>
+                          <button type="button" onClick={() => removeRegistrant(p.email)} disabled={removingEmail === p.email}
+                            style={{ padding: '0.5rem 1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.4)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: removingEmail === p.email ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            {removingEmail === p.email ? 'Removing…' : 'Yes, remove'}
+                          </button>
+                          <button type="button" onClick={() => setRemoveConfirm(null)}
+                            style={{ padding: '0.5rem 1rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => setRemoveConfirm(p.email)}
+                          style={{ padding: '0.5rem 1.1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                          Remove Registrant
+                        </button>
+                      )}
                     </div>
                   )}
                   </>
