@@ -82,7 +82,7 @@ export default function AwardsTallyClient({ eventId }) {
   return (
     <div style={{ padding: '1.5rem', maxWidth: '760px' }}>
       <p style={{ fontSize: '12px', color: '#888', margin: '0 0 1.5rem' }}>
-        Public ballot: <a href={`/awards/${eventId}`} target="_blank" rel="noreferrer" style={{ color: '#8A6535' }}>{`canvasroutes.com/awards/${eventId}`}</a>
+        Public ballot: <a href={`/awards/${data.event.awards_slug || eventId}`} target="_blank" rel="noreferrer" style={{ color: '#8A6535' }}>{`canvasroutes.com/awards/${data.event.awards_slug || eventId}`}</a>
       </p>
 
       <div style={CARD}>

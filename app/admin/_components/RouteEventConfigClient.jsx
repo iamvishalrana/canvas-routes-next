@@ -359,10 +359,7 @@ export default function RouteEventConfigClient({ eventId }) {
       {tab === 'awards' && (
         <div>
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: '12px', color: '#888', marginBottom: '1.1rem', overflowWrap: 'anywhere' }}>
-              Public voting page: <a href={`/awards/${form.awards_slug || eventId}`} target="_blank" rel="noreferrer" style={{ color: '#0F1E14', textDecoration: 'underline' }}>canvasroutes.com/awards/{form.awards_slug || eventId}</a>
-            </div>
-
+            {/* Public link is shown once, below, by AwardsTallyClient's "Public ballot" line — avoids showing the same URL twice with different wording. */}
             <GhostBtn small onClick={() => setShowAwardsConfig(v => !v)}>{showAwardsConfig ? 'Hide Categories' : 'Edit Categories'}</GhostBtn>
 
             {showAwardsConfig && (
