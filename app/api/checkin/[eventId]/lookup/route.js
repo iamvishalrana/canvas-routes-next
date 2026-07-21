@@ -19,7 +19,7 @@ export async function POST(request, { params }) {
 
   const admin = createAdminClient()
   const { data: event, error: eventErr } = await admin.from('events')
-    .select('id, name, checkin_enabled, checkin_sections, checkin_max_passengers, checkin_lunch_options, checkin_waiver_text, checkin_waiver_text_fr, checkin_lunch_cutoff')
+    .select('id, name, checkin_enabled, checkin_sections, checkin_max_passengers, checkin_lunch_options, checkin_lunch_intro, checkin_waiver_text, checkin_waiver_text_fr, checkin_lunch_cutoff')
     .eq('id', eventId).maybeSingle()
   if (eventErr || !event || !event.checkin_enabled) {
     return Response.json({ error: 'Check-in is not available for this event.' }, { status: 404 })
@@ -44,6 +44,7 @@ export async function POST(request, { params }) {
     sections: event.checkin_sections || [],
     maxPassengers: event.checkin_max_passengers || 2,
     lunchOptions: event.checkin_lunch_options || [],
+    lunchIntro: event.checkin_lunch_intro || '',
     waiverText: event.checkin_waiver_text || '',
     waiverTextFr: event.checkin_waiver_text_fr || '',
     lunchCutoff,

@@ -8,7 +8,7 @@ export async function GET(request, { params }) {
 
   const admin = createAdminClient()
   const { data: event, error: eventErr } = await admin.from('events')
-    .select('id, name, checkin_enabled, checkin_sections, checkin_max_passengers, checkin_lunch_options, checkin_waiver_text, checkin_waiver_text_fr, checkin_lunch_cutoff')
+    .select('id, name, checkin_enabled, checkin_sections, checkin_max_passengers, checkin_lunch_options, checkin_lunch_intro, checkin_waiver_text, checkin_waiver_text_fr, checkin_lunch_cutoff')
     .eq('id', eventId).maybeSingle()
   if (eventErr || !event) return Response.json({ error: 'Event not found' }, { status: 404 })
 

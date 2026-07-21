@@ -68,6 +68,7 @@ export default function RouteEventConfigClient({ eventId }) {
         checkin_waiver_text_fr: cEv.checkin_waiver_text_fr || '',
         checkin_lunch_cutoff: cEv.checkin_lunch_cutoff ? cEv.checkin_lunch_cutoff.slice(0, 16) : '',
         checkin_lunch_options: cEv.checkin_lunch_options || [],
+        checkin_lunch_intro: cEv.checkin_lunch_intro || '',
         awards_categories: aEv.awards_categories || [],
         awards_ineligible_names: aEv.awards_ineligible_names || [],
       })
@@ -207,6 +208,11 @@ export default function RouteEventConfigClient({ eventId }) {
           <input type="datetime-local" style={{ ...inp, maxWidth: '240px', marginBottom: '1rem' }} value={form.checkin_lunch_cutoff}
             onChange={e => setForm(p => ({ ...p, checkin_lunch_cutoff: e.target.value }))} />
 
+          <L>Lunch Intro (optional — shown above the dish choices, e.g. to mention a fixed starter/dessert or that drinks aren't included)</L>
+          <textarea style={{ ...smallTextarea, height: '65px', marginBottom: '1rem' }} value={form.checkin_lunch_intro}
+            onChange={e => setForm(p => ({ ...p, checkin_lunch_intro: e.target.value }))}
+            placeholder="e.g. Lunch is a three-course meal: soup starter, your choice of main below, and the chef's choice of dessert. Drinks are not included." />
+
           <L>Lunch Options</L>
           {(form.checkin_lunch_options || []).map((dish, di) => (
             <div key={dish.id || di} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -225,6 +231,7 @@ export default function RouteEventConfigClient({ eventId }) {
             <PrimaryBtn small disabled={saving} onClick={() => save({
               checkin_lunch_cutoff: form.checkin_lunch_cutoff || null,
               checkin_lunch_options: form.checkin_lunch_options,
+              checkin_lunch_intro: form.checkin_lunch_intro,
             })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
             {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
           </div>
@@ -244,7 +251,7 @@ export default function RouteEventConfigClient({ eventId }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: '0.5rem', marginBottom: '0.4rem' }}>
                   <input style={inp} placeholder="Category label (e.g. Most Beautiful Car)" value={cat.label || ''}
                     onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, label: e.target.value } : c) }))} />
-                  <input type="number" min="0" max="100" style={inp} placeholder="% off" value={cat.discount_pct ?? ''}
+                  <input type="number" min="0" style={inp} placeholder="$ off" value={cat.discount_pct ?? ''}
                     onChange={e => setForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, discount_pct: e.target.value === '' ? null : parseInt(e.target.value) } : c) }))} />
                   <DangerBtn small onClick={() => setForm(p => ({ ...p, awards_categories: p.awards_categories.filter((_, i2) => i2 !== ci) }))}>Remove</DangerBtn>
                 </div>

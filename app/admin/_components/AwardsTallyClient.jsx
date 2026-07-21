@@ -117,7 +117,7 @@ export default function AwardsTallyClient({ eventId }) {
               <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', margin: 0 }}>{cat.label}</h2>
               {typeof cat.discount_pct === 'number' && (
                 <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid #c5a882', borderRadius: '99px', padding: '2px 8px', flexShrink: 0 }}>
-                  Winner gets {cat.discount_pct}% off
+                  Winner gets ${cat.discount_pct} off
                 </span>
               )}
             </div>
@@ -143,7 +143,7 @@ export default function AwardsTallyClient({ eventId }) {
                     </div>
                     {i === 0 && typeof cat.discount_pct === 'number' && (
                       <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: RANK_COLORS[0], border: `0.5px solid ${RANK_COLORS[0]}`, borderRadius: '99px', padding: '2px 8px', flexShrink: 0 }}>
-                        {cat.discount_pct}% off
+                        ${cat.discount_pct} off
                       </span>
                     )}
                     <div style={{ fontSize: '12px', color: '#888', flexShrink: 0, minWidth: '48px', textAlign: 'right' }}>{r.count} vote{r.count !== 1 ? 's' : ''}</div>

@@ -1764,7 +1764,7 @@ export default function EventsClient() {
                                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 110px auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                     <input style={inp} placeholder="Category label (e.g. Most Beautiful Car)" value={cat.label || ''}
                                       onChange={e => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, label: e.target.value } : c) }))} />
-                                    <input type="number" min="0" max="100" style={inp} placeholder="% off" value={cat.discount_pct ?? ''}
+                                    <input type="number" min="0" style={inp} placeholder="$ off" value={cat.discount_pct ?? ''}
                                       onChange={e => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.map((c, i2) => i2 === ci ? { ...c, discount_pct: e.target.value === '' ? null : parseInt(e.target.value) } : c) }))} />
                                     <DangerBtn small onClick={() => setEditForm(p => ({ ...p, awards_categories: p.awards_categories.filter((_, i2) => i2 !== ci) }))}>Remove</DangerBtn>
                                   </div>

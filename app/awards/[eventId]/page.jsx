@@ -27,7 +27,7 @@ const T = {
   successTitle: 'Your ballot is in!', successBody: 'You can come back and change your vote any time before voting closes.',
   votingAs: name => `Voting as ${name}`,
   incompleteNote: 'Pick one car in each category to submit.',
-  discountTag: pct => `Winner gets ${pct}% off the next route`,
+  discountTag: amount => `Winner gets $${amount} off the next route`,
   finishLater: 'Finish later',
 }
 

@@ -8,7 +8,7 @@ import { useLanguage } from '../lib/i18n/LanguageContext'
 // passengersList: [{ name, age }] from Trip Details (driver first) — lunch is
 // per-person and depends on Trip Details being completed first. Only people
 // actually entered there get a dish picker — this never pads with blanks.
-export default function CheckinLunchSection({ identifier, lunch, lunchOptions, lunchCutoff, lunchLocked, passengersList, tripDone, onSaved }) {
+export default function CheckinLunchSection({ identifier, lunch, lunchOptions, lunchIntro, lunchCutoff, lunchLocked, passengersList, tripDone, onSaved }) {
   const { lang } = useLanguage()
   const t = CHECKIN_T[lang]
   const isDone = Array.isArray(lunch) && lunch.length > 0 && lunch.length === passengersList.length
@@ -61,6 +61,7 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
     return (
       <SectionCard title={t.lunchTitle} done delay={180} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
         <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>
+          {lunchIntro && <p style={{ fontSize: '12.5px', color: '#888', lineHeight: 1.8, marginBottom: '1rem' }}>{lunchIntro}</p>}
           {lunch.map((entry, i) => (
             <div key={i} style={{ marginBottom: '0.35rem' }}>
               <strong style={{ color: '#1a1a1a' }}>{entry.name || (i === 0 ? t.driverLabel : t.passengerLabel(i + 1))}</strong>
@@ -93,6 +94,7 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
 
   return (
     <SectionCard title={t.lunchTitle} done={false} delay={180} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
+      {lunchIntro && <p style={{ fontSize: '12.5px', color: '#888', lineHeight: 1.8, marginBottom: '1rem' }}>{lunchIntro}</p>}
       {cutoffStr && <p style={{ fontSize: '12px', color: '#999', marginBottom: '0.35rem' }}>{t.chooseOneUntil(cutoffStr)}</p>}
       <p style={{ fontSize: '12px', color: '#8A6535', fontWeight: '500', marginBottom: '1.25rem' }}>{t.lunchAllRequired}</p>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>

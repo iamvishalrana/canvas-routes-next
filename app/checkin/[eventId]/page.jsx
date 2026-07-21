@@ -187,6 +187,7 @@ function CheckinContent() {
               identifier={identifier}
               lunch={data.lunch}
               lunchOptions={data.lunchOptions}
+              lunchIntro={data.lunchIntro}
               lunchCutoff={data.lunchCutoff}
               lunchLocked={data.lunchLocked}
               passengersList={passengersList}
