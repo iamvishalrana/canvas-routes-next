@@ -814,8 +814,8 @@ export default function HelloToMontebelloPage() {
 
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
             className="htm-details-cta"
-            style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#45643c',color:'#F5F1EC',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
-            {t.registerFrom('199')}
+            style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#c5a882',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
+            Book Your Spot →
           </a>
           </FadeUp>
         </div>
