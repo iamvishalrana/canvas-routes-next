@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { captureException } from '../../../../../lib/sentry'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
+import { maybeSendCheckinCompleteEmail } from '../../../../../lib/maybeSendCheckinCompleteEmail.js'
 
 export async function POST(request, { params }) {
   const { eventId } = await params
@@ -73,6 +74,8 @@ export async function POST(request, { params }) {
     captureException(upsertErr, { context: 'generic-checkin-waiver-save', email, eventId })
     return Response.json({ error: 'Failed to save. Please try again.' }, { status: 500 })
   }
+
+  await maybeSendCheckinCompleteEmail(admin, eventId, email, event.name).catch(err => captureException(err, { context: 'checkin-complete-trigger-waiver', email, eventId }))
 
   return Response.json({ success: true, waiver: waiverRecord })
 }
