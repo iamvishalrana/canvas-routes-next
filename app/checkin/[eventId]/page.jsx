@@ -6,9 +6,29 @@ import SiteFooter from '../../../components/SiteFooter'
 import CheckinTripDetailsSection from '../../../components/CheckinTripDetailsSection'
 import CheckinWaiverSection from '../../../components/CheckinWaiverSection'
 import CheckinLunchSection from '../../../components/CheckinLunchSection'
-import { CHECKIN_T as t } from '../../../lib/genericCheckinContent'
+import { CHECKIN_T } from '../../../lib/genericCheckinContent'
 import { captureException } from '../../../lib/sentry'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
+import { useLanguage } from '../../../lib/i18n/LanguageContext'
+
+function LangToggle() {
+  const { lang, setLang } = useLanguage()
+  return (
+    <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '99px', overflow: 'hidden' }}>
+      {['en', 'fr'].map(l => (
+        <button key={l} type="button" onClick={() => setLang(l)}
+          style={{
+            padding: '0.35rem 0.85rem', border: 'none', cursor: 'pointer',
+            fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
+            fontFamily: 'var(--font-inter), sans-serif', fontWeight: lang === l ? '600' : '400',
+            background: lang === l ? '#0F1E14' : 'transparent', color: lang === l ? '#F5F1EC' : '#999',
+          }}>
+          {l}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
@@ -19,6 +39,8 @@ const label = { display: 'block', fontSize: '9px', letterSpacing: '0.15em', text
 
 function CheckinContent() {
   const { eventId } = useParams()
+  const { lang } = useLanguage()
+  const t = CHECKIN_T[lang]
 
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState('gate') // gate | loading | found
@@ -66,6 +88,17 @@ function CheckinContent() {
   return (
     <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
 
+      <div className="wtetci-fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.6rem' }}>Canvas Routes</div>
+          <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(2rem,5vw,2.6rem)', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.4rem', lineHeight: '1.15' }}>
+            {t.pageHeading}
+          </h1>
+          <p style={{ fontSize: '13px', color: '#999', margin: 0 }}>{t.pageHeadingSub}</p>
+        </div>
+        <LangToggle />
+      </div>
+
       {(status === 'gate' || status === 'loading') && (
         <div className="wtetci-fade-up">
           <div style={{ marginBottom: '2.5rem' }}>
@@ -105,6 +138,13 @@ function CheckinContent() {
             </p>
           </div>
 
+          {!allDone && (
+            <div className="wtetci-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', margin: '0 0 2rem', color: 'rgba(0,0,0,0.3)' }}>
+              <span style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase' }}>{t.scrollCue}</span>
+              <svg className="checkin-scroll-cue" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
+          )}
+
           {hasTrip && (
             <CheckinTripDetailsSection
               identifier={identifier}
@@ -124,6 +164,7 @@ function CheckinContent() {
               carMake={data.carMake}
               carModel={data.carModel}
               maxPassengers={data.maxPassengers || 2}
+              tripPassengers={passengersList.slice(1)}
               onSaved={waiver => setData(prev => ({ ...prev, waiver }))}
             />
           )}
@@ -164,9 +205,11 @@ export default function CheckinPage() {
         @keyframes wtetci-fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes wtetci-pop { 0% { transform: scale(0.9); opacity: 0.6; } 60% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
         @keyframes wtetci-shimmer { 0% { left: -80%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: 130%; opacity: 0; } }
+        @keyframes checkin-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 
         .wtetci-fade-up { animation: wtetci-fade-up 0.55s ease both; }
         .wtetci-fade-in { animation: wtetci-fade-in 0.35s ease both; }
+        .checkin-scroll-cue { animation: checkin-bounce 1.4s ease-in-out infinite; }
 
         .wtetci-btn-primary { box-shadow: 0 2px 6px rgba(15,30,20,0.22); transition: transform 0.18s ease, box-shadow 0.18s ease; }
         .wtetci-btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 6px rgba(15,30,20,0.22); }

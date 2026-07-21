@@ -1,12 +1,16 @@
 'use client'
 import { useState } from 'react'
 import SectionCard from './WtetSectionCard'
-import { CHECKIN_T as t, checkinDateLocale } from '../lib/genericCheckinContent'
+import { CHECKIN_T, checkinDateLocale } from '../lib/genericCheckinContent'
+import { useLanguage } from '../lib/i18n/LanguageContext'
 
 // identifier: { email, eventId }
 // passengersList: [{ name, age }] from Trip Details (driver first) — lunch is
-// per-person and depends on Trip Details being completed first.
+// per-person and depends on Trip Details being completed first. Only people
+// actually entered there get a dish picker — this never pads with blanks.
 export default function CheckinLunchSection({ identifier, lunch, lunchOptions, lunchCutoff, lunchLocked, passengersList, tripDone, onSaved }) {
+  const { lang } = useLanguage()
+  const t = CHECKIN_T[lang]
   const isDone = Array.isArray(lunch) && lunch.length > 0 && lunch.length === passengersList.length
   const [dishChoices, setDishChoices] = useState(() =>
     passengersList.map((_, i) => lunch?.[i]?.dish_id || '')
@@ -16,7 +20,7 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
   const [editing, setEditing] = useState(!isDone)
 
   const cutoffStr = lunchCutoff
-    ? new Date(lunchCutoff).toLocaleDateString(checkinDateLocale(), { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })
+    ? new Date(lunchCutoff).toLocaleDateString(checkinDateLocale(lang), { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })
     : null
 
   function setChoice(i, dishId) {

@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
 import SectionCard from './WtetSectionCard'
-import { CHECKIN_T as t, checkinDateLocale } from '../lib/genericCheckinContent'
+import { CHECKIN_T, checkinDateLocale } from '../lib/genericCheckinContent'
+import { useLanguage } from '../lib/i18n/LanguageContext'
 
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
@@ -13,14 +14,21 @@ const label = { display: 'block', fontSize: '9px', letterSpacing: '0.15em', text
 function emptyPassenger() { return { name: '', age: '' } }
 
 // identifier: { email, eventId }
-export default function CheckinWaiverSection({ waiverText, identifier, waiver, carYear, carMake, carModel, maxPassengers, onSaved }) {
+// tripPassengers: extra passengers (excluding the driver) already entered in
+// Trip Details, if that section ran first — pre-fills this section instead
+// of asking for the same names again, while staying editable in case the
+// people riding along changed since.
+export default function CheckinWaiverSection({ waiverText, identifier, waiver, carYear, carMake, carModel, maxPassengers, tripPassengers, onSaved }) {
+  const { lang } = useLanguage()
+  const t = CHECKIN_T[lang]
   const [fullName, setFullName] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [vehicleYear, setVehicleYear] = useState(carYear || '')
   const [vehicleMake, setVehicleMake] = useState(carMake || '')
   const [vehicleModel, setVehicleModel] = useState(carModel || '')
-  const [passengers, setPassengers] = useState([])
-  const [hasPassengers, setHasPassengers] = useState(false)
+  const prefilledExtra = (tripPassengers || []).filter(p => p.name?.trim())
+  const [passengers, setPassengers] = useState(() => prefilledExtra.length ? prefilledExtra.map(p => ({ name: p.name, age: String(p.age || '') })) : [])
+  const [hasPassengers, setHasPassengers] = useState(() => prefilledExtra.length > 0)
   const [emergencyName, setEmergencyName] = useState('')
   const [emergencyPhone, setEmergencyPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -80,7 +88,7 @@ export default function CheckinWaiverSection({ waiverText, identifier, waiver, c
             {waiver.full_name}
           </div>
           <div style={{ marginBottom: '0.5rem' }}>
-            {t.signedByOn} {new Date(waiver.signed_at).toLocaleDateString(checkinDateLocale(), { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}.
+            {t.signedByOn} {new Date(waiver.signed_at).toLocaleDateString(checkinDateLocale(lang), { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}.
           </div>
           <div style={{ fontSize: '12px', color: '#aaa' }}>{t.waiverLockedNote}</div>
         </div>
@@ -132,10 +140,11 @@ export default function CheckinWaiverSection({ waiverText, identifier, waiver, c
 
         {maxExtra > 0 && (
           <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#666', marginBottom: hasPassengers ? '0.75rem' : 0 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: '#666', marginBottom: '0.35rem' }}>
               <input type="checkbox" checked={hasPassengers} onChange={e => { setHasPassengers(e.target.checked); if (e.target.checked && passengers.length === 0) setPassengers([emptyPassenger()]) }} style={{ width: '14px', height: '14px', accentColor: '#45643c' }} />
               {t.bringingPassengers}
             </label>
+            <p style={{ fontSize: '11px', color: '#aaa', lineHeight: 1.6, margin: hasPassengers ? '0 0 0.75rem' : 0 }}>{t.bringingPassengersHint}</p>
             {hasPassengers && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="wtetci-fade-in">
                 {passengers.map((p, i) => (

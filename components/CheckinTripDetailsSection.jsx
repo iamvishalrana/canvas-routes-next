@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
 import SectionCard from './WtetSectionCard'
-import { CHECKIN_T as t } from '../lib/genericCheckinContent'
+import { CHECKIN_T } from '../lib/genericCheckinContent'
+import { useLanguage } from '../lib/i18n/LanguageContext'
 
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
@@ -18,6 +19,8 @@ function parsePassengerCount(str, max) {
 
 // identifier: { email, eventId }
 export default function CheckinTripDetailsSection({ identifier, alreadyCompleted, initialPassengerCount, maxPassengers, onSaved }) {
+  const { lang } = useLanguage()
+  const t = CHECKIN_T[lang]
   const [editing, setEditing] = useState(!alreadyCompleted)
   const [dietary, setDietary] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
