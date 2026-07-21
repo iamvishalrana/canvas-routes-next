@@ -102,7 +102,9 @@ export default function RouteEventConfigClient({ eventId }) {
       {tab === 'registrants' && (
         <div>
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
-            <CheckinEnabledToggle form={form} setForm={setForm} save={save} eventId={eventId} />
+            {!form.checkin_enabled && (
+              <div style={{ fontSize: '12px', color: '#999', marginBottom: '1rem' }}>Check-in isn't enabled yet — turn it on from the Waiver tab.</div>
+            )}
 
             {form.checkin_enabled && (
               <>
