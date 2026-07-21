@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 
 const TRIP_TYPES = [
@@ -543,6 +544,12 @@ export default function RoadtripsAdminClient() {
                   )}
                   <GhostBtn small onClick={() => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }} disabled={r.interested_count === 0}>Email</GhostBtn>
                   <GhostBtn small onClick={() => exportRouteCSV(r)} disabled={r.interested_count === 0}>Export CSV</GhostBtn>
+                  {r.event_id && (
+                    <Link href="/admin/events" title={`Manage in Admin > Events under "${r.name}"`}
+                      style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: '#8a6535', border: '0.5px solid rgba(197,168,130,0.5)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Registrants, Waiver, Lunch & Awards →
+                    </Link>
+                  )}
                   {!r.launched && !r.is_past && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
                   <div style={{ marginLeft: 'auto' }}>
                     {deleteConfirm === r.id ? (
