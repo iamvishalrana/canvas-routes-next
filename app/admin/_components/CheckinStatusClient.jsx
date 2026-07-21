@@ -20,6 +20,12 @@ function Pill({ done, doneLabel, pendingLabel }) {
   )
 }
 
+const PAYMENT_LABEL = {
+  authorized: { text: 'Hold — awaiting capture', color: '#7B5B2E' },
+  pending:    { text: 'Payment pending', color: '#999' },
+  paid:       { text: 'Paid', color: '#3B6B2F' },
+}
+
 // eventId: the event this status view is scoped to.
 export default function CheckinStatusClient({ eventId }) {
   const [event, setEvent] = useState(null)
@@ -28,6 +34,32 @@ export default function CheckinStatusClient({ eventId }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [expandedEmail, setExpandedEmail] = useState(null)
+  const [busyId, setBusyId] = useState(null)
+  const [declineConfirm, setDeclineConfirm] = useState(null) // application id
+  const [actionError, setActionError] = useState(null)
+
+  async function capturePayment(applicationId) {
+    setBusyId(applicationId); setActionError(null)
+    try {
+      const res = await fetch(`/api/admin/applications/${applicationId}/capture`, { method: 'POST' })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Capture failed.'); return }
+      load()
+    } catch { setActionError('Network error.') }
+    finally { setBusyId(null) }
+  }
+
+  async function declinePayment(applicationId) {
+    setBusyId(applicationId); setActionError(null)
+    try {
+      const res = await fetch(`/api/admin/applications/${applicationId}/reject`, { method: 'POST' })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Decline failed.'); return }
+      setDeclineConfirm(null)
+      load()
+    } catch { setActionError('Network error.') }
+    finally { setBusyId(null) }
+  }
 
   const load = useCallback(() => {
     setLoading(true)
@@ -123,6 +155,10 @@ export default function CheckinStatusClient({ eventId }) {
         <span style={{ fontSize: '11px', color: '#aaa', marginLeft: 'auto' }}>{filtered.length} of {total}</span>
       </div>
 
+      {actionError && (
+        <div style={{ fontSize: '12px', color: '#93333E', padding: '0.6rem 0.9rem', background: 'rgba(147,51,62,0.05)', border: '0.5px solid rgba(147,51,62,0.2)', borderRadius: '8px', marginBottom: '1rem' }}>{actionError}</div>
+      )}
+
       {filtered.length === 0 ? (
         <div style={{ ...CARD, padding: '2.5rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
           {total === 0 ? 'No registrants for this event yet.' : 'No participants match this filter.'}
@@ -141,12 +177,18 @@ export default function CheckinStatusClient({ eventId }) {
                     <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.name || '—'}</div>
                     <div style={{ fontSize: '11px', color: '#999' }}>{p.email}</div>
                   </div>
+                  {p.paymentStatus && PAYMENT_LABEL[p.paymentStatus] && (
+                    <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: PAYMENT_LABEL[p.paymentStatus].color, whiteSpace: 'nowrap' }}>
+                      {PAYMENT_LABEL[p.paymentStatus].text}
+                    </span>
+                  )}
                   {hasTrip && <Pill done={!!p.trip_details} doneLabel="Trip ✓" pendingLabel="Trip missing" />}
                   {hasWaiver && <Pill done={!!p.waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />}
                   {hasLunch && <Pill done={p.lunch?.length > 0} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />}
                 </div>
                 {isOpen && (
-                  <div style={{ padding: '1rem 1.25rem 1.25rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+                  <>
+                  <div style={{ padding: '1rem 1.25rem 1.25rem', background: '#fafaf9', borderBottom: p.paymentStatus === 'authorized' ? 'none' : (idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none'), display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
                     {hasTrip && (
                       <div>
                         <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Trip Details</div>
@@ -187,6 +229,35 @@ export default function CheckinStatusClient({ eventId }) {
                       </div>
                     )}
                   </div>
+                  {p.paymentStatus === 'authorized' && p.applicationId && (
+                    <div style={{ padding: '0 1.25rem 1.1rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button type="button" onClick={() => capturePayment(p.applicationId)} disabled={busyId === p.applicationId}
+                          style={{ padding: '0.5rem 1.1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: busyId === p.applicationId ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                          {busyId === p.applicationId ? 'Working…' : 'Capture Payment'}
+                        </button>
+                        {declineConfirm === p.applicationId ? (
+                          <>
+                            <span style={{ fontSize: '11px', color: '#93333E' }}>Decline and release the hold?</span>
+                            <button type="button" onClick={() => declinePayment(p.applicationId)} disabled={busyId === p.applicationId}
+                              style={{ padding: '0.5rem 1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.4)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: busyId === p.applicationId ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              Yes, decline
+                            </button>
+                            <button type="button" onClick={() => setDeclineConfirm(null)}
+                              style={{ padding: '0.5rem 1rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button type="button" onClick={() => setDeclineConfirm(p.applicationId)} disabled={busyId === p.applicationId}
+                            style={{ padding: '0.5rem 1.1rem', background: 'transparent', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: busyId === p.applicationId ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            Decline
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  </>
                 )}
               </div>
             )

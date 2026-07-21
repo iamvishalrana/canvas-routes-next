@@ -26,6 +26,9 @@ export async function GET(request, { params }) {
       trip_details: c?.trip_details || null,
       waiver: c?.waiver || null,
       lunch: c?.lunch || null,
+      paymentStatus: r.paymentStatus,
+      applicationId: r.applicationId,
+      amountPaid: r.amountPaid,
     }
   })
 
