@@ -1,6 +1,17 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from './useRealtimeSync'
+import GenericWaiverViewerModal from './GenericWaiverViewerModal'
+
+const SECTION_LABEL_MAP = { trip_details: 'Trip Details', waiver: 'Waiver', lunch: 'Lunch' }
+
+function downloadFile(content, filename, mime) {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }))
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
 
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
 
@@ -17,6 +28,36 @@ function Pill({ done, doneLabel, pendingLabel }) {
     }}>
       {done ? doneLabel : pendingLabel}
     </span>
+  )
+}
+
+// Every check-in section is immutable once submitted (see the reset-section
+// API route's comment) — this is the self-serve admin escape hatch when a
+// registrant needs to redo one after a typo or a changed plan.
+function ResetLink({ email, section, resetConfirm, setResetConfirm, resetBusy, resetSection }) {
+  const key = `${email}:${section}`
+  const busy = resetBusy === key
+  if (resetConfirm === key) {
+    return (
+      <span style={{ fontSize: '11px' }}>
+        <span style={{ color: '#93333E' }}>Reset {SECTION_LABEL_MAP[section]} so they can redo it? </span>
+        <button type="button" onClick={() => resetSection(email, section)} disabled={busy}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: busy ? 'wait' : 'pointer', color: '#93333E', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+          {busy ? 'Resetting…' : 'Yes, reset'}
+        </button>
+        {' · '}
+        <button type="button" onClick={() => setResetConfirm(null)}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#888', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+          Cancel
+        </button>
+      </span>
+    )
+  }
+  return (
+    <button type="button" onClick={() => setResetConfirm(key)}
+      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#93333E', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
+      Reset {SECTION_LABEL_MAP[section]}
+    </button>
   )
 }
 
@@ -44,6 +85,49 @@ export default function CheckinStatusClient({ eventId }) {
   const [addError, setAddError] = useState(null)
   const [removeConfirm, setRemoveConfirm] = useState(null) // email
   const [removingEmail, setRemovingEmail] = useState(null)
+  const [viewingWaiver, setViewingWaiver] = useState(null)
+  const [resetConfirm, setResetConfirm] = useState(null) // `${email}:${section}`
+  const [resetBusy, setResetBusy] = useState(null)
+  const [copiedEmail, setCopiedEmail] = useState(null)
+
+  function copyEmail(email) {
+    if (!navigator?.clipboard?.writeText) return
+    navigator.clipboard.writeText(email).then(() => {
+      setCopiedEmail(email)
+      setTimeout(() => setCopiedEmail(null), 1500)
+    }).catch(() => {})
+  }
+
+  async function resetSection(email, section) {
+    const key = `${email}:${section}`
+    setResetBusy(key); setActionError(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/reset-section`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, section }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Failed to reset.'); return }
+      setResetConfirm(null)
+      load()
+    } catch { setActionError('Network error.') }
+    finally { setResetBusy(null) }
+  }
+
+  function exportRegistrantsCSV() {
+    const rows = [
+      ['Name', 'Email', 'Payment Status', 'Member', 'Promo Code', 'Discount', 'Car', 'Phone', 'Trip Details', 'Waiver Signed', 'Lunch Selected'],
+      ...participants.map(p => [
+        p.name || '', p.email, p.paymentStatus || '', p.isMember ? 'Yes' : 'No',
+        p.discount?.code || '', p.discount ? (p.discount.amount / 100).toFixed(2) : '',
+        [p.registration?.carYear, p.registration?.carMake, p.registration?.carModel].filter(Boolean).join(' '),
+        p.registration?.phone || '',
+        p.trip_details ? 'Yes' : 'No', p.waiver ? 'Yes' : 'No', p.lunch?.length > 0 ? 'Yes' : 'No',
+      ]),
+    ]
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    downloadFile(csv, `registrants-${eventId}-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')
+  }
 
   async function addRegistrant(e) {
     e.preventDefault()
@@ -215,7 +299,13 @@ export default function CheckinStatusClient({ eventId }) {
             {f.label}
           </button>
         ))}
-        <span style={{ fontSize: '11px', color: '#aaa', marginLeft: 'auto' }}>{filtered.length} of {total}</span>
+        <span style={{ fontSize: '11px', color: '#aaa' }}>{filtered.length} of {total}</span>
+        {total > 0 && (
+          <button type="button" onClick={exportRegistrantsCSV}
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>
+            Export CSV
+          </button>
+        )}
       </div>
 
       {actionError && (
@@ -238,8 +328,19 @@ export default function CheckinStatusClient({ eventId }) {
                 >
                   <div style={{ minWidth: 0, flex: '1 1 200px' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.name || '—'}</div>
-                    <div style={{ fontSize: '11px', color: '#999' }}>{p.email}</div>
+                    <div style={{ fontSize: '11px', color: '#999', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {p.email}
+                      <button type="button" onClick={e => { e.stopPropagation(); copyEmail(p.email) }}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: copiedEmail === p.email ? '#3B6B2F' : '#ccc', fontSize: '10px' }}>
+                        {copiedEmail === p.email ? '✓ Copied' : 'Copy'}
+                      </button>
+                    </div>
                   </div>
+                  {[p.registration?.carYear, p.registration?.carMake, p.registration?.carModel].filter(Boolean).length > 0 && (
+                    <div style={{ fontSize: '12px', color: '#888', flex: '0 0 auto', minWidth: '110px' }}>
+                      {[p.registration?.carYear, p.registration?.carMake, p.registration?.carModel].filter(Boolean).join(' ')}
+                    </div>
+                  )}
                   {p.paymentStatus && PAYMENT_LABEL[p.paymentStatus] && (
                     <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: PAYMENT_LABEL[p.paymentStatus].color, whiteSpace: 'nowrap' }}>
                       {PAYMENT_LABEL[p.paymentStatus].text}
@@ -291,6 +392,11 @@ export default function CheckinStatusClient({ eventId }) {
                             ))}
                             {p.trip_details.dietary && <>Dietary: {p.trip_details.dietary}<br /></>}
                             {p.trip_details.whatsapp && <>WhatsApp: {p.trip_details.whatsapp}<br /></>}
+                            {p.trip_details.completed_at && (
+                              <span style={{ color: '#aaa' }}>Submitted {new Date(p.trip_details.completed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>
+                            )}
+                            <br />
+                            <ResetLink email={p.email} section="trip_details" resetConfirm={resetConfirm} setResetConfirm={setResetConfirm} resetBusy={resetBusy} resetSection={resetSection} />
                           </div>
                         ) : <div style={{ fontSize: '12px', color: '#bbb' }}>Not submitted yet.</div>}
                       </div>
@@ -301,9 +407,15 @@ export default function CheckinStatusClient({ eventId }) {
                         {p.waiver ? (
                           <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                             Signed by <strong>{p.waiver.full_name}</strong><br />
-                            {new Date(p.waiver.signed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}<br />
+                            {new Date(p.waiver.signed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })} · IP {p.waiver.ip_address}<br />
                             Vehicle: {[p.waiver.vehicle?.year, p.waiver.vehicle?.make, p.waiver.vehicle?.model].filter(Boolean).join(' ') || '—'}<br />
                             Emergency contact: {p.waiver.emergency_contact?.name} · {p.waiver.emergency_contact?.phone}
+                            <br />
+                            <button type="button" onClick={() => setViewingWaiver({ name: p.name, email: p.email, waiver: p.waiver })}
+                              style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', marginRight: '1rem', cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              View full waiver
+                            </button>
+                            <ResetLink email={p.email} section="waiver" resetConfirm={resetConfirm} setResetConfirm={setResetConfirm} resetBusy={resetBusy} resetSection={resetSection} />
                           </div>
                         ) : <div style={{ fontSize: '12px', color: '#bbb' }}>Not signed yet.</div>}
                       </div>
@@ -316,6 +428,11 @@ export default function CheckinStatusClient({ eventId }) {
                             {p.lunch.map((entry, i) => (
                               <div key={i}>{entry.name || (i === 0 ? 'Driver' : `Passenger ${i + 1}`)}: {entry.dish_name}</div>
                             ))}
+                            {p.lunch[0]?.selected_at && (
+                              <span style={{ color: '#aaa' }}>Selected {new Date(p.lunch[0].selected_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>
+                            )}
+                            <br />
+                            <ResetLink email={p.email} section="lunch" resetConfirm={resetConfirm} setResetConfirm={setResetConfirm} resetBusy={resetBusy} resetSection={resetSection} />
                           </div>
                         ) : <div style={{ fontSize: '12px', color: '#bbb' }}>Not selected yet.</div>}
                       </div>
@@ -377,6 +494,15 @@ export default function CheckinStatusClient({ eventId }) {
             )
           })}
         </div>
+      )}
+      {viewingWaiver && (
+        <GenericWaiverViewerModal
+          eventName={event?.name || 'Canvas Routes'}
+          name={viewingWaiver.name}
+          email={viewingWaiver.email}
+          waiver={viewingWaiver.waiver}
+          onClose={() => setViewingWaiver(null)}
+        />
       )}
     </div>
   )
