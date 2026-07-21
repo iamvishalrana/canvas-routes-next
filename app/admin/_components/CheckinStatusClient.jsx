@@ -61,20 +61,23 @@ export default function CheckinStatusClient({ eventId }) {
     finally { setBusyId(null) }
   }
 
-  const load = useCallback(() => {
-    setLoading(true)
+  const load = useCallback(({ silent = false } = {}) => {
+    if (!silent) setLoading(true)
     fetch(`/api/admin/checkin/${eventId}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => {
         setEvent(d.event)
         setParticipants(Array.isArray(d.participants) ? d.participants : [])
       })
-      .catch(() => setParticipants([]))
-      .finally(() => setLoading(false))
+      .catch(() => { if (!silent) setParticipants([]) })
+      .finally(() => { if (!silent) setLoading(false) })
   }, [eventId])
 
   useEffect(() => { load() }, [load])
-  useRealtimeSync(['event_checkins', 'applications', 'event_registrations'], load)
+  // Silent — a realtime event elsewhere (any application, any event's
+  // check-in) shouldn't flash this whole panel back to a loading spinner
+  // and collapse whichever registrant row the admin currently has open.
+  useRealtimeSync(['event_checkins', 'applications', 'event_registrations'], () => load({ silent: true }))
 
   const sections = event?.checkin_sections || []
   const hasTrip = sections.includes('trip_details')

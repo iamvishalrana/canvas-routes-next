@@ -75,8 +75,16 @@ export default function RouteEventConfigClient({ eventId }) {
     }).finally(() => setLoading(false))
   }, [eventId])
 
+  // Lighter refresh for realtime — only touches the participants list, never
+  // form/loading, so an admin mid-edit in the waiver textareas never has
+  // their unsaved draft clobbered by someone else's check-in landing elsewhere.
+  const refreshParticipants = useCallback(() => {
+    fetch(`/api/admin/checkin/${eventId}`).then(r => r.ok ? r.json() : null).catch(() => null)
+      .then(checkinData => setParticipants(Array.isArray(checkinData?.participants) ? checkinData.participants : []))
+  }, [eventId])
+
   useEffect(() => { load() }, [load])
-  useRealtimeSync(['event_checkins'], load)
+  useRealtimeSync(['event_checkins'], refreshParticipants)
 
   async function save(fields, { silent = false } = {}) {
     if (!silent) { setSaving(true); setSaveError(null) }
@@ -96,7 +104,7 @@ export default function RouteEventConfigClient({ eventId }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: '0.5rem', padding: '1.25rem 1.5rem 0' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', padding: '1.25rem 1.5rem 0', flexWrap: 'wrap' }}>
         <TabBtn active={tab === 'registrants'} onClick={() => setTab('registrants')}>Registrants</TabBtn>
         <TabBtn active={tab === 'waiver'} onClick={() => setTab('waiver')}>Waiver</TabBtn>
         <TabBtn active={tab === 'lunch'} onClick={() => setTab('lunch')}>Lunch</TabBtn>
