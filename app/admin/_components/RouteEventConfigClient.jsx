@@ -6,6 +6,20 @@ import AwardsTallyClient from './AwardsTallyClient'
 
 const smallTextarea = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }
 
+function CheckinEnabledToggle({ form, setForm, save, eventId }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Check-in enabled</div>
+        <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>
+          {form.checkin_enabled ? `Public check-in page: canvasroutes.com/checkin/${eventId}` : 'Turn on to let registrants use the check-in page.'}
+        </div>
+      </div>
+      <ToggleSwitch checked={form.checkin_enabled} onChange={v => { setForm(p => ({ ...p, checkin_enabled: v })); save({ checkin_enabled: v }, { silent: true }) }} label="Check-in enabled" />
+    </div>
+  )
+}
+
 function TabBtn({ active, onClick, children }) {
   return (
     <button type="button" onClick={onClick}
@@ -30,13 +44,12 @@ function TabBtn({ active, onClick, children }) {
 // parallel system. Split into three button-selected tabs (only one visible
 // at a time) instead of one long stacked page.
 export default function RouteEventConfigClient({ eventId }) {
-  const [tab, setTab] = useState('registrants') // registrants | lunch | awards
+  const [tab, setTab] = useState('registrants') // registrants | waiver | lunch | awards
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
-  const [showWaiverText, setShowWaiverText] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -81,6 +94,7 @@ export default function RouteEventConfigClient({ eventId }) {
     <div>
       <div style={{ display: 'flex', gap: '0.5rem', padding: '1.25rem 1.5rem 0' }}>
         <TabBtn active={tab === 'registrants'} onClick={() => setTab('registrants')}>Registrants</TabBtn>
+        <TabBtn active={tab === 'waiver'} onClick={() => setTab('waiver')}>Waiver</TabBtn>
         <TabBtn active={tab === 'lunch'} onClick={() => setTab('lunch')}>Lunch</TabBtn>
         <TabBtn active={tab === 'awards'} onClick={() => setTab('awards')}>Awards</TabBtn>
       </div>
@@ -88,15 +102,7 @@ export default function RouteEventConfigClient({ eventId }) {
       {tab === 'registrants' && (
         <div>
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Check-in enabled</div>
-                <div style={{ fontSize: '12px', color: '#888', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>
-                  {form.checkin_enabled ? `Public check-in page: canvasroutes.com/checkin/${eventId}` : 'Turn on to let registrants use the check-in page.'}
-                </div>
-              </div>
-              <ToggleSwitch checked={form.checkin_enabled} onChange={v => { setForm(p => ({ ...p, checkin_enabled: v })); save({ checkin_enabled: v }, { silent: true }) }} label="Check-in enabled" />
-            </div>
+            <CheckinEnabledToggle form={form} setForm={setForm} save={save} eventId={eventId} />
 
             {form.checkin_enabled && (
               <>
@@ -115,26 +121,6 @@ export default function RouteEventConfigClient({ eventId }) {
                     })}
                   </div>
                 </div>
-
-                {(form.checkin_sections || []).includes('waiver') && (
-                  <div style={{ marginBottom: '1rem' }}>
-                    <GhostBtn small onClick={() => setShowWaiverText(v => !v)}>{showWaiverText ? 'Hide Waiver Text' : 'Edit Waiver Text'}</GhostBtn>
-                    {showWaiverText && (
-                      <div style={{ marginTop: '0.75rem' }}>
-                        <L>Waiver Text (English)</L>
-                        <textarea style={{ ...smallTextarea, marginBottom: '0.65rem' }}
-                          value={form.checkin_waiver_text}
-                          onChange={e => setForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
-                          placeholder="Paste the liability waiver text participants will read and agree to…" />
-                        <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
-                        <textarea style={smallTextarea}
-                          value={form.checkin_waiver_text_fr}
-                          onChange={e => setForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
-                          placeholder="Collez le texte de la décharge en français…" />
-                      </div>
-                    )}
-                  </div>
-                )}
               </>
             )}
 
@@ -142,8 +128,6 @@ export default function RouteEventConfigClient({ eventId }) {
               <PrimaryBtn small disabled={saving} onClick={() => save({
                 checkin_sections: form.checkin_sections,
                 checkin_max_passengers: 2, // always 2 per car — not admin-configurable
-                checkin_waiver_text: form.checkin_waiver_text,
-                checkin_waiver_text_fr: form.checkin_waiver_text_fr,
               })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
               {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
             </div>
@@ -151,6 +135,32 @@ export default function RouteEventConfigClient({ eventId }) {
           </div>
 
           {form.checkin_enabled && <CheckinStatusClient eventId={eventId} />}
+        </div>
+      )}
+
+      {tab === 'waiver' && (
+        <div style={{ padding: '1.25rem 1.5rem' }}>
+          <CheckinEnabledToggle form={form} setForm={setForm} save={save} eventId={eventId} />
+
+          <L>Waiver Text (English)</L>
+          <textarea style={{ ...smallTextarea, marginBottom: '0.65rem' }}
+            value={form.checkin_waiver_text}
+            onChange={e => setForm(p => ({ ...p, checkin_waiver_text: e.target.value }))}
+            placeholder="Paste the liability waiver text participants will read and agree to…" />
+          <L>Waiver Text (French) — shown alongside English, always, regardless of the page's language toggle</L>
+          <textarea style={smallTextarea}
+            value={form.checkin_waiver_text_fr}
+            onChange={e => setForm(p => ({ ...p, checkin_waiver_text_fr: e.target.value }))}
+            placeholder="Collez le texte de la décharge en français…" />
+
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '1.1rem' }}>
+            <PrimaryBtn small disabled={saving} onClick={() => save({
+              checkin_waiver_text: form.checkin_waiver_text,
+              checkin_waiver_text_fr: form.checkin_waiver_text_fr,
+            })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
+            {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+          </div>
+          <Err msg={saveError} />
         </div>
       )}
 

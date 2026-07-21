@@ -18,6 +18,8 @@ const TRIP_TYPES = [
 ]
 const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
 
+const smallTextarea = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', resize: 'vertical' }
+
 const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '', is_past: false, cars_rolled_out: '', photo_url: '', recap_href: '', registration_url: '' }
 
 const splitActs = v => (v || '').split(',').map(x => x.trim()).filter(Boolean)
@@ -463,7 +465,7 @@ export default function RoadtripsAdminClient() {
         </div>
         <div style={{ marginBottom: '0.6rem' }}>
           <L>Itinerary (optional — shown on the card, expandable)</L>
-          <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.itinerary} onChange={e => setForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
+          <textarea style={{ ...smallTextarea, height: '65px' }} value={form.itinerary} onChange={e => setForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
         </div>
         <div style={{ marginBottom: '0.6rem' }}>
           <L>Activity options (comma-separated — asked on the interest form)</L>
@@ -471,7 +473,7 @@ export default function RoadtripsAdminClient() {
         </div>
         <div style={{ marginBottom: '0.75rem' }}>
           <L>Description</L>
-          <textarea style={{ ...inp, height: '72px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} maxLength={600} placeholder="Short evocative description shown on the card." />
+          <textarea style={{ ...smallTextarea, height: '55px' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} maxLength={600} placeholder="Short evocative description shown on the card." />
         </div>
         <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
           <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={inp} value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
@@ -588,7 +590,7 @@ export default function RoadtripsAdminClient() {
                 {launchFor === r.id && (
                   <div style={{ marginTop: '0.85rem', padding: '0.85rem', background: 'rgba(197,168,130,0.06)', border: '0.5px solid rgba(197,168,130,0.3)', borderRadius: '8px' }}>
                     <L>Launch message (optional — included in the email to all {r.interested_count} interested)</L>
-                    <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={launchMsg} onChange={e => setLaunchMsg(e.target.value)} placeholder="Meeting point, timing, per-car fee, convoy rules…" maxLength={1500} />
+                    <textarea style={{ ...smallTextarea, height: '65px' }} value={launchMsg} onChange={e => setLaunchMsg(e.target.value)} placeholder="Meeting point, timing, per-car fee, convoy rules…" maxLength={1500} />
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
                       <PrimaryBtn small disabled={launching} onClick={() => launch(r.id)}>{launching ? 'Launching…' : `Launch & email ${r.interested_count}`}</PrimaryBtn>
                       <GhostBtn small onClick={() => setLaunchFor(null)}>Cancel</GhostBtn>
@@ -601,7 +603,7 @@ export default function RoadtripsAdminClient() {
                   <div style={{ marginTop: '0.85rem', padding: '0.85rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.12)', borderRadius: '8px' }}>
                     <L>Email all {r.interested_count} interested driver{r.interested_count !== 1 ? 's' : ''}</L>
                     <input style={{ ...inp, marginBottom: '0.5rem' }} value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={`Subject (default: Update — ${r.name})`} maxLength={140} />
-                    <textarea style={{ ...inp, height: '96px', resize: 'vertical' }} value={emailMsg} onChange={e => setEmailMsg(e.target.value)} placeholder="Your message to everyone interested in this route…" maxLength={3000} />
+                    <textarea style={{ ...smallTextarea, height: '75px' }} value={emailMsg} onChange={e => setEmailMsg(e.target.value)} placeholder="Your message to everyone interested in this route…" maxLength={3000} />
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
                       <PrimaryBtn small disabled={emailing || !emailMsg.trim()} onClick={() => sendBroadcast(r.id)}>{emailing ? 'Sending…' : `Send to ${r.interested_count}`}</PrimaryBtn>
                       <GhostBtn small onClick={() => setEmailFor(null)}>Cancel</GhostBtn>
@@ -637,7 +639,7 @@ export default function RoadtripsAdminClient() {
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Itinerary</L>
-                      <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.itinerary} onChange={e => setEditForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
+                      <textarea style={{ ...smallTextarea, height: '65px' }} value={editForm.itinerary} onChange={e => setEditForm(p => ({ ...p, itinerary: e.target.value }))} maxLength={2000} placeholder="Stops, timing, route notes…" />
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Activity options (comma-separated)</L>
@@ -645,7 +647,7 @@ export default function RoadtripsAdminClient() {
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Description</L>
-                      <textarea style={{ ...inp, height: '72px', resize: 'vertical' }} value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} maxLength={600} />
+                      <textarea style={{ ...smallTextarea, height: '55px' }} value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} maxLength={600} />
                     </div>
                     <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
                       <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={inp} value={editForm.photo_url} onChange={e => setEditForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
