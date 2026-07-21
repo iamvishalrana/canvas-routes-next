@@ -29,6 +29,7 @@ export async function GET(request, { params }) {
       paymentStatus: r.paymentStatus,
       applicationId: r.applicationId,
       amountPaid: r.amountPaid,
+      registration: r.registration || null,
     }
   })
 

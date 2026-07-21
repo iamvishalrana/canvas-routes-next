@@ -189,6 +189,25 @@ export default function CheckinStatusClient({ eventId }) {
                 {isOpen && (
                   <>
                   <div style={{ padding: '1rem 1.25rem 1.25rem', background: '#fafaf9', borderBottom: p.paymentStatus === 'authorized' ? 'none' : (idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none'), display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+                    {p.registration && (
+                      <div>
+                        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Registration Details</div>
+                        <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
+                          {(p.registration.carYear || p.registration.carMake || p.registration.carModel) && (
+                            <>Car: {[p.registration.carYear, p.registration.carMake, p.registration.carModel].filter(Boolean).join(' ')}<br /></>
+                          )}
+                          {p.registration.phone && <>Phone: {p.registration.phone}<br /></>}
+                          {p.registration.instagram && <>Instagram: @{p.registration.instagram}<br /></>}
+                          {p.registration.passengers && <>Passengers: {p.registration.passengers}<br /></>}
+                          {p.registration.hasChildren && (
+                            <>Children: {p.registration.hasChildren === 'yes' ? `Yes${p.registration.childrenAges ? ` (ages ${p.registration.childrenAges})` : ''}` : 'No'}<br /></>
+                          )}
+                          {p.registration.dob && <>DOB: {p.registration.dob}<br /></>}
+                          {p.registration.source && <>Heard about us via: {p.registration.source}<br /></>}
+                          {p.registration.message && <>Message: {p.registration.message}<br /></>}
+                        </div>
+                      </div>
+                    )}
                     {hasTrip && (
                       <div>
                         <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Trip Details</div>
