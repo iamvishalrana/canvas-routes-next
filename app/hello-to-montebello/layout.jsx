@@ -13,14 +13,14 @@ export const metadata = {
     type: 'website',
     siteName: 'Canvas Routes',
     title: 'Hello to Montebello — August 1 | Canvas Routes',
-    description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee at L\'Atelier des Deux P, lunch at Aux Chantignoles, chocolate at Chocomotive. $199 members / $225.',
+    description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee at L\'Atelier des Deux P, lunch at Aux Chantignoles, a stroll around Montebello. $199 members / $225.',
     url: 'https://canvasroutes.com/hello-to-montebello',
     images: [{ url: HERO_IMAGE, width: 1400, height: 788, alt: 'Hello to Montebello — Canvas Routes Route' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Hello to Montebello — August 1 | Canvas Routes',
-    description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee stop, lunch at Aux Chantignoles, chocolate at Chocomotive. $199 members / $225.',
+    description: 'Curated convoy from Montreal to Fairmont Le Château Montebello. Coffee stop, lunch at Aux Chantignoles, a stroll around Montebello. $199 members / $225.',
     images: [HERO_IMAGE],
   },
 }
@@ -33,7 +33,7 @@ const eventSchema = {
   endDate: '2026-08-01T20:00:00-04:00',
   eventStatus: 'https://schema.org/EventScheduled',
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-  description: 'A curated convoy from Montreal to Fairmont Le Château Montebello — coffee at L\'Atelier des Deux P in Amherst, lunch at Aux Chantignoles inside the largest log château in the world, and a stop at Chocomotive before the drive home.',
+  description: 'A curated convoy from Montreal to Fairmont Le Château Montebello — coffee at L\'Atelier des Deux P in Amherst, lunch at Aux Chantignoles inside the largest log château in the world, and a stroll around Montebello before the drive home.',
   image: HERO_IMAGE,
   url: 'https://canvasroutes.com/hello-to-montebello',
   location: {
