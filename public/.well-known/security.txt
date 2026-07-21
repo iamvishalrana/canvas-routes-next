@@ -1,0 +1,4 @@
+Contact: mailto:info@canvasroutes.com
+Expires: 2027-07-21T00:00:00.000Z
+Preferred-Languages: en, fr
+Canonical: https://canvasroutes.com/.well-known/security.txt
