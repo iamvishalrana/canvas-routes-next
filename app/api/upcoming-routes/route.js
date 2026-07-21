@@ -12,7 +12,7 @@ export async function GET(request) {
 
   const { data: routes, error } = await supabase
     .from('upcoming_routes')
-    .select('id, slug, name, destination, month_label, description, duration_label, distance_label, target_count, sort_order, trip_type, price_per_car, price_range, itinerary, activity_options, dest_lat, dest_lng, launched')
+    .select('id, slug, name, destination, month_label, description, duration_label, distance_label, target_count, sort_order, trip_type, price_per_car, price_range, itinerary, activity_options, dest_lat, dest_lng, launched, photo_url, registration_url')
     .eq('is_active', true)
     .eq('is_past', false)
     .order('sort_order', { ascending: true })

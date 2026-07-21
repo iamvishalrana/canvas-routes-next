@@ -2,7 +2,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 
-const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug', 'is_past', 'cars_rolled_out', 'photo_url', 'recap_href', 'launched']
+const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug', 'is_past', 'cars_rolled_out', 'photo_url', 'recap_href', 'launched', 'registration_url']
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -43,6 +43,7 @@ export async function PATCH(request, { params }) {
   }
   if ('photo_url' in update) update.photo_url = (update.photo_url || '').trim() || null
   if ('recap_href' in update) update.recap_href = (update.recap_href || '').trim() || null
+  if ('registration_url' in update) update.registration_url = (update.registration_url || '').trim() || null
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
 
   const supabase = createAdminClient()

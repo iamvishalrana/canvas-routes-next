@@ -9,7 +9,7 @@ const TRIP_TYPES = [
 ]
 const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
 
-const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '', is_past: false, cars_rolled_out: '', photo_url: '', recap_href: '' }
+const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '', is_past: false, cars_rolled_out: '', photo_url: '', recap_href: '', registration_url: '' }
 
 const splitActs = v => (v || '').split(',').map(x => x.trim()).filter(Boolean)
 
@@ -168,6 +168,7 @@ export default function RoadtripsAdminClient() {
       cars_rolled_out: r.cars_rolled_out != null ? String(r.cars_rolled_out) : '',
       photo_url: r.photo_url || '',
       recap_href: r.recap_href || '',
+      registration_url: r.registration_url || '',
     })
   }
 
@@ -434,6 +435,10 @@ export default function RoadtripsAdminClient() {
           <L>Description</L>
           <textarea style={{ ...inp, height: '72px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} maxLength={600} placeholder="Short evocative description shown on the card." />
         </div>
+        <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+          <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={inp} value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
+          <Field label="Registration link (once launched — points the tile to the public registration page)"><input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="/hello-to-montebello" /></Field>
+        </div>
         <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', marginBottom: '0.75rem' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#555', marginBottom: '0.6rem', cursor: 'pointer' }}>
             <input type="checkbox" checked={form.is_past} onChange={e => setForm(p => ({ ...p, is_past: e.target.checked }))} />
@@ -442,7 +447,6 @@ export default function RoadtripsAdminClient() {
           {form.is_past && (
             <div className="rta-grid rta-grid-3">
               <Field label="Cars rolled out"><input style={inp} type="number" inputMode="numeric" min="0" value={form.cars_rolled_out} onChange={e => setForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
-              <Field label="Photo URL"><input style={inp} value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/wtet.png" /></Field>
               <Field label="Recap link"><input style={inp} value={form.recap_href} onChange={e => setForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
             </div>
           )}
@@ -594,6 +598,10 @@ export default function RoadtripsAdminClient() {
                       <L>Description</L>
                       <textarea style={{ ...inp, height: '72px', resize: 'vertical' }} value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} maxLength={600} />
                     </div>
+                    <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
+                      <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={inp} value={editForm.photo_url} onChange={e => setEditForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
+                      <Field label="Registration link (once launched — points the tile to the public registration page)"><input style={inp} value={editForm.registration_url} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="/hello-to-montebello" /></Field>
+                    </div>
                     <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', marginBottom: '0.6rem' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#555', marginBottom: '0.6rem', cursor: 'pointer' }}>
                         <input type="checkbox" checked={editForm.is_past} onChange={e => setEditForm(p => ({ ...p, is_past: e.target.checked }))} />
@@ -602,7 +610,6 @@ export default function RoadtripsAdminClient() {
                       {editForm.is_past && (
                         <div className="rta-grid rta-grid-3">
                           <Field label="Cars rolled out"><input style={inp} type="number" inputMode="numeric" min="0" value={editForm.cars_rolled_out} onChange={e => setEditForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
-                          <Field label="Photo URL"><input style={inp} value={editForm.photo_url} onChange={e => setEditForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/wtet.png" /></Field>
                           <Field label="Recap link"><input style={inp} value={editForm.recap_href} onChange={e => setEditForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
                         </div>
                       )}

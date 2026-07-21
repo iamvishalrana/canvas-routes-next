@@ -441,6 +441,8 @@ export default function Home() {
         const featuredRoute = routesPopupMode === 'specific'
           ? teaserRoutes.find(r => r.slug === routesPopupRouteSlug)
           : null
+        const featuredPhoto = featuredRoute && (featuredRoute.photo_url || ROUTE_PHOTOS[featuredRoute.slug])
+        const featuredLaunched = !!(featuredRoute?.launched && featuredRoute.registration_url)
         return (
         <div
           role="dialog"
@@ -467,6 +469,14 @@ export default function Home() {
             {/* Gold top line */}
             <div style={{ height: '2px', background: 'linear-gradient(90deg, transparent, #c5a882, transparent)' }} />
 
+            {/* Hero image — specific-route mode only, when the route has a photo */}
+            {featuredPhoto && (
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
+                <img src={featuredPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.1) 0%, rgba(15,30,20,0.75) 100%)' }} />
+              </div>
+            )}
+
             <div style={{ padding: 'clamp(1.75rem,5vw,2.75rem)' }}>
               {/* Close — 44px target for iOS */}
               <button
@@ -491,7 +501,7 @@ export default function Home() {
                 fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
                 color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem',
               }}>
-                {featuredRoute ? t.popupSpecificEyebrow : t.popupEyebrow}
+                {featuredRoute ? (featuredLaunched ? t.popupSpecificEyebrowLaunched : t.popupSpecificEyebrow) : t.popupEyebrow}
               </div>
 
               {/* Heading */}
@@ -520,7 +530,7 @@ export default function Home() {
                 fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8',
                 fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem',
               }}>
-                {featuredRoute ? t.popupSpecificBody : t.popupBody}
+                {featuredRoute ? (featuredLaunched ? t.popupSpecificBodyLaunched : t.popupSpecificBody) : t.popupBody}
               </p>
 
               {/* Route names (general) / month label (specific) */}
@@ -532,9 +542,11 @@ export default function Home() {
                 {featuredRoute ? featuredRoute.month_label : 'Charlevoix · Gaspésie · Tobermory · Calabogie · Cabot Trail'}
               </div>
 
-              {/* CTA — full-width on mobile */}
+              {/* CTA — full-width on mobile. Once a featured route has launched
+                  and has its own registration page, send people straight there
+                  instead of the general /routes interest list. */}
               <a
-                href="/routes"
+                href={featuredLaunched ? featuredRoute.registration_url : '/routes'}
                 onClick={dismissRoutesPopup}
                 className="routes-popup-cta"
                 style={{
@@ -547,7 +559,7 @@ export default function Home() {
                 onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
                 onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
               >
-                {featuredRoute ? t.popupSpecificCta : t.popupCta} →
+                {featuredRoute ? (featuredLaunched ? t.popupSpecificCtaLaunched : t.popupSpecificCta) : t.popupCta} →
               </a>
 
               {/* Soft dismiss */}
@@ -833,8 +845,8 @@ export default function Home() {
                       onClick={r._past ? (e => { e.preventDefault(); setRecapRoute(r) }) : undefined}
                       className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer",opacity:r._past?0.82:1}}>
                       <div style={{position:"relative",aspectRatio:"16/9",overflow:"hidden",background:ACCENT_BGS[i % ACCENT_BGS.length]}}>
-                        {(r._past ? r.photo : ROUTE_PHOTOS[r.slug]) && (
-                          <img src={r._past ? r.photo : ROUTE_PHOTOS[r.slug]} alt="" className="route-teaser-photo"
+                        {(r._past ? r.photo : (r.photo_url || ROUTE_PHOTOS[r.slug])) && (
+                          <img src={r._past ? r.photo : (r.photo_url || ROUTE_PHOTOS[r.slug])} alt="" className="route-teaser-photo"
                             style={{width:"100%",height:"100%",objectFit:"cover",filter:r._past?"grayscale(0.65) brightness(0.85)":"none"}} loading="lazy" />
                         )}
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)"}} />

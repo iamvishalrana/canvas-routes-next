@@ -666,11 +666,11 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                   {/* Image area */}
                   <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9', background: ACCENT_BGS[i % ACCENT_BGS.length] }}>
                     <div className="rt-card-img" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative' }}>
-                      {ROUTE_PHOTOS[r.slug] && (
-                        <img src={ROUTE_PHOTOS[r.slug]} alt="" className="rt-card-photo"
+                      {(r.photo_url || ROUTE_PHOTOS[r.slug]) && (
+                        <img src={r.photo_url || ROUTE_PHOTOS[r.slug]} alt="" className="rt-card-photo"
                           loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
                       )}
-                      {ROUTE_PHOTOS[r.slug] ? (
+                      {(r.photo_url || ROUTE_PHOTOS[r.slug]) ? (
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.35) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.45) 100%)' }} />
                       ) : (
                         <div style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(1.2rem,3vw,1.6rem)', fontWeight: 300, color: 'rgba(245,241,236,0.18)', textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{r.name}</div>
@@ -749,6 +749,8 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         </div>
                         <button onClick={() => shareInterest(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', padding: '8px 10px' }} aria-label={t.share}>↗</button>
                       </div>
+                    ) : r.launched && r.registration_url ? (
+                      <Link href={r.registration_url} style={{ display: 'block', padding: '12px 14px', background: '#7B5B2E', border: '0.5px solid #7B5B2E', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', textAlign: 'center', textDecoration: 'none', fontWeight: 600 }}>{t.registerNow} →</Link>
                     ) : r.launched ? (
                       <div style={{ padding: '12px 14px', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', textAlign: 'center' }}>{t.routeLaunched}</div>
                     ) : (
