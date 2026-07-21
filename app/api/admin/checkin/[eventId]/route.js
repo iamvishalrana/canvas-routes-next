@@ -30,6 +30,8 @@ export async function GET(request, { params }) {
       applicationId: r.applicationId,
       amountPaid: r.amountPaid,
       registration: r.registration || null,
+      isMember: !!r.isMember,
+      discount: r.discount || null,
     }
   })
 

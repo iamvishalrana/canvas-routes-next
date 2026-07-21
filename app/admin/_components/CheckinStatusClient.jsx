@@ -245,6 +245,16 @@ export default function CheckinStatusClient({ eventId }) {
                       {PAYMENT_LABEL[p.paymentStatus].text}
                     </span>
                   )}
+                  {p.isMember && (
+                    <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', borderRadius: '99px', padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                      Member
+                    </span>
+                  )}
+                  {p.discount && (
+                    <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.4)', borderRadius: '99px', padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                      {p.discount.code ? `Promo ${p.discount.code}` : 'Promo'} −${(p.discount.amount / 100).toFixed(0)}
+                    </span>
+                  )}
                   {hasTrip && <Pill done={!!p.trip_details} doneLabel="Trip ✓" pendingLabel="Trip missing" />}
                   {hasWaiver && <Pill done={!!p.waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />}
                   {hasLunch && <Pill done={p.lunch?.length > 0} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />}

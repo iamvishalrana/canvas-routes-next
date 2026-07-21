@@ -6,6 +6,38 @@ import AwardsTallyClient from './AwardsTallyClient'
 import { useRealtimeSync } from './useRealtimeSync'
 
 const smallTextarea = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }
+const smallInput = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem' }
+
+// Flattens each registrant's per-passenger lunch pick into one row per
+// person — lunch entries only store name/dish, so age comes from the same
+// person's trip_details.passengers_list (matched by name, falling back to
+// index since both arrays are written in the same driver-first order).
+function buildLunchRows(participants) {
+  const rows = []
+  for (const p of participants) {
+    if (!p.lunch?.length) continue
+    const passengers = p.trip_details?.passengers_list || []
+    p.lunch.forEach((entry, i) => {
+      const passenger = passengers.find(pp => pp.name === entry.name) || passengers[i]
+      rows.push({
+        registrant: p.name || p.email,
+        email: p.email,
+        personName: entry.name || (i === 0 ? 'Driver' : `Passenger ${i + 1}`),
+        age: passenger?.age || '',
+        dish: entry.dish_name || '',
+      })
+    })
+  }
+  return rows
+}
+
+function downloadFile(content, filename, mime) {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }))
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
 
 function CheckinEnabledToggle({ form, setForm, save, eventId }) {
   return (
@@ -52,6 +84,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
   const [participants, setParticipants] = useState([])
+  const [showLunchConfig, setShowLunchConfig] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -86,6 +119,42 @@ export default function RouteEventConfigClient({ eventId }) {
 
   useEffect(() => { load() }, [load])
   useRealtimeSync(['event_checkins'], refreshParticipants)
+
+  function exportLunchCSV() {
+    const rows = [['Registrant', 'Email', 'Passenger', 'Age', 'Dish'], ...buildLunchRows(participants).map(r => [r.registrant, r.email, r.personName, r.age, r.dish])]
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    downloadFile(csv, `lunch-selections-${eventId}-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')
+  }
+
+  function exportLunchTXT() {
+    const byRegistrant = new Map()
+    for (const r of buildLunchRows(participants)) {
+      if (!byRegistrant.has(r.email)) byRegistrant.set(r.email, { registrant: r.registrant, lines: [] })
+      byRegistrant.get(r.email).lines.push(`  ${r.personName}${r.age ? ` (age ${r.age})` : ''}: ${r.dish}`)
+    }
+    const text = Array.from(byRegistrant.values()).map(g => `${g.registrant}\n${g.lines.join('\n')}`).join('\n\n')
+    downloadFile(text, `lunch-selections-${eventId}-${new Date().toISOString().slice(0, 10)}.txt`, 'text/plain')
+  }
+
+  function exportLunchPrint() {
+    const rows = buildLunchRows(participants)
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`<!doctype html><html><head><title>Lunch Selections</title><style>
+      body{font-family:sans-serif;padding:2rem;color:#1a1a1a}
+      h1{font-size:18px} table{width:100%;border-collapse:collapse;font-size:13px}
+      th,td{text-align:left;padding:6px 10px;border-bottom:1px solid #ddd}
+      th{color:#888;text-transform:uppercase;font-size:10px;letter-spacing:0.06em}
+    </style></head><body>
+      <h1>Lunch Selections</h1>
+      <table><thead><tr><th>Registrant</th><th>Passenger</th><th>Age</th><th>Dish</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td>${r.registrant}</td><td>${r.personName}</td><td>${r.age || '—'}</td><td>${r.dish}</td></tr>`).join('')}
+      </tbody></table>
+    </body></html>`)
+    win.document.close()
+    win.focus()
+    win.print()
+  }
 
   async function save(fields, { silent = false } = {}) {
     if (!silent) { setSaving(true); setSaveError(null) }
@@ -204,38 +273,84 @@ export default function RouteEventConfigClient({ eventId }) {
 
       {tab === 'lunch' && (
         <div style={{ padding: '1.25rem 1.5rem' }}>
-          <L>Lunch Cutoff</L>
-          <input type="datetime-local" style={{ ...inp, maxWidth: '240px', marginBottom: '1rem' }} value={form.checkin_lunch_cutoff}
-            onChange={e => setForm(p => ({ ...p, checkin_lunch_cutoff: e.target.value }))} />
+          <GhostBtn small onClick={() => setShowLunchConfig(v => !v)}>{showLunchConfig ? 'Hide Lunch Options' : 'Edit Lunch Options'}</GhostBtn>
 
-          <L>Lunch Intro (optional — shown above the dish choices, e.g. to mention a fixed starter/dessert or that drinks aren't included)</L>
-          <textarea style={{ ...smallTextarea, height: '65px', marginBottom: '1rem' }} value={form.checkin_lunch_intro}
-            onChange={e => setForm(p => ({ ...p, checkin_lunch_intro: e.target.value }))}
-            placeholder="e.g. Lunch is a three-course meal: soup starter, your choice of main below, and the chef's choice of dessert. Drinks are not included." />
+          {showLunchConfig && (
+            <div style={{ marginTop: '1rem' }}>
+              <L>Lunch Cutoff</L>
+              <input type="datetime-local" style={{ ...inp, maxWidth: '240px', marginBottom: '1rem' }} value={form.checkin_lunch_cutoff}
+                onChange={e => setForm(p => ({ ...p, checkin_lunch_cutoff: e.target.value }))} />
 
-          <L>Lunch Options</L>
-          {(form.checkin_lunch_options || []).map((dish, di) => (
-            <div key={dish.id || di} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <input style={inp} placeholder="Dish name" value={dish.name || ''}
-                onChange={e => setForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.map((d, i2) => i2 === di ? { ...d, name: e.target.value } : d) }))} />
-              <input style={inp} placeholder="Description (optional)" value={dish.description || ''}
-                onChange={e => setForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.map((d, i2) => i2 === di ? { ...d, description: e.target.value } : d) }))} />
-              <DangerBtn small onClick={() => setForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.filter((_, i2) => i2 !== di) }))}>Remove</DangerBtn>
+              <L>Lunch Intro (optional — shown above the dish choices, e.g. to mention a fixed starter/dessert or that drinks aren't included)</L>
+              <textarea style={{ ...smallTextarea, height: '65px', marginBottom: '1rem' }} value={form.checkin_lunch_intro}
+                onChange={e => setForm(p => ({ ...p, checkin_lunch_intro: e.target.value }))}
+                placeholder="e.g. Lunch is a three-course meal: soup starter, your choice of main below, and the chef's choice of dessert. Drinks are not included." />
+
+              <L>Lunch Options</L>
+              {(form.checkin_lunch_options || []).map((dish, di) => (
+                <div key={dish.id || di} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <input style={smallInput} placeholder="Dish name" value={dish.name || ''}
+                    onChange={e => setForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.map((d, i2) => i2 === di ? { ...d, name: e.target.value } : d) }))} />
+                  <input style={smallInput} placeholder="Description (optional)" value={dish.description || ''}
+                    onChange={e => setForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.map((d, i2) => i2 === di ? { ...d, description: e.target.value } : d) }))} />
+                  <DangerBtn small onClick={() => setForm(p => ({ ...p, checkin_lunch_options: p.checkin_lunch_options.filter((_, i2) => i2 !== di) }))}>Remove</DangerBtn>
+                </div>
+              ))}
+              <GhostBtn small onClick={() => setForm(p => ({ ...p, checkin_lunch_options: [...(p.checkin_lunch_options || []), { id: `dish_${Date.now()}_${p.checkin_lunch_options?.length || 0}`, name: '', description: '' }] }))}>
+                + Add Dish
+              </GhostBtn>
+
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '1.1rem' }}>
+                <PrimaryBtn small disabled={saving} onClick={() => save({
+                  checkin_lunch_cutoff: form.checkin_lunch_cutoff || null,
+                  checkin_lunch_options: form.checkin_lunch_options,
+                  checkin_lunch_intro: form.checkin_lunch_intro,
+                })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
+                {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+              </div>
+              <Err msg={saveError} />
             </div>
-          ))}
-          <GhostBtn small onClick={() => setForm(p => ({ ...p, checkin_lunch_options: [...(p.checkin_lunch_options || []), { id: `dish_${Date.now()}_${p.checkin_lunch_options?.length || 0}`, name: '', description: '' }] }))}>
-            + Add Dish
-          </GhostBtn>
+          )}
 
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '1.1rem' }}>
-            <PrimaryBtn small disabled={saving} onClick={() => save({
-              checkin_lunch_cutoff: form.checkin_lunch_cutoff || null,
-              checkin_lunch_options: form.checkin_lunch_options,
-              checkin_lunch_intro: form.checkin_lunch_intro,
-            })}>{saving ? 'Saving…' : 'Save'}</PrimaryBtn>
-            {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
-          </div>
-          <Err msg={saveError} />
+          {(() => {
+            const lunchRows = buildLunchRows(participants)
+            return (
+              <div style={{ marginTop: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  <L>Lunch Selections ({participants.filter(p => p.lunch?.length > 0).length}/{participants.length})</L>
+                  {lunchRows.length > 0 && (
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <GhostBtn small onClick={exportLunchCSV}>Export CSV</GhostBtn>
+                      <GhostBtn small onClick={exportLunchTXT}>Export Text</GhostBtn>
+                      <GhostBtn small onClick={exportLunchPrint}>Print / PDF</GhostBtn>
+                    </div>
+                  )}
+                </div>
+                {participants.filter(p => p.lunch?.length > 0).length === 0 ? (
+                  <div style={{ fontSize: '12px', color: '#bbb', padding: '0.75rem 0' }}>No lunch selections yet.</div>
+                ) : (
+                  <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', overflow: 'hidden' }}>
+                    {participants.filter(p => p.lunch?.length > 0).map((p, i, arr) => (
+                      <div key={p.email} style={{ padding: '0.85rem 1rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                        <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '0.3rem' }}>{p.name || p.email}</div>
+                        <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.7 }}>
+                          {p.lunch.map((entry, li) => {
+                            const passenger = (p.trip_details?.passengers_list || []).find(pp => pp.name === entry.name) || (p.trip_details?.passengers_list || [])[li]
+                            return (
+                              <div key={li}>
+                                <strong style={{ color: '#1a1a1a' }}>{entry.name || (li === 0 ? 'Driver' : `Passenger ${li + 1}`)}</strong>
+                                {passenger?.age && ` (age ${passenger.age})`}: {entry.dish_name}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
       )}
 
