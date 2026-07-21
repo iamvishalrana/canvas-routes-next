@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch } from './shared'
 import CheckinStatusClient from './CheckinStatusClient'
 import AwardsTallyClient from './AwardsTallyClient'
+import { useRealtimeSync } from './useRealtimeSync'
 
 const smallTextarea = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }
 
@@ -50,6 +51,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
+  const [participants, setParticipants] = useState([])
 
   const load = useCallback(() => {
     setLoading(true)
@@ -69,10 +71,12 @@ export default function RouteEventConfigClient({ eventId }) {
         awards_categories: aEv.awards_categories || [],
         awards_ineligible_names: aEv.awards_ineligible_names || [],
       })
+      setParticipants(Array.isArray(checkinData?.participants) ? checkinData.participants : [])
     }).finally(() => setLoading(false))
   }, [eventId])
 
   useEffect(() => { load() }, [load])
+  useRealtimeSync(['event_checkins'], load)
 
   async function save(fields, { silent = false } = {}) {
     if (!silent) { setSaving(true); setSaveError(null) }
@@ -163,6 +167,29 @@ export default function RouteEventConfigClient({ eventId }) {
             {saved && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
           </div>
           <Err msg={saveError} />
+
+          {form.checkin_enabled && (form.checkin_sections || []).includes('waiver') && (
+            <div style={{ marginTop: '2rem' }}>
+              <L>Signed Waivers ({participants.filter(p => p.waiver).length}/{participants.length})</L>
+              {participants.filter(p => p.waiver).length === 0 ? (
+                <div style={{ fontSize: '12px', color: '#bbb', padding: '0.75rem 0' }}>No one has signed yet.</div>
+              ) : (
+                <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', overflow: 'hidden' }}>
+                  {participants.filter(p => p.waiver).map((p, i, arr) => (
+                    <div key={p.email} style={{ padding: '0.85rem 1rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                      <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.name || p.email}</div>
+                      <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.7, marginTop: '0.2rem' }}>
+                        Signed by <strong>{p.waiver.full_name}</strong> ·{' '}
+                        {new Date(p.waiver.signed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}<br />
+                        Vehicle: {[p.waiver.vehicle?.year, p.waiver.vehicle?.make, p.waiver.vehicle?.model].filter(Boolean).join(' ') || '—'}<br />
+                        Emergency contact: {p.waiver.emergency_contact?.name} · {p.waiver.emergency_contact?.phone}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
