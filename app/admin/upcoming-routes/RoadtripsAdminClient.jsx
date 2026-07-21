@@ -1,7 +1,15 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import Link from 'next/link'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import RouteEventConfigClient from '../_components/RouteEventConfigClient'
+import WtetClient from '../wtet/WtetClient'
+import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
+
+// WTET is still on its own frozen, bespoke check-in/waiver/lunch/awards
+// system (contacts.wtet_checkin/wtet_waiver/wtet_lunch + wtet_awards_votes) —
+// every other route (including future ones) uses the generic per-event
+// system via RouteEventConfigClient instead.
+const WTET_SLUG = 'whips-to-eastern-townships'
 
 const TRIP_TYPES = [
   { value: 'day',       label: 'Day trip'  },
@@ -68,6 +76,7 @@ export default function RoadtripsAdminClient() {
   const [savingEdit, setSavingEdit] = useState(false)
   const [editErr, setEditErr]     = useState(null)
   const [expanded, setExpanded]   = useState({})
+  const [showEventPanel, setShowEventPanel] = useState({}) // route id -> bool, registrants/check-in/awards
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [launchFor, setLaunchFor] = useState(null) // route id
   const [launchMsg, setLaunchMsg] = useState('')
@@ -544,11 +553,10 @@ export default function RoadtripsAdminClient() {
                   )}
                   <GhostBtn small onClick={() => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }} disabled={r.interested_count === 0}>Email</GhostBtn>
                   <GhostBtn small onClick={() => exportRouteCSV(r)} disabled={r.interested_count === 0}>Export CSV</GhostBtn>
-                  {r.event_id && (
-                    <Link href="/admin/events" title={`Manage in Admin > Events under "${r.name}"`}
-                      style={{ padding: '0.35rem 0.8rem', background: 'transparent', color: '#8a6535', border: '0.5px solid rgba(197,168,130,0.5)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
-                      Registrants, Waiver, Lunch & Awards →
-                    </Link>
+                  {(r.slug === WTET_SLUG || r.event_id) && (
+                    <GhostBtn small onClick={() => setShowEventPanel(p => ({ ...p, [r.id]: !p[r.id] }))}>
+                      {showEventPanel[r.id] ? 'Hide Registrants, Waiver, Lunch & Awards' : 'Registrants, Waiver, Lunch & Awards'}
+                    </GhostBtn>
                   )}
                   {!r.launched && !r.is_past && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
                   <div style={{ marginLeft: 'auto' }}>
@@ -679,6 +687,27 @@ export default function RoadtripsAdminClient() {
                             </div>
                           </button>
                         ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Registrants / Check-in (trip details, waiver, lunch) / Route Awards —
+                    inline here instead of requiring a trip to Admin > Events. WTET stays
+                    on its own frozen bespoke system; every other route (current and
+                    future) uses the generic per-event system via RouteEventConfigClient. */}
+                {showEventPanel[r.id] && (
+                  <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginLeft: '-1.25rem', marginRight: '-1.25rem' }}>
+                    {r.slug === WTET_SLUG ? (
+                      <>
+                        <WtetClient />
+                        <WtetAwardsClient />
+                      </>
+                    ) : r.event_id ? (
+                      <RouteEventConfigClient eventId={r.event_id} />
+                    ) : (
+                      <div style={{ padding: '1.5rem', fontSize: '12px', color: '#bbb' }}>
+                        This route isn't linked to an events row yet — re-save it or contact support to link one.
                       </div>
                     )}
                   </div>
