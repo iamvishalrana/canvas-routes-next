@@ -7,6 +7,8 @@ import { buildAdminNotifyHtml } from '../../../../lib/adminEmail.js'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail.js'
 import { MEMBERSHIP_TYPE_TIER } from '../../../../lib/prices.js'
 import { recordPaymentSuccess } from '../../../../lib/paymentLedger.js'
+import { markRegistrationPaid } from '../../../../lib/markRegistrationPaid.js'
+import { getRouteCheckinUrl } from '../../../../lib/routeEventLink.js'
 
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
@@ -210,13 +212,21 @@ export async function POST(request) {
             else captureMessage('road-trip-payment-db: used email fallback — PI ID was not in DB', { piId: pi.id, email: normalEmail })
           }
 
+          // Durable per-event proof — see lib/markRegistrationPaid.js. Runs
+          // unconditionally (member or not, admin-captured or webhook-driven)
+          // since this event is the authoritative "payment succeeded" signal.
+          if (normalEmail && eventName) {
+            await markRegistrationPaid(supabase, normalEmail, eventName).catch(err => captureException(err, { context: 'road-trip-payment-mark-paid', piId: pi.id }))
+          }
+
           // Non-member confirmation email — only when capture came from Stripe dashboard.
           // Admin panel captures send this email themselves via the capture route.
           if (!isMember && !adminPanelAlreadyCaptured && process.env.RESEND_API_KEY && normalEmail) {
-            // WTET has its own frozen check-in page; other routes don't have
-            // an equivalent wired up yet, so omit the button rather than
-            // link to WTET's page for a different event.
-            const checkinUrl = type === 'road_trip_wtet' ? `https://canvasroutes.com/wtet/checkin?t=${pi.id}` : null
+            // WTET has its own frozen check-in page; every other route
+            // (including HTM) is on the generic system.
+            const checkinUrl = type === 'road_trip_wtet'
+              ? `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
+              : await getRouteCheckinUrl(supabase, type)
             await Promise.all([
               fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -227,7 +237,7 @@ export async function POST(request) {
                   reply_to: 'jerry@canvasroutes.com',
                   subject: `Payment confirmed — ${eventLabel}`,
                   html: buildWtetConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
-                  text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+                  text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                 }),
               }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),
             ])

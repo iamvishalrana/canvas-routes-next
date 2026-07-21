@@ -25,15 +25,18 @@ export async function GET() {
     const admin = createAdminClient()
     const { data: reg } = await admin
       .from('applications')
-      .select('stripe_payment_status, registrations')
+      .select('registrations')
       .eq('email', user.email.toLowerCase())
       .maybeSingle()
 
+    // Per-event paid flag, not the shared stripe_payment_status column — that
+    // column is reused across every paid flow this member ever touches, so
+    // it can read 'pending' from an unrelated flow even after this event was
+    // paid in full. See lib/markRegistrationPaid.js.
     const htmReg = (reg?.registrations || []).find(r => r.event === EVENT_NAME || OLD_EVENT_NAMES.includes(r.event))
-    const status = reg?.stripe_payment_status || null
-    const alreadyRegistered = htmReg && ['authorized', 'paid'].includes(status)
+    const alreadyRegistered = !!htmReg?.paid
 
-    return Response.json({ alreadyRegistered: !!alreadyRegistered, status })
+    return Response.json({ alreadyRegistered })
   } catch (e) {
     captureException(e, { context: 'htm-member-register-get' })
     return Response.json({ alreadyRegistered: false, status: null })
@@ -79,8 +82,10 @@ export async function POST(request) {
     .eq('email', normalEmail)
     .maybeSingle()
 
+  // Per-event paid flag, not the shared stripe_payment_status column — see
+  // lib/markRegistrationPaid.js for why that column can't be trusted here.
   const existingHtm = (existing?.registrations || []).find(r => r.event === EVENT_NAME || OLD_EVENT_NAMES.includes(r.event))
-  if (existingHtm && ['authorized', 'paid'].includes(existing?.stripe_payment_status)) {
+  if (existingHtm?.paid) {
     return Response.json({ error: 'You have already registered for this event.' }, { status: 400 })
   }
 
@@ -105,6 +110,7 @@ export async function POST(request) {
       event: EVENT_NAME,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
+      paid: existingReg?.paid ?? false,
     }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME && !OLD_EVENT_NAMES.includes(r.event))
     const registrations = [...prevRegs, newReg]

@@ -95,10 +95,17 @@ export async function POST(request) {
     existing = existingData
 
     const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME || OLD_EVENT_NAMES.includes(r.event))
+    // Per-event paid flag, not the shared stripe_payment_status column (which
+    // gets overwritten by any other flow the same email later touches) — see
+    // lib/markRegistrationPaid.js for why.
+    if (existingReg?.paid) {
+      return Response.json({ error: 'This email has already registered and paid for this event.' }, { status: 400 })
+    }
     const newReg = {
       event: EVENT_NAME,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
+      paid: existingReg?.paid ?? false,
     }
     const registrations = [...(existing?.registrations || []).filter(r => r.event !== EVENT_NAME && !OLD_EVENT_NAMES.includes(r.event)), newReg]
 

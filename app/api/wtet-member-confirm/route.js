@@ -6,6 +6,7 @@ import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
+import { markRegistrationPaid } from '../../../lib/markRegistrationPaid.js'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 
@@ -60,6 +61,10 @@ export async function POST(request) {
     stripe_payment_type: 'road_trip_wtet',
   }).eq('email', normalEmail)
   if (confirmDbErr) captureException(confirmDbErr, { context: 'wtet-member-confirm-db', piId: pi.id })
+
+  // Durable per-event proof — see lib/markRegistrationPaid.js. Runs regardless
+  // of the email-claim outcome below so it's set even on a retried/duplicate call.
+  await markRegistrationPaid(admin, normalEmail, EVENT_NAME).catch(err => captureException(err, { context: 'wtet-member-confirm-mark-paid', piId: pi.id }))
 
   // Atomic compare-and-swap: only set stripe_paid_at if not already set.
   // Whichever concurrent call wins this update (normal flow vs 3DS redirect handler)

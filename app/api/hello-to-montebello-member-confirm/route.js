@@ -6,6 +6,8 @@ import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
+import { markRegistrationPaid } from '../../../lib/markRegistrationPaid.js'
+import { getRouteCheckinUrl } from '../../../lib/routeEventLink.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -63,6 +65,10 @@ export async function POST(request) {
   }).eq('email', normalEmail)
   if (confirmDbErr) captureException(confirmDbErr, { context: 'htm-member-confirm-db', piId: pi.id })
 
+  // Durable per-event proof — see lib/markRegistrationPaid.js. Runs regardless
+  // of the email-claim outcome below so it's set even on a retried/duplicate call.
+  await markRegistrationPaid(admin, normalEmail, EVENT_NAME).catch(err => captureException(err, { context: 'htm-member-confirm-mark-paid', piId: pi.id }))
+
   // Atomic compare-and-swap: only set stripe_paid_at if not already set.
   // Whichever concurrent call wins this update (normal flow vs 3DS redirect handler)
   // is the one that sends emails — prevents duplicate confirmation emails.
@@ -71,6 +77,8 @@ export async function POST(request) {
   }).eq('email', normalEmail).is('stripe_paid_at', null).select('id')
 
   if (!process.env.RESEND_API_KEY || !claimedRows?.length) return Response.json({ ok: true })
+
+  const checkinUrl = await getRouteCheckinUrl(admin, 'road_trip_hello-to-montebello').catch(() => null)
 
   // Fire emails after response — after() keeps the function alive until both fetches settle.
   after(() => Promise.allSettled([
@@ -82,8 +90,8 @@ export async function POST(request) {
         to: normalEmail,
         reply_to: 'jerry@canvasroutes.com',
         subject: `Payment confirmed — ${EVENT_NAME}`,
-        html: buildWtetConfirmHtml(firstName, amount, null, EVENT_NAME),
-        text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\nYou'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+        html: buildWtetConfirmHtml(firstName, amount, checkinUrl, EVENT_NAME),
+        text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
       }),
     }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — htm-member-confirm-member-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'htm-member-confirm-member-email', email: normalEmail })),
     fetch('https://api.resend.com/emails', {
