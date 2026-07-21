@@ -5,30 +5,30 @@ import Image from 'next/image'
 import PageLoader from '../../../components/PageLoader'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
 import { captureException } from '../../../lib/sentry'
+import { useLanguage } from '../../../lib/i18n/LanguageContext'
+import { genericAwardsT } from '../../../lib/i18n/genericAwards'
 
 // Only the logo — candidate photos are real uploaded car photos and aren't
 // needed until after email verification, well after this loader is gone.
 // (Same fix applied to /wtet-awards after a Sentry-reported "Load failed.")
 const PRELOAD_IMAGES = ['/logo-color.svg']
 
-const T = {
-  eyebrow: 'Canvas Routes',
-  title: 'Route Awards',
-  subtitle: "Cast your vote for the route's best. You can't vote for yourself.",
-  emailLabel: 'Your email', emailPlaceholder: 'you@email.com',
-  gateBody: 'Enter the email you registered with.',
-  enterBtn: 'Continue', checkingBtn: 'Checking…',
-  notFoundError: "We couldn't find a registration matching that email.",
-  invalidEmailError: 'Please enter a valid email address.',
-  genericError: 'Something went wrong — please try again.',
-  closedTitle: "Voting isn't open yet",
-  closedBody: "Check back soon — we'll open the ballot once it's time to vote.",
-  pickLabel: 'Tap a car to vote', submitBtn: 'Submit My Vote', submittingBtn: 'Submitting…', updateBtn: 'Update My Vote',
-  successTitle: 'Your ballot is in!', successBody: 'You can come back and change your vote any time before voting closes.',
-  votingAs: name => `Voting as ${name}`,
-  incompleteNote: 'Pick one car in each category to submit.',
-  discountTag: amount => `Winner gets $${amount} off the next route`,
-  finishLater: 'Finish later',
+function LangToggle({ lang, setLang }) {
+  return (
+    <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '99px', overflow: 'hidden', marginBottom: '1.25rem' }}>
+      {['en', 'fr'].map(l => (
+        <button key={l} type="button" onClick={() => setLang(l)}
+          style={{
+            padding: '0.35rem 0.85rem', border: 'none', cursor: 'pointer',
+            fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
+            fontFamily: 'var(--font-inter), sans-serif', fontWeight: lang === l ? '600' : '400',
+            background: lang === l ? '#0F1E14' : 'transparent', color: lang === l ? '#F5F1EC' : '#999',
+          }}>
+          {l}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 const inp = {
@@ -39,7 +39,8 @@ const inp = {
 
 export default function EventAwardsPage() {
   const { eventId } = useParams()
-  const t = T
+  const { lang, setLang } = useLanguage()
+  const t = genericAwardsT[lang]
 
   const [email, setEmail] = useState('')
   const [checking, setChecking] = useState(false)
@@ -126,6 +127,9 @@ export default function EventAwardsPage() {
 
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <img src="/logo-color.svg" alt="Canvas Routes" style={{ width: '190px', margin: '0 auto 1.5rem', display: 'block', opacity: 0.94 }} />
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <LangToggle lang={lang} setLang={setLang} />
+          </div>
           <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.75rem' }}>{verified?.eventName || t.eyebrow}</div>
           <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.2rem,6vw,3rem)', fontWeight: '400', color: '#0F1E14', margin: '0 0 1rem', lineHeight: '1.1' }}>{t.title}</h1>
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.75', margin: 0, maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{t.subtitle}</p>
