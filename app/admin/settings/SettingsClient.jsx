@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, sel, L, Err } from '../_components/shared'
+import { inp, Err } from '../_components/shared'
 
 const SECTION_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }
@@ -79,7 +79,6 @@ export default function SettingsClient() {
   const [saving, setSaving]     = useState({})
   const [errors, setErrors]     = useState({})
   const [saved, setSaved]       = useState({})
-  const [routesList, setRoutesList] = useState([]) // for the "specific route" picker
 
   // Local draft state for text fields
   const [drafts, setDrafts] = useState({})
@@ -98,7 +97,6 @@ export default function SettingsClient() {
           admin_banner:              data.admin_banner              || '',
           homepage_banner:           data.homepage_banner           || '',
           event_page_url:            data.event_page_url            || '',
-          routes_popup_route_slug:   data.routes_popup_route_slug   || '',
         })
       })
       .catch(() => setLoadError(true))
@@ -106,15 +104,6 @@ export default function SettingsClient() {
   }, [])
 
   useEffect(() => { load() }, [load])
-
-  // Route list for the "feature a specific route" picker — only needed once
-  // the admin actually opens that option, but cheap enough to fetch upfront.
-  useEffect(() => {
-    fetch('/api/admin/upcoming-routes')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => setRoutesList(Array.isArray(data) ? data : []))
-      .catch(() => {})
-  }, [])
 
   async function saveSetting(key, value) {
     setSaving(p => ({ ...p, [key]: true }))
@@ -305,85 +294,6 @@ export default function SettingsClient() {
           />
           {errors.event_page_url && <Err msg={errors.event_page_url} />}
           <SavedIndicator k="event_page_url" />
-        </div>
-      </div>
-
-      {/* Routes Popup */}
-      <div style={CARD}>
-        <div style={SECTION_LABEL}>Routes Popup</div>
-
-        <ToggleSetting
-          label="Show Routes Popup"
-          description="The homepage popup nudging visitors toward the Routes page to express interest. Shown once per session, a couple seconds after the page loads."
-          value={boolVal('routes_popup_enabled', true)}
-          saving={saving.routes_popup_enabled}
-          onChange={v => !loadError && saveSetting('routes_popup_enabled', v ? 'true' : 'false')}
-        />
-        {errors.routes_popup_enabled && <Err msg={errors.routes_popup_enabled} />}
-        <SavedIndicator k="routes_popup_enabled" />
-
-        <div style={{ paddingBottom: '1.25rem', marginBottom: '1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '0.25rem' }}>Popup Content</div>
-          <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.5, marginBottom: '0.75rem' }}>
-            General promotes the whole season's routes. Specific route features one route by name — pick it below.
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            {[
-              { val: 'general',  label: 'General — all routes' },
-              { val: 'specific', label: 'Specific route' },
-            ].map(({ val, label }) => {
-              const active = strVal('routes_popup_mode', 'general') === val
-              return (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => !loadError && saveSetting('routes_popup_mode', val)}
-                  disabled={saving.routes_popup_mode}
-                  style={{
-                    padding: '0.55rem 1rem', borderRadius: '8px',
-                    border: `1px solid ${active ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`,
-                    background: active ? '#0F1E14' : '#fff',
-                    color: active ? '#F5F1EC' : '#555',
-                    fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif',
-                    cursor: saving.routes_popup_mode ? 'wait' : 'pointer',
-                  }}
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-          {errors.routes_popup_mode && <Err msg={errors.routes_popup_mode} />}
-          <SavedIndicator k="routes_popup_mode" />
-
-          {strVal('routes_popup_mode', 'general') === 'specific' && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <L>Featured Route</L>
-              <select
-                style={{ ...sel, marginBottom: '0.5rem' }}
-                value={drafts.routes_popup_route_slug || ''}
-                onChange={e => setDrafts(p => ({ ...p, routes_popup_route_slug: e.target.value }))}
-              >
-                <option value="">Select a route…</option>
-                {routesList.map(r => (
-                  <option key={r.slug} value={r.slug}>{r.name} — {r.destination}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => saveSetting('routes_popup_route_slug', drafts.routes_popup_route_slug)}
-                disabled={saving.routes_popup_route_slug}
-                style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: saving.routes_popup_route_slug ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: saving.routes_popup_route_slug ? 0.6 : 1 }}
-              >
-                {saving.routes_popup_route_slug ? 'Saving…' : 'Save'}
-              </button>
-              {routesList.length === 0 && (
-                <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.5rem' }}>No routes found — add one under Routes first.</div>
-              )}
-              {errors.routes_popup_route_slug && <Err msg={errors.routes_popup_route_slug} />}
-              <SavedIndicator k="routes_popup_route_slug" />
-            </div>
-          )}
         </div>
       </div>
 

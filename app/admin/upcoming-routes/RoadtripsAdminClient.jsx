@@ -28,6 +28,34 @@ function TripSelect({ value, onChange }) {
   )
 }
 
+function PopupToggle({ label, description, value, onChange, saving }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2rem' }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '0.25rem' }}>{label}</div>
+        <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>{description}</div>
+      </div>
+      <button
+        type="button" role="switch" aria-checked={value}
+        onClick={() => !saving && onChange(!value)}
+        style={{
+          position: 'relative', flexShrink: 0, width: '40px', height: '22px',
+          background: value ? '#0F1E14' : 'rgba(0,0,0,0.15)',
+          border: 'none', borderRadius: '11px',
+          cursor: saving ? 'wait' : 'pointer', transition: 'background 0.18s',
+          opacity: saving ? 0.6 : 1, marginTop: '2px',
+        }}
+      >
+        <span style={{
+          position: 'absolute', top: '3px', left: value ? '20px' : '3px',
+          width: '16px', height: '16px', background: '#fff', borderRadius: '50%',
+          transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.25)', display: 'block',
+        }} />
+      </button>
+    </div>
+  )
+}
+
 export default function RoadtripsAdminClient() {
   const [routes, setRoutes]       = useState([])
   const [loading, setLoading]     = useState(true)
@@ -52,6 +80,13 @@ export default function RoadtripsAdminClient() {
   const [personConfirm, setPersonConfirm] = useState(false)
   const [personDeleting, setPersonDeleting] = useState(false)
 
+  // Homepage routes popup settings
+  const [popupSettings, setPopupSettings] = useState({})
+  const [popupSlugDraft, setPopupSlugDraft] = useState('')
+  const [popupSaving, setPopupSaving] = useState({})
+  const [popupErrors, setPopupErrors] = useState({})
+  const [popupSaved, setPopupSaved] = useState({})
+
   const load = useCallback(() => {
     fetch('/api/admin/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
@@ -59,6 +94,41 @@ export default function RoadtripsAdminClient() {
       .catch(() => setLoading(false))
   }, [])
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(data => { setPopupSettings(data); setPopupSlugDraft(data.routes_popup_route_slug || '') })
+      .catch(() => {})
+  }, [])
+
+  function popupBoolVal(key, fallback = true) {
+    if (!(key in popupSettings)) return fallback
+    return popupSettings[key] !== 'false'
+  }
+  function popupStrVal(key, fallback = '') {
+    return (key in popupSettings) ? popupSettings[key] : fallback
+  }
+
+  async function savePopupSetting(key, value) {
+    setPopupSaving(p => ({ ...p, [key]: true }))
+    setPopupErrors(p => ({ ...p, [key]: null }))
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setPopupErrors(p => ({ ...p, [key]: data.error || 'Failed to save.' })); return }
+      setPopupSettings(p => ({ ...p, [key]: value }))
+      setPopupSaved(p => ({ ...p, [key]: true }))
+      setTimeout(() => setPopupSaved(p => ({ ...p, [key]: false })), 2000)
+    } catch {
+      setPopupErrors(p => ({ ...p, [key]: 'Network error.' }))
+    } finally {
+      setPopupSaving(p => ({ ...p, [key]: false }))
+    }
+  }
 
   async function addRoute(e) {
     e.preventDefault()
@@ -247,6 +317,83 @@ export default function RoadtripsAdminClient() {
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: 300, color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Routes</h1>
         <p style={{ fontSize: '12px', color: '#999', marginTop: '0.5rem' }}>Shown on <a href="/routes" target="_blank" rel="noreferrer" style={{ color: '#c5a882' }}>canvasroutes.com/routes</a>. {routes.length} route{routes.length !== 1 ? 's' : ''} · {totalInterest} total interested.</p>
+      </div>
+
+      {/* Homepage popup */}
+      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Homepage Popup</div>
+
+        <PopupToggle
+          label="Show Routes Popup"
+          description="The homepage popup nudging visitors toward the Routes page. Shown once per session, a couple seconds after the page loads."
+          value={popupBoolVal('routes_popup_enabled', true)}
+          saving={popupSaving.routes_popup_enabled}
+          onChange={v => savePopupSetting('routes_popup_enabled', v ? 'true' : 'false')}
+        />
+        {popupErrors.routes_popup_enabled && <Err msg={popupErrors.routes_popup_enabled} />}
+        {popupSaved.routes_popup_enabled && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+
+        <div style={{ marginTop: '1.1rem', paddingTop: '1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5, marginBottom: '0.75rem' }}>
+            General promotes the whole season's routes. Specific route features one route by name — pick it below.
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            {[
+              { val: 'general',  label: 'General — all routes' },
+              { val: 'specific', label: 'Specific route' },
+            ].map(({ val, label }) => {
+              const active = popupStrVal('routes_popup_mode', 'general') === val
+              return (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => savePopupSetting('routes_popup_mode', val)}
+                  disabled={popupSaving.routes_popup_mode}
+                  style={{
+                    padding: '0.55rem 1rem', borderRadius: '8px',
+                    border: `1px solid ${active ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`,
+                    background: active ? '#0F1E14' : '#fff',
+                    color: active ? '#F5F1EC' : '#555',
+                    fontSize: '12px', cursor: popupSaving.routes_popup_mode ? 'wait' : 'pointer',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+          {popupErrors.routes_popup_mode && <Err msg={popupErrors.routes_popup_mode} />}
+          {popupSaved.routes_popup_mode && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+
+          {popupStrVal('routes_popup_mode', 'general') === 'specific' && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <L>Featured Route</L>
+              <select
+                style={{ ...sel, marginBottom: '0.5rem' }}
+                value={popupSlugDraft}
+                onChange={e => setPopupSlugDraft(e.target.value)}
+              >
+                <option value="">Select a route…</option>
+                {routes.map(r => (
+                  <option key={r.slug} value={r.slug}>{r.name} — {r.destination}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => savePopupSetting('routes_popup_route_slug', popupSlugDraft)}
+                disabled={popupSaving.routes_popup_route_slug}
+                style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: popupSaving.routes_popup_route_slug ? 'wait' : 'pointer', opacity: popupSaving.routes_popup_route_slug ? 0.6 : 1 }}
+              >
+                {popupSaving.routes_popup_route_slug ? 'Saving…' : 'Save'}
+              </button>
+              {routes.length === 0 && (
+                <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.5rem' }}>No routes yet — add one below first.</div>
+              )}
+              {popupErrors.routes_popup_route_slug && <Err msg={popupErrors.routes_popup_route_slug} />}
+              {popupSaved.routes_popup_route_slug && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Add form */}
