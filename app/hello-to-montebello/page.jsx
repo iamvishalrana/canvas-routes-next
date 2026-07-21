@@ -786,20 +786,18 @@ export default function HelloToMontebelloPage() {
             </div>
             <div style={{borderTop:'0.5px solid rgba(0,0,0,0.1)',marginTop:'1rem',paddingTop:'0.75rem',textAlign:'center',fontSize:'12px',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.04em'}}>{t.perCarLabel}</div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'2.5rem'}}>
             {et.routeNotes.map((note, i) => (
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
                 <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
                 <span style={{fontSize:'14px',color:'#555',lineHeight:'1.75'}}>{note}</span>
               </div>
             ))}
-          </div>
-
-          {/* Château highlight — lighter callout matching the eligibility box below */}
-          <div style={{display:'flex',alignItems:'flex-start',gap:'1rem',padding:'1rem 1.25rem',border:'0.5px solid rgba(197,168,130,0.4)',background:'rgba(197,168,130,0.08)',marginBottom:'2.5rem'}}>
-            <div>
-              <div style={{fontSize:'11px',fontWeight:'600',color:'#1a1a1a',letterSpacing:'0.04em',marginBottom:'0.25rem',fontFamily:'var(--font-inter),sans-serif'}}>{et.chateauHighlightTitle}</div>
-              <div style={{fontSize:'13px',color:'#666',lineHeight:'1.65',fontFamily:'var(--font-inter),sans-serif'}}>{et.chateauHighlightBody}</div>
+            <div style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
+              <div style={{width:'3px',height:'3px',borderRadius:'50%',background:'#c5a882',flexShrink:0,marginTop:'9px'}} />
+              <span style={{fontSize:'14px',color:'#555',lineHeight:'1.75'}}>
+                {et.chateauNoteBefore}<strong style={{fontWeight:'600',color:'#1a1a1a'}}>{et.chateauNoteBold}</strong>{et.chateauNoteAfter}
+              </span>
             </div>
           </div>
 
