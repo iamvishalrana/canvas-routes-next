@@ -1032,7 +1032,7 @@ export default function Home() {
         <p style={{fontSize:"0.8rem",color:"#8A6535",maxWidth:"420px",margin:"0 auto 2rem",lineHeight:"1.7"}}>
           {t.notifyPriority}
         </p>
-        <Link href="/notify" style={{display:"inline-block",padding:"1rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",background:"transparent",border:"1px solid #c5a882",color:"#8A6535",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
+        <Link href="/notify" style={{display:"inline-block",padding:"1rem 2.5rem",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",background:"transparent",border:"1px solid #93333E",color:"#93333E",textDecoration:"none",fontFamily:"var(--font-inter),sans-serif"}}>
           {t.notifyMe}
         </Link>
       </section>

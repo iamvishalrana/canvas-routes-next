@@ -1,33 +1,13 @@
 'use client'
 import Link from 'next/link'
 import LanguageFooterDropdown from './LanguageFooterDropdown'
-
-const COLS = [
-  {
-    heading: 'Explore',
-    links: [
-      { label: 'Membership',  href: '/membership' },
-      { label: 'Routes',      href: '/routes' },
-      { label: 'Partners',    href: '/partners' },
-      { label: 'FAQ',         href: '/faq' },
-    ],
-  },
-  {
-    heading: 'Members',
-    links: [
-      { label: 'Members Login', href: '/members/login' },
-    ],
-  },
-  {
-    heading: 'Legal',
-    links: [
-      { label: 'Privacy Policy',     href: '/privacy' },
-      { label: 'Terms & Conditions', href: '/terms' },
-    ],
-  },
-]
+import { useLanguage } from '../lib/i18n/LanguageContext'
+import { footerT } from '../lib/i18n/footer'
 
 export default function SiteFooter({ hideLangToggle = false }) {
+  const { lang } = useLanguage()
+  const t = footerT[lang]
+
   return (
     <footer style={{
       background: '#0F1E14',
@@ -51,7 +31,7 @@ export default function SiteFooter({ hideLangToggle = false }) {
             style={{ width: '140px', height: 'auto', opacity: 0.9 }}
           />
           <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)' }}>
-            Montreal · Est. 2025
+            {t.tagline}
           </div>
           <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem' }}>
             <a href="https://www.instagram.com/canvasroutes?igsh=MWs0encwMTY4cnFyeA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: 'rgba(245,241,236,0.4)', transition: 'color 0.2s', display: 'flex' }}
@@ -74,7 +54,7 @@ export default function SiteFooter({ hideLangToggle = false }) {
         </div>
 
         {/* Link columns */}
-        {COLS.map(col => (
+        {t.cols.map(col => (
           <div key={col.heading} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.25rem', fontWeight: '500' }}>
               {col.heading}
@@ -92,7 +72,7 @@ export default function SiteFooter({ hideLangToggle = false }) {
         {/* Contact column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.25rem', fontWeight: '500' }}>
-            Contact
+            {t.contact}
           </div>
           <a href="mailto:info@canvasroutes.com" style={{ fontSize: '12px', color: 'rgba(245,241,236,0.5)', textDecoration: 'none', letterSpacing: '0.02em', transition: 'color 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.9)'}
@@ -115,12 +95,12 @@ export default function SiteFooter({ hideLangToggle = false }) {
         gap: '0.75rem',
       }}>
         <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.25)', letterSpacing: '0.06em' }}>
-          © 2026 Événements Canvas Routes Inc. — Montreal, QC.
+          {t.copyright}
         </div>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           {[
-            { label: 'Privacy', href: '/privacy' },
-            { label: 'Terms',   href: '/terms' },
+            { label: t.privacy, href: '/privacy' },
+            { label: t.terms,   href: '/terms' },
           ].map(l => (
             <Link key={l.label} href={l.href} style={{ fontSize: '10px', color: 'rgba(245,241,236,0.25)', textDecoration: 'none', letterSpacing: '0.06em', transition: 'color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.55)'}
@@ -133,7 +113,7 @@ export default function SiteFooter({ hideLangToggle = false }) {
             style={{ background: 'none', border: 'none', padding: 0, fontSize: '10px', color: 'rgba(245,241,236,0.25)', cursor: 'pointer', letterSpacing: '0.06em', fontFamily: 'var(--font-inter),sans-serif', transition: 'color 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.55)'}
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.25)'}>
-            Manage cookies
+            {t.manageCookies}
           </button>
           {!hideLangToggle && <LanguageFooterDropdown />}
         </div>

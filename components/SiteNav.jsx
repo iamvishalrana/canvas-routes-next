@@ -5,16 +5,9 @@ import { createClient } from '../lib/supabase/client'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { navT } from '../lib/i18n/nav'
 
-// Single source of truth for the standard nav — every page that doesn't need
-// custom in-page-scroll links (see app/page.jsx) should rely on this default
-// rather than hardcoding its own copy, so header changes only happen once.
-export const DEFAULT_NAV_LINKS = [
-  { href: '/',         label: 'Home'    },
-  { href: '/routes',   label: 'Routes'  },
-  { href: '/#events',  label: 'Events'  },
-  { href: '/#contact', label: 'Contact' },
-  { href: '/faq',      label: 'FAQ'     },
-]
+// Kept for any external reference to the English shape — SiteNav itself now
+// sources the translated version from navT[lang].navLinks by default.
+export const DEFAULT_NAV_LINKS = navT.en.navLinks
 
 /**
  * Shared public-site nav. Detects member session and shows Dashboard / Profile /
@@ -22,17 +15,19 @@ export const DEFAULT_NAV_LINKS = [
  *
  * Props:
  *   links   – array of { href, label, onClick? } for the desktop + mobile nav.
- *             Defaults to DEFAULT_NAV_LINKS — only override this when a page
+ *             Defaults to navT[lang].navLinks — only override this when a page
  *             needs custom behavior (e.g. in-page scroll links on the homepage).
- *   ctaLabel – label for the Membership button (defaults to 'Membership')
+ *   ctaLabel – label for the Membership button (defaults to navT[lang].becomeMember)
  *   banner   – optional announcement string/node shown as a fixed strip above
  *              the nav. Its height is measured so the nav (and mobile menu)
  *              shift down by exactly that amount — nothing hardcoded.
  *   bannerHref – optional link target if the banner should be clickable
  */
-export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become a Member', onMenuChange, banner, bannerHref }) {
+export default function SiteNav({ links, ctaLabel, onMenuChange, banner, bannerHref }) {
   const { lang } = useLanguage()
   const nt = navT[lang]
+  const navLinks = links || nt.navLinks
+  const resolvedCtaLabel = ctaLabel || nt.becomeMember
   const [menuOpen, setMenuOpen] = useState(false)
   const bannerRef = useRef(null)
   const [bannerHeight, setBannerHeight] = useState(0)
@@ -101,7 +96,7 @@ export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become 
         </Link>
 
         <div className="nav-links">
-          {links.map((l, i) =>
+          {navLinks.map((l, i) =>
             l.onClick
               ? <a key={i} href={l.href} onClick={l.onClick} style={linkStyle}>{l.label}</a>
               : <Link key={i} href={l.href} style={linkStyle}>{l.label}</Link>
@@ -127,7 +122,7 @@ export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become 
             </>
           ) : (
             <>
-              <Link href="/membership" className="nav-join">{ctaLabel}</Link>
+              <Link href="/membership" className="nav-join">{resolvedCtaLabel}</Link>
               <Link href="/members/login" className="nav-members">{nt.membersLogin}</Link>
             </>
           )}
@@ -141,7 +136,7 @@ export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become 
 
       {/* Mobile menu */}
       <div className={`mobile-menu ${menuOpen ? 'open' : ''}`} style={{ marginTop: bannerHeight }}>
-        {links.map((l, i) =>
+        {navLinks.map((l, i) =>
           l.onClick
             ? <a key={i} href={l.href} onClick={e => { l.onClick(e); toggleMenu(false) }} style={linkStyle}>{l.label}</a>
             : <Link key={i} href={l.href} onClick={() => toggleMenu(false)} style={linkStyle}>{l.label}</Link>
@@ -160,7 +155,7 @@ export default function SiteNav({ links = DEFAULT_NAV_LINKS, ctaLabel = 'Become 
           </>
         ) : (
           <>
-            <Link href="/membership" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>{ctaLabel}</Link>
+            <Link href="/membership" onClick={() => toggleMenu(false)} style={{ color: '#0F1E14', fontWeight: '500' }}>{resolvedCtaLabel}</Link>
             <Link href="/members/login" onClick={() => toggleMenu(false)} style={{ color: '#93333E', fontWeight: '500' }}>{nt.membersLogin}</Link>
           </>
         )}
