@@ -102,11 +102,14 @@ function CheckinContent() {
 
   const identifier = { email: data?.email, eventId }
   const firstName = data?.name?.trim().split(' ')[0] || ''
-  const passengersList = data?.tripDetails?.passengers_list || []
   const sections = data?.sections || []
   const hasTrip = sections.includes('trip_details')
   const hasWaiver = sections.includes('waiver')
   const hasLunch = sections.includes('lunch')
+  // If lunch is enabled without trip_details, there's no passenger list to pick
+  // dishes for — fall back to just the registrant so the section is completable.
+  const passengersList = data?.tripDetails?.passengers_list
+    || (hasLunch && !hasTrip && data ? [{ name: data.name || '', age: '' }] : [])
   const allDone = data && (!hasTrip || !!data.tripDetails) && (!hasWaiver || !!data.waiver)
     && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
 
