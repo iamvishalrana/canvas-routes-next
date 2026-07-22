@@ -65,14 +65,8 @@ export default function CheckinPreviewPage() {
 
       <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
 
-        <div className="wtetci-fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.6rem' }}>Canvas Routes</div>
-            <h1 style={{ fontFamily: 'var(--font-cormorant), Georgia, serif', fontSize: 'clamp(2rem,5vw,2.6rem)', fontWeight: '300', color: '#0F1E14', margin: '0 0 0.4rem', lineHeight: '1.15' }}>
-              {t.pageHeading}
-            </h1>
-            <p style={{ fontSize: '13px', color: '#999', margin: 0 }}>{t.pageHeadingSub}</p>
-          </div>
+        <div className="wtetci-fade-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882' }}>Canvas Routes</div>
           <LangToggle />
         </div>
 
