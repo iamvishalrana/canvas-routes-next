@@ -290,10 +290,10 @@ export default function RouteEventConfigClient({ eventId }) {
               <input type="datetime-local" style={{ ...inp, maxWidth: '240px', marginBottom: '1rem' }} value={form.checkin_lunch_cutoff}
                 onChange={e => setForm(p => ({ ...p, checkin_lunch_cutoff: e.target.value }))} />
 
-              <L>Lunch Intro (optional — shown above the dish choices, e.g. to mention a fixed starter/dessert or that drinks aren't included)</L>
-              <textarea style={{ ...smallTextarea, height: '65px', marginBottom: '1rem' }} value={form.checkin_lunch_intro}
+              <L>Lunch Intro (optional — shown above the dish choices as a short list. One item per line, e.g. a fixed starter/dessert or that drinks aren't included.)</L>
+              <textarea style={{ ...smallTextarea, height: '85px', marginBottom: '1rem' }} value={form.checkin_lunch_intro}
                 onChange={e => setForm(p => ({ ...p, checkin_lunch_intro: e.target.value }))}
-                placeholder="e.g. Lunch is a three-course meal: soup starter, your choice of main below, and the chef's choice of dessert. Drinks are not included." />
+                placeholder={'e.g.\nMinestrone soup starter\nYour choice of main course below\nChef\'s choice of dessert to finish\nDrinks are not included'} />
 
               <L>Lunch Options</L>
               {(form.checkin_lunch_options || []).map((dish, di) => (
