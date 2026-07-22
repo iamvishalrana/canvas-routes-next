@@ -127,9 +127,9 @@ export default function CheckinStatusClient({ eventId }) {
 
   function exportRegistrantsCSV() {
     const rows = [
-      ['Name', 'Email', 'Payment Status', 'Member', 'Promo Code', 'Discount', 'Car', 'Phone', 'Trip Details', 'Waiver Signed', 'Lunch Selected'],
+      ['Name', 'Email', 'Language', 'Payment Status', 'Member', 'Promo Code', 'Discount', 'Car', 'Phone', 'Trip Details', 'Waiver Signed', 'Lunch Selected'],
       ...participants.map(p => [
-        p.name || '', p.email, p.paymentStatus || '', p.isMember ? 'Yes' : 'No',
+        p.name || '', p.email, p.lang === 'fr' ? 'French' : p.lang === 'en' ? 'English' : '', p.paymentStatus || '', p.isMember ? 'Yes' : 'No',
         p.discount?.code || '', p.discount ? (p.discount.amount / 100).toFixed(2) : '',
         formatCarLabel(p.registration?.carYear, p.registration?.carMake, p.registration?.carModel),
         p.registration?.phone || '',
@@ -371,6 +371,11 @@ export default function CheckinStatusClient({ eventId }) {
                       {p.discount.code ? `Promo ${p.discount.code}` : 'Promo'} −${(p.discount.amount / 100).toFixed(0)}
                     </span>
                   )}
+                  {p.lang && (
+                    <span title={p.lang === 'fr' ? 'Registered in French' : 'Registered in English'} style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#888', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '99px', padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                      {p.lang === 'fr' ? 'FR' : 'EN'}
+                    </span>
+                  )}
                   {hasTrip && <Pill done={!!p.trip_details} doneLabel="Trip ✓" pendingLabel="Trip missing" />}
                   {hasWaiver && <Pill done={!!p.waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />}
                   {hasLunch && <Pill done={p.lunch?.length > 0} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />}
@@ -382,6 +387,7 @@ export default function CheckinStatusClient({ eventId }) {
                       <div>
                         <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Registration Details</div>
                         <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
+                          {p.lang && <>Language: {p.lang === 'fr' ? 'French' : 'English'}<br /></>}
                           {(p.registration.carYear || p.registration.carMake || p.registration.carModel) && (
                             <>Car: {formatCarLabel(p.registration.carYear, p.registration.carMake, p.registration.carModel)}<br /></>
                           )}

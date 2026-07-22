@@ -105,6 +105,7 @@ export async function POST(request) {
       stripe_payment_intent_id: pi.id,
       stripe_payment_status: 'pending',
       amount_paid: total,
+      lang: lang === 'fr' ? 'fr' : 'en',
     }, { onConflict: 'event_id,member_id' })
     if (pendingErr) captureException(pendingErr, { context: 'event-payment-intent-pending-row', piId: pi.id })
 

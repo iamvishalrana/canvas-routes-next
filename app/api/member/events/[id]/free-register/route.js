@@ -16,6 +16,7 @@ export async function POST(request, { params }) {
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   const { id: eventId } = await params
+  const { lang } = await request.json().catch(() => ({}))
   const admin = createAdminClient()
 
   const [{ data: ev }, { data: member }] = await Promise.all([
@@ -64,6 +65,7 @@ export async function POST(request, { params }) {
     p_stripe_payment_intent_id: null,
     p_stripe_payment_status:    'free',
     p_amount_paid:              0,
+    p_lang:                     lang === 'fr' ? 'fr' : 'en',
   })
   if (regErr) {
     captureException(regErr, { context: 'free-register-event-reg', eventId, memberId: user.id })
@@ -144,6 +146,7 @@ export async function POST(request, { params }) {
       phone: member.phone || null,
       instagram: member.instagram || null,
       source: 'Canvas Routes Member',
+      lang: lang === 'fr' ? 'fr' : 'en',
       registrations: [...prevRegs, newReg],
       ...(existingApp ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' }).select('id').single()

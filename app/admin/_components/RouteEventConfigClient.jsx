@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch } from './shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, CopyBtn } from './shared'
 import CheckinStatusClient from './CheckinStatusClient'
 import AwardsTallyClient from './AwardsTallyClient'
 import { useRealtimeSync } from './useRealtimeSync'
@@ -80,6 +80,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [tab, setTab] = useState('registrants') // registrants | waiver | lunch | awards
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(null)
+  const [eventName, setEventName] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
@@ -96,6 +97,7 @@ export default function RouteEventConfigClient({ eventId }) {
     ]).then(([checkinData, awardsData]) => {
       const cEv = checkinData?.event || {}
       const aEv = awardsData?.event || {}
+      setEventName(cEv.name || '')
       setForm({
         checkin_enabled: !!cEv.checkin_enabled,
         checkin_sections: cEv.checkin_sections || [],
@@ -186,6 +188,13 @@ export default function RouteEventConfigClient({ eventId }) {
 
       {tab === 'registrants' && (
         <div>
+          {/^hello to montebello/i.test(eventName) && (
+            <div style={{ padding: '0.85rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span>Itinerary page:</span>
+              <a href="/itinerary-hello-to-montebello-july-26" target="_blank" rel="noopener noreferrer" style={{ color: '#3B6B2F' }}>canvasroutes.com/itinerary-hello-to-montebello-july-26</a>
+              <CopyBtn value="https://canvasroutes.com/itinerary-hello-to-montebello-july-26" />
+            </div>
+          )}
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
             {!form.checkin_enabled && (
               <div style={{ fontSize: '12px', color: '#999', marginBottom: '1rem' }}>Check-in isn't enabled yet — turn it on from the Waiver tab.</div>

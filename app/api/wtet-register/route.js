@@ -120,6 +120,7 @@ export async function POST(request) {
       dob_day: dob_day || null,
       dob_year: dob_year || null,
       registrations,
+      lang: lang === 'fr' ? 'fr' : 'en',
       stripe_payment_status: 'pending',
       // New payment cycle — clear the previous flow's capture timestamp so the
       // confirm route's email claim and the webhook's already-captured check

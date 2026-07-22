@@ -127,6 +127,7 @@ export async function POST(request) {
       children_ages: childrenAges || null,
       more: more || null,
       registrations,
+      lang: lang === 'fr' ? 'fr' : 'en',
       stripe_payment_status: 'pending',
       // New payment cycle — clear the previous flow's capture timestamp so the
       // confirm route's email claim and the webhook's already-captured check

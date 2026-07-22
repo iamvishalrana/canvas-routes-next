@@ -261,7 +261,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
     if (isFree) {
       setRegistering(true)
       try {
-        const res = await fetch(`/api/member/events/${event.id}/free-register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+        const res = await fetch(`/api/member/events/${event.id}/free-register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang }) })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) { setRegError(data.error || t.registrationFailed); return }
         setDone(true)
