@@ -38,6 +38,13 @@ playwright-report/
 # Temp files
 *.tmp
 
+# Agent tool isolated worktrees (isolation: "worktree") — these are their own
+# nested git repos checked out onto disk for a single agent run. One got
+# swept up by a broad git add in the past and committed as an orphaned
+# gitlink (mode 160000, no .gitmodules), which likely caused repeated
+# "git failed with exit code 128" checkout failures in CI. Never track these.
+.claude/worktrees/
+
 # Raw design source files (PSD/AI/EPS/originals) — kept locally for reference
 # only. Never in /public: Next.js serves that directory verbatim, so raw
 # multi-MB source files would otherwise become publicly downloadable on the
