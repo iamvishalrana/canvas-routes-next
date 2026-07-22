@@ -121,7 +121,11 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
         {cutoffStr && <span style={{ fontSize: '12px', color: '#999' }}>{t.chooseOneUntil(cutoffStr)}</span>}
       </div>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+        <div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.1rem' }}>
+            {t.mainCourseHeader}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
           {passengersList.map((p, i) => (
             <div key={i} className="wtetci-card" style={{ border: '0.5px solid rgba(197,168,130,0.3)', background: '#fdfcfb', padding: '1.1rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.85rem' }}>
@@ -140,6 +144,7 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
               </div>
             </div>
           ))}
+          </div>
         </div>
         {error && <div className="wtetci-fade-in" style={{ fontSize: '13px', color: '#93333E', padding: '0.7rem 0.9rem', background: 'rgba(147,51,62,0.05)', border: '0.5px solid rgba(147,51,62,0.2)' }}>{error}</div>}
         <div style={{ display: 'flex', gap: '0.6rem' }}>
