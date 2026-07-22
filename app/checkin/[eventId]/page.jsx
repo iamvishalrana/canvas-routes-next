@@ -50,12 +50,17 @@ function CheckinContent() {
   const [atBottom, setAtBottom] = useState(false)
 
   useEffect(() => {
-    function onScroll() {
+    function checkBottom() {
       setAtBottom(window.innerHeight + window.scrollY >= document.body.scrollHeight - 80)
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    checkBottom() // page may already be shorter than the viewport (e.g. only one section enabled) — the button shouldn't show if there's nothing to scroll to
+    window.addEventListener('scroll', checkBottom, { passive: true })
+    window.addEventListener('resize', checkBottom, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', checkBottom)
+      window.removeEventListener('resize', checkBottom)
+    }
+  }, [data])
 
   const autoSubmitted = useRef(false)
   useEffect(() => {
