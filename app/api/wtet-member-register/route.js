@@ -64,7 +64,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { carYear, carMake, carModel, passengers, hasChildren, childrenAges, more, _health_check } = body
+  const { carYear, carMake, carModel, passengers, hasChildren, childrenAges, more, lang, _health_check } = body
   const normalEmail = user.email.toLowerCase().trim()
 
   // Duplicate guard — one per member
@@ -161,6 +161,7 @@ export async function POST(request) {
         has_children: hasChildren || '',
         children_ages: childrenAges || '',
         original_amount: String(MEMBER_PRICE_CENTS),
+        lang: lang === 'fr' ? 'fr' : 'en',
         ...(_health_check ? {
           source: 'health_check',
           health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',

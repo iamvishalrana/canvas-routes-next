@@ -529,6 +529,7 @@ export default function MembershipContent() {
           year: form.year, carMake: form.carMake, carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), source: form.source,
           referredBy: form.referredBy, carPaint: form.carPaint, more: form.more,
           previousPiId,
+          lang,
         }),
       })
       const data = await res.json().catch(() => ({}))

@@ -33,7 +33,7 @@ export async function POST(request) {
     }
   } catch { /* allow through if events table unavailable */ }
 
-  const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, _hp, _health_check } = body
+  const { name, email, year, carMake, carModel, phone, instagram, passengers, hasChildren, childrenAges, more, source, dob, isMember, lang, _hp, _health_check } = body
   if (_hp) return Response.json({ success: true, clientSecret: null })
 
   // Validate required fields
@@ -164,6 +164,7 @@ export async function POST(request) {
         phone: phone || '',
         dob: dob || '',
         source: source || '',
+        lang: lang === 'fr' ? 'fr' : 'en',
         instagram: instagram ? instagram.trim().replace(/^@+/, '') : '',
         message: more || '',
         ...(_health_check ? {

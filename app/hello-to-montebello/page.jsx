@@ -517,6 +517,7 @@ export default function HelloToMontebelloPage() {
             hasChildren:   form.hasChildren,
             childrenAges:  form.childrenAges,
             more:          form.more,
+            lang,
           }),
           signal: memberController.signal,
         })
@@ -552,6 +553,7 @@ export default function HelloToMontebelloPage() {
           phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '',
           dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`,
           isMember: false,
+          lang,
           _hp: honeypotRef.current?.value || '',
         }),
         signal: controller.signal,

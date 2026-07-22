@@ -279,7 +279,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
     try {
       const res = await fetch('/api/stripe/event-payment-intent', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId: event.id }),
+        body: JSON.stringify({ eventId: event.id, lang }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setPiError(data.error || t.couldNotStartRegistration); return }

@@ -22,7 +22,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { eventId } = body
+  const { eventId, lang } = body
   if (!eventId) return Response.json({ error: 'Event ID required.' }, { status: 400 })
 
   const admin = createAdminClient()
@@ -91,6 +91,7 @@ export async function POST(request) {
         name: member.name || '',
         tier: member.tier || 'routes_member',
         original_amount: String(subtotal), // pre-tax subtotal
+        lang: lang === 'fr' ? 'fr' : 'en',
       },
       description: `Canvas Routes — ${ev.name}`,
       automatic_payment_methods: { enabled: true },

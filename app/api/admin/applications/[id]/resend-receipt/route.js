@@ -4,7 +4,8 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../lib/sentry.js'
 import { computeTax } from '../../../../../../lib/tax.js'
 import { PRICES, MEMBERSHIP_TYPE_TIER } from '../../../../../../lib/prices.js'
-import { buildReceiptHtml } from '../../../../../../lib/receiptEmail.js'
+import { buildReceiptEmailHtml } from '../../../../../../lib/receiptEmail.js'
+import { buildReceiptPdfBuffer } from '../../../../../../lib/receiptPdf.js'
 
 export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -49,6 +50,10 @@ export async function POST(request, { params }) {
     const firstName = (pi.metadata?.name || app.name || '').trim().split(' ')[0] || 'there'
     const paymentType = ledger?.payment_type || pi.metadata?.type
     const itemLabel = pi.metadata?.event_name || (MEMBERSHIP_TYPE_TIER[paymentType] ? `${MEMBERSHIP_TYPE_TIER[paymentType]} Membership` : 'your Canvas Routes payment')
+    const lang = pi.metadata?.lang === 'fr' ? 'fr' : 'en'
+    const receiptId = piId.slice(-10)
+
+    const pdfBuffer = buildReceiptPdfBuffer({ firstName, billedToName: pi.metadata?.name || app.name || null, billedToEmail: app.email || null, itemLabel, subtotal, discount, gst, qst, total, paidAt, receiptId })
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -56,8 +61,9 @@ export async function POST(request, { params }) {
       body: JSON.stringify({
         from: 'Canvas Routes <info@canvasroutes.com>',
         to: app.email,
-        subject: `Votre reçu Canvas Routes / Your Canvas Routes receipt — ${itemLabel}`,
-        html: buildReceiptHtml({ firstName, billedToName: pi.metadata?.name || app.name || null, billedToEmail: app.email || null, itemLabel, subtotal, discount, gst, qst, total, paidAt, receiptId: piId.slice(-10) }),
+        subject: lang === 'fr' ? `Votre reçu Canvas Routes — ${itemLabel}` : `Your Canvas Routes receipt — ${itemLabel}`,
+        html: buildReceiptEmailHtml({ lang, firstName, itemLabel }),
+        attachments: [{ filename: `canvas-routes-receipt-${receiptId}.pdf`, content: pdfBuffer.toString('base64') }],
       }),
     })
     if (!res.ok) {

@@ -25,7 +25,7 @@ export async function POST(request) {
   // For membership PIs, accept optional form fields to store in metadata.
   // This ensures the webhook rescue path can write full application data
   // even if the client closes the tab before /api/membership-waitlist fires.
-  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source, referredBy, carPaint, more, previousPiId, _health_check } = body
+  const { type, email, name, eventName, phone, dob, year, carMake, carModel, source, referredBy, carPaint, more, previousPiId, lang, _health_check } = body
 
   if (!type || !VALID_TYPES.includes(type)) {
     return Response.json({ error: 'Invalid payment type.' }, { status: 400 })
@@ -51,6 +51,7 @@ export async function POST(request) {
         name:       name.trim(),
         event_name: eventName || '',
         original_amount: String(PRICES[type]), // pre-tax subtotal — apply-promo discounts off this, never off `amount`
+        lang: lang === 'fr' ? 'fr' : 'en',
         // Membership-only fields stored so webhook can rescue form data on tab-close
         ...(isMembership ? {
           phone:       phone    || '',
