@@ -60,8 +60,13 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
   if (isDone && !editing) {
     return (
       <SectionCard title={t.lunchTitle} done delay={180} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
+        {lunchIntro && (
+          <div style={{ marginBottom: '1.25rem', padding: '1rem 1.1rem', background: 'rgba(197,168,130,0.06)', borderLeft: '3px solid #c5a882' }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', marginBottom: '0.4rem', fontWeight: '600' }}>{t.theMenu}</div>
+            <p style={{ fontSize: '13px', color: '#444', lineHeight: 1.8, margin: 0 }}>{lunchIntro}</p>
+          </div>
+        )}
         <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>
-          {lunchIntro && <p style={{ fontSize: '12.5px', color: '#888', lineHeight: 1.8, marginBottom: '1rem' }}>{lunchIntro}</p>}
           {lunch.map((entry, i) => (
             <div key={i} style={{ marginBottom: '0.35rem' }}>
               <strong style={{ color: '#1a1a1a' }}>{entry.name || (i === 0 ? t.driverLabel : t.passengerLabel(i + 1))}</strong>
@@ -94,9 +99,16 @@ export default function CheckinLunchSection({ identifier, lunch, lunchOptions, l
 
   return (
     <SectionCard title={t.lunchTitle} done={false} delay={180} doneLabel={t.lunchDoneLabel} pendingLabel={t.lunchPendingLabel}>
-      {lunchIntro && <p style={{ fontSize: '12.5px', color: '#888', lineHeight: 1.8, marginBottom: '1rem' }}>{lunchIntro}</p>}
-      {cutoffStr && <p style={{ fontSize: '12px', color: '#999', marginBottom: '0.35rem' }}>{t.chooseOneUntil(cutoffStr)}</p>}
-      <p style={{ fontSize: '12px', color: '#8A6535', fontWeight: '500', marginBottom: '1.25rem' }}>{t.lunchAllRequired}</p>
+      {lunchIntro && (
+        <div style={{ marginBottom: '1.25rem', padding: '1rem 1.1rem', background: 'rgba(197,168,130,0.06)', borderLeft: '3px solid #c5a882' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', marginBottom: '0.4rem', fontWeight: '600' }}>{t.theMenu}</div>
+          <p style={{ fontSize: '13px', color: '#444', lineHeight: 1.8, margin: 0 }}>{lunchIntro}</p>
+        </div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
+        <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: '600', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.45)', borderRadius: '99px', padding: '3px 10px' }}>{t.lunchAllRequired}</span>
+        {cutoffStr && <span style={{ fontSize: '12px', color: '#999' }}>{t.chooseOneUntil(cutoffStr)}</span>}
+      </div>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
           {passengersList.map((p, i) => (
