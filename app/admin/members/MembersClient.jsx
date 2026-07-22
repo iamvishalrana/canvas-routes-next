@@ -13,6 +13,7 @@ import {
 import { ExportButton } from '../_components/ExportModal'
 import MemberProfilePreview from '../../../components/MemberProfilePreview'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { formatCarLabel } from '../../../lib/carLabel'
 import { attendanceKey, normalizeEventName } from '../../../lib/eventMeta.js'
 
 // ─── Tier chip ────────────────────────────────────────────────────────────────
@@ -494,7 +495,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
       Status: m.membership_status || '',
       Phone: m.phone || '',
       Instagram: m.instagram ? `@${m.instagram}` : '',
-      Car: [m.cars?.[0]?.year || m.car_year, m.cars?.[0]?.make || m.car_make, m.cars?.[0]?.model || m.car_model].filter(Boolean).join(' '),
+      Car: formatCarLabel(m.cars?.[0]?.year || m.car_year, m.cars?.[0]?.make || m.car_make, m.cars?.[0]?.model || m.car_model),
       'Car Paint': m.cars?.[0]?.paint || '',
       'Password Set': m.password_set_at ? new Date(m.password_set_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
     }))
@@ -956,8 +957,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: '#888' }}>
                           {m.cars?.length > 0
-                            ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || '—'
-                            : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || '—'}
+                            ? formatCarLabel(m.cars[0].year, m.cars[0].make, m.cars[0].model) || '—'
+                            : formatCarLabel(m.car_year, m.car_make, m.car_model) || '—'}
                           {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.3rem' }}>+{m.cars.length - 1}</span>}
                         </span>
                         {(m.cars?.[0]?.paint) && <span style={{ fontSize: '11px', color: '#c5a882' }}>{m.cars[0].paint}</span>}
@@ -1021,8 +1022,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                     <div style={{ fontSize: '12px', color: '#888' }}>
                       <div>
                         {m.cars?.length > 0
-                          ? [m.cars[0].year, m.cars[0].make, m.cars[0].model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
-                          : [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>
+                          ? formatCarLabel(m.cars[0].year, m.cars[0].make, m.cars[0].model) || <span style={{ color: '#ddd' }}>—</span>
+                          : formatCarLabel(m.car_year, m.car_make, m.car_model) || <span style={{ color: '#ddd' }}>—</span>
                         }
                         {m.cars?.length > 1 && <span style={{ fontSize: '10px', color: '#c5a882', marginLeft: '0.4rem' }}>+{m.cars.length - 1}</span>}
                       </div>

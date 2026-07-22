@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from './useRealtimeSync'
 import GenericWaiverViewerModal from './GenericWaiverViewerModal'
 import { CopyBtn } from './shared'
+import { formatCarLabel } from '../../../lib/carLabel'
 
 const SECTION_LABEL_MAP = { trip_details: 'Trip Details', waiver: 'Waiver', lunch: 'Lunch' }
 
@@ -130,7 +131,7 @@ export default function CheckinStatusClient({ eventId }) {
       ...participants.map(p => [
         p.name || '', p.email, p.paymentStatus || '', p.isMember ? 'Yes' : 'No',
         p.discount?.code || '', p.discount ? (p.discount.amount / 100).toFixed(2) : '',
-        [p.registration?.carYear, p.registration?.carMake, p.registration?.carModel].filter(Boolean).join(' '),
+        formatCarLabel(p.registration?.carYear, p.registration?.carMake, p.registration?.carModel),
         p.registration?.phone || '',
         p.trip_details ? 'Yes' : 'No', p.waiver ? 'Yes' : 'No', p.lunch?.length > 0 ? 'Yes' : 'No',
       ]),
@@ -350,9 +351,9 @@ export default function CheckinStatusClient({ eventId }) {
                       <CopyBtn value={p.email} />
                     </div>
                   </div>
-                  {[p.registration?.carYear, p.registration?.carMake, p.registration?.carModel].filter(Boolean).length > 0 && (
+                  {(p.registration?.carYear || p.registration?.carMake || p.registration?.carModel) && (
                     <div style={{ fontSize: '12px', color: '#888', flex: '0 0 auto', minWidth: '110px' }}>
-                      {[p.registration?.carYear, p.registration?.carMake, p.registration?.carModel].filter(Boolean).join(' ')}
+                      {formatCarLabel(p.registration?.carYear, p.registration?.carMake, p.registration?.carModel)}
                     </div>
                   )}
                   {p.paymentStatus && PAYMENT_LABEL[p.paymentStatus] && (
@@ -382,7 +383,7 @@ export default function CheckinStatusClient({ eventId }) {
                         <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Registration Details</div>
                         <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                           {(p.registration.carYear || p.registration.carMake || p.registration.carModel) && (
-                            <>Car: {[p.registration.carYear, p.registration.carMake, p.registration.carModel].filter(Boolean).join(' ')}<br /></>
+                            <>Car: {formatCarLabel(p.registration.carYear, p.registration.carMake, p.registration.carModel)}<br /></>
                           )}
                           {p.registration.phone && <>Phone: {p.registration.phone}<br /></>}
                           {p.registration.instagram && <>Instagram: @{p.registration.instagram}<br /></>}

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import { formatCarLabel } from '../../../lib/carLabel'
 
 function ResultGroup({ label, items, onSelect }) {
   if (!items.length) return null
@@ -83,7 +84,7 @@ export default function GlobalSearch() {
   const q = query.toLowerCase()
   function sub(m) {
     const parts = []
-    const car = [m.car_year, m.car_make, m.car_model].filter(Boolean).join(' ')
+    const car = formatCarLabel(m.car_year, m.car_make, m.car_model)
     if (car) parts.push(car)
     if (m.phone && m.phone.toLowerCase().includes(q)) parts.push(m.phone)
     if (m.instagram && m.instagram.toLowerCase().includes(q)) parts.push(m.instagram)

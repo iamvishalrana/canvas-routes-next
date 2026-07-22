@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import CardInteractive from './CardInteractive'
+import { formatCarLabel } from '../../../../lib/carLabel'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Member Card | Canvas Routes' } }
@@ -43,7 +44,7 @@ export default async function CardPage() {
   const carYear = (primaryCar?.year || member.car_year)?.toString().trim() || null
   const carMake = (primaryCar?.make || member.car_make)?.trim() || null
   const carModel = (primaryCar?.model || member.car_model)?.trim() || null
-  const carLine = [carYear, carMake, carModel].filter(Boolean).join(' ') || null
+  const carLine = formatCarLabel(carYear, carMake, carModel) || null
   const carPaint = application?.car_paint?.trim() || null
 
   return (

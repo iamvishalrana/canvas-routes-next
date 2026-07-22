@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { formatCarLabel } from '../../../../lib/carLabel'
 
 const INP = {
   width: '100%', boxSizing: 'border-box', padding: '0.75rem 1rem',
@@ -94,7 +95,7 @@ export default function EventProfilePage() {
     setPassengerDetails(prev => prev.filter((_, i) => i !== index))
   }
 
-  const carLabel = [data?.carYear, data?.carMake, data?.carModel].filter(Boolean).join(' ')
+  const carLabel = formatCarLabel(data?.carYear, data?.carMake, data?.carModel)
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', flexDirection: 'column' }}>

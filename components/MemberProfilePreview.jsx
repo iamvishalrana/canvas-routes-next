@@ -1,5 +1,6 @@
 'use client'
 import { MONTREAL_TZ } from '../lib/mtlTime'
+import { formatCarLabel } from '../lib/carLabel'
 
 // Presentational replica of the members-portal profile hero + garage + stats,
 // rendered from a raw members row. Used by the admin Members tab to preview
@@ -89,20 +90,20 @@ export default function MemberProfilePreview({ member }) {
             {primaryCar && (
               <div style={{ position: 'absolute', bottom: '0.8rem', left: '0.9rem', right: '0.9rem', lineHeight: 1.2 }}>
                 <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.35rem', color: '#F5F1EC', textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}>{primaryCar.model || primaryCar.make}</div>
-                <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.65)', marginTop: '0.15rem' }}>{[primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).join(' ')}</div>
+                <div style={{ fontSize: '10px', color: 'rgba(245,241,236,0.65)', marginTop: '0.15rem' }}>{formatCarLabel(primaryCar.year, primaryCar.make, primaryCar.model)}</div>
               </div>
             )}
           </div>
         ) : primaryCar ? (
           <div style={{ borderRadius: '12px', border: '0.5px dashed rgba(197,168,130,0.3)', padding: '1rem', fontSize: '12px', color: 'rgba(245,241,236,0.6)' }}>
-            {[primaryCar.year, primaryCar.make, primaryCar.model].filter(Boolean).join(' ')} — no photo yet
+            {formatCarLabel(primaryCar.year, primaryCar.make, primaryCar.model)} — no photo yet
           </div>
         ) : (
           <div style={{ fontSize: '12px', color: 'rgba(245,241,236,0.35)' }}>No car on file.</div>
         )}
         {extraCars.length > 0 && extraCars.map((car, i) => (
           <div key={i} style={{ marginTop: '0.5rem', padding: '0.6rem 0.85rem', borderRadius: '10px', background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)', fontSize: '11px', color: 'rgba(245,241,236,0.8)' }}>
-            {[car.year, car.make, car.model].filter(Boolean).join(' ')}
+            {formatCarLabel(car.year, car.make, car.model)}
           </div>
         ))}
       </div>

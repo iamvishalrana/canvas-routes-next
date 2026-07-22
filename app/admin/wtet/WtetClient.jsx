@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { GhostBtn, Err } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
+import { formatCarLabel } from '../../../lib/carLabel'
 
 const PAGE_STYLE = { padding: '1.5rem' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
@@ -202,7 +203,7 @@ export default function WtetClient() {
                     <div style={{ fontSize: '11px', color: '#999' }}>{p.email}</div>
                   </div>
                   <div style={{ fontSize: '12px', color: '#888', flex: '0 0 auto', minWidth: '120px' }}>
-                    {[p.car_year, p.car_make, p.car_model].filter(Boolean).join(' ') || '—'}
+                    {formatCarLabel(p.car_year, p.car_make, p.car_model) || '—'}
                   </div>
                   <Pill done={!!p.wtet_checkin} doneLabel="Trip ✓" pendingLabel="Trip missing" />
                   <Pill done={!!p.wtet_waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />
