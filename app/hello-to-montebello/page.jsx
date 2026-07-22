@@ -306,6 +306,22 @@ export default function HelloToMontebelloPage() {
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
+  const [atBottom, setAtBottom] = useState(false)
+
+  // Floating scroll cue — hides once there's nothing left to scroll to,
+  // same pattern as the generic check-in pages.
+  useEffect(() => {
+    function checkBottom() {
+      setAtBottom(window.innerHeight + window.scrollY >= document.body.scrollHeight - 80)
+    }
+    checkBottom()
+    window.addEventListener('scroll', checkBottom, { passive: true })
+    window.addEventListener('resize', checkBottom, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', checkBottom)
+      window.removeEventListener('resize', checkBottom)
+    }
+  }, [])
 
   // Meta Pixel — ViewContent on page load
   useEffect(() => {
@@ -653,6 +669,15 @@ export default function HelloToMontebelloPage() {
              zoom-on-focus behavior. ── */
         input, select, textarea { font-size: 16px !important; }
 
+        /* ── Floating scroll cue (mobile + desktop) ── */
+        @keyframes htm-bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+        .htm-scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
+        .htm-scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
+        .htm-scroll-chevron { animation: htm-bounce-down 1.6s ease-in-out infinite; }
+        @media (max-width: 768px) {
+          .htm-scroll-btn { right: 1rem; bottom: 1.25rem; }
+        }
+
         /* ── Responsive ── */
         @media (max-width: 768px) {
           .htm-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
@@ -706,6 +731,18 @@ export default function HelloToMontebelloPage() {
       `}</style>
 
       <SiteNav />
+
+      <button
+        type="button"
+        className="htm-scroll-btn"
+        aria-label={t.scrollCue}
+        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto' }}
+        onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
+      >
+        <svg className="htm-scroll-chevron" width="16" height="10" viewBox="0 0 16 10" fill="none">
+          <path d="M1 1.5L8 8.5L15 1.5" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
 
       {/* HERO */}
       <section className="htm-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/montebello-hero.jpg')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
