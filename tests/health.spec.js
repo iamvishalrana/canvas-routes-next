@@ -93,8 +93,14 @@ test('route page shows form or closed message', async ({ page }) => {
 
 test('route page form inputs render when open', async ({ page }) => {
   await page.goto('/routes/into-the-laurentians')
-  const closed = await page.locator('text=Registration is now closed').isVisible().catch(() => false)
-  if (closed) return
+  const form = page.locator('text=Apply for your spot')
+  const closed = page.locator('text=Registration is now closed')
+  // Wait for either branch to actually render before checking which one —
+  // a bare isVisible() right after goto() can catch the DOM mid-hydration
+  // and race false, then this test times out waiting on a form that will
+  // never appear because registration is closed.
+  await expect(form.or(closed)).toBeVisible({ timeout: 15000 })
+  if (await closed.isVisible().catch(() => false)) return
   await expect(page.locator('input#field-name')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('input#field-email')).toBeVisible()
   await expect(page.locator('button[type="submit"]')).toBeVisible()
