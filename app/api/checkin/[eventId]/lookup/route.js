@@ -40,6 +40,9 @@ export async function POST(request, { params }) {
   return Response.json({
     name: registrant.name,
     email,
+    carYear: registrant.carYear || '',
+    carMake: registrant.carMake || '',
+    carModel: registrant.carModel || '',
     eventName: event.name,
     sections: event.checkin_sections || [],
     maxPassengers: event.checkin_max_passengers || 2,
