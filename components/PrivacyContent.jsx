@@ -1,12 +1,11 @@
 'use client'
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import SiteNav from './SiteNav'
 import SiteFooter from './SiteFooter'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { legalChrome, privacyT } from '../lib/i18n/legal'
 
 export default function PrivacyContent() {
-  const router = useRouter()
   const { lang } = useLanguage()
   const c = legalChrome[lang]
   const t = privacyT[lang]
@@ -17,15 +16,7 @@ export default function PrivacyContent() {
 
   return (
     <div style={{background:"#F5F1EC",minHeight:"100vh",fontFamily:"'Inter',sans-serif"}}>
-      <nav style={{position:"sticky",top:0,zIndex:100,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"1rem 3rem",borderBottom:"0.5px solid rgba(0,0,0,0.12)",background:"#F5F1EC"}}>
-        <a href="/" onClick={e => { e.preventDefault(); router.push('/') }}><img src="/logo-color.svg" alt="Canvas Routes" style={{height:"180px",width:"auto"}} /></a>
-        <div style={{display:"flex",alignItems:"center",gap:"1.5rem"}}>
-          <a href="/faq" style={{background:"none",border:"none",cursor:"pointer",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",textDecoration:"none"}}>{c.faq}</a>
-          <button onClick={() => router.push('/')} style={{background:"none",border:"none",cursor:"pointer",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"#888",display:"flex",alignItems:"center",gap:"0.5rem",padding:0}}>
-            {c.back}
-          </button>
-        </div>
-      </nav>
+      <SiteNav />
       <div style={{maxWidth:"720px",margin:"0 auto",padding:"4rem 2rem"}}>
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>{c.eyebrow}</div>
         <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem",lineHeight:"1.2"}}>{t.pageTitle}</div>
