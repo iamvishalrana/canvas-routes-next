@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import CountUp from '../../../../components/CountUp'
 import { MONTREAL_TZ } from '../../../../lib/mtlTime'
+import { formatForDisplay } from '../../../../lib/memberNumber.js'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -496,7 +497,7 @@ export default function ProfilePage() {
               <>
                 <span style={{ color: 'rgba(245,241,236,0.25)' }}>·</span>
                 <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', fontFamily: 'var(--font-inter), sans-serif' }}>
-                  No. {String(membershipNumber).padStart(3, '0')}
+                  No. {formatForDisplay(membershipNumber)}
                 </span>
               </>
             )}

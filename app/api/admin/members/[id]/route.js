@@ -3,6 +3,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { attendanceKey, attendanceKeyToEventName, normalizeEventName } from '../../../../../lib/eventMeta.js'
 import { captureException } from '../../../../../lib/sentry.js'
 import { logAdminAction } from '../../../../../lib/adminAudit.js'
+import { padForStorage } from '../../../../../lib/memberNumber.js'
 
 export async function PATCH(request, { params }) {
   const admin = await requireAdmin()
@@ -23,12 +24,15 @@ export async function PATCH(request, { params }) {
     if (authErr) return Response.json({ error: process.env.NODE_ENV === 'development' ? authErr.message : 'Database error' }, { status: 500 })
   }
 
-  // Check for duplicate membership number if being set
-  if (body.membership_number && String(body.membership_number).trim() !== '') {
+  // Check for duplicate membership number if being set — stored zero-padded
+  // (see lib/memberNumber.js) so the plain column sort used on the Members
+  // page is a correct numeric order, not lexicographic ("10" before "9").
+  const paddedMembershipNumber = 'membership_number' in body ? padForStorage(body.membership_number) : undefined
+  if (paddedMembershipNumber) {
     const { data: existing } = await supabase
       .from('members')
       .select('id, name, email')
-      .eq('membership_number', String(body.membership_number).trim())
+      .eq('membership_number', paddedMembershipNumber)
       .neq('id', id)
       .maybeSingle()
     if (existing) {
@@ -42,6 +46,7 @@ export async function PATCH(request, { params }) {
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if (update.email) update.email = update.email.trim().toLowerCase()
+  if ('membership_number' in update) update.membership_number = paddedMembershipNumber
 
   const { error } = await supabase.from('members').update(update).eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })

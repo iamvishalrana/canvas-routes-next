@@ -7,6 +7,7 @@ import { attendanceKeyToEventName, normalizeEventName as resolveEventName } from
 import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 import FadeUp from '../../../../components/FadeUp'
 import CountUp from '../../../../components/CountUp'
+import { formatForDisplay } from '../../../../lib/memberNumber.js'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Dashboard | Canvas Routes' } }
@@ -140,7 +141,7 @@ export default async function DashboardPage() {
   const tier = member?.tier || 'routes_member'
   const isInnerCircle = tier === 'inner_circle'
   const carPhotoUrl = member?.car_photo_url || null
-  const membershipNumber = member?.membership_number ? String(member.membership_number).padStart(3, '0') : null
+  const membershipNumber = formatForDisplay(member?.membership_number)
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
 

@@ -15,6 +15,7 @@ import MemberProfilePreview from '../../../components/MemberProfilePreview'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import { formatCarLabel } from '../../../lib/carLabel'
 import { attendanceKey, normalizeEventName } from '../../../lib/eventMeta.js'
+import { formatForDisplay } from '../../../lib/memberNumber.js'
 
 // ─── Tier chip ────────────────────────────────────────────────────────────────
 
@@ -272,7 +273,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   const [expanded, setExpanded] = useState(null)
   const [previewMember, setPreviewMember] = useState(null) // member whose portal profile card is being previewed
   const [selected, setSelected] = useState(new Set())
-  const [sort, setSort] = useState(() => searchParams.get('sort') || 'newest')
+  const [sort, setSort] = useState(() => searchParams.get('sort') || 'member_num_asc')
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || 'all')
   const [tierFilter, setTierFilter] = useState(() => searchParams.get('tier') || 'all')
   const [editingNote, setEditingNote] = useState(null)
@@ -339,7 +340,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
       dob_month: m.dob_month ? String(m.dob_month) : '',
       dob_day: m.dob_day ? String(m.dob_day) : '',
       dob_year: m.dob_year ? String(m.dob_year) : '',
-      membership_number: m.membership_number || '',
+      // Stored zero-padded for sort order (lib/memberNumber.js) — strip
+      // leading zeros so the edit field shows the plain number, not "000042".
+      membership_number: m.membership_number ? String(parseInt(m.membership_number, 10) || '') : '',
     })
     if (m.cars?.length > 0) {
       setEditCars(m.cars)
@@ -471,21 +474,13 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
     setTimeout(() => setInviteSuccess(false), 4000)
   }
 
-  // Search/status/tier/sort (except member #) are all applied server-side now
-  // (see page.jsx + pushQuery above) so `members` already IS the correct,
-  // globally-filtered page — no client re-filtering needed, and no risk of
-  // "no results" for someone who's just on a different page. Member-number
-  // sort is the one exception: membership_number is free-text and not
-  // reliably zero-padded, so it's re-sorted here, but only within this page.
-  const filtered = sort.startsWith('member_num')
-    ? [...members].sort((a, b) => {
-        // `|| 9999` AFTER parseInt — non-numeric values produce NaN, and any
-        // NaN comparison made the whole sort order undefined
-        const an = parseInt(a.membership_number, 10) || 9999
-        const bn = parseInt(b.membership_number, 10) || 9999
-        return sort === 'member_num_asc' ? an - bn : bn - an
-      })
-    : members
+  // Search/status/tier/sort are all applied server-side (see page.jsx +
+  // pushQuery above) so `members` already IS the correct, globally-sorted/
+  // filtered page — no client re-sorting needed, and no risk of "no results"
+  // for someone who's just on a different page. membership_number is stored
+  // zero-padded (lib/memberNumber.js) specifically so the DB-level sort in
+  // page.jsx's SORT_COLUMNS is correct numeric order.
+  const filtered = members
 
   function exportCSV() {
     const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : members
@@ -748,12 +743,12 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <select value={sort} onChange={e => onSortChange(e.target.value)}
               style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="member_num_asc">Member # ↑ (lowest first)</option>
+              <option value="member_num_desc">Member # ↓ (highest first)</option>
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name_az">Name A → Z</option>
               <option value="name_za">Name Z → A</option>
-              <option value="member_num_asc">Member # ↑ (this page)</option>
-              <option value="member_num_desc">Member # ↓ (this page)</option>
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -1007,7 +1002,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                         <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>No name</span>}</div>
                         {m.membership_number && (
                           <span style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '1px 6px', background: 'rgba(197,168,130,0.06)' }}>
-                            #{String(m.membership_number).padStart(3, '0')}
+                            #{formatForDisplay(m.membership_number)}
                           </span>
                         )}
                         <TierChip tier={m.tier} />

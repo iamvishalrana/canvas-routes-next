@@ -6,6 +6,10 @@ export const metadata = { title: 'Members — Admin' }
 
 const PAGE_SIZE = 50
 const SORT_COLUMNS = {
+  // membership_number is stored zero-padded (see lib/memberNumber.js) so a
+  // plain column sort is already correct numeric order, not lexicographic.
+  member_num_asc:  { column: 'membership_number', ascending: true },
+  member_num_desc: { column: 'membership_number', ascending: false },
   name_az:  { column: 'name', ascending: true },
   name_za:  { column: 'name', ascending: false },
   oldest:   { column: 'created_at', ascending: true },
@@ -18,10 +22,9 @@ export default async function MembersPage({ searchParams }) {
   const q = (params.q || '').trim()
   const status = params.status || ''
   const tier = params.tier || ''
-  // member_num sort isn't a real DB order (membership_number is free-text and
-  // not reliably zero-padded) — MembersClient re-sorts by it within the
-  // fetched page only; every other sort mode is a true global DB order.
-  const sortKey = SORT_COLUMNS[params.sort] ? params.sort : 'newest'
+  // Members section always opens sorted by membership number, lowest first —
+  // the standing default, not just an option in the dropdown.
+  const sortKey = SORT_COLUMNS[params.sort] ? params.sort : 'member_num_asc'
   const offset = (page - 1) * PAGE_SIZE
 
   const supabase = createAdminClient()

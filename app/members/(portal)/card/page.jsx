@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import CardInteractive from './CardInteractive'
 import { formatCarLabel } from '../../../../lib/carLabel'
+import { formatForDisplay } from '../../../../lib/memberNumber.js'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Member Card | Canvas Routes' } }
@@ -35,7 +36,7 @@ export default async function CardPage() {
   const tierLabel = member.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'
   const status = member.membership_status || 'pending'
   const isActive = status === 'active'
-  const memberNumber = member.membership_number != null ? String(member.membership_number).padStart(3, '0') : null
+  const memberNumber = formatForDisplay(member.membership_number)
   const rawYear = member.created_at ? new Date(member.created_at).getFullYear() : NaN
   const joinYear = Number.isFinite(rawYear) ? rawYear : 2026
   const verifyUrl = `${SITE_URL}/verify/${member.id}`

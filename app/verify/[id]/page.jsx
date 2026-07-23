@@ -1,4 +1,5 @@
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { formatForDisplay } from '../../../lib/memberNumber.js'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +16,7 @@ export default async function VerifyPage({ params }) {
 
   const isValid = member && member.membership_status === 'active'
   const tierLabel = member?.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'
-  const memberNumber = member?.membership_number ? String(member.membership_number).padStart(3, '0') : null
+  const memberNumber = formatForDisplay(member?.membership_number)
   const joinYear = member?.created_at ? new Date(member.created_at).getFullYear() : null
 
   const statusLabel = isValid ? 'Active Member'
