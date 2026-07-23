@@ -1,7 +1,7 @@
 import { after } from 'next/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
-import { listEventRegistrants } from '../../../../../../lib/eventCheckinShared'
+import { listEventRegistrants, resolveCheckinSectionsBatch } from '../../../../../../lib/eventCheckinShared'
 import { buildCheckinReminderHtml } from '../../../../../../lib/checkinReminderEmail'
 import { captureException, captureMessage } from '../../../../../../lib/sentry.js'
 
@@ -30,14 +30,20 @@ export async function POST(request, { params }) {
 
   const [registrants, { data: checkins }] = await Promise.all([
     listEventRegistrants(admin, eventId, event.name),
-    admin.from('event_checkins').select('email, trip_details, waiver, lunch').eq('event_id', eventId),
+    admin.from('event_checkins').select('email, trip_details, waiver, lunch, car_photo').eq('event_id', eventId),
   ])
   const checkinByEmail = new Map((checkins || []).map(c => [(c.email || '').toLowerCase(), c]))
+  // Resolved per-registrant — car_photo drops out for anyone exempt (already
+  // sent one / attended a route with us before), so this reminder never nags
+  // them about something they were never meant to be asked for.
+  const sectionsByEmail = await resolveCheckinSectionsBatch(admin, registrants.map(r => r.email), sections)
 
   const incomplete = registrants.filter(r => {
     if (onlyEmails && !onlyEmails.has(r.email)) return false
     const c = checkinByEmail.get(r.email)
-    const done = (!hasTrip || c?.trip_details) && (!hasWaiver || c?.waiver) && (!hasLunch || c?.lunch?.length > 0)
+    const effectiveSections = sectionsByEmail.get(r.email) || sections
+    const hasCarPhoto = effectiveSections.includes('car_photo')
+    const done = (!hasTrip || c?.trip_details) && (!hasWaiver || c?.waiver) && (!hasLunch || c?.lunch?.length > 0) && (!hasCarPhoto || c?.car_photo)
     return !done
   })
 

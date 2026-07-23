@@ -1670,7 +1670,7 @@ export default function EventsClient() {
                             <div style={{ marginBottom: '1.1rem' }}>
                               <L>Sections</L>
                               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                {[['trip_details', 'Trip Details'], ['waiver', 'Waiver'], ['lunch', 'Lunch']].map(([id, label]) => {
+                                {[['trip_details', 'Trip Details'], ['waiver', 'Waiver'], ['lunch', 'Lunch'], ['car_photo', 'Car Photo']].map(([id, label]) => {
                                   const on = (editForm.checkin_sections || []).includes(id)
                                   return (
                                     <button key={id} type="button"
@@ -1681,6 +1681,11 @@ export default function EventsClient() {
                                   )
                                 })}
                               </div>
+                              {(editForm.checkin_sections || []).includes('car_photo') && (
+                                <div style={{ fontSize: '11px', color: '#999', marginTop: '0.5rem', lineHeight: 1.6 }}>
+                                  Auto-skipped for anyone who's already sent a car photo (any event) or who's attended a route with us before — the ask only ever surfaces once, on someone's first route.
+                                </div>
+                              )}
                             </div>
 
                             {(editForm.checkin_sections || []).includes('waiver') && (

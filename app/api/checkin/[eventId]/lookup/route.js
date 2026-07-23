@@ -1,7 +1,7 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
-import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
+import { findEventRegistrant, resolveCheckinSections } from '../../../../../lib/eventCheckinShared'
 
 // Email-only lookup, no code/link sent — same low-stakes tradeoff as the
 // WTET check-in lookup this is modeled on.
@@ -31,11 +31,12 @@ export async function POST(request, { params }) {
   }
 
   const { data: checkin } = await admin.from('event_checkins')
-    .select('trip_details, waiver, lunch')
+    .select('trip_details, waiver, lunch, car_photo')
     .eq('event_id', eventId).eq('email', email).maybeSingle()
 
   const lunchCutoff = event.checkin_lunch_cutoff
   const lunchLocked = lunchCutoff ? new Date() > new Date(lunchCutoff) : false
+  const sections = await resolveCheckinSections(admin, email, event.checkin_sections)
 
   return Response.json({
     name: registrant.name,
@@ -44,7 +45,7 @@ export async function POST(request, { params }) {
     carMake: registrant.carMake || '',
     carModel: registrant.carModel || '',
     eventName: event.name,
-    sections: event.checkin_sections || [],
+    sections,
     maxPassengers: event.checkin_max_passengers || 2,
     lunchOptions: event.checkin_lunch_options || [],
     lunchIntro: event.checkin_lunch_intro || '',
@@ -55,5 +56,6 @@ export async function POST(request, { params }) {
     tripDetails: checkin?.trip_details || null,
     waiver: checkin?.waiver || null,
     lunch: checkin?.lunch || null,
+    carPhoto: checkin?.car_photo || null,
   })
 }

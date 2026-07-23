@@ -190,8 +190,9 @@ export async function POST(request) {
           const adminPanelAlreadyCaptured = !!(preUpdateApp?.stripe_paid_at)
 
           // Write payment fields — update by PI ID so we don't clobber unrelated rows.
-          // For member road trips, skip stripe_paid_at so wtet-member-confirm remains the
-          // sole setter — alreadyConfirmed guard in that route depends on this.
+          // For member road trips, skip stripe_paid_at here — the atomic claim
+          // below (or the client-side */member-confirm route) is what sets it,
+          // whichever wins the race.
           const paymentFields = {
             stripe_payment_status: 'paid',
             stripe_amount_paid:    amountPaid,
@@ -241,6 +242,65 @@ export async function POST(request) {
                 }),
               }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),
             ])
+          }
+
+          // Member confirmation email — rescue path. Members use automatic
+          // capture, so this succeeded event is the ONLY signal Stripe ever
+          // gives us; hello-to-montebello-member-confirm / wtet-member-confirm
+          // normally win this race within ~1s of confirmPayment() resolving
+          // client-side, using this exact same atomic claim on stripe_paid_at.
+          // Without this block, a browser closing/crashing right after the
+          // charge succeeds (before that client call or its one retry
+          // completes) left the member charged with no confirmation email,
+          // no admin notice, and stripe_paid_at stuck null forever.
+          if (isMember && process.env.RESEND_API_KEY && normalEmail) {
+            const { data: memberClaim } = await supabase.from('applications')
+              .update({ stripe_paid_at: new Date().toISOString() })
+              .eq('email', normalEmail)
+              .is('stripe_paid_at', null)
+              .select('id')
+            if ((memberClaim || []).length > 0) {
+              captureMessage('Member road-trip webhook rescue fired — client confirm did not win the race', { email: normalEmail, type, piId: pi.id })
+              const checkinUrl = type === 'road_trip_wtet'
+                ? `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
+                : await getRouteCheckinUrl(supabase, type, normalEmail)
+              const memberName = name || normalEmail.split('@')[0]
+              after(() => Promise.allSettled([
+                fetch('https://api.resend.com/emails', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                  body: JSON.stringify({
+                    from: 'Canvas Routes <info@canvasroutes.com>',
+                    to: normalEmail,
+                    reply_to: 'jerry@canvasroutes.com',
+                    subject: `Payment confirmed — ${eventLabel}`,
+                    html: buildWtetConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
+                    text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+                  }),
+                }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-member-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-member-payment-confirm-email', email: normalEmail })),
+                fetch('https://api.resend.com/emails', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                  body: JSON.stringify({
+                    from: 'Canvas Routes <info@canvasroutes.com>',
+                    to: 'jerry@canvasroutes.com',
+                    subject: `Member Payment Confirmed — ${memberName}`,
+                    html: buildAdminNotifyHtml('Member payment confirmed (webhook rescue)', [
+                      ['Event',          eventLabel],
+                      ['Name',           `<strong>${memberName}</strong>`],
+                      ['Email',          `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+                      ['Amount',         amountFormatted],
+                      ['Car year',       pi.metadata?.car_year || '—'],
+                      ['Car',            pi.metadata?.car_model || '—'],
+                      ['Passengers',     pi.metadata?.passengers || '—'],
+                      ['Children',       pi.metadata?.has_children || '—'],
+                      ['Children ages',  pi.metadata?.children_ages || '—'],
+                      ['PI',             pi.id],
+                    ]),
+                  }),
+                }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-member-payment-confirm-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-member-payment-confirm-admin-email', email: normalEmail })),
+              ]))
+            }
           }
         }
         break
@@ -313,7 +373,10 @@ export async function POST(request) {
           ...(pi.metadata?.source   ? { source:   pi.metadata.source }   : {}),
           ...(pi.metadata?.referred_by ? { referred_by: pi.metadata.referred_by } : {}),
           ...(pi.metadata?.car_paint   ? { car_paint:   pi.metadata.car_paint }   : {}),
-          ...(pi.metadata?.more        ? { more:        pi.metadata.more }        : {}),
+          // Register routes store the "tell us more" field under metadata key
+          // `message` (see hello-to-montebello-register / wtet-register), not
+          // `more` — this used to read the wrong key and silently never restore it.
+          ...(pi.metadata?.message     ? { more:        pi.metadata.message }     : {}),
           // Road-trip-specific fields (WTET, Hello to Montebello) — were being
           // silently dropped on rescue even though they're always in PI metadata,
           // the same class of bug rule 21 documents for referred_by.

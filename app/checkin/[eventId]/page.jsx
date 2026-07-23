@@ -6,6 +6,7 @@ import SiteFooter from '../../../components/SiteFooter'
 import CheckinTripDetailsSection from '../../../components/CheckinTripDetailsSection'
 import CheckinWaiverSection from '../../../components/CheckinWaiverSection'
 import CheckinLunchSection from '../../../components/CheckinLunchSection'
+import CheckinCarPhotoSection from '../../../components/CheckinCarPhotoSection'
 import { CHECKIN_T } from '../../../lib/genericCheckinContent'
 import { captureException } from '../../../lib/sentry'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
@@ -106,12 +107,14 @@ function CheckinContent() {
   const hasTrip = sections.includes('trip_details')
   const hasWaiver = sections.includes('waiver')
   const hasLunch = sections.includes('lunch')
+  const hasCarPhoto = sections.includes('car_photo')
   // If lunch is enabled without trip_details, there's no passenger list to pick
   // dishes for — fall back to just the registrant so the section is completable.
   const passengersList = data?.tripDetails?.passengers_list
     || (hasLunch && !hasTrip && data ? [{ name: data.name || '', age: '' }] : [])
   const allDone = data && (!hasTrip || !!data.tripDetails) && (!hasWaiver || !!data.waiver)
     && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
+    && (!hasCarPhoto || !!data.carPhoto)
 
   return (
     <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
@@ -212,6 +215,14 @@ function CheckinContent() {
               passengersList={passengersList}
               tripDone={!hasTrip || !!data.tripDetails}
               onSaved={lunch => setData(prev => ({ ...prev, lunch }))}
+            />
+          )}
+
+          {hasCarPhoto && (
+            <CheckinCarPhotoSection
+              identifier={identifier}
+              carPhoto={data.carPhoto}
+              onSaved={carPhoto => setData(prev => ({ ...prev, carPhoto }))}
             />
           )}
         </>

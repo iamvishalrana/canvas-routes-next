@@ -5,7 +5,7 @@ import GenericWaiverViewerModal from './GenericWaiverViewerModal'
 import { CopyBtn } from './shared'
 import { formatCarLabel } from '../../../lib/carLabel'
 
-const SECTION_LABEL_MAP = { trip_details: 'Trip Details', waiver: 'Waiver', lunch: 'Lunch' }
+const SECTION_LABEL_MAP = { trip_details: 'Trip Details', waiver: 'Waiver', lunch: 'Lunch', car_photo: 'Car Photo' }
 
 function downloadFile(content, filename, mime) {
   const a = document.createElement('a')
@@ -127,13 +127,13 @@ export default function CheckinStatusClient({ eventId }) {
 
   function exportRegistrantsCSV() {
     const rows = [
-      ['Name', 'Email', 'Language', 'Payment Status', 'Member', 'Promo Code', 'Discount', 'Car', 'Phone', 'Trip Details', 'Waiver Signed', 'Lunch Selected'],
+      ['Name', 'Email', 'Language', 'Payment Status', 'Member', 'Promo Code', 'Discount', 'Car', 'Phone', 'Trip Details', 'Waiver Signed', 'Lunch Selected', 'Car Photo Sent'],
       ...participants.map(p => [
         p.name || '', p.email, p.lang === 'fr' ? 'French' : p.lang === 'en' ? 'English' : '', p.paymentStatus || '', p.isMember ? 'Yes' : 'No',
         p.discount?.code || '', p.discount ? (p.discount.amount / 100).toFixed(2) : '',
         formatCarLabel(p.registration?.carYear, p.registration?.carMake, p.registration?.carModel),
         p.registration?.phone || '',
-        p.trip_details ? 'Yes' : 'No', p.waiver ? 'Yes' : 'No', p.lunch?.length > 0 ? 'Yes' : 'No',
+        p.trip_details ? 'Yes' : 'No', p.waiver ? 'Yes' : 'No', p.lunch?.length > 0 ? 'Yes' : 'No', p.car_photo ? 'Yes' : 'No',
       ]),
     ]
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -217,13 +217,20 @@ export default function CheckinStatusClient({ eventId }) {
   const hasTrip = sections.includes('trip_details')
   const hasWaiver = sections.includes('waiver')
   const hasLunch = sections.includes('lunch')
+  const hasCarPhoto = sections.includes('car_photo')
 
+  // Raw completion status, not exemption-aware — this view is for Jerry to
+  // see who has/hasn't sent one at all, regardless of whether the public
+  // check-in page would have asked them (repeat participants and anyone who
+  // already sent one elsewhere are never shown the ask, so they'll always
+  // read as "missing" here, which is expected).
   const filtered = participants.filter(p => {
     if (filter === 'trip_missing' && p.trip_details) return false
     if (filter === 'waiver_missing' && p.waiver) return false
     if (filter === 'lunch_missing' && p.lunch?.length > 0) return false
+    if (filter === 'car_photo_missing' && p.car_photo) return false
     if (filter === 'incomplete') {
-      const done = (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0)
+      const done = (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0) && (!hasCarPhoto || p.car_photo)
       if (done) return false
     }
     if (search && !((p.name || '').toLowerCase().includes(search.toLowerCase()) || (p.email || '').toLowerCase().includes(search.toLowerCase()))) return false
@@ -233,7 +240,8 @@ export default function CheckinStatusClient({ eventId }) {
   const tripCount = participants.filter(p => p.trip_details).length
   const waiverCount = participants.filter(p => p.waiver).length
   const lunchCount = participants.filter(p => p.lunch?.length > 0).length
-  const fullyDoneCount = participants.filter(p => (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0)).length
+  const carPhotoCount = participants.filter(p => p.car_photo).length
+  const fullyDoneCount = participants.filter(p => (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0) && (!hasCarPhoto || p.car_photo)).length
   const total = participants.length
   const incompleteCount = total - fullyDoneCount
 
@@ -267,6 +275,12 @@ export default function CheckinStatusClient({ eventId }) {
           <div style={{ ...CARD, padding: '1.1rem 1.3rem' }}>
             <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', fontWeight: '400', color: lunchCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{lunchCount}<span style={{ fontSize: '1rem', color: '#ccc' }}>/{total}</span></div>
             <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Lunch selected</div>
+          </div>
+        )}
+        {hasCarPhoto && (
+          <div style={{ ...CARD, padding: '1.1rem 1.3rem' }}>
+            <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', fontWeight: '400', color: carPhotoCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{carPhotoCount}<span style={{ fontSize: '1rem', color: '#ccc' }}>/{total}</span></div>
+            <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>Car photos sent</div>
           </div>
         )}
       </div>
@@ -305,6 +319,7 @@ export default function CheckinStatusClient({ eventId }) {
           ...(hasTrip ? [{ id: 'trip_missing', label: 'Trip details missing' }] : []),
           ...(hasWaiver ? [{ id: 'waiver_missing', label: 'Waiver missing' }] : []),
           ...(hasLunch ? [{ id: 'lunch_missing', label: 'Lunch missing' }] : []),
+          ...(hasCarPhoto ? [{ id: 'car_photo_missing', label: 'Car photo missing' }] : []),
         ].map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: `0.5px solid ${filter === f.id ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: filter === f.id ? '#0F1E14' : 'transparent', color: filter === f.id ? '#F5F1EC' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -379,6 +394,7 @@ export default function CheckinStatusClient({ eventId }) {
                   {hasTrip && <Pill done={!!p.trip_details} doneLabel="Trip ✓" pendingLabel="Trip missing" />}
                   {hasWaiver && <Pill done={!!p.waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />}
                   {hasLunch && <Pill done={p.lunch?.length > 0} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />}
+                  {hasCarPhoto && <Pill done={!!p.car_photo} doneLabel="Photo ✓" pendingLabel="Photo missing" />}
                 </div>
                 {isOpen && (
                   <>
@@ -458,6 +474,24 @@ export default function CheckinStatusClient({ eventId }) {
                         ) : <div style={{ fontSize: '12px', color: '#bbb' }}>Not selected yet.</div>}
                       </div>
                     )}
+                    {hasCarPhoto && (
+                      <div>
+                        <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Car Photo</div>
+                        {p.car_photo ? (
+                          <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
+                            <a href={p.car_photo.url} target="_blank" rel="noreferrer">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={p.car_photo.url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '0.5px solid rgba(0,0,0,0.1)', display: 'block', marginBottom: '0.5rem' }} />
+                            </a>
+                            {p.car_photo.submitted_at && (
+                              <span style={{ color: '#aaa' }}>Submitted {new Date(p.car_photo.submitted_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>
+                            )}
+                            <br />
+                            <ResetLink email={p.email} section="car_photo" resetConfirm={resetConfirm} setResetConfirm={setResetConfirm} resetBusy={resetBusy} resetSection={resetSection} />
+                          </div>
+                        ) : <div style={{ fontSize: '12px', color: '#bbb' }}>Not sent yet.</div>}
+                      </div>
+                    )}
                   </div>
                   {p.paymentStatus === 'authorized' && p.applicationId && (
                     <div style={{ padding: '0 1.25rem 1.1rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
@@ -490,7 +524,7 @@ export default function CheckinStatusClient({ eventId }) {
                   {p.paymentStatus !== 'authorized' && (
                     <div style={{ padding: '0 1.25rem 1.1rem', background: '#fafaf9', borderBottom: idx < filtered.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {!((!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0)) && (
+                        {!((!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0) && (!hasCarPhoto || p.car_photo)) && (
                           <button type="button" onClick={() => sendReminders([p.email])} disabled={reminding === p.email}
                             style={{ padding: '0.5rem 1.1rem', background: 'transparent', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.5)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: reminding === p.email ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                             {reminding === p.email ? 'Sending…' : remindResult?.key === p.email ? '✓ Sent' : 'Resend Check-in Email'}

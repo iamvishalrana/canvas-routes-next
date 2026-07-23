@@ -26,7 +26,7 @@ export async function PATCH(request, { params }) {
   if ('registration_visibility' in update && !['members', 'public'].includes(update.registration_visibility)) update.registration_visibility = 'members'
   if ('trip_length' in update && !['Same Day', 'Overnight', 'Multiple Nights'].includes(update.trip_length)) update.trip_length = null
   if ('checkin_enabled' in update) update.checkin_enabled = Boolean(update.checkin_enabled)
-  if ('checkin_sections' in update) update.checkin_sections = Array.isArray(update.checkin_sections) ? update.checkin_sections.filter(s => ['trip_details', 'waiver', 'lunch'].includes(s)) : []
+  if ('checkin_sections' in update) update.checkin_sections = Array.isArray(update.checkin_sections) ? update.checkin_sections.filter(s => ['trip_details', 'waiver', 'lunch', 'car_photo'].includes(s)) : []
   if ('checkin_max_passengers' in update) update.checkin_max_passengers = parseInt(update.checkin_max_passengers) || 2
   if ('checkin_lunch_options' in update) update.checkin_lunch_options = Array.isArray(update.checkin_lunch_options) ? update.checkin_lunch_options : []
   if ('checkin_waiver_text' in update) update.checkin_waiver_text = update.checkin_waiver_text || null

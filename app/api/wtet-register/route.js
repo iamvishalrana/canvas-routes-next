@@ -167,7 +167,7 @@ export async function POST(request) {
         source: source || '',
         lang: lang === 'fr' ? 'fr' : 'en',
         instagram: instagram ? instagram.trim().replace(/^@+/, '') : '',
-        message: more || '',
+        message: (more || '').slice(0, 450), // Stripe metadata values cap at 500 chars
         ...(_health_check ? {
           source: 'health_check',
           health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',
