@@ -5,6 +5,7 @@ import { stripe } from '../../../lib/stripe.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { captureException } from '../../../lib/sentry.js'
 import { computeTax } from '../../../lib/tax.js'
+import { getFbCookiesFromRequest } from '../../../lib/metaConversionsApi.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -150,6 +151,11 @@ export async function POST(request) {
 
   // Create Stripe PI — immediate capture for members (vetted, no manual review needed)
   const { total: memberTotalWithTax } = computeTax(MEMBER_PRICE_CENTS)
+  // Stashed in metadata for Meta CAPI attribution — see hello-to-montebello-register
+  // for why (the webhook/confirm routes that fire the Purchase event later have
+  // no browser/cookies of their own to read this from).
+  const { fbc, fbp } = getFbCookiesFromRequest(request)
+  const clientUa = (request.headers.get('user-agent') || '').slice(0, 450)
   try {
     const pi = await stripe.paymentIntents.create({
       amount: memberTotalWithTax,
@@ -170,6 +176,10 @@ export async function POST(request) {
         children_ages: childrenAges || '',
         original_amount: String(MEMBER_PRICE_CENTS),
         lang: lang === 'fr' ? 'fr' : 'en',
+        ...(fbc ? { fbc } : {}),
+        ...(fbp ? { fbp } : {}),
+        client_ip: ip || '',
+        client_ua: clientUa,
         ...(_health_check ? {
           source: 'health_check',
           health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',

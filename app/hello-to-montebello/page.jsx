@@ -8,6 +8,7 @@ import SiteFooter from '../../components/SiteFooter'
 import FadeUp from '../../components/FadeUp'
 import SiteNav from '../../components/SiteNav'
 import PageLoader from '../../components/PageLoader'
+import InAppBrowserNotice from '../../components/InAppBrowserNotice'
 import { computeTax } from '../../lib/tax'
 import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { routeEventSharedT } from '../../lib/i18n/routeEventShared'
@@ -337,7 +338,11 @@ export default function HelloToMontebelloPage() {
       window.fbq('track', 'InitiateCheckout', { value: wasMemberRef.current ? 199 : 225, currency: 'CAD', num_items: 1 })
     }
     if (status === 'success') {
-      window.fbq('track', 'Purchase', { value: wasMemberRef.current ? 199 : 225, currency: 'CAD' })
+      // eventID = the Stripe PaymentIntent id, matching what the server-side
+      // Meta CAPI Purchase event (webhook / member-confirm route) sends for
+      // the same PI — lets Meta dedupe the two instead of double-counting.
+      const paymentIntentId = clientSecret?.split('_secret_')[0]
+      window.fbq('track', 'Purchase', { value: wasMemberRef.current ? 199 : 225, currency: 'CAD' }, { eventID: paymentIntentId })
     }
   }, [status])
 
@@ -674,8 +679,12 @@ export default function HelloToMontebelloPage() {
         .htm-scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
         .htm-scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
         .htm-scroll-chevron { animation: htm-bounce-down 1.6s ease-in-out infinite; }
+        /* In-app-browser notice is also bottom-fixed and full-width — shift
+           the scroll cue up while it's showing so they don't stack. */
+        body.iab-notice-visible .htm-scroll-btn { bottom: 4.5rem; }
         @media (max-width: 768px) {
           .htm-scroll-btn { right: 1rem; bottom: 1.25rem; }
+          body.iab-notice-visible .htm-scroll-btn { bottom: 5.5rem; }
         }
 
         /* ── Responsive ── */
@@ -731,6 +740,7 @@ export default function HelloToMontebelloPage() {
       `}</style>
 
       <SiteNav />
+      <InAppBrowserNotice />
 
       <button
         type="button"

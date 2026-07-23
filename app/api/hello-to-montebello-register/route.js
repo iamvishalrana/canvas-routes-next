@@ -6,6 +6,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
+import { getFbCookiesFromRequest } from '../../../lib/metaConversionsApi.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -152,6 +153,12 @@ export async function POST(request) {
 
   // Create Stripe PaymentIntent — manual capture (hold only)
   const { total: totalWithTax } = computeTax(amountCents)
+  // Captured now (this request carries the visitor's cookies) and stashed in
+  // metadata so the Meta CAPI Purchase event fired later from the webhook —
+  // which has no browser/cookies of its own — can still be attributed back
+  // to the ad that brought them here. See lib/metaConversionsApi.js.
+  const { fbc, fbp } = getFbCookiesFromRequest(request)
+  const clientUa = (request.headers.get('user-agent') || '').slice(0, 450)
   try {
     const pi = await stripe.paymentIntents.create({
       amount: totalWithTax,
@@ -176,6 +183,10 @@ export async function POST(request) {
         lang: lang === 'fr' ? 'fr' : 'en',
         instagram: instagram ? instagram.trim().replace(/^@+/, '') : '',
         message: (more || '').slice(0, 450), // Stripe metadata values cap at 500 chars
+        ...(fbc ? { fbc } : {}),
+        ...(fbp ? { fbp } : {}),
+        client_ip: ip || '',
+        client_ua: clientUa,
         ...(_health_check ? {
           source: 'health_check',
           health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',

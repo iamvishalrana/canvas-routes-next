@@ -9,6 +9,7 @@ import { MEMBERSHIP_TYPE_TIER } from '../../../../lib/prices.js'
 import { recordPaymentSuccess } from '../../../../lib/paymentLedger.js'
 import { markRegistrationPaid } from '../../../../lib/markRegistrationPaid.js'
 import { getRouteCheckinUrl } from '../../../../lib/routeEventLink.js'
+import { sendMetaCapiEvent } from '../../../../lib/metaConversionsApi.js'
 
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
@@ -253,7 +254,7 @@ export async function POST(request) {
           // charge succeeds (before that client call or its one retry
           // completes) left the member charged with no confirmation email,
           // no admin notice, and stripe_paid_at stuck null forever.
-          if (isMember && process.env.RESEND_API_KEY && normalEmail) {
+          if (isMember && normalEmail) {
             const { data: memberClaim } = await supabase.from('applications')
               .update({ stripe_paid_at: new Date().toISOString() })
               .eq('email', normalEmail)
@@ -261,45 +262,68 @@ export async function POST(request) {
               .select('id')
             if ((memberClaim || []).length > 0) {
               captureMessage('Member road-trip webhook rescue fired — client confirm did not win the race', { email: normalEmail, type, piId: pi.id })
-              const checkinUrl = type === 'road_trip_wtet'
-                ? `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
-                : await getRouteCheckinUrl(supabase, type, normalEmail)
-              const memberName = name || normalEmail.split('@')[0]
-              after(() => Promise.allSettled([
-                fetch('https://api.resend.com/emails', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-                  body: JSON.stringify({
-                    from: 'Canvas Routes <info@canvasroutes.com>',
-                    to: normalEmail,
-                    reply_to: 'jerry@canvasroutes.com',
-                    subject: `Payment confirmed — ${eventLabel}`,
-                    html: buildWtetConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
-                    text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
-                  }),
-                }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-member-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-member-payment-confirm-email', email: normalEmail })),
-                fetch('https://api.resend.com/emails', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-                  body: JSON.stringify({
-                    from: 'Canvas Routes <info@canvasroutes.com>',
-                    to: 'jerry@canvasroutes.com',
-                    subject: `Member Payment Confirmed — ${memberName}`,
-                    html: buildAdminNotifyHtml('Member payment confirmed (webhook rescue)', [
-                      ['Event',          eventLabel],
-                      ['Name',           `<strong>${memberName}</strong>`],
-                      ['Email',          `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
-                      ['Amount',         amountFormatted],
-                      ['Car year',       pi.metadata?.car_year || '—'],
-                      ['Car',            pi.metadata?.car_model || '—'],
-                      ['Passengers',     pi.metadata?.passengers || '—'],
-                      ['Children',       pi.metadata?.has_children || '—'],
-                      ['Children ages',  pi.metadata?.children_ages || '—'],
-                      ['PI',             pi.id],
-                    ]),
-                  }),
-                }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-member-payment-confirm-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-member-payment-confirm-admin-email', email: normalEmail })),
-              ]))
+
+              // Meta CAPI Purchase — HTM only for now. Its client (app/hello-to-montebello/page.jsx)
+              // passes eventId=pi.id to fbq('track','Purchase',...) for dedup; WTET's client doesn't
+              // yet, so firing this for WTET here would double-count instead of deduping.
+              if (type === 'road_trip_hello-to-montebello') {
+                after(() => sendMetaCapiEvent({
+                  eventName: 'Purchase',
+                  eventId: pi.id,
+                  eventSourceUrl: 'https://canvasroutes.com/hello-to-montebello',
+                  email: normalEmail,
+                  phone: pi.metadata?.phone || null,
+                  clientIp: pi.metadata?.client_ip || null,
+                  clientUserAgent: pi.metadata?.client_ua || null,
+                  fbc: pi.metadata?.fbc || null,
+                  fbp: pi.metadata?.fbp || null,
+                  value: amountPaid / 100,
+                  currency: 'CAD',
+                  contentName: eventLabel,
+                }).catch(err => captureException(err, { context: 'road-trip-member-webhook-meta-capi', piId: pi.id })))
+              }
+
+              if (process.env.RESEND_API_KEY) {
+                const checkinUrl = type === 'road_trip_wtet'
+                  ? `https://canvasroutes.com/wtet/checkin?t=${pi.id}`
+                  : await getRouteCheckinUrl(supabase, type, normalEmail)
+                const memberName = name || normalEmail.split('@')[0]
+                after(() => Promise.allSettled([
+                  fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                    body: JSON.stringify({
+                      from: 'Canvas Routes <info@canvasroutes.com>',
+                      to: normalEmail,
+                      reply_to: 'jerry@canvasroutes.com',
+                      subject: `Payment confirmed — ${eventLabel}`,
+                      html: buildWtetConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
+                      text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+                    }),
+                  }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-member-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-member-payment-confirm-email', email: normalEmail })),
+                  fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                    body: JSON.stringify({
+                      from: 'Canvas Routes <info@canvasroutes.com>',
+                      to: 'jerry@canvasroutes.com',
+                      subject: `Member Payment Confirmed — ${memberName}`,
+                      html: buildAdminNotifyHtml('Member payment confirmed (webhook rescue)', [
+                        ['Event',          eventLabel],
+                        ['Name',           `<strong>${memberName}</strong>`],
+                        ['Email',          `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+                        ['Amount',         amountFormatted],
+                        ['Car year',       pi.metadata?.car_year || '—'],
+                        ['Car',            pi.metadata?.car_model || '—'],
+                        ['Passengers',     pi.metadata?.passengers || '—'],
+                        ['Children',       pi.metadata?.has_children || '—'],
+                        ['Children ages',  pi.metadata?.children_ages || '—'],
+                        ['PI',             pi.id],
+                      ]),
+                    }),
+                  }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-member-payment-confirm-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-member-payment-confirm-admin-email', email: normalEmail })),
+                ]))
+              }
             }
           }
         }
@@ -398,7 +422,7 @@ export async function POST(request) {
         console.log(`Payment authorized (held): ${type} — ${normalEmail} — $${(amountHeld / 100).toFixed(2)} CAD`)
 
         // Send registration received email + admin notification for road trip holds
-        if (type?.startsWith('road_trip_') && process.env.RESEND_API_KEY) {
+        if (type?.startsWith('road_trip_')) {
           // Atomic per-PI claim — amount_capturable_updated can be redelivered
           // (Stripe retries, amount changes while requires_capture); without
           // this the hold emails would send once per delivery.
@@ -412,48 +436,74 @@ export async function POST(request) {
           const firstName   = (name || '').trim().split(' ')[0] || 'there'
           const eventLabel  = piEventName || 'Canvas Routes Road Trip'
           const amountFmt   = `$${(amountHeld / 100).toFixed(2)} CAD`
-          after(() => Promise.allSettled([
-            // Registrant hold email
-            fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-              body: JSON.stringify({
-                from: 'Canvas Routes <jerry@canvasroutes.com>',
-                to: normalEmail,
-                reply_to: 'jerry@canvasroutes.com',
-                subject: `Registration received — ${eventLabel}`,
-                html: buildWtetHoldHtml(firstName, amountFmt, eventLabel),
-                text: `Hey ${firstName},\n\nWe've received your registration for ${eventLabel}.\n\nYour ${amountFmt} hold is placed — your card has not been charged. We review every registration personally. If you're confirmed, the charge goes through and you'll receive full event details. If not, the hold is released with no charge.\n\nAdd jerry@canvasroutes.com to your contacts so our reply gets through.\n\nQuestions? Reply to this email.\n\nSee you on the road,\nJerry\nCanvas Routes`,
-              }),
-            }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-hold-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-hold-email', email: normalEmail })),
-            // Admin notification — new non-member registration awaiting review
-            fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-              body: JSON.stringify({
-                from: 'Canvas Routes <info@canvasroutes.com>',
-                to: 'jerry@canvasroutes.com',
-                subject: `New Registration (pending review) — ${name || normalEmail}`,
-                html: buildAdminNotifyHtml('New registration — awaiting review', [
-                  ['Event',          eventLabel],
-                  ['Name',           `<strong>${name || '—'}</strong>`],
-                  ['Email',          `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
-                  ['Phone',          pi.metadata?.phone || '—'],
-                  ['DOB',            pi.metadata?.dob || '—'],
-                  ['Instagram',      pi.metadata?.instagram ? `@${pi.metadata.instagram}` : '—'],
-                  ['Hold',           amountFmt],
-                  ['Car year',       pi.metadata?.car_year || '—'],
-                  ['Car',            pi.metadata?.car_model || '—'],
-                  ['Passengers',     pi.metadata?.passengers || '—'],
-                  ['Children',       pi.metadata?.has_children || '—'],
-                  ['Children ages',  pi.metadata?.children_ages || '—'],
-                  ['Source',         pi.metadata?.source || '—'],
-                  ['Message',        pi.metadata?.message || '—'],
-                  ['PI',             pi.id],
-                ]),
-              }),
-            }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-hold-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
-          ]))
+
+          // Meta CAPI Purchase — HTM only for now. The non-member client fires
+          // fbq('track','Purchase', eventID: pi.id) as soon as this same
+          // authorization hold succeeds (redirect:'if_required' resolves), so
+          // this is the matching server-side moment for dedup. WTET's client
+          // doesn't pass an eventID yet, so firing this for WTET here would
+          // double-count instead of deduping.
+          if (type === 'road_trip_hello-to-montebello') {
+            after(() => sendMetaCapiEvent({
+              eventName: 'Purchase',
+              eventId: pi.id,
+              eventSourceUrl: 'https://canvasroutes.com/hello-to-montebello',
+              email: normalEmail,
+              phone: pi.metadata?.phone || null,
+              clientIp: pi.metadata?.client_ip || null,
+              clientUserAgent: pi.metadata?.client_ua || null,
+              fbc: pi.metadata?.fbc || null,
+              fbp: pi.metadata?.fbp || null,
+              value: amountHeld / 100,
+              currency: 'CAD',
+              contentName: eventLabel,
+            }).catch(err => captureException(err, { context: 'road-trip-hold-meta-capi', piId: pi.id })))
+          }
+
+          if (process.env.RESEND_API_KEY) {
+            after(() => Promise.allSettled([
+              // Registrant hold email
+              fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                body: JSON.stringify({
+                  from: 'Canvas Routes <jerry@canvasroutes.com>',
+                  to: normalEmail,
+                  reply_to: 'jerry@canvasroutes.com',
+                  subject: `Registration received — ${eventLabel}`,
+                  html: buildWtetHoldHtml(firstName, amountFmt, eventLabel),
+                  text: `Hey ${firstName},\n\nWe've received your registration for ${eventLabel}.\n\nYour ${amountFmt} hold is placed — your card has not been charged. We review every registration personally. If you're confirmed, the charge goes through and you'll receive full event details. If not, the hold is released with no charge.\n\nAdd jerry@canvasroutes.com to your contacts so our reply gets through.\n\nQuestions? Reply to this email.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+                }),
+              }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-hold-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-hold-email', email: normalEmail })),
+              // Admin notification — new non-member registration awaiting review
+              fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+                body: JSON.stringify({
+                  from: 'Canvas Routes <info@canvasroutes.com>',
+                  to: 'jerry@canvasroutes.com',
+                  subject: `New Registration (pending review) — ${name || normalEmail}`,
+                  html: buildAdminNotifyHtml('New registration — awaiting review', [
+                    ['Event',          eventLabel],
+                    ['Name',           `<strong>${name || '—'}</strong>`],
+                    ['Email',          `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+                    ['Phone',          pi.metadata?.phone || '—'],
+                    ['DOB',            pi.metadata?.dob || '—'],
+                    ['Instagram',      pi.metadata?.instagram ? `@${pi.metadata.instagram}` : '—'],
+                    ['Hold',           amountFmt],
+                    ['Car year',       pi.metadata?.car_year || '—'],
+                    ['Car',            pi.metadata?.car_model || '—'],
+                    ['Passengers',     pi.metadata?.passengers || '—'],
+                    ['Children',       pi.metadata?.has_children || '—'],
+                    ['Children ages',  pi.metadata?.children_ages || '—'],
+                    ['Source',         pi.metadata?.source || '—'],
+                    ['Message',        pi.metadata?.message || '—'],
+                    ['PI',             pi.id],
+                  ]),
+                }),
+              }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-hold-admin-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-hold-admin-email', email: normalEmail })),
+            ]))
+          }
         }
 
         // Send membership hold emails only if membership-waitlist didn't already run.

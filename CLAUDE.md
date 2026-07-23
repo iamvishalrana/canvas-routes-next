@@ -517,6 +517,8 @@ Required for full functionality:
 | `ADMIN_EMAILS` | Comma-separated list of admin email addresses |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis (rate limiting) |
 | `ANTHROPIC_API_KEY` | AI email draft generation in admin |
+| `META_CAPI_ACCESS_TOKEN` | Meta Conversions API server-side event sends (`lib/metaConversionsApi.js`) — absent = silent no-op |
+| `META_CAPI_TEST_EVENT_CODE` | Optional — routes CAPI events to Events Manager's Test Events tool instead of live; unset for production |
 
 All services degrade gracefully when their key is absent — check the relevant `lib/` singleton before assuming a feature works locally.
 

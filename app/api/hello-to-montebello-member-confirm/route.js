@@ -8,6 +8,7 @@ import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { markRegistrationPaid } from '../../../lib/markRegistrationPaid.js'
 import { getRouteCheckinUrl } from '../../../lib/routeEventLink.js'
+import { sendMetaCapiEvent } from '../../../lib/metaConversionsApi.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -76,7 +77,27 @@ export async function POST(request) {
     stripe_paid_at: new Date().toISOString(),
   }).eq('email', normalEmail).is('stripe_paid_at', null).select('id')
 
-  if (!process.env.RESEND_API_KEY || !claimedRows?.length) return Response.json({ ok: true })
+  if (!claimedRows?.length) return Response.json({ ok: true })
+
+  // Meta CAPI Purchase — independent of Resend/email config below. eventId is
+  // the PI id, matching the eventID the client passes to fbq('track','Purchase',...)
+  // on the same success, so Meta dedupes the two instead of double-counting.
+  after(() => sendMetaCapiEvent({
+    eventName: 'Purchase',
+    eventId: pi.id,
+    eventSourceUrl: 'https://canvasroutes.com/hello-to-montebello',
+    email: normalEmail,
+    phone: pi.metadata?.phone || null,
+    clientIp: pi.metadata?.client_ip || null,
+    clientUserAgent: pi.metadata?.client_ua || null,
+    fbc: pi.metadata?.fbc || null,
+    fbp: pi.metadata?.fbp || null,
+    value: pi.amount_received / 100,
+    currency: 'CAD',
+    contentName: EVENT_NAME,
+  }).catch(err => captureException(err, { context: 'htm-member-confirm-meta-capi', piId: pi.id })))
+
+  if (!process.env.RESEND_API_KEY) return Response.json({ ok: true })
 
   const checkinUrl = await getRouteCheckinUrl(admin, 'road_trip_hello-to-montebello', normalEmail).catch(() => null)
 
