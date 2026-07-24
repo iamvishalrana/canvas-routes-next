@@ -103,10 +103,6 @@ export default function Home() {
       .then(r => r.ok ? r.json() : [])
       .then(list => setTeaserRoutes(Array.isArray(list) ? list : []))
       .catch(() => {})
-      // The routes popup's specific-route content is looked up from this
-      // list — the timer below also waits on this flag so a "specific" mode
-      // popup never opens before its route data has arrived.
-      .finally(() => setTeaserRoutesLoaded(true))
     fetch('/api/upcoming-routes/past')
       .then(r => r.ok ? r.json() : [])
       .then(list => setPastRoutes((Array.isArray(list) ? list : []).map(r => ({
@@ -124,7 +120,10 @@ export default function Home() {
         // always-on behavior before the admin toggle existed.
         setRoutesPopupEnabled(s.routes_popup_enabled !== 'false')
         if (s.routes_popup_mode === 'specific') setRoutesPopupMode('specific')
-        if (s.routes_popup_route_slug) setRoutesPopupRouteSlug(s.routes_popup_route_slug)
+        // Resolved server-side by /api/public/settings — the popup needs no
+        // other fetch to have its specific-route content ready, so its timer
+        // below depends on nothing but this one response settling.
+        if (s.routes_popup_route) setRoutesPopupRoute(s.routes_popup_route)
       })
       .catch(() => {})
       // Runs regardless of success/failure — the popup timer below waits on
@@ -135,10 +134,9 @@ export default function Home() {
   }, [])
   const [showRoutesPopup, setShowRoutesPopup] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
-  const [teaserRoutesLoaded, setTeaserRoutesLoaded] = useState(false)
   const [routesPopupEnabled, setRoutesPopupEnabled] = useState(true)
   const [routesPopupMode, setRoutesPopupMode] = useState('general')
-  const [routesPopupRouteSlug, setRoutesPopupRouteSlug] = useState('')
+  const [routesPopupRoute, setRoutesPopupRoute] = useState(null)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
   const [homepageBanner, setHomepageBanner] = useState(null)
@@ -157,21 +155,20 @@ export default function Home() {
   // unchanged for anyone who hasn't touched the setting.
   useEffect(() => {
     // Wait for the settings fetch to resolve first — otherwise the timer can
-    // fire while routesPopupMode/routesPopupRouteSlug are still their
-    // 'general'/'' defaults, opening the popup with the generic content for
-    // a beat before it re-renders with the admin-configured specific route
-    // (e.g. Hello to Montebello) once the fetch lands. In 'specific' mode,
-    // also wait for teaserRoutes — that's where the specific route's actual
-    // name/photo come from, and it resolves on its own independent fetch.
+    // fire while routesPopupMode/routesPopupRoute are still their defaults,
+    // opening the popup with the generic content for a beat before it
+    // re-renders with the admin-configured specific route (e.g. Hello to
+    // Montebello) once the fetch lands. That one response is the popup's
+    // only dependency — the specific route is resolved server-side into it,
+    // so this never has to coordinate with any other fetch on the page.
     if (!settingsLoaded) return
-    if (routesPopupMode === 'specific' && !teaserRoutesLoaded) return
     if (!routesPopupEnabled) { setShowRoutesPopup(false); return }
     // Storage access can throw in strict in-app browsers / private modes —
     // never let that take down the homepage.
     try { if (sessionStorage.getItem('routes_popup_seen')) return } catch {}
     const t = setTimeout(() => setShowRoutesPopup(true), 1600)
     return () => clearTimeout(t)
-  }, [settingsLoaded, teaserRoutesLoaded, routesPopupMode, routesPopupEnabled])
+  }, [settingsLoaded, routesPopupEnabled])
 
   function dismissRoutesPopup() {
     setShowRoutesPopup(false)
@@ -454,14 +451,13 @@ export default function Home() {
 
       {/* 2026 ROUTES POPUP — leads every visitor to /routes to express interest.
           Admin-configurable: general (all routes) or featuring one specific
-          route by slug (Settings → Routes Popup). The show-popup effect
-          above waits for both settings and teaserRoutes to load before
-          starting its timer, so this only falls back to general content if
-          the configured route slug genuinely doesn't exist (e.g. deleted). */}
+          route by slug (Settings → Routes Popup), resolved server-side into
+          the settings response — no dependency on the page's separate
+          teaserRoutes fetch (used only by the unrelated routes-teaser
+          section), so this only falls back to general content if the
+          configured route slug genuinely doesn't exist (e.g. deleted). */}
       {showRoutesPopup && (() => {
-        const featuredRoute = routesPopupMode === 'specific'
-          ? teaserRoutes.find(r => r.slug === routesPopupRouteSlug)
-          : null
+        const featuredRoute = routesPopupMode === 'specific' ? routesPopupRoute : null
         const featuredPhoto = featuredRoute && (featuredRoute.photo_url || ROUTE_PHOTOS[featuredRoute.slug])
         const featuredLaunched = !!(featuredRoute?.launched && featuredRoute.registration_url)
         return (
