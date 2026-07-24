@@ -8,6 +8,7 @@ import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog } from '../_components/shared'
+import { EMAIL_SIGNATURE_HTML } from '../../../lib/emailSignature.js'
 
 const MAX_RECIPIENTS = 2000
 const DRAFT_KEY = 'bc_draft'
@@ -71,25 +72,6 @@ const PRESET_TEMPLATES = [
   },
 ]
 
-// ── Signature HTML (inside actual emails) ───────────────────────────────────
-const SIG_HTML = `
-<table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
-  <tr>
-    <td style="vertical-align:middle;padding-right:14px;">
-      <img src="https://canvasroutes.com/logo-color.png" width="78" height="30" border="0" style="display:block;" alt="Canvas Routes"/>
-    </td>
-    <td style="vertical-align:middle;padding-left:14px;border-left:1px solid #e8e8e8;">
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">Jerry</div>
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#888;margin-bottom:4px;">Founder, Canvas Routes</div>
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaa;">
-        <a href="https://canvasroutes.com" style="color:#8A6535;text-decoration:none;">canvasroutes.com</a>
-        <span style="color:#ddd;margin:0 5px;">|</span>
-        <a href="https://instagram.com/canvasroutes" style="color:#8A6535;text-decoration:none;">@canvasroutes</a>
-      </div>
-    </td>
-  </tr>
-</table>`
-
 // Mirrors the editor's rendering 1:1 in email clients. The editor shows
 // paragraphs 0.75em apart and a blank line where you pressed Enter twice —
 // the sent email must look identical, so paragraphs get the same margin
@@ -141,7 +123,7 @@ function buildHtml(bodyHtml) {
       </tr>
       <tr>
         <td style="padding:0 24px 4px;">
-          ${SIG_HTML}
+          ${EMAIL_SIGNATURE_HTML}
         </td>
       </tr>
       <!-- Unsubscribe — replaced per-recipient by broadcasts route.js -->
