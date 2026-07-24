@@ -74,8 +74,8 @@ function CopyButton({ text }) {
 function CarGrid({ cars, onSelect }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
-      {cars.map(p => (
-        <div key={p.name} className="car-wrap">
+      {cars.map((p, i) => (
+        <div key={`${p.name}-${i}`} className="car-wrap">
           <button type="button" onClick={() => onSelect(p)}
             className="car-card"
             aria-label={`${p.name} — ${p.car}`}

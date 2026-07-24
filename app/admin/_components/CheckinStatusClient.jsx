@@ -99,8 +99,9 @@ export default function CheckinStatusClient({ eventId }) {
   const [photoTargetEmail, setPhotoTargetEmail] = useState(null)
 
   async function saveGroup(email, value) {
+    const clearDraft = () => setGroupDrafts(d => { const n = { ...d }; delete n[email]; return n })
     const group = value.trim() === '' ? null : parseInt(value, 10)
-    if (group !== null && !Number.isFinite(group)) return
+    if (group !== null && !Number.isFinite(group)) { clearDraft(); return }
     setGroupBusy(email); setActionError(null)
     try {
       const res = await fetch(`/api/admin/checkin/${eventId}/registrants`, {
@@ -109,9 +110,11 @@ export default function CheckinStatusClient({ eventId }) {
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setActionError(d.error || 'Failed to save group.'); return }
-      load({ silent: true })
+      // Keep the draft showing until the reload lands — clearing it right
+      // away would flash the input back to the pre-save value for a beat.
+      await load({ silent: true })
     } catch { setActionError('Network error.') }
-    finally { setGroupBusy(null) }
+    finally { setGroupBusy(null); clearDraft() }
   }
 
   function triggerPhotoUpload(email) {
@@ -239,7 +242,7 @@ export default function CheckinStatusClient({ eventId }) {
 
   const load = useCallback(({ silent = false } = {}) => {
     if (!silent) setLoading(true)
-    fetch(`/api/admin/checkin/${eventId}`)
+    return fetch(`/api/admin/checkin/${eventId}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => {
         setEvent(d.event)
@@ -427,7 +430,11 @@ export default function CheckinStatusClient({ eventId }) {
                         type="text" inputMode="numeric" placeholder="—"
                         value={groupDrafts[p.email] ?? (p.convoy_group ?? '')}
                         onChange={e => setGroupDrafts(d => ({ ...d, [p.email]: e.target.value.replace(/[^\d]/g, '') }))}
-                        onBlur={e => { setGroupDrafts(d => { const n = { ...d }; delete n[p.email]; return n }); saveGroup(p.email, e.target.value) }}
+                        onBlur={e => {
+                          const currentStr = p.convoy_group == null ? '' : String(p.convoy_group)
+                          if (e.target.value !== currentStr) saveGroup(p.email, e.target.value)
+                          else setGroupDrafts(d => { const n = { ...d }; delete n[p.email]; return n })
+                        }}
                         disabled={groupBusy === p.email}
                         style={{ width: '32px', padding: '3px 4px', textAlign: 'center', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }}
                       />
