@@ -270,6 +270,16 @@ export async function POST(request) {
       tier,
       registered_at: existingMembershipReg?.registered_at || new Date().toISOString(),
       attended: existingMembershipReg?.attended ?? null,
+      // Snapshot of what was actually submitted for the membership application —
+      // the flat columns below get overwritten by whichever event this email
+      // registers for next, so without this the original application details
+      // are silently lost the moment they register for a road trip/event.
+      details: {
+        car_year: year.trim(), car_make: carMake?.trim() || null, car_model: fullCar || carMake,
+        car_paint: carPaint?.trim() || null, phone: phone || null,
+        dob_month: dob_month ? parseInt(dob_month) : null, dob_day: dob_day ? parseInt(dob_day) : null, dob_year: dob_year ? parseInt(dob_year) : null,
+        source: source || null, more: more || null, referred_by: referredBy?.trim() || null,
+      },
     }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== 'Canvas Routes Membership')
     const registrations = [...prevRegs, membershipReg]

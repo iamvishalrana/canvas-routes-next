@@ -134,7 +134,16 @@ export async function POST(request, { params }) {
       .eq('email', normalEmail)
       .maybeSingle()
 
-    const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null }
+    const newReg = {
+      event: ev.name, registered_at: new Date().toISOString(), attended: null,
+      // Snapshot of their member-profile car/contact info as of this
+      // registration — preserved even if they edit their profile later.
+      details: {
+        car_year: member.car_year || null,
+        car_model: [member.car_make, member.car_model].filter(Boolean).join(' ') || null,
+        phone: member.phone || null, instagram: member.instagram || null,
+      },
+    }
     const prevRegs = (existingApp?.registrations || []).filter(r => r.event !== ev.name)
 
     const { data: appData, error: appErr } = await admin.from('applications').upsert({

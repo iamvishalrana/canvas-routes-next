@@ -115,6 +115,14 @@ export async function POST(request) {
       // Preserve an admin-assigned convoy group across re-registration (e.g.
       // payment failed and they resubmit) — same reasoning as attended/paid above.
       convoy_group: existingReg?.convoy_group ?? null,
+      // Snapshot of what was actually submitted for THIS event — see the same
+      // key on hello-to-montebello-register/route.js for why this exists.
+      // No phone/instagram/dob/source here — members don't re-submit those.
+      details: {
+        car_year: carYear.trim(), car_make: carMake.trim(), car_model: fullCar,
+        passengers: passengers || null, has_children: hasChildren || null, children_ages: childrenAges || null,
+        more: more || null,
+      },
     }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME && !OLD_EVENT_NAMES.includes(r.event))
     const registrations = [...prevRegs, newReg]

@@ -9,6 +9,7 @@ import { MEMBERSHIP_TYPE_TIER } from '../../../../lib/prices.js'
 import { recordPaymentSuccess } from '../../../../lib/paymentLedger.js'
 import { markRegistrationPaid } from '../../../../lib/markRegistrationPaid.js'
 import { getRouteCheckinUrl } from '../../../../lib/routeEventLink.js'
+import { isSameEvent } from '../../../../lib/eventCheckinShared.js'
 import { sendMetaCapiEvent } from '../../../../lib/metaConversionsApi.js'
 
 // Stripe requires the raw body — Next.js must NOT parse it
@@ -364,6 +365,20 @@ export async function POST(request) {
         // never stripe_payment_type). Without this, an applicant whose tab closes
         // before membership-waitlist fires shows up in admin with no tier at all.
         const membershipTier = MEMBERSHIP_TYPE_TIER[type] // undefined for road_trip_* types
+
+        // Per-event submitted-data snapshot, same `details` key every register
+        // route writes — built from PI metadata since this rescue path has no
+        // form data of its own, only whatever the register routes stashed
+        // in metadata. Restores this even when the browser closed mid-flow
+        // and the normal route's own `details` write never happened.
+        const detailsFromMetadata = Object.fromEntries(Object.entries({
+          car_year: pi.metadata?.car_year, car_make: pi.metadata?.car_make, car_model: pi.metadata?.car_model,
+          phone: pi.metadata?.phone, dob: pi.metadata?.dob, source: pi.metadata?.source,
+          passengers: pi.metadata?.passengers, has_children: pi.metadata?.has_children, children_ages: pi.metadata?.children_ages,
+          instagram: pi.metadata?.instagram, more: pi.metadata?.message,
+          ...(membershipTier ? { car_paint: pi.metadata?.car_paint, referred_by: pi.metadata?.referred_by } : {}),
+        }).filter(([, v]) => v))
+
         const existingMembershipReg = priorRegs.find(r => r.event === 'Canvas Routes Membership')
         const registrations = membershipTier
           ? [...priorRegs.filter(r => r.event !== 'Canvas Routes Membership'), {
@@ -371,8 +386,18 @@ export async function POST(request) {
               tier: membershipTier,
               registered_at: existingMembershipReg?.registered_at || new Date().toISOString(),
               attended: existingMembershipReg?.attended ?? null,
+              details: { ...existingMembershipReg?.details, ...detailsFromMetadata },
             }]
-          : undefined // road-trip PIs: rescue leaves registrations untouched here, unchanged behavior
+          : (() => {
+              // road-trip PIs: merge details into the matching entry only —
+              // if none exists yet (webhook raced ahead of the initial
+              // 'pending' upsert), leave registrations untouched as before.
+              const idx = priorRegs.findIndex(r => isSameEvent(r.event, piEventName))
+              if (idx === -1) return undefined
+              const updated = [...priorRegs]
+              updated[idx] = { ...updated[idx], details: { ...updated[idx].details, ...detailsFromMetadata } }
+              return updated
+            })()
 
         // Upsert with all form fields stored in PI metadata (written by create-payment-intent
         // for membership PIs) — ensures full application data is saved even if the client

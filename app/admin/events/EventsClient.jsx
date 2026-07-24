@@ -735,7 +735,12 @@ export default function EventsClient() {
       const newRegs = (Array.isArray(regData) ? regData : []).map(r => {
         const email = r.members?.email || r.email || '—'
         const contact = contactByEmail[email.toLowerCase()] || {}
-        const { make, model } = parseCarMakeModel(contact.car_model)
+        // Per-event snapshot first — contact.car_year/car_model are flat
+        // columns that reflect whichever event this email registered for
+        // MOST RECENTLY, not necessarily this one.
+        const matchedReg = (contact.registrations || []).find(reg => evBase(normalizeEventName(reg.event)) === evBase(eventName))
+        const d = matchedReg?.details
+        const { make, model } = parseCarMakeModel(d?.car_model ?? contact.car_model)
         return {
           name: r.members?.name || r.name || '—',
           email,
@@ -743,7 +748,7 @@ export default function EventsClient() {
           status: r.stripe_payment_status,
           amount: r.amount_paid,
           registeredAt: r.registered_at || null,
-          car: [contact.car_year, make, model].filter(Boolean).join(' ') || null,
+          car: [d?.car_year ?? contact.car_year, make, model].filter(Boolean).join(' ') || null,
           href: `/admin/members?q=${encodeURIComponent(email)}`,
         }
       })
@@ -766,7 +771,10 @@ export default function EventsClient() {
           const reg = (c.registrations || []).find(r => evBase(r.event) === evBase(eventName))
           const rsvpToken = (c.rsvp_history || []).find(t => evBase(t.event_name) === evBase(eventName))
           const isConfirmed = !!(rsvpToken?.confirmed_at || reg?.rsvp_confirmed)
-          const { make, model } = parseCarMakeModel(c.car_model)
+          // Per-event snapshot first — c.car_year/car_model are flat columns
+          // that reflect whichever event this contact registered for MOST
+          // RECENTLY, not necessarily this one.
+          const { make, model } = parseCarMakeModel(reg?.details?.car_model ?? c.car_model)
           // For paid road trip contacts, use the real Stripe payment status and amount
           const isRoadTripPayment = c.stripe_payment_type?.startsWith('road_trip_')
           const isTrackedPayment = isRoadTripPayment || c.stripe_payment_type?.startsWith('external_')
@@ -781,7 +789,7 @@ export default function EventsClient() {
             rsvpAnswers: rsvpToken?.answers || null,
             confirmedAt: rsvpToken?.confirmed_at || null,
             inviteSent: !!rsvpToken,
-            car: [c.car_year, make, model].filter(Boolean).join(' ') || null,
+            car: [reg?.details?.car_year ?? c.car_year, make, model].filter(Boolean).join(' ') || null,
             href: `/admin/contacts?q=${encodeURIComponent(c.email || c.name || '')}`,
             wtetCheckin: c.wtet_checkin || null,
             wtetWaiver: c.wtet_waiver || null,

@@ -33,6 +33,38 @@ function InfoCell({ label, value, copyable }) {
   )
 }
 
+// ─── EventDetailsCard — what was actually submitted for ONE specific event.
+// Applications share one row per email, so the flat car_year/phone/etc.
+// columns above reflect whichever event this person registered for MOST
+// RECENTLY — this renders the frozen-at-the-time snapshot for a single
+// event instead, so an earlier event's car/"tell us more"/etc. isn't lost
+// once they register for something else. ─────────────────────────────────
+
+const DETAIL_LABELS = {
+  car_year: 'Car Year', car_make: 'Car Make', car_model: 'Car Model', car_paint: 'Paint',
+  phone: 'Phone', instagram: 'Instagram', dob: 'DOB',
+  dob_month: 'DOB Month', dob_day: 'DOB Day', dob_year: 'DOB Year',
+  passengers: 'Passengers', has_children: 'Children', children_ages: 'Children Ages',
+  source: 'Heard About Us Via', referred_by: 'Referred By', more: 'Tell Us More',
+}
+
+function EventDetailsCard({ details }) {
+  const rows = Object.entries(details || {}).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  if (rows.length === 0) return (
+    <div style={{ fontSize: '12px', color: '#ccc', padding: '0.6rem 0.75rem' }}>No submitted details recorded for this event.</div>
+  )
+  return (
+    <div style={{ background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '8px', padding: '0.7rem 0.85rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.6rem' }}>
+      {rows.map(([key, value]) => (
+        <div key={key}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginBottom: '2px' }}>{DETAIL_LABELS[key] || key}</div>
+          <div style={{ fontSize: '12px', color: '#444', whiteSpace: key === 'more' ? 'pre-wrap' : 'nowrap' }}>{String(value)}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ─── Shared Admin Notes component for Applications ────────────────────────────
 
 function AppAdminNotes({ appId, initialNotes, onSaved }) {
@@ -72,6 +104,7 @@ export default function ApplicationsClient() {
   const [inviting, setInviting] = useState(null)
   const [inviteStatus, setInviteStatus] = useState({})
   const [expanded, setExpanded] = useState(null)
+  const [expandedEventDetail, setExpandedEventDetail] = useState(null) // `${appId}-${eventName}`
   const [editingApp, setEditingApp] = useState(null)
   const [editAppForm, setEditAppForm] = useState({})
   const [savingApp, setSavingApp] = useState(false)
@@ -845,15 +878,30 @@ export default function ApplicationsClient() {
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
                         const isPast = eventDate ? new Date(eventDate) <= today : true
+                        const detailKey = `${a.id}-${eventName}`
+                        const detailOpen = expandedEventDetail === detailKey
                         return (
-                          <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
-                            {isPast ? (
-                              // AttendanceToggle itself treats anything that isn't
-                              // explicitly true/false as N/A — no special-casing needed here
-                              <AttendanceToggle value={reg?.attended ?? null} onChange={v => toggleAttended(a.id, eventName, v)} />
-                            ) : (
-                              <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
+                          <div key={eventName} style={{ marginBottom: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>
+                              {isPast ? (
+                                // AttendanceToggle itself treats anything that isn't
+                                // explicitly true/false as N/A — no special-casing needed here
+                                <AttendanceToggle value={reg?.attended ?? null} onChange={v => toggleAttended(a.id, eventName, v)} />
+                              ) : (
+                                <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.06em' }}>Upcoming</span>
+                              )}
+                              {reg && (
+                                <button type="button" onClick={() => setExpandedEventDetail(detailOpen ? null : detailKey)}
+                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'underline', fontFamily: 'inherit' }}>
+                                  {detailOpen ? 'Hide details' : 'What was submitted?'}
+                                </button>
+                              )}
+                            </div>
+                            {detailOpen && reg && (
+                              <div style={{ marginTop: '0.4rem' }}>
+                                <EventDetailsCard details={reg.details} />
+                              </div>
                             )}
                           </div>
                         )

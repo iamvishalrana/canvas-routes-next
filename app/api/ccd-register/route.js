@@ -174,6 +174,13 @@ export async function POST(request) {
       event: EVENT_NAME,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
+      // Snapshot of what was actually submitted for THIS event — see the same
+      // key on hello-to-montebello-register/route.js for why this exists.
+      details: {
+        car_year: year.trim(), car_make: carMake?.trim() || null, car_model: fullCarModel,
+        phone: phone || null, instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
+        more: more || null, source: source || null,
+      },
     }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME)
     const registrations = [...prevRegs, newReg]

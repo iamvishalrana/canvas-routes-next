@@ -110,6 +110,16 @@ export async function POST(request) {
       // Preserve an admin-assigned convoy group across re-registration (e.g.
       // payment failed and they resubmit) — same reasoning as attended/paid above.
       convoy_group: existingReg?.convoy_group ?? null,
+      // Snapshot of what was actually submitted for THIS event — the flat
+      // columns below get overwritten by whichever event someone registers
+      // for next, so without this, an earlier event's car/tell-us-more/etc.
+      // is silently lost the moment the same email registers for another one.
+      details: {
+        car_year: year.trim(), car_make: carMake.trim(), car_model: fullCarModel,
+        phone: phone || null, instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
+        passengers: passengers || null, has_children: hasChildren || null, children_ages: childrenAges || null,
+        source: source || null, dob: dob || null, more: more || null,
+      },
     }
     const registrations = [...(existing?.registrations || []).filter(r => r.event !== EVENT_NAME && !OLD_EVENT_NAMES.includes(r.event)), newReg]
 
