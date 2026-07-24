@@ -103,6 +103,10 @@ export default function Home() {
       .then(r => r.ok ? r.json() : [])
       .then(list => setTeaserRoutes(Array.isArray(list) ? list : []))
       .catch(() => {})
+      // The routes popup's specific-route content is looked up from this
+      // list — the timer below also waits on this flag so a "specific" mode
+      // popup never opens before its route data has arrived.
+      .finally(() => setTeaserRoutesLoaded(true))
     fetch('/api/upcoming-routes/past')
       .then(r => r.ok ? r.json() : [])
       .then(list => setPastRoutes((Array.isArray(list) ? list : []).map(r => ({
@@ -123,8 +127,15 @@ export default function Home() {
         if (s.routes_popup_route_slug) setRoutesPopupRouteSlug(s.routes_popup_route_slug)
       })
       .catch(() => {})
+      // Runs regardless of success/failure — the popup timer below waits on
+      // this so it never opens showing the generic content for a beat before
+      // flashing to the admin-configured specific-route content once this
+      // fetch resolves (was a visible flash on slower mobile connections).
+      .finally(() => setSettingsLoaded(true))
   }, [])
   const [showRoutesPopup, setShowRoutesPopup] = useState(false)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [teaserRoutesLoaded, setTeaserRoutesLoaded] = useState(false)
   const [routesPopupEnabled, setRoutesPopupEnabled] = useState(true)
   const [routesPopupMode, setRoutesPopupMode] = useState('general')
   const [routesPopupRouteSlug, setRoutesPopupRouteSlug] = useState('')
@@ -145,13 +156,22 @@ export default function Home() {
   // (Settings → Routes Popup) — defaults to on/general so behavior is
   // unchanged for anyone who hasn't touched the setting.
   useEffect(() => {
+    // Wait for the settings fetch to resolve first — otherwise the timer can
+    // fire while routesPopupMode/routesPopupRouteSlug are still their
+    // 'general'/'' defaults, opening the popup with the generic content for
+    // a beat before it re-renders with the admin-configured specific route
+    // (e.g. Hello to Montebello) once the fetch lands. In 'specific' mode,
+    // also wait for teaserRoutes — that's where the specific route's actual
+    // name/photo come from, and it resolves on its own independent fetch.
+    if (!settingsLoaded) return
+    if (routesPopupMode === 'specific' && !teaserRoutesLoaded) return
     if (!routesPopupEnabled) { setShowRoutesPopup(false); return }
     // Storage access can throw in strict in-app browsers / private modes —
     // never let that take down the homepage.
     try { if (sessionStorage.getItem('routes_popup_seen')) return } catch {}
     const t = setTimeout(() => setShowRoutesPopup(true), 1600)
     return () => clearTimeout(t)
-  }, [routesPopupEnabled])
+  }, [settingsLoaded, teaserRoutesLoaded, routesPopupMode, routesPopupEnabled])
 
   function dismissRoutesPopup() {
     setShowRoutesPopup(false)
@@ -434,9 +454,10 @@ export default function Home() {
 
       {/* 2026 ROUTES POPUP — leads every visitor to /routes to express interest.
           Admin-configurable: general (all routes) or featuring one specific
-          route by slug (Settings → Routes Popup). Falls back to general if
-          "specific" mode is on but the chosen route can't be found (deleted,
-          or teaserRoutes hasn't loaded yet). */}
+          route by slug (Settings → Routes Popup). The show-popup effect
+          above waits for both settings and teaserRoutes to load before
+          starting its timer, so this only falls back to general content if
+          the configured route slug genuinely doesn't exist (e.g. deleted). */}
       {showRoutesPopup && (() => {
         const featuredRoute = routesPopupMode === 'specific'
           ? teaserRoutes.find(r => r.slug === routesPopupRouteSlug)
@@ -457,7 +478,12 @@ export default function Home() {
           }}
           onClick={dismissRoutesPopup}
         >
+          <style>{`
+            .routes-popup-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+            .routes-popup-scroll::-webkit-scrollbar { display: none; }
+          `}</style>
           <div
+            className="routes-popup-scroll"
             onClick={e => e.stopPropagation()}
             style={{
               background: '#0F1E14', maxWidth: '480px', width: '100%',
