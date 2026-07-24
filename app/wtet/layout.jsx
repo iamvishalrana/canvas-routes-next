@@ -56,11 +56,15 @@ const eventSchema = {
 export default function WtetLayout({ children }) {
   return (
     <>
-      {/* Polyfill for Facebook in-app browser: window.webkit.messageHandlers is partially
-          implemented and throws when Stripe.js tries to init Apple Pay native handlers. */}
+      {/* Polyfill for in-app browsers where Stripe.js's Apple Pay detection throws on
+          window.webkit.messageHandlers: Facebook's in-app browser defines window.webkit
+          but not messageHandlers; Instagram's doesn't define window.webkit at all. */}
       <script dangerouslySetInnerHTML={{ __html: `
         try {
-          if (window.webkit && !window.webkit.messageHandlers) {
+          if (!window.webkit) {
+            window.webkit = {};
+          }
+          if (!window.webkit.messageHandlers) {
             window.webkit.messageHandlers = new Proxy({}, { get: function() { return { postMessage: function() {} } } });
           }
         } catch(e) {}
