@@ -1,6 +1,7 @@
 'use client'
 import { MONTREAL_TZ } from '../lib/mtlTime'
 import { formatCarLabel } from '../lib/carLabel'
+import { formatForDisplay } from '../lib/memberNumber.js'
 
 // Presentational replica of the members-portal profile hero + garage + stats,
 // rendered from a raw members row. Used by the admin Members tab to preview
@@ -62,7 +63,7 @@ export default function MemberProfilePreview({ member }) {
           {m.membership_number && (
             <>
               <span style={{ color: 'rgba(245,241,236,0.25)' }}>·</span>
-              <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)' }}>No. {String(m.membership_number).padStart(3, '0')}</span>
+              <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)' }}>No. {formatForDisplay(m.membership_number)}</span>
             </>
           )}
         </div>

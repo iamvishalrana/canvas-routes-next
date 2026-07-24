@@ -929,6 +929,11 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                             <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{m.name || <span style={{ color: '#ccc', fontWeight: '400' }}>No name</span>}</div>
                             {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '1px' }}>{m.notes}</div>}
                           </div>
+                          {m.membership_number && (
+                            <span style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.06em', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '1px 6px', background: 'rgba(197,168,130,0.06)' }}>
+                              #{formatForDisplay(m.membership_number)}
+                            </span>
+                          )}
                           <Badge status={m.membership_status} />
                           <TierChip tier={m.tier} />
                         </div>
