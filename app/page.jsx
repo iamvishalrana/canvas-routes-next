@@ -1142,7 +1142,7 @@ export default function Home() {
       {/* FOOTER */}
       <SiteFooter />
 
-      <PastRouteRecapModal route={recapRoute} onClose={() => setRecapRoute(null)} />
+      <PastRouteRecapModal route={recapRoute} onClose={() => setRecapRoute(null)} t={t} />
 
     </div>
     </ErrorBoundary>

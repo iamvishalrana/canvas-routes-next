@@ -8,7 +8,9 @@ const FACEBOOK_URL = 'https://www.facebook.com/share/1B8GXiPHUe/?mibextid=wwXIfr
 // actual day-of photos/videos live instead of navigating to the (now closed)
 // registration page.
 export default function PastRouteRecapModal({ route, onClose, t }) {
-  if (!route) return null
+  // t missing has crashed a caller before (a render path that forgot to pass
+  // it) — guard here too, not just by fixing that call site.
+  if (!route || !t) return null
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(10,20,12,0.75)', backdropFilter: 'blur(4px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.25rem' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#F5F1EC', maxWidth: '460px', width: '100%', maxHeight: '88vh', overflowY: 'auto', position: 'relative', boxShadow: '0 24px 70px rgba(0,0,0,0.35)' }}>
