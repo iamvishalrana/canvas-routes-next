@@ -112,6 +112,9 @@ export async function POST(request) {
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
       paid: existingReg?.paid ?? false,
+      // Preserve an admin-assigned convoy group across re-registration (e.g.
+      // payment failed and they resubmit) — same reasoning as attended/paid above.
+      convoy_group: existingReg?.convoy_group ?? null,
     }
     const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME && !OLD_EVENT_NAMES.includes(r.event))
     const registrations = [...prevRegs, newReg]
