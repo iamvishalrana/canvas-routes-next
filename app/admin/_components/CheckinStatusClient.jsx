@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRealtimeSync } from './useRealtimeSync'
 import GenericWaiverViewerModal from './GenericWaiverViewerModal'
 import { CopyBtn } from './shared'
@@ -92,6 +92,48 @@ export default function CheckinStatusClient({ eventId }) {
   const [resetBusy, setResetBusy] = useState(null)
   const [reminding, setReminding] = useState(null) // 'all' | email | null
   const [remindResult, setRemindResult] = useState(null) // { email or 'all', count }
+  const [groupBusy, setGroupBusy] = useState(null) // email
+  const [groupDrafts, setGroupDrafts] = useState({}) // email -> string, while typing
+  const [photoBusy, setPhotoBusy] = useState(null) // email
+  const photoInputRef = useRef(null)
+  const [photoTargetEmail, setPhotoTargetEmail] = useState(null)
+
+  async function saveGroup(email, value) {
+    const group = value.trim() === '' ? null : parseInt(value, 10)
+    if (group !== null && !Number.isFinite(group)) return
+    setGroupBusy(email); setActionError(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/registrants`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, group }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Failed to save group.'); return }
+      load({ silent: true })
+    } catch { setActionError('Network error.') }
+    finally { setGroupBusy(null) }
+  }
+
+  function triggerPhotoUpload(email) {
+    setPhotoTargetEmail(email)
+    photoInputRef.current?.click()
+  }
+
+  async function uploadPhoto(file) {
+    const email = photoTargetEmail
+    if (!email || !file) return
+    setPhotoBusy(email); setActionError(null)
+    try {
+      const formData = new FormData()
+      formData.append('email', email)
+      formData.append('photo', file)
+      const res = await fetch(`/api/admin/checkin/${eventId}/car-photo`, { method: 'POST', body: formData })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Failed to upload photo.'); return }
+      load()
+    } catch { setActionError('Network error.') }
+    finally { setPhotoBusy(null); setPhotoTargetEmail(null) }
+  }
 
   async function sendReminders(emails) {
     const key = emails ? emails[0] : 'all'
@@ -254,6 +296,8 @@ export default function CheckinStatusClient({ eventId }) {
 
   return (
     <div style={{ padding: '1.5rem' }}>
+      <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadPhoto(f) }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
         <div style={{ ...CARD, padding: '1.1rem 1.3rem' }}>
           <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', fontWeight: '400', color: fullyDoneCount === total && total > 0 ? '#3B6B2F' : '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{fullyDoneCount}<span style={{ fontSize: '1rem', color: '#ccc' }}>/{total}</span></div>
@@ -371,6 +415,19 @@ export default function CheckinStatusClient({ eventId }) {
                       {formatCarLabel(p.registration?.carYear, p.registration?.carMake, p.registration?.carModel)}
                     </div>
                   )}
+                  {p.applicationId != null && (
+                    <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flex: '0 0 auto' }}>
+                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group</span>
+                      <input
+                        type="text" inputMode="numeric" placeholder="—"
+                        value={groupDrafts[p.email] ?? (p.convoy_group ?? '')}
+                        onChange={e => setGroupDrafts(d => ({ ...d, [p.email]: e.target.value.replace(/[^\d]/g, '') }))}
+                        onBlur={e => { setGroupDrafts(d => { const n = { ...d }; delete n[p.email]; return n }); saveGroup(p.email, e.target.value) }}
+                        disabled={groupBusy === p.email}
+                        style={{ width: '32px', padding: '3px 4px', textAlign: 'center', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }}
+                      />
+                    </div>
+                  )}
                   {p.paymentStatus && PAYMENT_LABEL[p.paymentStatus] && (
                     <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: PAYMENT_LABEL[p.paymentStatus].color, whiteSpace: 'nowrap' }}>
                       {PAYMENT_LABEL[p.paymentStatus].text}
@@ -474,7 +531,10 @@ export default function CheckinStatusClient({ eventId }) {
                         ) : <div style={{ fontSize: '12px', color: '#bbb' }}>Not selected yet.</div>}
                       </div>
                     )}
-                    {hasCarPhoto && (
+                    {/* Shown regardless of whether car_photo is an active check-in ask for
+                        this event — admin can attach a photo any time, e.g. for non-members
+                        or before the public check-in step is even turned on. */}
+                    {(hasCarPhoto || p.car_photo || p.applicationId != null) && (
                       <div>
                         <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Car Photo</div>
                         {p.car_photo ? (
@@ -488,8 +548,21 @@ export default function CheckinStatusClient({ eventId }) {
                             )}
                             <br />
                             <ResetLink email={p.email} section="car_photo" resetConfirm={resetConfirm} setResetConfirm={setResetConfirm} resetBusy={resetBusy} resetSection={resetSection} />
+                            {' · '}
+                            <button type="button" onClick={() => triggerPhotoUpload(p.email)} disabled={photoBusy === p.email}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: photoBusy === p.email ? 'wait' : 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              {photoBusy === p.email ? 'Uploading…' : 'Replace photo'}
+                            </button>
                           </div>
-                        ) : <div style={{ fontSize: '12px', color: '#bbb' }}>Not sent yet.</div>}
+                        ) : (
+                          <div style={{ fontSize: '12px', color: '#bbb' }}>
+                            Not sent yet.{' '}
+                            <button type="button" onClick={() => triggerPhotoUpload(p.email)} disabled={photoBusy === p.email}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: photoBusy === p.email ? 'wait' : 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              {photoBusy === p.email ? 'Uploading…' : 'Upload photo'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

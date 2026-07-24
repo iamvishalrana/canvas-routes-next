@@ -50,6 +50,40 @@ export async function POST(request, { params }) {
   return Response.json({ success: true })
 }
 
+// Sets (or clears) the convoy group on a road-trip registrant — lives inside
+// their matched registrations[] entry, same as `attended`/`paid`. Member-
+// portal (event_registrations) registrants have no group support; this is a
+// no-op for them since they never have a matching applications row here.
+export async function PATCH(request, { params }) {
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const { eventId } = await params
+
+  let body
+  try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
+  const email = normalizeEmail(body?.email)
+  if (!email) return Response.json({ error: 'Missing email.' }, { status: 400 })
+  const group = body?.group === null || body?.group === '' ? null : parseInt(body?.group, 10)
+  if (group !== null && !Number.isFinite(group)) return Response.json({ error: 'Invalid group.' }, { status: 400 })
+
+  const admin = createAdminClient()
+  const { data: event, error: eventErr } = await admin.from('events').select('id, name').eq('id', eventId).maybeSingle()
+  if (eventErr || !event) return Response.json({ error: 'Event not found' }, { status: 404 })
+
+  const { data: app } = await admin.from('applications').select('id, registrations').eq('email', email).maybeSingle()
+  const matched = (app?.registrations || []).find(r => isSameEvent(r.event, event.name))
+  if (!app || !matched) return Response.json({ error: 'No registration found for this email.' }, { status: 404 })
+
+  const registrations = (app.registrations || []).map(r =>
+    isSameEvent(r.event, event.name) ? { ...r, convoy_group: group } : r
+  )
+  const { error: updErr } = await admin.from('applications').update({ registrations }).eq('id', app.id)
+  if (updErr) {
+    captureException(updErr, { context: 'admin-set-convoy-group', eventId, email })
+    return Response.json({ error: 'Failed to save group.' }, { status: 500 })
+  }
+  return Response.json({ success: true })
+}
+
 // Removes a registrant from this event only — strips their registrations[]
 // entry for this event (or their event_registrations row, for the
 // member-portal generic paid-event path). Refuses if a payment is still an

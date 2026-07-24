@@ -29,6 +29,7 @@ export async function GET(request, { params }) {
       car_photo: c?.car_photo || null,
       paymentStatus: r.paymentStatus,
       applicationId: r.applicationId,
+      convoy_group: r.convoy_group ?? null,
       amountPaid: r.amountPaid,
       registration: r.registration || null,
       isMember: !!r.isMember,

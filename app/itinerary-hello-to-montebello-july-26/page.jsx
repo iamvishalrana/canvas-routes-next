@@ -25,10 +25,11 @@ const STOPS = [
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
 ]
 
-// Single participant confirmed so far — no group-splitting needed yet
-// (WTET's 20-car, 3-group system doesn't apply at this scale).
-const PARTICIPANTS = [
-  { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, fact: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.' },
+// Jerry's entry stays manual (lead car + fact blurb) — everyone else is
+// fetched live from /api/hello-to-montebello/roster, which reflects paid
+// registrants automatically (added on capture, removed on refund/cancel).
+const MANUAL_PARTICIPANTS = [
+  { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.' },
 ]
 
 const DRIVE_BULLETS = [
@@ -65,6 +66,43 @@ function CopyButton({ text }) {
     <button onClick={copy} style={{ background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'block', marginTop: '3px' }}>
       {copied ? '✓ Copied' : 'Copy number'}
     </button>
+  )
+}
+
+// Extracted so the "Who's Coming" section can render either one flat grid or
+// one grid per convoy group without duplicating the card markup.
+function CarGrid({ cars, onSelect }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
+      {cars.map(p => (
+        <div key={p.name} className="car-wrap">
+          <button type="button" onClick={() => onSelect(p)}
+            className="car-card"
+            aria-label={`${p.name} — ${p.car}`}
+            style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 10px rgba(0,0,0,0.09)', width: '100%' }}>
+            <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
+              {p.photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.photo} alt={`${p.name}'s ${p.car}`} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span aria-hidden="true" style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
+                    {p.name.split(' ').map(w => w[0]).join('')}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
+              {p.lead && (
+                <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>Lead Car</p>
+              )}
+              <p style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em', margin: 0 }}>{p.name}</p>
+              {p.car && <p style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: 0 }}>{p.car}</p>}
+            </div>
+          </button>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -219,6 +257,19 @@ export default function HelloToMontebelloItineraryPage() {
   const [rulesOpen, setRulesOpen] = useState(false)
   const [selectedCar, setSelectedCar] = useState(null)
   const [atBottom, setAtBottom] = useState(false)
+  const [fetchedParticipants, setFetchedParticipants] = useState([])
+
+  useEffect(() => {
+    if (!authed) return
+    fetch('/api/hello-to-montebello/roster')
+      .then(r => r.ok ? r.json() : { participants: [] })
+      .then(d => setFetchedParticipants(Array.isArray(d.participants) ? d.participants : []))
+      .catch(() => {})
+  }, [authed])
+
+  const allParticipants = [...MANUAL_PARTICIPANTS, ...fetchedParticipants]
+  const groupNumbers = [...new Set(allParticipants.map(p => p.group).filter(g => g != null))].sort((a, b) => a - b)
+  const ungrouped = allParticipants.filter(p => p.group == null)
 
   useEffect(() => {
     function onScroll() {
@@ -410,7 +461,7 @@ export default function HelloToMontebelloItineraryPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      <PageLoader images={['/montebello-itinerary.jpg', ...PARTICIPANTS.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
+      <PageLoader images={['/montebello-itinerary.jpg', ...allParticipants.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
 
       {/* Scroll indicator */}
       <button
@@ -612,41 +663,29 @@ export default function HelloToMontebelloItineraryPage() {
 
         {/* Who's Coming */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Who&apos;s Coming — {PARTICIPANTS.length} Car{PARTICIPANTS.length !== 1 ? 's' : ''} So Far</h2>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Who&apos;s Coming — {allParticipants.length} Car{allParticipants.length !== 1 ? 's' : ''} So Far</h2>
           <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: '0 0 1.25rem' }}>
             Registration just opened — this list grows as more people sign up. Check back closer to the date.
           </p>
           <p style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', margin: '0 0 1rem' }}>Tap a photo to learn more about the car</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
-            {PARTICIPANTS.map(p => (
-              <div key={p.name} className="car-wrap">
-                <button type="button" onClick={() => setSelectedCar(p)}
-                  className="car-card"
-                  aria-label={`${p.name} — ${p.car}`}
-                  style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 10px rgba(0,0,0,0.09)', width: '100%' }}>
-                  <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
-                    {p.photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photo} alt={`${p.name}'s ${p.car}`} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span aria-hidden="true" style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
-                          {p.name.split(' ').map(w => w[0]).join('')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
-                    {p.lead && (
-                      <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>Lead Car</p>
-                    )}
-                    <p style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em', margin: 0 }}>{p.name}</p>
-                    {p.car && <p style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: 0 }}>{p.car}</p>}
-                  </div>
-                </button>
-              </div>
-            ))}
-          </div>
+          {groupNumbers.length > 0 ? (
+            <>
+              {groupNumbers.map(g => (
+                <div key={g} style={{ marginBottom: '1.5rem' }}>
+                  <p style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 0.75rem' }}>Group {g}</p>
+                  <CarGrid cars={allParticipants.filter(p => p.group === g)} onSelect={setSelectedCar} />
+                </div>
+              ))}
+              {ungrouped.length > 0 && (
+                <div>
+                  <p style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', margin: '0 0 0.75rem' }}>Ungrouped</p>
+                  <CarGrid cars={ungrouped} onSelect={setSelectedCar} />
+                </div>
+              )}
+            </>
+          ) : (
+            <CarGrid cars={allParticipants} onSelect={setSelectedCar} />
+          )}
         </section>
 
         {/* Map */}
