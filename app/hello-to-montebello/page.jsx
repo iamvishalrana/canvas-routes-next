@@ -304,6 +304,7 @@ export default function HelloToMontebelloPage() {
   const [clientSecret, setClientSecret] = useState(null)
   const [countdown, setCountdown]     = useState(null)
   const [memberProfile, setMemberProfile] = useState(null)
+  const [memberCheckDone, setMemberCheckDone] = useState(false)
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
@@ -411,7 +412,11 @@ export default function HelloToMontebelloPage() {
     }
   }, [])
 
-  // Detect logged-in members and pre-fill their details
+  // Detect logged-in members and pre-fill their details. Until this settles,
+  // memberCheckDone gates the "are you a member?" selector below — without
+  // it, a real logged-in member on a slow connection (in-app browsers over
+  // cellular are the common case) would briefly see themselves asked to
+  // choose, since memberProfile starts null regardless of who they are.
   useEffect(() => {
     fetch('/api/member/me')
       .then(r => r.ok ? r.json() : null)
@@ -437,6 +442,7 @@ export default function HelloToMontebelloPage() {
           .catch(() => {})
       })
       .catch(() => {})
+      .finally(() => setMemberCheckDone(true))
   }, [])
 
   function updateForm(field, value) {
@@ -1100,8 +1106,10 @@ export default function HelloToMontebelloPage() {
 
               <form onSubmit={e => { e.preventDefault(); handleSubmit() }} noValidate>
 
-                {/* Member status — only shown when NOT logged in as a member */}
-                {!memberProfile && (
+                {/* Member status — only shown once we know for sure they're not
+                    logged in as a member (memberCheckDone gates this; see the
+                    detection effect above) */}
+                {memberCheckDone && !memberProfile && (
                   <div id="field-isMember" style={{marginBottom:'1.5rem'}}>
                     <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
                       {t.chooseOneToSecure}
@@ -1378,8 +1386,8 @@ export default function HelloToMontebelloPage() {
                   </div>
                 )}
 
-                <button type="submit" disabled={status==='loading' || (alreadyRegistered && !!memberProfile)}
-                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:(status==='loading'||(alreadyRegistered&&!!memberProfile))?'rgba(15,30,20,0.5)':'#0F1E14',color:'#c5a882',border:'none',marginBottom:'1rem',opacity:(alreadyRegistered&&!!memberProfile)?0.5:1}}>
+                <button type="submit" disabled={!memberCheckDone || status==='loading' || (alreadyRegistered && !!memberProfile)}
+                  style={{display:'block',width:'100%',padding:'1.1rem',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',cursor:(!memberCheckDone||status==='loading'||(alreadyRegistered&&!!memberProfile))?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',fontWeight:'700',background:(!memberCheckDone||status==='loading'||(alreadyRegistered&&!!memberProfile))?'rgba(15,30,20,0.5)':'#0F1E14',color:'#c5a882',border:'none',marginBottom:'1rem',opacity:(alreadyRegistered&&!!memberProfile)?0.5:1}}>
                   {status==='loading' ? t.settingUpPayment : memberProfile ? t.secureYourSpot('199') : form.isMember === 'no' ? t.continueToPayment(price) : t.continueToPaymentPlain}
                 </button>
 
