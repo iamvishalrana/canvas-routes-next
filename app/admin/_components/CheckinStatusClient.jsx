@@ -261,6 +261,11 @@ export default function CheckinStatusClient({ eventId }) {
   const hasLunch = sections.includes('lunch')
   const hasCarPhoto = sections.includes('car_photo')
 
+  // "Has a car photo" counts their member-profile photo as covered too, not
+  // just an event-specific submission — someone whose profile photo is
+  // already showing on the itinerary page shouldn't read as "missing" here.
+  const hasCarPhotoish = p => !!(p.car_photo || p.profile_photo_url)
+
   // Raw completion status, not exemption-aware — this view is for Jerry to
   // see who has/hasn't sent one at all, regardless of whether the public
   // check-in page would have asked them (repeat participants and anyone who
@@ -270,9 +275,9 @@ export default function CheckinStatusClient({ eventId }) {
     if (filter === 'trip_missing' && p.trip_details) return false
     if (filter === 'waiver_missing' && p.waiver) return false
     if (filter === 'lunch_missing' && p.lunch?.length > 0) return false
-    if (filter === 'car_photo_missing' && p.car_photo) return false
+    if (filter === 'car_photo_missing' && hasCarPhotoish(p)) return false
     if (filter === 'incomplete') {
-      const done = (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0) && (!hasCarPhoto || p.car_photo)
+      const done = (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0) && (!hasCarPhoto || hasCarPhotoish(p))
       if (done) return false
     }
     if (search && !((p.name || '').toLowerCase().includes(search.toLowerCase()) || (p.email || '').toLowerCase().includes(search.toLowerCase()))) return false
@@ -282,8 +287,8 @@ export default function CheckinStatusClient({ eventId }) {
   const tripCount = participants.filter(p => p.trip_details).length
   const waiverCount = participants.filter(p => p.waiver).length
   const lunchCount = participants.filter(p => p.lunch?.length > 0).length
-  const carPhotoCount = participants.filter(p => p.car_photo).length
-  const fullyDoneCount = participants.filter(p => (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0) && (!hasCarPhoto || p.car_photo)).length
+  const carPhotoCount = participants.filter(hasCarPhotoish).length
+  const fullyDoneCount = participants.filter(p => (!hasTrip || p.trip_details) && (!hasWaiver || p.waiver) && (!hasLunch || p.lunch?.length > 0) && (!hasCarPhoto || hasCarPhotoish(p))).length
   const total = participants.length
   const incompleteCount = total - fullyDoneCount
 
@@ -451,7 +456,7 @@ export default function CheckinStatusClient({ eventId }) {
                   {hasTrip && <Pill done={!!p.trip_details} doneLabel="Trip ✓" pendingLabel="Trip missing" />}
                   {hasWaiver && <Pill done={!!p.waiver} doneLabel="Waiver ✓" pendingLabel="Waiver missing" />}
                   {hasLunch && <Pill done={p.lunch?.length > 0} doneLabel="Lunch ✓" pendingLabel="Lunch missing" />}
-                  {hasCarPhoto && <Pill done={!!p.car_photo} doneLabel="Photo ✓" pendingLabel="Photo missing" />}
+                  {hasCarPhoto && <Pill done={hasCarPhotoish(p)} doneLabel="Photo ✓" pendingLabel="Photo missing" />}
                 </div>
                 {isOpen && (
                   <>
@@ -552,6 +557,19 @@ export default function CheckinStatusClient({ eventId }) {
                             <button type="button" onClick={() => triggerPhotoUpload(p.email)} disabled={photoBusy === p.email}
                               style={{ background: 'none', border: 'none', padding: 0, cursor: photoBusy === p.email ? 'wait' : 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
                               {photoBusy === p.email ? 'Uploading…' : 'Replace photo'}
+                            </button>
+                          </div>
+                        ) : p.profile_photo_url ? (
+                          <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
+                            <a href={p.profile_photo_url} target="_blank" rel="noreferrer">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={p.profile_photo_url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '0.5px solid rgba(0,0,0,0.1)', display: 'block', marginBottom: '0.5rem' }} />
+                            </a>
+                            <span style={{ color: '#aaa' }}>Using their member profile photo — no event-specific submission</span>
+                            <br />
+                            <button type="button" onClick={() => triggerPhotoUpload(p.email)} disabled={photoBusy === p.email}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: photoBusy === p.email ? 'wait' : 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
+                              {photoBusy === p.email ? 'Uploading…' : 'Override with a different photo'}
                             </button>
                           </div>
                         ) : (

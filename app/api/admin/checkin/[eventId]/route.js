@@ -17,9 +17,20 @@ export async function GET(request, { params }) {
     admin.from('event_checkins').select('*').eq('event_id', eventId),
   ])
 
+  const emails = registrants.map(r => r.email)
+  // Fallback photo source for members who haven't submitted an event-specific
+  // one — same resolution listEventCandidates uses for the public roster, so
+  // this view doesn't show "Not sent yet." for someone whose car photo is
+  // already showing on the itinerary page via their member profile.
+  const { data: members } = emails.length
+    ? await admin.from('members').select('email, cars, car_photo_url').in('email', emails)
+    : { data: [] }
+  const memberByEmail = new Map((members || []).map(m => [(m.email || '').toLowerCase(), m]))
+
   const checkinByEmail = new Map((checkins || []).map(c => [(c.email || '').toLowerCase(), c]))
   const participants = registrants.map(r => {
     const c = checkinByEmail.get(r.email)
+    const m = memberByEmail.get(r.email)
     return {
       name: r.name,
       email: r.email,
@@ -27,6 +38,7 @@ export async function GET(request, { params }) {
       waiver: c?.waiver || null,
       lunch: c?.lunch || null,
       car_photo: c?.car_photo || null,
+      profile_photo_url: m?.cars?.[0]?.photo_url || m?.car_photo_url || null,
       paymentStatus: r.paymentStatus,
       applicationId: r.applicationId,
       convoy_group: r.convoy_group ?? null,
