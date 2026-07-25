@@ -19,7 +19,7 @@ export async function POST(request, { params }) {
 
   const admin = createAdminClient()
   const { data: event, error: eventErr } = await admin.from('events')
-    .select('id, name, checkin_enabled, checkin_sections')
+    .select('id, name, date, date_display, location, checkin_enabled, checkin_sections')
     .eq('id', eventId).maybeSingle()
   if (eventErr || !event || !event.checkin_enabled) return Response.json({ error: 'Check-in is not enabled for this event.' }, { status: 404 })
 
@@ -38,14 +38,25 @@ export async function POST(request, { params }) {
   // them about something they were never meant to be asked for.
   const sectionsByEmail = await resolveCheckinSectionsBatch(admin, registrants.map(r => r.email), sections)
 
-  const incomplete = registrants.filter(r => {
-    if (onlyEmails && !onlyEmails.has(r.email)) return false
-    const c = checkinByEmail.get(r.email)
-    const effectiveSections = sectionsByEmail.get(r.email) || sections
-    const hasCarPhoto = effectiveSections.includes('car_photo')
-    const done = (!hasTrip || c?.trip_details) && (!hasWaiver || c?.waiver) && (!hasLunch || c?.lunch?.length > 0) && (!hasCarPhoto || c?.car_photo)
-    return !done
-  })
+  const SECTION_LABELS = { trip_details: 'Trip details', waiver: 'Liability waiver', lunch: 'Lunch selection', car_photo: 'Car photo' }
+
+  // Per-registrant, not just a done/not-done boolean — so the email can list
+  // exactly what's missing for THEM instead of a generic "trip details,
+  // waiver, and/or lunch, depending what's open" that made them guess.
+  const incomplete = registrants
+    .map(r => {
+      const c = checkinByEmail.get(r.email)
+      const effectiveSections = sectionsByEmail.get(r.email) || sections
+      const hasCarPhoto = effectiveSections.includes('car_photo')
+      const missing = [
+        hasTrip && !c?.trip_details && 'trip_details',
+        hasWaiver && !c?.waiver && 'waiver',
+        hasLunch && !(c?.lunch?.length > 0) && 'lunch',
+        hasCarPhoto && !c?.car_photo && 'car_photo',
+      ].filter(Boolean)
+      return { ...r, missing }
+    })
+    .filter(r => (!onlyEmails || onlyEmails.has(r.email)) && r.missing.length > 0)
 
   if (incomplete.length === 0) return Response.json({ success: true, sentCount: 0 })
   if (!process.env.RESEND_API_KEY) return Response.json({ error: 'Email not configured.' }, { status: 503 })
@@ -53,6 +64,7 @@ export async function POST(request, { params }) {
   after(() => Promise.allSettled(incomplete.map(r => {
     const firstName = (r.name || '').trim().split(' ')[0] || 'there'
     const checkinUrl = `https://canvasroutes.com/checkin/${eventId}?email=${encodeURIComponent(r.email)}`
+    const missingLabels = r.missing.map(s => SECTION_LABELS[s])
     return fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
@@ -61,8 +73,8 @@ export async function POST(request, { params }) {
         to: r.email,
         reply_to: 'jerry@canvasroutes.com',
         subject: `Reminder — complete your check-in for ${event.name}`,
-        html: buildCheckinReminderHtml(firstName, checkinUrl, event.name),
-        text: `Hey ${firstName},\n\nYou're registered for ${event.name}, but we still need a few things from you before the day. Complete your check-in here: ${checkinUrl}\n\nIf you've already completed check-in, you can ignore this email.\n\nJerry\nCanvas Routes`,
+        html: buildCheckinReminderHtml({ firstName, checkinUrl, eventLabel: event.name, dateDisplay: event.date_display || event.date, location: event.location, missingLabels }),
+        text: `Hey ${firstName},\n\nYou're registered for ${event.name}${event.date_display || event.date ? ` on ${event.date_display || event.date}` : ''}${event.location ? ` at ${event.location}` : ''}, but we still need the following from you before the day:\n${missingLabels.map(l => `- ${l}`).join('\n')}\n\nComplete your check-in here: ${checkinUrl}\n\nIf you've already completed check-in, you can ignore this email.\n\nJerry\nCanvas Routes`,
       }),
     }).then(res => { if (!res.ok) captureMessage('Resend non-200 — checkin-reminder-email', { status: res.status, email: r.email }) })
       .catch(err => captureException(err, { context: 'checkin-reminder-email', email: r.email }))
