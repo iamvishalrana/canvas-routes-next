@@ -1,11 +1,13 @@
+import { after } from 'next/server'
 import { createClient } from '../../../lib/supabase/server'
 import { deviceType } from '../../../lib/deviceType'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
-import { captureException } from '../../../lib/sentry.js'
+import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { computeTax } from '../../../lib/tax.js'
 import { getFbCookiesFromRequest } from '../../../lib/metaConversionsApi.js'
+import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -216,6 +218,40 @@ export async function POST(request) {
       .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_hello-to-montebello' })
       .eq('email', normalEmail)
     if (piStoreErr) captureException(piStoreErr, { context: 'htm-member-register-pi-store', email: normalEmail })
+
+    // Notify Jerry immediately when a member reaches the payment step — same
+    // belt-and-suspenders heads-up the non-member route already sends
+    // (hello-to-montebello-register/route.js). Members use automatic
+    // capture, so htm-member-confirm normally sends the "payment confirmed"
+    // notify moments later — this is the earlier "someone's paying right
+    // now" signal that route never had, the gap members' registrations were
+    // silently missing relative to non-members.
+    if (process.env.RESEND_API_KEY && !_health_check) {
+      after(() =>
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Canvas Routes <info@canvasroutes.com>',
+            to: 'jerry@canvasroutes.com',
+            subject: `Registration Started — ${memberName} (Member)`,
+            html: buildAdminNotifyHtml('Member registration started — payment processing', [
+              ['Name',       `<strong>${memberName}</strong>`],
+              ['Email',      `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+              ['Amount',     `$${(memberTotalWithTax / 100).toFixed(2)} CAD incl. tax`],
+              ['Car year',   carYear.trim()],
+              ['Car',        fullCar],
+              ['Passengers', passengers],
+              ['Children',   hasChildren],
+              ['Children ages', childrenAges || '—'],
+              ['Message',    more || '—'],
+              ['PI',         pi.id],
+            ]),
+          }),
+        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — htm-member-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'htm-member-register-admin-notify', email: normalEmail }))
+      )
+    }
+
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {
     captureException(err, { context: 'htm-member-create-pi', email: normalEmail })
