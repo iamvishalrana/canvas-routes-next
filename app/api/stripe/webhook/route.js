@@ -7,7 +7,7 @@ import { buildAdminNotifyHtml } from '../../../../lib/adminEmail.js'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail.js'
 import { MEMBERSHIP_TYPE_TIER } from '../../../../lib/prices.js'
 import { recordPaymentSuccess } from '../../../../lib/paymentLedger.js'
-import { markRegistrationPaid } from '../../../../lib/markRegistrationPaid.js'
+import { markRegistrationPaid, buildDetailsSnapshotFromMetadata, mergeRegistrationDetails } from '../../../../lib/markRegistrationPaid.js'
 import { getRouteCheckinUrl } from '../../../../lib/routeEventLink.js'
 import { isSameEvent } from '../../../../lib/eventCheckinShared.js'
 import { sendMetaCapiEvent } from '../../../../lib/metaConversionsApi.js'
@@ -220,6 +220,13 @@ export async function POST(request) {
           // since this event is the authoritative "payment succeeded" signal.
           if (normalEmail && eventName) {
             await markRegistrationPaid(supabase, normalEmail, eventName).catch(err => captureException(err, { context: 'road-trip-payment-mark-paid', piId: pi.id }))
+            // Restore the per-event submitted-data snapshot if it's missing —
+            // this is the ONLY server-side rescue for MEMBER road-trip PIs
+            // (automatic capture skips requires_capture entirely), so without
+            // this, a browser closing before the register route's own
+            // `details` write lands would leave it gone with no recovery path.
+            await mergeRegistrationDetails(supabase, normalEmail, eventName, buildDetailsSnapshotFromMetadata(pi.metadata))
+              .catch(err => captureException(err, { context: 'road-trip-payment-details-rescue', piId: pi.id }))
           }
 
           // Non-member confirmation email — only when capture came from Stripe dashboard.
@@ -371,13 +378,7 @@ export async function POST(request) {
         // form data of its own, only whatever the register routes stashed
         // in metadata. Restores this even when the browser closed mid-flow
         // and the normal route's own `details` write never happened.
-        const detailsFromMetadata = Object.fromEntries(Object.entries({
-          car_year: pi.metadata?.car_year, car_make: pi.metadata?.car_make, car_model: pi.metadata?.car_model,
-          phone: pi.metadata?.phone, dob: pi.metadata?.dob, source: pi.metadata?.source,
-          passengers: pi.metadata?.passengers, has_children: pi.metadata?.has_children, children_ages: pi.metadata?.children_ages,
-          instagram: pi.metadata?.instagram, more: pi.metadata?.message,
-          ...(membershipTier ? { car_paint: pi.metadata?.car_paint, referred_by: pi.metadata?.referred_by } : {}),
-        }).filter(([, v]) => v))
+        const detailsFromMetadata = buildDetailsSnapshotFromMetadata(pi.metadata, { includeMembershipFields: !!membershipTier })
 
         const existingMembershipReg = priorRegs.find(r => r.event === 'Canvas Routes Membership')
         const registrations = membershipTier
