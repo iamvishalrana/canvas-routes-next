@@ -60,17 +60,28 @@ const eventSchema = {
 export default function HelloToMontebelloLayout({ children }) {
   return (
     <>
-      {/* Polyfill for in-app browsers where Stripe.js's Apple Pay detection throws on
-          window.webkit.messageHandlers: Facebook's in-app browser defines window.webkit
-          but not messageHandlers; Instagram's doesn't define window.webkit at all. */}
+      {/* Polyfill for in-app browsers where native-bridge calls throw on
+          window.webkit.messageHandlers[someHandler].postMessage(...):
+          Instagram doesn't define window.webkit at all; Facebook DOES define
+          window.webkit.messageHandlers, but its own injected in-app-browser
+          instrumentation (LCP reporting, etc.) sometimes calls a handler key
+          (e.g. IOS_BRIDGE_NO_REPLY) that isn't actually registered, throwing
+          on undefined.postMessage. Wrapping messageHandlers itself in a Proxy
+          (rather than only creating it when entirely absent) covers both —
+          real handlers still work via the `in target` check, anything else
+          falls back to a no-op instead of crashing. */}
       <script dangerouslySetInnerHTML={{ __html: `
         try {
           if (!window.webkit) {
             window.webkit = {};
           }
-          if (!window.webkit.messageHandlers) {
-            window.webkit.messageHandlers = new Proxy({}, { get: function() { return { postMessage: function() {} } } });
-          }
+          var existingHandlers = window.webkit.messageHandlers || {};
+          window.webkit.messageHandlers = new Proxy(existingHandlers, {
+            get: function(target, prop) {
+              if (prop in target) return target[prop];
+              return { postMessage: function() {} };
+            }
+          });
         } catch(e) {}
       `}} />
       <script
