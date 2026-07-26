@@ -257,7 +257,24 @@ export default function HelloToMontebelloItineraryPage() {
   const [rulesOpen, setRulesOpen] = useState(false)
   const [selectedCar, setSelectedCar] = useState(null)
   const [atBottom, setAtBottom] = useState(false)
+  const [bannerHeight, setBannerHeight] = useState(0)
   const [fetchedParticipants, setFetchedParticipants] = useState([])
+
+  // CookieBanner.jsx shows for any first-time visitor and sits at z-index
+  // 1000 across the full width, covering this page's own bottom-right
+  // scroll-down button (z-index 50) underneath it. It signals its own
+  // height by setting body.style.paddingBottom — read that instead of
+  // duplicating its visibility logic, and shift the button up by it.
+  useEffect(() => {
+    function syncBannerHeight() {
+      const px = parseFloat(document.body.style.paddingBottom) || 0
+      setBannerHeight(px)
+    }
+    syncBannerHeight()
+    const mo = new MutationObserver(syncBannerHeight)
+    mo.observe(document.body, { attributes: true, attributeFilter: ['style'] })
+    return () => mo.disconnect()
+  }, [])
 
   useEffect(() => {
     if (!authed) return
@@ -275,8 +292,20 @@ export default function HelloToMontebelloItineraryPage() {
     function onScroll() {
       setAtBottom(window.innerHeight + window.scrollY >= document.body.scrollHeight - 80)
     }
+    onScroll() // page may already be shorter than the viewport
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('resize', onScroll, { passive: true })
+    // The roster (fetched async, after the password gate) can add a whole
+    // "Who's Coming" section below the fold without any window resize event
+    // — that left atBottom stuck true from before the roster loaded, hiding
+    // the scroll-down button even with the new section still below it.
+    const ro = new ResizeObserver(onScroll)
+    ro.observe(document.body)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      ro.disconnect()
+    }
   }, [])
 
   useEffect(() => {
@@ -466,7 +495,7 @@ export default function HelloToMontebelloItineraryPage() {
       {/* Scroll indicator */}
       <button
         className="scroll-btn"
-        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto' }}
+        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto', bottom: `calc(1.75rem + ${bannerHeight}px)` }}
         onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
         aria-label="Scroll down"
       >
@@ -505,7 +534,7 @@ export default function HelloToMontebelloItineraryPage() {
           98% { transform: translateY(0) rotate(0deg); }
         }
 
-        .scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
+        .scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 1001; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease, bottom 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
         .scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
         @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
         .scroll-chevron { animation: bounce-down 1.6s ease-in-out infinite; }

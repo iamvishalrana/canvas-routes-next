@@ -308,6 +308,23 @@ export default function HelloToMontebelloPage() {
   const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
   const [atBottom, setAtBottom] = useState(false)
+  const [bannerHeight, setBannerHeight] = useState(0)
+
+  // CookieBanner.jsx shows for any first-time visitor and sits at z-index
+  // 1000 across the full width, covering this page's own bottom-right
+  // scroll cue (previously z-index 50) underneath it. It signals its own
+  // height by setting body.style.paddingBottom — read that instead of
+  // duplicating its visibility logic, and shift the cue up by it.
+  useEffect(() => {
+    function syncBannerHeight() {
+      const px = parseFloat(document.body.style.paddingBottom) || 0
+      setBannerHeight(px)
+    }
+    syncBannerHeight()
+    const mo = new MutationObserver(syncBannerHeight)
+    mo.observe(document.body, { attributes: true, attributeFilter: ['style'] })
+    return () => mo.disconnect()
+  }, [])
 
   // Floating scroll cue — hides once there's nothing left to scroll to,
   // same pattern as the generic check-in pages.
@@ -318,9 +335,16 @@ export default function HelloToMontebelloPage() {
     checkBottom()
     window.addEventListener('scroll', checkBottom, { passive: true })
     window.addEventListener('resize', checkBottom, { passive: true })
+    // Form validation errors, the promo-code panel, and the member/non-member
+    // content swap can all change the page's height without a window resize
+    // event — watch the content's real size directly so atBottom can't get
+    // stuck stale from an earlier, shorter render.
+    const ro = new ResizeObserver(checkBottom)
+    ro.observe(document.body)
     return () => {
       window.removeEventListener('scroll', checkBottom)
       window.removeEventListener('resize', checkBottom)
+      ro.disconnect()
     }
   }, [])
 
@@ -681,7 +705,7 @@ export default function HelloToMontebelloPage() {
 
         /* ── Floating scroll cue (mobile + desktop) ── */
         @keyframes htm-bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
-        .htm-scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
+        .htm-scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 1001; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease, bottom 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
         .htm-scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
         .htm-scroll-chevron { animation: htm-bounce-down 1.6s ease-in-out infinite; }
         @media (max-width: 768px) {
@@ -746,7 +770,7 @@ export default function HelloToMontebelloPage() {
         type="button"
         className="htm-scroll-btn"
         aria-label={t.scrollCue}
-        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto' }}
+        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto', bottom: `calc(1.75rem + ${bannerHeight}px)` }}
         onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
       >
         <svg className="htm-scroll-chevron" width="16" height="10" viewBox="0 0 16 10" fill="none">
