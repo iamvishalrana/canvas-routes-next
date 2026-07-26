@@ -120,6 +120,8 @@ export default function ApplicationsClient() {
   const [deleteAppConfirm, setDeleteAppConfirm] = useState(null)
   const [deleteAppError, setDeleteAppError] = useState({})
   const [showFilter, setShowFilter] = useState('all') // 'all' | 'unseen' | 'pending'
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
+  const [eventFilter, setEventFilter] = useState('all')
   const [rejectConfirm, setRejectConfirm] = useState(null)
   const [rejecting, setRejecting]   = useState(null)
   const [rejectErr, setRejectErr]   = useState({})
@@ -434,10 +436,15 @@ export default function ApplicationsClient() {
     }
   }
 
+  // Union of every event name anyone has ever registered for, for the event filter dropdown.
+  const eventOptions = [...new Set(apps.flatMap(a => (a.registrations || []).map(r => r.event)).filter(Boolean))].sort()
+
   const filtered = apps
     .filter(a => {
       if (showFilter === 'unseen' && seenAppIds.has(a.id)) return false
       if (showFilter === 'pending' && a.is_member) return false
+      if (paymentStatusFilter !== 'all' && (a.stripe_payment_status || 'none') !== paymentStatusFilter) return false
+      if (eventFilter !== 'all' && !(a.registrations || []).some(r => r.event === eventFilter)) return false
       return !search || [a.name, a.email, a.car_year, a.car_model, a.car_paint, a.instagram, a.source, a.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && a.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
     })
     .sort((a, b) => {
@@ -445,6 +452,9 @@ export default function ApplicationsClient() {
       if (sortApps === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
       if (sortApps === 'name_az') return (a.name || '').localeCompare(b.name || '')
       if (sortApps === 'name_za') return (b.name || '').localeCompare(a.name || '')
+      if (sortApps === 'email_az') return (a.email || '').localeCompare(b.email || '')
+      if (sortApps === 'amount_high') return (b.stripe_amount_paid || 0) - (a.stripe_amount_paid || 0)
+      if (sortApps === 'amount_low') return (a.stripe_amount_paid || 0) - (b.stripe_amount_paid || 0)
       return 0
     })
   const totalInvited = apps.filter(a => a.is_member).length
@@ -568,12 +578,41 @@ export default function ApplicationsClient() {
             </button>
           ))}
           <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={paymentStatusFilter} onChange={e => setPaymentStatusFilter(e.target.value)}
+              style={{ ...sel, width: '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="all">Any payment status</option>
+              <option value="paid">Paid</option>
+              <option value="authorized">Authorized (hold)</option>
+              <option value="pending">Pending</option>
+              <option value="refunded">Refunded</option>
+              <option value="partially_refunded">Partially refunded</option>
+              <option value="rejected">Rejected</option>
+              <option value="failed">Failed</option>
+              <option value="disputed">Disputed</option>
+              <option value="disputed_won">Dispute won</option>
+              <option value="disputed_lost">Dispute lost</option>
+              <option value="none">No payment on file</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select value={eventFilter} onChange={e => setEventFilter(e.target.value)}
+              style={{ ...sel, width: '170px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              <option value="all">Any event</option>
+              {eventOptions.map(ev => <option key={ev} value={ev}>{ev}</option>)}
+            </select>
+            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
             <select value={sortApps} onChange={e => setSortApps(e.target.value)}
               style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name_az">Name A → Z</option>
               <option value="name_za">Name Z → A</option>
+              <option value="email_az">Email A → Z</option>
+              <option value="amount_high">Amount paid: High → Low</option>
+              <option value="amount_low">Amount paid: Low → High</option>
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
