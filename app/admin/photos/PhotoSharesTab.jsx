@@ -414,10 +414,10 @@ export default function PhotoSharesTab() {
             return (
               <div key={group.name}>
                 <button type="button" onClick={() => setOpenFolders(p => ({ ...p, [group.name]: !folderOpen }))}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0.35rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0.35rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', minWidth: 0 }}>
                   <ChevronIcon open={folderOpen} />
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a' }}>{group.name}</span>
-                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</span>
+                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0 }}>
                     {group.items.length} share{group.items.length !== 1 ? 's' : ''}
                   </span>
                 </button>

@@ -5,7 +5,7 @@ import MembersGallery from './MembersGallery'
 const inp = {
   width: '100%', boxSizing: 'border-box', padding: '0.95rem 1.1rem',
   background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.16)',
-  color: '#F5F1EC', fontSize: '15px', fontFamily: 'var(--font-inter),sans-serif',
+  color: '#F5F1EC', fontSize: '16px', fontFamily: 'var(--font-inter),sans-serif',
   outline: 'none', borderRadius: '2px', appearance: 'none', WebkitAppearance: 'none',
   transition: 'border-color 0.2s, background 0.2s',
 }

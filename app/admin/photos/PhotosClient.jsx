@@ -355,10 +355,12 @@ export default function PhotosClient() {
   )
 
   return (
-    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }}>
+    <div className="ph-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }}>
       <style>{`
         @keyframes phFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .ph-body { animation: phFadeUp 0.25s ease both; }
+        /* iOS Safari zooms in on focus for any input under 16px */
+        .ph-wrap input, .ph-wrap select, .ph-wrap textarea { font-size: 16px !important; }
         .ph-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
         @media (max-width: 480px) { .ph-grid { grid-template-columns: repeat(2, 1fr); } }
       `}</style>
