@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { captureException } from '../../../../lib/sentry'
+import { normalizeEmail } from '../../../../lib/normalizeEmail'
 
 const SHARE_LIFETIME_DAYS = 30
 
@@ -24,9 +25,11 @@ export async function GET() {
   return Response.json((shares || []).map(s => ({ ...s, photoCount: countByShare.get(s.id) || 0 })))
 }
 
-// Creates a new share — a title (shown to the recipient), optional recipient
-// name/email (admin reference only, never shown publicly), and a fresh
-// token. Photos are uploaded afterward via ./[id]/upload-url + ./[id]/photos.
+// Creates a new share — a title (shown to the recipient), a recipient email
+// (doubles as the access password the recipient must type on the public
+// page — see /api/gallery/[token]/verify — so it's required, not just an
+// admin reference field), and a fresh token. Photos are uploaded afterward
+// via ./[id]/upload-url + ./[id]/photos.
 export async function POST(request) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -36,8 +39,11 @@ export async function POST(request) {
   if (!title) return Response.json({ error: 'Title is required.' }, { status: 400 })
   if (title.length > 120) return Response.json({ error: 'Title is too long.' }, { status: 400 })
 
+  const recipientEmail = normalizeEmail(body.recipientEmail).slice(0, 200)
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+    return Response.json({ error: 'A valid recipient email is required — it doubles as the access password.' }, { status: 400 })
+  }
   const recipientName = (body.recipientName || '').toString().trim().slice(0, 120) || null
-  const recipientEmail = (body.recipientEmail || '').toString().trim().slice(0, 200) || null
   const expiresAt = new Date(Date.now() + SHARE_LIFETIME_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
   const supabase = createAdminClient()

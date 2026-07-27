@@ -183,6 +183,10 @@ export default function PhotoSharesTab() {
   async function handleCreate(e) {
     e.preventDefault()
     if (!form.title.trim()) { setFormErr('Title is required.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.recipientEmail.trim())) {
+      setFormErr('A valid recipient email is required — it doubles as the access password.')
+      return
+    }
     setSubmitting(true); setFormErr('')
     try {
       const res = await fetch('/api/admin/photo-shares', {
@@ -203,7 +207,8 @@ export default function PhotoSharesTab() {
     <div>
       <div style={{ fontSize: '12px', color: '#999', marginBottom: '1.25rem', lineHeight: 1.7 }}>
         Create a link to share photos with someone who isn't a member — for one person, or a whole event's
-        worth to hand out broadly. Each link auto-expires and its photos are deleted 30 days after creation
+        worth to hand out broadly (give the group the same email to use). The recipient must enter that
+        email to view the gallery. Each link auto-expires and its photos are deleted 30 days after creation
         (renewable). The page also includes a membership pitch.
       </div>
 
@@ -224,8 +229,8 @@ export default function PhotoSharesTab() {
               <input style={inp} value={form.recipientName} onChange={e => setForm(p => ({ ...p, recipientName: e.target.value }))} maxLength={120} />
             </div>
             <div style={{ flex: '1 1 200px' }}>
-              <L>Recipient email (optional, for your reference)</L>
-              <input style={inp} type="email" value={form.recipientEmail} onChange={e => setForm(p => ({ ...p, recipientEmail: e.target.value }))} maxLength={200} />
+              <L>Recipient email (required — this is the access password)</L>
+              <input style={inp} type="email" required value={form.recipientEmail} onChange={e => setForm(p => ({ ...p, recipientEmail: e.target.value }))} maxLength={200} />
             </div>
           </div>
           <div>
@@ -255,7 +260,8 @@ export default function PhotoSharesTab() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{share.title}</div>
                     <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                      {(share.recipient_name || share.recipient_email) && <>{[share.recipient_name, share.recipient_email].filter(Boolean).join(' · ')} · </>}
+                      {share.recipient_name && <>{share.recipient_name} · </>}
+                      {share.recipient_email && <>Password: <span style={{ color: '#8a7a5c' }}>{share.recipient_email}</span> · </>}
                       {share.photoCount} photo{share.photoCount !== 1 ? 's' : ''}
                     </div>
                   </div>
