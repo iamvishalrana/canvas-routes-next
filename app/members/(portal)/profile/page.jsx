@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import CountUp from '../../../../components/CountUp'
 import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 import { formatForDisplay } from '../../../../lib/memberNumber.js'
+import { uploadToSupabaseStorage } from '../../../../lib/uploadToSupabaseStorage'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -246,12 +247,20 @@ export default function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (avatarInputRef.current) avatarInputRef.current.value = ''
+    if (file.size > 8 * 1024 * 1024) { setAvatarError('File must be under 8 MB.'); return }
     setAvatarUploading(true); setAvatarError(null)
     try {
-      const fd = new FormData()
-      fd.append('photo', file)
-      fd.append('kind', 'avatar')
-      const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
+      const urlRes = await fetch('/api/member/photo/upload-url', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'avatar', fileType: file.type }),
+      })
+      const urls = await urlRes.json().catch(() => ({}))
+      if (!urlRes.ok) { setAvatarError(urls.error || 'Upload failed.'); return }
+      await uploadToSupabaseStorage({ bucket: 'member-photos', path: urls.path, token: urls.token, file })
+      const res = await fetch('/api/member/photo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'avatar', fileType: file.type }),
+      })
       const data = await res.json()
       if (res.ok) setAvatarUrl(data.url)
       else setAvatarError(data.error || 'Upload failed.')
@@ -272,12 +281,20 @@ export default function ProfilePage() {
     if (carFileInputRef.current) carFileInputRef.current.value = ''
     const idx = uploadTargetIdx
     if (!file || idx === null) return
+    if (file.size > 8 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: 'File must be under 8 MB.' })); return }
     setPhotoUploadingIdx(idx); setPhotoErrors(p => ({ ...p, [idx]: null }))
     try {
-      const fd = new FormData()
-      fd.append('photo', file)
-      fd.append('carIndex', String(idx))
-      const res = await fetch('/api/member/photo', { method: 'POST', body: fd })
+      const urlRes = await fetch('/api/member/photo/upload-url', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'car', carIndex: idx, fileType: file.type }),
+      })
+      const urls = await urlRes.json().catch(() => ({}))
+      if (!urlRes.ok) { setPhotoErrors(p => ({ ...p, [idx]: urls.error || 'Upload failed.' })); return }
+      await uploadToSupabaseStorage({ bucket: 'member-photos', path: urls.path, token: urls.token, file })
+      const res = await fetch('/api/member/photo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'car', carIndex: idx, fileType: file.type }),
+      })
       const data = await res.json()
       if (res.ok) setCars(prev => prev.map((c, i) => i === idx ? { ...c, photo_url: data.url } : c))
       else setPhotoErrors(p => ({ ...p, [idx]: data.error || 'Upload failed.' }))

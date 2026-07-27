@@ -1,50 +1,32 @@
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
+import { memberPhotoPath, EXT_BY_MIME } from '../../../../lib/memberPhotoPath'
 
+const BUCKET = 'member-photos'
+
+// Records the photo after the member's browser has uploaded it directly to
+// the member-photos bucket via a signed upload URL (see ./upload-url). The
+// path is recomputed here from the authenticated user + kind/carIndex —
+// never trusted from the client — so this doubles as the ownership check.
 export async function POST(request) {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const formData = await request.formData()
-  const file = formData.get('photo')
-  const kind = formData.get('kind') === 'avatar' ? 'avatar' : 'car'
-  const carIndexRaw = formData.get('carIndex')
-  const carIndex = kind === 'car' && carIndexRaw !== null && carIndexRaw !== '' ? parseInt(carIndexRaw, 10) : null
-  if (!file || typeof file === 'string') return Response.json({ error: 'No file provided' }, { status: 400 })
-  if (file.size > 8 * 1024 * 1024) return Response.json({ error: 'File must be under 8 MB' }, { status: 400 })
-  if (!file.type.startsWith('image/')) return Response.json({ error: 'File must be an image' }, { status: 400 })
-
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
-
-  // Magic byte check — verify file is actually an image
-  const magicBytes = new Uint8Array(bytes.slice(0, 12))
-  const isJpeg = magicBytes[0] === 0xFF && magicBytes[1] === 0xD8 && magicBytes[2] === 0xFF
-  const isPng = magicBytes[0] === 0x89 && magicBytes[1] === 0x50 && magicBytes[2] === 0x4E && magicBytes[3] === 0x47
-  const isWebp = magicBytes[8] === 0x57 && magicBytes[9] === 0x45 && magicBytes[10] === 0x42 && magicBytes[11] === 0x50
-  const isGif = magicBytes[0] === 0x47 && magicBytes[1] === 0x49 && magicBytes[2] === 0x46
-  if (!isJpeg && !isPng && !isWebp && !isGif) {
-    return Response.json({ error: 'File must be a valid image (JPEG, PNG, WebP, or GIF)' }, { status: 400 })
-  }
-
-  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
-  const path = kind === 'avatar'
-    ? `${user.id}-avatar.${ext}`
-    : (carIndex !== null && carIndex > 0 ? `${user.id}-car-${carIndex}.${ext}` : `${user.id}.${ext}`)
+  const body = await request.json().catch(() => ({}))
+  const kind = body.kind === 'avatar' ? 'avatar' : 'car'
+  const carIndex = kind === 'car' && body.carIndex !== null && body.carIndex !== undefined && body.carIndex !== ''
+    ? parseInt(body.carIndex, 10) : null
+  const ext = EXT_BY_MIME[body.fileType]
+  if (!ext) return Response.json({ error: 'File must be a valid image (JPEG, PNG, or WebP).' }, { status: 400 })
 
   const admin = createAdminClient()
+  const path = memberPhotoPath(user.id, kind, carIndex, ext)
 
-  // Create bucket if not exists
-  await admin.storage.createBucket('member-photos', { public: true }).catch(() => {})
+  const { data: exists } = await admin.storage.from(BUCKET).exists(path)
+  if (!exists) return Response.json({ error: 'Upload incomplete — please retry.' }, { status: 400 })
 
-  const { error: uploadErr } = await admin.storage
-    .from('member-photos')
-    .upload(path, buffer, { contentType: file.type, upsert: true })
-
-  if (uploadErr) return Response.json({ error: uploadErr.message }, { status: 500 })
-
-  const { data: { publicUrl } } = admin.storage.from('member-photos').getPublicUrl(path)
+  const { data: { publicUrl } } = admin.storage.from(BUCKET).getPublicUrl(path)
 
   // Save URL to member record — cache-bust so a replaced photo shows immediately
   const bustedUrl = `${publicUrl}?v=${Date.now()}`
