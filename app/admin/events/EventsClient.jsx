@@ -8,6 +8,7 @@ import {
   inp, sel, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu, CopyBtn,
 } from '../_components/shared'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
+import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
 import WtetClient from '../wtet/WtetClient'
@@ -488,8 +489,18 @@ export default function EventsClient() {
   async function uploadPhoto(eventId, file) {
     setUploadingPhoto(eventId); setPhotoError(p => ({ ...p, [eventId]: null }))
     try {
-      const fd = new FormData(); fd.append('photo', file)
-      const res = await fetch(`/api/admin/events/${eventId}/photo`, { method: 'POST', body: fd })
+      if (file.size > 10 * 1024 * 1024) { setPhotoError(p => ({ ...p, [eventId]: 'File must be under 10 MB.' })); return }
+      const urlRes = await fetch(`/api/admin/events/${eventId}/photo/upload-url`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileType: file.type }),
+      })
+      const urls = await urlRes.json().catch(() => ({}))
+      if (!urlRes.ok) { setPhotoError(p => ({ ...p, [eventId]: urls.error || 'Upload failed.' })); return }
+      await uploadToSupabaseStorage({ bucket: 'event-photos', path: urls.path, token: urls.token, file })
+      const res = await fetch(`/api/admin/events/${eventId}/photo`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: urls.path }),
+      })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setPhotoError(p => ({ ...p, [eventId]: data.error || 'Upload failed.' })); return }
       setItems(prev => prev.map(ev => ev.id === eventId ? { ...ev, photo_url: data.url } : ev))
