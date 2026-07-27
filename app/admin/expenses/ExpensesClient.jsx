@@ -53,10 +53,6 @@ function taxOf(e) {
   return split > 0 ? split : (parseFloat(e.tax_amount) || 0)
 }
 
-function computeFolderPath(eventName, date) {
-  const slug = slugify(eventName)
-  return date ? `${slug}/${date}` : slug
-}
 function fmt(n) { return `$${(parseFloat(n) || 0).toFixed(2)}` }
 function fmtDate(d) {
   if (!d) return '—'
@@ -103,6 +99,20 @@ async function uploadReceipt(file, folderPath) {
   return data.url
 }
 
+// Cleans up a receipt that was uploaded but never made it into a saved
+// expense row (replaced before saving, removed, or the edit/add was
+// abandoned) — without this, every such upload sits in Storage forever,
+// since the only other cleanup path only ever looks at what's already in
+// the DB. Best-effort: the server also refuses to delete anything still
+// attached to a real expense, so this is safe to fire liberally.
+async function deleteReceiptByUrl(url) {
+  if (!url) return
+  await fetch('/api/admin/expenses/upload-receipt', {
+    method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  }).catch(() => {})
+}
+
 export default function ExpensesClient() {
   const [expenses, setExpenses]         = useState([])
   const [loading, setLoading]           = useState(true)
@@ -139,6 +149,11 @@ export default function ExpensesClient() {
   const fileRef = useRef(null)
   const scanRef = useRef(null)
   const editFileRef = useRef(null)
+  // Tracks an uploaded-but-not-yet-saved receipt so it can be deleted from
+  // Storage if it's replaced, removed, or the form/edit is abandoned before
+  // saving — see deleteReceiptByUrl above.
+  const pendingReceiptRef = useRef(null)
+  const pendingEditReceiptRef = useRef(null)
 
   const load = useCallback(() => {
     fetch('/api/admin/expenses')
@@ -327,6 +342,12 @@ export default function ExpensesClient() {
   function toggleGroup(name) { setOpenGroups(p => ({ ...p, [name]: !p[name] })) }
 
   function startEdit(expense) {
+    // Switching edit targets without saving abandons any receipt just
+    // replaced in the previous edit panel — flush it before starting fresh.
+    if (pendingEditReceiptRef.current) {
+      deleteReceiptByUrl(pendingEditReceiptRef.current)
+      pendingEditReceiptRef.current = null
+    }
     setEditingId(expense.id)
     setEditErr(null)
     setDeleteConfirm(null)
@@ -344,7 +365,15 @@ export default function ExpensesClient() {
     })
   }
 
-  function cancelEdit() { setEditingId(null); setEditErr(null) }
+  function cancelEdit() {
+    // A replaced-but-unsaved receipt is discarded with the rest of the edit
+    // — clean it up rather than leaving it orphaned in Storage.
+    if (pendingEditReceiptRef.current) {
+      deleteReceiptByUrl(pendingEditReceiptRef.current)
+      pendingEditReceiptRef.current = null
+    }
+    setEditingId(null); setEditErr(null)
+  }
 
   // Copy an expense into the Add form — recurring purchases (fuel, coffee
   // supplies, the same vendor every event) become a two-tap entry
@@ -402,6 +431,9 @@ export default function ExpensesClient() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setEditErr(data.error || 'Failed to save.'); return }
+      // Now committed to the DB row — future cleanup goes through the PATCH
+      // route's old-vs-new diff, not this pending-upload tracker.
+      pendingEditReceiptRef.current = null
       setExpenses(prev => prev.map(e => e.id === id ? data : e))
       setEditingId(null)
     } catch { setEditErr('Network error.') }
@@ -413,8 +445,12 @@ export default function ExpensesClient() {
     if (!file) return
     setUploadingFile(true); setFormErr(null)
     try {
+      // Replacing an already-attached-but-unsaved receipt would otherwise
+      // orphan it in Storage — nothing else ever points at that exact path.
+      if (pendingReceiptRef.current) await deleteReceiptByUrl(pendingReceiptRef.current)
       const uploadPath = slugify(folderEvent) + (form.expense_date ? `/${form.expense_date}` : '')
       const url = await uploadReceipt(file, uploadPath)
+      pendingReceiptRef.current = url
       setForm(p => ({ ...p, receipt_url: url }))
       setReceiptName(file.name)
     } catch (err) { setFormErr(err.message || 'Upload failed.') }
@@ -429,8 +465,13 @@ export default function ExpensesClient() {
     if (!file) return
     setEditUploading(true); setEditErr(null)
     try {
+      // Replacing an already-replaced-but-unsaved receipt would otherwise
+      // orphan the previous upload — the PATCH diff on Save only ever
+      // compares against what's already in the DB, not this in-flight one.
+      if (pendingEditReceiptRef.current) await deleteReceiptByUrl(pendingEditReceiptRef.current)
       const uploadPath = slugify(editForm.event_name || 'General') + (editForm.expense_date ? `/${editForm.expense_date}` : '')
       const url = await uploadReceipt(file, uploadPath)
+      pendingEditReceiptRef.current = url
       setEditForm(p => ({ ...p, receipt_url: url }))
     } catch (err) { setEditErr(err.message || 'Upload failed.') }
     finally { setEditUploading(false); if (editFileRef.current) editFileRef.current.value = '' }
@@ -467,10 +508,17 @@ export default function ExpensesClient() {
 
       // Also store the scanned file so it's attached to the expense in one step
       try {
+        if (pendingReceiptRef.current) await deleteReceiptByUrl(pendingReceiptRef.current)
         const path = slugify(folderEvent) + ((data.date || form.expense_date) ? `/${data.date || form.expense_date}` : '')
         const url = await uploadReceipt(file, path)
+        pendingReceiptRef.current = url
         setForm(p => ({ ...p, receipt_url: url })); setReceiptName(file.name)
-      } catch {}
+      } catch {
+        // Fields were extracted fine, but the receipt image itself didn't
+        // attach — this used to fail silently, leaving a green "Scanned ✓"
+        // banner while the expense would save with no receipt at all.
+        setScanNotice({ type: 'warn', text: "Fields were read, but the receipt image couldn't be attached — use \"Attach receipt\" below to add it manually." })
+      }
     } catch { setFormErr('Scan failed.') }
     finally { setScanning(false); if (scanRef.current) scanRef.current.value = '' }
   }
@@ -504,6 +552,8 @@ export default function ExpensesClient() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Failed to save.'); return }
+      // Now committed to the DB row — no longer this tracker's responsibility.
+      pendingReceiptRef.current = null
       setExpenses(prev => [data, ...prev])
       setNewIds(prev => new Set([...prev, data.id]))
       setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n }), 700)
@@ -801,7 +851,10 @@ export default function ExpensesClient() {
           {receiptName && (
             <span style={{ fontSize: '11px', color: '#3B6B2F', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               ✓ {receiptName}
-              <button type="button" onClick={() => { setForm(p => ({ ...p, receipt_url: '' })); setReceiptName(''); if (fileRef.current) fileRef.current.value = '' }}
+              <button type="button" onClick={() => {
+                if (pendingReceiptRef.current) { deleteReceiptByUrl(pendingReceiptRef.current); pendingReceiptRef.current = null }
+                setForm(p => ({ ...p, receipt_url: '' })); setReceiptName(''); if (fileRef.current) fileRef.current.value = ''
+              }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '0 2px' }}>×</button>
             </span>
           )}
@@ -1228,7 +1281,15 @@ export default function ExpensesClient() {
                                       style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                       {editUploading ? 'Uploading…' : 'Replace'}
                                     </button>
-                                    <button type="button" onClick={() => setEditForm(p => ({ ...p, receipt_url: '' }))}
+                                    <button type="button" onClick={() => {
+                                      // Only delete immediately if this is a not-yet-saved
+                                      // replacement — the originally-saved receipt is left
+                                      // alone so Cancel can still back out without side effects.
+                                      if (pendingEditReceiptRef.current && pendingEditReceiptRef.current === editForm.receipt_url) {
+                                        deleteReceiptByUrl(pendingEditReceiptRef.current); pendingEditReceiptRef.current = null
+                                      }
+                                      setEditForm(p => ({ ...p, receipt_url: '' }))
+                                    }}
                                       style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: 'none', color: '#c99', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                       Remove
                                     </button>
