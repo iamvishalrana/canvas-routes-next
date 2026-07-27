@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
+import { compressImageClient } from '../../../lib/compressImageClient'
 import PhotoSharesTab from './PhotoSharesTab'
 
 const BUCKET = 'gallery-photos'
@@ -219,6 +220,13 @@ export default function PhotosClient() {
   // Only the original is uploaded — grid/lightbox display sizes are rendered
   // on demand via Supabase's image transform endpoint (lib/supabaseImageUrl.js),
   // so there's no client-side compression step to guess a "good enough" size.
+  // Uploads go browser → Supabase Storage directly via signed URLs (full-size
+  // originals exceed the serverless request-body limit). Two files are sent
+  // per photo: the untouched original (full-resolution download) and a
+  // client-compressed display copy (grid/lightbox) — Supabase's on-the-fly
+  // image transform endpoint proved unreliable for large camera originals
+  // (broken-image icon, or slow enough to look broken), so the display copy
+  // is a real small file rather than a live-transformed URL.
   async function uploadFiles({ category, album, albumDate, memberId, label }, fileList) {
     const all = Array.from(fileList || [])
     const files = all.filter(f => ALLOWED[f.type])
@@ -229,16 +237,20 @@ export default function PhotosClient() {
       const file = files[i]
       try {
         if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
+        const display = await compressImageClient(file)
         const urlRes = await fetch('/api/admin/gallery/upload-url', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ origExt: ALLOWED[file.type] }),
+          body: JSON.stringify({ origExt: ALLOWED[file.type], dispExt: ALLOWED[display.type] || 'jpg' }),
         })
         const urls = await urlRes.json().catch(() => ({}))
         if (!urlRes.ok) throw new Error(urls.error || `HTTP ${urlRes.status}`)
-        await uploadToSupabaseStorage({ bucket: BUCKET, path: urls.originalPath, token: urls.originalToken, file })
+        await Promise.all([
+          uploadToSupabaseStorage({ bucket: BUCKET, path: urls.originalPath, token: urls.originalToken, file }),
+          uploadToSupabaseStorage({ bucket: BUCKET, path: urls.displayPath, token: urls.displayToken, file: display }),
+        ])
         const res = await fetch('/api/admin/gallery', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category, album, albumDate: albumDate || '', memberId, originalPath: urls.originalPath }),
+          body: JSON.stringify({ category, album, albumDate: albumDate || '', memberId, originalPath: urls.originalPath, displayPath: urls.displayPath }),
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)

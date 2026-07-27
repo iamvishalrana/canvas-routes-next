@@ -19,8 +19,8 @@ async function cleanupExpiredShares() {
   let deletedFiles = 0
   let deletedShares = 0
   for (const share of expired) {
-    const { data: items } = await supabase.from('photo_share_items').select('storage_path').eq('share_id', share.id)
-    const paths = (items || []).map(i => i.storage_path).filter(Boolean)
+    const { data: items } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('share_id', share.id)
+    const paths = [...new Set((items || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
     if (paths.length) {
       const { error: removeErr } = await supabase.storage.from(BUCKET).remove(paths)
       if (removeErr) {

@@ -2,7 +2,6 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { captureException } from '../../../../lib/sentry'
-import { buildTransformedUrl } from '../../../../lib/supabaseImageUrl.js'
 
 const BUCKET = 'gallery-photos'
 
@@ -39,14 +38,14 @@ export async function GET() {
   return Response.json(enriched)
 }
 
-// Records a photo after the browser has uploaded the original directly to
-// the gallery-photos bucket via a signed upload URL (see ./upload-url).
-// photo_url (grids/lightbox) is now a Supabase image-transform URL derived
-// from the same original, not a separately-uploaded compressed copy —
-// storage_path is set equal to original_path for new rows purely so old code
-// paths that still read storage_path (e.g. delete handlers) keep working.
-const PATH_RE = /^originals\/[\w-]+\.(jpg|png|webp)$/
-const DISPLAY_WIDTH = 1600
+// Records a photo after the browser has uploaded both the original and a
+// pre-compressed display copy directly to the gallery-photos bucket via
+// signed upload URLs (see ./upload-url). photo_url/storage_path point at the
+// small display copy (grids/lightbox); original_path/original_url point at
+// the untouched original (full-resolution download). Two real files rather
+// than one original + a live-transformed URL — Supabase's on-the-fly image
+// transform endpoint proved unreliable for large camera originals.
+const PATH_RE = /^(originals|display)\/[\w-]+\.(jpg|png|webp)$/
 
 export async function POST(request) {
   const adminUser = await requireAdmin()
@@ -59,7 +58,7 @@ export async function POST(request) {
   const caption = (body.caption || '').toString().trim()
   const memberId = (body.memberId || '').toString().trim()
   const tagMemberIds = Array.isArray(body.tagMemberIds) ? [...new Set(body.tagMemberIds.filter(Boolean))] : []
-  const { originalPath } = body
+  const { originalPath, displayPath } = body
 
   if (category === 'event') {
     if (!album) return Response.json({ error: 'Event name is required.' }, { status: 400 })
@@ -68,21 +67,24 @@ export async function POST(request) {
   } else {
     if (!memberId) return Response.json({ error: 'A member must be selected.' }, { status: 400 })
   }
-  if (!PATH_RE.test(originalPath || '')) {
+  if (!PATH_RE.test(originalPath || '') || !PATH_RE.test(displayPath || '')) {
     return Response.json({ error: 'Invalid storage path.' }, { status: 400 })
   }
 
   const supabase = createAdminClient()
 
-  // The file must actually exist — a record pointing at a failed upload
+  // Both files must actually exist — a record pointing at a failed upload
   // would render as a broken tile for every member
-  const { data: exists } = await supabase.storage.from(BUCKET).exists(originalPath)
-  if (!exists) {
+  const [{ data: origExists }, { data: dispExists }] = await Promise.all([
+    supabase.storage.from(BUCKET).exists(originalPath),
+    supabase.storage.from(BUCKET).exists(displayPath),
+  ])
+  if (!origExists || !dispExists) {
     return Response.json({ error: 'Upload incomplete — please retry this photo.' }, { status: 400 })
   }
 
   const { data: { publicUrl: originalUrl } } = supabase.storage.from(BUCKET).getPublicUrl(originalPath)
-  const displayUrl = buildTransformedUrl(originalUrl, { width: DISPLAY_WIDTH })
+  const { data: { publicUrl: displayUrl } } = supabase.storage.from(BUCKET).getPublicUrl(displayPath)
 
   const { data: row, error: insertErr } = await supabase.from('gallery_photos')
     .insert({
@@ -92,7 +94,7 @@ export async function POST(request) {
       member_id: category === 'personal' ? memberId : null,
       caption: caption.slice(0, 300) || null,
       photo_url: displayUrl,
-      storage_path: originalPath,
+      storage_path: displayPath,
       original_path: originalPath,
       original_url: originalUrl,
     })

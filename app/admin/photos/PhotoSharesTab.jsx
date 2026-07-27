@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
+import { compressImageClient } from '../../../lib/compressImageClient'
 
 const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
 const EMPTY_FORM = { title: '', recipientName: '', recipientEmail: '' }
@@ -59,16 +60,20 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
       const file = files[i]
       try {
         if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
+        const display = await compressImageClient(file)
         const urlRes = await fetch(`/api/admin/photo-shares/${share.id}/upload-url`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileType: file.type }),
+          body: JSON.stringify({ fileType: file.type, dispFileType: display.type || 'image/jpeg' }),
         })
         const urls = await urlRes.json().catch(() => ({}))
         if (!urlRes.ok) throw new Error(urls.error || `HTTP ${urlRes.status}`)
-        await uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.path, token: urls.token, file })
+        await Promise.all([
+          uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.originalPath, token: urls.originalToken, file }),
+          uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.displayPath, token: urls.displayToken, file: display }),
+        ])
         const res = await fetch(`/api/admin/photo-shares/${share.id}/photos`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: urls.path }),
+          body: JSON.stringify({ originalPath: urls.originalPath, displayPath: urls.displayPath }),
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)

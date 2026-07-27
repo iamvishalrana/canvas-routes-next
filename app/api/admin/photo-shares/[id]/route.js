@@ -39,12 +39,12 @@ export async function DELETE(request, { params }) {
   const supabase = createAdminClient()
 
   const { data: share } = await supabase.from('photo_shares').select('title').eq('id', id).maybeSingle()
-  const { data: items } = await supabase.from('photo_share_items').select('storage_path').eq('share_id', id)
+  const { data: items } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('share_id', id)
 
   const { error } = await supabase.from('photo_shares').delete().eq('id', id)
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
-  const paths = (items || []).map(i => i.storage_path).filter(Boolean)
+  const paths = [...new Set((items || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
   if (paths.length) {
     await supabase.storage.from(BUCKET).remove(paths).catch(err =>
       captureException(err, { context: 'admin-photo-share-delete-storage', shareId: id }))

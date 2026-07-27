@@ -4,18 +4,20 @@ import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 const BUCKET = 'photo-shares'
 const EXT_BY_MIME = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
 
-// Issues a one-time signed upload URL so the admin browser can push a photo
-// straight to Supabase Storage, same direct-upload pattern as every other
-// bucket — bulk-selecting a dozen camera originals would otherwise blow past
-// the serverless request-body limit fast.
+// Issues one-time signed upload URLs for both the original and a pre-
+// compressed display copy, same dual-upload pattern as gallery-photos —
+// Supabase's on-the-fly image transform endpoint proved unreliable for
+// large camera originals (broken-image icon, or slow enough to look
+// broken), so the display copy is a real small file, not a live transform.
 export async function POST(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
 
-  const { fileType } = await request.json().catch(() => ({}))
+  const { fileType, dispFileType } = await request.json().catch(() => ({}))
   const ext = EXT_BY_MIME[fileType]
-  if (!ext) return Response.json({ error: 'File must be a valid image (JPEG, PNG, or WebP).' }, { status: 400 })
+  const dispExt = EXT_BY_MIME[dispFileType]
+  if (!ext || !dispExt) return Response.json({ error: 'File must be a valid image (JPEG, PNG, or WebP).' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: share } = await admin.from('photo_shares').select('id, expires_at').eq('id', id).maybeSingle()
@@ -26,9 +28,19 @@ export async function POST(request, { params }) {
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
     admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
 
-  const path = `${id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
-  const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path)
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  const base = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+  const originalPath = `${id}/originals/${base}.${ext}`
+  const displayPath = `${id}/display/${base}.${dispExt}`
 
-  return Response.json({ path, token: data.token })
+  const [origResult, dispResult] = await Promise.all([
+    admin.storage.from(BUCKET).createSignedUploadUrl(originalPath),
+    admin.storage.from(BUCKET).createSignedUploadUrl(displayPath),
+  ])
+  if (origResult.error) return Response.json({ error: origResult.error.message }, { status: 500 })
+  if (dispResult.error) return Response.json({ error: dispResult.error.message }, { status: 500 })
+
+  return Response.json({
+    originalPath, originalToken: origResult.data.token,
+    displayPath, displayToken: dispResult.data.token,
+  })
 }

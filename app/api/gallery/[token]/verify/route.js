@@ -1,10 +1,8 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
-import { buildTransformedUrl } from '../../../../../lib/supabaseImageUrl'
 
 const BUCKET = 'photo-shares'
-const DISPLAY_WIDTH = 1600
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // Public, rate-limited password check for a shared gallery — the recipient
@@ -42,11 +40,12 @@ export async function POST(request, { params }) {
   if (share.recipient_email && normalizeEmail(share.recipient_email) !== entered) return mismatch()
 
   const { data: items } = await admin.from('photo_share_items')
-    .select('id, storage_path').eq('share_id', share.id).order('created_at', { ascending: true })
+    .select('id, storage_path, original_path').eq('share_id', share.id).order('created_at', { ascending: true })
 
   const photos = (items || []).map(i => {
-    const { data: { publicUrl } } = admin.storage.from(BUCKET).getPublicUrl(i.storage_path)
-    return { id: i.id, url: buildTransformedUrl(publicUrl, { width: DISPLAY_WIDTH }), originalUrl: publicUrl, caption: null }
+    const { data: { publicUrl: url } } = admin.storage.from(BUCKET).getPublicUrl(i.storage_path)
+    const { data: { publicUrl: originalUrl } } = admin.storage.from(BUCKET).getPublicUrl(i.original_path || i.storage_path)
+    return { id: i.id, url, originalUrl, caption: null }
   })
 
   return Response.json({ title: share.title, expiresAt: share.expires_at, photos })
