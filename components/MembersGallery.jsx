@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import JSZip from 'jszip'
 import FadeUp from './FadeUp'
 import { onImgError } from '../lib/imgFallback'
 
@@ -17,6 +18,8 @@ function downloadName(album, idx, url) {
 export default function MembersGallery({ albums }) {
   // lightbox: { albumIdx, photoIdx } or null
   const [lightbox, setLightbox] = useState(null)
+  // { albumIdx, done, total, failed } or null — one zip download at a time
+  const [zipping, setZipping] = useState(null)
   const touchStartX = useRef(null)
 
   const close = useCallback(() => setLightbox(null), [])
@@ -52,16 +55,53 @@ export default function MembersGallery({ albums }) {
   const current = lightbox ? albums[lightbox.albumIdx] : null
   const currentPhoto = current ? current.photos[lightbox.photoIdx] : null
 
+  // Bundles every full-resolution original in an album into a single .zip —
+  // fetched and packaged entirely client-side (no new server endpoint), same
+  // pattern this codebase already uses for other client-generated exports
+  // (jsPDF, docx, xlsx). One failed photo just gets skipped rather than
+  // aborting the whole download.
+  async function downloadAlbum(album, ai) {
+    setZipping({ albumIdx: ai, done: 0, total: album.photos.length, failed: 0 })
+    try {
+      const zip = new JSZip()
+      for (let i = 0; i < album.photos.length; i++) {
+        const photo = album.photos[i]
+        const url = photo.originalUrl || photo.url
+        try {
+          const res = await fetch(url)
+          if (!res.ok) throw new Error('fetch failed')
+          const blob = await res.blob()
+          zip.file(downloadName(album.name, i, url), blob)
+        } catch {
+          setZipping(z => z ? { ...z, failed: z.failed + 1 } : z)
+        }
+        setZipping(z => z ? { ...z, done: i + 1 } : z)
+      }
+      const content = await zip.generateAsync({ type: 'blob' })
+      const slug = album.name.replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'canvas-routes'
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(content)
+      a.download = `${slug}.zip`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } finally {
+      setZipping(null)
+    }
+  }
+
   return (
     <div>
       <style>{`
+        @keyframes mg-tile-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes mg-lb-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes mg-lb-img-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
         .mg-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 0.6rem;
+          gap: 0.7rem;
         }
         @media (max-width: 640px) {
-          .mg-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+          .mg-grid { grid-template-columns: repeat(2, 1fr); gap: 0.55rem; }
         }
         .mg-tile {
           position: relative;
@@ -69,18 +109,23 @@ export default function MembersGallery({ albums }) {
           overflow: hidden;
           background: rgba(0,0,0,0.05);
           border: none;
+          border-radius: 6px;
           padding: 0;
           cursor: pointer;
           display: block;
           width: 100%;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 20px -8px rgba(0,0,0,0.14);
+          transition: box-shadow 0.35s cubic-bezier(0.23,1,0.32,1), transform 0.35s cubic-bezier(0.23,1,0.32,1);
+          animation: mg-tile-in 0.5s cubic-bezier(0.16,1,0.3,1) both;
         }
         .mg-tile img {
           width: 100%; height: 100%;
           object-fit: cover; display: block;
-          transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+          transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
         @media (hover: hover) {
-          .mg-tile:hover img { transform: scale(1.04); }
+          .mg-tile:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1), 0 16px 32px -10px rgba(0,0,0,0.24); transform: translateY(-3px); }
+          .mg-tile:hover img { transform: scale(1.05); }
         }
         .mg-lb-nav {
           position: absolute; top: 50%; transform: translateY(-50%);
@@ -92,23 +137,49 @@ export default function MembersGallery({ albums }) {
         }
         @media (hover: hover) { .mg-lb-nav:hover { color: #F5F1EC; } }
         @media (max-width: 640px) { .mg-lb-nav { padding: 0.75rem 0.5rem; font-size: 24px; } }
+        .mg-dl-all { transition: border-color 0.15s, color 0.15s, background 0.15s; }
+        @media (hover: hover) { .mg-dl-all:hover:not(:disabled) { border-color: rgba(197,168,130,0.8) !important; color: #8a7a5c !important; background: rgba(197,168,130,0.06) !important; } }
       `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
-        {albums.map((album, ai) => (
+        {albums.map((album, ai) => {
+          const isZippingThis = zipping?.albumIdx === ai
+          return (
           <FadeUp key={album.name} delay={ai * 60}>
             <div>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.5rem, 3vw, 1.9rem)', fontWeight: '400', color: '#1a1a1a', margin: '0 0 0.35rem', lineHeight: 1.2 }}>
-                  {album.name}
-                </h2>
-                <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>
-                  {formatDate(album.date) ? `${formatDate(album.date)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                <div>
+                  <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.5rem, 3vw, 1.9rem)', fontWeight: '400', color: '#1a1a1a', margin: '0 0 0.35rem', lineHeight: 1.2 }}>
+                    {album.name}
+                  </h2>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>
+                    {formatDate(album.date) ? `${formatDate(album.date)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}
+                  </div>
                 </div>
+                {album.photos.length > 0 && (
+                  <button type="button" className="mg-dl-all" onClick={() => downloadAlbum(album, ai)} disabled={!!zipping}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
+                      fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                      color: isZippingThis ? '#8a7a5c' : '#666', background: 'none',
+                      border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '99px', padding: '0.5rem 1rem',
+                      cursor: zipping ? 'default' : 'pointer', opacity: (zipping && !isZippingThis) ? 0.4 : 1,
+                      fontFamily: 'var(--font-inter), sans-serif',
+                    }}>
+                    {isZippingThis ? (
+                      <>Zipping {zipping.done}/{zipping.total}…</>
+                    ) : (
+                      <>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download all
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
               <div className="mg-grid">
                 {album.photos.map((photo, pi) => (
-                  <button key={photo.id} type="button" className="mg-tile"
+                  <button key={photo.id} type="button" className="mg-tile" style={{ animationDelay: `${Math.min(pi, 12) * 35}ms` }}
                     onClick={() => setLightbox({ albumIdx: ai, photoIdx: pi })}
                     aria-label={photo.caption || `Photo ${pi + 1} — ${album.name}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -118,7 +189,8 @@ export default function MembersGallery({ albums }) {
               </div>
             </div>
           </FadeUp>
-        ))}
+          )
+        })}
       </div>
 
       {/* Lightbox */}
@@ -138,6 +210,7 @@ export default function MembersGallery({ albums }) {
             background: 'rgba(10,16,12,0.96)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             padding: 'calc(1rem + env(safe-area-inset-top)) 1rem calc(1.5rem + env(safe-area-inset-bottom))',
+            animation: 'mg-lb-in 0.25s ease both',
           }}>
           <button type="button" onClick={close} aria-label="Close"
             style={{
@@ -159,10 +232,14 @@ export default function MembersGallery({ albums }) {
           )}
 
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={currentPhoto.url} alt={currentPhoto.caption || current.name}
+          <img key={currentPhoto.id} src={currentPhoto.url} alt={currentPhoto.caption || current.name}
             onClick={e => e.stopPropagation()}
             onError={onImgError(currentPhoto.originalUrl)}
-            style={{ maxWidth: 'min(92vw, 1100px)', maxHeight: '76vh', objectFit: 'contain', display: 'block' }} />
+            style={{
+              maxWidth: 'min(92vw, 1100px)', maxHeight: '76vh', objectFit: 'contain', display: 'block',
+              borderRadius: '3px', boxShadow: '0 30px 80px -20px rgba(0,0,0,0.6)',
+              animation: 'mg-lb-img-in 0.3s cubic-bezier(0.16,1,0.3,1) both',
+            }} />
 
           <div onClick={e => e.stopPropagation()} style={{ textAlign: 'center', marginTop: '1.1rem', maxWidth: '85vw', fontFamily: 'var(--font-inter), sans-serif' }}>
             {currentPhoto.caption && (
