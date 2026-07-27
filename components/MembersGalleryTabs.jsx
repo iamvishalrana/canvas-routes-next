@@ -20,7 +20,7 @@ export default function MembersGalleryTabs({ eventAlbums, personalAlbum }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '1rem' }}>
         {[['event', 'Event Photos'], ['personal', 'My Car & Personal']].map(([key, label]) => (
           <button key={key} type="button" onClick={() => setTab(key)}
             style={{
@@ -33,6 +33,11 @@ export default function MembersGalleryTabs({ eventAlbums, personalAlbum }) {
             {label}
           </button>
         ))}
+      </div>
+
+      <div style={{ fontSize: '10.5px', color: '#bbb', marginBottom: '1.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+        To get a photo removed, please reach out to us at{' '}
+        <a href="mailto:info@canvasroutes.com" style={{ color: '#bbb' }}>info@canvasroutes.com</a>.
       </div>
 
       {albums.length === 0 ? (
