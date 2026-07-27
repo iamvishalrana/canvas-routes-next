@@ -4,6 +4,7 @@ import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/sha
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
+import { formatMbps } from '../../../lib/formatMbps'
 
 const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
 const EMPTY_FORM = { title: '', recipientName: '', recipientEmail: '' }
@@ -115,7 +116,7 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
     const files = all.filter(f => ALLOWED[f.type])
     const skipped = all.filter(f => !ALLOWED[f.type]).map(f => `${f.name} — unsupported format (use JPEG, PNG, or WebP)`)
     if (!all.length) return
-    setUpload({ done: 0, total: files.length, errors: skipped })
+    setUpload({ done: 0, total: files.length, errors: skipped, bytes: 0, ms: 0 })
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       try {
@@ -127,10 +128,17 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
         })
         const urls = await urlRes.json().catch(() => ({}))
         if (!urlRes.ok) throw new Error(urls.error || `HTTP ${urlRes.status}`)
+        // Both files transfer concurrently — measure wall-clock time around
+        // the pair so the speed reflects actual throughput, not the sum of
+        // two sequential durations.
+        const pairStarted = performance.now()
         await Promise.all([
           uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.originalPath, token: urls.originalToken, file }),
           uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.displayPath, token: urls.displayToken, file: display }),
         ])
+        const pairMs = performance.now() - pairStarted
+        const pairBytes = file.size + display.size
+        setUpload(u => u ? { ...u, bytes: u.bytes + pairBytes, ms: u.ms + pairMs } : u)
         const res = await fetch(`/api/admin/photo-shares/${share.id}/photos`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ originalPath: urls.originalPath, displayPath: urls.displayPath }),
@@ -198,9 +206,17 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
       </div>
 
       {upload && (
-        <div style={{ marginBottom: '1rem', fontSize: '12px', color: '#555' }}>
-          {upload.done < upload.total ? <>Uploading {upload.done} / {upload.total}…</> : <>Uploaded {Math.max(0, upload.total - upload.errors.length)} / {upload.total}</>}
-          {upload.errors.map((e, i) => <div key={i} style={{ color: '#93333E', marginTop: '0.25rem' }}>{e}</div>)}
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ fontSize: '12px', color: '#555' }}>
+            {upload.done < upload.total ? <>Uploading {upload.done} / {upload.total}…</> : <>Uploaded {Math.max(0, upload.total - upload.errors.length)} / {upload.total}</>}
+            {formatMbps(upload.bytes, upload.ms) != null && (
+              <span style={{ color: '#999' }}> · {formatMbps(upload.bytes, upload.ms).toFixed(1)} Mbps</span>
+            )}
+          </div>
+          <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', marginTop: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${upload.total ? (upload.done / upload.total) * 100 : 100}%`, background: '#45643C', borderRadius: '99px', transition: 'width 0.3s ease' }} />
+          </div>
+          {upload.errors.map((e, i) => <div key={i} style={{ fontSize: '12px', color: '#93333E', marginTop: '0.4rem' }}>{e}</div>)}
         </div>
       )}
       {err && <Err msg={err} />}

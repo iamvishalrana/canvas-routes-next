@@ -4,6 +4,7 @@ import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/sha
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
+import { formatMbps } from '../../../lib/formatMbps'
 import PhotoSharesTab from './PhotoSharesTab'
 
 const BUCKET = 'gallery-photos'
@@ -232,7 +233,7 @@ export default function PhotosClient() {
     const files = all.filter(f => ALLOWED[f.type])
     const skipped = all.filter(f => !ALLOWED[f.type]).map(f => `${f.name} — unsupported format (use JPEG, PNG, or WebP; iOS converts HEIC automatically when picking from Photos)`)
     if (!all.length) return
-    setUpload({ label, done: 0, total: files.length, errors: skipped })
+    setUpload({ label, done: 0, total: files.length, errors: skipped, bytes: 0, ms: 0 })
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       try {
@@ -244,10 +245,17 @@ export default function PhotosClient() {
         })
         const urls = await urlRes.json().catch(() => ({}))
         if (!urlRes.ok) throw new Error(urls.error || `HTTP ${urlRes.status}`)
+        // Both files transfer concurrently — measure wall-clock time around
+        // the pair so the speed reflects actual throughput, not the sum of
+        // two sequential durations.
+        const pairStarted = performance.now()
         await Promise.all([
           uploadToSupabaseStorage({ bucket: BUCKET, path: urls.originalPath, token: urls.originalToken, file }),
           uploadToSupabaseStorage({ bucket: BUCKET, path: urls.displayPath, token: urls.displayToken, file: display }),
         ])
+        const pairMs = performance.now() - pairStarted
+        const pairBytes = file.size + display.size
+        setUpload(u => u ? { ...u, bytes: u.bytes + pairBytes, ms: u.ms + pairMs } : u)
         const res = await fetch('/api/admin/gallery', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ category, album, albumDate: albumDate || '', memberId, originalPath: urls.originalPath, displayPath: urls.displayPath }),
@@ -366,6 +374,9 @@ export default function PhotosClient() {
               {upload.done < upload.total
                 ? <>Uploading to <strong>{upload.label}</strong> — {upload.done} / {upload.total}…</>
                 : <>Finished uploading to <strong>{upload.label}</strong> ({Math.max(0, upload.total - upload.errors.length)} / {upload.total} succeeded)</>}
+              {formatMbps(upload.bytes, upload.ms) != null && (
+                <span style={{ color: '#999' }}> · {formatMbps(upload.bytes, upload.ms).toFixed(1)} Mbps</span>
+              )}
             </div>
             {upload.done >= upload.total && <GhostBtn small onClick={() => setUpload(null)}>Dismiss</GhostBtn>}
           </div>
