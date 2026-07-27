@@ -56,7 +56,9 @@ export async function DELETE(request, { params }) {
   const { error: delErr } = await supabase.from('gallery_photos').delete().eq('id', id)
   if (delErr) return Response.json({ error: delErr.message }, { status: 500 })
 
-  const paths = [row.storage_path, row.original_path].filter(Boolean)
+  // storage_path === original_path for new rows (single-upload flow) —
+  // dedupe so we don't ask Supabase to remove the same path twice.
+  const paths = [...new Set([row.storage_path, row.original_path].filter(Boolean))]
   if (paths.length) await supabase.storage.from(BUCKET).remove(paths).catch(err =>
     captureException(err, { context: 'admin-gallery-photo-delete-storage', id }))
 

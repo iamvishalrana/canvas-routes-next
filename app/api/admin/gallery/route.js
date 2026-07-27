@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { captureException } from '../../../../lib/sentry'
+import { buildTransformedUrl } from '../../../../lib/supabaseImageUrl.js'
 
 const BUCKET = 'gallery-photos'
 
@@ -38,10 +39,14 @@ export async function GET() {
   return Response.json(enriched)
 }
 
-// Records a photo after the browser has uploaded both files directly to the
-// gallery-photos bucket via signed upload URLs (see ./upload-url) — the
-// full-size original plus a compressed display copy for grids/lightbox.
-const PATH_RE = /^(originals|display)\/[\w-]+\.(jpg|png|webp)$/
+// Records a photo after the browser has uploaded the original directly to
+// the gallery-photos bucket via a signed upload URL (see ./upload-url).
+// photo_url (grids/lightbox) is now a Supabase image-transform URL derived
+// from the same original, not a separately-uploaded compressed copy —
+// storage_path is set equal to original_path for new rows purely so old code
+// paths that still read storage_path (e.g. delete handlers) keep working.
+const PATH_RE = /^originals\/[\w-]+\.(jpg|png|webp)$/
+const DISPLAY_WIDTH = 1600
 
 export async function POST(request) {
   const adminUser = await requireAdmin()
@@ -54,7 +59,7 @@ export async function POST(request) {
   const caption = (body.caption || '').toString().trim()
   const memberId = (body.memberId || '').toString().trim()
   const tagMemberIds = Array.isArray(body.tagMemberIds) ? [...new Set(body.tagMemberIds.filter(Boolean))] : []
-  const { displayPath, originalPath } = body
+  const { originalPath } = body
 
   if (category === 'event') {
     if (!album) return Response.json({ error: 'Event name is required.' }, { status: 400 })
@@ -63,24 +68,21 @@ export async function POST(request) {
   } else {
     if (!memberId) return Response.json({ error: 'A member must be selected.' }, { status: 400 })
   }
-  if (!PATH_RE.test(displayPath || '') || !PATH_RE.test(originalPath || '')) {
-    return Response.json({ error: 'Invalid storage paths.' }, { status: 400 })
+  if (!PATH_RE.test(originalPath || '')) {
+    return Response.json({ error: 'Invalid storage path.' }, { status: 400 })
   }
 
   const supabase = createAdminClient()
 
-  // Both files must actually exist — a record pointing at a failed upload
+  // The file must actually exist — a record pointing at a failed upload
   // would render as a broken tile for every member
-  const [origInfo, dispInfo] = await Promise.all([
-    supabase.storage.from(BUCKET).exists(originalPath),
-    supabase.storage.from(BUCKET).exists(displayPath),
-  ])
-  if (!origInfo.data || !dispInfo.data) {
+  const { data: exists } = await supabase.storage.from(BUCKET).exists(originalPath)
+  if (!exists) {
     return Response.json({ error: 'Upload incomplete — please retry this photo.' }, { status: 400 })
   }
 
-  const { data: { publicUrl: displayUrl } } = supabase.storage.from(BUCKET).getPublicUrl(displayPath)
   const { data: { publicUrl: originalUrl } } = supabase.storage.from(BUCKET).getPublicUrl(originalPath)
+  const displayUrl = buildTransformedUrl(originalUrl, { width: DISPLAY_WIDTH })
 
   const { data: row, error: insertErr } = await supabase.from('gallery_photos')
     .insert({
@@ -90,7 +92,7 @@ export async function POST(request) {
       member_id: category === 'personal' ? memberId : null,
       caption: caption.slice(0, 300) || null,
       photo_url: displayUrl,
-      storage_path: displayPath,
+      storage_path: originalPath,
       original_path: originalPath,
       original_url: originalUrl,
     })
@@ -153,7 +155,9 @@ export async function DELETE(request) {
   const { error: delErr } = await supabase.from('gallery_photos').delete().eq('category', 'event').eq('album', album.trim())
   if (delErr) return Response.json({ error: delErr.message }, { status: 500 })
 
-  const paths = (rows || []).flatMap(r => [r.storage_path, r.original_path]).filter(Boolean)
+  // storage_path === original_path for new rows (single-upload flow) —
+  // dedupe so we don't ask Supabase to remove the same path twice.
+  const paths = [...new Set((rows || []).flatMap(r => [r.storage_path, r.original_path]).filter(Boolean))]
   if (paths.length) await supabase.storage.from(BUCKET).remove(paths).catch(err =>
     captureException(err, { context: 'admin-gallery-album-delete-storage', album }))
 
