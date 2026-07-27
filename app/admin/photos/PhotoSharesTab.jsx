@@ -5,6 +5,7 @@ import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
 import { formatMbps } from '../../../lib/formatMbps'
+import AdminPhotoLightbox from '../_components/AdminPhotoLightbox'
 
 const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
 const EMPTY_FORM = { title: '', recipientName: '', recipientEmail: '' }
@@ -92,6 +93,7 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [err, setErr] = useState(null)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -187,7 +189,14 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
       <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <input readOnly value={link} onFocus={e => e.target.select()}
           style={{ ...inp, flex: '1 1 260px', fontSize: '12px', color: '#666' }} />
-        <GhostBtn small onClick={copyLink}>{copied ? 'Copied ✓' : 'Copy link'}</GhostBtn>
+        <button type="button" onClick={copyLink} title={copied ? 'Copied!' : 'Copy link'} aria-label="Copy link"
+          style={{ width: '34px', height: '34px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: `0.5px solid ${copied ? '#3B6B2F' : 'rgba(0,0,0,0.2)'}`, borderRadius: '8px', cursor: 'pointer', color: copied ? '#3B6B2F' : '#555', transition: 'border-color 0.15s, color 0.15s' }}>
+          {copied ? (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+          )}
+        </button>
         <GhostBtn small onClick={handleRenew}>Renew 30 days</GhostBtn>
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFiles} />
         <PrimaryBtn onClick={() => fileRef.current?.click()} disabled={!!upload}>+ Add Photos</PrimaryBtn>
@@ -227,19 +236,22 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
         <div style={{ fontSize: '12px', color: '#bbb' }}>No photos yet — click "+ Add Photos" to upload.</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
-          {photos.map(photo => (
-            <div key={photo.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1', background: 'rgba(0,0,0,0.04)' }}>
+          {photos.map((photo, i) => (
+            <button key={photo.id} type="button" onClick={() => setLightboxIndex(i)}
+              style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1', background: 'rgba(0,0,0,0.04)', border: 'none', padding: 0, cursor: 'pointer', display: 'block' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photo.url} alt="" onError={onImgError(photo.originalUrl)}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              <button type="button" onClick={() => handleDeletePhoto(photo.id)} aria-label="Delete photo"
+              <span onClick={e => { e.stopPropagation(); handleDeletePhoto(photo.id) }} role="button" aria-label="Delete photo"
                 style={{ position: 'absolute', top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '99px', border: 'none', cursor: 'pointer', background: 'rgba(15,30,20,0.65)', color: '#fff', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
                 ×
-              </button>
-            </div>
+              </span>
+            </button>
           ))}
         </div>
       )}
+
+      <AdminPhotoLightbox photos={photos} openIndex={lightboxIndex} onNavigate={setLightboxIndex} onClose={() => setLightboxIndex(null)} onDelete={id => { handleDeletePhoto(id) }} />
     </div>
   )
 }

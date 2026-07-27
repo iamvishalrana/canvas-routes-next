@@ -5,6 +5,7 @@ import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
 import { formatMbps } from '../../../lib/formatMbps'
+import AdminPhotoLightbox from '../_components/AdminPhotoLightbox'
 import PhotoSharesTab from './PhotoSharesTab'
 
 const BUCKET = 'gallery-photos'
@@ -127,17 +128,18 @@ function MemberSearchSelect({ members, onSelect, placeholder }) {
   )
 }
 
-function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDeletePhoto, onSaved }) {
+function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDeletePhoto, onSaved, onImageClick }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-      <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1', background: 'rgba(0,0,0,0.04)' }}>
+      <button type="button" onClick={onImageClick}
+        style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1', background: 'rgba(0,0,0,0.04)', border: 'none', padding: 0, cursor: 'pointer', display: 'block', width: '100%' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photo.photo_url} alt={photo.caption || photo.album || ''} loading="lazy"
           onError={onImgError(photo.original_url)}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        <button type="button"
-          onClick={() => armedPhoto === photo.id ? handleDeletePhoto(photo) : armDelete(photo.id)}
-          aria-label={armedPhoto === photo.id ? 'Confirm delete' : 'Delete photo'}
+        <span
+          onClick={e => { e.stopPropagation(); armedPhoto === photo.id ? handleDeletePhoto(photo) : armDelete(photo.id) }}
+          role="button" aria-label={armedPhoto === photo.id ? 'Confirm delete' : 'Delete photo'}
           style={{
             position: 'absolute', top: '6px', right: '6px', width: armedPhoto === photo.id ? 'auto' : '26px', height: '26px',
             padding: armedPhoto === photo.id ? '0 10px' : 0,
@@ -149,8 +151,8 @@ function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDele
             display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
           }}>
           {armedPhoto === photo.id ? 'Delete?' : '×'}
-        </button>
-      </div>
+        </span>
+      </button>
       <CaptionInput photo={photo} onSaved={onSaved} />
       {showTags && <TagPicker photo={photo} members={members} onSaved={onSaved} />}
     </div>
@@ -171,6 +173,10 @@ export default function PhotosClient() {
   const [deleteAlbum, setDeleteAlbum] = useState(null)
   const [armedPhoto, setArmedPhoto] = useState(null)
   const [personalMember, setPersonalMember] = useState(null)
+  // { kind: 'event', key: albumName } | { kind: 'personal', key: memberId }, plus index —
+  // stores a lookup key rather than a snapshot of the photos array so a
+  // delete from inside the lightbox stays in sync with the live list.
+  const [lightbox, setLightbox] = useState(null)
   const newFilesRef = useRef(null)
   const addFilesRef = useRef(null)
   const addTargetRef = useRef(null)
@@ -214,6 +220,13 @@ export default function PhotosClient() {
     }
     return [...map.values()].sort((a, b) => (a.member?.name || '').localeCompare(b.member?.name || ''))
   }, [photos])
+
+  // Looked up live from `photos` (via albums/personalGroups) rather than a
+  // snapshot, so deleting a photo from inside the lightbox stays in sync.
+  const lightboxGroup = !lightbox ? []
+    : lightbox.kind === 'event' ? (albums.find(a => a.name === lightbox.key)?.photos || [])
+    : photos.filter(p => p.category === 'personal' && p.member_id === lightbox.key)
+  const lightboxPhotos = lightboxGroup.map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption }))
 
   // Uploads go browser → Supabase Storage directly via a signed URL (full-size
   // originals exceed the serverless request-body limit), then the row is
@@ -474,9 +487,10 @@ export default function PhotosClient() {
                   )}
 
                   <div className="ph-grid" style={{ padding: '1.25rem' }}>
-                    {album.photos.map(photo => (
+                    {album.photos.map((photo, i) => (
                       <PhotoTile key={photo.id} photo={photo} members={members} showTags
-                        armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto} />
+                        armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
+                        onImageClick={() => setLightbox({ kind: 'event', key: album.name, index: i })} />
                     ))}
                   </div>
                 </div>
@@ -518,9 +532,10 @@ export default function PhotosClient() {
                   <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#bbb', fontSize: '13px', padding: '1.5rem 0' }}>
                     No photos yet — click Add Photos to upload.
                   </div>
-                ) : photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id).map(photo => (
+                ) : photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id).map((photo, i) => (
                   <PhotoTile key={photo.id} photo={photo} members={members}
-                    armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto} />
+                    armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
+                    onImageClick={() => setLightbox({ kind: 'personal', key: personalMember.id, index: i })} />
                 ))}
               </div>
             </div>
@@ -549,6 +564,11 @@ export default function PhotosClient() {
           )}
         </>
       )}
+
+      <AdminPhotoLightbox photos={lightboxPhotos} openIndex={lightbox?.index ?? null}
+        onNavigate={i => setLightbox(l => l ? { ...l, index: i } : l)}
+        onClose={() => setLightbox(null)}
+        onDelete={id => handleDeletePhoto({ id })} />
     </div>
   )
 }
