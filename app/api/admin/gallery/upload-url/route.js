@@ -20,11 +20,14 @@ export async function POST(request) {
   }
 
   const supabase = createAdminClient()
-  await supabase.storage.createBucket(BUCKET, {
-    public: true,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    fileSizeLimit: '15MB',
-  }).catch(() => {})
+  const bucketOpts = { public: true, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'], fileSizeLimit: '40MB' }
+  // createBucket() silently no-ops once the bucket already exists — a limit
+  // raised here in code would never actually reach it without this, which is
+  // exactly what happened when this was 15MB: real camera JPEGs (DSLR/
+  // mirrorless originals routinely run 20-40MB) got rejected by the client's
+  // matching check with no way for a code change alone to fix it server-side.
+  await supabase.storage.createBucket(BUCKET, bucketOpts).catch(() =>
+    supabase.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
 
   const base = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
   const originalPath = `originals/${base}.${origExt}`

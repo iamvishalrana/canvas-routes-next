@@ -489,7 +489,7 @@ export default function EventsClient() {
   async function uploadPhoto(eventId, file) {
     setUploadingPhoto(eventId); setPhotoError(p => ({ ...p, [eventId]: null }))
     try {
-      if (file.size > 10 * 1024 * 1024) { setPhotoError(p => ({ ...p, [eventId]: 'File must be under 10 MB.' })); return }
+      if (file.size > 20 * 1024 * 1024) { setPhotoError(p => ({ ...p, [eventId]: 'File must be under 20 MB.' })); return }
       const urlRes = await fetch(`/api/admin/events/${eventId}/photo/upload-url`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileType: file.type }),

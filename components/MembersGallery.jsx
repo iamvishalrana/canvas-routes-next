@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import FadeUp from './FadeUp'
+import { onImgError } from '../lib/imgFallback'
 
 function formatDate(d) {
   if (!d) return null
@@ -111,7 +112,7 @@ export default function MembersGallery({ albums }) {
                     onClick={() => setLightbox({ albumIdx: ai, photoIdx: pi })}
                     aria-label={photo.caption || `Photo ${pi + 1} — ${album.name}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo.url} alt={photo.caption || album.name} loading="lazy" />
+                    <img src={photo.url} alt={photo.caption || album.name} loading="lazy" onError={onImgError(photo.originalUrl)} />
                   </button>
                 ))}
               </div>
@@ -160,6 +161,7 @@ export default function MembersGallery({ albums }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={currentPhoto.url} alt={currentPhoto.caption || current.name}
             onClick={e => e.stopPropagation()}
+            onError={onImgError(currentPhoto.originalUrl)}
             style={{ maxWidth: 'min(92vw, 1100px)', maxHeight: '76vh', objectFit: 'contain', display: 'block' }} />
 
           <div onClick={e => e.stopPropagation()} style={{ textAlign: 'center', marginTop: '1.1rem', maxWidth: '85vw', fontFamily: 'var(--font-inter), sans-serif' }}>

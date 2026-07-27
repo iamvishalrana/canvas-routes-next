@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
+import { onImgError } from '../../../lib/imgFallback'
 
 const BUCKET = 'gallery-photos'
 const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
@@ -129,6 +130,7 @@ function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDele
       <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1', background: 'rgba(0,0,0,0.04)' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photo.photo_url} alt={photo.caption || photo.album || ''} loading="lazy"
+          onError={onImgError(photo.original_url)}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         <button type="button"
           onClick={() => armedPhoto === photo.id ? handleDeletePhoto(photo) : armDelete(photo.id)}
@@ -225,7 +227,7 @@ export default function PhotosClient() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       try {
-        if (file.size > 15 * 1024 * 1024) throw new Error('over the 15 MB per-file limit')
+        if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
         const urlRes = await fetch('/api/admin/gallery/upload-url', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ origExt: ALLOWED[file.type] }),

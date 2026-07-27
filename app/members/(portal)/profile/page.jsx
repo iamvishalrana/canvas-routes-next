@@ -247,7 +247,7 @@ export default function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (avatarInputRef.current) avatarInputRef.current.value = ''
-    if (file.size > 8 * 1024 * 1024) { setAvatarError('File must be under 8 MB.'); return }
+    if (file.size > 15 * 1024 * 1024) { setAvatarError('File must be under 15 MB.'); return }
     setAvatarUploading(true); setAvatarError(null)
     try {
       const urlRes = await fetch('/api/member/photo/upload-url', {
@@ -281,7 +281,7 @@ export default function ProfilePage() {
     if (carFileInputRef.current) carFileInputRef.current.value = ''
     const idx = uploadTargetIdx
     if (!file || idx === null) return
-    if (file.size > 8 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: 'File must be under 8 MB.' })); return }
+    if (file.size > 15 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: 'File must be under 15 MB.' })); return }
     setPhotoUploadingIdx(idx); setPhotoErrors(p => ({ ...p, [idx]: null }))
     try {
       const urlRes = await fetch('/api/member/photo/upload-url', {

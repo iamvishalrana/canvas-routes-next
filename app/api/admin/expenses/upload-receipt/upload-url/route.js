@@ -28,11 +28,12 @@ export async function POST(request) {
   }
 
   const admin = createAdminClient()
-  await admin.storage.createBucket(BUCKET, {
-    public: true,
-    allowedMimeTypes: ALLOWED_TYPES,
-    fileSizeLimit: '10MB',
-  }).catch(() => {})
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_TYPES, fileSizeLimit: '10MB' }
+  // createBucket() silently no-ops once the bucket already exists, so a
+  // limit change here would never reach it without falling back to
+  // updateBucket() for the already-exists case.
+  await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
+    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
 
   const folder = sanitizeFolderPath(folderPath)
   const ext = (fileName || '').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'

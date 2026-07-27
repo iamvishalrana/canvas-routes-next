@@ -40,11 +40,12 @@ export async function POST(request, { params }) {
     .select('car_photo').eq('event_id', eventId).eq('email', email).maybeSingle()
   if (existing?.car_photo) return Response.json({ error: 'A photo has already been submitted.' }, { status: 400 })
 
-  await admin.storage.createBucket(BUCKET, {
-    public: true,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    fileSizeLimit: '8MB',
-  }).catch(() => {})
+  const bucketOpts = { public: true, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'], fileSizeLimit: '15MB' }
+  // createBucket() silently no-ops once the bucket already exists, so a
+  // limit change here would never reach it without falling back to
+  // updateBucket() for the already-exists case.
+  await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
+    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
 
   const path = `${eventId}-${email.replace(/[^a-z0-9]/gi, '_')}-${Date.now()}.${ext}`
   const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path)
