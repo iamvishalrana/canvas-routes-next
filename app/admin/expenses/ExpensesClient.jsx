@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
+import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 
 const CATEGORIES = EXPENSE_CATEGORIES
 
@@ -80,6 +81,27 @@ function SelectChevron() {
 }
 
 const COL = '96px 1fr 1fr 88px 88px 88px 78px'
+
+// Shared by all three upload sites below: browser -> Supabase Storage
+// directly via a signed URL (receipts include scanned PDFs, which run
+// larger than a request body limit should have to accommodate), then a
+// confirm step verifies the file landed and hands back its public URL.
+async function uploadReceipt(file, folderPath) {
+  const urlRes = await fetch('/api/admin/expenses/upload-receipt/upload-url', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderPath, fileName: file.name, fileType: file.type }),
+  })
+  const urls = await urlRes.json().catch(() => ({}))
+  if (!urlRes.ok) throw new Error(urls.error || 'Upload failed.')
+  await uploadToSupabaseStorage({ bucket: 'receipts', path: urls.path, token: urls.token, file })
+  const res = await fetch('/api/admin/expenses/upload-receipt', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: urls.path }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || 'Upload failed.')
+  return data.url
+}
 
 export default function ExpensesClient() {
   const [expenses, setExpenses]         = useState([])
@@ -392,15 +414,10 @@ export default function ExpensesClient() {
     setUploadingFile(true); setFormErr(null)
     try {
       const uploadPath = slugify(folderEvent) + (form.expense_date ? `/${form.expense_date}` : '')
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('folder_path', uploadPath)
-      const res = await fetch('/api/admin/expenses/upload-receipt', { method: 'POST', body: fd })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setFormErr(data.error || 'Upload failed.'); return }
-      setForm(p => ({ ...p, receipt_url: data.url }))
+      const url = await uploadReceipt(file, uploadPath)
+      setForm(p => ({ ...p, receipt_url: url }))
       setReceiptName(file.name)
-    } catch { setFormErr('Upload failed.') }
+    } catch (err) { setFormErr(err.message || 'Upload failed.') }
     finally { setUploadingFile(false) }
   }
 
@@ -413,14 +430,9 @@ export default function ExpensesClient() {
     setEditUploading(true); setEditErr(null)
     try {
       const uploadPath = slugify(editForm.event_name || 'General') + (editForm.expense_date ? `/${editForm.expense_date}` : '')
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('folder_path', uploadPath)
-      const res = await fetch('/api/admin/expenses/upload-receipt', { method: 'POST', body: fd })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setEditErr(data.error || 'Upload failed.'); return }
-      setEditForm(p => ({ ...p, receipt_url: data.url }))
-    } catch { setEditErr('Upload failed.') }
+      const url = await uploadReceipt(file, uploadPath)
+      setEditForm(p => ({ ...p, receipt_url: url }))
+    } catch (err) { setEditErr(err.message || 'Upload failed.') }
     finally { setEditUploading(false); if (editFileRef.current) editFileRef.current.value = '' }
   }
 
@@ -456,12 +468,8 @@ export default function ExpensesClient() {
       // Also store the scanned file so it's attached to the expense in one step
       try {
         const path = slugify(folderEvent) + ((data.date || form.expense_date) ? `/${data.date || form.expense_date}` : '')
-        const ufd = new FormData()
-        ufd.append('file', file)
-        ufd.append('folder_path', path)
-        const ures = await fetch('/api/admin/expenses/upload-receipt', { method: 'POST', body: ufd })
-        const udata = await ures.json().catch(() => ({}))
-        if (ures.ok && udata.url) { setForm(p => ({ ...p, receipt_url: udata.url })); setReceiptName(file.name) }
+        const url = await uploadReceipt(file, path)
+        setForm(p => ({ ...p, receipt_url: url })); setReceiptName(file.name)
       } catch {}
     } catch { setFormErr('Scan failed.') }
     finally { setScanning(false); if (scanRef.current) scanRef.current.value = '' }
