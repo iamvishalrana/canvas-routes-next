@@ -19,10 +19,10 @@ function MembershipCta() {
         Enjoyed these photos?
       </h2>
       <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.65)', lineHeight: 1.8, maxWidth: '480px', margin: '0 auto 1.75rem' }}>
-        Members get their own private photo folder, priority spots on every road trip, and first access to meets
-        and drives across Montreal. Come join us on the next one.
+        Members get their own private photo folder, priority spots on every drive, exclusive member discounts,
+        and first access to all our meets and road trips. Come join us on the next one.
       </p>
-      <Link href="/membership" style={{
+      <Link href="/membership" target="_blank" rel="noopener noreferrer" style={{
         display: 'inline-block', padding: '0.85rem 2rem', background: '#F5F1EC', color: '#0F1E14',
         fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none',
         fontFamily: 'var(--font-inter),sans-serif', fontWeight: '600',
@@ -62,7 +62,7 @@ export default async function GallerySharePage({ params }) {
   const admin = createAdminClient()
 
   const { data: share } = UUID_RE.test(token)
-    ? await admin.from('photo_shares').select('title, expires_at').eq('token', token).maybeSingle()
+    ? await admin.from('photo_shares').select('title, expires_at, recipient_name').eq('token', token).maybeSingle()
     : { data: null }
 
   if (!share) {
@@ -98,6 +98,9 @@ export default async function GallerySharePage({ params }) {
         <div style={{ fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.85rem' }}>
           Canvas Routes
         </div>
+        {share.recipient_name && (
+          <div style={{ fontSize: '14px', color: '#888', marginBottom: '0.4rem' }}>Hi {share.recipient_name},</div>
+        )}
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2rem, 5vw, 2.8rem)', fontWeight: '300', color: '#1a1a1a', margin: '0 0 0.75rem', lineHeight: 1.1 }}>
           {share.title}
         </h1>
