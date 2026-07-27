@@ -3,30 +3,9 @@ import { useState, useRef } from 'react'
 import SectionCard from './WtetSectionCard'
 import { CHECKIN_T } from '../lib/genericCheckinContent'
 import { useLanguage } from '../lib/i18n/LanguageContext'
+import { uploadToSupabaseStorage } from '../lib/uploadToSupabaseStorage'
 
-// Downscales + re-encodes before upload — same approach as the admin photo
-// gallery (app/admin/photos/PhotosClient.jsx) since Vercel's function body
-// limit makes this load-bearing for anything shot on a modern phone camera.
-// Falls back to the original file on any failure.
-async function compressImage(file) {
-  try {
-    let bitmap
-    try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }) }
-    catch { bitmap = await createImageBitmap(file) }
-    const MAX = 2000
-    const scale = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height))
-    if (scale === 1 && file.size < 2.5 * 1024 * 1024) { bitmap.close?.(); return file }
-    const w = Math.round(bitmap.width * scale)
-    const h = Math.round(bitmap.height * scale)
-    const canvas = document.createElement('canvas')
-    canvas.width = w; canvas.height = h
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h)
-    bitmap.close?.()
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85))
-    if (!blob || blob.size >= file.size) return file
-    return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' })
-  } catch { return file }
-}
+const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
 
 // identifier: { email, eventId }
 export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }) {
@@ -50,13 +29,21 @@ export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }
     e.preventDefault()
     setError(null)
     if (!file) { setError(t.carPhotoErrMissing); return }
+    if (!ALLOWED[file.type]) { setError(t.genericError); return }
+    if (file.size > 8 * 1024 * 1024) { setError(t.genericError); return }
     setSubmitting(true)
     try {
-      const compressed = await compressImage(file)
-      const body = new FormData()
-      body.append('email', identifier.email)
-      body.append('photo', compressed)
-      const res = await fetch(`/api/checkin/${identifier.eventId}/car-photo`, { method: 'POST', body })
+      const urlRes = await fetch(`/api/checkin/${identifier.eventId}/car-photo/upload-url`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: identifier.email, fileType: file.type }),
+      })
+      const urls = await urlRes.json().catch(() => ({}))
+      if (!urlRes.ok) { setError(urls.error || t.genericError); return }
+      await uploadToSupabaseStorage({ bucket: 'route-car-photos', path: urls.path, token: urls.token, file })
+      const res = await fetch(`/api/checkin/${identifier.eventId}/car-photo`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: identifier.email, path: urls.path }),
+      })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setError(d.error || t.genericError); return }
       onSaved(d.carPhoto)

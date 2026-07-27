@@ -4,6 +4,8 @@ import { useRealtimeSync } from './useRealtimeSync'
 import GenericWaiverViewerModal from './GenericWaiverViewerModal'
 import { CopyBtn } from './shared'
 import { formatCarLabel } from '../../../lib/carLabel'
+import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
+import { buildTransformedUrl } from '../../../lib/supabaseImageUrl'
 
 const SECTION_LABEL_MAP = { trip_details: 'Trip Details', waiver: 'Waiver', lunch: 'Lunch', car_photo: 'Car Photo' }
 
@@ -127,10 +129,17 @@ export default function CheckinStatusClient({ eventId }) {
     if (!email || !file) return
     setPhotoBusy(email); setActionError(null)
     try {
-      const formData = new FormData()
-      formData.append('email', email)
-      formData.append('photo', file)
-      const res = await fetch(`/api/admin/checkin/${eventId}/car-photo`, { method: 'POST', body: formData })
+      const urlRes = await fetch(`/api/admin/checkin/${eventId}/car-photo/upload-url`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, fileType: file.type }),
+      })
+      const urls = await urlRes.json().catch(() => ({}))
+      if (!urlRes.ok) { setActionError(urls.error || 'Failed to upload photo.'); return }
+      await uploadToSupabaseStorage({ bucket: 'route-car-photos', path: urls.path, token: urls.token, file })
+      const res = await fetch(`/api/admin/checkin/${eventId}/car-photo`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, path: urls.path }),
+      })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setActionError(d.error || 'Failed to upload photo.'); return }
       load()
@@ -553,7 +562,7 @@ export default function CheckinStatusClient({ eventId }) {
                           <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                             <a href={p.car_photo.url} target="_blank" rel="noreferrer">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={p.car_photo.url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '0.5px solid rgba(0,0,0,0.1)', display: 'block', marginBottom: '0.5rem' }} />
+                              <img src={buildTransformedUrl(p.car_photo.url, { width: 80, height: 80 })} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '0.5px solid rgba(0,0,0,0.1)', display: 'block', marginBottom: '0.5rem' }} />
                             </a>
                             {p.car_photo.submitted_at && (
                               <span style={{ color: '#aaa' }}>Submitted {new Date(p.car_photo.submitted_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>
@@ -570,7 +579,7 @@ export default function CheckinStatusClient({ eventId }) {
                           <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                             <a href={p.profile_photo_url} target="_blank" rel="noreferrer">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={p.profile_photo_url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '0.5px solid rgba(0,0,0,0.1)', display: 'block', marginBottom: '0.5rem' }} />
+                              <img src={buildTransformedUrl(p.profile_photo_url, { width: 80, height: 80 })} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '0.5px solid rgba(0,0,0,0.1)', display: 'block', marginBottom: '0.5rem' }} />
                             </a>
                             <span style={{ color: '#aaa' }}>Using their member profile photo — no event-specific submission</span>
                             <br />
