@@ -1,8 +1,9 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
+import { ALLOWED_EXTS, ALLOWED_MIME_TYPES } from '../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'gallery-photos'
-const EXTS = ['jpg', 'png', 'webp']
+const EXTS = ALLOWED_EXTS
 
 // Issues one-time signed upload URLs so the admin browser can push both the
 // original and a pre-compressed display copy straight to Supabase Storage —
@@ -25,7 +26,7 @@ export async function POST(request) {
   }
 
   const supabase = createAdminClient()
-  const bucketOpts = { public: true, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'], fileSizeLimit: '40MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
   // createBucket() silently no-ops once the bucket already exists — a limit
   // raised here in code would never actually reach it without falling back
   // to updateBucket() for the already-exists case.

@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../lib/sentry'
+import { ALLOWED_EXTS } from '../../../../../../lib/allowedImageTypes'
 
 // Extract the storage path from a Supabase public URL
 function storagePathFromUrl(url) {
@@ -13,7 +14,7 @@ function storagePathFromUrl(url) {
   } catch { return null }
 }
 
-const PATH_RE = /^[\w-]+-\d+\.(jpg|png|webp)$/
+const PATH_RE = new RegExp(`^[\\w-]+-\\d+\\.(${ALLOWED_EXTS.join('|')})$`)
 
 // Records the event photo after the browser has uploaded it directly to the
 // event-photos bucket via a signed upload URL (see ./upload-url).

@@ -6,6 +6,7 @@ import CountUp from '../../../../components/CountUp'
 import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 import { formatForDisplay } from '../../../../lib/memberNumber.js'
 import { uploadToSupabaseStorage } from '../../../../lib/uploadToSupabaseStorage'
+import { convertHeicIfNeeded } from '../../../../lib/convertHeicIfNeeded'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -244,12 +245,13 @@ export default function ProfilePage() {
   }
 
   async function handleAvatarUpload(e) {
-    const file = e.target.files?.[0]
+    let file = e.target.files?.[0]
     if (!file) return
     if (avatarInputRef.current) avatarInputRef.current.value = ''
-    if (file.size > 15 * 1024 * 1024) { setAvatarError('File must be under 15 MB.'); return }
     setAvatarUploading(true); setAvatarError(null)
     try {
+      file = await convertHeicIfNeeded(file)
+      if (file.size > 15 * 1024 * 1024) { setAvatarError('File must be under 15 MB.'); return }
       const urlRes = await fetch('/api/member/photo/upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'avatar', fileType: file.type }),
@@ -277,13 +279,14 @@ export default function ProfilePage() {
   }
 
   async function handleCarFileSelected(e) {
-    const file = e.target.files?.[0]
+    let file = e.target.files?.[0]
     if (carFileInputRef.current) carFileInputRef.current.value = ''
     const idx = uploadTargetIdx
     if (!file || idx === null) return
-    if (file.size > 15 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: 'File must be under 15 MB.' })); return }
     setPhotoUploadingIdx(idx); setPhotoErrors(p => ({ ...p, [idx]: null }))
     try {
+      file = await convertHeicIfNeeded(file)
+      if (file.size > 15 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: 'File must be under 15 MB.' })); return }
       const urlRes = await fetch('/api/member/photo/upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'car', carIndex: idx, fileType: file.type }),

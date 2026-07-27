@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail'
 import { captureException } from '../../../../../../lib/sentry'
+import { ALLOWED_EXTS } from '../../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'route-car-photos'
 
@@ -10,7 +11,7 @@ const BUCKET = 'route-car-photos'
 // won't) self-submit one, e.g. a non-member or someone who joined before the
 // car-photo check-in step existed. Unlike the public route, this can
 // overwrite an existing photo and doesn't require checkin_sections to be on.
-const PATH_RE = /^[\w-]+\.(jpg|png|webp)$/
+const PATH_RE = new RegExp(`^[\\w-]+\\.(${ALLOWED_EXTS.join('|')})$`)
 
 // Records the car photo after the admin browser has uploaded it directly to
 // the route-car-photos bucket via a signed upload URL (see ./upload-url).

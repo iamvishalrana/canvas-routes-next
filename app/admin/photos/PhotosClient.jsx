@@ -4,12 +4,14 @@ import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/sha
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
+import { convertHeicIfNeeded, isHeicFile } from '../../../lib/convertHeicIfNeeded'
 import { formatMbps } from '../../../lib/formatMbps'
+import { MIME_TO_EXT } from '../../../lib/allowedImageTypes'
 import AdminPhotoLightbox from '../_components/AdminPhotoLightbox'
 import PhotoSharesTab from './PhotoSharesTab'
 
 const BUCKET = 'gallery-photos'
-const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+const ALLOWED = MIME_TO_EXT
 
 function formatDate(d) {
   if (!d) return null
@@ -228,28 +230,26 @@ export default function PhotosClient() {
     : photos.filter(p => p.category === 'personal' && p.member_id === lightbox.key)
   const lightboxPhotos = lightboxGroup.map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption }))
 
-  // Uploads go browser → Supabase Storage directly via a signed URL (full-size
-  // originals exceed the serverless request-body limit), then the row is
-  // recorded through the API once the file is confirmed in the bucket.
-  // Only the original is uploaded — grid/lightbox display sizes are rendered
-  // on demand via Supabase's image transform endpoint (lib/supabaseImageUrl.js),
-  // so there's no client-side compression step to guess a "good enough" size.
   // Uploads go browser → Supabase Storage directly via signed URLs (full-size
   // originals exceed the serverless request-body limit). Two files are sent
   // per photo: the untouched original (full-resolution download) and a
   // client-compressed display copy (grid/lightbox) — Supabase's on-the-fly
   // image transform endpoint proved unreliable for large camera originals
   // (broken-image icon, or slow enough to look broken), so the display copy
-  // is a real small file rather than a live-transformed URL.
+  // is a real small file rather than a live-transformed URL. HEIC/HEIF files
+  // (iOS default when not auto-converted) are converted to JPEG first — no
+  // browser but Safari can display a raw .heic file.
   async function uploadFiles({ category, album, albumDate, memberId, label }, fileList) {
     const all = Array.from(fileList || [])
-    const files = all.filter(f => ALLOWED[f.type])
-    const skipped = all.filter(f => !ALLOWED[f.type]).map(f => `${f.name} — unsupported format (use JPEG, PNG, or WebP; iOS converts HEIC automatically when picking from Photos)`)
+    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
+    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — unsupported format`)
     if (!all.length) return
     setUpload({ label, done: 0, total: files.length, errors: skipped, bytes: 0, ms: 0 })
     for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+      let file = files[i]
       try {
+        file = await convertHeicIfNeeded(file)
+        if (!ALLOWED[file.type]) throw new Error('could not be converted from HEIC — try exporting as JPEG first')
         if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
         const display = await compressImageClient(file)
         const urlRes = await fetch('/api/admin/gallery/upload-url', {

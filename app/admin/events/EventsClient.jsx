@@ -9,6 +9,7 @@ import {
 } from '../_components/shared'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
+import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
 import WtetClient from '../wtet/WtetClient'
@@ -229,7 +230,7 @@ const FIELD_INFO = {
   member_price:         'Price in CAD. Enter 0.00 for free events. Paid events trigger a Stripe checkout. Leave blank if this event uses an external registration URL instead.',
   capacity:             'Maximum confirmed spots. Enforced atomically at the database level to prevent overbooking. Leave blank for unlimited.',
   priority_window:      'Inner Circle members get exclusive early access until this date and time. After the window closes, all members can register. Leave blank to open to everyone at the same time.',
-  photo:                'Shown in the popup when a visitor clicks the event tile on the homepage. Landscape images work best — at least 800 px wide. JPEG, PNG, or WebP.',
+  photo:                'Shown in the popup when a visitor clicks the event tile on the homepage. Landscape images work best — at least 800 px wide. Any common image format, including HEIC.',
 }
 
 function InfoTip({ field }) {
@@ -489,6 +490,7 @@ export default function EventsClient() {
   async function uploadPhoto(eventId, file) {
     setUploadingPhoto(eventId); setPhotoError(p => ({ ...p, [eventId]: null }))
     try {
+      file = await convertHeicIfNeeded(file)
       if (file.size > 20 * 1024 * 1024) { setPhotoError(p => ({ ...p, [eventId]: 'File must be under 20 MB.' })); return }
       const urlRes = await fetch(`/api/admin/events/${eventId}/photo/upload-url`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },

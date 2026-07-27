@@ -1,11 +1,12 @@
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../lib/sentry'
+import { ALLOWED_EXTS } from '../../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'photo-shares'
 
 function pathRegexFor(shareId) {
-  return new RegExp(`^${shareId}/(originals|display)/[\\w-]+\\.(jpg|png|webp)$`)
+  return new RegExp(`^${shareId}/(originals|display)/[\\w-]+\\.(${ALLOWED_EXTS.join('|')})$`)
 }
 
 // Lists the photos already attached to a share — used when the admin reopens

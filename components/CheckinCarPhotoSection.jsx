@@ -4,8 +4,10 @@ import SectionCard from './WtetSectionCard'
 import { CHECKIN_T } from '../lib/genericCheckinContent'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { uploadToSupabaseStorage } from '../lib/uploadToSupabaseStorage'
+import { convertHeicIfNeeded } from '../lib/convertHeicIfNeeded'
+import { MIME_TO_EXT } from '../lib/allowedImageTypes'
 
-const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+const ALLOWED = MIME_TO_EXT
 
 // identifier: { email, eventId }
 export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }) {
@@ -17,12 +19,16 @@ export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
 
-  function pickFile(e) {
+  // Converted here (not just at submit) so the preview itself renders
+  // correctly too — a raw .heic object URL can't be displayed by any
+  // browser but Safari.
+  async function pickFile(e) {
     const f = e.target.files?.[0]
     if (!f) return
     setError(null)
-    setFile(f)
-    setPreview(URL.createObjectURL(f))
+    const converted = await convertHeicIfNeeded(f)
+    setFile(converted)
+    setPreview(URL.createObjectURL(converted))
   }
 
   async function submit(e) {

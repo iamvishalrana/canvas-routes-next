@@ -18,7 +18,7 @@ export async function POST(request) {
   const carIndex = kind === 'car' && body.carIndex !== null && body.carIndex !== undefined && body.carIndex !== ''
     ? parseInt(body.carIndex, 10) : null
   const ext = EXT_BY_MIME[body.fileType]
-  if (!ext) return Response.json({ error: 'File must be a valid image (JPEG, PNG, or WebP).' }, { status: 400 })
+  if (!ext) return Response.json({ error: 'Unsupported image format.' }, { status: 400 })
 
   const admin = createAdminClient()
   const path = memberPhotoPath(user.id, kind, carIndex, ext)

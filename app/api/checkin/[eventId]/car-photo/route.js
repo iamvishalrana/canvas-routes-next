@@ -4,10 +4,11 @@ import { captureException } from '../../../../../lib/sentry'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
 import { maybeSendCheckinCompleteEmail } from '../../../../../lib/maybeSendCheckinCompleteEmail.js'
+import { ALLOWED_EXTS } from '../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'route-car-photos'
 
-const PATH_RE = /^[\w-]+\.(jpg|png|webp)$/
+const PATH_RE = new RegExp(`^[\\w-]+\\.(${ALLOWED_EXTS.join('|')})$`)
 
 // Records the car photo after the browser has uploaded it directly to the
 // route-car-photos bucket via a signed upload URL (see ./upload-url). All

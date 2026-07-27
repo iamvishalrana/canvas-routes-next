@@ -4,10 +4,12 @@ import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/sha
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
+import { convertHeicIfNeeded, isHeicFile } from '../../../lib/convertHeicIfNeeded'
 import { formatMbps } from '../../../lib/formatMbps'
+import { MIME_TO_EXT } from '../../../lib/allowedImageTypes'
 import AdminPhotoLightbox from '../_components/AdminPhotoLightbox'
 
-const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+const ALLOWED = MIME_TO_EXT
 const EMPTY_FORM = { title: '', recipientName: '', recipientEmail: '', folder: '' }
 
 function siteUrl() {
@@ -126,13 +128,15 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
   async function handleFiles(e) {
     const all = Array.from(e.target.files || [])
     if (fileRef.current) fileRef.current.value = ''
-    const files = all.filter(f => ALLOWED[f.type])
-    const skipped = all.filter(f => !ALLOWED[f.type]).map(f => `${f.name} — unsupported format (use JPEG, PNG, or WebP)`)
+    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
+    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — unsupported format`)
     if (!all.length) return
     setUpload({ done: 0, total: files.length, errors: skipped, bytes: 0, ms: 0 })
     for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+      let file = files[i]
       try {
+        file = await convertHeicIfNeeded(file)
+        if (!ALLOWED[file.type]) throw new Error('could not be converted from HEIC — try exporting as JPEG first')
         if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
         const display = await compressImageClient(file)
         const urlRes = await fetch(`/api/admin/photo-shares/${share.id}/upload-url`, {

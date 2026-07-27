@@ -1,8 +1,9 @@
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
+import { MIME_TO_EXT, ALLOWED_MIME_TYPES } from '../../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'photo-shares'
-const EXT_BY_MIME = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+const EXT_BY_MIME = MIME_TO_EXT
 
 // Issues one-time signed upload URLs for both the original and a pre-
 // compressed display copy, same dual-upload pattern as gallery-photos —
@@ -17,14 +18,14 @@ export async function POST(request, { params }) {
   const { fileType, dispFileType } = await request.json().catch(() => ({}))
   const ext = EXT_BY_MIME[fileType]
   const dispExt = EXT_BY_MIME[dispFileType]
-  if (!ext || !dispExt) return Response.json({ error: 'File must be a valid image (JPEG, PNG, or WebP).' }, { status: 400 })
+  if (!ext || !dispExt) return Response.json({ error: 'Unsupported image format.' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: share } = await admin.from('photo_shares').select('id, expires_at').eq('id', id).maybeSingle()
   if (!share) return Response.json({ error: 'Share not found.' }, { status: 404 })
   if (new Date(share.expires_at) <= new Date()) return Response.json({ error: 'This share has already expired.' }, { status: 400 })
 
-  const bucketOpts = { public: true, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'], fileSizeLimit: '40MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
     admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
 

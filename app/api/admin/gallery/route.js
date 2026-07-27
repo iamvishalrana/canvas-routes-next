@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { captureException } from '../../../../lib/sentry'
+import { ALLOWED_EXTS } from '../../../../lib/allowedImageTypes'
 
 const BUCKET = 'gallery-photos'
 
@@ -45,7 +46,7 @@ export async function GET() {
 // the untouched original (full-resolution download). Two real files rather
 // than one original + a live-transformed URL — Supabase's on-the-fly image
 // transform endpoint proved unreliable for large camera originals.
-const PATH_RE = /^(originals|display)\/[\w-]+\.(jpg|png|webp)$/
+const PATH_RE = new RegExp(`^(originals|display)/[\\w-]+\\.(${ALLOWED_EXTS.join('|')})$`)
 
 export async function POST(request) {
   const adminUser = await requireAdmin()

@@ -2,9 +2,10 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../../lib/eventCheckinShared'
+import { MIME_TO_EXT, ALLOWED_MIME_TYPES } from '../../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'route-car-photos'
-const EXT_BY_MIME = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+const EXT_BY_MIME = MIME_TO_EXT
 
 // Issues a one-time signed upload URL for the registrant's browser to push
 // the photo straight to Supabase Storage, bypassing the serverless
@@ -23,7 +24,7 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   const ext = EXT_BY_MIME[body.fileType]
-  if (!ext) return Response.json({ error: 'File must be a valid image (JPEG, PNG, or WebP).' }, { status: 400 })
+  if (!ext) return Response.json({ error: 'Unsupported image format.' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: event } = await admin.from('events')
@@ -40,7 +41,7 @@ export async function POST(request, { params }) {
     .select('car_photo').eq('event_id', eventId).eq('email', email).maybeSingle()
   if (existing?.car_photo) return Response.json({ error: 'A photo has already been submitted.' }, { status: 400 })
 
-  const bucketOpts = { public: true, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'], fileSizeLimit: '15MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '15MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
   // updateBucket() for the already-exists case.

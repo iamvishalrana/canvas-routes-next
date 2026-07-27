@@ -5,6 +5,7 @@ import GenericWaiverViewerModal from './GenericWaiverViewerModal'
 import { CopyBtn } from './shared'
 import { formatCarLabel } from '../../../lib/carLabel'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
+import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
 import { buildTransformedUrl } from '../../../lib/supabaseImageUrl'
 import { onImgError } from '../../../lib/imgFallback'
 
@@ -130,6 +131,7 @@ export default function CheckinStatusClient({ eventId }) {
     if (!email || !file) return
     setPhotoBusy(email); setActionError(null)
     try {
+      file = await convertHeicIfNeeded(file)
       const urlRes = await fetch(`/api/admin/checkin/${eventId}/car-photo/upload-url`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, fileType: file.type }),

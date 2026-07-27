@@ -1,6 +1,7 @@
 import { createClient } from '../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { memberPhotoPath, EXT_BY_MIME } from '../../../../../lib/memberPhotoPath'
+import { ALLOWED_MIME_TYPES } from '../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'member-photos'
 
@@ -18,10 +19,10 @@ export async function POST(request) {
   const carIndex = kind === 'car' && body.carIndex !== null && body.carIndex !== undefined && body.carIndex !== ''
     ? parseInt(body.carIndex, 10) : null
   const ext = EXT_BY_MIME[body.fileType]
-  if (!ext) return Response.json({ error: 'File must be a valid image (JPEG, PNG, or WebP).' }, { status: 400 })
+  if (!ext) return Response.json({ error: 'Unsupported image format.' }, { status: 400 })
 
   const admin = createAdminClient()
-  const bucketOpts = { public: true, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'], fileSizeLimit: '15MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '15MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
   // updateBucket() for the already-exists case.
