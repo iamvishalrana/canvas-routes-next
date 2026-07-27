@@ -21,6 +21,66 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function carLabelOf(c) {
+  return [c.car_year, c.car_make, c.car_model].filter(Boolean).join(' ')
+}
+
+// Debounced search against the existing global admin search endpoint —
+// covers members, applications, and contacts by name/email/phone/car, since
+// most non-members the admin wants to share photos with are already sitting
+// in applications/contacts from a past registration, not typed in blind.
+function ContactSearchSelect({ onSelect }) {
+  const [q, setQ] = useState('')
+  const [results, setResults] = useState([])
+  const [open, setOpen] = useState(false)
+  const debounceRef = useRef(null)
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current)
+    const term = q.trim()
+    if (term.length < 2) { setResults([]); setOpen(false); return }
+    debounceRef.current = setTimeout(() => {
+      fetch(`/api/admin/search?q=${encodeURIComponent(term)}`)
+        .then(r => r.ok ? r.json() : { members: [], applications: [], contacts: [] })
+        .then(data => {
+          const merged = [
+            ...(data.members || []).map(m => ({ key: `m-${m.id}`, name: m.name, email: m.email, car: carLabelOf(m), tag: 'Member' })),
+            ...(data.applications || []).map(a => ({ key: `a-${a.id}`, name: a.name, email: a.email, car: carLabelOf(a), tag: 'Application' })),
+            ...(data.contacts || []).map(c => ({ key: `c-${c.id}`, name: c.applications?.name, email: c.applications?.email, car: carLabelOf(c.applications || {}), tag: 'Contact' })),
+          ].filter(r => r.email)
+          // Same email can surface from more than one table — keep one
+          const seen = new Set()
+          setResults(merged.filter(r => (seen.has(r.email) ? false : (seen.add(r.email), true))).slice(0, 8))
+          setOpen(true)
+        })
+        .catch(() => {})
+    }, 250)
+    return () => clearTimeout(debounceRef.current)
+  }, [q])
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input value={q} onChange={e => setQ(e.target.value)} onFocus={() => results.length && setOpen(true)}
+        placeholder="Search by name, email, car, or phone…" style={inp} />
+      {open && results.length > 0 && (
+        <div style={{ position: 'absolute', zIndex: 20, top: '100%', left: 0, right: 0, marginTop: '4px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', boxShadow: '0 6px 20px rgba(0,0,0,0.12)', maxHeight: '260px', overflowY: 'auto' }}>
+          {results.map(r => (
+            <button key={r.key} type="button"
+              onClick={() => { onSelect(r); setQ(''); setResults([]); setOpen(false) }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 0.75rem', background: 'none', border: 'none', borderBottom: '0.5px solid rgba(0,0,0,0.05)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+                <span style={{ fontSize: '12px', color: '#1a1a1a' }}>{r.name || '(no name)'}</span>
+                <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#bbb' }}>{r.tag}</span>
+              </div>
+              <div style={{ fontSize: '10px', color: '#999' }}>{r.email}{r.car ? ` · ${r.car}` : ''}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // One expanded share: lists its photos, lets the admin upload more, copy the
 // link, renew the 30-day expiry, or delete the whole share early.
 function ShareDetail({ share, onDeleted, onRenewed }) {
@@ -223,6 +283,15 @@ export default function PhotoSharesTab() {
 
       {creating && (
         <form onSubmit={handleCreate} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1.1rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div>
+            <L>Find a non-member (searches applications &amp; contacts)</L>
+            <ContactSearchSelect onSelect={r => setForm(p => ({
+              ...p,
+              recipientName: r.name || p.recipientName,
+              recipientEmail: r.email || p.recipientEmail,
+              title: p.title || (r.name ? `${r.name} — Photos` : p.title),
+            }))} />
+          </div>
           <div>
             <L>Title (shown on the shared page)</L>
             <input style={inp} value={form.title} placeholder="e.g. John Smith — July Meet, or Sunday Meet Photos"
