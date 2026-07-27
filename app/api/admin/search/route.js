@@ -1,8 +1,12 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../lib/supabase/admin'
+import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 
 export async function GET(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
+  const ip = getClientIp(request)
+  if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')?.trim()
