@@ -1,8 +1,10 @@
 import { createClient } from '../../../lib/supabase/server'
+import { createAdminClient } from '../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import MembersNav from '../../../components/MembersNav'
 import MembersCar from '../../../components/MembersCar'
 import PortalTransition from '../../../components/PortalTransition'
+import { memberHasGalleryPhotos } from '../../../lib/memberHasGalleryPhotos'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Members Portal | Canvas Routes' } }
@@ -14,9 +16,13 @@ export default async function PortalLayout({ children }) {
   const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
   const isAdmin = user && adminEmails.includes(user.email)
 
+  // The Photos nav link only appears once there's actually something to see —
+  // a personal photo, or at least one photo from an event they attended.
+  const hasPhotos = await memberHasGalleryPhotos(createAdminClient(), user.id)
+
   return (
     <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif' }}>
-      <MembersNav email={user?.email} isAdmin={isAdmin} />
+      <MembersNav email={user?.email} isAdmin={isAdmin} showPhotos={hasPhotos} />
       <MembersCar />
       {/* viewport-fit=cover extends the page under the iOS home indicator /
           collapsed toolbar — without the safe-area inset the last content on

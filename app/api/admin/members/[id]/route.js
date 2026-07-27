@@ -161,6 +161,14 @@ export async function DELETE(request, { params }) {
   // Fetch email and photo URLs before any deletion
   const { data: member } = await supabase.from('members').select('name, email, car_photo_url, profile_photo_url, cars').eq('id', id).maybeSingle()
 
+  // gallery_photos.member_id and gallery_photo_tags.member_id both cascade on
+  // auth.users deletion below — the DB rows for this member's personal photos
+  // vanish the instant deleteUser() runs, so their storage paths must be read
+  // out now or they can never be found again, leaking the files forever.
+  const { data: personalGalleryPhotos } = await supabase
+    .from('gallery_photos').select('storage_path, original_path')
+    .eq('category', 'personal').eq('member_id', id)
+
   // Delete auth user — cascade-deletes the members row via FK
   const { error } = await supabase.auth.admin.deleteUser(id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
@@ -193,6 +201,15 @@ export async function DELETE(request, { params }) {
     ...[1, 2, 3, 4].flatMap(i => [`${id}-car-${i}.jpg`, `${id}-car-${i}.jpeg`, `${id}-car-${i}.png`, `${id}-car-${i}.webp`]),
   ])]
   try { await supabase.storage.from('member-photos').remove(photoPaths) } catch {}
+
+  // Same cleanup for the gallery-photos bucket (Car & Personal folder) — the
+  // DB rows are already gone via cascade, so this is the only remaining
+  // record of these paths (see fetch above, before deleteUser()).
+  const galleryPaths = [...new Set((personalGalleryPhotos || [])
+    .flatMap(p => [p.storage_path, p.original_path]).filter(Boolean))]
+  if (galleryPaths.length) {
+    try { await supabase.storage.from('gallery-photos').remove(galleryPaths) } catch {}
+  }
 
   // Delete application row by email — cascades to contacts
   if (member?.email) {

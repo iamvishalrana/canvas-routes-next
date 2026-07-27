@@ -12,11 +12,6 @@ export default async function PhotosPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/members/login')
 
-  // Not launched to members yet — admin-only preview until albums are ready.
-  // To go live: delete this block and restore the Photos links in MembersNav.
-  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
-  if (!adminEmails.includes(user.email)) redirect('/members/dashboard')
-
   const admin = createAdminClient()
   const [{ data: member }, { data: eventPhotos }, { data: personalPhotos }, { data: tagRows }, { data: members }] = await Promise.all([
     admin.from('members').select('event_attendance').eq('id', user.id).maybeSingle(),
@@ -55,6 +50,11 @@ export default async function PhotosPage() {
     date: null,
     photos: (personalPhotos || []).map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })),
   }
+
+  // Mirrors the nav link's visibility (see memberHasGalleryPhotos) — a direct
+  // hit on this URL (bookmark, stale link) shouldn't land on an empty page
+  // just because the nav correctly hid the link.
+  if (eventAlbums.length === 0 && personalAlbum.photos.length === 0) redirect('/members/dashboard')
 
   return (
     <div>
