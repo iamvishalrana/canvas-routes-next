@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
@@ -8,7 +8,7 @@ import { formatMbps } from '../../../lib/formatMbps'
 import AdminPhotoLightbox from '../_components/AdminPhotoLightbox'
 
 const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
-const EMPTY_FORM = { title: '', recipientName: '', recipientEmail: '' }
+const EMPTY_FORM = { title: '', recipientName: '', recipientEmail: '', folder: '' }
 
 function siteUrl() {
   return typeof window !== 'undefined' ? window.location.origin : ''
@@ -21,6 +21,15 @@ function daysLeft(expiresAt) {
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function ChevronIcon({ open }) {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+      style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
 }
 
 function carLabelOf(c) {
@@ -94,6 +103,8 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
   const [deleting, setDeleting] = useState(false)
   const [err, setErr] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(null)
+  const [folderDraft, setFolderDraft] = useState(share.folder || '')
+  const [movingFolder, setMovingFolder] = useState(false)
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -175,6 +186,20 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
     } catch { setErr('Network error.') }
   }
 
+  async function handleMoveFolder() {
+    if ((share.folder || '') === folderDraft.trim()) return
+    setMovingFolder(true); setErr(null)
+    try {
+      const res = await fetch(`/api/admin/photo-shares/${share.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: folderDraft }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setErr(data.error || 'Failed to move.'); return }
+      onRenewed(data)
+    } catch { setErr('Network error.') }
+    finally { setMovingFolder(false) }
+  }
+
   async function handleDeleteShare() {
     setDeleting(true)
     try {
@@ -198,6 +223,11 @@ function ShareDetail({ share, onDeleted, onRenewed }) {
           )}
         </button>
         <GhostBtn small onClick={handleRenew}>Renew 30 days</GhostBtn>
+        <input value={folderDraft} onChange={e => setFolderDraft(e.target.value)} placeholder="Folder" list="share-folder-names"
+          style={{ ...inp, width: '130px', fontSize: '12px', padding: '0.45rem 0.6rem' }} />
+        <GhostBtn small onClick={handleMoveFolder} disabled={movingFolder || (share.folder || '') === folderDraft.trim()}>
+          {movingFolder ? 'Moving…' : 'Move'}
+        </GhostBtn>
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFiles} />
         <PrimaryBtn onClick={() => fileRef.current?.click()} disabled={!!upload}>+ Add Photos</PrimaryBtn>
         {!deleteConfirm ? (
@@ -265,6 +295,7 @@ export default function PhotoSharesTab() {
   const [formErr, setFormErr] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [openId, setOpenId] = useState(null)
+  const [openFolders, setOpenFolders] = useState({})
 
   useEffect(() => {
     fetch('/api/admin/photo-shares')
@@ -272,6 +303,22 @@ export default function PhotoSharesTab() {
       .then(data => { setShares(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => { setListErr('Failed to load shares.'); setLoading(false) })
   }, [])
+
+  const existingFolders = useMemo(() => [...new Set(shares.map(s => s.folder?.trim()).filter(Boolean))].sort(), [shares])
+
+  // Grouped so the list stays browsable as shares pile up — same "General"
+  // fallback bucket convention as gallery-photos' event albums.
+  const folderGroups = useMemo(() => {
+    const map = new Map()
+    for (const s of shares) {
+      const key = s.folder?.trim() || 'General'
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(s)
+    }
+    return [...map.entries()]
+      .map(([name, items]) => ({ name, items }))
+      .sort((a, b) => a.name === 'General' ? 1 : b.name === 'General' ? -1 : a.name.localeCompare(b.name))
+  }, [shares])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -284,7 +331,7 @@ export default function PhotoSharesTab() {
     try {
       const res = await fetch('/api/admin/photo-shares', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: form.title.trim(), recipientName: form.recipientName, recipientEmail: form.recipientEmail }),
+        body: JSON.stringify({ title: form.title.trim(), recipientName: form.recipientName, recipientEmail: form.recipientEmail, folder: form.folder }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Failed to create share.'); return }
@@ -298,6 +345,7 @@ export default function PhotoSharesTab() {
 
   return (
     <div>
+      <datalist id="share-folder-names">{existingFolders.map(f => <option key={f} value={f} />)}</datalist>
       <div style={{ fontSize: '12px', color: '#999', marginBottom: '1.25rem', lineHeight: 1.7 }}>
         Create a link to share photos with someone who isn't a member — for one person, or a whole event's
         worth to hand out broadly (give the group the same email to use). The recipient must enter that
@@ -336,6 +384,11 @@ export default function PhotoSharesTab() {
             </div>
           </div>
           <div>
+            <L>Folder (groups shares in the list below — e.g. an event name)</L>
+            <input style={inp} value={form.folder} placeholder="General" list="share-folder-names"
+              onChange={e => setForm(p => ({ ...p, folder: e.target.value }))} maxLength={120} />
+          </div>
+          <div>
             <PrimaryBtn type="submit" disabled={submitting}>{submitting ? 'Creating…' : 'Create Share'}</PrimaryBtn>
           </div>
           {formErr && <Err msg={formErr} />}
@@ -351,32 +404,52 @@ export default function PhotoSharesTab() {
           No shares yet — click "+ New Share" to create a link for someone.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {shares.map(share => {
-            const isOpen = openId === share.id
-            const left = daysLeft(share.expires_at)
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {folderGroups.map(group => {
+            const folderOpen = openFolders[group.name] ?? true
             return (
-              <div key={share.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                <button type="button" onClick={() => setOpenId(isOpen ? null : share.id)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1.1rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{share.title}</div>
-                    <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                      {share.recipient_name && <>{share.recipient_name} · </>}
-                      {share.recipient_email && <>Password: <span style={{ color: '#8a7a5c' }}>{share.recipient_email}</span> · </>}
-                      {share.photoCount} photo{share.photoCount !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: left <= 5 ? '#93333E' : '#bbb', whiteSpace: 'nowrap' }}>
-                    {left <= 0 ? 'Expired' : `${left} day${left !== 1 ? 's' : ''} left`} · {fmtDate(share.expires_at)}
-                  </div>
+              <div key={group.name}>
+                <button type="button" onClick={() => setOpenFolders(p => ({ ...p, [group.name]: !folderOpen }))}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0.35rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <ChevronIcon open={folderOpen} />
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a' }}>{group.name}</span>
+                  <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    {group.items.length} share{group.items.length !== 1 ? 's' : ''}
+                  </span>
                 </button>
-                {isOpen && (
-                  <ShareDetail
-                    share={share}
-                    onDeleted={id => { setShares(prev => prev.filter(s => s.id !== id)); setOpenId(null) }}
-                    onRenewed={updated => setShares(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s))}
-                  />
+
+                {folderOpen && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingLeft: '0.5rem', marginBottom: '0.5rem' }}>
+                    {group.items.map(share => {
+                      const isOpen = openId === share.id
+                      const left = daysLeft(share.expires_at)
+                      return (
+                        <div key={share.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+                          <button type="button" onClick={() => setOpenId(isOpen ? null : share.id)}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1.1rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{share.title}</div>
+                              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                {share.recipient_name && <>{share.recipient_name} · </>}
+                                {share.recipient_email && <>Password: <span style={{ color: '#8a7a5c' }}>{share.recipient_email}</span> · </>}
+                                {share.photoCount} photo{share.photoCount !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: left <= 5 ? '#93333E' : '#bbb', whiteSpace: 'nowrap' }}>
+                              {left <= 0 ? 'Expired' : `${left} day${left !== 1 ? 's' : ''} left`} · {fmtDate(share.expires_at)}
+                            </div>
+                          </button>
+                          {isOpen && (
+                            <ShareDetail
+                              share={share}
+                              onDeleted={id => { setShares(prev => prev.filter(s => s.id !== id)); setOpenId(null) }}
+                              onRenewed={updated => setShares(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s))}
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 )}
               </div>
             )

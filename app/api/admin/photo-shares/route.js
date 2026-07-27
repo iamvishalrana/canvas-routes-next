@@ -44,11 +44,12 @@ export async function POST(request) {
     return Response.json({ error: 'A valid recipient email is required — it doubles as the access password.' }, { status: 400 })
   }
   const recipientName = (body.recipientName || '').toString().trim().slice(0, 120) || null
+  const folder = (body.folder || '').toString().trim().slice(0, 120) || null
   const expiresAt = new Date(Date.now() + SHARE_LIFETIME_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
   const supabase = createAdminClient()
   const { data: share, error } = await supabase.from('photo_shares')
-    .insert({ title, recipient_name: recipientName, recipient_email: recipientEmail, expires_at: expiresAt })
+    .insert({ title, recipient_name: recipientName, recipient_email: recipientEmail, folder, expires_at: expiresAt })
     .select('*').single()
 
   if (error) {

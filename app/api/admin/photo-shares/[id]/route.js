@@ -21,6 +21,7 @@ export async function PATCH(request, { params }) {
   }
   if ('recipientName' in body) update.recipient_name = (body.recipientName || '').toString().trim().slice(0, 120) || null
   if ('recipientEmail' in body) update.recipient_email = (body.recipientEmail || '').toString().trim().slice(0, 200) || null
+  if ('folder' in body) update.folder = (body.folder || '').toString().trim().slice(0, 120) || null
   if (body.renew) update.expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
 
