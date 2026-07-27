@@ -36,7 +36,7 @@ const PROVINCES = [
 const PROVINCE_MAP = Object.fromEntries(PROVINCES.map(p => [p.value, p]))
 const provLabelOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).provLabel
 
-const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', province: 'QC', category: '', payment_method: '', receipt_url: '' }
+const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', province: 'QC', category: '', payment_method: '', receipt_url: '', notes: '' }
 
 function round2(n) { return Math.round((parseFloat(n) || 0) * 100) / 100 }
 // Break a tax-INCLUDED total into { subtotal, gst, qst } for a province's rates.
@@ -76,7 +76,7 @@ function SelectChevron() {
   return <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
 }
 
-const COL = '96px 1fr 1fr 88px 88px 88px 78px'
+const COL = '22px 96px 1fr 1fr 88px 88px 88px 78px'
 
 // Shared by all three upload sites below: browser -> Supabase Storage
 // directly via a signed URL (receipts include scanned PDFs, which run
@@ -146,6 +146,13 @@ export default function ExpensesClient() {
   const [editErr, setEditErr]           = useState(null)
   const [newIds, setNewIds]             = useState(new Set())
   const [editUploading, setEditUploading] = useState(false)
+  const [searchQuery, setSearchQuery]   = useState('')
+  const [selectedIds, setSelectedIds]   = useState(new Set())
+  const [bulkBusy, setBulkBusy]         = useState(false)
+  const [bulkErr, setBulkErr]           = useState(null)
+  const [bulkConfirm, setBulkConfirm]   = useState(null) // { field, value, label } awaiting yes/no
+  const [bulkCategoryPick, setBulkCategoryPick] = useState('')
+  const [bulkEventPick, setBulkEventPick] = useState('')
   const fileRef = useRef(null)
   const scanRef = useRef(null)
   const editFileRef = useRef(null)
@@ -193,12 +200,17 @@ export default function ExpensesClient() {
     setForm(p => ({ ...p, gst_amount: gst ? String(gst) : '', qst_amount: qst ? String(qst) : '' }))
   }, [form.paid, form.province])
 
-  // Date-range + category filters feed both the list and the summary
+  // Date-range + category + free-text filters feed both the list and the summary
+  const searchTerm = searchQuery.trim().toLowerCase()
   const baseFiltered = expenses.filter(e => {
     if (filterCategory !== 'all' && (e.category || '') !== filterCategory) return false
     if (dateFrom && e.expense_date < dateFrom) return false
     if (dateTo && e.expense_date > dateTo) return false
     if (filterMissing && e.receipt_url) return false
+    if (searchTerm) {
+      const haystack = `${e.vendor || ''} ${e.event_name || ''} ${e.category || ''} ${e.notes || ''}`.toLowerCase()
+      if (!haystack.includes(searchTerm)) return false
+    }
     return true
   })
   const usedCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))].sort()
@@ -362,6 +374,7 @@ export default function ExpensesClient() {
       category:       expense.category     || '',
       payment_method: expense.payment_method || '',
       receipt_url:    expense.receipt_url  || '',
+      notes:          expense.notes        || '',
     })
   }
 
@@ -424,6 +437,7 @@ export default function ExpensesClient() {
           province:       editForm.province || 'QC',
           payment_method: editForm.payment_method || null,
           receipt_url:    editForm.receipt_url || null,
+          notes:          editForm.notes || null,
           amount:         amtNum,
           gst_amount:     gstNum,
           qst_amount:     qstNum,
@@ -545,6 +559,7 @@ export default function ExpensesClient() {
           receipt_url:    form.receipt_url,
           province:       form.province,
           payment_method: form.payment_method,
+          notes:          form.notes,
           amount:         subtotal,
           gst_amount:     gstNum,
           qst_amount:     qstNum,
@@ -587,11 +602,56 @@ export default function ExpensesClient() {
         return
       }
       setExpenses(prev => prev.filter(e => e.id !== expense.id))
+      setSelectedIds(prev => { if (!prev.has(expense.id)) return prev; const n = new Set(prev); n.delete(expense.id); return n })
       setDeleteConfirm(null)
     } catch {
       setDeleteErr('Network error — expense not deleted.')
     }
     setDeleting(null)
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function clearSelection() {
+    setSelectedIds(new Set()); setBulkConfirm(null); setBulkCategoryPick(''); setBulkEventPick(''); setBulkErr(null)
+  }
+
+  // Bulk delete / re-categorize / move-to-event for every currently-selected
+  // expense — loops the existing per-id endpoints (same confirm-then-apply
+  // pattern as the Members admin page's bulkUpdate) rather than adding a new
+  // bulk API route.
+  async function bulkDelete() {
+    setBulkBusy(true); setBulkErr(null)
+    const ids = [...selectedIds]
+    const results = await Promise.allSettled(ids.map(id =>
+      fetch(`/api/admin/expenses/${id}`, { method: 'DELETE' }).then(res => { if (!res.ok) throw new Error() })
+    ))
+    const succeededIds = new Set(ids.filter((id, i) => results[i].status === 'fulfilled'))
+    const failed = ids.length - succeededIds.size
+    setExpenses(prev => prev.filter(e => !succeededIds.has(e.id)))
+    setBulkBusy(false); setBulkConfirm(null)
+    if (failed > 0) { setBulkErr(`${failed} of ${ids.length} failed to delete.`); setSelectedIds(prev => new Set([...prev].filter(id => !succeededIds.has(id)))) }
+    else clearSelection()
+  }
+
+  async function bulkUpdate(field, value) {
+    setBulkBusy(true); setBulkErr(null)
+    const ids = [...selectedIds]
+    const results = await Promise.allSettled(ids.map(id =>
+      fetch(`/api/admin/expenses/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: value }),
+      }).then(res => { if (!res.ok) throw new Error() })
+    ))
+    const failed = results.filter(r => r.status === 'rejected').length
+    setBulkBusy(false); setBulkConfirm(null)
+    if (failed > 0) setBulkErr(`${failed} of ${ids.length} failed to update.`)
+    load()
+    setSelectedIds(new Set()); setBulkCategoryPick(''); setBulkEventPick('')
   }
 
   function exportCSV() {
@@ -601,7 +661,7 @@ export default function ExpensesClient() {
     // silently exported all-time data instead.
     const source = visibleExpenses
     const rows = [
-      ['Date', 'Event', 'Vendor', 'Category', 'Payment', 'Province', 'Amount', 'GST', 'QST', 'Tax', 'Total', 'Receipt'],
+      ['Date', 'Event', 'Vendor', 'Category', 'Payment', 'Province', 'Amount', 'GST', 'QST', 'Tax', 'Total', 'Receipt', 'Notes'],
       ...source.map(e => {
         const gst = parseFloat(e.gst_amount || 0), qst = parseFloat(e.qst_amount || 0)
         return [
@@ -609,7 +669,7 @@ export default function ExpensesClient() {
           PAYMENT_LABELS[e.payment_method] || '', e.province || 'QC',
           parseFloat(e.amount || 0).toFixed(2), gst.toFixed(2), qst.toFixed(2), taxOf(e).toFixed(2),
           (parseFloat(e.amount || 0) + taxOf(e)).toFixed(2),
-          e.receipt_url || '',
+          e.receipt_url || '', e.notes || '',
         ]
       }),
     ]
@@ -842,6 +902,12 @@ export default function ExpensesClient() {
           )
         })()}
 
+        <div style={{ marginBottom: '0.85rem' }}>
+          <L>Notes (optional)</L>
+          <input style={inp} value={form.notes} placeholder="e.g. reimbursed by Jerry, bought for spare tires"
+            onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} maxLength={1000} />
+        </div>
+
         <div className="exp-actions-row" style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleFileChange} />
           <button type="button" className="exp-tap" onClick={() => fileRef.current?.click()} disabled={uploadingFile}
@@ -897,6 +963,11 @@ export default function ExpensesClient() {
 
           {/* Date range + category filters */}
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '0.85rem' }}>
+            <div style={{ width: '190px' }}>
+              <L>Search</L>
+              <input style={inp} value={searchQuery} placeholder="Vendor, event, category, notes…"
+                onChange={e => setSearchQuery(e.target.value)} />
+            </div>
             <div style={{ width: '150px' }}>
               <L>From</L>
               <input type="date" style={inp} value={dateFrom} max={dateTo || today}
@@ -948,7 +1019,7 @@ export default function ExpensesClient() {
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>
               {visibleExpenses.length} expense{visibleExpenses.length !== 1 ? 's' : ''}
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
-              {(hasDateFilter || filterCategory !== 'all') && <span style={{ color: '#c5a882' }}> · filtered</span>}
+              {(hasDateFilter || filterCategory !== 'all' || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
@@ -969,6 +1040,7 @@ export default function ExpensesClient() {
                 Summary{hasDateFilter ? ` · ${dateFrom || '…'} → ${dateTo || '…'}` : ' · All time'}
                 {filterEvent !== 'all' && ` · ${filterEvent}`}
                 {filterCategory !== 'all' && ` · ${filterCategory}`}
+                {searchTerm && ` · "${searchQuery.trim()}"`}
               </div>
 
               {visibleExpenses.length === 0 ? (
@@ -1042,6 +1114,69 @@ export default function ExpensesClient() {
         </div>
       )}
 
+      {/* Bulk action bar — appears once at least one expense is checked */}
+      {selectedIds.size > 0 && (
+        <div style={{ position: 'sticky', top: '0.5rem', zIndex: 5, background: '#0F1E14', color: '#F5F1EC', borderRadius: '10px', padding: '0.7rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}>
+          <span style={{ fontSize: '12px', fontWeight: 500 }}>{selectedIds.size} selected</span>
+          <button onClick={clearSelection} disabled={bulkBusy}
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '4px 8px', background: 'none', border: 'none', color: 'rgba(245,241,236,0.6)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Clear
+          </button>
+
+          {!bulkConfirm ? (
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginLeft: 'auto' }}>
+              <div style={{ position: 'relative' }}>
+                <select value={bulkCategoryPick} disabled={bulkBusy}
+                  onChange={e => {
+                    const v = e.target.value
+                    setBulkCategoryPick(v)
+                    if (v) setBulkConfirm({ field: 'category', value: v === '__clear__' ? null : v, label: v === '__clear__' ? 'no category' : v })
+                  }}
+                  style={{ ...sel, background: 'rgba(245,241,236,0.08)', borderColor: 'rgba(245,241,236,0.25)', color: '#F5F1EC', fontSize: '11px', padding: '6px 26px 6px 10px' }}>
+                  <option value="" style={{ color: '#1a1a1a' }}>Set category…</option>
+                  <option value="__clear__" style={{ color: '#1a1a1a' }}>— Clear category —</option>
+                  {CATEGORIES.map(c => <option key={c} value={c} style={{ color: '#1a1a1a' }}>{c}</option>)}
+                </select>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <select value={bulkEventPick} disabled={bulkBusy}
+                  onChange={e => {
+                    const v = e.target.value
+                    setBulkEventPick(v)
+                    if (v) setBulkConfirm({ field: 'event_name', value: v === 'General' ? null : v, label: v })
+                  }}
+                  style={{ ...sel, background: 'rgba(245,241,236,0.08)', borderColor: 'rgba(245,241,236,0.25)', color: '#F5F1EC', fontSize: '11px', padding: '6px 26px 6px 10px' }}>
+                  <option value="" style={{ color: '#1a1a1a' }}>Move to event…</option>
+                  <option value="General" style={{ color: '#1a1a1a' }}>General</option>
+                  {eventNames.map(n => <option key={n} value={n} style={{ color: '#1a1a1a' }}>{n}</option>)}
+                </select>
+              </div>
+              <button onClick={() => setBulkConfirm({ field: 'delete', value: null, label: 'delete' })} disabled={bulkBusy}
+                style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(147,51,62,0.5)', borderRadius: '6px', color: '#e5a1a8', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Delete
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginLeft: 'auto' }}>
+              <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.85)' }}>
+                {bulkConfirm.field === 'delete'
+                  ? <>Delete <strong>{selectedIds.size}</strong> expense{selectedIds.size !== 1 ? 's' : ''}?</>
+                  : <>Set {bulkConfirm.field === 'category' ? 'category' : 'event'} to <strong>{bulkConfirm.label}</strong> for <strong>{selectedIds.size}</strong> expense{selectedIds.size !== 1 ? 's' : ''}?</>}
+              </span>
+              <button onClick={() => bulkConfirm.field === 'delete' ? bulkDelete() : bulkUpdate(bulkConfirm.field, bulkConfirm.value)} disabled={bulkBusy}
+                style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '7px 14px', background: bulkConfirm.field === 'delete' ? '#93333E' : '#c5a882', color: bulkConfirm.field === 'delete' ? '#F5F1EC' : '#0F1E14', border: 'none', borderRadius: '6px', cursor: bulkBusy ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                {bulkBusy ? '…' : 'Confirm'}
+              </button>
+              <button onClick={() => { setBulkConfirm(null); setBulkCategoryPick(''); setBulkEventPick('') }} disabled={bulkBusy}
+                style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(245,241,236,0.3)', borderRadius: '6px', color: 'rgba(245,241,236,0.8)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Cancel
+              </button>
+            </div>
+          )}
+          {bulkErr && <span style={{ fontSize: '11px', color: '#ffb3b8', width: '100%' }}>{bulkErr}</span>}
+        </div>
+      )}
+
       {/* Grouped expense list */}
       {loading ? (
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
@@ -1097,7 +1232,7 @@ export default function ExpensesClient() {
                     {!isMobile && (
                       <div className="exp-scroll">
                         <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '560px' }}>
-                          {['Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
+                          {['', 'Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
                             <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                           ))}
                         </div>
@@ -1145,7 +1280,10 @@ export default function ExpensesClient() {
                             /* Mobile card — no horizontal scroll */
                             <div style={{ padding: '0.8rem 1.1rem', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-                                <div style={{ minWidth: 0 }}>
+                                <div style={{ minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                                  <input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)}
+                                    style={{ width: '17px', height: '17px', cursor: 'pointer', marginTop: '2px', flexShrink: 0 }} aria-label="Select expense" />
+                                  <div style={{ minWidth: 0 }}>
                                   <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
                                     {expense.vendor || <span style={{ color: '#ccc' }}>No vendor</span>}
                                     {expense.receipt_url && (
@@ -1157,6 +1295,10 @@ export default function ExpensesClient() {
                                     {fmtDate(expense.expense_date)}
                                     {expense.category && <> · {expense.category}</>}
                                     {expense.payment_method && <> · {PAYMENT_LABELS[expense.payment_method]}</>}
+                                  </div>
+                                  {expense.notes && (
+                                    <div style={{ fontSize: '11px', color: '#aaa', fontStyle: 'italic', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.notes}</div>
+                                  )}
                                   </div>
                                 </div>
                                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -1172,6 +1314,8 @@ export default function ExpensesClient() {
                             /* Desktop table row — scrolls horizontally on its own */
                             <div className="exp-scroll">
                               <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '560px' }}>
+                                <input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)}
+                                  style={{ width: '15px', height: '15px', cursor: 'pointer' }} aria-label="Select expense" />
                                 <div style={{ fontSize: '12px', color: '#555' }}>{fmtDate(expense.expense_date)}</div>
                                 <div style={{ fontSize: '12px', color: '#333', minWidth: 0 }}>
                                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
@@ -1184,6 +1328,9 @@ export default function ExpensesClient() {
                                       <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '0.04em' }}>· {PAYMENT_LABELS[expense.payment_method]}</span>
                                     )}
                                   </span>
+                                  {expense.notes && (
+                                    <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={expense.notes}>{expense.notes}</div>
+                                  )}
                                 </div>
                                 <div style={{ fontSize: '11px', color: '#888' }}>{expense.category || <span style={{ color: '#ddd' }}>—</span>}</div>
                                 <div style={{ fontSize: '12px', color: '#333', fontVariantNumeric: 'tabular-nums' }}>{fmt(expense.amount)}</div>
@@ -1260,6 +1407,11 @@ export default function ExpensesClient() {
                                     onChange={e => setEditForm(p => ({ ...p, qst_amount: e.target.value }))} />
                                 </div>
                               </div>
+                              <div style={{ marginBottom: '0.6rem' }}>
+                                <L>Notes</L>
+                                <input style={inp} value={editForm.notes || ''} placeholder="—"
+                                  onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} maxLength={1000} />
+                              </div>
                               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <button onClick={() => saveEdit(expense.id)} disabled={editSaving || editUploading} className="exp-tap"
                                   style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: (editSaving || editUploading) ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: (editSaving || editUploading) ? 0.6 : 1 }}>
@@ -1330,7 +1482,7 @@ export default function ExpensesClient() {
                     ) : (
                       <div className="exp-scroll">
                         <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '560px' }}>
-                          <div style={{ gridColumn: '1 / 4', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
+                          <div style={{ gridColumn: '1 / 5', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
                           <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
                           <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
                           <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total + group.totalTax)}</div>

@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS public.expenses (
   payment_method TEXT         CHECK (payment_method IN ('cash', 'credit', 'etransfer', 'other')),
   category     TEXT,
   receipt_url  TEXT,
+  notes        TEXT,
   created_at   TIMESTAMPTZ    DEFAULT now()
 );
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
