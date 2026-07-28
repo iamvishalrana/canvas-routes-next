@@ -3,6 +3,10 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { memberPhotoPath, EXT_BY_MIME } from '../../../../lib/memberPhotoPath'
 
 const BUCKET = 'member-photos'
+// Matches the profile page's own cap (app/members/(portal)/profile/page.jsx
+// blocks adding a 6th car client-side) — enforced here too since a client-
+// side limit alone doesn't stop a direct POST with an arbitrary carIndex.
+const MAX_CARS = 5
 
 // Records the photo after the member's browser has uploaded it directly to
 // the member-photos bucket via a signed upload URL (see ./upload-url). The
@@ -19,6 +23,9 @@ export async function POST(request) {
     ? parseInt(body.carIndex, 10) : null
   const ext = EXT_BY_MIME[body.fileType]
   if (!ext) return Response.json({ error: 'Unsupported image format.' }, { status: 400 })
+  if (carIndex !== null && (!Number.isInteger(carIndex) || carIndex < 0 || carIndex >= MAX_CARS)) {
+    return Response.json({ error: 'Invalid car index.' }, { status: 400 })
+  }
 
   const admin = createAdminClient()
   const path = memberPhotoPath(user.id, kind, carIndex, ext)

@@ -4,6 +4,10 @@ import { memberPhotoPath, EXT_BY_MIME } from '../../../../../lib/memberPhotoPath
 import { ALLOWED_MIME_TYPES } from '../../../../../lib/allowedImageTypes'
 
 const BUCKET = 'member-photos'
+// Matches the profile page's own cap and the confirm route's check
+// (app/api/member/photo/route.js) — kept in sync manually since it's a tiny,
+// stable constant, not worth a shared import for.
+const MAX_CARS = 5
 
 // Issues a one-time signed upload URL so the member's browser can push the
 // photo straight to Supabase Storage, bypassing the serverless request-body
@@ -20,6 +24,9 @@ export async function POST(request) {
     ? parseInt(body.carIndex, 10) : null
   const ext = EXT_BY_MIME[body.fileType]
   if (!ext) return Response.json({ error: 'Unsupported image format.' }, { status: 400 })
+  if (carIndex !== null && (!Number.isInteger(carIndex) || carIndex < 0 || carIndex >= MAX_CARS)) {
+    return Response.json({ error: 'Invalid car index.' }, { status: 400 })
+  }
 
   const admin = createAdminClient()
   const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '15MB' }
