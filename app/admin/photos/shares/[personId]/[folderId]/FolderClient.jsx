@@ -38,8 +38,13 @@ export default function FolderClient() {
   const [titleDraft, setTitleDraft] = useState('')
   const [savingTitle, setSavingTitle] = useState(false)
   const [renewing, setRenewing] = useState(false)
+  const [editingExpiry, setEditingExpiry] = useState(false)
+  const [expiryDraft, setExpiryDraft] = useState('')
+  const [savingExpiry, setSavingExpiry] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [selected, setSelected] = useState(() => new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
   const fileRef = useRef(null)
 
   function load() {
@@ -112,6 +117,7 @@ export default function FolderClient() {
       const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/photos/${photoId}`, { method: 'DELETE' })
       if (!res.ok) { setErr('Failed to delete photo.'); return }
       setPhotos(prev => prev.filter(p => p.id !== photoId))
+      setSelected(prev => { const next = new Set(prev); next.delete(photoId); return next })
     } catch { setErr('Network error — photo not deleted.') }
   }
 
@@ -141,6 +147,50 @@ export default function FolderClient() {
       setFolder(f => ({ ...f, ...data }))
     } catch { setErr('Network error.') }
     finally { setRenewing(false) }
+  }
+
+  function startEditExpiry() {
+    setExpiryDraft(new Date(folder.expires_at).toISOString().slice(0, 10))
+    setEditingExpiry(true)
+  }
+
+  async function saveExpiry() {
+    if (!expiryDraft) return
+    setSavingExpiry(true)
+    try {
+      // End-of-day in the folder's chosen date so the photos stay available
+      // through the whole day the admin picked, not just until midnight UTC.
+      const isoAtEndOfDay = new Date(`${expiryDraft}T23:59:59`).toISOString()
+      const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresAt: isoAtEndOfDay }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setErr(data.error || 'Failed to update expiry.'); return }
+      setFolder(f => ({ ...f, ...data })); setEditingExpiry(false)
+    } catch { setErr('Network error.') }
+    finally { setSavingExpiry(false) }
+  }
+
+  function toggleSelected(photoId) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(photoId)) next.delete(photoId)
+      else next.add(photoId)
+      return next
+    })
+  }
+
+  async function handleBulkDelete() {
+    setBulkDeleting(true)
+    try {
+      const ids = Array.from(selected)
+      for (const photoId of ids) {
+        const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/photos/${photoId}`, { method: 'DELETE' })
+        if (res.ok) setPhotos(prev => prev.filter(p => p.id !== photoId))
+      }
+      setSelected(new Set())
+    } catch { setErr('Network error — some photos may not have been deleted.') }
+    finally { setBulkDeleting(false) }
   }
 
   async function handleDeleteFolder() {
@@ -193,9 +243,19 @@ export default function FolderClient() {
             <GhostBtn onClick={() => setEditingTitle(false)}>Cancel</GhostBtn>
           </div>
         )}
-        <div style={{ fontSize: '11px', color: left <= 5 ? '#93333E' : '#999', marginTop: '0.4rem' }}>
-          {left <= 0 ? 'Expired' : `${left} day${left !== 1 ? 's' : ''} left`} · removes on {fmtDate(folder.expires_at)}
-        </div>
+        {!editingExpiry ? (
+          <div style={{ fontSize: '11px', color: left <= 5 ? '#93333E' : '#999', marginTop: '0.4rem' }}>
+            {left <= 0 ? 'Expired' : `${left} day${left !== 1 ? 's' : ''} left`} · removes on {fmtDate(folder.expires_at)}
+            {' · '}<button type="button" onClick={startEditExpiry} style={{ background: 'none', border: 'none', color: '#8a7a5c', textDecoration: 'underline', cursor: 'pointer', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Change</button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.5rem' }}>
+            <input type="date" style={{ ...inp, width: 'auto' }} value={expiryDraft} onChange={e => setExpiryDraft(e.target.value)} />
+            <PrimaryBtn onClick={saveExpiry} disabled={savingExpiry}>{savingExpiry ? 'Saving…' : 'Save'}</PrimaryBtn>
+            <GhostBtn onClick={() => setEditingExpiry(false)}>Cancel</GhostBtn>
+            <span style={{ fontSize: '10.5px', color: '#aaa', width: '100%' }}>Pick any date — sooner to remove it early, later to extend it.</span>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
@@ -236,20 +296,43 @@ export default function FolderClient() {
       )}
       {err && <Err msg={err} />}
 
+      {photos.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+          {selected.size === 0 ? (
+            <span style={{ fontSize: '11px', color: '#aaa' }}>Tap a photo's corner to select it for bulk delete.</span>
+          ) : (
+            <>
+              <span style={{ fontSize: '12px', color: '#555' }}>{selected.size} selected</span>
+              <DangerBtn small onClick={handleBulkDelete} disabled={bulkDeleting}>{bulkDeleting ? 'Deleting…' : 'Delete Selected'}</DangerBtn>
+              <GhostBtn small onClick={() => setSelected(new Set())}>Clear</GhostBtn>
+            </>
+          )}
+        </div>
+      )}
+
       {photos.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#bbb', fontSize: '13px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px' }}>
           No photos yet — click "+ Add Photos" to upload.
         </div>
       ) : (
         <div className="shp-grid">
-          {photos.map((photo, i) => (
-            <button key={photo.id} type="button" onClick={() => setLightboxIndex(i)}
-              style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1', background: 'rgba(0,0,0,0.04)', border: 'none', padding: 0, cursor: 'pointer', display: 'block' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt="" onError={onImgError(photo.originalUrl)}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </button>
-          ))}
+          {photos.map((photo, i) => {
+            const isSelected = selected.has(photo.id)
+            return (
+              <div key={photo.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1', background: 'rgba(0,0,0,0.04)' }}>
+                <button type="button" onClick={() => setLightboxIndex(i)}
+                  style={{ position: 'absolute', inset: 0, border: 'none', padding: 0, cursor: 'pointer', display: 'block', width: '100%', height: '100%' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.url} alt="" onError={onImgError(photo.originalUrl)}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </button>
+                <button type="button" onClick={() => toggleSelected(photo.id)} aria-label={isSelected ? 'Deselect photo' : 'Select photo'}
+                  style={{ position: 'absolute', top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: isSelected ? '#45643C' : 'rgba(0,0,0,0.35)', border: '1.5px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
+                  {isSelected && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                </button>
+              </div>
+            )
+          })}
         </div>
       )}
 

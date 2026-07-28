@@ -28,7 +28,11 @@ export async function GET(request, { params }) {
   return Response.json({ ...folder, photos })
 }
 
-// Rename the folder, or push its expiry back out another 30 days.
+// Rename the folder, push its expiry out another 30 days, or set it to an
+// exact admin-chosen date — either further out or sooner than today, so a
+// folder can be extended or wound down early without deleting it outright.
+const MAX_EXPIRY_YEARS_OUT = 3
+
 export async function PATCH(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -41,7 +45,15 @@ export async function PATCH(request, { params }) {
     if (!title) return Response.json({ error: 'Title is required.' }, { status: 400 })
     update.title = title.slice(0, 120)
   }
-  if (body.renew) update.expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  if (body.renew) {
+    update.expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  } else if ('expiresAt' in body) {
+    const parsed = new Date(body.expiresAt)
+    const maxOut = new Date(Date.now() + MAX_EXPIRY_YEARS_OUT * 365 * 24 * 60 * 60 * 1000)
+    if (Number.isNaN(parsed.getTime())) return Response.json({ error: 'Invalid date.' }, { status: 400 })
+    if (parsed > maxOut) return Response.json({ error: `Can't set an expiry more than ${MAX_EXPIRY_YEARS_OUT} years out.` }, { status: 400 })
+    update.expires_at = parsed.toISOString()
+  }
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
 
   const supabase = createAdminClient()

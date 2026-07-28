@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../../../_components/shared'
+import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../../../_components/shared'
+
+const LIFETIME_OPTIONS = [7, 14, 30, 60, 90]
 
 function siteUrl() {
   return typeof window !== 'undefined' ? window.location.origin : ''
@@ -24,8 +26,11 @@ export default function PersonClient() {
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [sendingLink, setSendingLink] = useState(false)
+  const [sendLinkResult, setSendLinkResult] = useState(null)
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [folderTitle, setFolderTitle] = useState('')
+  const [folderLifetime, setFolderLifetime] = useState(30)
   const [folderErr, setFolderErr] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deleteFolderConfirm, setDeleteFolderConfirm] = useState(null)
@@ -52,6 +57,19 @@ export default function PersonClient() {
     }).catch(() => {})
   }
 
+  async function sendLink() {
+    setSendingLink(true); setSendLinkResult(null)
+    try {
+      const res = await fetch(`/api/admin/photo-share-people/${personId}/send-link`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      setSendLinkResult(res.ok ? { ok: true } : { ok: false, error: data.error || 'Failed to send.' })
+    } catch {
+      setSendLinkResult({ ok: false, error: 'Network error.' })
+    }
+    setSendingLink(false)
+    setTimeout(() => setSendLinkResult(null), 4000)
+  }
+
   async function handleCreateFolder(e) {
     e.preventDefault()
     if (!folderTitle.trim()) { setFolderErr('Folder title is required.'); return }
@@ -59,7 +77,7 @@ export default function PersonClient() {
     try {
       const res = await fetch(`/api/admin/photo-share-people/${personId}/folders`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: folderTitle.trim() }),
+        body: JSON.stringify({ title: folderTitle.trim(), lifetimeDays: folderLifetime }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFolderErr(data.error || 'Failed to create folder.'); return }
@@ -164,6 +182,10 @@ export default function PersonClient() {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
           )}
         </button>
+        <GhostBtn small onClick={sendLink} disabled={sendingLink}>
+          {sendingLink ? 'Sending…' : sendLinkResult?.ok ? 'Sent ✓' : 'Email link to them'}
+        </GhostBtn>
+        {sendLinkResult?.error && <span style={{ fontSize: '11px', color: '#93333E' }}>{sendLinkResult.error}</span>}
         {!deletePersonConfirm ? (
           <button type="button" onClick={() => setDeletePersonConfirm(true)}
             style={{ background: 'none', border: 'none', color: '#c99', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -191,6 +213,15 @@ export default function PersonClient() {
             <L>Folder title (e.g. the event name)</L>
             <input style={inp} value={folderTitle} placeholder="e.g. Whips to Eastern Townships — July 2026"
               onChange={e => setFolderTitle(e.target.value)} maxLength={120} autoFocus />
+          </div>
+          <div style={{ flex: '0 0 auto' }}>
+            <L>Removes after</L>
+            <div style={{ position: 'relative' }}>
+              <select style={{ ...sel, width: 'auto', paddingRight: '1.75rem' }} value={folderLifetime} onChange={e => setFolderLifetime(Number(e.target.value))}>
+                {LIFETIME_OPTIONS.map(d => <option key={d} value={d}>{d} days</option>)}
+              </select>
+              <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
           <PrimaryBtn type="submit" disabled={submitting}>{submitting ? 'Creating…' : 'Create Folder'}</PrimaryBtn>
           {folderErr && <div style={{ width: '100%' }}><Err msg={folderErr} /></div>}
