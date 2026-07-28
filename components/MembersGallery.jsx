@@ -153,7 +153,7 @@ export default function MembersGallery({ albums }) {
                     {album.name}
                   </h2>
                   <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>
-                    {formatDate(album.date) ? `${formatDate(album.date)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}
+                    {formatDate(album.date) ? `${formatDate(album.date)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}{album.note ? ` · ${album.note}` : ''}
                   </div>
                 </div>
                 {album.photos.length > 0 && (

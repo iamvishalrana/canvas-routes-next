@@ -4,36 +4,50 @@ import { captureException } from '../../../../lib/sentry'
 
 const BUCKET = 'photo-shares'
 
-// Deletes every photo_shares row (and its storage files) whose 30-day
-// expiry has passed. Storage removal happens before the DB delete — if it
-// fails partway through, the DB rows for that share are left in place so
-// the next run retries the same share rather than losing track of orphaned
-// files.
+// Deletes every photo_share_folders row (and its storage files) whose
+// 30-day expiry has passed. Storage removal happens before the DB delete —
+// if it fails partway through, the DB row for that folder is left in place
+// so the next run retries it rather than losing track of orphaned files.
+// A person who ends up with zero folders left (every event they were
+// shared photos for has expired) is removed too, along with their link.
 async function cleanupExpiredShares() {
   const supabase = createAdminClient()
   const { data: expired, error } = await supabase
-    .from('photo_shares').select('id, title').lte('expires_at', new Date().toISOString())
+    .from('photo_share_folders').select('id, title, person_id').lte('expires_at', new Date().toISOString())
   if (error) throw new Error(error.message)
-  if (!expired?.length) return { deletedShares: 0, deletedFiles: 0 }
 
   let deletedFiles = 0
-  let deletedShares = 0
-  for (const share of expired) {
-    const { data: items } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('share_id', share.id)
+  let deletedFolders = 0
+  const touchedPersonIds = new Set()
+  for (const folder of (expired || [])) {
+    const { data: items } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('folder_id', folder.id)
     const paths = [...new Set((items || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
     if (paths.length) {
       const { error: removeErr } = await supabase.storage.from(BUCKET).remove(paths)
       if (removeErr) {
-        captureException(new Error(removeErr.message), { context: 'photo-shares-cleanup-storage', shareId: share.id })
+        captureException(new Error(removeErr.message), { context: 'photo-shares-cleanup-storage', folderId: folder.id })
         continue // leave the DB row for next run rather than losing the file reference
       }
       deletedFiles += paths.length
     }
-    const { error: delErr } = await supabase.from('photo_shares').delete().eq('id', share.id)
-    if (delErr) captureException(delErr, { context: 'photo-shares-cleanup-db', shareId: share.id })
-    else deletedShares++
+    const { error: delErr } = await supabase.from('photo_share_folders').delete().eq('id', folder.id)
+    if (delErr) captureException(delErr, { context: 'photo-shares-cleanup-db', folderId: folder.id })
+    else { deletedFolders++; touchedPersonIds.add(folder.person_id) }
   }
-  return { deletedShares, deletedFiles, totalExpired: expired.length }
+
+  // Any person touched this run who now has zero folders left is done —
+  // their link no longer leads anywhere, so the row (and the link) go too.
+  let deletedPeople = 0
+  for (const personId of touchedPersonIds) {
+    const { count } = await supabase.from('photo_share_folders').select('id', { count: 'exact', head: true }).eq('person_id', personId)
+    if (count === 0) {
+      const { error: personDelErr } = await supabase.from('photo_share_people').delete().eq('id', personId)
+      if (personDelErr) captureException(personDelErr, { context: 'photo-shares-cleanup-person-db', personId })
+      else deletedPeople++
+    }
+  }
+
+  return { deletedFolders, deletedFiles, deletedPeople, totalExpired: (expired || []).length }
 }
 
 // Called by Vercel cron (GET with Authorization: Bearer {CRON_SECRET})

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
+import Link from 'next/link'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
@@ -8,7 +9,6 @@ import { convertHeicIfNeeded, isHeicFile } from '../../../lib/convertHeicIfNeede
 import { formatMbps } from '../../../lib/formatMbps'
 import { MIME_TO_EXT } from '../../../lib/allowedImageTypes'
 import AdminPhotoLightbox from '../_components/AdminPhotoLightbox'
-import PhotoSharesTab from './PhotoSharesTab'
 
 const BUCKET = 'gallery-photos'
 const ALLOWED = MIME_TO_EXT
@@ -162,7 +162,7 @@ function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDele
 }
 
 export default function PhotosClient() {
-  const [mode, setMode] = useState('event') // 'event' | 'personal' | 'share'
+  const [mode, setMode] = useState('event') // 'event' | 'personal'
   const [photos, setPhotos] = useState([])
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -376,7 +376,14 @@ export default function PhotosClient() {
       <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '1.5rem' }}>
         {tabBtn('event', 'Event Photos')}
         {tabBtn('personal', 'Car & Personal')}
-        {tabBtn('share', 'Non-Member Shares')}
+        <Link href="/admin/photos/shares" style={{
+          padding: '0.5rem 1.1rem', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+          border: 'none', borderBottom: '2px solid transparent',
+          color: '#999', textDecoration: 'none',
+          fontFamily: 'var(--font-inter),sans-serif', fontWeight: '400',
+        }}>
+          Non-Member Shares →
+        </Link>
       </div>
 
       {listErr && <Err msg={listErr} />}
@@ -406,9 +413,6 @@ export default function PhotosClient() {
 
       {loading ? (
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
-
-      ) : mode === 'share' ? (
-        <PhotoSharesTab />
 
       ) : mode === 'event' ? (
         <>

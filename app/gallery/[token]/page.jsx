@@ -5,10 +5,6 @@ import GalleryPasswordGate from '../../../components/GalleryPasswordGate'
 export const dynamic = 'force-dynamic'
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function fmtDate(d) {
-  return new Date(d).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
-}
-
 function MembershipCta() {
   return (
     <div style={{ marginTop: '4rem', background: '#0F1E14', borderRadius: '14px', padding: 'clamp(2rem,5vw,3rem)', textAlign: 'center' }}>
@@ -52,20 +48,22 @@ function Shell({ children }) {
   )
 }
 
-// This page only ever reads title/expires_at server-side — never the photos
-// themselves, and never recipient_email. The actual gallery (photo URLs)
-// only ever gets fetched client-side, after the visitor's entered email is
-// verified server-side by /api/gallery/[token]/verify — see that route and
-// components/GalleryPasswordGate.jsx.
+// This page only ever confirms the token maps to a real person — never the
+// photos themselves, and never their email. The actual galleries (photo
+// URLs, grouped by event folder) only ever get fetched client-side, after
+// the visitor's entered email is verified server-side by
+// /api/gallery/[token]/verify — see that route and
+// components/GalleryPasswordGate.jsx. Folder-level expiry is checked there
+// too (each event folder has its own 30-day clock), not here.
 export default async function GallerySharePage({ params }) {
   const { token } = await params
   const admin = createAdminClient()
 
-  const { data: share } = UUID_RE.test(token)
-    ? await admin.from('photo_shares').select('title, expires_at, recipient_name').eq('token', token).maybeSingle()
+  const { data: person } = UUID_RE.test(token)
+    ? await admin.from('photo_share_people').select('id, name').eq('token', token).maybeSingle()
     : { data: null }
 
-  if (!share) {
+  if (!person) {
     return (
       <Shell>
         <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
@@ -76,42 +74,23 @@ export default async function GallerySharePage({ params }) {
     )
   }
 
-  const isExpired = new Date(share.expires_at) <= new Date()
-  if (isExpired) {
-    return (
-      <Shell>
-        <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-          <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.8rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>This gallery has expired</h1>
-          <p style={{ fontSize: '13px', color: '#999', maxWidth: '380px', margin: '0 auto' }}>
-            Photos shared this way are automatically removed 30 days after the link was created. Reach out to us at{' '}
-            <a href="mailto:info@canvasroutes.com" style={{ color: '#8a7a5c' }}>info@canvasroutes.com</a> if you need them again.
-          </p>
-        </div>
-        <MembershipCta />
-      </Shell>
-    )
-  }
-
   return (
     <Shell>
       <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.85rem' }}>
           Canvas Routes
         </div>
-        {share.recipient_name && (
-          <div style={{ fontSize: '14px', color: '#888', marginBottom: '0.4rem' }}>Hi {share.recipient_name},</div>
-        )}
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2rem, 5vw, 2.8rem)', fontWeight: '300', color: '#1a1a1a', margin: '0 0 0.75rem', lineHeight: 1.1 }}>
-          {share.title}
+          {person.name ? `Hi ${person.name}` : 'Your Photos'}
         </h1>
         <div style={{ fontSize: '10.5px', color: '#bbb' }}>
-          These photos will be automatically removed on {fmtDate(share.expires_at)}. To keep them, download the
+          Each event below is automatically removed 30 days after it was added. To keep them, download the
           full-resolution originals now. To get a photo removed sooner, reach out to us at{' '}
           <a href="mailto:info@canvasroutes.com" style={{ color: '#bbb' }}>info@canvasroutes.com</a>.
         </div>
       </div>
 
-      <GalleryPasswordGate token={token} title={share.title}>
+      <GalleryPasswordGate token={token}>
         <MembershipCta />
       </GalleryPasswordGate>
     </Shell>

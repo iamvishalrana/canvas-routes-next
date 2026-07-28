@@ -3,21 +3,25 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 export async function generateMetadata({ params }) {
   const { token } = await params
   const admin = createAdminClient()
-  const { data: share } = await admin.from('photo_shares').select('id, title').eq('token', token).maybeSingle()
+  const { data: person } = await admin.from('photo_share_people').select('id, name').eq('token', token).maybeSingle()
 
   let bg = null
-  if (share) {
-    const { data: firstItem } = await admin.from('photo_share_items')
-      .select('storage_path').eq('share_id', share.id).order('created_at', { ascending: true }).limit(1).maybeSingle()
+  if (person) {
+    const { data: folders } = await admin.from('photo_share_folders').select('id').eq('person_id', person.id)
+    const folderIds = (folders || []).map(f => f.id)
+    const { data: firstItem } = folderIds.length
+      ? await admin.from('photo_share_items').select('storage_path').in('folder_id', folderIds).order('created_at', { ascending: true }).limit(1).maybeSingle()
+      : { data: null }
     if (firstItem) {
       const { data: { publicUrl } } = admin.storage.from('photo-shares').getPublicUrl(firstItem.storage_path)
       bg = publicUrl
     }
   }
 
-  const title = share ? `${share.title} | Canvas Routes` : 'Photo Gallery | Canvas Routes'
+  const pageTitle = person?.name ? `${person.name}'s Photos` : 'Photo Gallery'
+  const title = `${pageTitle} | Canvas Routes`
   const description = 'A private photo gallery shared by Canvas Routes.'
-  const ogParams = new URLSearchParams({ type: 'event', title: share?.title || 'Photo Gallery' })
+  const ogParams = new URLSearchParams({ type: 'event', title: pageTitle })
   if (bg) ogParams.set('bg', bg)
   const ogImage = `https://canvasroutes.com/api/og?${ogParams.toString()}`
 

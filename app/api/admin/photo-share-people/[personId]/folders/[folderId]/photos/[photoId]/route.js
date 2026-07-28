@@ -1,16 +1,19 @@
-import { createAdminClient } from '../../../../../../../lib/supabase/admin'
-import { requireAdmin } from '../../../../../../../lib/supabase/authCheck'
-import { captureException } from '../../../../../../../lib/sentry'
+import { createAdminClient } from '../../../../../../../../../lib/supabase/admin'
+import { requireAdmin } from '../../../../../../../../../lib/supabase/authCheck'
+import { captureException } from '../../../../../../../../../lib/sentry'
 
 const BUCKET = 'photo-shares'
 
 export async function DELETE(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
-  const { photoId } = await params
+  const { personId, folderId, photoId } = await params
   const supabase = createAdminClient()
 
-  const { data: row } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('id', photoId).maybeSingle()
+  const { data: folder } = await supabase.from('photo_share_folders').select('id').eq('id', folderId).eq('person_id', personId).maybeSingle()
+  if (!folder) return Response.json({ error: 'Folder not found.' }, { status: 404 })
+
+  const { data: row } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('id', photoId).eq('folder_id', folderId).maybeSingle()
   if (!row) return Response.json({ error: 'Photo not found.' }, { status: 404 })
 
   const { error } = await supabase.from('photo_share_items').delete().eq('id', photoId)

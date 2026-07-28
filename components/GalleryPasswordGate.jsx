@@ -10,20 +10,25 @@ const inp = {
   transition: 'border-color 0.2s, background 0.2s',
 }
 
-// Gates the actual photo grid behind an email check — the recipient email
-// set on the share (see PhotoSharesTab.jsx) doubles as the password. Nothing
+function daysLeft(expiresAt) {
+  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000)
+}
+
+// Gates the actual photo grid behind an email check — the person's email
+// (see the admin Non-Member Shares pages) doubles as the password for their
+// one link, which covers every event folder underneath them. Nothing
 // sensitive (photo URLs) is ever present in the server-rendered HTML; it's
 // only fetched client-side after /api/gallery/[token]/verify confirms the
 // entered email matches. Remembers a verified email per-token in
 // localStorage so a returning visitor isn't asked to retype it — but the
 // server still re-checks it silently on that return visit, it's never just
 // a client-side flag.
-export default function GalleryPasswordGate({ token, title, children }) {
+export default function GalleryPasswordGate({ token, children }) {
   const [phase, setPhase] = useState('checking') // 'checking' | 'gate' | 'authed'
   const [email, setEmail] = useState('')
   const [checking, setChecking] = useState(false)
   const [errMsg, setErrMsg] = useState(null)
-  const [photos, setPhotos] = useState([])
+  const [folders, setFolders] = useState([])
 
   useEffect(() => {
     const remembered = localStorage.getItem(`gallery_email_${token}`)
@@ -49,7 +54,7 @@ export default function GalleryPasswordGate({ token, title, children }) {
         return
       }
       localStorage.setItem(`gallery_email_${token}`, candidate)
-      setPhotos(data.photos || [])
+      setFolders(data.folders || [])
       setPhase('authed')
     } catch {
       if (silent) { setPhase('gate'); return }
@@ -151,14 +156,19 @@ export default function GalleryPasswordGate({ token, title, children }) {
     )
   }
 
+  const totalPhotos = folders.reduce((s, f) => s + f.photos.length, 0)
+
   return (
     <div>
-      {photos.length === 0 ? (
+      {totalPhotos === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)' }}>
-          <div style={{ fontSize: '13px', color: '#999' }}>No photos have been added to this gallery yet.</div>
+          <div style={{ fontSize: '13px', color: '#999' }}>No photos have been added yet.</div>
         </div>
       ) : (
-        <MembersGallery albums={[{ name: title, date: null, photos }]} />
+        <MembersGallery albums={folders.map(f => {
+          const left = daysLeft(f.expiresAt)
+          return { name: f.title, date: null, photos: f.photos, note: left <= 5 ? `${left <= 0 ? 'expiring today' : `${left}d left`}` : null }
+        })} />
       )}
       {children}
     </div>
