@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRealtimeSync } from './useRealtimeSync'
 import GenericWaiverViewerModal from './GenericWaiverViewerModal'
 import { CopyBtn } from './shared'
+import ContactSearchSelect from './ContactSearchSelect'
 import { formatCarLabel } from '../../../lib/carLabel'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
@@ -355,7 +356,14 @@ export default function CheckinStatusClient({ eventId }) {
           {showAddForm ? 'Cancel' : '+ Add Registrant'}
         </button>
         {showAddForm && (
-          <form onSubmit={addRegistrant} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' }}>
+          <form onSubmit={addRegistrant} className="add-reg-wrap" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' }}>
+            <style>{`.add-reg-wrap input { font-size: 16px !important; }`}</style>
+            <div style={{ flex: '1 1 260px', maxWidth: '340px' }}>
+              <ContactSearchSelect
+                placeholder="Search members, applications, contacts…"
+                onSelect={r => { setAddName(r.name || ''); setAddEmail(r.email || '') }}
+              />
+            </div>
             <input value={addName} onChange={e => setAddName(e.target.value)} placeholder="Name" required
               style={{ padding: '0.5rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', flex: '1 1 160px', maxWidth: '220px' }} />
             <input value={addEmail} onChange={e => setAddEmail(e.target.value)} placeholder="Email" type="email" required
@@ -365,7 +373,7 @@ export default function CheckinStatusClient({ eventId }) {
               {adding ? 'Adding…' : 'Add'}
             </button>
             {addError && <div style={{ fontSize: '11px', color: '#93333E', width: '100%' }}>{addError}</div>}
-            <div style={{ fontSize: '10.5px', color: '#aaa', width: '100%' }}>Added registrants are marked as confirmed — for walk-ins, comps, or anyone who registered outside the normal flow.</div>
+            <div style={{ fontSize: '10.5px', color: '#aaa', width: '100%' }}>Search to fill the name and email automatically, or type them in directly for a true walk-in. Added registrants are marked as confirmed — for walk-ins, comps, or anyone who registered outside the normal flow.</div>
           </form>
         )}
       </div>
