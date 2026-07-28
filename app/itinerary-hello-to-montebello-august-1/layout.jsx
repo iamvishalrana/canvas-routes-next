@@ -12,7 +12,7 @@ export const metadata = {
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',
-    url: 'https://canvasroutes.com/itinerary-hello-to-montebello-july-26',
+    url: 'https://canvasroutes.com/itinerary-hello-to-montebello-august-1',
     title: 'Hello to Montebello — August 1',
     description: 'Your route and itinerary for the Canvas Routes drive to Fairmont Le Château Montebello.',
     images: [{ url: HERO_IMAGE, width: 1400, height: 788, alt: 'Hello to Montebello — Canvas Routes' }],

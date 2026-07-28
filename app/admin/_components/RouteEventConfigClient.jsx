@@ -191,8 +191,8 @@ export default function RouteEventConfigClient({ eventId }) {
           {/^hello to montebello/i.test(eventName) && (
             <div style={{ padding: '0.85rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <span>Itinerary page:</span>
-              <a href="/itinerary-hello-to-montebello-july-26" target="_blank" rel="noopener noreferrer" style={{ color: '#3B6B2F' }}>canvasroutes.com/itinerary-hello-to-montebello-july-26</a>
-              <CopyBtn value="https://canvasroutes.com/itinerary-hello-to-montebello-july-26" />
+              <a href="/itinerary-hello-to-montebello-august-1" target="_blank" rel="noopener noreferrer" style={{ color: '#3B6B2F' }}>canvasroutes.com/itinerary-hello-to-montebello-august-1</a>
+              <CopyBtn value="https://canvasroutes.com/itinerary-hello-to-montebello-august-1" />
             </div>
           )}
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
