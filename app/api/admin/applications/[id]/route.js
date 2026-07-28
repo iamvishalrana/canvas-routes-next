@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { captureMessage } from '../../../../../lib/sentry.js'
 import { attendanceKey } from '../../../../../lib/eventMeta.js'
+import { JERRY_EMAIL } from '../../../../../lib/jerryRegistrant.js'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -76,6 +77,9 @@ export async function DELETE(request, { params }) {
 
   // Fetch email before deletion so we can clean up the linked member
   const { data: app } = await supabase.from('applications').select('email').eq('id', id).maybeSingle()
+  if ((app?.email || '').toLowerCase().trim() === JERRY_EMAIL) {
+    return Response.json({ error: "Jerry's application is permanent and can't be deleted." }, { status: 403 })
+  }
 
   const { error } = await supabase.from('applications').delete().eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })

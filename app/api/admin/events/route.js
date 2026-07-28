@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
+import { ensureJerryRegistered } from '../../../../lib/jerryRegistrant.js'
 
 export async function GET(request) {
   const adminUser = await requireAdmin()
@@ -46,6 +47,7 @@ export async function POST(request) {
     trip_length: ['Same Day', 'Overnight', 'Multiple Nights'].includes(trip_length) ? trip_length : null,
   }).select().single()
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  await ensureJerryRegistered(supabase, data.name)
   await logAdminAction(supabase, adminUser?.email, {
     action: 'event.create', entityType: 'event', entityId: data.id, entityName: data.name,
     metadata: { date: data.date, type: data.type },

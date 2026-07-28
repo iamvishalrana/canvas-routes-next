@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail'
 import { isSameEvent } from '../../../../../../lib/eventCheckinShared'
+import { isPermanentRegistrant } from '../../../../../../lib/jerryRegistrant.js'
 import { captureException } from '../../../../../../lib/sentry.js'
 
 // Manually add someone to an event's registrant list — for walk-ins, comps,
@@ -119,6 +120,9 @@ export async function DELETE(request, { params }) {
   const { data: app } = await admin.from('applications').select('id, registrations, stripe_payment_status').eq('email', email).maybeSingle()
   const matched = (app?.registrations || []).find(r => isSameEvent(r.event, event.name))
   if (!app || !matched) return Response.json({ error: 'No registration found for this email.' }, { status: 404 })
+  if (isPermanentRegistrant(email, matched)) {
+    return Response.json({ error: "Jerry's registration is permanent and can't be removed from an event." }, { status: 403 })
+  }
   if (!matched.paid && app.stripe_payment_status === 'authorized') {
     return Response.json({ error: 'This person has a pending payment hold — decline it from the Registrants list before removing.' }, { status: 400 })
   }

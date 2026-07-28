@@ -284,7 +284,11 @@ export default function HelloToMontebelloItineraryPage() {
       .catch(() => {})
   }, [authed])
 
-  const allParticipants = [...MANUAL_PARTICIPANTS, ...fetchedParticipants]
+  // Jerry is now a real registrant (see lib/jerryRegistrant.js) so he comes
+  // back from the roster fetch too — his richer hardcoded entry above (lead
+  // flag, fact blurb, fixed photo) is what's actually shown, so drop the
+  // fetched duplicate rather than listing him twice.
+  const allParticipants = [...MANUAL_PARTICIPANTS, ...fetchedParticipants.filter(p => p.name !== 'Jerry')]
   const groupNumbers = [...new Set(allParticipants.map(p => p.group).filter(g => g != null))].sort((a, b) => a - b)
   const ungrouped = allParticipants.filter(p => p.group == null)
 
