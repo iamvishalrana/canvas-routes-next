@@ -29,14 +29,28 @@ export async function POST(request) {
   const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword })
   if (verifyError) return Response.json({ error: 'Current password is incorrect.' }, { status: 401 })
 
+  // Capture the current session's token before updateUser() has a chance to
+  // rotate it — this is the "except this one" reference for the sign-out
+  // call below, so the session that just legitimately changed the password
+  // doesn't get logged out along with everyone else.
+  const { data: { session } } = await supabase.auth.getSession()
+
   const { error } = await supabase.auth.updateUser({ password })
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  const admin = createAdminClient()
+
+  // Sign out every other session for this account — if a stolen/leaked
+  // session was the reason for changing the password, this is what actually
+  // revokes it instead of leaving it valid until it happens to expire.
+  if (session?.access_token) {
+    await admin.auth.admin.signOut(session.access_token, 'others').catch(() => {})
+  }
 
   // Stamp password_set_at if it was never set (e.g. password set via a
   // recovery flow) — the admin panel shows "Awaiting" and keeps offering
   // re-invites until this is non-null
   try {
-    const admin = createAdminClient()
     await admin.from('members')
       .update({ password_set_at: new Date().toISOString() })
       .eq('id', user.id)

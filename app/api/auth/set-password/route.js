@@ -26,24 +26,38 @@ export async function POST(request) {
 
   const admin = createAdminClient()
   let userId = null
+  let resolvedToken = null
 
   // Try token-based auth first (invite / implicit flow)
   if (accessToken) {
     const { data: { user } } = await admin.auth.getUser(accessToken)
-    userId = user?.id
+    if (user) { userId = user.id; resolvedToken = accessToken }
   }
 
   // Fall back to cookie-based session (PKCE / forgot-password flow)
   if (!userId) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    userId = user?.id
+    if (user) {
+      userId = user.id
+      const { data: { session } } = await supabase.auth.getSession()
+      resolvedToken = session?.access_token || null
+    }
   }
 
   if (!userId) return Response.json({ error: 'Session expired. Please request a new link.' }, { status: 401 })
 
   const { error } = await admin.auth.admin.updateUserById(userId, { password })
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  // Revoke every session for this account, including the recovery/invite
+  // token just used — the page redirects to a fresh login right after this,
+  // so nothing relies on that token staying valid, and this is what actually
+  // locks out anyone who had unauthorized access (the usual reason someone
+  // resets their password) instead of leaving their session valid.
+  if (resolvedToken) {
+    await admin.auth.admin.signOut(resolvedToken, 'global').catch(() => {})
+  }
 
   await admin.from('members')
     .update({ membership_status: 'active', password_set_at: new Date().toISOString() })
