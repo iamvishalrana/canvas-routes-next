@@ -4,27 +4,57 @@ import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, CopyBtn } f
 import CheckinStatusClient from './CheckinStatusClient'
 import AwardsTallyClient from './AwardsTallyClient'
 import { useRealtimeSync } from './useRealtimeSync'
+import { formatCarLabel } from '../../../lib/carLabel'
 
 const smallTextarea = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }
 const smallInput = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem' }
+
+// Every field the lunch export can include, plus which ones are on by
+// default — matches what the export already showed before field selection
+// existed (name/email/passenger/age/dish), with the rest opt-in.
+const LUNCH_FIELD_DEFS = [
+  { key: 'registrant', label: 'Name' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'car', label: 'Car' },
+  { key: 'convoyGroup', label: 'Convoy Group' },
+  { key: 'personName', label: 'Passenger' },
+  { key: 'age', label: 'Age' },
+  { key: 'dish', label: 'Lunch Selection' },
+  { key: 'paymentStatus', label: 'Payment Status' },
+  { key: 'isMember', label: 'Member' },
+]
+const DEFAULT_LUNCH_FIELDS = {
+  registrant: true, email: true, phone: false, car: false, convoyGroup: false,
+  personName: true, age: true, dish: true, paymentStatus: false, isMember: false,
+}
 
 // Flattens each registrant's per-passenger lunch pick into one row per
 // person — lunch entries only store name/dish, so age comes from the same
 // person's trip_details.passengers_list (matched by name, falling back to
 // index since both arrays are written in the same driver-first order).
+// Includes every exportable field regardless of current selection — the
+// export functions pick which columns to use at write time, so toggling
+// fields never needs a re-fetch.
 function buildLunchRows(participants) {
   const rows = []
   for (const p of participants) {
     if (!p.lunch?.length) continue
     const passengers = p.trip_details?.passengers_list || []
+    const car = formatCarLabel(p.registration?.carYear, p.registration?.carMake, p.registration?.carModel) || ''
     p.lunch.forEach((entry, i) => {
       const passenger = passengers.find(pp => pp.name === entry.name) || passengers[i]
       rows.push({
         registrant: p.name || p.email,
         email: p.email,
+        phone: p.registration?.phone || '',
+        car,
+        convoyGroup: p.convoy_group ?? '',
         personName: entry.name || (i === 0 ? 'Driver' : `Passenger ${i + 1}`),
         age: passenger?.age || '',
         dish: entry.dish_name || '',
+        paymentStatus: p.paymentStatus || '',
+        isMember: p.isMember ? 'Yes' : 'No',
       })
     })
   }
@@ -88,6 +118,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [showLunchConfig, setShowLunchConfig] = useState(false)
   const [showAwardsConfig, setShowAwardsConfig] = useState(false)
   const [showWaiverText, setShowWaiverText] = useState(false)
+  const [lunchFields, setLunchFields] = useState(DEFAULT_LUNCH_FIELDS)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -125,24 +156,49 @@ export default function RouteEventConfigClient({ eventId }) {
   useEffect(() => { load() }, [load])
   useRealtimeSync(['event_checkins'], refreshParticipants)
 
+  function activeLunchFieldDefs() {
+    return LUNCH_FIELD_DEFS.filter(f => lunchFields[f.key])
+  }
+
   function exportLunchCSV() {
-    const rows = [['Registrant', 'Email', 'Passenger', 'Age', 'Dish'], ...buildLunchRows(participants).map(r => [r.registrant, r.email, r.personName, r.age, r.dish])]
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const active = activeLunchFieldDefs()
+    if (!active.length) return
+    const dataRows = buildLunchRows(participants).map(r => active.map(f => r[f.key]))
+    const rows = [active.map(f => f.label), ...dataRows]
+    const csv = rows.map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
     downloadFile(csv, `lunch-selections-${eventId}-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')
   }
 
   function exportLunchTXT() {
+    const active = activeLunchFieldDefs()
+    if (!active.length) return
+    // Registrant is always the grouping key (even if not itself selected as
+    // a column) — otherwise there's nothing sensible to group passenger rows
+    // under in a plain-text list.
+    const groupKeys = active.filter(f => f.key !== 'personName' && f.key !== 'age' && f.key !== 'dish')
+    const lineKeys = active.filter(f => f.key === 'personName' || f.key === 'age' || f.key === 'dish')
     const byRegistrant = new Map()
     for (const r of buildLunchRows(participants)) {
-      if (!byRegistrant.has(r.email)) byRegistrant.set(r.email, { registrant: r.registrant, lines: [] })
-      byRegistrant.get(r.email).lines.push(`  ${r.personName}${r.age ? ` (age ${r.age})` : ''}: ${r.dish}`)
+      if (!byRegistrant.has(r.email)) {
+        const groupInfo = groupKeys.filter(f => f.key !== 'registrant').map(f => `${f.label}: ${r[f.key] || '—'}`).join(' · ')
+        byRegistrant.set(r.email, { header: r.registrant, groupInfo, lines: [] })
+      }
+      const line = lineKeys.length
+        ? lineKeys.map(f => f.key === 'age' ? (r.age ? `age ${r.age}` : null) : r[f.key]).filter(Boolean).join(': ')
+        : null
+      if (line) byRegistrant.get(r.email).lines.push(`  ${line}`)
     }
-    const text = Array.from(byRegistrant.values()).map(g => `${g.registrant}\n${g.lines.join('\n')}`).join('\n\n')
+    const text = Array.from(byRegistrant.values())
+      .map(g => `${g.header}${g.groupInfo ? ` (${g.groupInfo})` : ''}${g.lines.length ? `\n${g.lines.join('\n')}` : ''}`)
+      .join('\n\n')
     downloadFile(text, `lunch-selections-${eventId}-${new Date().toISOString().slice(0, 10)}.txt`, 'text/plain')
   }
 
   function exportLunchPrint() {
+    const active = activeLunchFieldDefs()
+    if (!active.length) return
     const rows = buildLunchRows(participants)
+    const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(`<!doctype html><html><head><title>Lunch Selections</title><style>
@@ -152,8 +208,8 @@ export default function RouteEventConfigClient({ eventId }) {
       th{color:#888;text-transform:uppercase;font-size:10px;letter-spacing:0.06em}
     </style></head><body>
       <h1>Lunch Selections</h1>
-      <table><thead><tr><th>Registrant</th><th>Passenger</th><th>Age</th><th>Dish</th></tr></thead><tbody>
-      ${rows.map(r => `<tr><td>${r.registrant}</td><td>${r.personName}</td><td>${r.age || '—'}</td><td>${r.dish}</td></tr>`).join('')}
+      <table><thead><tr>${active.map(f => `<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
+      ${rows.map(r => `<tr>${active.map(f => `<td>${esc(r[f.key]) || '—'}</td>`).join('')}</tr>`).join('')}
       </tbody></table>
     </body></html>`)
     win.document.close()
@@ -349,6 +405,19 @@ export default function RouteEventConfigClient({ eventId }) {
                     </div>
                   )}
                 </div>
+                {lunchRows.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+                    {LUNCH_FIELD_DEFS.map(f => {
+                      const on = !!lunchFields[f.key]
+                      return (
+                        <button key={f.key} type="button" onClick={() => setLunchFields(p => ({ ...p, [f.key]: !p[f.key] }))}
+                          style={{ fontSize: '10px', letterSpacing: '0.04em', padding: '4px 10px', borderRadius: '99px', border: `0.5px solid ${on ? 'rgba(59,107,47,0.5)' : 'rgba(0,0,0,0.15)'}`, background: on ? 'rgba(59,107,47,0.08)' : 'transparent', color: on ? '#3B6B2F' : '#999', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                          {on ? '✓ ' : ''}{f.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
                 {participants.filter(p => p.lunch?.length > 0).length === 0 ? (
                   <div style={{ fontSize: '12px', color: '#bbb', padding: '0.75rem 0' }}>No lunch selections yet.</div>
                 ) : (
