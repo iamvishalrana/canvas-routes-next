@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { inp, L, PrimaryBtn, Err } from '../../_components/shared'
+import { inp, sel, L, PrimaryBtn, Err } from '../../_components/shared'
 import ContactSearchSelect from '../../_components/ContactSearchSelect'
 
 const EMPTY_FORM = { name: '', email: '' }
@@ -13,6 +13,8 @@ export default function SharesPeopleClient() {
   const [loading, setLoading] = useState(true)
   const [listErr, setListErr] = useState('')
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('name') // name | newest | folders | photos
+  const [emptyOnly, setEmptyOnly] = useState(false)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [formErr, setFormErr] = useState('')
@@ -27,10 +29,16 @@ export default function SharesPeopleClient() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const list = !q ? people : people.filter(p =>
+    let list = !q ? people : people.filter(p =>
       (p.name || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q))
-    return [...list].sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
-  }, [people, search])
+    if (emptyOnly) list = list.filter(p => p.folderCount === 0)
+    const sorted = [...list]
+    if (sortBy === 'newest') sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    else if (sortBy === 'folders') sorted.sort((a, b) => b.folderCount - a.folderCount)
+    else if (sortBy === 'photos') sorted.sort((a, b) => b.photoCount - a.photoCount)
+    else sorted.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
+    return sorted
+  }, [people, search, sortBy, emptyOnly])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -54,8 +62,6 @@ export default function SharesPeopleClient() {
   return (
     <div className="shp-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }}>
       <style>{`
-        /* iOS Safari zooms in on focus for any input under 16px */
-        .shp-wrap input, .shp-wrap select, .shp-wrap textarea { font-size: 16px !important; }
         .shp-row:hover { border-color: rgba(197,168,130,0.4) !important; background: rgba(197,168,130,0.03) !important; }
       `}</style>
 
@@ -97,8 +103,22 @@ export default function SharesPeopleClient() {
       )}
 
       {!creating && (
-        <div style={{ marginBottom: '1rem' }}>
-          <input style={inp} value={search} onChange={e => setSearch(e.target.value)} placeholder="Filter by name or email…" />
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
+          <input style={{ ...inp, flex: '1 1 200px', maxWidth: '280px' }} value={search} onChange={e => setSearch(e.target.value)} placeholder="Filter by name or email…" />
+          <div style={{ position: 'relative', flex: '0 0 auto' }}>
+            <select style={{ ...sel, width: 'auto', paddingRight: '1.75rem' }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+              <option value="name">Sort: Name (A–Z)</option>
+              <option value="newest">Sort: Newest added</option>
+              <option value="folders">Sort: Most folders</option>
+              <option value="photos">Sort: Most photos</option>
+            </select>
+            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <button type="button" onClick={() => setEmptyOnly(v => !v)}
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: `0.5px solid ${emptyOnly ? 'rgba(197,168,130,0.7)' : 'rgba(0,0,0,0.15)'}`, background: emptyOnly ? 'rgba(197,168,130,0.12)' : 'transparent', color: emptyOnly ? '#8A6535' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+            No folders yet
+          </button>
+          <span style={{ fontSize: '11px', color: '#aaa' }}>{filtered.length} of {people.length}</span>
         </div>
       )}
 

@@ -356,8 +356,7 @@ export default function CheckinStatusClient({ eventId }) {
           {showAddForm ? 'Cancel' : '+ Add Registrant'}
         </button>
         {showAddForm && (
-          <form onSubmit={addRegistrant} className="add-reg-wrap" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' }}>
-            <style>{`.add-reg-wrap input { font-size: 16px !important; }`}</style>
+          <form onSubmit={addRegistrant} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' }}>
             <div style={{ flex: '1 1 260px', maxWidth: '340px' }}>
               <ContactSearchSelect
                 placeholder="Search members, applications, contacts…"

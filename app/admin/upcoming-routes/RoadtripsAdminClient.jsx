@@ -336,7 +336,6 @@ export default function RoadtripsAdminClient() {
   return (
     <div className="rta-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)' }}>
       <style>{`
-        .rta-wrap input, .rta-wrap select, .rta-wrap textarea { font-size: 16px !important; }
         .rta-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .rta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
         .rta-grid > div { min-width: 0; }

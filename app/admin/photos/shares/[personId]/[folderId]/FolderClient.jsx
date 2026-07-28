@@ -170,7 +170,6 @@ export default function FolderClient() {
   return (
     <div className="shp-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }}>
       <style>{`
-        .shp-wrap input, .shp-wrap select, .shp-wrap textarea { font-size: 16px !important; }
         .shp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
         @media (max-width: 480px) { .shp-grid { grid-template-columns: repeat(2, 1fr); } }
       `}</style>

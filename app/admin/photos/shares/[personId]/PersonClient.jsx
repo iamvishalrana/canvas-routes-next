@@ -122,7 +122,6 @@ export default function PersonClient() {
   return (
     <div className="shp-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }}>
       <style>{`
-        .shp-wrap input, .shp-wrap select, .shp-wrap textarea { font-size: 16px !important; }
         .shp-folder-row:hover { border-color: rgba(197,168,130,0.4) !important; background: rgba(197,168,130,0.03) !important; }
       `}</style>
 

@@ -702,8 +702,6 @@ export default function ExpensesClient() {
         .exp-new { animation: expFadeIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
         .exp-edit-panel { animation: expPanelIn 0.2s ease both; }
         .exp-filter-chip { transition: background 0.15s, color 0.15s, border-color 0.15s; }
-        /* iOS: inputs must be >=16px or Safari zooms on focus; kill tap highlight */
-        .exp-wrap input, .exp-wrap select, .exp-wrap textarea { font-size: 16px !important; }
         .exp-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .exp-tap { min-height: 44px; }
         @keyframes expFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
