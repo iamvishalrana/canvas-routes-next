@@ -42,7 +42,7 @@ function resetHtml({ actionLink }) {
 
 export async function POST(request) {
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip)) {
+  if (await checkRateLimit(ip, 10, 60)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 

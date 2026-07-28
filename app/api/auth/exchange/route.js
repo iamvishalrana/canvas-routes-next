@@ -2,7 +2,7 @@ import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
 
 export async function GET(request) {
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip)) return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+  if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
 
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')

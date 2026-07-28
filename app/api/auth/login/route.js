@@ -3,7 +3,9 @@ import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
 
 export async function POST(request) {
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip)) {
+  // Credential-guessing surface — same strict tier as the gallery password
+  // gate (app/api/gallery/[token]/verify), tighter than the sitewide default.
+  if (await checkRateLimit(ip, 5, 60)) {
     return Response.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 

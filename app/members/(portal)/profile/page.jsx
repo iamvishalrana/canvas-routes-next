@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const editAnchorRef = useRef(null)
 
   const [pwOpen, setPwOpen] = useState(false)
-  const [pwForm, setPwForm] = useState({ password: '', confirm: '' })
+  const [pwForm, setPwForm] = useState({ currentPassword: '', password: '', confirm: '' })
   const pwRules = [
     { label: 'At least 8 characters', pass: pwForm.password.length >= 8 },
     { label: 'Under 72 characters', pass: pwForm.password.length > 0 && pwForm.password.length <= 72 },
@@ -225,6 +225,7 @@ export default function ProfilePage() {
 
   async function savePassword(e) {
     e.preventDefault()
+    if (!pwForm.currentPassword) { setPwError('Please enter your current password.'); return }
     if (!pwAllPass) { setPwError('Please meet all password requirements.'); return }
     if (pwForm.password !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
     setSavingPw(true); setPwError(null); setSavedPw(false)
@@ -232,11 +233,11 @@ export default function ProfilePage() {
       const res = await fetch('/api/member/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pwForm.password }),
+        body: JSON.stringify({ currentPassword: pwForm.currentPassword, password: pwForm.password }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) setPwError(data.error || 'Could not update password.')
-      else { setSavedPw(true); setPwForm({ password: '', confirm: '' }) }
+      else { setSavedPw(true); setPwForm({ currentPassword: '', password: '', confirm: '' }) }
     } catch {
       setPwError('Connection error. Please check your network and try again.')
     } finally {
@@ -873,6 +874,11 @@ export default function ProfilePage() {
             {pwOpen && (
               <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)', padding: '1.4rem 1.25rem', background: 'rgba(250,250,248,0.8)' }}>
                 <form onSubmit={savePassword}>
+                  <Field label="Current Password">
+                    <input className="cr-input" type="password" value={pwForm.currentPassword}
+                      onChange={e => setPwForm(p => ({ ...p, currentPassword: e.target.value }))}
+                      autoComplete="current-password" style={inp} />
+                  </Field>
                   <Field label="New Password">
                     <input className="cr-input" type="password" value={pwForm.password}
                       onChange={e => setPwForm(p => ({ ...p, password: e.target.value }))}

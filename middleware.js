@@ -74,10 +74,11 @@ export async function middleware(request) {
     }
   }
 
-  // CSRF defense-in-depth: reject cross-site mutating requests to admin API
-  // routes. Only blocks when Origin is present AND clearly mismatched — never
-  // blocks same-origin requests or requests that omit the header entirely.
-  if (isApiAdmin && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+  // CSRF defense-in-depth: reject cross-site mutating requests to admin AND
+  // member API routes. Only blocks when Origin is present AND clearly
+  // mismatched — never blocks same-origin requests or requests that omit the
+  // header entirely.
+  if ((isApiAdmin || isApiMember) && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
     const origin = request.headers.get('origin')
     if (origin) {
       try {
