@@ -7,6 +7,7 @@ import { computeTax } from '../../../../../../lib/tax.js'
 import { PRICES, MEMBERSHIP_TYPE_TIER } from '../../../../../../lib/prices.js'
 import { buildRefundEmailHtml } from '../../../../../../lib/refundEmail.js'
 import { buildRefundPdfBuffer } from '../../../../../../lib/refundPdf.js'
+import { isSameEvent } from '../../../../../../lib/eventCheckinShared.js'
 
 export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -31,10 +32,11 @@ export async function POST(request, { params }) {
   const wasCaptured = app.stripe_payment_status === 'paid'
   let refund = null
 
+  let pi = null
   try {
     if (!wasCaptured) {
       // Cancel the hold — no charge to the customer
-      await stripe.paymentIntents.cancel(
+      pi = await stripe.paymentIntents.cancel(
         app.stripe_payment_intent_id,
         {},
         { idempotencyKey: `reject-cancel-${app.stripe_payment_intent_id}` }
@@ -47,6 +49,7 @@ export async function POST(request, { params }) {
         { payment_intent: app.stripe_payment_intent_id, expand: ['payment_intent'] },
         { idempotencyKey: `reject-refund-${app.stripe_payment_intent_id}` }
       )
+      pi = refund.payment_intent
     }
 
     // Money already moved — a failed status write here must not look like success
@@ -56,6 +59,21 @@ export async function POST(request, { params }) {
     if (updateErr) {
       captureException(new Error(updateErr.message), { context: 'admin-reject-status-update', appId: id })
       return Response.json({ error: `Payment was ${app.stripe_payment_status === 'authorized' ? 'cancelled' : 'refunded'} on Stripe, but the status could not be updated: ${updateErr.message}` }, { status: 500 })
+    }
+
+    // Clear `paid` on this event's registrations[] entry too — otherwise
+    // listEventRegistrants()/findEventRegistrant() (lib/eventCheckinShared.js)
+    // check matchedReg.paid BEFORE falling back to the shared
+    // stripe_payment_status column above, so a refunded/declined registrant
+    // would keep showing up as "Paid" and passing check-in indefinitely.
+    const eventName = pi?.metadata?.event_name
+    if (eventName) {
+      const { data: current } = await supabase.from('applications').select('registrations').eq('id', id).maybeSingle()
+      const registrations = (current?.registrations || []).map(reg =>
+        isSameEvent(reg.event, eventName) ? { ...reg, paid: false } : reg
+      )
+      const { error: regErr } = await supabase.from('applications').update({ registrations }).eq('id', id)
+      if (regErr) captureException(new Error(regErr.message), { context: 'admin-reject-registrations-sync', appId: id })
     }
 
     if (wasCaptured && process.env.RESEND_API_KEY && app.email) {

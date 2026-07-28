@@ -18,7 +18,28 @@ export async function PATCH(request, { params }) {
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
 
   // Sync shared fields to members table
-  const { data: app } = await supabase.from('applications').select('email').eq('id', id).single()
+  const { data: app } = await supabase.from('applications').select('email, registrations').eq('id', id).single()
+
+  // Per-event registrations[].details is a snapshot of car info taken at
+  // registration time, and it takes priority over these flat columns
+  // everywhere check-in/registrants reads from (lib/eventCheckinShared.js) —
+  // so a car-info correction made here would silently have no visible effect
+  // on any event whose snapshot already has a value, unless it's propagated
+  // into every snapshot too.
+  const carFieldsEdited = ['car_year', 'car_make', 'car_model'].filter(f => f in body)
+  if (carFieldsEdited.length && Array.isArray(app?.registrations) && app.registrations.length) {
+    const registrations = app.registrations.map(reg => {
+      if (!reg.details) return reg
+      const details = { ...reg.details }
+      if ('car_year' in body) details.car_year = body.car_year || null
+      if ('car_make' in body) details.car_make = body.car_make || null
+      if ('car_model' in body) details.car_model = body.car_model || null
+      return { ...reg, details }
+    })
+    const { error: regSyncErr } = await supabase.from('applications').update({ registrations }).eq('id', id)
+    if (regSyncErr) captureMessage('Application→registrations car snapshot sync failed', { error: regSyncErr.message, appId: id })
+  }
+
   if (app?.email) {
     const memberSync = {}
     if ('name' in body) memberSync.name = body.name?.trim() || null

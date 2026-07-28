@@ -8,6 +8,7 @@ import { computeTax } from '../../../../../../lib/tax.js'
 import { PRICES, MEMBERSHIP_TYPE_TIER } from '../../../../../../lib/prices.js'
 import { buildRefundEmailHtml } from '../../../../../../lib/refundEmail.js'
 import { buildRefundPdfBuffer } from '../../../../../../lib/refundPdf.js'
+import { isSameEvent } from '../../../../../../lib/eventCheckinShared.js'
 
 export async function POST(request, { params }) {
   const admin = await requireAdmin()
@@ -52,6 +53,21 @@ export async function POST(request, { params }) {
       .update({ stripe_payment_status: 'refunded', stripe_amount_refunded: refund.amount })
       .eq('stripe_payment_intent_id', piId)
     if (syncErr) captureException(new Error(syncErr.message), { context: 'admin-stripe-refund-db-sync', piId })
+
+    // Clear `paid` on this event's registrations[] entry too — otherwise
+    // listEventRegistrants()/findEventRegistrant() (lib/eventCheckinShared.js)
+    // check matchedReg.paid BEFORE falling back to the shared
+    // stripe_payment_status column above, so a refunded registrant would
+    // keep showing up as "Paid" and passing check-in indefinitely.
+    const eventName = pi?.metadata?.event_name
+    if (eventName) {
+      const { data: current } = await supabase.from('applications').select('registrations').eq('id', app.id).maybeSingle()
+      const registrations = (current?.registrations || []).map(reg =>
+        isSameEvent(reg.event, eventName) ? { ...reg, paid: false } : reg
+      )
+      const { error: regErr } = await supabase.from('applications').update({ registrations }).eq('id', app.id)
+      if (regErr) captureException(new Error(regErr.message), { context: 'admin-stripe-refund-registrations-sync', piId })
+    }
 
     await logAdminAction(supabase, admin.email, {
       action: 'payment.refund',

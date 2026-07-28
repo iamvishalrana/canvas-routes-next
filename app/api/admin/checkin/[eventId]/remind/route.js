@@ -33,6 +33,20 @@ export async function POST(request, { params }) {
     admin.from('event_checkins').select('email, trip_details, waiver, lunch, car_photo').eq('event_id', eventId),
   ])
   const checkinByEmail = new Map((checkins || []).map(c => [(c.email || '').toLowerCase(), c]))
+  // Same "already has a car photo" definition the admin dashboard uses
+  // (CheckinStatusClient.jsx's hasCarPhotoish) — a member's existing profile
+  // photo counts too, not just this event's own submission. Without this,
+  // someone the dashboard already shows as "Photo ✓" would still get a
+  // reminder email telling them they still need to submit one.
+  const emails = registrants.map(r => r.email)
+  const { data: members } = emails.length
+    ? await admin.from('members').select('email, cars, car_photo_url').in('email', emails)
+    : { data: [] }
+  const memberByEmail = new Map((members || []).map(m => [(m.email || '').toLowerCase(), m]))
+  const hasProfilePhoto = email => {
+    const m = memberByEmail.get(email)
+    return !!(m?.cars?.[0]?.photo_url || m?.car_photo_url)
+  }
   // Resolved per-registrant — car_photo drops out for anyone exempt (already
   // sent one / attended a route with us before), so this reminder never nags
   // them about something they were never meant to be asked for.
@@ -52,7 +66,7 @@ export async function POST(request, { params }) {
         hasTrip && !c?.trip_details && 'trip_details',
         hasWaiver && !c?.waiver && 'waiver',
         hasLunch && !(c?.lunch?.length > 0) && 'lunch',
-        hasCarPhoto && !c?.car_photo && 'car_photo',
+        hasCarPhoto && !c?.car_photo && !hasProfilePhoto(r.email) && 'car_photo',
       ].filter(Boolean)
       return { ...r, missing }
     })
