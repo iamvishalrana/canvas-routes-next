@@ -112,17 +112,17 @@ export default function GlobalSearch() {
   )
 
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '10vh' }}
+    <div className="admin-shell" style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '10vh' }}
       onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', animation: 'srBackdrop 0.18s ease' }} />
       <div style={{ position: 'relative', width: '100%', maxWidth: '520px', margin: '0 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.12)', boxShadow: '0 16px 60px rgba(0,0,0,0.2)', maxHeight: '70vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'srPanel 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
 
         {/* Input */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.9rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.7rem 1rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
             placeholder="Search members, applications, contacts…"
-            style={{ flex: 1, border: 'none', outline: 'none', fontSize: '14px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', background: 'transparent' }} />
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', background: 'transparent' }} />
           {loading && <div style={{ width: '14px', height: '14px', border: '2px solid rgba(0,0,0,0.1)', borderTopColor: '#0F1E14', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />}
           <kbd onClick={() => setOpen(false)} style={{ fontSize: '9px', letterSpacing: '0.04em', background: 'rgba(0,0,0,0.06)', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 6px', color: '#999', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>Esc</kbd>
         </div>

@@ -43,15 +43,15 @@ export default function AdminLoginPage() {
   }
 
   const inputStyle = field => ({
-    width: '100%', padding: '0.9rem 1rem', boxSizing: 'border-box',
+    width: '100%', padding: '0.65rem 0.85rem', boxSizing: 'border-box',
     border: `1px solid ${focused === field ? 'rgba(197,168,130,0.8)' : 'rgba(197,168,130,0.2)'}`,
-    background: 'rgba(245,241,236,0.04)', borderRadius: '10px',
-    fontSize: '14px', fontFamily: 'var(--font-inter),sans-serif', color: '#F5F1EC',
+    background: 'rgba(245,241,236,0.04)', borderRadius: '8px',
+    fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#F5F1EC',
     outline: 'none', transition: 'border-color 0.2s', WebkitAppearance: 'none',
   })
 
   return (
-    <div style={{
+    <div className="admin-shell" style={{
       minHeight: '100dvh', background: '#0F1E14',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: 'calc(1.5rem + env(safe-area-inset-top)) 1.5rem calc(2.5rem + env(safe-area-inset-bottom))',

@@ -41,11 +41,11 @@ export function parseCarMakeModel(combined) {
 // ── Base styles ───────────────────────────────────────────────────────────────
 
 export const inp = {
-  width: '100%', padding: '0.7rem 0.9rem',
+  width: '100%', padding: '0.5rem 0.75rem',
   border: '1px solid rgba(0,0,0,0.14)', background: '#fff',
   fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif',
   color: '#1a1a1a', outline: 'none', boxSizing: 'border-box',
-  borderRadius: '10px',
+  borderRadius: '8px',
 }
 export const sel = { ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none' }
 
