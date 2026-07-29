@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu } from '../_components/shared'
 import RouteEventConfigClient from '../_components/RouteEventConfigClient'
 import WtetClient from '../wtet/WtetClient'
 import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
@@ -18,7 +18,9 @@ const TRIP_TYPES = [
 ]
 const TRIP_TAG = { overnight: 'Overnight', multi_day: 'Multi-day' } // 'day' shows no tag
 
-const smallTextarea = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', resize: 'vertical' }
+const smallInput = { ...inp, fontSize: '12px', padding: '0.4rem 0.6rem' }
+const smallTextarea = { ...smallInput, resize: 'vertical' }
+const smallSelect = { ...smallInput, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none' }
 
 const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '', is_past: false, cars_rolled_out: '', photo_url: '', recap_href: '', registration_url: '' }
 
@@ -31,7 +33,7 @@ function Field({ label, children }) {
 function TripSelect({ value, onChange }) {
   return (
     <div style={{ position: 'relative' }}>
-      <select style={sel} value={value || 'day'} onChange={onChange}>
+      <select style={smallSelect} value={value || 'day'} onChange={onChange}>
         {TRIP_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
       </select>
       <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
@@ -407,7 +409,7 @@ export default function RoadtripsAdminClient() {
             <div style={{ marginTop: '0.5rem' }}>
               <L>Featured Route</L>
               <select
-                style={{ ...sel, marginBottom: '0.5rem' }}
+                style={{ ...smallSelect, marginBottom: '0.5rem' }}
                 value={popupSlugDraft}
                 onChange={e => setPopupSlugDraft(e.target.value)}
               >
@@ -440,27 +442,27 @@ export default function RoadtripsAdminClient() {
       <form onSubmit={addRoute} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem', marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Add Route</div>
         <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
-          <Field label="Route name"><input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Memoirs to Charlevoix" maxLength={120} /></Field>
-          <Field label="Destination"><input style={inp} value={form.destination} onChange={e => setForm(p => ({ ...p, destination: e.target.value }))} placeholder="Charlevoix, QC" maxLength={120} /></Field>
+          <Field label="Route name"><input style={smallInput} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Memoirs to Charlevoix" maxLength={120} /></Field>
+          <Field label="Destination"><input style={smallInput} value={form.destination} onChange={e => setForm(p => ({ ...p, destination: e.target.value }))} placeholder="Charlevoix, QC" maxLength={120} /></Field>
         </div>
         <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
-          <Field label="Month label"><input style={inp} value={form.month_label} onChange={e => setForm(p => ({ ...p, month_label: e.target.value }))} placeholder="July 2026" maxLength={40} /></Field>
-          <Field label="Duration"><input style={inp} value={form.duration_label} onChange={e => setForm(p => ({ ...p, duration_label: e.target.value }))} placeholder="1 day" maxLength={40} /></Field>
-          <Field label="Distance"><input style={inp} value={form.distance_label} onChange={e => setForm(p => ({ ...p, distance_label: e.target.value }))} placeholder="780 km (roundtrip)" maxLength={60} /></Field>
+          <Field label="Month label"><input style={smallInput} value={form.month_label} onChange={e => setForm(p => ({ ...p, month_label: e.target.value }))} placeholder="July 2026" maxLength={40} /></Field>
+          <Field label="Duration"><input style={smallInput} value={form.duration_label} onChange={e => setForm(p => ({ ...p, duration_label: e.target.value }))} placeholder="1 day" maxLength={40} /></Field>
+          <Field label="Distance"><input style={smallInput} value={form.distance_label} onChange={e => setForm(p => ({ ...p, distance_label: e.target.value }))} placeholder="780 km (roundtrip)" maxLength={60} /></Field>
         </div>
         <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
-          <Field label="Target (threshold)"><input style={inp} type="number" inputMode="numeric" min="1" value={form.target_count} onChange={e => setForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
-          <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} placeholder={String(routes.length + 1)} /></Field>
+          <Field label="Target (threshold)"><input style={smallInput} type="number" inputMode="numeric" min="1" value={form.target_count} onChange={e => setForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
+          <Field label="Sort order"><input style={smallInput} type="number" inputMode="numeric" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} placeholder={String(routes.length + 1)} /></Field>
           <Field label="Trip type"><TripSelect value={form.trip_type} onChange={e => setForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
         </div>
         <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
-          <Field label="Avg. price range"><input style={inp} value={form.price_range} onChange={e => setForm(p => ({ ...p, price_range: e.target.value }))} placeholder="e.g. $800–$1,200 per car" maxLength={60} /></Field>
-          <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.price_per_car} onChange={e => setForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="exact — set at launch" /></Field>
-          <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={form.max_cars} onChange={e => setForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
+          <Field label="Avg. price range"><input style={smallInput} value={form.price_range} onChange={e => setForm(p => ({ ...p, price_range: e.target.value }))} placeholder="e.g. $800–$1,200 per car" maxLength={60} /></Field>
+          <Field label="Price per car ($)"><input style={smallInput} type="number" inputMode="decimal" min="0" step="0.01" value={form.price_per_car} onChange={e => setForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="exact — set at launch" /></Field>
+          <Field label="Max cars"><input style={smallInput} type="number" inputMode="numeric" min="1" value={form.max_cars} onChange={e => setForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
         </div>
         <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
-          <Field label="Destination latitude"><input style={inp} type="number" inputMode="decimal" step="any" value={form.dest_lat} onChange={e => setForm(p => ({ ...p, dest_lat: e.target.value }))} placeholder="e.g. 47.4412 — plots the map" /></Field>
-          <Field label="Destination longitude"><input style={inp} type="number" inputMode="decimal" step="any" value={form.dest_lng} onChange={e => setForm(p => ({ ...p, dest_lng: e.target.value }))} placeholder="e.g. -70.5052" /></Field>
+          <Field label="Destination latitude"><input style={smallInput} type="number" inputMode="decimal" step="any" value={form.dest_lat} onChange={e => setForm(p => ({ ...p, dest_lat: e.target.value }))} placeholder="e.g. 47.4412 — plots the map" /></Field>
+          <Field label="Destination longitude"><input style={smallInput} type="number" inputMode="decimal" step="any" value={form.dest_lng} onChange={e => setForm(p => ({ ...p, dest_lng: e.target.value }))} placeholder="e.g. -70.5052" /></Field>
         </div>
         <div style={{ marginBottom: '0.6rem' }}>
           <L>Itinerary (optional — shown on the card, expandable)</L>
@@ -468,15 +470,15 @@ export default function RoadtripsAdminClient() {
         </div>
         <div style={{ marginBottom: '0.6rem' }}>
           <L>Activity options (comma-separated — asked on the interest form)</L>
-          <input style={inp} value={form.activity_options} onChange={e => setForm(p => ({ ...p, activity_options: e.target.value }))} placeholder="Scenic drives, Whale watching, Local food…" maxLength={500} />
+          <input style={smallInput} value={form.activity_options} onChange={e => setForm(p => ({ ...p, activity_options: e.target.value }))} placeholder="Scenic drives, Whale watching, Local food…" maxLength={500} />
         </div>
         <div style={{ marginBottom: '0.75rem' }}>
           <L>Description</L>
           <textarea style={{ ...smallTextarea, height: '55px' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} maxLength={600} placeholder="Short evocative description shown on the card." />
         </div>
         <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
-          <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={inp} value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
-          <Field label="Registration link (once launched — points the tile to the public registration page)"><input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="/hello-to-montebello" /></Field>
+          <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={smallInput} value={form.photo_url} onChange={e => setForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
+          <Field label="Registration link (once launched — points the tile to the public registration page)"><input style={smallInput} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="/hello-to-montebello" /></Field>
         </div>
         <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', marginBottom: '0.75rem' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#555', marginBottom: '0.6rem', cursor: 'pointer' }}>
@@ -485,8 +487,8 @@ export default function RoadtripsAdminClient() {
           </label>
           {form.is_past && (
             <div className="rta-grid rta-grid-3">
-              <Field label="Cars rolled out"><input style={inp} type="number" inputMode="numeric" min="0" value={form.cars_rolled_out} onChange={e => setForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
-              <Field label="Recap link"><input style={inp} value={form.recap_href} onChange={e => setForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
+              <Field label="Cars rolled out"><input style={smallInput} type="number" inputMode="numeric" min="0" value={form.cars_rolled_out} onChange={e => setForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
+              <Field label="Recap link"><input style={smallInput} value={form.recap_href} onChange={e => setForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
             </div>
           )}
         </div>
@@ -549,39 +551,38 @@ export default function RoadtripsAdminClient() {
                   </div>
                 )}
 
-                {/* actions */}
+                {/* actions — only what's used most (Edit, Check-in, Launch) stays
+                    visible; everything else (interested list, visibility,
+                    registration, email, export, delete) lives in the "•••" menu */}
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
                   <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', overflow: 'hidden' }} title="Reorder">
                     {arrowBtn('up', i === 0)}
                     <div style={{ width: '0.5px', background: 'rgba(0,0,0,0.1)' }} />
                     {arrowBtn('down', i === routes.length - 1)}
                   </div>
-                  <GhostBtn small onClick={() => setExpanded(p => ({ ...p, [r.id]: !p[r.id] }))}>{isOpen ? 'Collapse' : `Interested (${r.interested_count})`}</GhostBtn>
                   <GhostBtn small onClick={() => (isEditing ? setEditId(null) : startEdit(r))}>{isEditing ? 'Close' : 'Edit'}</GhostBtn>
-                  <GhostBtn small onClick={() => toggleActive(r)} disabled={busyId === r.id}>{r.is_active ? 'Hide from site' : 'Show on site'}</GhostBtn>
-                  {r.launched && (
-                    <GhostBtn small onClick={() => toggleRegistrationOpen(r)} disabled={busyId === r.id}>
-                      {r.registration_open === false ? 'Reopen registration' : 'Close registration'}
-                    </GhostBtn>
-                  )}
-                  <GhostBtn small onClick={() => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }} disabled={r.interested_count === 0}>Email</GhostBtn>
-                  <GhostBtn small onClick={() => exportRouteCSV(r)} disabled={r.interested_count === 0}>Export CSV</GhostBtn>
                   {(r.slug === WTET_SLUG || r.event_id) && (
                     <GhostBtn small onClick={() => setShowEventPanel(p => ({ ...p, [r.id]: !p[r.id] }))}>
-                      {showEventPanel[r.id] ? 'Hide Registrants, Waiver, Lunch & Awards' : 'Registrants, Waiver, Lunch & Awards'}
+                      {showEventPanel[r.id] ? 'Hide Check-in & Awards' : 'Check-in & Awards'}
                     </GhostBtn>
                   )}
                   {!r.launched && !r.is_past && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
-                  <div style={{ marginLeft: 'auto' }}>
-                    {deleteConfirm === r.id ? (
+                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {deleteConfirm === r.id && (
                       <span style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '11px', color: '#93333E' }}>Delete?</span>
+                        <span style={{ fontSize: '11px', color: '#93333E' }}>Delete this route?</span>
                         <DangerBtn small onClick={() => del(r.id)} disabled={busyId === r.id}>Yes</DangerBtn>
                         <GhostBtn small onClick={() => setDeleteConfirm(null)}>No</GhostBtn>
                       </span>
-                    ) : (
-                      <button onClick={() => setDeleteConfirm(r.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ddd', fontSize: '18px', lineHeight: 1, padding: '2px 6px' }} aria-label="Delete route">×</button>
                     )}
+                    <KebabMenu items={[
+                      { label: isOpen ? 'Hide Interested List' : `Interested (${r.interested_count})`, onClick: () => setExpanded(p => ({ ...p, [r.id]: !p[r.id] })) },
+                      { label: r.is_active ? 'Hide From Site' : 'Show On Site', onClick: () => toggleActive(r), disabled: busyId === r.id },
+                      r.launched && { label: r.registration_open === false ? 'Reopen Registration' : 'Close Registration', onClick: () => toggleRegistrationOpen(r), disabled: busyId === r.id },
+                      { label: 'Email Interested', onClick: () => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }, disabled: r.interested_count === 0 },
+                      { label: 'Export CSV', onClick: () => exportRouteCSV(r), disabled: r.interested_count === 0 },
+                      { label: 'Delete Route', onClick: () => setDeleteConfirm(r.id), danger: true },
+                    ]} />
                   </div>
                 </div>
 
@@ -601,7 +602,7 @@ export default function RoadtripsAdminClient() {
                 {emailFor === r.id && (
                   <div style={{ marginTop: '0.85rem', padding: '0.85rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.12)', borderRadius: '8px' }}>
                     <L>Email all {r.interested_count} interested driver{r.interested_count !== 1 ? 's' : ''}</L>
-                    <input style={{ ...inp, marginBottom: '0.5rem' }} value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={`Subject (default: Update — ${r.name})`} maxLength={140} />
+                    <input style={{ ...smallInput, marginBottom: '0.5rem' }} value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={`Subject (default: Update — ${r.name})`} maxLength={140} />
                     <textarea style={{ ...smallTextarea, height: '75px' }} value={emailMsg} onChange={e => setEmailMsg(e.target.value)} placeholder="Your message to everyone interested in this route…" maxLength={3000} />
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
                       <PrimaryBtn small disabled={emailing || !emailMsg.trim()} onClick={() => sendBroadcast(r.id)}>{emailing ? 'Sending…' : `Send to ${r.interested_count}`}</PrimaryBtn>
@@ -614,27 +615,27 @@ export default function RoadtripsAdminClient() {
                 {isEditing && (
                   <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
                     <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
-                      <Field label="Route name"><input style={inp} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></Field>
-                      <Field label="Destination"><input style={inp} value={editForm.destination} onChange={e => setEditForm(p => ({ ...p, destination: e.target.value }))} /></Field>
+                      <Field label="Route name"><input style={smallInput} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} /></Field>
+                      <Field label="Destination"><input style={smallInput} value={editForm.destination} onChange={e => setEditForm(p => ({ ...p, destination: e.target.value }))} /></Field>
                     </div>
                     <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
-                      <Field label="Month label"><input style={inp} value={editForm.month_label} onChange={e => setEditForm(p => ({ ...p, month_label: e.target.value }))} /></Field>
-                      <Field label="Duration"><input style={inp} value={editForm.duration_label} onChange={e => setEditForm(p => ({ ...p, duration_label: e.target.value }))} /></Field>
-                      <Field label="Distance"><input style={inp} value={editForm.distance_label} onChange={e => setEditForm(p => ({ ...p, distance_label: e.target.value }))} /></Field>
+                      <Field label="Month label"><input style={smallInput} value={editForm.month_label} onChange={e => setEditForm(p => ({ ...p, month_label: e.target.value }))} /></Field>
+                      <Field label="Duration"><input style={smallInput} value={editForm.duration_label} onChange={e => setEditForm(p => ({ ...p, duration_label: e.target.value }))} /></Field>
+                      <Field label="Distance"><input style={smallInput} value={editForm.distance_label} onChange={e => setEditForm(p => ({ ...p, distance_label: e.target.value }))} /></Field>
                     </div>
                     <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
-                      <Field label="Target"><input style={inp} type="number" inputMode="numeric" min="1" value={editForm.target_count} onChange={e => setEditForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
-                      <Field label="Sort order"><input style={inp} type="number" inputMode="numeric" value={editForm.sort_order} onChange={e => setEditForm(p => ({ ...p, sort_order: e.target.value }))} /></Field>
+                      <Field label="Target"><input style={smallInput} type="number" inputMode="numeric" min="1" value={editForm.target_count} onChange={e => setEditForm(p => ({ ...p, target_count: e.target.value }))} /></Field>
+                      <Field label="Sort order"><input style={smallInput} type="number" inputMode="numeric" value={editForm.sort_order} onChange={e => setEditForm(p => ({ ...p, sort_order: e.target.value }))} /></Field>
                       <Field label="Trip type"><TripSelect value={editForm.trip_type} onChange={e => setEditForm(p => ({ ...p, trip_type: e.target.value }))} /></Field>
                     </div>
                     <div className="rta-grid rta-grid-3" style={{ marginBottom: '0.6rem' }}>
-                      <Field label="Avg. price range"><input style={inp} value={editForm.price_range} onChange={e => setEditForm(p => ({ ...p, price_range: e.target.value }))} placeholder="e.g. $800–$1,200 per car" maxLength={60} /></Field>
-                      <Field label="Price per car ($)"><input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.price_per_car} onChange={e => setEditForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional" /></Field>
-                      <Field label="Max cars"><input style={inp} type="number" inputMode="numeric" min="1" value={editForm.max_cars} onChange={e => setEditForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
+                      <Field label="Avg. price range"><input style={smallInput} value={editForm.price_range} onChange={e => setEditForm(p => ({ ...p, price_range: e.target.value }))} placeholder="e.g. $800–$1,200 per car" maxLength={60} /></Field>
+                      <Field label="Price per car ($)"><input style={smallInput} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.price_per_car} onChange={e => setEditForm(p => ({ ...p, price_per_car: e.target.value }))} placeholder="optional" /></Field>
+                      <Field label="Max cars"><input style={smallInput} type="number" inputMode="numeric" min="1" value={editForm.max_cars} onChange={e => setEditForm(p => ({ ...p, max_cars: e.target.value }))} placeholder="optional" /></Field>
                     </div>
                     <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
-                      <Field label="Destination latitude"><input style={inp} type="number" inputMode="decimal" step="any" value={editForm.dest_lat} onChange={e => setEditForm(p => ({ ...p, dest_lat: e.target.value }))} placeholder="e.g. 47.4412" /></Field>
-                      <Field label="Destination longitude"><input style={inp} type="number" inputMode="decimal" step="any" value={editForm.dest_lng} onChange={e => setEditForm(p => ({ ...p, dest_lng: e.target.value }))} placeholder="e.g. -70.5052" /></Field>
+                      <Field label="Destination latitude"><input style={smallInput} type="number" inputMode="decimal" step="any" value={editForm.dest_lat} onChange={e => setEditForm(p => ({ ...p, dest_lat: e.target.value }))} placeholder="e.g. 47.4412" /></Field>
+                      <Field label="Destination longitude"><input style={smallInput} type="number" inputMode="decimal" step="any" value={editForm.dest_lng} onChange={e => setEditForm(p => ({ ...p, dest_lng: e.target.value }))} placeholder="e.g. -70.5052" /></Field>
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Itinerary</L>
@@ -642,15 +643,15 @@ export default function RoadtripsAdminClient() {
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Activity options (comma-separated)</L>
-                      <input style={inp} value={editForm.activity_options} onChange={e => setEditForm(p => ({ ...p, activity_options: e.target.value }))} placeholder="Scenic drives, Whale watching, Local food…" maxLength={500} />
+                      <input style={smallInput} value={editForm.activity_options} onChange={e => setEditForm(p => ({ ...p, activity_options: e.target.value }))} placeholder="Scenic drives, Whale watching, Local food…" maxLength={500} />
                     </div>
                     <div style={{ marginBottom: '0.6rem' }}>
                       <L>Description</L>
                       <textarea style={{ ...smallTextarea, height: '55px' }} value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} maxLength={600} />
                     </div>
                     <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
-                      <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={inp} value={editForm.photo_url} onChange={e => setEditForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
-                      <Field label="Registration link (once launched — points the tile to the public registration page)"><input style={inp} value={editForm.registration_url} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="/hello-to-montebello" /></Field>
+                      <Field label="Photo URL (hero image — shown on the route's tile and in the homepage popup)"><input style={smallInput} value={editForm.photo_url} onChange={e => setEditForm(p => ({ ...p, photo_url: e.target.value }))} placeholder="/montebello-hero.jpg" /></Field>
+                      <Field label="Registration link (once launched — points the tile to the public registration page)"><input style={smallInput} value={editForm.registration_url} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))} placeholder="/hello-to-montebello" /></Field>
                     </div>
                     <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', marginBottom: '0.6rem' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#555', marginBottom: '0.6rem', cursor: 'pointer' }}>
@@ -659,8 +660,8 @@ export default function RoadtripsAdminClient() {
                       </label>
                       {editForm.is_past && (
                         <div className="rta-grid rta-grid-3">
-                          <Field label="Cars rolled out"><input style={inp} type="number" inputMode="numeric" min="0" value={editForm.cars_rolled_out} onChange={e => setEditForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
-                          <Field label="Recap link"><input style={inp} value={editForm.recap_href} onChange={e => setEditForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
+                          <Field label="Cars rolled out"><input style={smallInput} type="number" inputMode="numeric" min="0" value={editForm.cars_rolled_out} onChange={e => setEditForm(p => ({ ...p, cars_rolled_out: e.target.value }))} placeholder="e.g. 22" /></Field>
+                          <Field label="Recap link"><input style={smallInput} value={editForm.recap_href} onChange={e => setEditForm(p => ({ ...p, recap_href: e.target.value }))} placeholder="/wtet" /></Field>
                         </div>
                       )}
                     </div>
