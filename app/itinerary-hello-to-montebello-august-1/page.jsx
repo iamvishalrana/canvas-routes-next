@@ -64,14 +64,14 @@ const CAR_FACTS = {
   'Jean-Francois Rouette': "This one's been tuned — Stage 2, pushing 554 horsepower. 0 to 100 km/h in just 3.3 seconds. A five-cylinder engine with a wild, uneven growl that only gets angrier the harder you push it.",
   'Michel Robert': 'The engine lives right behind the seats. Drop the roof and that flat-six sound wraps all the way around you. Balanced, playful, and built for exactly this kind of drive.',
   'Julien Fernandez': <>A <span style={{ textDecoration: 'line-through', textDecorationThickness: '1px', opacity: 0.55 }}>flat-six</span> <span style={{ fontWeight: 700 }}>6FLAT</span> — yes, that's the plate — that loves to rev high, with steering so direct it feels like the road is talking straight to your hands.</>,
-  'Martin Griffin': 'This V8 screams all the way to 8,250 RPM, way higher than most engines dare to go. Near redline it turns sharp and furious, a sound most V8s simply can\'t make.',
+  'Martin Griffin': "This V8 has a special crank inside — the same trick used in high-revving race engines — letting it scream all the way to 8,250 RPM, one of the highest redlines any V8 has ever had. Near the top, it turns sharp and wild, a sound no ordinary V8 can make.",
   'Alexandre Boutin': 'Looks like a calm family wagon, but hides two turbos and a monster V8 underneath. Dead quiet at idle, then it launches like it was shot out of a cannon.',
   'Elie Massuda': "Same trick as Michel's car — a flat-six engine right behind the seats. Small, light, and an absolute blast on winding backroads with the top down.",
   'Manon Cronier': 'A calm, quiet cruiser that eats up highway kilometres without breaking a sweat — smooth power and a relaxed ride the whole way there.',
   'Aleks Sahakian': 'An old-school V8 with a deep, rumbling idle — no computers, no filters, just raw mechanical muscle from a different era.',
   'Martin Boisvert': 'Small, light, and built purely for fun — a turbocharged inline-six sending power to the rear wheels only. One of the most exciting driver\'s cars BMW has ever made, built to be thrown into corners hard.',
   'Yvon Maggi': 'One of the fastest 911s ever built at the time — twin turbos, all-wheel drive, and launch control that slams you back into your seat. 0 to 100 km/h in under 3 seconds, gone before you can blink.',
-  'Nicholas Talarico': 'A screaming V12 with no turbos at all — something you almost never see anymore. It revs to nearly 8,500 RPM and is loud enough to turn heads from blocks away. One of the last of a dying breed.',
+  'Nicholas Talarico': 'A screaming V12 with no turbos at all — something you almost never see anymore. It revs to nearly 8,500 RPM and is loud enough to turn heads from blocks away. One of the last pure, naturally-aspirated Lamborghini V12s ever built — raw fury, no filter.',
   'Alain Sahakian': 'A turbocharged inline-six that builds power smoothly, then erupts into a deep, satisfying growl — and it just keeps pulling, right until you lift.',
 }
 
