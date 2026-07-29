@@ -136,7 +136,12 @@ function CarGrid({ cars, onSelect }) {
             <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
               {p.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.photo} alt={`${p.name}'s ${p.car}`} className="car-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img
+                  src={p.photo} alt={`${p.name}'s ${p.car}`} className="car-img"
+                  draggable={false}
+                  onContextMenu={e => e.preventDefault()}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+                />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span aria-hidden="true" style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
@@ -168,7 +173,9 @@ function ModalImage({ src, alt }) {
         src={src} alt={alt}
         loading="eager" decoding="sync"
         onLoad={() => setLoaded(true)}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease' }}
+        draggable={false}
+        onContextMenu={e => e.preventDefault()}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
       />
     </div>
   )
@@ -339,11 +346,31 @@ export default function HelloToMontebelloItineraryPage() {
   const [checked, setChecked] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [selectedCar, setSelectedCar] = useState(null)
+  const [modalCar, setModalCar] = useState(null)
+  const [modalClosing, setModalClosing] = useState(false)
   const [atBottom, setAtBottom] = useState(false)
   const [bannerHeight, setBannerHeight] = useState(0)
   const [fetchedParticipants, setFetchedParticipants] = useState([])
   const [countdown, setCountdown] = useState(null)
   const [mapView, setMapView] = useState('to')
+
+  // Keep the modal mounted through its exit animation instead of unmounting
+  // the instant selectedCar clears — modalCar tracks what's actually shown.
+  useEffect(() => {
+    if (selectedCar) {
+      setModalCar(selectedCar)
+      setModalClosing(false)
+    }
+  }, [selectedCar])
+
+  function closeCarModal() {
+    setModalClosing(true)
+    setTimeout(() => {
+      setSelectedCar(null)
+      setModalCar(null)
+      setModalClosing(false)
+    }, 200)
+  }
 
   useEffect(() => {
     const MEETUP = new Date('2026-08-01T13:00:00Z') // 9 AM Montreal (EDT)
@@ -677,6 +704,16 @@ export default function HelloToMontebelloItineraryPage() {
         @media (hover: hover) {
           .quick-info-item:hover { transform: translateY(-2px); }
         }
+
+        /* Car detail modal — fade the backdrop, fade+scale the card */
+        @keyframes car-modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes car-modal-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes car-modal-card-in { from { opacity: 0; transform: scale(0.94) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes car-modal-card-out { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.96) translateY(6px); } }
+        .car-modal-backdrop.opening { animation: car-modal-backdrop-in 0.2s ease both; }
+        .car-modal-backdrop.closing { animation: car-modal-backdrop-out 0.18s ease both; }
+        .car-modal-card.opening { animation: car-modal-card-in 0.24s cubic-bezier(0.2,0.7,0.3,1) both; }
+        .car-modal-card.closing { animation: car-modal-card-out 0.18s ease both; }
       `}</style>
 
       {/* Header */}
@@ -907,41 +944,43 @@ export default function HelloToMontebelloItineraryPage() {
       </main>
 
       {/* Car modal */}
-      {selectedCar && (
+      {modalCar && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={`${selectedCar.name} — ${selectedCar.car}`}
-          onClick={() => setSelectedCar(null)}
+          aria-label={`${modalCar.name} — ${modalCar.car}`}
+          onClick={closeCarModal}
+          className={modalClosing ? 'car-modal-backdrop closing' : 'car-modal-backdrop opening'}
           style={{ position: 'fixed', inset: 0, background: 'rgba(10,18,12,0.88)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
         >
           <div
             onClick={e => e.stopPropagation()}
+            className={modalClosing ? 'car-modal-card closing' : 'car-modal-card opening'}
             style={{ background: '#fff', maxWidth: '480px', width: '100%', position: 'relative', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
           >
             <button
-              onClick={() => setSelectedCar(null)}
+              onClick={closeCarModal}
               aria-label="Close"
               style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', zIndex: 2, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer', color: '#fff', width: '44px', height: '44px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', lineHeight: 1 }}>
               ×
             </button>
-            {selectedCar.photo ? (
-              <ModalImage key={selectedCar.photo} src={selectedCar.photo} alt={`${selectedCar.name}'s ${selectedCar.car}`} />
+            {modalCar.photo ? (
+              <ModalImage key={modalCar.photo} src={modalCar.photo} alt={`${modalCar.name}'s ${modalCar.car}`} />
             ) : (
               <div style={{ width: '100%', aspectRatio: '4/3', background: '#e8e4de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span aria-hidden="true" style={{ fontSize: '48px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.18)' }}>
-                  {selectedCar.name.split(' ').map(w => w[0]).join('')}
+                  {modalCar.name.split(' ').map(w => w[0]).join('')}
                 </span>
               </div>
             )}
             <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
               <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>Canvas Routes · Hello to Montebello 2026</p>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem', marginTop: 0 }}>{selectedCar.name}</h2>
-              {selectedCar.car && (
-                <p style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em', marginTop: 0 }}>{selectedCar.car}</p>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem', marginTop: 0 }}>{modalCar.name}</h2>
+              {modalCar.car && (
+                <p style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em', marginTop: 0 }}>{modalCar.car}</p>
               )}
-              {selectedCar.fact && (
-                <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: 0 }}>{selectedCar.fact}</p>
+              {modalCar.fact && (
+                <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: 0 }}>{modalCar.fact}</p>
               )}
             </div>
           </div>
