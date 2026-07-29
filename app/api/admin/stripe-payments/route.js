@@ -1,7 +1,14 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { stripe } from '../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-import { captureException } from '../../../../lib/sentry.js'
+import { captureException, captureMessage } from '../../../../lib/sentry.js'
+
+// .list() has no metadata filter, so this fetches every PaymentIntent on the
+// whole Stripe account (test charges, abandoned checkouts, everything) before
+// the metadata.type filter below narrows it down — the cap has to cover that
+// full account-wide volume, not just Canvas Routes' share of it, or older
+// real payments silently drop out with no error.
+const PI_FETCH_LIMIT = 10000
 
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -11,7 +18,10 @@ export async function GET() {
 
   let allPIs
   try {
-    allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
+    allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: PI_FETCH_LIMIT })
+    if (allPIs.length >= PI_FETCH_LIMIT) {
+      captureMessage('Stripe payments admin route hit its PaymentIntent fetch cap — results may be missing older payments', { context: 'admin-stripe-payments-list', limit: PI_FETCH_LIMIT })
+    }
   } catch (err) {
     captureException(err, { context: 'admin-stripe-payments-list' })
     return Response.json({ error: 'Could not fetch payments from Stripe.' }, { status: 502 })
@@ -51,10 +61,26 @@ export async function GET() {
     if (receipts) for (const r of receipts) receiptsByPi[r.stripe_payment_intent_id] = r
   }
 
+  // Dispute status, keyed by PI id — NOT by email like appsByEmail above.
+  // applications is one row per email, so a dispute recorded against a
+  // person's most recent payment would otherwise get applied to every one
+  // of their PIs (wrongly flagging unrelated, undisputed payments), while a
+  // dispute on an OLDER payment would be missed entirely once a later
+  // payment overwrites that row's status.
+  let disputeStatusByPi = {}
+  if (piIds.length > 0) {
+    const { data: disputes } = await supabase.from('applications')
+      .select('stripe_payment_intent_id, stripe_payment_status')
+      .in('stripe_payment_intent_id', piIds)
+      .in('stripe_payment_status', ['disputed', 'disputed_won', 'disputed_lost'])
+    if (disputes) for (const d of disputes) disputeStatusByPi[d.stripe_payment_intent_id] = d.stripe_payment_status
+  }
+
   const records = canvasPIs.map(pi => {
     const email = pi.metadata.email?.toLowerCase().trim() || ''
     const app = appsByEmail[email] || null
     const receipt = receiptsByPi[pi.id] || null
+    const disputeStatus = disputeStatusByPi[pi.id] || null
 
     // Determine normalized status and refund amount
     let stripe_payment_status
@@ -62,7 +88,16 @@ export async function GET() {
     const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
     const fullyRefunded  = (charge && typeof charge === 'object') ? charge.refunded : false
 
-    if (fullyRefunded) {
+    // Disputes are only ever recorded by the Stripe webhook (charge.dispute.*
+    // handlers in app/api/stripe/webhook/route.js), which is the sole source
+    // of truth for disputed/disputed_won/disputed_lost — Stripe's PaymentIntent
+    // itself doesn't change status for a dispute, so re-deriving status from
+    // pi/charge alone (as this route did before) always showed "paid" for a
+    // disputed charge even after it was lost, silently disagreeing with both
+    // the DB and Stripe's own dashboard.
+    if (disputeStatus) {
+      stripe_payment_status = disputeStatus
+    } else if (fullyRefunded) {
       stripe_payment_status = 'refunded'
     } else if (amountRefunded > 0) {
       stripe_payment_status = 'partially_refunded'
@@ -79,6 +114,12 @@ export async function GET() {
     }
 
     const card = (charge && typeof charge === 'object') ? charge.payment_method_details?.card : null
+    const stripeAmountPaid = pi.status === 'requires_capture' ? pi.amount : pi.amount_received
+    // A lost dispute withdraws the funds just like a refund would, but
+    // Stripe's charge object never sets amount_refunded/refunded for a
+    // dispute (that's a separate mechanism) — without this, a charged-back
+    // payment kept showing its full amount as still "collected".
+    const effectiveRefunded = stripe_payment_status === 'disputed_lost' ? stripeAmountPaid : amountRefunded
 
     return {
       id: app?.id || null,
@@ -86,8 +127,8 @@ export async function GET() {
       name: pi.metadata.name || '',
       email,
       // amount_received is 0 until captured; use pi.amount for authorized holds
-      stripe_amount_paid: pi.status === 'requires_capture' ? pi.amount : pi.amount_received,
-      stripe_amount_refunded: amountRefunded,
+      stripe_amount_paid: stripeAmountPaid,
+      stripe_amount_refunded: effectiveRefunded,
       stripe_payment_status,
       stripe_payment_type: pi.metadata.type || '',
       // Use actual charge timestamp when available; fall back to PI creation time

@@ -1,6 +1,14 @@
 import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { captureMessage } from '../../../lib/sentry.js'
 import RevenueClient from './RevenueClient'
+
+// .list() has no metadata filter, so this fetches every PaymentIntent on the
+// whole Stripe account (test charges, abandoned checkouts, everything) before
+// the metadata.type filter below narrows it down — the cap has to cover that
+// full account-wide volume, not just Canvas Routes' share of it, or older
+// real revenue silently drops out with no error.
+const PI_FETCH_LIMIT = 10000
 
 // Auth is already enforced by middleware.js — no need to re-check here.
 // Deliberately NOT cached (no revalidate/ISR) — this is a financial page, and
@@ -36,17 +44,45 @@ export default async function RevenuePage() {
 
   if (stripe) {
     try {
-      const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
-      rows = allPIs
-        .filter(pi => pi.metadata?.type && pi.status === 'succeeded')
+      const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: PI_FETCH_LIMIT })
+      if (allPIs.length >= PI_FETCH_LIMIT) {
+        captureMessage('Revenue page hit its PaymentIntent fetch cap — totals may be missing older payments', { context: 'admin-revenue-list', limit: PI_FETCH_LIMIT })
+      }
+      const succeeded = allPIs.filter(pi => pi.metadata?.type && pi.status === 'succeeded')
+
+      // Disputes are only recorded by the Stripe webhook (charge.dispute.*
+      // handlers), which is the sole source of truth for a lost dispute —
+      // Stripe's charge object never sets amount_refunded for one (that's a
+      // separate mechanism from a refund), so without this a charged-back
+      // payment kept counting its full amount as revenue collected. Matched
+      // by stripe_payment_intent_id, NOT email — applications is one row per
+      // email, so matching by email would wrongly zero out an unrelated
+      // payment for the same person, or miss the dispute entirely if a later
+      // payment already overwrote that row's status.
+      const piIds = succeeded.map(pi => pi.id)
+      let disputedLostPiIds = new Set()
+      if (piIds.length > 0) {
+        const supabase = createAdminClient()
+        const { data: apps } = await supabase
+          .from('applications')
+          .select('stripe_payment_intent_id, stripe_payment_status')
+          .in('stripe_payment_intent_id', piIds)
+          .eq('stripe_payment_status', 'disputed_lost')
+        if (apps) disputedLostPiIds = new Set(apps.map(a => a.stripe_payment_intent_id))
+      }
+
+      rows = succeeded
         .map(pi => {
           const charge = pi.latest_charge
-          const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
+          const email = pi.metadata.email?.toLowerCase().trim() || ''
+          const amountRefunded = disputedLostPiIds.has(pi.id)
+            ? pi.amount_received
+            : ((charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0)
           return {
             id:                     pi.id,
             manual:                 false,
             name:                   pi.metadata.name || '—',
-            email:                  pi.metadata.email?.toLowerCase().trim() || '',
+            email,
             phone:                  pi.metadata.phone || '',
             stripe_amount_paid:     pi.amount_received,
             stripe_amount_refunded: amountRefunded,

@@ -107,6 +107,8 @@ const STATUS_COLORS = {
   refunded:            { bg: 'rgba(80,80,180,0.08)',   text: '#4040aa', border: 'rgba(80,80,180,0.3)' },
   partially_refunded:  { bg: 'rgba(197,168,130,0.12)', text: '#8A6535', border: 'rgba(197,168,130,0.4)' },
   disputed:            { bg: 'rgba(180,60,0,0.1)',     text: '#b33c00', border: 'rgba(180,60,0,0.3)' },
+  disputed_won:        { bg: 'rgba(59,107,47,0.1)',    text: '#3B6B2F', border: 'rgba(59,107,47,0.3)' },
+  disputed_lost:       { bg: 'rgba(147,51,62,0.1)',    text: '#93333E', border: 'rgba(147,51,62,0.3)' },
   failed:              { bg: 'rgba(147,51,62,0.1)',    text: '#93333E', border: 'rgba(147,51,62,0.3)' },
   pending:             { bg: 'rgba(197,168,130,0.15)', text: '#8A6535', border: 'rgba(197,168,130,0.45)' },
 }
@@ -337,11 +339,18 @@ export default function PaymentsClient({ initialRecords = [] }) {
       })
     : records
 
+  // A dispute only actually loses money on 'disputed_lost' — 'disputed'
+  // (pending/warning_closed) and 'disputed_won' don't withdraw funds, so
+  // they still count as collected (their stripe_amount_refunded is already
+  // set to the full amount for a lost dispute upstream, so including it
+  // here would net to zero anyway — excluding it instead keeps it out of
+  // "Paid" entirely, matching how Stripe's own dashboard treats it).
+  const COLLECTED_STATUSES = ['paid', 'partially_refunded', 'disputed', 'disputed_won']
   const totalCollected = recordsInRange
-    .filter(r => ['paid', 'partially_refunded'].includes(r.stripe_payment_status))
+    .filter(r => COLLECTED_STATUSES.includes(r.stripe_payment_status))
     .reduce((s, r) => s + (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0), 0)
-  const paidCount      = recordsInRange.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).length
-  const otherCount     = recordsInRange.filter(r => r.stripe_payment_status && !['paid','partially_refunded','failed','rejected'].includes(r.stripe_payment_status)).length
+  const paidCount      = recordsInRange.filter(r => COLLECTED_STATUSES.includes(r.stripe_payment_status)).length
+  const otherCount     = recordsInRange.filter(r => r.stripe_payment_status && !COLLECTED_STATUSES.includes(r.stripe_payment_status) && !['failed','rejected'].includes(r.stripe_payment_status)).length
 
   const FAILED_STATUSES = ['failed', 'rejected']
   let filtered = recordsInRange.filter(r => !FAILED_STATUSES.includes(r.stripe_payment_status))
