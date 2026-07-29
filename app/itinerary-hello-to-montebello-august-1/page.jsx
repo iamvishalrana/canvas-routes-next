@@ -11,18 +11,19 @@ const ROUTE_SLUG = 'hello-to-montebello'
 
 // Only real venues so this one array can drive both the itinerary timeline
 // and the map markers. lat/lng for Fairmont comes from Jerry's traced My Maps
-// route (see routePath.js). The meetup point moved to Rona Carrefour Laval —
-// its lat/lng below is an estimate from the store's public street address
-// (3065 Boulevard le Carrefour, Laval, QC H7T 1C7), NOT independently
-// verified against a traced route — confirm/correct the pin before relying
-// on it for real navigation. The rest of the stops are estimates too.
+// route (see routePath.js). The meetup point is the McDonald's on the south
+// service road of Autoroute 440 in Laval (4610 Desserte Sud Autoroute 440 O,
+// Laval, QC H7T 2Z8) — confirmed via the official route link Jerry shared:
+// https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9. Its lat/lng below is a geocoded
+// estimate, NOT independently verified against a traced route — confirm/
+// correct the pin before relying on it for real navigation. The rest of the
+// stops are estimates too.
+const ROUTE_LINK = 'https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9'
 const STOPS = [
-  { label: 'Rona — Carrefour Laval', note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=3065+Boulevard+le+Carrefour+Laval+QC', lat: 45.5762, lng: -73.7530 },
+  { label: "McDonald's", note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4610+Desserte+Sud+Autoroute+440+Ouest+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 45.68, lng: -75.05 },
-  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
-  { label: 'Stroll around Montebello', note: 'Suggestions: Chocomotive · Lieu historique national du Manoir-Papineau', href: null, lat: 45.6514, lng: -74.9438 },
-  { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
+  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
 ]
 
 // Jerry's entry stays manual (lead car + fact blurb) — everyone else is
@@ -60,7 +61,7 @@ const CAR_FACTS = {
 }
 
 const DRIVE_BULLETS = [
-  { emoji: '🛣️', text: 'We meet at 9:00 AM at Rona, Carrefour Laval, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside.' },
+  { emoji: '🛣️', text: "We meet at 9:00 AM at McDonald's in Laval, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside." },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
   { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars self-park together in a display area out front for the afternoon. Enjoy a three-course lunch, with parking covered by Canvas Routes. Gourmet coffee and Lot 35 tea are included — any other beverages, including alcohol, can be purchased directly from the venue at your own cost." },
   { emoji: '🍫', text: 'A stroll around Montebello before the drive home — we suggest Chocomotive, an artisan chocolate workshop in the old train station, and/or the Lieu historique national du Manoir-Papineau.' },
@@ -640,6 +641,14 @@ export default function HelloToMontebelloItineraryPage() {
             ))}
           </div>
 
+          <a
+            href={ROUTE_LINK}
+            target="_blank" rel="noreferrer"
+            style={{ display: 'inline-block', marginTop: '1.25rem', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#F5F1EC', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
+          >
+            Open Full Route in Google Maps →
+          </a>
+
           {countdown && (
             <div className="itin-hero-countdown" style={{ display: 'inline-flex', gap: 0, marginTop: '1.75rem', border: '0.5px solid rgba(197,168,130,0.25)', overflow: 'hidden' }}>
               {[
@@ -665,7 +674,7 @@ export default function HelloToMontebelloItineraryPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
-              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>9:00 AM · Rona, Carrefour Laval</p>
+              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>9:00 AM · McDonald's</p>
               <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>Laval, QC</p>
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
