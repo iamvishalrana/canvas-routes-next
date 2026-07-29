@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu } from '../_components/shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu, ToggleSwitch } from '../_components/shared'
 import RouteEventConfigClient from '../_components/RouteEventConfigClient'
 import WtetClient from '../wtet/WtetClient'
 import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
@@ -82,6 +82,7 @@ export default function RoadtripsAdminClient() {
   const [expanded, setExpanded]   = useState({})
   const [showEventPanel, setShowEventPanel] = useState({}) // route id -> bool, registrants/check-in/awards
   const [showPopupCard, setShowPopupCard] = useState(false) // collapsed by default
+  const [showAddForm, setShowAddForm] = useState(false) // collapsed by default
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [launchFor, setLaunchFor] = useState(null) // route id
   const [launchMsg, setLaunchMsg] = useState('')
@@ -454,9 +455,19 @@ export default function RoadtripsAdminClient() {
         )}
       </div>
 
-      {/* Add form */}
+      {/* Add form — collapsed by default, click the header to expand */}
       <form onSubmit={addRoute} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem', marginBottom: '2rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Add Route</div>
+        <button type="button" onClick={() => setShowAddForm(p => !p)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: showAddForm ? '1rem' : 0 }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999' }}>+ Add Route</span>
+          <span style={{ fontSize: '10px', color: '#c5a882', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            {showAddForm ? 'Hide' : 'Show'}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: showAddForm ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}><polyline points="6 9 12 15 18 9" /></svg>
+          </span>
+        </button>
+
+        {showAddForm && (
+        <>
         <div className="rta-grid" style={{ marginBottom: '0.6rem' }}>
           <Field label="Route name"><input style={smallInput} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Memoirs to Charlevoix" maxLength={120} /></Field>
           <Field label="Destination"><input style={smallInput} value={form.destination} onChange={e => setForm(p => ({ ...p, destination: e.target.value }))} placeholder="Charlevoix, QC" maxLength={120} /></Field>
@@ -512,6 +523,8 @@ export default function RoadtripsAdminClient() {
           <PrimaryBtn disabled={adding} onClick={addRoute}>{adding ? 'Adding…' : 'Add Route'}</PrimaryBtn>
           {formErr && <Err msg={formErr} />}
         </div>
+        </>
+        )}
       </form>
 
       {/* List */}
@@ -595,14 +608,41 @@ export default function RoadtripsAdminClient() {
                     <KebabMenu items={[
                       { label: isOpen ? 'Hide Interested List' : `Interested (${r.interested_count})`, onClick: () => setExpanded(p => ({ ...p, [r.id]: !p[r.id] })) },
                       { label: r.is_active ? 'Hide From Site' : 'Show On Site', onClick: () => toggleActive(r), disabled: busyId === r.id },
-                      r.launched && { label: r.registration_open === false ? 'Reopen Public Registration' : 'Close Public Registration', onClick: () => toggleRegistrationOpen(r), disabled: busyId === r.id },
-                      r.launched && { label: r.member_registration_open === false ? 'Reopen Member Registration' : 'Close Member Registration', onClick: () => toggleMemberRegistrationOpen(r), disabled: busyId === r.id },
                       { label: 'Email Interested', onClick: () => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }, disabled: r.interested_count === 0 },
                       { label: 'Export CSV', onClick: () => exportRouteCSV(r), disabled: r.interested_count === 0 },
                       { label: 'Delete Route', onClick: () => setDeleteConfirm(r.id), danger: true },
                     ]} />
                   </div>
                 </div>
+
+                {/* Registration toggles — same pattern as Admin > Events, own
+                    row so they're always visible at a glance, not buried */}
+                {r.launched && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ToggleSwitch
+                        checked={r.member_registration_open !== false}
+                        onChange={() => toggleMemberRegistrationOpen(r)}
+                        disabled={busyId === r.id}
+                        label="Member registration"
+                      />
+                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: r.member_registration_open !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter),sans-serif' }}>
+                        Members
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ToggleSwitch
+                        checked={r.registration_open !== false}
+                        onChange={() => toggleRegistrationOpen(r)}
+                        disabled={busyId === r.id}
+                        label="Public registration"
+                      />
+                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: r.registration_open !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter),sans-serif' }}>
+                        Public
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Launch composer */}
                 {launchFor === r.id && (
