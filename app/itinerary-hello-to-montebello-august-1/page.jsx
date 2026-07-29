@@ -24,7 +24,7 @@ const ROUTE_SLUG = 'hello-to-montebello'
 // the real roads but is not a pixel-perfect copy of Google's route.
 const ROUTE_LINK = 'https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9'
 const STOPS = [
-  { label: "McDonald's", note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4610+Desserte+Sud+Autoroute+440+Ouest+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
+  { label: "McDonald's — 440 Ouest, Back Parking", note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4610+Desserte+Sud+Autoroute+440+Ouest+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 46.0105673, lng: -74.7612215 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
@@ -63,7 +63,7 @@ const CAR_FACTS = {
   'Frederic Lefebvre': 'Five cylinders instead of the usual four or six, and it sounds like nothing else on the road. Snap, crackle, and pop on every lift off the gas, then a hard launch that shoves you back in your seat.',
   'Jean-Francois Rouette': "This one's been tuned — Stage 2, pushing 554 horsepower. 0 to 100 km/h in just 3.3 seconds. A five-cylinder engine with a wild, uneven growl that only gets angrier the harder you push it.",
   'Michel Robert': 'The engine lives right behind the seats. Drop the roof and that flat-six sound wraps all the way around you. Balanced, playful, and built for exactly this kind of drive.',
-  'Julien Fernandez': 'A flat-six that loves to rev high, with steering so direct it feels like the road is talking straight to your hands.',
+  'Julien Fernandez': <>A <span style={{ textDecoration: 'line-through', textDecorationThickness: '1px', opacity: 0.55 }}>flat-six</span> <span style={{ fontWeight: 700 }}>6FLAT</span> — yes, that's the plate — that loves to rev high, with steering so direct it feels like the road is talking straight to your hands.</>,
   'Martin Griffin': 'This V8 screams all the way to 8,250 RPM, way higher than most engines dare to go. Near redline it turns sharp and furious, a sound most V8s simply can\'t make.',
   'Alexandre Boutin': 'Looks like a calm family wagon, but hides two turbos and a monster V8 underneath. Dead quiet at idle, then it launches like it was shot out of a cannon.',
   'Elie Massuda': "Same trick as Michel's car — a flat-six engine right behind the seats. Small, light, and an absolute blast on winding backroads with the top down.",
@@ -106,8 +106,16 @@ function CopyButton({ text }) {
     }).catch(() => {})
   }
   return (
-    <button onClick={copy} style={{ background: 'none', border: 'none', padding: '10px 0', margin: '-8px 0 -2px', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'block' }}>
-      {copied ? '✓ Copied' : 'Copy number'}
+    <button onClick={copy} style={{ background: 'none', border: 'none', padding: '10px 0', margin: '-8px 0 -2px', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}>
+      {copied ? '✓ Copied' : (
+        <>
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <rect x="5.5" y="5.5" width="9" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M3.5 10.5H2.5C1.94772 10.5 1.5 10.0523 1.5 9.5V2.5C1.5 1.94772 1.94772 1.5 2.5 1.5H9.5C10.0523 1.5 10.5 1.94772 10.5 2.5V3.5" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+          Copy number
+        </>
+      )}
     </button>
   )
 }
@@ -712,8 +720,8 @@ export default function HelloToMontebelloItineraryPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
-              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>9:00 AM · McDonald's</p>
-              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>Laval, QC</p>
+              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>McDonald's — 440 Ouest, Back Parking</p>
+              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>9:00 AM · Laval, QC</p>
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
               <h2 style={{ ...SECTION_LABEL, color: '#93333E', marginBottom: '5px', fontWeight: '600' }}>Contact</h2>
@@ -837,10 +845,7 @@ export default function HelloToMontebelloItineraryPage() {
 
         {/* Who's Coming */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Who&apos;s Coming — {allParticipants.length} Car{allParticipants.length !== 1 ? 's' : ''} So Far</h2>
-          <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', margin: '0 0 1.25rem' }}>
-            Registration just opened — this list grows as more people sign up. Check back closer to the date.
-          </p>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Who&apos;s Coming — {allParticipants.length} Car{allParticipants.length !== 1 ? 's' : ''}</h2>
           <p style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', margin: '0 0 1rem' }}>Tap a photo to learn more about the car</p>
           {groupNumbers.length > 0 ? (
             <>
