@@ -233,16 +233,32 @@ export default function RoadtripsAdminClient() {
     } catch {} finally { setBusyId(null) }
   }
 
-  // Gates hello-to-montebello-register / hello-to-montebello-member-register
-  // (and the equivalent per-route registration pages as they're added) —
-  // separate from is_active, which only controls whether the route's tile
-  // shows up in listings at all.
+  // Gates the public hello-to-montebello-register form (and the equivalent
+  // per-route registration pages as they're added) — separate from
+  // is_active, which only controls whether the route's tile shows up in
+  // listings at all, and independent from member registration below.
   async function toggleRegistrationOpen(r) {
     setBusyId(r.id)
     try {
       const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ registration_open: !(r.registration_open !== false) }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
+    } catch {} finally { setBusyId(null) }
+  }
+
+  // Gates the member-only hello-to-montebello-member-register form —
+  // independent of toggleRegistrationOpen above, so the club can close
+  // registration to the public while keeping it open to members (or vice
+  // versa) once a route is close to full.
+  async function toggleMemberRegistrationOpen(r) {
+    setBusyId(r.id)
+    try {
+      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ member_registration_open: !(r.member_registration_open !== false) }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
@@ -525,7 +541,8 @@ export default function RoadtripsAdminClient() {
                       {r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Past</span>}
                       {r.launched && !r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Launched</span>}
                       {!r.is_active && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '99px' }}>Hidden</span>}
-                      {r.launched && r.registration_open === false && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Registration Closed</span>}
+                      {r.launched && r.registration_open === false && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Public Registration Closed</span>}
+                      {r.launched && r.member_registration_open === false && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Member Registration Closed</span>}
                     </div>
                     <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>{r.destination} · {r.month_label} · {r.duration_label || '—'} · {r.distance_label || '—'}</div>
                   </div>
@@ -578,7 +595,8 @@ export default function RoadtripsAdminClient() {
                     <KebabMenu items={[
                       { label: isOpen ? 'Hide Interested List' : `Interested (${r.interested_count})`, onClick: () => setExpanded(p => ({ ...p, [r.id]: !p[r.id] })) },
                       { label: r.is_active ? 'Hide From Site' : 'Show On Site', onClick: () => toggleActive(r), disabled: busyId === r.id },
-                      r.launched && { label: r.registration_open === false ? 'Reopen Registration' : 'Close Registration', onClick: () => toggleRegistrationOpen(r), disabled: busyId === r.id },
+                      r.launched && { label: r.registration_open === false ? 'Reopen Public Registration' : 'Close Public Registration', onClick: () => toggleRegistrationOpen(r), disabled: busyId === r.id },
+                      r.launched && { label: r.member_registration_open === false ? 'Reopen Member Registration' : 'Close Member Registration', onClick: () => toggleMemberRegistrationOpen(r), disabled: busyId === r.id },
                       { label: 'Email Interested', onClick: () => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }, disabled: r.interested_count === 0 },
                       { label: 'Export CSV', onClick: () => exportRouteCSV(r), disabled: r.interested_count === 0 },
                       { label: 'Delete Route', onClick: () => setDeleteConfirm(r.id), danger: true },

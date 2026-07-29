@@ -388,16 +388,18 @@ export default function HelloToMontebelloPage() {
 
   useEffect(() => {
     // Read registration status from upcoming_routes (toggled via admin Routes →
-    // Registration Open). HTM lives there, not in events — its events row was
-    // removed when it moved into Routes admin.
+    // kebab menu). HTM lives there, not in events — its events row was
+    // removed when it moved into Routes admin. Public and member registration
+    // are independent gates — registration_open covers the public form,
+    // member_registration_open covers the member form — so the club can
+    // close one without affecting the other.
     fetch('/api/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
       .then(routes => {
         const route = routes.find(r => r.slug === 'hello-to-montebello')
-        if (route && route.registration_open === false) {
-          setMemberRegOpen(false)
-          setRegOpen(false)
-        }
+        if (!route) return
+        if (route.registration_open === false) setRegOpen(false)
+        if (route.member_registration_open === false) setMemberRegOpen(false)
       })
       .catch(() => {})
   }, [])

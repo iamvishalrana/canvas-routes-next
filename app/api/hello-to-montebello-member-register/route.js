@@ -53,13 +53,16 @@ export async function POST(request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Check registration open — members respect the same gate as the public form.
-  // HTM lives in upcoming_routes (not events — its events row was removed when
-  // it moved into Routes admin), so the gate reads from there.
+  // Check registration open — members have their own independent gate
+  // (member_registration_open) from the public form's (registration_open),
+  // so the club can close registration to one without affecting the other —
+  // e.g. prioritizing remaining spots for members only. HTM lives in
+  // upcoming_routes (not events — its events row was removed when it moved
+  // into Routes admin), so the gate reads from there.
   try {
     const adminCheck = createAdminClient()
-    const { data: route } = await adminCheck.from('upcoming_routes').select('registration_open').eq('slug', 'hello-to-montebello').maybeSingle()
-    if (route && route.registration_open === false) {
+    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open').eq('slug', 'hello-to-montebello').maybeSingle()
+    if (route && route.member_registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
   } catch { /* allow through if upcoming_routes unavailable */ }
