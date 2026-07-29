@@ -4,6 +4,19 @@ import { captureException } from '../../../../../lib/sentry'
 
 const ALLOWED = ['name', 'destination', 'month_label', 'description', 'duration_label', 'distance_label', 'target_count', 'sort_order', 'trip_type', 'price_per_car', 'price_range', 'max_cars', 'itinerary', 'activity_options', 'dest_lat', 'dest_lng', 'is_active', 'slug', 'is_past', 'cars_rolled_out', 'photo_url', 'recap_href', 'launched', 'registration_url', 'registration_open']
 
+// Single-route lookup — backs the dedicated Registrants/Waiver/Lunch/Awards
+// page (app/admin/upcoming-routes/[routeId]) so it isn't stuck fetching and
+// filtering the entire route list just to get one row's name/event_id.
+export async function GET(request, { params }) {
+  if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const { id } = await params
+  const supabase = createAdminClient()
+  const { data, error } = await supabase.from('upcoming_routes').select('*').eq('id', id).maybeSingle()
+  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (!data) return Response.json({ error: 'Not found.' }, { status: 404 })
+  return Response.json(data)
+}
+
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
