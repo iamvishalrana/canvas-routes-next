@@ -29,31 +29,33 @@ const STOPS = [
 // fetched live from /api/hello-to-montebello/roster, which reflects paid
 // registrants automatically (added on capture, removed on refund/cancel).
 const MANUAL_PARTICIPANTS = [
-  { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.' },
+  { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect balance between front and back, and every option added — this is exactly how this car should be built.' },
 ]
 
 // Editorial car facts for specific live (roster-fetched) participants, shown
 // in the same click-to-reveal modal as Jerry's — matched onto the roster by
 // exact name. Nothing derived from the DB; add an entry here as we learn
-// something worth mentioning about someone's car. Style: how it performs,
-// feels, or sounds — never a comparison to another car or brand.
+// something worth mentioning about someone's car. Keep the words simple —
+// not everyone reading this speaks English as a first language. Not just
+// sound — a rare or impressive fact about the car works too. No comparing
+// one car or brand to another.
 const CAR_FACTS = {
-  'Karim Abdul Baki': 'A naturally aspirated flat-four that only wants to rev — a boxer burble at idle that turns into a hard-edged wail by 7,000 RPM, with a chassis that rotates the moment you ask it to.',
-  'Joseph Dizazzo': 'A naturally aspirated V8 sitting right behind your shoulders — the induction snarl gets louder the harder it works, and every downshift cracks through the cabin.',
-  'Dany Bossé': "One of only two 911s in the world finished in Phoenix Yellow. The flat-six wakes up past 5,000 RPM — a howl that builds all the way to redline and doesn't let go.",
-  'Frederic Lefebvre': 'A turbocharged five-cylinder with a distinctive warble, pops and crackles on every lift, and enough grip to launch hard off the line.',
-  'Jean-Francois Rouette': 'The same five-cylinder growl in a smaller, tighter package — turbo spool building into a bark, with a chassis that changes direction almost as fast as the engine revs.',
-  'Michel Robert': 'A flat-six sitting low behind the seats — roof down, the exhaust note bounces right back into the cabin. Perfectly balanced, and happiest the moment you stop thinking about it and just drive.',
-  'Julien Fernandez': 'A high-revving flat-six with a direct, mechanical feel through the wheel — every input translates instantly, no filter between hands and road.',
-  'Martin Griffin': 'A flat-plane-crank V8 that revs to a screaming 8,250 RPM redline, with an exhaust note that fills the cabin the entire way there.',
-  'Alexandre Boutin': 'A twin-turbo V8 wearing a wagon body — understated right up until the throttle goes down, then it launches with a shove that doesn\'t match how quiet the cabin stays.',
-  'Elie Massuda': 'Mid-engine weight distribution and a flat-six right behind your head — small, light, and happiest carving through backroads with the top down.',
-  'Manon Cronier': 'A composed, refined cruiser built for eating highway miles quietly — smooth power delivery and a cabin that stays hushed no matter how far the trip runs.',
-  'Aleks Sahakian': 'A carbureted-era 5.0 V8 with a rumble at idle that\'s pure old-school muscle — raw, mechanical, and completely unfiltered.',
-  'Martin Boisvert': 'A small, tight chassis wrapped around a turbocharged inline-six — quick-revving, perfectly balanced, and built to be tossed into a corner without a second thought.',
-  'Yvon Maggi': 'Twin turbos spooling behind a flat-six and launch control that slams you into the seat — a whoosh and a wail that build together the harder it\'s pushed.',
-  'Nicholas Talarico': 'A naturally aspirated V12 revving to nearly 8,500 RPM — one of the last of its kind, with an engine note loud enough to fill an entire street.',
-  'Alain Sahakian': 'A turbocharged inline-six with a smooth, building hum that turns into a proper growl under load — power that comes on progressively, not all at once.',
+  'Karim Abdul Baki': 'This engine loves to rev high. It has a special flat-engine sound that gets sharper and louder near the top, and the car turns into corners fast and light.',
+  'Joseph Dizazzo': 'The engine sits right behind you instead of up front like most cars. It is loud, very fast, and one of the best performance-for-the-price cars you can buy. Every downshift makes a loud crack.',
+  'Dany Bossé': 'Only two of these in the world have this yellow colour, called Phoenix Yellow. The engine gets loud and strong after 5,000 RPM, all the way to redline.',
+  'Frederic Lefebvre': 'This engine has 5 cylinders, which is rare. It makes pop and crackle sounds when you let off the gas, and it grips hard off the line.',
+  'Jean-Francois Rouette': 'This one is tuned — Stage 2, making 554 horsepower. It goes 0 to 100 km/h in just 3.3 seconds, with the same special 5-cylinder sound, only faster.',
+  'Michel Robert': 'The engine sits in the middle, right behind the seats. With the roof down you hear it very close to you. It feels smooth and balanced everywhere you drive it.',
+  'Julien Fernandez': 'A high-revving engine that feels very connected to the road — you feel everything through the steering wheel.',
+  'Martin Griffin': 'This V8 revs all the way to 8,250 RPM, which is very high for a V8. It sounds sharper and louder near the top than a normal V8.',
+  'Alexandre Boutin': 'Looks like a normal family wagon, but has two turbos and a big V8 inside. Quiet until you push the gas, then it launches hard.',
+  'Elie Massuda': 'Same idea as Michel\'s car — engine in the middle, right behind the seats. Small, light, and a lot of fun on backroads with the top down.',
+  'Manon Cronier': 'A smooth, quiet car built for comfortable long drives — easy and relaxing on the highway.',
+  'Aleks Sahakian': 'An old-school V8 with a deep rumble at idle. Raw and simple — no computers helping you, just you and the engine.',
+  'Martin Boisvert': 'Small and light, but one of the most fun cars BMW has ever built. Turbo 6-cylinder engine, rear-wheel drive, made just for driving hard through corners.',
+  'Yvon Maggi': 'One of the fastest 911s ever made at the time — twin turbos, all-wheel drive, and launch control that pins you to your seat. 0 to 100 km/h in under 3 seconds.',
+  'Nicholas Talarico': 'A V12 engine with no turbos — very rare today. It revs to almost 8,500 RPM and is loud enough to hear from far away. One of the last of its kind.',
+  'Alain Sahakian': 'A turbo 6-cylinder engine that builds power smoothly, then turns into a strong growl. Power comes on steadily, not all at once.',
 }
 
 const DRIVE_BULLETS = [
