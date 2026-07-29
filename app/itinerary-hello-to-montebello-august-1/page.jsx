@@ -90,7 +90,7 @@ function CopyButton({ text }) {
     }).catch(() => {})
   }
   return (
-    <button onClick={copy} style={{ background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'block', marginTop: '3px' }}>
+    <button onClick={copy} style={{ background: 'none', border: 'none', padding: '10px 0', margin: '-8px 0 -2px', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'block' }}>
       {copied ? '✓ Copied' : 'Copy number'}
     </button>
   )
@@ -453,7 +453,7 @@ export default function HelloToMontebelloItineraryPage() {
   if (!authed) {
     return (
       <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
         backgroundColor: '#0F1E14',
         backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center 40%',
@@ -521,7 +521,7 @@ export default function HelloToMontebelloItineraryPage() {
                   display: 'block', width: '100%', padding: '0.95rem 1rem',
                   background: 'rgba(255,255,255,0.05)',
                   border: `0.5px solid ${errMsg ? '#c0526a' : 'rgba(255,255,255,0.16)'}`,
-                  color: '#F5F1EC', fontSize: '15px', outline: 'none',
+                  color: '#F5F1EC', fontSize: '16px', outline: 'none',
                   fontFamily: 'Georgia, serif', textAlign: 'center', letterSpacing: '0.02em',
                   transition: 'border-color 0.2s ease, background 0.2s ease',
                 }}
@@ -543,13 +543,13 @@ export default function HelloToMontebelloItineraryPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
+    <div style={{ minHeight: '100dvh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
       <PageLoader images={['/montebello-itinerary.jpg', ...allParticipants.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
 
       {/* Scroll indicator */}
       <button
         className="scroll-btn"
-        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto', bottom: `calc(1.75rem + ${bannerHeight}px)` }}
+        style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto', bottom: `calc(1.75rem + ${bannerHeight}px + env(safe-area-inset-bottom))`, right: `calc(1.25rem + env(safe-area-inset-right))` }}
         onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
         aria-label="Scroll down"
       >
@@ -575,11 +575,14 @@ export default function HelloToMontebelloItineraryPage() {
         .scroll-reveal.revealed .itin-stop { opacity: 1; transform: translateY(0); }
 
         .car-wrap { animation: car-nudge 10s ease-in-out infinite; }
-        .car-wrap:hover, .car-wrap:focus-within { animation-play-state: paused; }
+        .car-wrap:focus-within { animation-play-state: paused; }
+        @media (hover: hover) { .car-wrap:hover { animation-play-state: paused; } }
         .car-card { transition: box-shadow 0.2s ease; }
-        .car-card:hover, .car-card:active { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; }
+        .car-card:active { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; }
+        @media (hover: hover) { .car-card:hover { box-shadow: 0 10px 28px rgba(0,0,0,0.14) !important; } }
         .car-card .car-img { transition: transform 0.3s ease; }
-        .car-card:hover .car-img, .car-card:active .car-img { transform: scale(1.04); }
+        .car-card:active .car-img { transform: scale(1.04); }
+        @media (hover: hover) { .car-card:hover .car-img { transform: scale(1.04); } }
         @keyframes car-nudge {
           0%, 90%, 100% { transform: translateY(0) rotate(0deg); }
           92% { transform: translateY(-3px) rotate(-1.2deg); }
@@ -589,7 +592,7 @@ export default function HelloToMontebelloItineraryPage() {
         }
 
         .scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 1001; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease, bottom 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
-        .scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
+        @media (hover: hover) { .scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); } }
         @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
         .scroll-chevron { animation: bounce-down 1.6s ease-in-out infinite; }
 
@@ -837,7 +840,7 @@ export default function HelloToMontebelloItineraryPage() {
             <button
               onClick={() => setSelectedCar(null)}
               aria-label="Close"
-              style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', zIndex: 2, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', lineHeight: 1 }}>
+              style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', zIndex: 2, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer', color: '#fff', width: '44px', height: '44px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', lineHeight: 1 }}>
               ×
             </button>
             {selectedCar.photo ? (
