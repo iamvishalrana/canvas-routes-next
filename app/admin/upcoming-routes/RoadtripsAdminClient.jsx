@@ -355,10 +355,25 @@ export default function RoadtripsAdminClient() {
   return (
     <div className="rta-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)' }}>
       <style>{`
-        .rta-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .rta-wrap button, .rta-wrap a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .rta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
         .rta-grid > div { min-width: 0; }
         @media (min-width: 640px) { .rta-grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+        /* iOS Safari zooms the whole page in on focus if a text input's
+           font-size is under 16px — the compact 12px admin fields need a
+           mobile-only bump so tapping into them doesn't jolt the viewport. */
+        @media (max-width: 640px) {
+          .rta-wrap input, .rta-wrap select, .rta-wrap textarea { font-size: 16px !important; }
+        }
+
+        /* Interest-list rows used JS mouseenter/leave for the hover tint,
+           which can get stuck "on" after a tap on touch devices — CSS-only
+           hover guarded to real pointer devices avoids that. */
+        .rta-interest-row:active { background: rgba(0,0,0,0.05); }
+        @media (hover: hover) {
+          .rta-interest-row:hover { background: rgba(0,0,0,0.03); }
+        }
       `}</style>
 
       <div style={{ marginBottom: '1.75rem' }}>
@@ -370,7 +385,7 @@ export default function RoadtripsAdminClient() {
       {/* Homepage popup — collapsed by default, click the header to expand */}
       <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
         <button type="button" onClick={() => setShowPopupCard(p => !p)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: showPopupCard ? '1rem' : 0 }}>
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: '44px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, margin: 0, marginBottom: showPopupCard ? '1rem' : 0 }}>
           <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999' }}>Homepage Popup</span>
           <span style={{ fontSize: '10px', color: '#c5a882', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
             {showPopupCard ? 'Hide' : 'Show'}
@@ -394,7 +409,7 @@ export default function RoadtripsAdminClient() {
           <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5, marginBottom: '0.75rem' }}>
             General promotes the whole season's routes. Specific route features one route by name — pick it below.
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
             {[
               { val: 'general',  label: 'General — all routes' },
               { val: 'specific', label: 'Specific route' },
@@ -407,7 +422,7 @@ export default function RoadtripsAdminClient() {
                   onClick={() => savePopupSetting('routes_popup_mode', val)}
                   disabled={popupSaving.routes_popup_mode}
                   style={{
-                    padding: '0.55rem 1rem', borderRadius: '8px',
+                    padding: '0.7rem 1rem', minHeight: '44px', borderRadius: '8px',
                     border: `1px solid ${active ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`,
                     background: active ? '#0F1E14' : '#fff',
                     color: active ? '#F5F1EC' : '#555',
@@ -458,7 +473,7 @@ export default function RoadtripsAdminClient() {
       {/* Add form — collapsed by default, click the header to expand */}
       <form onSubmit={addRoute} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem', marginBottom: '2rem' }}>
         <button type="button" onClick={() => setShowAddForm(p => !p)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: showAddForm ? '1rem' : 0 }}>
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: '44px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, margin: 0, marginBottom: showAddForm ? '1rem' : 0 }}>
           <span style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999' }}>+ Add Route</span>
           <span style={{ fontSize: '10px', color: '#c5a882', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
             {showAddForm ? 'Hide' : 'Show'}
@@ -540,7 +555,7 @@ export default function RoadtripsAdminClient() {
             const isOpen = !!expanded[r.id]
             const arrowBtn = (dir, disabled) => (
               <button onClick={() => move(r.id, dir)} disabled={disabled} aria-label={`Move ${dir}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', background: 'none', border: 'none', cursor: disabled ? 'default' : 'pointer', color: disabled ? '#ddd' : '#888', fontSize: '14px', lineHeight: 1 }}>
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', background: 'none', border: 'none', cursor: disabled ? 'default' : 'pointer', color: disabled ? '#ddd' : '#888', fontSize: '14px', lineHeight: 1 }}>
                 {dir === 'up' ? '↑' : '↓'}
               </button>
             )
@@ -746,11 +761,9 @@ export default function RoadtripsAdminClient() {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         {r.interest.map((p, i) => (
-                          <button key={p.id || i} type="button"
+                          <button key={p.id || i} type="button" className="rta-interest-row"
                             onClick={() => { setPerson({ route: r, p }); setPersonConfirm(false) }}
-                            style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', width: '100%', minHeight: '44px', padding: '0.5rem 0.6rem', margin: '0 -0.6rem', background: 'none', border: 'none', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                            style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', width: '100%', minHeight: '44px', padding: '0.5rem 0.6rem', margin: '0 -0.6rem', background: 'none', border: 'none', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
                             <div style={{ minWidth: 0 }}>
                               <span style={{ fontSize: '13px', color: '#333' }}>{p.name || '—'}</span>
                               <span style={{ fontSize: '12px', color: '#888', marginLeft: '0.5rem' }}>{p.email}</span>
