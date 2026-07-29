@@ -29,33 +29,34 @@ const STOPS = [
 // fetched live from /api/hello-to-montebello/roster, which reflects paid
 // registrants automatically (added on capture, removed on refund/cancel).
 const MANUAL_PARTICIPANTS = [
-  { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect balance between front and back, and every option added — this is exactly how this car should be built.' },
+  { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect balance front to back, every option added — this is exactly how this car was meant to be built.' },
 ]
 
 // Editorial car facts for specific live (roster-fetched) participants, shown
 // in the same click-to-reveal modal as Jerry's — matched onto the roster by
 // exact name. Nothing derived from the DB; add an entry here as we learn
 // something worth mentioning about someone's car. Keep the words simple —
-// not everyone reading this speaks English as a first language. Not just
-// sound — a rare or impressive fact about the car works too. No comparing
-// one car or brand to another.
+// not everyone reading this speaks English as a first language — but give it
+// some life: vivid, exciting, a little fun. Not just sound — a rare or
+// impressive fact about the car works too. No comparing one car or brand to
+// another.
 const CAR_FACTS = {
-  'Karim Abdul Baki': 'This engine loves to rev high. It has a special flat-engine sound that gets sharper and louder near the top, and the car turns into corners fast and light.',
-  'Joseph Dizazzo': 'The engine sits right behind you instead of up front like most cars. It is loud, very fast, and one of the best performance-for-the-price cars you can buy. Every downshift makes a loud crack.',
-  'Dany Bossé': 'Only two of these in the world have this yellow colour, called Phoenix Yellow. The engine gets loud and strong after 5,000 RPM, all the way to redline.',
-  'Frederic Lefebvre': 'This engine has 5 cylinders, which is rare. It makes pop and crackle sounds when you let off the gas, and it grips hard off the line.',
-  'Jean-Francois Rouette': 'This one is tuned — Stage 2, making 554 horsepower. It goes 0 to 100 km/h in just 3.3 seconds, with the same special 5-cylinder sound, only faster.',
-  'Michel Robert': 'The engine sits in the middle, right behind the seats. With the roof down you hear it very close to you. It feels smooth and balanced everywhere you drive it.',
-  'Julien Fernandez': 'A high-revving engine that feels very connected to the road — you feel everything through the steering wheel.',
-  'Martin Griffin': 'This V8 revs all the way to 8,250 RPM, which is very high for a V8. It sounds sharper and louder near the top than a normal V8.',
-  'Alexandre Boutin': 'Looks like a normal family wagon, but has two turbos and a big V8 inside. Quiet until you push the gas, then it launches hard.',
-  'Elie Massuda': 'Same idea as Michel\'s car — engine in the middle, right behind the seats. Small, light, and a lot of fun on backroads with the top down.',
-  'Manon Cronier': 'A smooth, quiet car built for comfortable long drives — easy and relaxing on the highway.',
-  'Aleks Sahakian': 'An old-school V8 with a deep rumble at idle. Raw and simple — no computers helping you, just you and the engine.',
-  'Martin Boisvert': 'Small and light, but one of the most fun cars BMW has ever built. Turbo 6-cylinder engine, rear-wheel drive, made just for driving hard through corners.',
-  'Yvon Maggi': 'One of the fastest 911s ever made at the time — twin turbos, all-wheel drive, and launch control that pins you to your seat. 0 to 100 km/h in under 3 seconds.',
-  'Nicholas Talarico': 'A V12 engine with no turbos — very rare today. It revs to almost 8,500 RPM and is loud enough to hear from far away. One of the last of its kind.',
-  'Alain Sahakian': 'A turbo 6-cylinder engine that builds power smoothly, then turns into a strong growl. Power comes on steadily, not all at once.',
+  'Karim Abdul Baki': 'This little engine just wants to scream. Push it past 7,000 RPM and it turns into a sharp, angry howl — and the car dances through corners like it was made for them.',
+  'Joseph Dizazzo': 'The engine sits right behind your head instead of up front like most cars — so every bit of power feels like it explodes right next to you. Blistering speed for the money, and every downshift cracks like a whip.',
+  'Dany Bossé': 'Only two of these exist anywhere in the world in this exact shade — Phoenix Yellow. Push past 5,000 RPM and the flat-six wakes up into a wild howl that keeps climbing all the way to redline.',
+  'Frederic Lefebvre': 'Five cylinders instead of the usual four or six, and it sounds like nothing else on the road. Snap, crackle, and pop on every lift off the gas, then a hard launch that shoves you back in your seat.',
+  'Jean-Francois Rouette': "This one's been tuned — Stage 2, pushing 554 horsepower. 0 to 100 km/h in just 3.3 seconds. Same wild five-cylinder growl as the RS3, only sharper, angrier, and even faster.",
+  'Michel Robert': 'The engine lives right behind the seats. Drop the roof and that flat-six sound wraps all the way around you. Balanced, playful, and built for exactly this kind of drive.',
+  'Julien Fernandez': 'A flat-six that loves to rev high, with steering so direct it feels like the road is talking straight to your hands.',
+  'Martin Griffin': 'This V8 screams all the way to 8,250 RPM, way higher than most engines dare to go. Near redline it turns sharp and furious, a sound most V8s simply can\'t make.',
+  'Alexandre Boutin': 'Looks like a calm family wagon, but hides two turbos and a monster V8 underneath. Dead quiet at idle, then it launches like it was shot out of a cannon.',
+  'Elie Massuda': "Same trick as Michel's car — a flat-six engine right behind the seats. Small, light, and an absolute blast on winding backroads with the top down.",
+  'Manon Cronier': 'A calm, quiet cruiser that eats up highway kilometres without breaking a sweat — smooth power and a relaxed ride the whole way there.',
+  'Aleks Sahakian': 'An old-school V8 with a deep, rumbling idle — no computers, no filters, just raw mechanical muscle from a different era.',
+  'Martin Boisvert': 'Small, light, and built purely for fun — a turbocharged inline-six sending power to the rear wheels only. One of the most exciting driver\'s cars BMW has ever made, built to be thrown into corners hard.',
+  'Yvon Maggi': 'One of the fastest 911s ever built at the time — twin turbos, all-wheel drive, and launch control that slams you back into your seat. 0 to 100 km/h in under 3 seconds, gone before you can blink.',
+  'Nicholas Talarico': 'A screaming V12 with no turbos at all — something you almost never see anymore. It revs to nearly 8,500 RPM and is loud enough to turn heads from blocks away. One of the last of a dying breed.',
+  'Alain Sahakian': 'A turbocharged inline-six that builds power smoothly, then erupts into a deep, satisfying growl — and it just keeps pulling, right until you lift.',
 }
 
 const DRIVE_BULLETS = [
@@ -618,7 +619,7 @@ export default function HelloToMontebelloItineraryPage() {
               <CopyButton text="514-437-3437" />
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Convoy App</h2>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Convoy App — Velox</h2>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <a
                   href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
@@ -635,7 +636,7 @@ export default function HelloToMontebelloItineraryPage() {
                   Android →
                 </a>
               </div>
-              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>Stay connected in real time</p>
+              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>See the whole convoy live on the map and never lose the group — grab it before we roll out.</p>
             </div>
           </div>
         </div>
