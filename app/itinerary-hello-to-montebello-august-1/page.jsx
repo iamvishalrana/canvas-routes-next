@@ -58,7 +58,7 @@ const MANUAL_PARTICIPANTS = [
 // another.
 const CAR_FACTS = {
   'Karim Abdul Baki': 'This little engine just wants to scream. Push it past 7,000 RPM and it turns into a sharp, angry howl — and the car dances through corners like it was made for them.',
-  'Joseph Dizazzo': 'The engine sits right behind your head instead of up front like most cars — so every bit of power feels like it explodes right next to you. Blistering speed for the money, and every downshift cracks like a whip.',
+  'Joseph Dizazzo': 'The engine sits right behind your head instead of up front like most cars — so every bit of power feels like it explodes right next to you. Blistering speed, and every downshift cracks like a whip.',
   'Dany Bossé': 'Only two of these exist anywhere in the world in this exact shade — Phoenix Yellow. Push past 5,000 RPM and the flat-six wakes up into a wild howl that keeps climbing all the way to redline.',
   'Frederic Lefebvre': 'Five cylinders instead of the usual four or six, and it sounds like nothing else on the road. Snap, crackle, and pop on every lift off the gas, then a hard launch that shoves you back in your seat.',
   'Jean-Francois Rouette': "A five-cylinder engine tuned to Stage 2, pushing 554 horsepower and hitting 100 km/h in just 3.3 seconds — with a wild, uneven growl that only gets angrier the harder you push it.",
