@@ -105,7 +105,7 @@ function CarGrid({ cars, onSelect }) {
           <button type="button" onClick={() => onSelect(p)}
             className="car-card"
             aria-label={`${p.name} — ${p.car}`}
-            style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', boxShadow: '0 2px 10px rgba(0,0,0,0.09)', width: '100%' }}>
+            style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.09)', width: '100%' }}>
             <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
               {p.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
