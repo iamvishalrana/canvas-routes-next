@@ -32,6 +32,15 @@ const MANUAL_PARTICIPANTS = [
   { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect 50:50 weight distribution, every option selected — the benchmark sport sedan exactly as it should be.' },
 ]
 
+// Editorial car facts for specific live (roster-fetched) participants, shown
+// in the same click-to-reveal modal as Jerry's — matched onto the roster by
+// exact name. Nothing derived from the DB; add an entry here as we learn
+// something worth mentioning about someone's car. Style: how it performs,
+// feels, or sounds — never a comparison to another car or brand.
+const CAR_FACTS = {
+  'Dany Bosse': "One of only two 911s in the world finished in Phoenix Yellow. The flat-six wakes up past 5,000 RPM — a howl that builds all the way to redline and doesn't let go.",
+}
+
 const DRIVE_BULLETS = [
   { emoji: '🛣️', text: 'We meet at 9:00 AM at Rona, Carrefour Laval, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside.' },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
@@ -288,7 +297,12 @@ export default function HelloToMontebelloItineraryPage() {
   // back from the roster fetch too — his richer hardcoded entry above (lead
   // flag, fact blurb, fixed photo) is what's actually shown, so drop the
   // fetched duplicate rather than listing him twice.
-  const allParticipants = [...MANUAL_PARTICIPANTS, ...fetchedParticipants.filter(p => p.name !== 'Jerry')]
+  const allParticipants = [
+    ...MANUAL_PARTICIPANTS,
+    ...fetchedParticipants
+      .filter(p => p.name !== 'Jerry')
+      .map(p => CAR_FACTS[p.name] ? { ...p, fact: CAR_FACTS[p.name] } : p),
+  ]
   const groupNumbers = [...new Set(allParticipants.map(p => p.group).filter(g => g != null))].sort((a, b) => a - b)
   const ungrouped = allParticipants.filter(p => p.group == null)
 
