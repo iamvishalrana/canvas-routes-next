@@ -741,21 +741,37 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         <span style={{ fontSize: '10px', color: ACCENT, letterSpacing: '0.06em' }}>{t.spotsLeft(slotsLeft)}</span>
                       </div>
                     </div>
-                    {/* CTA */}
-                    {r.interested ? (
-                      <div className="rt-success" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(197,168,130,0.06)', border: '0.5px solid rgba(197,168,130,0.25)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                          <CheckIcon /><span style={{ fontSize: '10px', color: '#7B5B2E', letterSpacing: '0.18em', textTransform: 'uppercase' }}>{t.onTheList}</span>
-                        </div>
-                        <button onClick={() => shareInterest(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', padding: '8px 10px' }} aria-label={t.share}>↗</button>
-                      </div>
-                    ) : r.launched && r.registration_url ? (
-                      <Link href={r.registration_url} style={{ display: 'block', padding: '12px 14px', background: '#7B5B2E', border: '0.5px solid #7B5B2E', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', textAlign: 'center', textDecoration: 'none', fontWeight: 600 }}>{t.registerNow} →</Link>
-                    ) : r.launched ? (
-                      <div style={{ padding: '12px 14px', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', textAlign: 'center' }}>{t.routeLaunched}</div>
-                    ) : (
-                      <button onClick={() => { patch(r.id, { error: null }); setSheetSuccess(false); setSheetId(r.id) }} className="rt-btn">{t.expressInterest}</button>
-                    )}
+                    {/* CTA — registration_open/member_registration_open are two
+                        independent admin toggles (Routes admin kebab menu);
+                        check whichever applies to this viewer so the tile
+                        never invites someone to a registration that's
+                        actually closed. */}
+                    {(() => {
+                      const regOpenForViewer = isMember ? r.member_registration_open !== false : r.registration_open !== false
+                      if (r.interested) {
+                        return (
+                          <div className="rt-success" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(197,168,130,0.06)', border: '0.5px solid rgba(197,168,130,0.25)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                              <CheckIcon /><span style={{ fontSize: '10px', color: '#7B5B2E', letterSpacing: '0.18em', textTransform: 'uppercase' }}>{t.onTheList}</span>
+                            </div>
+                            <button onClick={() => shareInterest(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', padding: '8px 10px' }} aria-label={t.share}>↗</button>
+                          </div>
+                        )
+                      }
+                      if (r.launched && r.registration_url && regOpenForViewer) {
+                        return <Link href={r.registration_url} style={{ display: 'block', padding: '12px 14px', background: '#0F1E14', border: '0.5px solid #0F1E14', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', textAlign: 'center', textDecoration: 'none', fontWeight: 600 }}>{t.registerNow} →</Link>
+                      }
+                      if (r.launched && r.registration_url) {
+                        // Launched with a real registration page, but closed —
+                        // the page itself still exists and is browsable, it
+                        // just won't accept a new registration right now.
+                        return <div style={{ padding: '12px 14px', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.12)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', textAlign: 'center' }}>{t.registrationClosed}</div>
+                      }
+                      if (r.launched) {
+                        return <div style={{ padding: '12px 14px', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5B2E', textAlign: 'center' }}>{t.routeLaunched}</div>
+                      }
+                      return <button onClick={() => { patch(r.id, { error: null }); setSheetSuccess(false); setSheetId(r.id) }} className="rt-btn">{t.expressInterest}</button>
+                    })()}
                   </div>
                 </div>
               )
