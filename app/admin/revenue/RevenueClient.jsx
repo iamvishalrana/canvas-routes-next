@@ -1,10 +1,22 @@
 'use client'
 
-import { useState, useEffect, Fragment } from 'react'
+import { useState, useEffect, useMemo, Fragment } from 'react'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
+const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: MONTREAL_TZ })
+
+// Date range is compared against the Montreal calendar date of each payment
+// (not raw UTC), matching how the monthly breakdown already groups — a
+// payment at 11pm Montreal time on the last day of a range must still count
+// as being on that day, not the next UTC day.
+function montrealDateKey(iso) {
+  const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: MONTREAL_TZ }).formatToParts(new Date(iso))
+  return `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}-${parts.find(p => p.type === 'day').value}`
+}
+
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
+const DATE_INPUT = { padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }
 const SECTION_LABEL = { fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }
 const TH = { fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', padding: '0.65rem 1rem', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.08)', fontWeight: '400', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }
@@ -94,14 +106,69 @@ function PaymentDetailPanel({ p }) {
   )
 }
 
-export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType = [], byMonth = [], recentPayments = [], payments = [] }) {
+export default function RevenueClient({ payments = [] }) {
   const [isMobile, setIsMobile] = useState(false)
   const [expanded, setExpanded] = useState(null) // index of the recent payment row currently open
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check(); window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  const filteredPayments = useMemo(() => {
+    if (!dateFrom && !dateTo) return payments
+    return payments.filter(p => {
+      if (!p.date) return false
+      const key = montrealDateKey(p.date)
+      if (dateFrom && key < dateFrom) return false
+      if (dateTo && key > dateTo) return false
+      return true
+    })
+  }, [payments, dateFrom, dateTo])
+
+  const totalRevenue = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+  const totalPaid = filteredPayments.length
+
+  const byType = useMemo(() => {
+    const map = new Map()
+    for (const p of filteredPayments) {
+      const key = p.typeKey || 'unknown'
+      if (!map.has(key)) map.set(key, { key, label: p.type, count: 0, revenue: 0 })
+      const entry = map.get(key)
+      entry.count += 1
+      entry.revenue += p.amount
+    }
+    return Array.from(map.values())
+  }, [filteredPayments])
+
+  const byMonth = useMemo(() => {
+    const map = new Map()
+    for (const p of filteredPayments) {
+      if (!p.date) continue
+      const parts = monthKeyFormatter.formatToParts(new Date(p.date))
+      const ym = `${parts.find(x => x.type === 'year').value}-${parts.find(x => x.type === 'month').value}`
+      if (!map.has(ym)) map.set(ym, { count: 0, revenue: 0 })
+      const entry = map.get(ym)
+      entry.count += 1
+      entry.revenue += p.amount
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([ym, val]) => {
+        const [year, month] = ym.split('-')
+        const label = new Date(Date.UTC(Number(year), Number(month) - 1, 1, 12)).toLocaleDateString('en-CA', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+        return { ym, label, count: val.count, revenue: val.revenue }
+      })
+  }, [filteredPayments])
+
+  // Sorted newest-first — capped only when unfiltered (all-time) to keep the
+  // page light; once a date range narrows things down, show everything in it.
+  const recentPayments = useMemo(() => {
+    const sorted = [...filteredPayments].sort((a, b) => new Date(b.date) - new Date(a.date))
+    return (dateFrom || dateTo) ? sorted : sorted.slice(0, 10)
+  }, [filteredPayments, dateFrom, dateTo])
 
   const routesRevenue = byType.find(t => t.key === 'membership_routes')?.revenue ?? 0
   const innerCircleRevenue = byType.find(t => t.key === 'membership_inner_circle')?.revenue ?? 0
@@ -130,7 +197,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
             filename="revenue"
             title="Revenue"
             headers={['Name', 'Email', 'Type', 'Amount (CAD)', 'Date']}
-            rows={payments.map(p => [
+            rows={filteredPayments.map(p => [
               p.name || '',
               p.email || '',
               p.type || '',
@@ -138,6 +205,18 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
               p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
             ])}
           />
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '1.1rem' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>Date Range</span>
+          <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} style={DATE_INPUT} />
+          <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
+          <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} style={DATE_INPUT} />
+          {(dateFrom || dateTo) && (
+            <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }}
+              style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
@@ -218,7 +297,7 @@ export default function RevenueClient({ totalRevenue = 0, totalPaid = 0, byType 
       {/* Recent payments */}
       <div style={{ ...CARD }}>
         <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
-          <div style={SECTION_LABEL}>Recent Payments</div>
+          <div style={SECTION_LABEL}>{(dateFrom || dateTo) ? `Payments In Range (${recentPayments.length})` : 'Recent Payments'}</div>
         </div>
         {recentPayments.length === 0 ? (
           <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No payments yet.</div>

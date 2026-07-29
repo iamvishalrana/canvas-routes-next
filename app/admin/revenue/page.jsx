@@ -1,6 +1,5 @@
 import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
-import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import RevenueClient from './RevenueClient'
 
 // Auth is already enforced by middleware.js — no need to re-check here.
@@ -47,19 +46,24 @@ export default async function RevenuePage() {
       .sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
   }
 
-  // Also include manual (e-transfer) payments from DB
+  // Also include manual (e-transfer) payments from DB. Dedupe against the
+  // Stripe-sourced rows above by payment_intent_id, NOT email — matching by
+  // email alone silently dropped a genuine manual payment for anyone who
+  // ALSO has any unrelated Stripe payment (e.g. a membership paid by card,
+  // and a separate route paid by e-transfer), undercounting real revenue
+  // against what Stripe's own dashboard shows for the Stripe-only side.
   try {
     const supabase = createAdminClient()
-    const stripeEmails = new Set(rows.map(r => r.email))
+    const stripePiIds = new Set(rows.map(r => r.id).filter(Boolean))
     const { data: manualApps } = await supabase
       .from('applications')
-      .select('name, email, phone, stripe_amount_paid, stripe_payment_type, stripe_paid_at')
+      .select('name, email, phone, stripe_amount_paid, stripe_payment_type, stripe_paid_at, stripe_payment_intent_id')
       .eq('stripe_payment_status', 'paid')
       .not('stripe_amount_paid', 'is', null)
     for (const a of (manualApps || [])) {
       const email = a.email?.toLowerCase().trim()
       if (!email) continue
-      if (stripeEmails.has(email)) continue
+      if (a.stripe_payment_intent_id && stripePiIds.has(a.stripe_payment_intent_id)) continue
       rows.push({
         id: null,
         manual: true,
@@ -89,47 +93,10 @@ export default async function RevenuePage() {
     }
   } catch {}
 
-  const totalGross    = rows.reduce((sum, r) => sum + (r.stripe_amount_paid || 0), 0) / 100
-  const totalRefunded = rows.reduce((sum, r) => sum + (r.stripe_amount_refunded || 0), 0) / 100
-  const totalRevenue  = totalGross - totalRefunded
-  const totalPaid     = rows.length
-
-  // By payment type (net of refunds)
-  const byTypeMap = {}
-  for (const r of rows) {
-    const key = r.stripe_payment_type || 'unknown'
-    if (!byTypeMap[key]) byTypeMap[key] = { count: 0, revenue: 0 }
-    byTypeMap[key].count += 1
-    byTypeMap[key].revenue += ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100
-  }
-  const byType = Object.entries(byTypeMap).map(([key, val]) => ({
-    key, label: TYPE_LABELS[key] || key, count: val.count, revenue: val.revenue,
-  }))
-
-  // Monthly breakdown (net of refunds) — group by Montreal calendar month, not
-  // the server's UTC month, or a late-evening Montreal payment near midnight
-  // gets bucketed into the wrong month.
-  const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: MONTREAL_TZ })
-  const byMonthMap = {}
-  for (const r of rows) {
-    if (!r.stripe_paid_at) continue
-    const parts = monthKeyFormatter.formatToParts(new Date(r.stripe_paid_at))
-    const ym = `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}`
-    if (!byMonthMap[ym]) byMonthMap[ym] = { count: 0, revenue: 0 }
-    byMonthMap[ym].count += 1
-    byMonthMap[ym].revenue += ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100
-  }
-  const byMonth = Object.entries(byMonthMap)
-    .sort((a, b) => b[0].localeCompare(a[0]))
-    .map(([ym, val]) => {
-      const [year, month] = ym.split('-')
-      // Anchor at UTC noon on the 1st and format in UTC so this pure y-m label
-      // can't be shifted back a day/month by any timezone reinterpretation.
-      const label = new Date(Date.UTC(Number(year), Number(month) - 1, 1, 12)).toLocaleDateString('en-CA', { month: 'long', year: 'numeric', timeZone: 'UTC' })
-      return { ym, label, count: val.count, revenue: val.revenue }
-    })
-
-  // Recent 10 payments
+  // Stats (total/by-type/by-month/recent) are all derived client-side from
+  // `payments` in RevenueClient instead of here — that's what lets the page
+  // offer a date-range filter that recomputes everything instantly instead
+  // of round-tripping to the server on every range change.
   const toPaymentRow = r => {
     const receipt = r.id ? receiptsByPi[r.id] : null
     return {
@@ -150,16 +117,5 @@ export default async function RevenuePage() {
       taxDiscount: receipt?.discount_amount ? receipt.discount_amount / 100 : null,
     }
   }
-  const recentPayments = rows.slice(0, 10).map(toPaymentRow)
-
-  return (
-    <RevenueClient
-      totalRevenue={totalRevenue}
-      totalPaid={totalPaid}
-      byType={byType}
-      byMonth={byMonth}
-      recentPayments={recentPayments}
-      payments={rows.map(toPaymentRow)}
-    />
-  )
+  return <RevenueClient payments={rows.map(toPaymentRow)} />
 }
