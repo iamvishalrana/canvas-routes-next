@@ -498,7 +498,7 @@ export default function HelloToMontebelloItineraryPage() {
             Saturday · August 1, 2026
           </div>
           <div className="gate-tags" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.75rem' }}>
-            {['Château Lunch', 'Coffee Stop', 'Montebello Stroll'].map(tag => (
+            {['Scenic Backroads', '~300km Drive', 'Château Lunch'].map(tag => (
               <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', border: '0.5px solid rgba(197,168,130,0.25)', padding: '3px 9px' }}>{tag}</span>
             ))}
           </div>
@@ -632,7 +632,7 @@ export default function HelloToMontebelloItineraryPage() {
           <h1 className="itin-hero-title" style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Hello to Montebello</h1>
           <p className="itin-hero-date" style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>Saturday · August 1, 2026</p>
           <div className="itin-hero-tags" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
-            {['Château Lunch', 'Coffee Stop', 'Montebello Stroll'].map(tag => (
+            {['Scenic Backroads', '~300km Drive', 'Château Lunch'].map(tag => (
               <span key={tag} style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '4px 12px' }}>{tag}</span>
             ))}
           </div>
@@ -646,7 +646,7 @@ export default function HelloToMontebelloItineraryPage() {
                 { label: 'Sec', val: countdown.s },
               ].map(({ label, val }, i, arr) => (
                 <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.55rem 0.9rem', borderRight: i < arr.length - 1 ? '0.5px solid rgba(197,168,130,0.15)' : 'none', minWidth: '54px' }}>
-                  <div key={val} className="itin-countdown-num" style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.4rem', fontWeight: '400', color: '#F5F1EC', lineHeight: 1 }}>{String(val).padStart(2, '0')}</div>
+                  <div key={val} className="itin-countdown-num" style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.8rem', fontWeight: '400', color: '#F5F1EC', lineHeight: 1, letterSpacing: '0.05em' }}>{String(val).padStart(2, '0')}</div>
                   <div style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.65)', marginTop: '3px' }}>{label}</div>
                 </div>
               ))}
