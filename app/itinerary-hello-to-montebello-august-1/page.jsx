@@ -10,19 +10,21 @@ const PASSWORD = 'montebello'
 const ROUTE_SLUG = 'hello-to-montebello'
 
 // Only real venues so this one array can drive both the itinerary timeline
-// and the map markers. lat/lng for Fairmont comes from Jerry's traced My Maps
-// route (see routePath.js). The meetup point is the McDonald's on the south
+// and the map markers. The meetup point is the McDonald's on the south
 // service road of Autoroute 440 in Laval (4610 Desserte Sud Autoroute 440 O,
 // Laval, QC H7T 2Z8) — confirmed via the official route link Jerry shared:
-// https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9. Its lat/lng below is a geocoded
-// estimate, NOT independently verified against a traced route — confirm/
-// correct the pin before relying on it for real navigation. The rest of the
-// stops are estimates too.
+// https://maps.app.goo.gl/H1MhTqXNUzvxheCq7. Stop lat/lng are geocoded
+// estimates, NOT independently verified against a traced route — confirm/
+// correct the pins before relying on them for real navigation. The drawn
+// road path in routePath.js is a routed polyline through this same route's
+// waypoints (via OSRM, since Google's own turn-by-turn path isn't exposed
+// through a shared link) — it approximates the real roads but is not a
+// pixel-perfect copy of Google's route.
 const ROUTE_LINK = 'https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9'
 const STOPS = [
   { label: "McDonald's", note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4610+Desserte+Sud+Autoroute+440+Ouest+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
-  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 45.68, lng: -75.05 },
+  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 46.0105673, lng: -74.7612215 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
 ]
 
@@ -641,14 +643,6 @@ export default function HelloToMontebelloItineraryPage() {
             ))}
           </div>
 
-          <a
-            href={ROUTE_LINK}
-            target="_blank" rel="noreferrer"
-            style={{ display: 'inline-block', marginTop: '1.25rem', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#F5F1EC', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
-          >
-            Open Full Route in Google Maps →
-          </a>
-
           {countdown && (
             <div className="itin-hero-countdown" style={{ display: 'inline-flex', gap: 0, marginTop: '1.75rem', border: '0.5px solid rgba(197,168,130,0.25)', overflow: 'hidden' }}>
               {[
@@ -825,7 +819,16 @@ export default function HelloToMontebelloItineraryPage() {
 
         {/* Map */}
         <section className="scroll-reveal" style={{ padding: '2rem 0' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Map</h2>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+            <h2 style={{ ...SECTION_LABEL, marginBottom: 0 }}>Map</h2>
+            <a
+              href={ROUTE_LINK}
+              target="_blank" rel="noreferrer"
+              style={{ fontSize: '11px', letterSpacing: '0.06em', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
+            >
+              Open Full Route in Google Maps →
+            </a>
+          </div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
             <RouteMap stops={STOPS} />
           </div>
