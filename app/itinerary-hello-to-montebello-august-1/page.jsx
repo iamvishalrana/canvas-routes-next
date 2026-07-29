@@ -706,11 +706,6 @@ export default function HelloToMontebelloItineraryPage() {
                   {stop.note}
                 </p>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                  {stop.feature && (
-                    <div style={{ display: 'inline-block', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0F1E14', background: '#c5a882', padding: '2px 8px', fontWeight: '600' }}>
-                      ★ Centerpiece
-                    </div>
-                  )}
                   {stop.tag && (
                     <div style={{ display: 'inline-block', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
                       {stop.tag}
