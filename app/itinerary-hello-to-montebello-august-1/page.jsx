@@ -72,7 +72,7 @@ const CAR_FACTS = {
   'Martin Boisvert': 'Small, light, and built purely for fun — a turbocharged inline-six sending power to the rear wheels only. One of the most exciting driver\'s cars BMW has ever made, built to be thrown into corners hard.',
   'Yvon Maggi': 'One of the fastest 911s ever built at the time — twin turbos, all-wheel drive, and launch control that slams you back into your seat. 0 to 100 km/h in under 3 seconds, gone before you can blink.',
   'Nicholas Talarico': 'A screaming V12 with no turbos at all — something you almost never see anymore. It revs to nearly 8,500 RPM and is loud enough to turn heads from blocks away. One of the last pure, naturally-aspirated Lamborghini V12s ever built — raw fury, no filter.',
-  'Alain Sahakian': "Boost builds so smoothly here you'd barely notice the turbo at all — until a wall of torque shows up in the midrange and just keeps shoving, all the way to redline.",
+  'Alain Sahakian': "One of the biggest comeback stories in sports cars — this turbocharged inline-six stays calm and quiet at a cruise, then pulls hard and just doesn't let up.",
 }
 
 const DRIVE_BULLETS = [
@@ -846,7 +846,7 @@ export default function HelloToMontebelloItineraryPage() {
         {/* Who's Coming */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Who&apos;s Coming — {allParticipants.length} Car{allParticipants.length !== 1 ? 's' : ''}</h2>
-          <p style={{ fontSize: '13px', color: '#0F1E14', fontWeight: '700', letterSpacing: '0.02em', margin: '0 0 1.25rem' }}>👆 Tap a photo to learn more about the car</p>
+          <p style={{ fontSize: '13px', color: '#0F1E14', fontWeight: '700', letterSpacing: '0.02em', margin: '0 0 1.25rem' }}>👇 Tap a photo to learn more about the car</p>
           {groupNumbers.length > 0 ? (
             <>
               {groupNumbers.map(g => (
