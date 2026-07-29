@@ -597,6 +597,26 @@ export default function HelloToMontebelloItineraryPage() {
           .quick-info-item { border-right: none !important; margin-right: 0 !important; border-bottom: 0.5px solid rgba(0,0,0,0.08); padding-right: 0 !important; }
           .quick-info-item:last-child { border-bottom: none; }
         }
+
+        /* Header entrance — staggered fade-in the moment the itinerary unlocks */
+        @keyframes itin-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes itin-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        .itin-hero-logo      { animation: itin-fade-in 0.7s ease both; animation-delay: 100ms; }
+        .itin-hero-title     { animation: itin-fade-up 0.8s ease both; animation-delay: 220ms; }
+        .itin-hero-date      { animation: itin-fade-in 0.6s ease both; animation-delay: 380ms; }
+        .itin-hero-tags      { animation: itin-fade-in 0.6s ease both; animation-delay: 500ms; }
+        .itin-hero-countdown { animation: itin-fade-up 0.7s ease both; animation-delay: 620ms; }
+        .itin-quick-info     { animation: itin-fade-up 0.7s ease both; animation-delay: 740ms; }
+
+        /* Countdown digits — a quiet pulse each time a second ticks over */
+        @keyframes itin-tick { 0% { transform: scale(1.12); } 100% { transform: scale(1); } }
+        .itin-countdown-num { display: inline-block; animation: itin-tick 0.4s ease-out; }
+
+        /* Quick info cards — gentle lift on tap/hover so they don't feel inert */
+        .quick-info-item { transition: transform 0.15s ease; }
+        @media (hover: hover) {
+          .quick-info-item:hover { transform: translateY(-2px); }
+        }
       `}</style>
 
       {/* Header */}
@@ -608,17 +628,17 @@ export default function HelloToMontebelloItineraryPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
-          <h1 style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Hello to Montebello</h1>
-          <p style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>Saturday · August 1, 2026</p>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
+          <img src="/white-outline.png" alt="Canvas Routes" className="itin-hero-logo" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
+          <h1 className="itin-hero-title" style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Hello to Montebello</h1>
+          <p className="itin-hero-date" style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>Saturday · August 1, 2026</p>
+          <div className="itin-hero-tags" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
             {['Château Lunch', 'Coffee Stop', 'Montebello Stroll'].map(tag => (
               <span key={tag} style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '4px 12px' }}>{tag}</span>
             ))}
           </div>
 
           {countdown && (
-            <div style={{ display: 'inline-flex', gap: 0, marginTop: '1.75rem', border: '0.5px solid rgba(197,168,130,0.25)', overflow: 'hidden' }}>
+            <div className="itin-hero-countdown" style={{ display: 'inline-flex', gap: 0, marginTop: '1.75rem', border: '0.5px solid rgba(197,168,130,0.25)', overflow: 'hidden' }}>
               {[
                 { label: 'Days', val: countdown.d },
                 { label: 'Hrs', val: countdown.h },
@@ -626,7 +646,7 @@ export default function HelloToMontebelloItineraryPage() {
                 { label: 'Sec', val: countdown.s },
               ].map(({ label, val }, i, arr) => (
                 <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.55rem 0.9rem', borderRight: i < arr.length - 1 ? '0.5px solid rgba(197,168,130,0.15)' : 'none', minWidth: '54px' }}>
-                  <div style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.4rem', fontWeight: '400', color: '#F5F1EC', lineHeight: 1 }}>{String(val).padStart(2, '0')}</div>
+                  <div key={val} className="itin-countdown-num" style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.4rem', fontWeight: '400', color: '#F5F1EC', lineHeight: 1 }}>{String(val).padStart(2, '0')}</div>
                   <div style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.65)', marginTop: '3px' }}>{label}</div>
                 </div>
               ))}
@@ -638,7 +658,7 @@ export default function HelloToMontebelloItineraryPage() {
       <main style={{ maxWidth: '740px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
 
         {/* Quick info */}
-        <div style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+        <div className="itin-quick-info" style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
