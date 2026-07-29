@@ -38,7 +38,22 @@ const MANUAL_PARTICIPANTS = [
 // something worth mentioning about someone's car. Style: how it performs,
 // feels, or sounds — never a comparison to another car or brand.
 const CAR_FACTS = {
-  'Dany Bosse': "One of only two 911s in the world finished in Phoenix Yellow. The flat-six wakes up past 5,000 RPM — a howl that builds all the way to redline and doesn't let go.",
+  'Karim Abdul Baki': 'A naturally aspirated flat-four that only wants to rev — a boxer burble at idle that turns into a hard-edged wail by 7,000 RPM, with a chassis that rotates the moment you ask it to.',
+  'Joseph Dizazzo': 'A naturally aspirated V8 sitting right behind your shoulders — the induction snarl gets louder the harder it works, and every downshift cracks through the cabin.',
+  'Dany Bossé': "One of only two 911s in the world finished in Phoenix Yellow. The flat-six wakes up past 5,000 RPM — a howl that builds all the way to redline and doesn't let go.",
+  'Frederic Lefebvre': 'A turbocharged five-cylinder with a distinctive warble, pops and crackles on every lift, and enough grip to launch hard off the line.',
+  'Jean-Francois Rouette': 'The same five-cylinder growl in a smaller, tighter package — turbo spool building into a bark, with a chassis that changes direction almost as fast as the engine revs.',
+  'Michel Robert': 'A flat-six sitting low behind the seats — roof down, the exhaust note bounces right back into the cabin. Perfectly balanced, and happiest the moment you stop thinking about it and just drive.',
+  'Julien Fernandez': 'A high-revving flat-six with a direct, mechanical feel through the wheel — every input translates instantly, no filter between hands and road.',
+  'Martin Griffin': 'A flat-plane-crank V8 that revs to a screaming 8,250 RPM redline, with an exhaust note that fills the cabin the entire way there.',
+  'Alexandre Boutin': 'A twin-turbo V8 wearing a wagon body — understated right up until the throttle goes down, then it launches with a shove that doesn\'t match how quiet the cabin stays.',
+  'Elie Massuda': 'Mid-engine weight distribution and a flat-six right behind your head — small, light, and happiest carving through backroads with the top down.',
+  'Manon Cronier': 'A composed, refined cruiser built for eating highway miles quietly — smooth power delivery and a cabin that stays hushed no matter how far the trip runs.',
+  'Aleks Sahakian': 'A carbureted-era 5.0 V8 with a rumble at idle that\'s pure old-school muscle — raw, mechanical, and completely unfiltered.',
+  'Martin Boisvert': 'A small, tight chassis wrapped around a turbocharged inline-six — quick-revving, perfectly balanced, and built to be tossed into a corner without a second thought.',
+  'Yvon Maggi': 'Twin turbos spooling behind a flat-six and launch control that slams you into the seat — a whoosh and a wail that build together the harder it\'s pushed.',
+  'Nicholas Talarico': 'A naturally aspirated V12 revving to nearly 8,500 RPM — one of the last of its kind, with an engine note loud enough to fill an entire street.',
+  'Alain Sahakian': 'A turbocharged inline-six with a smooth, building hum that turns into a proper growl under load — power that comes on progressively, not all at once.',
 }
 
 const DRIVE_BULLETS = [
@@ -602,14 +617,23 @@ export default function HelloToMontebelloItineraryPage() {
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Convoy App</h2>
-              <a
-                href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
-                target="_blank" rel="noreferrer"
-                style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', display: 'block', fontWeight: '700' }}
-              >
-                Download Velox →
-              </a>
-              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>Stay connected in real time · iOS only</p>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <a
+                  href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
+                  target="_blank" rel="noreferrer"
+                  style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', fontWeight: '700' }}
+                >
+                  iOS →
+                </a>
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.jaamways.velox"
+                  target="_blank" rel="noreferrer"
+                  style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', fontWeight: '700' }}
+                >
+                  Android →
+                </a>
+              </div>
+              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>Stay connected in real time</p>
             </div>
           </div>
         </div>
