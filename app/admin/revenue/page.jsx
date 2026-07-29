@@ -3,9 +3,15 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import RevenueClient from './RevenueClient'
 
 // Auth is already enforced by middleware.js — no need to re-check here.
-// This page recomputes revenue totals from up to 2000 Stripe payment intents on every
-// render — cache it for a minute instead of refetching on every navigation.
-export const revalidate = 60
+// Deliberately NOT cached (no revalidate/ISR) — this is a financial page, and
+// a refund issued directly in the Stripe dashboard (not through this admin
+// panel) must show up on the very next load. This page has low enough
+// traffic that refetching Stripe on every request is the right trade-off
+// over risking a stale post-refund snapshot sticking around indefinitely on
+// a low-traffic route (ISR only revalidates when the next request happens to
+// arrive after the window expires, which can lag well past the nominal TTL
+// when admin visits are infrequent).
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Revenue — Admin' }
 
 const TYPE_LABELS = {

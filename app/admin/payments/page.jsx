@@ -3,10 +3,15 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import PaymentsClient from './PaymentsClient'
 
 // Auth is already enforced by middleware.js — no need to re-check here.
-// This page's own data (up to 2000 Stripe payment intents, paginated over multiple
-// API calls) is expensive to recompute — cache it for a minute instead of refetching
-// on every navigation. Real-time changes still show up within the revalidate window.
-export const revalidate = 60
+// Deliberately NOT cached (no revalidate/ISR) — this is a financial page, and
+// a refund issued directly in the Stripe dashboard (not through this admin
+// panel) must show up on the very next load. This page has low enough
+// traffic that refetching Stripe on every request is the right trade-off
+// over risking a stale post-refund snapshot sticking around indefinitely on
+// a low-traffic route (ISR only revalidates when the next request happens to
+// arrive after the window expires, which can lag well past the nominal TTL
+// when admin visits are infrequent).
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Payments — Admin' }
 
 export default async function PaymentsPage() {
@@ -51,10 +56,14 @@ export default async function PaymentsPage() {
     }
   }
 
-  // Also fetch manual (e-transfer) payments from DB
+  // Also fetch manual (e-transfer) payments from DB. Dedupe against the
+  // Stripe-sourced records above by payment_intent_id, NOT email — matching
+  // by email alone silently dropped a genuine manual payment for anyone who
+  // ALSO has any unrelated Stripe payment (e.g. a membership paid by card,
+  // and a separate route paid by e-transfer).
   try {
     const supabase = createAdminClient()
-    const stripeEmails = new Set(records.map(r => r.email))
+    const stripePiIds = new Set(records.map(r => r.stripe_payment_intent_id).filter(Boolean))
     const { data: manualApps } = await supabase
       .from('applications')
       .select('id, name, email, stripe_payment_status, stripe_amount_paid, stripe_payment_type, stripe_paid_at, stripe_payment_intent_id')
@@ -63,7 +72,8 @@ export default async function PaymentsPage() {
 
     for (const a of (manualApps || [])) {
       const email = a.email?.toLowerCase().trim()
-      if (!email || stripeEmails.has(email)) continue
+      if (!email) continue
+      if (a.stripe_payment_intent_id && stripePiIds.has(a.stripe_payment_intent_id)) continue
       records.push({
         id:                       a.id,
         stripe_payment_intent_id: a.stripe_payment_intent_id || null,
