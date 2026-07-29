@@ -61,7 +61,7 @@ const CAR_FACTS = {
   'Joseph Dizazzo': 'The engine sits right behind your head instead of up front like most cars — so every bit of power feels like it explodes right next to you. Blistering speed for the money, and every downshift cracks like a whip.',
   'Dany Bossé': 'Only two of these exist anywhere in the world in this exact shade — Phoenix Yellow. Push past 5,000 RPM and the flat-six wakes up into a wild howl that keeps climbing all the way to redline.',
   'Frederic Lefebvre': 'Five cylinders instead of the usual four or six, and it sounds like nothing else on the road. Snap, crackle, and pop on every lift off the gas, then a hard launch that shoves you back in your seat.',
-  'Jean-Francois Rouette': "This one's been tuned — Stage 2, pushing 554 horsepower. 0 to 100 km/h in just 3.3 seconds. Same wild five-cylinder growl as the RS3, only sharper, angrier, and even faster.",
+  'Jean-Francois Rouette': "This one's been tuned — Stage 2, pushing 554 horsepower. 0 to 100 km/h in just 3.3 seconds. A five-cylinder engine with a wild, uneven growl that only gets angrier the harder you push it.",
   'Michel Robert': 'The engine lives right behind the seats. Drop the roof and that flat-six sound wraps all the way around you. Balanced, playful, and built for exactly this kind of drive.',
   'Julien Fernandez': 'A flat-six that loves to rev high, with steering so direct it feels like the road is talking straight to your hands.',
   'Martin Griffin': 'This V8 screams all the way to 8,250 RPM, way higher than most engines dare to go. Near redline it turns sharp and furious, a sound most V8s simply can\'t make.',
@@ -79,8 +79,8 @@ const DRIVE_BULLETS = [
   { emoji: '🛣️', text: "We meet at 9:00 AM at McDonald's in Laval, then regroup at Porte du Nord in Saint-Jérôme before leaving the highway behind and heading east into the countryside." },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
   { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars self-park together in a display area out front for the afternoon. Enjoy a three-course lunch, with parking covered by Canvas Routes. Gourmet coffee and Lot 35 tea are included — any other beverages, including alcohol, can be purchased directly from the venue at your own cost." },
-  { emoji: '🍫', text: 'A stroll around Montebello before the drive home — we suggest Chocomotive, an artisan chocolate workshop in the old train station, and/or the Lieu historique national du Manoir-Papineau.' },
-  { emoji: '🏁', text: 'After Montebello, the convoy drives back together — a stop at Chocomotive, then A-50 and Route 329 north through Morin-Heights — to Porte du Nord for one last regroup before everyone heads home.' },
+  { emoji: '🍫', text: 'A stroll around Montebello before the drive home — the convoy stops together at Chocomotive, an artisan chocolate workshop in the old train station. Also worth a look nearby: the Lieu historique national du Manoir-Papineau.' },
+  { emoji: '🏁', text: 'From Chocomotive, the convoy drives back together — A-50 then Route 329 north through Morin-Heights — to Porte du Nord for one last regroup before everyone heads home.' },
 ]
 
 const CONVOY_RULES = [
@@ -167,8 +167,10 @@ function ModalImage({ src, alt }) {
 function RouteMap({ stops, path = ROUTE_PATH }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
+  const boundsRef = useRef(null)
   const [status, setStatus] = useState('loading')
   const [errorMsg, setErrorMsg] = useState('')
+  const [moved, setMoved] = useState(false)
 
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -184,6 +186,7 @@ function RouteMap({ stops, path = ROUTE_PATH }) {
 
         const bounds = new google.maps.LatLngBounds()
         stops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }))
+        boundsRef.current = bounds
 
         const map = new google.maps.Map(containerRef.current, {
           mapTypeId: 'roadmap',
@@ -202,6 +205,14 @@ function RouteMap({ stops, path = ROUTE_PATH }) {
         })
         map.fitBounds(bounds, 40)
         mapRef.current = map
+
+        // Only flag the map as "moved" (to show the recenter button) once the
+        // initial fitBounds has settled — fitBounds itself fires drag/zoom-like
+        // events that would otherwise show the button immediately on load.
+        let settled = false
+        google.maps.event.addListenerOnce(map, 'idle', () => { settled = true })
+        map.addListener('dragstart', () => { if (settled) setMoved(true) })
+        map.addListener('zoom_changed', () => { if (settled) setMoved(true) })
 
         new google.maps.Polyline({
           path,
@@ -280,6 +291,25 @@ function RouteMap({ stops, path = ROUTE_PATH }) {
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0ede8' }}>
           <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Loading map…</span>
         </div>
+      )}
+      {status === 'ready' && moved && (
+        <button
+          onClick={() => {
+            if (mapRef.current && boundsRef.current) {
+              mapRef.current.fitBounds(boundsRef.current, 40)
+              setMoved(false)
+            }
+          }}
+          style={{
+            position: 'absolute', top: '10px', right: '10px', zIndex: 2,
+            display: 'flex', alignItems: 'center', gap: '5px', minHeight: '36px',
+            background: '#0F1E14', color: '#F5F1EC', border: 'none', padding: '0 0.85rem',
+            fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: '600',
+            cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+          }}
+        >
+          ⟲ Recenter
+        </button>
       )}
       {status === 'error' && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f0ede8', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
@@ -693,7 +723,8 @@ export default function HelloToMontebelloItineraryPage() {
               <CopyButton text="514-437-3437" />
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Convoy App — Velox</h2>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>Convoy App</h2>
+              <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700', letterSpacing: '0.01em', margin: '0 0 5px' }}>Velox</p>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <a
                   href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
@@ -710,7 +741,7 @@ export default function HelloToMontebelloItineraryPage() {
                   Android →
                 </a>
               </div>
-              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>See the whole convoy live on the map and never lose the group — grab it before we roll out.</p>
+              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>See the whole convoy live on the map and never lose the group — download it now, before August 1.</p>
             </div>
           </div>
         </div>
@@ -838,19 +869,19 @@ export default function HelloToMontebelloItineraryPage() {
             <a
               href={mapView === 'to' ? ROUTE_LINK : RETURN_ROUTE_LINK}
               target="_blank" rel="noreferrer"
-              style={{ fontSize: '11px', letterSpacing: '0.06em', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
+              style={{ display: 'inline-block', padding: '6px 0', margin: '-6px 0', fontSize: '11px', letterSpacing: '0.06em', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
             >
-              Open Full Route in Google Maps →
+              Open {mapView === 'to' ? 'To Montebello' : 'Drive Back'} Route in Google Maps →
             </a>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.85rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.85rem' }}>
             {[{ key: 'to', label: 'To Montebello' }, { key: 'back', label: 'Drive Back' }].map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setMapView(key)}
                 style={{
                   fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: '600',
-                  padding: '0.5rem 1rem', cursor: 'pointer',
+                  padding: '0.5rem 1.1rem', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                   border: mapView === key ? '1px solid #0F1E14' : '1px solid rgba(0,0,0,0.15)',
                   background: mapView === key ? '#0F1E14' : 'transparent',
                   color: mapView === key ? '#F5F1EC' : '#666',
