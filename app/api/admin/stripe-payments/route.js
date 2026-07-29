@@ -108,7 +108,11 @@ export async function GET() {
   })
 
   // Also pull manual (non-Stripe) payments from DB — e-transfers, cash, etc.
-  const stripeEmails = new Set(records.map(r => r.email).filter(Boolean))
+  // Dedupe against the Stripe-sourced records above by payment_intent_id, NOT
+  // email — matching by email alone silently dropped a genuine manual
+  // payment for anyone who ALSO has any unrelated Stripe payment (e.g. a
+  // membership paid by card, and a separate route paid by e-transfer).
+  const stripePiIds = new Set(records.map(r => r.stripe_payment_intent_id).filter(Boolean))
   const { data: manualApps, error: manualErr } = await supabase
     .from('applications')
     .select('id, name, email, stripe_payment_status, stripe_amount_paid, stripe_payment_type, stripe_paid_at, stripe_payment_intent_id')
@@ -117,7 +121,8 @@ export async function GET() {
   if (!manualErr) {
     for (const a of (manualApps || [])) {
       const email = a.email?.toLowerCase().trim()
-      if (!email || stripeEmails.has(email)) continue
+      if (!email) continue
+      if (a.stripe_payment_intent_id && stripePiIds.has(a.stripe_payment_intent_id)) continue
       records.push({
         id:                       a.id,
         stripe_payment_intent_id: a.stripe_payment_intent_id || null,

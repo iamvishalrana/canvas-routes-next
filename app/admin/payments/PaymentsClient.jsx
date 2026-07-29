@@ -22,6 +22,17 @@ function fmtDateTime(iso) {
   return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })
 }
 
+// Compared against the Montreal calendar date, not raw UTC — a payment at
+// 11pm Montreal time on the last day of a range must still count as that
+// day, not the next UTC day.
+function montrealDateKey(iso) {
+  if (!iso) return null
+  const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: MONTREAL_TZ }).formatToParts(new Date(iso))
+  return `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}-${parts.find(p => p.type === 'day').value}`
+}
+
+const DATE_INPUT = { padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }
+
 const WALLET_LABELS = { apple_pay: 'Apple Pay', google_pay: 'Google Pay', link: 'Link' }
 const CARD_BRANDS   = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover', interac: 'Interac' }
 
@@ -224,6 +235,8 @@ export default function PaymentsClient({ initialRecords = [] }) {
   useRealtimeSync('applications', load)
   const [filter, setFilter]           = useState('')
   const [sort, setSort]               = useState('date_desc')
+  const [dateFrom, setDateFrom]       = useState('')
+  const [dateTo, setDateTo]           = useState('')
   const [search, setSearch]           = useState('')
   const [isMobile, setIsMobile]       = useState(false)
   const [showFailed, setShowFailed]   = useState(false)
@@ -307,15 +320,27 @@ export default function PaymentsClient({ initialRecords = [] }) {
     finally { setReceiptBusy(null) }
   }
 
-  const totalCollected = records
+  // Date range scopes every stat/table below — applied once here rather than
+  // separately in each derived list, so the cards and the table always agree.
+  const recordsInRange = (dateFrom || dateTo)
+    ? records.filter(r => {
+        const key = montrealDateKey(r.stripe_paid_at)
+        if (!key) return false
+        if (dateFrom && key < dateFrom) return false
+        if (dateTo && key > dateTo) return false
+        return true
+      })
+    : records
+
+  const totalCollected = recordsInRange
     .filter(r => ['paid', 'partially_refunded'].includes(r.stripe_payment_status))
     .reduce((s, r) => s + (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0), 0)
-  const paidCount      = records.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).length
-  const otherCount     = records.filter(r => r.stripe_payment_status && !['paid','partially_refunded','failed','rejected'].includes(r.stripe_payment_status)).length
+  const paidCount      = recordsInRange.filter(r => ['paid','partially_refunded'].includes(r.stripe_payment_status)).length
+  const otherCount     = recordsInRange.filter(r => r.stripe_payment_status && !['paid','partially_refunded','failed','rejected'].includes(r.stripe_payment_status)).length
 
   const FAILED_STATUSES = ['failed', 'rejected']
-  let filtered = records.filter(r => !FAILED_STATUSES.includes(r.stripe_payment_status))
-  let failedRecords = records.filter(r => FAILED_STATUSES.includes(r.stripe_payment_status))
+  let filtered = recordsInRange.filter(r => !FAILED_STATUSES.includes(r.stripe_payment_status))
+  let failedRecords = recordsInRange.filter(r => FAILED_STATUSES.includes(r.stripe_payment_status))
   if (filter) filtered = filtered.filter(r => r.stripe_payment_status === filter)
   if (search) {
     filtered = filtered.filter(r =>
@@ -360,7 +385,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
           { label: 'Total Collected', value: fmt(totalCollected), color: '#3B6B2F' },
           { label: 'Paid',           value: paidCount,            color: '#1a1a1a' },
           { label: 'Other Statuses', value: otherCount,           color: '#8A6535' },
-          { label: 'Total Records',  value: records.length,       color: '#1a1a1a' },
+          { label: 'Total Records',  value: recordsInRange.length, color: '#1a1a1a' },
         ].map(s => (
           <div key={s.label} style={CARD}>
             <div style={{ fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -414,6 +439,19 @@ export default function PaymentsClient({ initialRecords = [] }) {
             r.stripe_paid_at ? new Date(r.stripe_paid_at).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) : '',
           ])}
         />
+      </div>
+
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>Date Range</span>
+        <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} style={DATE_INPUT} />
+        <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
+        <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} style={DATE_INPUT} />
+        {(dateFrom || dateTo) && (
+          <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }}
+            style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Clear
+          </button>
+        )}
       </div>
 
       {/* Table / Cards */}
