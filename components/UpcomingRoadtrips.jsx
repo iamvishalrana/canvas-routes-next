@@ -731,16 +731,21 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                         {r.showItinerary && <p className="rt-form" style={{ fontSize: '12px', color: '#777', lineHeight: 1.8, marginTop: '10px', whiteSpace: 'pre-wrap', fontWeight: 300 }}>{r.itinerary}</p>}
                       </div>
                     )}
-                    {/* Progress */}
-                    <div style={{ marginBottom: '18px' }}>
-                      <div className="rt-track" style={{ marginBottom: '7px' }}>
-                        <div className="rt-fill" style={{ width: animated ? `${pct}%` : '0%' }} />
+                    {/* Progress — only meaningful pre-launch (it's the "how many
+                        interested before we launch this" threshold); once
+                        launched, real registrant counts live behind the
+                        registration page itself, not here */}
+                    {!r.launched && (
+                      <div style={{ marginBottom: '18px' }}>
+                        <div className="rt-track" style={{ marginBottom: '7px' }}>
+                          <div className="rt-fill" style={{ width: animated ? `${pct}%` : '0%' }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em' }}>{r.interested_count} / {r.target_count}</span>
+                          <span style={{ fontSize: '10px', color: ACCENT, letterSpacing: '0.06em' }}>{t.spotsLeft(slotsLeft)}</span>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.06em' }}>{r.interested_count} / {r.target_count}</span>
-                        <span style={{ fontSize: '10px', color: ACCENT, letterSpacing: '0.06em' }}>{t.spotsLeft(slotsLeft)}</span>
-                      </div>
-                    </div>
+                    )}
                     {/* CTA — registration_open/member_registration_open are two
                         independent admin toggles (Routes admin kebab menu);
                         check whichever applies to this viewer so the tile
