@@ -360,13 +360,6 @@ export default function RoadtripsAdminClient() {
         .rta-grid > div { min-width: 0; }
         @media (min-width: 640px) { .rta-grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
 
-        /* iOS Safari zooms the whole page in on focus if a text input's
-           font-size is under 16px — the compact 12px admin fields need a
-           mobile-only bump so tapping into them doesn't jolt the viewport. */
-        @media (max-width: 640px) {
-          .rta-wrap input, .rta-wrap select, .rta-wrap textarea { font-size: 16px !important; }
-        }
-
         /* Interest-list rows used JS mouseenter/leave for the hover tint,
            which can get stuck "on" after a tap on touch devices — CSS-only
            hover guarded to real pointer devices avoids that. */

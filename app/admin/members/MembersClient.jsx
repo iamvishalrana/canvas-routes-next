@@ -159,8 +159,8 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
             const attended = m.event_attendance?.[key]
             const isPast = new Date(ev.date) <= today
             return (
-              <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '12px', color: '#444', flex: 1 }}>{ev.name}</span>
+              <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', color: '#444', flex: 1, minWidth: '140px' }}>{ev.name}</span>
                 {isPast ? (
                   <AttendanceToggle value={attended} onChange={v => onToggleAttendance(m, ev.name, v)} />
                 ) : (
@@ -313,6 +313,18 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
+
+  // Resync search/status/tier/sort from the URL when it changes from outside
+  // this component (browser back/forward) — pushQuery only covers the other
+  // direction (local state -> URL). Without this, navigating back after a
+  // search leaves the input/dropdowns showing stale values even though the
+  // member list itself (server-rendered from the URL) is already correct.
+  useEffect(() => {
+    setSearch(searchParams.get('q') || '')
+    setStatusFilter(searchParams.get('status') || 'all')
+    setTierFilter(searchParams.get('tier') || 'all')
+    setSort(searchParams.get('sort') || 'member_num_asc')
+  }, [searchParams])
 
   function onStatusFilterChange(v) { setStatusFilter(v); pushQuery({ status: v }) }
   function onTierFilterChange(v) { setTierFilter(v); pushQuery({ tier: v }) }
@@ -481,27 +493,6 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   // zero-padded (lib/memberNumber.js) specifically so the DB-level sort in
   // page.jsx's SORT_COLUMNS is correct numeric order.
   const filtered = members
-
-  function exportCSV() {
-    const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : members
-    const rows = source.map(m => ({
-      Name: m.name || '',
-      Email: m.email || '',
-      Status: m.membership_status || '',
-      Phone: m.phone || '',
-      Instagram: m.instagram ? `@${m.instagram}` : '',
-      Car: formatCarLabel(m.cars?.[0]?.year || m.car_year, m.cars?.[0]?.make || m.car_make, m.cars?.[0]?.model || m.car_model),
-      'Car Paint': m.cars?.[0]?.paint || '',
-      'Password Set': m.password_set_at ? new Date(m.password_set_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
-    }))
-    const headers = Object.keys(rows[0] || {})
-    const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(','))].join('\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = `canvas-routes-members-${new Date().toISOString().slice(0,10)}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
 
   function copyEmails() {
     const source = selected.size > 0 ? members.filter(m => selected.has(m.id)) : filtered
@@ -943,9 +934,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                             title="Preview member profile card"
                             aria-label="Preview member profile card"
                             className="admin-btn"
-                            style={{ width: '30px', height: '30px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                            style={{ width: '44px', height: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', cursor: 'pointer', padding: 0, flexShrink: 0 }}
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7 17c1.2-2 3-3 5-3s3.8 1 5 3"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7 17c1.2-2 3-3 5-3s3.8 1 5 3"/></svg>
                           </button>
                           <KebabMenu items={[
                             { label: 'Edit', onClick: () => startEdit(m) },
@@ -968,10 +959,10 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                         {!m.password_set_at && (() => {
                           const rs = resendStatus[m.id]
                           if (resendConfirm === m.id) return (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                               <span style={{ fontSize: '10px', color: '#8A6535' }}>Resend?</span>
-                              <button onClick={e => { e.stopPropagation(); setResendConfirm(null); resendInvite(m) }} style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.12)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 6px', cursor: 'pointer', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>Yes</button>
-                              <button onClick={e => { e.stopPropagation(); setResendConfirm(null) }} style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 6px', cursor: 'pointer', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>No</button>
+                              <button onClick={e => { e.stopPropagation(); setResendConfirm(null); resendInvite(m) }} style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.12)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '0.5rem 0.75rem', minHeight: '32px', cursor: 'pointer', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>Yes</button>
+                              <button onClick={e => { e.stopPropagation(); setResendConfirm(null) }} style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '0.5rem 0.75rem', minHeight: '32px', cursor: 'pointer', color: '#aaa', fontFamily: 'var(--font-inter),sans-serif' }}>No</button>
                             </span>
                           )
                           return (
