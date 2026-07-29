@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { ROUTE_PATH } from './routePath'
+import { RETURN_ROUTE_PATH } from './returnRoutePath'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
 import { captureException } from '../../lib/sentry'
@@ -27,6 +28,17 @@ const STOPS = [
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 46.0105673, lng: -74.7612215 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
+]
+
+// Drive back — confirmed via https://maps.app.goo.gl/KM6W62YvBBYVHEk59: leaves
+// Fairmont, stops at Chocomotive, then A-50 to Route 329 north through
+// Morin-Heights (no stop there — it's just a via-point for the drawn path,
+// not a marker) before finishing at Porte du Nord again.
+const RETURN_ROUTE_LINK = 'https://maps.app.goo.gl/KM6W62YvBBYVHEk59'
+const RETURN_STOPS = [
+  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Depart after lunch', tag: 'Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
+  { label: 'Chocomotive', note: 'Montebello · Chocolate stop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6498295, lng: -74.9425688 },
+  { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
 ]
 
 // Jerry's entry stays manual (lead car + fact blurb) — everyone else is
@@ -68,7 +80,7 @@ const DRIVE_BULLETS = [
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive before the backroads open up on the approach to the Outaouais." },
   { emoji: '🏰', text: "Lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars self-park together in a display area out front for the afternoon. Enjoy a three-course lunch, with parking covered by Canvas Routes. Gourmet coffee and Lot 35 tea are included — any other beverages, including alcohol, can be purchased directly from the venue at your own cost." },
   { emoji: '🍫', text: 'A stroll around Montebello before the drive home — we suggest Chocomotive, an artisan chocolate workshop in the old train station, and/or the Lieu historique national du Manoir-Papineau.' },
-  { emoji: '🏁', text: 'After Montebello, the convoy drives back together — same route, same group — to Porte du Nord for one last regroup before everyone heads home.' },
+  { emoji: '🏁', text: 'After Montebello, the convoy drives back together — a stop at Chocomotive, then A-50 and Route 329 north through Morin-Heights — to Porte du Nord for one last regroup before everyone heads home.' },
 ]
 
 const CONVOY_RULES = [
@@ -152,7 +164,7 @@ function ModalImage({ src, alt }) {
   )
 }
 
-function RouteMap({ stops }) {
+function RouteMap({ stops, path = ROUTE_PATH }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const [status, setStatus] = useState('loading')
@@ -192,7 +204,7 @@ function RouteMap({ stops }) {
         mapRef.current = map
 
         new google.maps.Polyline({
-          path: ROUTE_PATH,
+          path,
           geodesic: true,
           strokeColor: '#0F1E14',
           strokeOpacity: 0.75,
@@ -259,7 +271,7 @@ function RouteMap({ stops }) {
       destroyed = true
       if (mapRef.current) { mapRef.current = null }
     }
-  }, [stops])
+  }, [stops, path])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -291,6 +303,7 @@ export default function HelloToMontebelloItineraryPage() {
   const [bannerHeight, setBannerHeight] = useState(0)
   const [fetchedParticipants, setFetchedParticipants] = useState([])
   const [countdown, setCountdown] = useState(null)
+  const [mapView, setMapView] = useState('to')
 
   useEffect(() => {
     const MEETUP = new Date('2026-08-01T13:00:00Z') // 9 AM Montreal (EDT)
@@ -823,15 +836,33 @@ export default function HelloToMontebelloItineraryPage() {
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
             <h2 style={{ ...SECTION_LABEL, marginBottom: 0 }}>Map</h2>
             <a
-              href={ROUTE_LINK}
+              href={mapView === 'to' ? ROUTE_LINK : RETURN_ROUTE_LINK}
               target="_blank" rel="noreferrer"
               style={{ fontSize: '11px', letterSpacing: '0.06em', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
             >
               Open Full Route in Google Maps →
             </a>
           </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.85rem' }}>
+            {[{ key: 'to', label: 'To Montebello' }, { key: 'back', label: 'Drive Back' }].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setMapView(key)}
+                style={{
+                  fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: '600',
+                  padding: '0.5rem 1rem', cursor: 'pointer',
+                  border: mapView === key ? '1px solid #0F1E14' : '1px solid rgba(0,0,0,0.15)',
+                  background: mapView === key ? '#0F1E14' : 'transparent',
+                  color: mapView === key ? '#F5F1EC' : '#666',
+                  transition: 'background 0.18s ease, color 0.18s ease',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-            <RouteMap stops={STOPS} />
+            <RouteMap key={mapView} stops={mapView === 'to' ? STOPS : RETURN_STOPS} path={mapView === 'to' ? ROUTE_PATH : RETURN_ROUTE_PATH} />
           </div>
         </section>
 
