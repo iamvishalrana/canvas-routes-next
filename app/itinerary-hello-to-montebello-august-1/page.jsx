@@ -10,20 +10,21 @@ const PASSWORD = 'montebello'
 const ROUTE_SLUG = 'hello-to-montebello'
 
 // Only real venues so this one array can drive both the itinerary timeline
-// and the map markers. The meetup point is the McDonald's on the south
-// service road of Autoroute 440 in Laval (4610 Desserte Sud Autoroute 440 O,
-// Laval, QC H7T 2Z8) — confirmed via the official route link Jerry shared:
-// https://maps.app.goo.gl/H1MhTqXNUzvxheCq7. Stop lat/lng are geocoded
-// estimates, NOT independently verified against a traced route — confirm/
-// correct the pins before relying on them for real navigation. The drawn
-// road path in routePath.js is a routed polyline through this same route's
-// waypoints (via OSRM, since Google's own turn-by-turn path isn't exposed
-// through a shared link) — it approximates the real roads but is not a
-// pixel-perfect copy of Google's route.
+// and the map markers. Meetup is the McDonald's on the south service road of
+// Autoroute 440 in Laval (4610 Desserte Sud Autoroute 440 O, Laval, QC
+// H7T 2Z8) — confirmed via https://maps.app.goo.gl/H1MhTqXNUzvxheCq7. Porte
+// du Nord is the service area on Autoroute des Laurentides (A-15) reached
+// directly from A-440 — confirmed via https://maps.app.goo.gl/frM6FQAgCirv7a359.
+// Stop lat/lng are geocoded estimates, NOT independently verified against a
+// traced route — confirm/correct the pins before relying on them for real
+// navigation. The drawn road path in routePath.js is a routed polyline
+// through this same route's waypoints (via OSRM, since Google's own
+// turn-by-turn path isn't exposed through a shared link) — it approximates
+// the real roads but is not a pixel-perfect copy of Google's route.
 const ROUTE_LINK = 'https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9'
 const STOPS = [
   { label: "McDonald's", note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4610+Desserte+Sud+Autoroute+440+Ouest+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
-  { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/JeVTLfLvkGE8NYEF9', lat: 45.8957004, lng: -74.1564982 },
+  { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 46.0105673, lng: -74.7612215 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
 ]
