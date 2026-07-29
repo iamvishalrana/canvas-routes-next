@@ -286,6 +286,24 @@ export default function HelloToMontebelloItineraryPage() {
   const [atBottom, setAtBottom] = useState(false)
   const [bannerHeight, setBannerHeight] = useState(0)
   const [fetchedParticipants, setFetchedParticipants] = useState([])
+  const [countdown, setCountdown] = useState(null)
+
+  useEffect(() => {
+    const MEETUP = new Date('2026-08-01T13:00:00Z') // 9 AM Montreal (EDT)
+    function tick() {
+      const diff = MEETUP - new Date()
+      if (diff <= 0) { setCountdown(null); return }
+      setCountdown({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+      })
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   // CookieBanner.jsx shows for any first-time visitor and sits at z-index
   // 1000 across the full width, covering this page's own bottom-right
@@ -598,6 +616,22 @@ export default function HelloToMontebelloItineraryPage() {
               <span key={tag} style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '4px 12px' }}>{tag}</span>
             ))}
           </div>
+
+          {countdown && (
+            <div style={{ display: 'inline-flex', gap: 0, marginTop: '1.75rem', border: '0.5px solid rgba(197,168,130,0.25)', overflow: 'hidden' }}>
+              {[
+                { label: 'Days', val: countdown.d },
+                { label: 'Hrs', val: countdown.h },
+                { label: 'Min', val: countdown.m },
+                { label: 'Sec', val: countdown.s },
+              ].map(({ label, val }, i, arr) => (
+                <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.55rem 0.9rem', borderRight: i < arr.length - 1 ? '0.5px solid rgba(197,168,130,0.15)' : 'none', minWidth: '54px' }}>
+                  <div style={{ fontFamily: 'Georgia, Times New Roman, serif', fontSize: '1.4rem', fontWeight: '400', color: '#F5F1EC', lineHeight: 1 }}>{String(val).padStart(2, '0')}</div>
+                  <div style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.65)', marginTop: '3px' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 

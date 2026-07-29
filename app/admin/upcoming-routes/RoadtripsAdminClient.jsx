@@ -565,6 +565,13 @@ export default function RoadtripsAdminClient() {
                         <div style={{ fontSize: '15px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{r.cars_rolled_out ?? '—'} / {r.target_count}</div>
                         <div style={{ fontSize: '10px', color: '#bbb' }}>cars rolled out</div>
                       </>
+                    ) : r.launched ? (
+                      // The target/interest count only means anything pre-launch
+                      // (it's the "how many interested before we launch this"
+                      // threshold) — once launched, real registrant counts live
+                      // in Check-in & Awards, not here, so there's nothing
+                      // meaningful left to show against the old target.
+                      <div style={{ fontSize: '10px', color: '#bbb' }}>See Check-in &amp; Awards for registrants</div>
                     ) : (
                       <>
                         <div style={{ fontSize: '15px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{r.interested_count} / {r.target_count}</div>
@@ -574,8 +581,8 @@ export default function RoadtripsAdminClient() {
                   </div>
                 </div>
 
-                {/* progress */}
-                {!r.is_past && (
+                {/* progress — only meaningful pre-launch */}
+                {!r.is_past && !r.launched && (
                   <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden', margin: '0.75rem 0' }}>
                     <div style={{ height: '100%', width: `${pct}%`, background: pct >= 100 ? '#3B6B2F' : 'linear-gradient(90deg,#c5a882,#e8c99a)' }} />
                   </div>

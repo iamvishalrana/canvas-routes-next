@@ -818,9 +818,9 @@ export default function HelloToMontebelloPage() {
           )}
 
           <div style={{animation:'htm-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
-            <a href="#form" className="htm-hero-cta" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
-              style={{display:'inline-block',padding:'0.9rem 2.5rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
-              {t.secureYourSeatCta}
+            <a href="#form" className={effectiveRegOpen ? 'htm-hero-cta' : undefined} onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
+              style={{display:'inline-block',padding:'0.9rem 2.5rem',background:effectiveRegOpen?'#F5F1EC':'rgba(245,241,236,0.12)',color:effectiveRegOpen?'#0F1E14':'rgba(245,241,236,0.6)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600',border:effectiveRegOpen?'none':'1px solid rgba(245,241,236,0.25)'}}>
+              {effectiveRegOpen ? t.secureYourSeatCta : t.registrationsClosedCta}
             </a>
           </div>
         </div>
