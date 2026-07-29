@@ -222,13 +222,18 @@ function PiLink({ id, manual }) {
 export default function PaymentsClient({ initialRecords = [] }) {
   const [records, setRecords]         = useState(initialRecords)
   const [loading, setLoading]         = useState(false)
+  const [loadError, setLoadError]     = useState(false)
 
+  // A failed refresh (dropped connection, tab backgrounded mid-request, etc.)
+  // used to fail completely silently — the page just kept showing whatever
+  // it last had, with no sign a refresh didn't go through. Surface it so a
+  // stale view is visible and retryable instead of invisible.
   const load = useCallback(() => {
     setLoading(true)
     fetch('/api/admin/stripe-payments')
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => { if (Array.isArray(data)) setRecords(data) })
-      .catch(() => {})
+      .then(data => { if (Array.isArray(data)) { setRecords(data); setLoadError(false) } })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [])
 
@@ -378,6 +383,16 @@ export default function PaymentsClient({ initialRecords = [] }) {
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Payments</h1>
       </div>
+
+      {loadError && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', padding: '0.75rem 1rem', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.25)', borderRadius: '10px', marginBottom: '1.25rem', fontSize: '12px', color: '#93333E' }}>
+          Couldn&apos;t refresh live data from Stripe — showing the last loaded results.
+          <button type="button" onClick={load} disabled={loading}
+            style={{ background: 'none', border: 'none', color: '#93333E', textDecoration: 'underline', textUnderlineOffset: '2px', cursor: loading ? 'wait' : 'pointer', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>
+            {loading ? 'Retrying…' : 'Retry'}
+          </button>
+        </div>
+      )}
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>

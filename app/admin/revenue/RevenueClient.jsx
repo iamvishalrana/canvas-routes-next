@@ -106,7 +106,7 @@ function PaymentDetailPanel({ p }) {
   )
 }
 
-export default function RevenueClient({ payments = [] }) {
+export default function RevenueClient({ payments = [], stripeError = false }) {
   const [isMobile, setIsMobile] = useState(false)
   const [expanded, setExpanded] = useState(null) // index of the recent payment row currently open
   const [dateFrom, setDateFrom] = useState('')
@@ -219,6 +219,12 @@ export default function RevenueClient({ payments = [] }) {
           )}
         </div>
       </div>
+
+      {stripeError && (
+        <div style={{ padding: '0.75rem 1rem', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.25)', borderRadius: '10px', marginBottom: '1.25rem', fontSize: '12px', color: '#93333E' }}>
+          Couldn&apos;t load live data from Stripe — the numbers below only include manual payments and may be incomplete. Reload the page to try again.
+        </div>
+      )}
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>

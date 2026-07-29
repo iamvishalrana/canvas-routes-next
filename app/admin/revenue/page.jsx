@@ -27,29 +27,40 @@ const TYPE_LABELS = {
 
 export default async function RevenuePage() {
   let rows = []
+  // A Stripe API hiccup (timeout, transient 5xx, etc.) used to throw straight
+  // out of this async Server Component with no catch, taking down the whole
+  // page with Next's generic error boundary instead of just missing the
+  // Stripe-sourced rows. Degrade instead: keep whatever's available (manual
+  // payments still load below) and tell the client so it can show a banner.
+  let stripeError = false
 
   if (stripe) {
-    const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
-    rows = allPIs
-      .filter(pi => pi.metadata?.type && pi.status === 'succeeded')
-      .map(pi => {
-        const charge = pi.latest_charge
-        const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
-        return {
-          id:                     pi.id,
-          manual:                 false,
-          name:                   pi.metadata.name || '—',
-          email:                  pi.metadata.email?.toLowerCase().trim() || '',
-          phone:                  pi.metadata.phone || '',
-          stripe_amount_paid:     pi.amount_received,
-          stripe_amount_refunded: amountRefunded,
-          stripe_paid_at:         (charge && typeof charge === 'object' && charge.created)
-            ? new Date(charge.created * 1000).toISOString()
-            : new Date(pi.created * 1000).toISOString(),
-          stripe_payment_type:    pi.metadata.type || '',
-        }
-      })
-      .sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
+    try {
+      const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: 2000 })
+      rows = allPIs
+        .filter(pi => pi.metadata?.type && pi.status === 'succeeded')
+        .map(pi => {
+          const charge = pi.latest_charge
+          const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
+          return {
+            id:                     pi.id,
+            manual:                 false,
+            name:                   pi.metadata.name || '—',
+            email:                  pi.metadata.email?.toLowerCase().trim() || '',
+            phone:                  pi.metadata.phone || '',
+            stripe_amount_paid:     pi.amount_received,
+            stripe_amount_refunded: amountRefunded,
+            stripe_paid_at:         (charge && typeof charge === 'object' && charge.created)
+              ? new Date(charge.created * 1000).toISOString()
+              : new Date(pi.created * 1000).toISOString(),
+            stripe_payment_type:    pi.metadata.type || '',
+          }
+        })
+        .sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
+    } catch (err) {
+      console.error('Revenue page Stripe fetch failed:', err.message)
+      stripeError = true
+    }
   }
 
   // Also include manual (e-transfer) payments from DB. Dedupe against the
@@ -123,5 +134,5 @@ export default async function RevenuePage() {
       taxDiscount: receipt?.discount_amount ? receipt.discount_amount / 100 : null,
     }
   }
-  return <RevenueClient payments={rows.map(toPaymentRow)} />
+  return <RevenueClient payments={rows.map(toPaymentRow)} stripeError={stripeError} />
 }
