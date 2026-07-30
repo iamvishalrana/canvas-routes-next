@@ -82,6 +82,7 @@ export default function CheckinStatusClient({ eventId }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('name_az')
+  const [emailsCopied, setEmailsCopied] = useState(false)
   const [expandedEmail, setExpandedEmail] = useState(null)
   const [busyId, setBusyId] = useState(null)
   const [declineConfirm, setDeclineConfirm] = useState(null) // application id
@@ -247,6 +248,14 @@ export default function CheckinStatusClient({ eventId }) {
       load()
     } catch { setActionError('Network error.') }
     finally { setResetBusy(null) }
+  }
+
+  function copyEmails(list) {
+    const emails = list.map(p => p.email).filter(Boolean).join(', ')
+    navigator.clipboard?.writeText(emails).then(() => {
+      setEmailsCopied(true)
+      setTimeout(() => setEmailsCopied(false), 1500)
+    }).catch(() => {})
   }
 
   function exportRegistrantsCSV() {
@@ -494,8 +503,14 @@ export default function CheckinStatusClient({ eventId }) {
           </button>
         )}
         {total > 0 && (
+          <button type="button" onClick={() => copyEmails(filtered)}
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.35)' : 'rgba(0,0,0,0.15)'}`, background: 'transparent', color: emailsCopied ? '#3B6B2F' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: incompleteCount > 0 ? 0 : 'auto' }}>
+            {emailsCopied ? 'Copied!' : 'Copy Emails'}
+          </button>
+        )}
+        {total > 0 && (
           <button type="button" onClick={exportRegistrantsCSV}
-            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: incompleteCount > 0 ? 0 : 'auto' }}>
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
             Export CSV
           </button>
         )}
