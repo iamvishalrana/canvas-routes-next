@@ -227,15 +227,31 @@ export default function RouteEventConfigClient({ eventId }) {
     if (!active.length) return
     const rows = buildLunchRows(participants, form.checkin_lunch_extras)
     const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    const today = new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
     const html = `<!doctype html><html><head><title>Lunch Selections</title><style>
-      body{font-family:sans-serif;padding:2rem;color:#1a1a1a}
-      h1{font-size:18px} table{width:100%;border-collapse:collapse;font-size:13px}
-      th,td{text-align:left;padding:6px 10px;border-bottom:1px solid #ddd}
-      th{color:#888;text-transform:uppercase;font-size:10px;letter-spacing:0.06em}
+      @page{margin:28px}
+      *{box-sizing:border-box}
+      body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:0;padding:32px 36px;color:#1a1a1a}
+      .hdr{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid #1a1a1a;padding-bottom:12px;margin-bottom:20px}
+      h1{font-size:20px;margin:0;letter-spacing:0.01em}
+      .meta{font-size:11px;color:#888}
+      .count{font-size:11px;color:#888;margin-bottom:14px}
+      table{width:100%;border-collapse:collapse;font-size:12.5px}
+      thead th{text-align:left;padding:8px 10px;background:#1a1a1a;color:#fff;text-transform:uppercase;font-size:9.5px;letter-spacing:0.07em;font-weight:600}
+      thead th:first-child{border-radius:5px 0 0 5px}
+      thead th:last-child{border-radius:0 5px 5px 0}
+      td{padding:8px 10px;border-bottom:1px solid #eaeaea;vertical-align:top}
+      .num{color:#999;font-variant-numeric:tabular-nums;width:28px}
+      tbody tr:nth-child(even){background:#fafafa}
+      @media print{ tbody tr:nth-child(even){background:#fafafa !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
     </style></head><body>
-      <h1>Lunch Selections</h1>
-      <table><thead><tr>${active.map(f => `<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
-      ${rows.map(r => `<tr>${active.map(f => `<td>${esc(r[f.key]) || '—'}</td>`).join('')}</tr>`).join('')}
+      <div class="hdr">
+        <h1>Lunch Selections</h1>
+        <span class="meta">${esc(eventName)} · ${today}</span>
+      </div>
+      <div class="count">${rows.length} order${rows.length === 1 ? '' : 's'}</div>
+      <table><thead><tr><th class="num">#</th>${active.map(f => `<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
+      ${rows.map((r, i) => `<tr><td class="num">${i + 1}</td>${active.map(f => `<td>${esc(r[f.key]) || '—'}</td>`).join('')}</tr>`).join('')}
       </tbody></table>
     </body></html>`
     // Print via a hidden same-page iframe instead of window.open — the admin
