@@ -102,6 +102,10 @@ export default function CheckinStatusClient({ eventId }) {
   const [photoBusy, setPhotoBusy] = useState(null) // email
   const photoInputRef = useRef(null)
   const [photoTargetEmail, setPhotoTargetEmail] = useState(null)
+  const [carEditingEmail, setCarEditingEmail] = useState(null) // email currently showing the car edit form
+  const [carDraft, setCarDraft] = useState({ year: '', make: '', model: '' })
+  const [carBusy, setCarBusy] = useState(null) // email
+  const [carErr, setCarErr] = useState(null)
 
   async function saveGroup(email, value) {
     const clearDraft = () => setGroupDrafts(d => { const n = { ...d }; delete n[email]; return n })
@@ -120,6 +124,35 @@ export default function CheckinStatusClient({ eventId }) {
       await load({ silent: true })
     } catch { setActionError('Network error.') }
     finally { setGroupBusy(null); clearDraft() }
+  }
+
+  // Lets an admin swap the car a registrant is bringing — e.g. someone
+  // decides to drive a different car from their garage than what they
+  // originally registered with. Writes into this event's own registration
+  // snapshot only (see the PATCH route), not the person's general profile.
+  function startCarEdit(p) {
+    setCarEditingEmail(p.email)
+    setCarDraft({
+      year: p.registration?.carYear || '',
+      make: p.registration?.carMake || '',
+      model: p.registration?.carModel || '',
+    })
+    setCarErr(null)
+  }
+
+  async function saveCar(email) {
+    setCarBusy(email); setCarErr(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/registrants`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, car_year: carDraft.year, car_make: carDraft.make, car_model: carDraft.model }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setCarErr(d.error || 'Failed to save car.'); return }
+      setCarEditingEmail(null)
+      await load({ silent: true })
+    } catch { setCarErr('Network error.') }
+    finally { setCarBusy(null) }
   }
 
   function triggerPhotoUpload(email) {
@@ -492,8 +525,39 @@ export default function CheckinStatusClient({ eventId }) {
                         <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Registration Details</div>
                         <div style={{ fontSize: '12px', color: '#444', lineHeight: 1.8 }}>
                           {p.lang && <>Language: {p.lang === 'fr' ? 'French' : 'English'}<br /></>}
-                          {(p.registration.carYear || p.registration.carMake || p.registration.carModel) && (
-                            <>Car: {formatCarLabel(p.registration.carYear, p.registration.carMake, p.registration.carModel)}<br /></>
+                          {carEditingEmail === p.email ? (
+                            <div style={{ margin: '0.15rem 0 0.5rem' }}>
+                              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                                <input placeholder="Year" inputMode="numeric" value={carDraft.year} onChange={e => setCarDraft(d => ({ ...d, year: e.target.value }))}
+                                  style={{ width: '55px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
+                                <input placeholder="Make" value={carDraft.make} onChange={e => setCarDraft(d => ({ ...d, make: e.target.value }))}
+                                  style={{ width: '85px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
+                                <input placeholder="Model" value={carDraft.model} onChange={e => setCarDraft(d => ({ ...d, model: e.target.value }))}
+                                  style={{ width: '95px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
+                              </div>
+                              <span style={{ fontSize: '11px' }}>
+                                <button type="button" onClick={() => saveCar(p.email)} disabled={carBusy === p.email}
+                                  style={{ background: 'none', border: 'none', padding: 0, cursor: carBusy === p.email ? 'wait' : 'pointer', color: '#3B6B2F', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  {carBusy === p.email ? 'Saving…' : 'Save'}
+                                </button>
+                                {' · '}
+                                <button type="button" onClick={() => setCarEditingEmail(null)} disabled={carBusy === p.email}
+                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#888', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  Cancel
+                                </button>
+                              </span>
+                              {carErr && <div style={{ fontSize: '10px', color: '#93333E', marginTop: '0.25rem' }}>{carErr}</div>}
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <span>Car: {(p.registration.carYear || p.registration.carMake || p.registration.carModel) ? formatCarLabel(p.registration.carYear, p.registration.carMake, p.registration.carModel) : <span style={{ color: '#bbb' }}>—</span>}</span>
+                              {p.applicationId != null && (
+                                <button type="button" onClick={() => startCarEdit(p)}
+                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  Edit
+                                </button>
+                              )}
+                            </div>
                           )}
                           {p.registration.phone && <>Phone: {p.registration.phone}<br /></>}
                           {p.registration.instagram && <>Instagram: @{p.registration.instagram}<br /></>}

@@ -51,10 +51,18 @@ export async function POST(request, { params }) {
   return Response.json({ success: true })
 }
 
-// Sets (or clears) the convoy group on a road-trip registrant — lives inside
-// their matched registrations[] entry, same as `attended`/`paid`. Member-
-// portal (event_registrations) registrants have no group support; this is a
-// no-op for them since they never have a matching applications row here.
+// Sets (or clears) the convoy group and/or the car year/make/model on a
+// road-trip registrant — both live inside their matched registrations[]
+// entry, same as `attended`/`paid`. Member-portal (event_registrations)
+// registrants have no group/car-edit support; this is a no-op for them
+// since they never have a matching applications row here.
+//
+// Car edits write into registrations[].details — the per-EVENT snapshot —
+// not the flat applications.car_year/car_make/car_model columns, so
+// swapping the car for this one event (e.g. bringing a different car from
+// the garage) doesn't change what shows for the same person's other events
+// or their general profile. See lib/eventCheckinShared.js, which already
+// prefers details.car_* over the flat columns for exactly this reason.
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { eventId } = await params
@@ -63,8 +71,16 @@ export async function PATCH(request, { params }) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = normalizeEmail(body?.email)
   if (!email) return Response.json({ error: 'Missing email.' }, { status: 400 })
-  const group = body?.group === null || body?.group === '' ? null : parseInt(body?.group, 10)
-  if (group !== null && !Number.isFinite(group)) return Response.json({ error: 'Invalid group.' }, { status: 400 })
+
+  const hasGroup = Object.prototype.hasOwnProperty.call(body, 'group')
+  const hasCar = ['car_year', 'car_make', 'car_model'].some(k => Object.prototype.hasOwnProperty.call(body, k))
+  if (!hasGroup && !hasCar) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
+
+  let group = null
+  if (hasGroup) {
+    group = body.group === null || body.group === '' ? null : parseInt(body.group, 10)
+    if (group !== null && !Number.isFinite(group)) return Response.json({ error: 'Invalid group.' }, { status: 400 })
+  }
 
   const admin = createAdminClient()
   const { data: event, error: eventErr } = await admin.from('events').select('id, name').eq('id', eventId).maybeSingle()
@@ -74,13 +90,23 @@ export async function PATCH(request, { params }) {
   const matched = (app?.registrations || []).find(r => isSameEvent(r.event, event.name))
   if (!app || !matched) return Response.json({ error: 'No registration found for this email.' }, { status: 404 })
 
-  const registrations = (app.registrations || []).map(r =>
-    isSameEvent(r.event, event.name) ? { ...r, convoy_group: group } : r
-  )
+  const registrations = (app.registrations || []).map(r => {
+    if (!isSameEvent(r.event, event.name)) return r
+    const next = { ...r }
+    if (hasGroup) next.convoy_group = group
+    if (hasCar) {
+      const details = { ...(r.details || {}) }
+      if ('car_year' in body)  details.car_year  = (body.car_year  || '').toString().trim() || null
+      if ('car_make' in body)  details.car_make  = (body.car_make  || '').toString().trim() || null
+      if ('car_model' in body) details.car_model = (body.car_model || '').toString().trim() || null
+      next.details = details
+    }
+    return next
+  })
   const { error: updErr } = await admin.from('applications').update({ registrations }).eq('id', app.id)
   if (updErr) {
-    captureException(updErr, { context: 'admin-set-convoy-group', eventId, email })
-    return Response.json({ error: 'Failed to save group.' }, { status: 500 })
+    captureException(updErr, { context: 'admin-update-registrant', eventId, email })
+    return Response.json({ error: 'Failed to save.' }, { status: 500 })
   }
   return Response.json({ success: true })
 }
