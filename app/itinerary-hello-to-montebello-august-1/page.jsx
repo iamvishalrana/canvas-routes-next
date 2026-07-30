@@ -400,6 +400,7 @@ export default function HelloToMontebelloItineraryPage() {
   const [modalCar, setModalCar] = useState(null)
   const [modalClosing, setModalClosing] = useState(false)
   const [atBottom, setAtBottom] = useState(false)
+  const [toggleHidden, setToggleHidden] = useState(false)
   const [bannerHeight, setBannerHeight] = useState(0)
   const [fetchedParticipants, setFetchedParticipants] = useState([])
   const [countdown, setCountdown] = useState(null)
@@ -484,8 +485,19 @@ export default function HelloToMontebelloItineraryPage() {
   const ungrouped = allParticipants.filter(p => p.group == null)
 
   useEffect(() => {
+    let lastY = window.scrollY
     function onScroll() {
       setAtBottom(window.innerHeight + window.scrollY >= document.body.scrollHeight - 80)
+      // The EN/FR toggle is fixed over the top-right corner of the screen —
+      // with no persistent header bar behind it (unlike WTET's page), it was
+      // sitting directly on top of scrolling body text and hiding whatever
+      // words passed under it. Hide it on scroll-down, bring it back on
+      // scroll-up or near the very top, like a standard auto-hiding nav bar.
+      const y = window.scrollY
+      if (y < 60) setToggleHidden(false)
+      else if (y > lastY + 4) setToggleHidden(true)
+      else if (y < lastY - 4) setToggleHidden(false)
+      lastY = y
     }
     onScroll() // page may already be shorter than the viewport
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -799,8 +811,13 @@ export default function HelloToMontebelloItineraryPage() {
       }}>
         <div className="itin-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
-        {/* Language toggle — matches the WTET itinerary page's EN/FR pill */}
-        <div style={{ position: 'fixed', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+        {/* Language toggle — matches the WTET itinerary page's EN/FR pill.
+            Auto-hides on scroll-down since (unlike WTET) there's no
+            persistent header bar behind it to keep it clear of body text. */}
+        <div style={{
+          position: 'fixed', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+          opacity: toggleHidden ? 0 : 1, transform: toggleHidden ? 'translateY(-12px)' : 'translateY(0)', pointerEvents: toggleHidden ? 'none' : 'auto', transition: 'opacity 0.25s ease, transform 0.25s ease',
+        }}>
           {['en', 'fr'].map(l => (
             <button
               key={l}
