@@ -795,21 +795,19 @@ export default function HelloToMontebelloItineraryPage() {
       }}>
         <div className="itin-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
-        <button
-          key={lang}
-          onClick={() => setLang(l => (l === 'en' ? 'fr' : 'en'))}
-          className="lang-toggle-btn"
-          aria-label="Switch language / Changer de langue"
-          style={{
-            position: 'absolute', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 2,
-            minWidth: '44px', minHeight: '32px', padding: '0.4rem 0.8rem',
-            background: 'rgba(197,168,130,0.14)', border: '0.5px solid rgba(197,168,130,0.5)',
-            color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: '700',
-            fontFamily: 'sans-serif', cursor: 'pointer',
-          }}
-        >
-          {lang === 'en' ? 'FR' : 'EN'}
-        </button>
+        {/* Language toggle — matches the WTET itinerary page's EN/FR pill */}
+        <div style={{ position: 'fixed', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)' }}>
+          {['en', 'fr'].map(l => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className={lang === l ? 'lang-toggle-btn' : undefined}
+              style={{ padding: '0.45rem 0.75rem', background: lang === l ? '#c5a882' : 'none', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(197,168,130,0.55)', fontWeight: lang === l ? '700' : '400', fontFamily: 'sans-serif', transition: 'all 0.15s ease' }}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/white-outline.png" alt="Canvas Routes" className="itin-hero-logo" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
