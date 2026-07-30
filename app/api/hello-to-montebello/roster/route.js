@@ -20,7 +20,7 @@ export async function GET() {
     const candidates = await listEventCandidates(admin, route.event_id, EVENT_NAME)
     const participants = candidates
       .filter(c => c.paymentStatus === 'paid')
-      .map(c => ({ name: c.name, car: c.car, photo: c.photo, group: c.group }))
+      .map(c => ({ name: c.name, car: c.car, photo: c.photo, group: c.group, lead: c.lead }))
     return Response.json({ participants })
   } catch (err) {
     captureException(err, { context: 'htm-roster' })
