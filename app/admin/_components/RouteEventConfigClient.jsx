@@ -227,9 +227,7 @@ export default function RouteEventConfigClient({ eventId }) {
     if (!active.length) return
     const rows = buildLunchRows(participants, form.checkin_lunch_extras)
     const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!doctype html><html><head><title>Lunch Selections</title><style>
+    const html = `<!doctype html><html><head><title>Lunch Selections</title><style>
       body{font-family:sans-serif;padding:2rem;color:#1a1a1a}
       h1{font-size:18px} table{width:100%;border-collapse:collapse;font-size:13px}
       th,td{text-align:left;padding:6px 10px;border-bottom:1px solid #ddd}
@@ -239,10 +237,27 @@ export default function RouteEventConfigClient({ eventId }) {
       <table><thead><tr>${active.map(f => `<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
       ${rows.map(r => `<tr>${active.map(f => `<td>${esc(r[f.key]) || '—'}</td>`).join('')}</tr>`).join('')}
       </tbody></table>
-    </body></html>`)
-    win.document.close()
-    win.focus()
-    win.print()
+    </body></html>`
+    // Print via a hidden same-page iframe instead of window.open — the admin
+    // panel runs as a standalone home-screen PWA on iOS, which has no real
+    // multi-window/tab model. window.open('', '_blank') there would replace
+    // the app's own view with the blank print doc, and once the AirPrint
+    // sheet closed it left the app on an untitled blank page.
+    const iframe = document.createElement('iframe')
+    iframe.style.position = 'fixed'
+    iframe.style.right = '0'
+    iframe.style.bottom = '0'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = '0'
+    document.body.appendChild(iframe)
+    const doc = iframe.contentWindow.document
+    doc.open()
+    doc.write(html)
+    doc.close()
+    iframe.contentWindow.focus()
+    iframe.contentWindow.print()
+    setTimeout(() => document.body.removeChild(iframe), 1000)
   }
 
   // Admin override for a registrant's already-submitted lunch pick (wrong
@@ -519,7 +534,9 @@ export default function RouteEventConfigClient({ eventId }) {
                             )}
                             {lunchEditDraft.map((entry, li) => (
                               <div key={li} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: '12px', color: '#444', minWidth: '90px' }}>{entry.name || (li === 0 ? 'Driver' : `Passenger ${li + 1}`)}</span>
+                                <input value={entry.name} placeholder={li === 0 ? 'Driver' : `Passenger ${li + 1}`}
+                                  onChange={e => setLunchEditDraft(d => d.map((x, xi) => xi === li ? { ...x, name: e.target.value } : x))}
+                                  style={{ ...smallInput, width: '110px' }} />
                                 <select value={entry.dish_id} onChange={e => setLunchEditDraft(d => d.map((x, xi) => xi === li ? { ...x, dish_id: e.target.value } : x))}
                                   style={{ ...smallInput, width: 'auto', minWidth: '160px' }}>
                                   {dishOptions.map(dish => <option key={dish.id} value={dish.id}>{dish.name}</option>)}
@@ -530,6 +547,12 @@ export default function RouteEventConfigClient({ eventId }) {
                                 </button>
                               </div>
                             ))}
+                            <button type="button"
+                              onClick={() => setLunchEditDraft(d => [...d, { name: '', dish_id: dishOptions[0]?.id || '' }])}
+                              disabled={dishOptions.length === 0}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: dishOptions.length === 0 ? 'default' : 'pointer', fontSize: '11px', color: dishOptions.length === 0 ? '#ccc' : '#3B6B2F', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', display: 'block', marginBottom: '0.6rem' }}>
+                              + Add Passenger
+                            </button>
                             <span style={{ fontSize: '11px' }}>
                               <button type="button" onClick={() => saveLunchEdit(p.email)} disabled={lunchEditBusy}
                                 style={{ background: 'none', border: 'none', padding: 0, cursor: lunchEditBusy ? 'wait' : 'pointer', color: '#3B6B2F', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
