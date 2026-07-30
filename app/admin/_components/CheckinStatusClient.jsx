@@ -81,6 +81,7 @@ export default function CheckinStatusClient({ eventId }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('name_az')
   const [expandedEmail, setExpandedEmail] = useState(null)
   const [busyId, setBusyId] = useState(null)
   const [declineConfirm, setDeclineConfirm] = useState(null) // application id
@@ -104,6 +105,7 @@ export default function CheckinStatusClient({ eventId }) {
   const [photoTargetEmail, setPhotoTargetEmail] = useState(null)
   const [carEditingEmail, setCarEditingEmail] = useState(null) // email currently showing the car edit form
   const [carDraft, setCarDraft] = useState({ year: '', make: '', model: '' })
+  const [carPickerValue, setCarPickerValue] = useState('custom') // index into p.garage as a string, or 'custom'
   const [carBusy, setCarBusy] = useState(null) // email
   const [carErr, setCarErr] = useState(null)
 
@@ -130,14 +132,30 @@ export default function CheckinStatusClient({ eventId }) {
   // decides to drive a different car from their garage than what they
   // originally registered with. Writes into this event's own registration
   // snapshot only (see the PATCH route), not the person's general profile.
+  // For members with cars on file, picking from their garage (p.garage) is
+  // preferred over retyping a year/make/model by hand — the manual fields
+  // stay as a fallback for non-members or a car not yet added to the garage.
   function startCarEdit(p) {
     setCarEditingEmail(p.email)
-    setCarDraft({
+    const current = {
       year: p.registration?.carYear || '',
       make: p.registration?.carMake || '',
       model: p.registration?.carModel || '',
-    })
+    }
+    setCarDraft(current)
+    const garage = p.garage || []
+    const matchIdx = garage.findIndex(c =>
+      String(c.year || '') === String(current.year) && (c.make || '') === current.make && (c.model || '') === current.model
+    )
+    setCarPickerValue(matchIdx >= 0 ? String(matchIdx) : 'custom')
     setCarErr(null)
+  }
+
+  function pickGarageCar(p, value) {
+    setCarPickerValue(value)
+    if (value === 'custom') return // leave carDraft as-is so they can type over it
+    const car = (p.garage || [])[parseInt(value, 10)]
+    if (car) setCarDraft({ year: car.year || '', make: car.make || '', model: car.model || '' })
   }
 
   async function saveCar(email) {
@@ -332,6 +350,21 @@ export default function CheckinStatusClient({ eventId }) {
     if (search && !((p.name || '').toLowerCase().includes(search.toLowerCase()) || (p.email || '').toLowerCase().includes(search.toLowerCase()))) return false
     return true
   })
+  filtered.sort((a, b) => {
+    if (sort === 'name_za') return (b.name || b.email || '').localeCompare(a.name || a.email || '')
+    if (sort === 'group') {
+      const ag = a.convoy_group ?? Infinity, bg = b.convoy_group ?? Infinity
+      return ag - bg || (a.name || a.email || '').localeCompare(b.name || b.email || '')
+    }
+    if (sort === 'car') {
+      const ac = formatCarLabel(a.registration?.carYear, a.registration?.carMake, a.registration?.carModel) || ''
+      const bc = formatCarLabel(b.registration?.carYear, b.registration?.carMake, b.registration?.carModel) || ''
+      return ac.localeCompare(bc) || (a.name || a.email || '').localeCompare(b.name || b.email || '')
+    }
+    if (sort === 'payment') return (a.paymentStatus || '').localeCompare(b.paymentStatus || '') || (a.name || a.email || '').localeCompare(b.name || b.email || '')
+    // name_az (default)
+    return (a.name || a.email || '').localeCompare(b.name || b.email || '')
+  })
 
   const tripCount = participants.filter(p => p.trip_details).length
   const waiverCount = participants.filter(p => p.waiver).length
@@ -417,6 +450,14 @@ export default function CheckinStatusClient({ eventId }) {
           placeholder="Search name or email…"
           style={{ padding: '0.5rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', flex: '1 1 200px', maxWidth: '260px' }}
         />
+        <select value={sort} onChange={e => setSort(e.target.value)}
+          style={{ padding: '0.5rem 0.6rem', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#555', background: '#fff', cursor: 'pointer' }}>
+          <option value="name_az">Sort: Name (A–Z)</option>
+          <option value="name_za">Sort: Name (Z–A)</option>
+          <option value="group">Sort: Convoy Group</option>
+          <option value="car">Sort: Car</option>
+          <option value="payment">Sort: Payment Status</option>
+        </select>
         {[
           { id: 'all', label: 'All' },
           { id: 'incomplete', label: 'Anything missing' },
@@ -527,14 +568,25 @@ export default function CheckinStatusClient({ eventId }) {
                           {p.lang && <>Language: {p.lang === 'fr' ? 'French' : 'English'}<br /></>}
                           {carEditingEmail === p.email ? (
                             <div style={{ margin: '0.15rem 0 0.5rem' }}>
-                              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                                <input placeholder="Year" inputMode="numeric" value={carDraft.year} onChange={e => setCarDraft(d => ({ ...d, year: e.target.value }))}
-                                  style={{ width: '55px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
-                                <input placeholder="Make" value={carDraft.make} onChange={e => setCarDraft(d => ({ ...d, make: e.target.value }))}
-                                  style={{ width: '85px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
-                                <input placeholder="Model" value={carDraft.model} onChange={e => setCarDraft(d => ({ ...d, model: e.target.value }))}
-                                  style={{ width: '95px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
-                              </div>
+                              {p.garage?.length > 0 && (
+                                <select value={carPickerValue} onChange={e => pickGarageCar(p, e.target.value)}
+                                  style={{ display: 'block', width: '100%', maxWidth: '260px', padding: '4px 6px', marginBottom: '0.4rem', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333', background: '#fff', cursor: 'pointer' }}>
+                                  {p.garage.map((c, gi) => (
+                                    <option key={gi} value={String(gi)}>{formatCarLabel(c.year, c.make, c.model) || `Car ${gi + 1}`}</option>
+                                  ))}
+                                  <option value="custom">Other / type manually…</option>
+                                </select>
+                              )}
+                              {(carPickerValue === 'custom' || !p.garage?.length) && (
+                                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                                  <input placeholder="Year" inputMode="numeric" value={carDraft.year} onChange={e => setCarDraft(d => ({ ...d, year: e.target.value }))}
+                                    style={{ width: '55px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
+                                  <input placeholder="Make" value={carDraft.make} onChange={e => setCarDraft(d => ({ ...d, make: e.target.value }))}
+                                    style={{ width: '85px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
+                                  <input placeholder="Model" value={carDraft.model} onChange={e => setCarDraft(d => ({ ...d, model: e.target.value }))}
+                                    style={{ width: '95px', padding: '3px 5px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }} />
+                                </div>
+                              )}
                               <span style={{ fontSize: '11px' }}>
                                 <button type="button" onClick={() => saveCar(p.email)} disabled={carBusy === p.email}
                                   style={{ background: 'none', border: 'none', padding: 0, cursor: carBusy === p.email ? 'wait' : 'pointer', color: '#3B6B2F', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>

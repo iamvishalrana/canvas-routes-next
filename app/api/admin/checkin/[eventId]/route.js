@@ -46,6 +46,12 @@ export async function GET(request, { params }) {
       registration: r.registration || null,
       isMember: !!r.isMember,
       discount: r.discount || null,
+      // Member's full garage (lib/admin/members editing), so admins can pick
+      // which car they're bringing to THIS event instead of retyping one —
+      // e.g. swapping to a different car out of their garage. Non-members
+      // (or members with no cars on file) get an empty array, and the UI
+      // falls back to manual entry.
+      garage: m?.cars || [],
     }
   })
 
