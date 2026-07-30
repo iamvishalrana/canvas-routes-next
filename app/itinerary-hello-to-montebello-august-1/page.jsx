@@ -74,7 +74,7 @@ const CAR_FACTS = {
   'Aleks Sahakian': 'A Fox-body drop-top with an old-school V8 and a deep, rumbling idle — no computers, no filters, just raw mechanical muscle from a different era, top down.',
   'Martin Boisvert': 'Small, light, and built purely for fun — a turbocharged inline-six sending power to the rear wheels only. One of the most exciting driver\'s cars BMW has ever made, built to be thrown into corners hard.',
   'Yvon Maggi': 'One of the fastest 911s ever built at the time — twin turbos, all-wheel drive, and launch control that slams you back into your seat. 0 to 100 km/h in under 3 seconds, gone before you can blink.',
-  'Nicholas Talarico': 'A screaming V12 with no turbos at all — something you almost never see anymore. It revs to nearly 8,500 RPM and is loud enough to turn heads from blocks away. One of the last pure, naturally-aspirated Lamborghini V12s ever built — raw fury, no filter.',
+  'Nicholas Talarico': "A screaming naturally-aspirated V10 that revs past 8,000 RPM with no turbos at all — just pure, raw sound. Active aero flaps shift automatically through corners, borrowed straight from Lamborghini's own track cars.",
   'Alain Sahakian': "One of the biggest comeback stories in sports cars — this turbocharged inline-six stays calm and quiet at a cruise, then pulls hard and just doesn't let up.",
 }
 
@@ -155,7 +155,7 @@ function CarGrid({ cars, onSelect }) {
             </div>
             <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
               {p.lead && (
-                <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>Lead Car</p>
+                <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>Group Lead</p>
               )}
               <p style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em', margin: 0 }}>{p.name}</p>
               {p.car && <p style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: 0 }}>{p.car}</p>}
@@ -721,14 +721,23 @@ export default function HelloToMontebelloItineraryPage() {
         .car-modal-backdrop.closing { animation: car-modal-backdrop-out 0.18s ease both; }
         .car-modal-card.opening { animation: car-modal-card-in 0.24s cubic-bezier(0.2,0.7,0.3,1) both; }
         .car-modal-card.closing { animation: car-modal-card-out 0.18s ease both; }
+
+        /* Hero photo — slow one-time pan-out on mobile only, where the header
+           is the first full-bleed thing someone sees and has room to breathe
+           (desktop's header is comparatively short relative to its width, so
+           the same zoom reads as barely-there and isn't worth the cost). */
+        @media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+          @keyframes itin-hero-pan { from { transform: scale(1.18); } to { transform: scale(1); } }
+          .itin-hero-bg { animation: itin-hero-pan 16s ease-out both; will-change: transform; }
+        }
       `}</style>
 
       {/* Header */}
       <header style={{
         position: 'relative', padding: '3.5rem 1.25rem 3rem', textAlign: 'center',
-        backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center',
         overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
       }}>
+        <div className="itin-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -766,8 +775,8 @@ export default function HelloToMontebelloItineraryPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
-              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>Starbucks — 440 Ouest, Back Parking</p>
-              <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>9:00 AM · Laval, QC</p>
+              <a href={STOPS[0].href} target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', display: 'block', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)' }}>Starbucks — 440 Ouest, Back Parking</a>
+              <p style={{ fontSize: '12px', color: '#45643C', marginTop: '3px', marginBottom: 0, fontWeight: '700' }}>Meetup — 9:00 AM · Laval, QC</p>
               <p style={{ fontSize: '11px', color: '#93333E', marginTop: '2px', marginBottom: 0, fontWeight: '600' }}>Departure 9:30 AM sharp</p>
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
@@ -796,7 +805,7 @@ export default function HelloToMontebelloItineraryPage() {
                   Android →
                 </a>
               </div>
-              <p style={{ fontSize: '10px', color: '#bbb', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>See the whole convoy live on the map and never lose the group — download it now, before August 1.</p>
+              <p style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>See the whole convoy live on the map and never lose the group — download it now, before August 1.</p>
             </div>
           </div>
         </div>
@@ -827,7 +836,7 @@ export default function HelloToMontebelloItineraryPage() {
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ marginBottom: '1.5rem' }}>
             <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Itinerary</h2>
-            <p style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', margin: 0 }}>Tap a stop to open in Maps</p>
+            <p style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', margin: 0 }}>Tap a stop to open in Maps</p>
           </div>
           {STOPS.map((stop, i) => (
             <div key={i} className="itin-stop" style={{ display: 'flex', alignItems: 'stretch', gap: '1rem', transitionDelay: `${0.15 + i * 0.09}s`, background: stop.feature ? 'rgba(197,168,130,0.08)' : 'transparent', margin: stop.feature ? '0 -1.25rem' : 0, padding: stop.feature ? '0.5rem 1.25rem' : 0 }}>
@@ -913,7 +922,7 @@ export default function HelloToMontebelloItineraryPage() {
               {groupNumbers.map(g => (
                 <div key={g} style={{ marginBottom: '1.5rem' }}>
                   <p style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 0.75rem' }}>Group {g}</p>
-                  <CarGrid cars={allParticipants.filter(p => p.group === g)} onSelect={setSelectedCar} />
+                  <CarGrid cars={allParticipants.filter(p => p.group === g).sort((a, b) => (b.lead ? 1 : 0) - (a.lead ? 1 : 0))} onSelect={setSelectedCar} />
                 </div>
               ))}
               {ungrouped.length > 0 && (

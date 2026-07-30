@@ -41,7 +41,7 @@ const DEFAULT_LUNCH_FIELDS = {
 // Includes every exportable field regardless of current selection — the
 // export functions pick which columns to use at write time, so toggling
 // fields never needs a re-fetch.
-function buildLunchRows(participants) {
+function buildLunchRows(participants, extras = []) {
   const rows = []
   for (const p of participants) {
     if (!p.lunch?.length) continue
@@ -64,6 +64,15 @@ function buildLunchRows(participants) {
         paymentStatus: p.paymentStatus || '',
         isMember: p.isMember ? 'Yes' : 'No',
       })
+    })
+  }
+  // Team/staff lunch orders — not real registrants, so most columns are just
+  // blank rather than misleadingly empty-string-matching a registrant field.
+  for (const extra of extras) {
+    rows.push({
+      registrant: extra.name || 'Team', email: '', phone: '', car: '', convoyGroup: '',
+      personName: extra.name || 'Team', age: '', dish: extra.dish_name || '', dietary: '',
+      paymentStatus: 'Team', isMember: '',
     })
   }
   return rows
@@ -127,6 +136,13 @@ export default function RouteEventConfigClient({ eventId }) {
   const [showAwardsConfig, setShowAwardsConfig] = useState(false)
   const [showWaiverText, setShowWaiverText] = useState(false)
   const [lunchFields, setLunchFields] = useState(DEFAULT_LUNCH_FIELDS)
+  const [editingLunchEmail, setEditingLunchEmail] = useState(null)
+  const [lunchEditDraft, setLunchEditDraft] = useState([])
+  const [lunchEditBusy, setLunchEditBusy] = useState(false)
+  const [lunchEditErr, setLunchEditErr] = useState(null)
+  const [extraName, setExtraName] = useState('')
+  const [extraDish, setExtraDish] = useState('')
+  const [extraErr, setExtraErr] = useState(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -145,6 +161,7 @@ export default function RouteEventConfigClient({ eventId }) {
         checkin_lunch_cutoff: cEv.checkin_lunch_cutoff ? cEv.checkin_lunch_cutoff.slice(0, 16) : '',
         checkin_lunch_options: cEv.checkin_lunch_options || [],
         checkin_lunch_intro: cEv.checkin_lunch_intro || '',
+        checkin_lunch_extras: cEv.checkin_lunch_extras || [],
         awards_categories: aEv.awards_categories || [],
         awards_ineligible_names: aEv.awards_ineligible_names || [],
         awards_slug: aEv.awards_slug || '',
@@ -171,7 +188,7 @@ export default function RouteEventConfigClient({ eventId }) {
   function exportLunchCSV() {
     const active = activeLunchFieldDefs()
     if (!active.length) return
-    const dataRows = buildLunchRows(participants).map(r => active.map(f => r[f.key]))
+    const dataRows = buildLunchRows(participants, form.checkin_lunch_extras).map(r => active.map(f => r[f.key]))
     const rows = [active.map(f => f.label), ...dataRows]
     const csv = rows.map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
     downloadFile(csv, `lunch-selections-${eventId}-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')
@@ -186,15 +203,18 @@ export default function RouteEventConfigClient({ eventId }) {
     const groupKeys = active.filter(f => f.key !== 'personName' && f.key !== 'age' && f.key !== 'dish')
     const lineKeys = active.filter(f => f.key === 'personName' || f.key === 'age' || f.key === 'dish')
     const byRegistrant = new Map()
-    for (const r of buildLunchRows(participants)) {
-      if (!byRegistrant.has(r.email)) {
+    for (const r of buildLunchRows(participants, form.checkin_lunch_extras)) {
+      // Team extras have no email — key on their name instead so multiple
+      // extras don't collapse into the same group under an empty '' key.
+      const key = r.email || `extra:${r.personName}`
+      if (!byRegistrant.has(key)) {
         const groupInfo = groupKeys.filter(f => f.key !== 'registrant').map(f => `${f.label}: ${r[f.key] || '—'}`).join(' · ')
-        byRegistrant.set(r.email, { header: r.registrant, groupInfo, lines: [] })
+        byRegistrant.set(key, { header: r.registrant, groupInfo, lines: [] })
       }
       const line = lineKeys.length
         ? lineKeys.map(f => f.key === 'age' ? (r.age ? `age ${r.age}` : null) : r[f.key]).filter(Boolean).join(': ')
         : null
-      if (line) byRegistrant.get(r.email).lines.push(`  ${line}`)
+      if (line) byRegistrant.get(key).lines.push(`  ${line}`)
     }
     const text = Array.from(byRegistrant.values())
       .map(g => `${g.header}${g.groupInfo ? ` (${g.groupInfo})` : ''}${g.lines.length ? `\n${g.lines.join('\n')}` : ''}`)
@@ -205,7 +225,7 @@ export default function RouteEventConfigClient({ eventId }) {
   function exportLunchPrint() {
     const active = activeLunchFieldDefs()
     if (!active.length) return
-    const rows = buildLunchRows(participants)
+    const rows = buildLunchRows(participants, form.checkin_lunch_extras)
     const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
     const win = window.open('', '_blank')
     if (!win) return
@@ -223,6 +243,51 @@ export default function RouteEventConfigClient({ eventId }) {
     win.document.close()
     win.focus()
     win.print()
+  }
+
+  // Admin override for a registrant's already-submitted lunch pick (wrong
+  // dish, dietary change after the fact) — the public check-in route only
+  // lets the registrant themselves edit it, and only before the cutoff.
+  function startEditLunch(p) {
+    setEditingLunchEmail(p.email)
+    setLunchEditDraft(p.lunch.map(entry => ({ name: entry.name, dish_id: entry.dish_id })))
+    setLunchEditErr(null)
+  }
+
+  async function saveLunchEdit(email) {
+    setLunchEditBusy(true); setLunchEditErr(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/lunch`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, lunch: lunchEditDraft }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setLunchEditErr(d.error || 'Failed to save.'); return }
+      setEditingLunchEmail(null)
+      load()
+    } catch { setLunchEditErr('Network error.') }
+    finally { setLunchEditBusy(false) }
+  }
+
+  // Team/staff lunch orders — people helping run the event who aren't
+  // registrants at all, so they have no check-in record of their own to
+  // attach a lunch pick to. Stored directly on the event row instead.
+  async function addLunchExtra() {
+    setExtraErr(null)
+    const name = extraName.trim()
+    const dish = (form.checkin_lunch_options || []).find(d => d.id === extraDish)
+    if (!name) { setExtraErr('Enter a name.'); return }
+    if (!dish) { setExtraErr('Pick a dish.'); return }
+    const next = [...(form.checkin_lunch_extras || []), { id: `extra_${Date.now()}`, name, dish_id: dish.id, dish_name: dish.name }]
+    setForm(p => ({ ...p, checkin_lunch_extras: next }))
+    setExtraName(''); setExtraDish('')
+    await save({ checkin_lunch_extras: next }, { silent: true })
+  }
+
+  function removeLunchExtra(id) {
+    const next = (form.checkin_lunch_extras || []).filter(e => e.id !== id)
+    setForm(p => ({ ...p, checkin_lunch_extras: next }))
+    save({ checkin_lunch_extras: next }, { silent: true })
   }
 
   async function save(fields, { silent = false } = {}) {
@@ -400,7 +465,8 @@ export default function RouteEventConfigClient({ eventId }) {
           )}
 
           {(() => {
-            const lunchRows = buildLunchRows(participants)
+            const lunchRows = buildLunchRows(participants, form.checkin_lunch_extras)
+            const dishOptions = form.checkin_lunch_options || []
             return (
               <div style={{ marginTop: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
@@ -432,27 +498,95 @@ export default function RouteEventConfigClient({ eventId }) {
                   <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', overflow: 'hidden' }}>
                     {participants.filter(p => p.lunch?.length > 0).map((p, i, arr) => (
                       <div key={p.email} style={{ padding: '0.85rem 1rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
-                        <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '0.3rem' }}>{p.name || p.email}</div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+                          <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '0.3rem' }}>{p.name || p.email}</div>
+                          {editingLunchEmail !== p.email && (
+                            <button type="button" onClick={() => startEditLunch(p)}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif', flexShrink: 0 }}>
+                              Edit
+                            </button>
+                          )}
+                        </div>
                         {p.trip_details?.dietary && (
                           <div style={{ fontSize: '11px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', borderRadius: '6px', padding: '3px 8px', marginBottom: '0.4rem', display: 'inline-block' }}>
                             ⚠ Dietary: {p.trip_details.dietary}
                           </div>
                         )}
-                        <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.7 }}>
-                          {p.lunch.map((entry, li) => {
-                            const passenger = (p.trip_details?.passengers_list || []).find(pp => pp.name === entry.name) || (p.trip_details?.passengers_list || [])[li]
-                            return (
-                              <div key={li}>
-                                <strong style={{ color: '#1a1a1a' }}>{entry.name || (li === 0 ? 'Driver' : `Passenger ${li + 1}`)}</strong>
-                                {passenger?.age && ` (age ${passenger.age})`}: {entry.dish_name}
+                        {editingLunchEmail === p.email ? (
+                          <div>
+                            {lunchEditDraft.map((entry, li) => (
+                              <div key={li} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '12px', color: '#444', minWidth: '90px' }}>{entry.name || (li === 0 ? 'Driver' : `Passenger ${li + 1}`)}</span>
+                                <select value={entry.dish_id} onChange={e => setLunchEditDraft(d => d.map((x, xi) => xi === li ? { ...x, dish_id: e.target.value } : x))}
+                                  style={{ ...smallInput, width: 'auto', minWidth: '160px' }}>
+                                  {dishOptions.map(dish => <option key={dish.id} value={dish.id}>{dish.name}</option>)}
+                                </select>
                               </div>
-                            )
-                          })}
-                        </div>
+                            ))}
+                            <span style={{ fontSize: '11px' }}>
+                              <button type="button" onClick={() => saveLunchEdit(p.email)} disabled={lunchEditBusy}
+                                style={{ background: 'none', border: 'none', padding: 0, cursor: lunchEditBusy ? 'wait' : 'pointer', color: '#3B6B2F', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                {lunchEditBusy ? 'Saving…' : 'Save'}
+                              </button>
+                              {' · '}
+                              <button type="button" onClick={() => setEditingLunchEmail(null)} disabled={lunchEditBusy}
+                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#888', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                Cancel
+                              </button>
+                            </span>
+                            {lunchEditErr && <div style={{ fontSize: '10px', color: '#93333E', marginTop: '0.25rem' }}>{lunchEditErr}</div>}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.7 }}>
+                            {p.lunch.map((entry, li) => {
+                              const passenger = (p.trip_details?.passengers_list || []).find(pp => pp.name === entry.name) || (p.trip_details?.passengers_list || [])[li]
+                              return (
+                                <div key={li}>
+                                  <strong style={{ color: '#1a1a1a' }}>{entry.name || (li === 0 ? 'Driver' : `Passenger ${li + 1}`)}</strong>
+                                  {passenger?.age && ` (age ${passenger.age})`}: {entry.dish_name}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
+
+                {/* Team / staff lunch orders — not registrants, so they have
+                    no check-in record to hang a lunch pick off; stored
+                    directly on the event and merged into the export/list
+                    above so everyone comes out on one combined order. */}
+                <div style={{ marginTop: '1.5rem' }}>
+                  <L>Team / Extra Orders</L>
+                  {(form.checkin_lunch_extras || []).length > 0 && (
+                    <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.75rem' }}>
+                      {form.checkin_lunch_extras.map((extra, i, arr) => (
+                        <div key={extra.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.6rem 1rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                          <span style={{ fontSize: '12px', color: '#1a1a1a' }}><strong>{extra.name}</strong> — {extra.dish_name}</span>
+                          <button type="button" onClick={() => removeLunchExtra(extra.id)}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#93333E', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {dishOptions.length === 0 ? (
+                    <div style={{ fontSize: '12px', color: '#bbb' }}>Add lunch options above before adding team orders.</div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <input value={extraName} onChange={e => setExtraName(e.target.value)} placeholder="Name" style={{ ...smallInput, width: '160px' }} />
+                      <select value={extraDish} onChange={e => setExtraDish(e.target.value)} style={{ ...smallInput, width: 'auto', minWidth: '180px' }}>
+                        <option value="">Choose a dish…</option>
+                        {dishOptions.map(dish => <option key={dish.id} value={dish.id}>{dish.name}</option>)}
+                      </select>
+                      <GhostBtn small onClick={addLunchExtra}>+ Add</GhostBtn>
+                    </div>
+                  )}
+                  {extraErr && <Err msg={extraErr} />}
+                </div>
               </div>
             )
           })()}
