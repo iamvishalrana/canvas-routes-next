@@ -26,11 +26,14 @@ const ROUTE_SLUG = 'hello-to-montebello'
 // through a shared link) — it approximates the real roads but is not a
 // pixel-perfect copy of Google's route.
 const ROUTE_LINK = 'https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9'
+// Translatable fields are {en, fr} pairs, resolved via pick(value, lang) at
+// render time. Proper nouns/addresses (place names, hrefs, coordinates)
+// aren't language objects — there's nothing to translate in a street address.
 const STOPS = [
-  { label: "Starbucks — 440 Ouest, Back Parking", note: '9:00 AM · Laval · Departure 9:30 AM sharp', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
-  { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
-  { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 46.0105673, lng: -74.7612215 },
-  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
+  { label: "Starbucks — 440 Ouest, Back Parking", note: { en: '9:00 AM · Laval · Departure 9:30 AM sharp', fr: '9 h · Laval · Départ à 9 h 30 précises' }, tag: { en: 'Meetup & Departure', fr: 'Rendez-vous et départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
+  { label: 'Porte du Nord', note: { en: 'Saint-Jérôme · Fuel & regroup', fr: 'Saint-Jérôme · Essence et regroupement' }, href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
+  { label: "L'Atelier des Deux P", note: { en: 'Amherst · Coffee stop — coffee & snacks on you', fr: 'Amherst · Pause café — café et collations à vos frais' }, href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 46.0105673, lng: -74.7612215 },
+  { label: 'Fairmont Le Château Montebello', note: { en: 'Montebello · Lunch at Aux Chantignoles', fr: 'Montebello · Dîner à Aux Chantignoles' }, tag: { en: 'Lunch & self-parking included', fr: 'Dîner et stationnement inclus' }, feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
 ]
 
 // Drive back — confirmed via https://maps.app.goo.gl/KM6W62YvBBYVHEk59: leaves
@@ -39,10 +42,16 @@ const STOPS = [
 // not a marker) before finishing at Porte du Nord again.
 const RETURN_ROUTE_LINK = 'https://maps.app.goo.gl/KM6W62YvBBYVHEk59'
 const RETURN_STOPS = [
-  { label: 'Fairmont Le Château Montebello', note: 'Montebello · Depart after lunch', tag: 'Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
-  { label: 'Chocomotive', note: 'Montebello · Chocolate stop', href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6498295, lng: -74.9425688 },
-  { label: 'Porte du Nord', note: 'Saint-Jérôme · Final regroup', tag: 'See Off Point', end: true, href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
+  { label: 'Fairmont Le Château Montebello', note: { en: 'Montebello · Depart after lunch', fr: 'Montebello · Départ après le dîner' }, tag: { en: 'Departure', fr: 'Départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
+  { label: 'Chocomotive', note: { en: 'Montebello · Chocolate stop', fr: 'Montebello · Arrêt chocolat' }, href: 'https://www.google.com/maps/search/?api=1&query=502+Rue+Notre-Dame+Montebello+QC', lat: 45.6498295, lng: -74.9425688 },
+  { label: 'Porte du Nord', note: { en: 'Saint-Jérôme · Final regroup', fr: 'Saint-Jérôme · Dernier regroupement' }, tag: { en: 'See Off Point', fr: 'Point de départ final' }, end: true, href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
 ]
+
+// Resolves a translatable field — either a plain string (untranslated, e.g.
+// a proper noun) or an {en, fr} pair — against the current language.
+function pick(value, lang) {
+  return value && typeof value === 'object' && 'en' in value ? value[lang] : value
+}
 
 // Jerry's entry stays manual (lead car + fact blurb) — everyone else is
 // fetched live from /api/hello-to-montebello/roster, which reflects paid
@@ -79,29 +88,68 @@ const CAR_FACTS = {
 }
 
 const DRIVE_BULLETS = [
-  { emoji: '📸', text: "Arrive on time — it's a great chance to catch up with everyone, talk cars, and get to know the group before we roll out together." },
-  { emoji: '🛣️', text: "We meet at 9:00 AM at Starbucks in Laval — departure is 9:30 AM sharp, so don't be late. From there, the convoy heads up A-440 and A-15 together to Porte du Nord in Saint-Jérôme for one last regroup. That's where the highway ends and the real drive begins — the convoy peels off onto Route 364, tight and curvy the whole way, and heads east into the Laurentian hills." },
-  { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst (coffee and snacks at your own cost) breaks up the drive right as things get good — long, flowing curves through forest and farmland, with the Laurentians opening up all around on the approach to the Outaouais." },
-  { emoji: '🏰', text: "The convoy rolls into Montebello together for lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars park together in a display area out front for the afternoon, with parking fully covered by Canvas Routes. Inside, enjoy a three-course lunch — gourmet coffee and Lot 35 tea are included, and any other beverages, including alcohol, can be purchased directly from the venue at your own cost." },
-  { emoji: '🍫', text: 'Leaving Fairmont, the convoy may stop by Chocomotive, an artisan chocolate workshop in the old train station — optional, decided on the day. Also worth a look nearby: the Lieu historique national du Manoir-Papineau.' },
-  { emoji: '🏁', text: "From Chocomotive, the fun starts all over again on a completely different road home — A-50 flows into Route 329, a twisting run north through Morin-Heights and the heart of the Laurentians, before dropping back down to Porte du Nord for one last regroup before everyone heads home." },
-  { emoji: '🌅', text: "By the time the convoy rolls through Morin-Heights on the way back, the light starts turning golden — one last stretch of good driving through the Laurentians before everyone heads home." },
+  { emoji: '📸', text: { en: "Arrive on time — it's a great chance to catch up with everyone, talk cars, and get to know the group before we roll out together.", fr: "Arrivez à l'heure — c'est une belle occasion de retrouver tout le monde, de parler chars et de faire connaissance avant le départ." } },
+  { emoji: '🛣️', text: { en: "We meet at 9:00 AM at Starbucks in Laval — departure is 9:30 AM sharp, so don't be late. From there, the convoy heads up A-440 and A-15 together to Porte du Nord in Saint-Jérôme for one last regroup. That's where the highway ends and the real drive begins — the convoy peels off onto Route 364, tight and curvy the whole way, and heads east into the Laurentian hills.", fr: "Rendez-vous à 9 h au Starbucks à Laval — départ à 9 h 30 précises, alors ne soyez pas en retard. De là, le convoi prend les autoroutes 440 et 15 ensemble jusqu'à la Porte du Nord à Saint-Jérôme pour un dernier regroupement. C'est là que l'autoroute se termine et que la vraie balade commence — le convoi bifurque sur la route 364, serrée et sinueuse tout du long, en direction est vers les collines des Laurentides." } },
+  { emoji: '☕', text: { en: "A coffee stop at L'Atelier des Deux P in Amherst (coffee and snacks at your own cost) breaks up the drive right as things get good — long, flowing curves through forest and farmland, with the Laurentians opening up all around on the approach to the Outaouais.", fr: "Une pause café à L'Atelier des Deux P à Amherst (café et collations à vos frais) casse la route juste au bon moment — de longues courbes fluides à travers forêts et terres agricoles, avec les Laurentides qui s'ouvrent tout autour à l'approche de l'Outaouais." } },
+  { emoji: '🏰', text: { en: "The convoy rolls into Montebello together for lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars park together in a display area out front for the afternoon, with parking fully covered by Canvas Routes. Inside, enjoy a three-course lunch — gourmet coffee and Lot 35 tea are included, and any other beverages, including alcohol, can be purchased directly from the venue at your own cost.", fr: "Le convoi arrive à Montebello ensemble pour le dîner à Aux Chantignoles, à l'intérieur du Fairmont Le Château Montebello — le plus grand château en bois rond au monde, juste sur la rivière des Outaouais. Les voitures se stationnent ensemble dans une aire d'exposition à l'avant pour l'après-midi, le stationnement étant entièrement couvert par Canvas Routes. À l'intérieur, profitez d'un dîner trois services — café gourmet et thé Lot 35 inclus, et toute autre boisson, y compris l'alcool, peut être achetée directement au restaurant à vos frais." } },
+  { emoji: '🍫', text: { en: 'Leaving Fairmont, the convoy may stop by Chocomotive, an artisan chocolate workshop in the old train station — optional, decided on the day. Also worth a look nearby: the Lieu historique national du Manoir-Papineau.', fr: "En quittant le Fairmont, le convoi pourrait s'arrêter à Chocomotive, un atelier de chocolat artisanal dans l'ancienne gare — optionnel, décidé le jour même. À voir aussi tout près : le lieu historique national du Manoir-Papineau." } },
+  { emoji: '🏁', text: { en: "From Chocomotive, the fun starts all over again on a completely different road home — A-50 flows into Route 329, a twisting run north through Morin-Heights and the heart of the Laurentians, before dropping back down to Porte du Nord for one last regroup before everyone heads home.", fr: "À partir de Chocomotive, le plaisir recommence sur une route complètement différente pour le retour — l'autoroute 50 se prolonge sur la route 329, un parcours sinueux vers le nord à travers Morin-Heights et le cœur des Laurentides, avant de redescendre vers la Porte du Nord pour un dernier regroupement avant que tout le monde rentre à la maison." } },
+  { emoji: '🌅', text: { en: "By the time the convoy rolls through Morin-Heights on the way back, the light starts turning golden — one last stretch of good driving through the Laurentians before everyone heads home.", fr: "Le temps que le convoi traverse Morin-Heights au retour, la lumière commence à devenir dorée — une dernière belle portion de route à travers les Laurentides avant que tout le monde rentre à la maison." } },
 ]
 
 const CONVOY_RULES = [
-  'Follow the lead car at all times — do not overtake any car in the convoy.',
-  "Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can't react.",
-  'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.',
-  'If you get separated, do not panic — proceed to the next stop on the route and wait.',
-  'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.',
-  'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.',
-  'Fuel up before departure — options are limited once we leave the highway.',
-  'Respect the roads and the communities we pass through.',
+  { en: 'Follow the lead car at all times — do not overtake any car in the convoy.', fr: 'Suivez toujours la voiture de tête — ne dépassez aucune voiture du convoi.' },
+  { en: "Maintain a safe following distance. Stay close enough to keep the group together, not so close that you can't react.", fr: 'Gardez une distance de sécurité. Restez assez proche pour garder le groupe uni, mais pas trop pour pouvoir réagir.' },
+  { en: 'Obey all traffic laws. Speed limits, signals, and road signs apply regardless of group pace.', fr: "Respectez le code de la route. Les limites de vitesse, les feux et les panneaux s'appliquent peu importe le rythme du groupe." },
+  { en: 'If you get separated, do not panic — proceed to the next stop on the route and wait.', fr: 'Si vous êtes séparé du groupe, pas de panique — rendez-vous au prochain arrêt et attendez.' },
+  { en: 'Do not race, push, or drive aggressively. This is a scenic drive, not a track day.', fr: "Ne faites pas la course et ne conduisez pas de façon agressive. C'est une balade panoramique, pas une journée piste." },
+  { en: 'If you need to stop urgently, hazard lights on immediately. The car behind will relay the signal forward.', fr: "En cas d'arrêt d'urgence, allumez vos feux de détresse immédiatement. La voiture derrière relaiera le signal." },
+  { en: 'Fuel up before departure — options are limited once we leave the highway.', fr: "Faites le plein avant le départ — les options sont limitées une fois sortis de l'autoroute." },
+  { en: 'Respect the roads and the communities we pass through.', fr: 'Respectez les routes et les communautés que nous traversons.' },
 ]
+
+// Static UI copy — everything on the page except individual car facts
+// (16 highly editorial one-off blurbs; left English-only for this pass).
+const UI = {
+  en: {
+    meetupLabel: 'Meetup', meetupLine: 'Meetup — 9:00 AM · Laval, QC', departure: 'Departure 9:30 AM sharp',
+    contactLabel: 'Contact', convoyAppLabel: 'Convoy App',
+    convoyAppBody: 'See the whole convoy live on the map and never lose the group — download it now, before August 1.',
+    copyNumber: 'Copy number', copied: '✓ Copied',
+    convoyRulesLabel: 'Convoy Rules', rulesClose: '▲ Close', rulesRead: '▼ Read',
+    itineraryLabel: 'Itinerary', itineraryHint: 'Tap a stop to open in Maps',
+    driveLabel: 'The Drive',
+    photoLabel: 'Photography', photoBody: 'Revpix Media is capturing photos and video throughout the day — give them a follow:',
+    whosComing: n => `Who's Coming — ${n} Car${n !== 1 ? 's' : ''}`,
+    tapPhoto: '👇 Tap a photo to learn more about the car',
+    groupLabel: n => `Group ${n}`, ungrouped: 'Ungrouped', groupLead: 'Group Lead',
+    mapLabel: 'Map', toMontebello: 'To Montebello', driveBack: 'Drive Back',
+    openRoute: view => `Open ${view} Route in Google Maps →`,
+    modalEyebrow: 'Canvas Routes · Hello to Montebello 2026',
+    heroTags: ['Scenic Backroads', '~300km Drive', 'Château Lunch'],
+  },
+  fr: {
+    meetupLabel: 'Rendez-vous', meetupLine: 'Rendez-vous — 9 h · Laval, QC', departure: 'Départ à 9 h 30 précises',
+    contactLabel: 'Contact', convoyAppLabel: 'Appli de convoi',
+    convoyAppBody: 'Voyez tout le convoi en direct sur la carte et ne perdez jamais le groupe — téléchargez-la maintenant, avant le 1er août.',
+    copyNumber: 'Copier le numéro', copied: '✓ Copié',
+    convoyRulesLabel: 'Règles du convoi', rulesClose: '▲ Fermer', rulesRead: '▼ Lire',
+    itineraryLabel: 'Itinéraire', itineraryHint: 'Touchez un arrêt pour l\'ouvrir dans Maps',
+    driveLabel: 'La route',
+    photoLabel: 'Photographie', photoBody: 'Revpix Media capture photos et vidéos tout au long de la journée — suivez-les :',
+    whosComing: n => `Qui vient — ${n} voiture${n !== 1 ? 's' : ''}`,
+    tapPhoto: '👇 Touchez une photo pour en savoir plus sur la voiture',
+    groupLabel: n => `Groupe ${n}`, ungrouped: 'Sans groupe', groupLead: 'Chef de groupe',
+    mapLabel: 'Carte', toMontebello: 'Vers Montebello', driveBack: 'Retour',
+    openRoute: view => `Ouvrir l'itinéraire ${view === 'Vers Montebello' ? 'vers Montebello' : 'du retour'} dans Google Maps →`,
+    modalEyebrow: 'Canvas Routes · Hello to Montebello 2026',
+    heroTags: ['Routes panoramiques', '~300 km de route', 'Dîner au Château'],
+  },
+}
 
 const SECTION_LABEL = { fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#999', display: 'block', fontWeight: '400', fontStyle: 'normal' }
 
-function CopyButton({ text }) {
+function CopyButton({ text, label, copiedLabel }) {
   const [copied, setCopied] = useState(false)
   function copy() {
     if (!navigator?.clipboard?.writeText) return
@@ -112,13 +160,13 @@ function CopyButton({ text }) {
   }
   return (
     <button onClick={copy} style={{ background: 'none', border: 'none', padding: '10px 0', margin: '-8px 0 -2px', cursor: 'pointer', fontSize: '10px', color: copied ? '#3B6B2F' : '#bbb', letterSpacing: '0.06em', fontFamily: 'sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}>
-      {copied ? '✓ Copied' : (
+      {copied ? copiedLabel : (
         <>
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <rect x="5.5" y="5.5" width="9" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" />
             <path d="M3.5 10.5H2.5C1.94772 10.5 1.5 10.0523 1.5 9.5V2.5C1.5 1.94772 1.94772 1.5 2.5 1.5H9.5C10.0523 1.5 10.5 1.94772 10.5 2.5V3.5" stroke="currentColor" strokeWidth="1.2" />
           </svg>
-          Copy number
+          {label}
         </>
       )}
     </button>
@@ -127,7 +175,7 @@ function CopyButton({ text }) {
 
 // Extracted so the "Who's Coming" section can render either one flat grid or
 // one grid per convoy group without duplicating the card markup.
-function CarGrid({ cars, onSelect }) {
+function CarGrid({ cars, onSelect, groupLeadLabel }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
       {cars.map((p, i) => (
@@ -155,7 +203,7 @@ function CarGrid({ cars, onSelect }) {
             </div>
             <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
               {p.lead && (
-                <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>Group Lead</p>
+                <p style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 3px' }}>{groupLeadLabel}</p>
               )}
               <p style={{ fontSize: '12px', color: '#1a1a1a', letterSpacing: '0.01em', margin: 0 }}>{p.name}</p>
               {p.car && <p style={{ fontSize: '11px', color: '#999', marginTop: '2px', marginBottom: 0 }}>{p.car}</p>}
@@ -184,7 +232,7 @@ function ModalImage({ src, alt }) {
   )
 }
 
-function RouteMap({ stops, path = ROUTE_PATH }) {
+function RouteMap({ stops, path = ROUTE_PATH, lang = 'en' }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const boundsRef = useRef(null)
@@ -259,7 +307,7 @@ function RouteMap({ stops, path = ROUTE_PATH }) {
             },
           })
           const infoWindow = new google.maps.InfoWindow({
-            content: `<div style="font-family:sans-serif;padding:2px 4px"><strong style="font-size:13px">${stop.label}</strong><br/><span style="color:#888;font-size:11px">${stop.note}</span></div>`,
+            content: `<div style="font-family:sans-serif;padding:2px 4px"><strong style="font-size:13px">${stop.label}</strong><br/><span style="color:#888;font-size:11px">${pick(stop.note, lang)}</span></div>`,
           })
           marker.addListener('click', () => infoWindow.open(map, marker))
         })
@@ -302,7 +350,7 @@ function RouteMap({ stops, path = ROUTE_PATH }) {
       destroyed = true
       if (mapRef.current) { mapRef.current = null }
     }
-  }, [stops, path])
+  }, [stops, path, lang])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -356,6 +404,8 @@ export default function HelloToMontebelloItineraryPage() {
   const [fetchedParticipants, setFetchedParticipants] = useState([])
   const [countdown, setCountdown] = useState(null)
   const [mapView, setMapView] = useState('to')
+  const [lang, setLang] = useState('en')
+  const t = UI[lang]
 
   // Keep the modal mounted through its exit animation instead of unmounting
   // the instant selectedCar clears — modalCar tracks what's actually shown.
@@ -730,6 +780,12 @@ export default function HelloToMontebelloItineraryPage() {
           @keyframes itin-hero-pan { from { transform: scale(1.18); } to { transform: scale(1); } }
           .itin-hero-bg { animation: itin-hero-pan 16s ease-out both; will-change: transform; }
         }
+
+        /* Language toggle — a quick punch on every switch, retriggered by
+           remounting the button on a key={lang} change. */
+        @keyframes lang-toggle-punch { 0% { transform: scale(0.7); opacity: 0.4; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+        .lang-toggle-btn { animation: lang-toggle-punch 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .lang-toggle-btn:active { transform: scale(0.93); }
       `}</style>
 
       {/* Header */}
@@ -739,13 +795,28 @@ export default function HelloToMontebelloItineraryPage() {
       }}>
         <div className="itin-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/montebello-itinerary.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
+        <button
+          key={lang}
+          onClick={() => setLang(l => (l === 'en' ? 'fr' : 'en'))}
+          className="lang-toggle-btn"
+          aria-label="Switch language / Changer de langue"
+          style={{
+            position: 'absolute', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 2,
+            minWidth: '44px', minHeight: '32px', padding: '0.4rem 0.8rem',
+            background: 'rgba(197,168,130,0.14)', border: '0.5px solid rgba(197,168,130,0.5)',
+            color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: '700',
+            fontFamily: 'sans-serif', cursor: 'pointer',
+          }}
+        >
+          {lang === 'en' ? 'FR' : 'EN'}
+        </button>
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/white-outline.png" alt="Canvas Routes" className="itin-hero-logo" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
           <h1 className="itin-hero-title" style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Hello to Montebello</h1>
-          <p className="itin-hero-date" style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>Saturday · August 1, 2026</p>
+          <p className="itin-hero-date" style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>{lang === 'fr' ? 'Samedi · 1er août 2026' : 'Saturday · August 1, 2026'}</p>
           <div className="itin-hero-tags" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
-            {['Scenic Backroads', '~300km Drive', 'Château Lunch'].map(tag => (
+            {t.heroTags.map(tag => (
               <span key={tag} style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '4px 12px' }}>{tag}</span>
             ))}
           </div>
@@ -774,20 +845,20 @@ export default function HelloToMontebelloItineraryPage() {
         <div className="itin-quick-info" style={{ borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
-              <a href={STOPS[0].href} target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', display: 'block', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)' }}>Starbucks — 440 Ouest, Back Parking</a>
-              <p style={{ fontSize: '12px', color: '#45643C', marginTop: '3px', marginBottom: 0, fontWeight: '700' }}>Meetup — 9:00 AM · Laval, QC</p>
-              <p style={{ fontSize: '11px', color: '#93333E', marginTop: '2px', marginBottom: 0, fontWeight: '600' }}>Departure 9:30 AM sharp</p>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.meetupLabel}</h2>
+              <a href={STOPS[0].href} target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', display: 'block', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)' }}>{STOPS[0].label}</a>
+              <p style={{ fontSize: '12px', color: '#45643C', marginTop: '3px', marginBottom: 0, fontWeight: '700' }}>{t.meetupLine}</p>
+              <p style={{ fontSize: '11px', color: '#93333E', marginTop: '2px', marginBottom: 0, fontWeight: '600' }}>{t.departure}</p>
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
-              <h2 style={{ ...SECTION_LABEL, color: '#93333E', marginBottom: '5px', fontWeight: '600' }}>Contact</h2>
+              <h2 style={{ ...SECTION_LABEL, color: '#93333E', marginBottom: '5px', fontWeight: '600' }}>{t.contactLabel}</h2>
               <a href="tel:5144373437" style={{ fontSize: '14px', color: '#93333E', textDecoration: 'none', lineHeight: '1.4', display: 'block', fontWeight: '700', letterSpacing: '0.01em' }}>
                 Jerry — 514-437-3437
               </a>
-              <CopyButton text="514-437-3437" />
+              <CopyButton text="514-437-3437" label={t.copyNumber} copiedLabel={t.copied} />
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>Convoy App</h2>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>{t.convoyAppLabel}</h2>
               <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700', letterSpacing: '0.01em', margin: '0 0 5px' }}>Velox</p>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <a
@@ -805,7 +876,7 @@ export default function HelloToMontebelloItineraryPage() {
                   Android →
                 </a>
               </div>
-              <p style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>See the whole convoy live on the map and never lose the group — download it now, before August 1.</p>
+              <p style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>{t.convoyAppBody}</p>
             </div>
           </div>
         </div>
@@ -817,15 +888,15 @@ export default function HelloToMontebelloItineraryPage() {
             aria-expanded={rulesOpen}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
           >
-            <h2 style={{ ...SECTION_LABEL, margin: 0 }}>Convoy Rules</h2>
-            <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? '▲ Close' : '▼ Read'}</span>
+            <h2 style={{ ...SECTION_LABEL, margin: 0 }}>{t.convoyRulesLabel}</h2>
+            <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? t.rulesClose : t.rulesRead}</span>
           </button>
           {rulesOpen && (
             <ol style={{ margin: '1.25rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {CONVOY_RULES.map((rule, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
                   <span aria-hidden="true" style={{ color: '#c5a882', fontSize: '11px', fontWeight: '600', flexShrink: 0, paddingTop: '2px' }}>{String(i + 1).padStart(2, '0')}</span>
-                  <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{rule}</span>
+                  <span style={{ fontSize: '13px', color: '#444', lineHeight: '1.6' }}>{pick(rule, lang)}</span>
                 </li>
               ))}
             </ol>
@@ -835,8 +906,8 @@ export default function HelloToMontebelloItineraryPage() {
         {/* Itinerary */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
           <div style={{ marginBottom: '1.5rem' }}>
-            <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Itinerary</h2>
-            <p style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', margin: 0 }}>Tap a stop to open in Maps</p>
+            <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.itineraryLabel}</h2>
+            <p style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', margin: 0 }}>{t.itineraryHint}</p>
           </div>
           {STOPS.map((stop, i) => (
             <div key={i} className="itin-stop" style={{ display: 'flex', alignItems: 'stretch', gap: '1rem', transitionDelay: `${0.15 + i * 0.09}s`, background: stop.feature ? 'rgba(197,168,130,0.08)' : 'transparent', margin: stop.feature ? '0 -1.25rem' : 0, padding: stop.feature ? '0.5rem 1.25rem' : 0 }}>
@@ -872,12 +943,12 @@ export default function HelloToMontebelloItineraryPage() {
                   <div style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '400', lineHeight: '1.35' }}>{stop.label}</div>
                 )}
                 <p style={{ fontSize: '12px', color: '#999', marginTop: '2px', marginBottom: '5px' }}>
-                  {stop.note}
+                  {pick(stop.note, lang)}
                 </p>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
                   {stop.tag && (
                     <div style={{ display: 'inline-block', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '2px 8px' }}>
-                      {stop.tag}
+                      {pick(stop.tag, lang)}
                     </div>
                   )}
                 </div>
@@ -888,12 +959,12 @@ export default function HelloToMontebelloItineraryPage() {
 
         {/* The Drive */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>The Drive</h2>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>{t.driveLabel}</h2>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {DRIVE_BULLETS.map(({ emoji, text }, i) => (
               <li key={i} className="itin-stop" style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', transitionDelay: `${0.12 + i * 0.08}s` }}>
                 <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>{emoji}</span>
-                <span style={{ fontSize: '14px', color: '#444', lineHeight: '1.75' }}>{text}</span>
+                <span style={{ fontSize: '14px', color: '#444', lineHeight: '1.75' }}>{pick(text, lang)}</span>
               </li>
             ))}
           </ul>
@@ -901,8 +972,8 @@ export default function HelloToMontebelloItineraryPage() {
 
         {/* Photography */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Photography</h2>
-          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: '0 0 0.6rem' }}>Revpix Media is capturing photos and video throughout the day — give them a follow:</p>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>{t.photoLabel}</h2>
+          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: '0 0 0.6rem' }}>{t.photoBody}</p>
           <a
             href="https://www.instagram.com/revpix.media?igsh=bjl3MHN5NDN0eXZ5"
             target="_blank" rel="noreferrer"
@@ -915,42 +986,42 @@ export default function HelloToMontebelloItineraryPage() {
 
         {/* Who's Coming */}
         <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>Who&apos;s Coming — {allParticipants.length} Car{allParticipants.length !== 1 ? 's' : ''}</h2>
-          <p style={{ fontSize: '13px', color: '#0F1E14', fontWeight: '700', letterSpacing: '0.02em', margin: '0 0 1.25rem' }}>👇 Tap a photo to learn more about the car</p>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>{t.whosComing(allParticipants.length)}</h2>
+          <p style={{ fontSize: '13px', color: '#0F1E14', fontWeight: '700', letterSpacing: '0.02em', margin: '0 0 1.25rem' }}>{t.tapPhoto}</p>
           {groupNumbers.length > 0 ? (
             <>
               {groupNumbers.map(g => (
                 <div key={g} style={{ marginBottom: '1.5rem' }}>
-                  <p style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 0.75rem' }}>Group {g}</p>
-                  <CarGrid cars={allParticipants.filter(p => p.group === g).sort((a, b) => (b.lead ? 1 : 0) - (a.lead ? 1 : 0))} onSelect={setSelectedCar} />
+                  <p style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#c5a882', margin: '0 0 0.75rem' }}>{t.groupLabel(g)}</p>
+                  <CarGrid cars={allParticipants.filter(p => p.group === g).sort((a, b) => (b.lead ? 1 : 0) - (a.lead ? 1 : 0))} onSelect={setSelectedCar} groupLeadLabel={t.groupLead} />
                 </div>
               ))}
               {ungrouped.length > 0 && (
                 <div>
-                  <p style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', margin: '0 0 0.75rem' }}>Ungrouped</p>
-                  <CarGrid cars={ungrouped} onSelect={setSelectedCar} />
+                  <p style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', margin: '0 0 0.75rem' }}>{t.ungrouped}</p>
+                  <CarGrid cars={ungrouped} onSelect={setSelectedCar} groupLeadLabel={t.groupLead} />
                 </div>
               )}
             </>
           ) : (
-            <CarGrid cars={allParticipants} onSelect={setSelectedCar} />
+            <CarGrid cars={allParticipants} onSelect={setSelectedCar} groupLeadLabel={t.groupLead} />
           )}
         </section>
 
         {/* Map */}
         <section className="scroll-reveal" style={{ padding: '2rem 0' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-            <h2 style={{ ...SECTION_LABEL, marginBottom: 0 }}>Map</h2>
+            <h2 style={{ ...SECTION_LABEL, marginBottom: 0 }}>{t.mapLabel}</h2>
             <a
               href={mapView === 'to' ? ROUTE_LINK : RETURN_ROUTE_LINK}
               target="_blank" rel="noreferrer"
               style={{ display: 'inline-block', padding: '6px 0', margin: '-6px 0', fontSize: '11px', letterSpacing: '0.06em', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
             >
-              Open {mapView === 'to' ? 'To Montebello' : 'Drive Back'} Route in Google Maps →
+              {t.openRoute(mapView === 'to' ? t.toMontebello : t.driveBack)}
             </a>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.85rem' }}>
-            {[{ key: 'to', label: 'To Montebello' }, { key: 'back', label: 'Drive Back' }].map(({ key, label }) => (
+            {[{ key: 'to', label: t.toMontebello }, { key: 'back', label: t.driveBack }].map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setMapView(key)}
@@ -968,7 +1039,7 @@ export default function HelloToMontebelloItineraryPage() {
             ))}
           </div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-            <RouteMap key={mapView} stops={mapView === 'to' ? STOPS : RETURN_STOPS} path={mapView === 'to' ? ROUTE_PATH : RETURN_ROUTE_PATH} />
+            <RouteMap key={`${mapView}-${lang}`} stops={mapView === 'to' ? STOPS : RETURN_STOPS} path={mapView === 'to' ? ROUTE_PATH : RETURN_ROUTE_PATH} lang={lang} />
           </div>
         </section>
 
@@ -1005,7 +1076,7 @@ export default function HelloToMontebelloItineraryPage() {
               </div>
             )}
             <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
-              <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>Canvas Routes · Hello to Montebello 2026</p>
+              <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.35rem', marginTop: 0 }}>{t.modalEyebrow}</p>
               <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '400', color: '#1a1a1a', marginBottom: '0.2rem', marginTop: 0 }}>{modalCar.name}</h2>
               {modalCar.car && (
                 <p style={{ fontSize: '12px', color: '#888', marginBottom: '1rem', letterSpacing: '0.02em', marginTop: 0 }}>{modalCar.car}</p>
