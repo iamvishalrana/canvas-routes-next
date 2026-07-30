@@ -644,8 +644,7 @@ export default function HelloToMontebelloItineraryPage() {
         onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
         aria-label="Scroll down"
       >
-        <span style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.8)', fontFamily: 'sans-serif' }}>scroll</span>
-        <svg className="scroll-chevron" width="16" height="10" viewBox="0 0 16 10" fill="none">
+        <svg className="scroll-chevron" width="18" height="11" viewBox="0 0 16 10" fill="none">
           <path d="M1 1.5L8 8.5L15 1.5" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
@@ -682,7 +681,8 @@ export default function HelloToMontebelloItineraryPage() {
           98% { transform: translateY(0) rotate(0deg); }
         }
 
-        .scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 1001; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0F1E14; border: none; padding: 0.75rem 0.9rem 0.65rem; cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease, bottom 0.2s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.22); pointer-events: auto; }
+        .scroll-btn { position: fixed; right: 1.25rem; bottom: 1.75rem; z-index: 1001; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 50%; background: rgba(15,30,20,0.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 0.5px solid rgba(197,168,130,0.3); cursor: pointer; transition: opacity 0.4s ease, box-shadow 0.2s ease, bottom 0.2s ease, transform 0.15s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.22); pointer-events: auto; }
+        .scroll-btn:active { transform: scale(0.93); }
         @media (hover: hover) { .scroll-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); } }
         @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
         .scroll-chevron { animation: bounce-down 1.6s ease-in-out infinite; }
