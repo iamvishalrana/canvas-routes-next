@@ -15,7 +15,10 @@ export async function PATCH(request, { params }) {
   const email = (body?.email || '').toLowerCase().trim()
   const picks = body?.lunch
   if (!email) return Response.json({ error: 'Missing email.' }, { status: 400 })
-  if (!Array.isArray(picks) || picks.length === 0) return Response.json({ error: 'Missing lunch selections.' }, { status: 400 })
+  // Empty array is allowed — an admin removing every passenger (down to
+  // zero) from a registrant's lunch order is a legitimate action, not a
+  // malformed request.
+  if (!Array.isArray(picks)) return Response.json({ error: 'Missing lunch selections.' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: event, error: eventErr } = await admin.from('events')

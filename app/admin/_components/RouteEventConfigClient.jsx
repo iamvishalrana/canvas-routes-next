@@ -514,6 +514,9 @@ export default function RouteEventConfigClient({ eventId }) {
                         )}
                         {editingLunchEmail === p.email ? (
                           <div>
+                            {lunchEditDraft.length === 0 && (
+                              <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.5rem' }}>No passengers left on this order.</div>
+                            )}
                             {lunchEditDraft.map((entry, li) => (
                               <div key={li} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                                 <span style={{ fontSize: '12px', color: '#444', minWidth: '90px' }}>{entry.name || (li === 0 ? 'Driver' : `Passenger ${li + 1}`)}</span>
@@ -521,6 +524,10 @@ export default function RouteEventConfigClient({ eventId }) {
                                   style={{ ...smallInput, width: 'auto', minWidth: '160px' }}>
                                   {dishOptions.map(dish => <option key={dish.id} value={dish.id}>{dish.name}</option>)}
                                 </select>
+                                <button type="button" onClick={() => setLunchEditDraft(d => d.filter((_, xi) => xi !== li))}
+                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#93333E', textDecoration: 'underline', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  Remove
+                                </button>
                               </div>
                             ))}
                             <span style={{ fontSize: '11px' }}>
