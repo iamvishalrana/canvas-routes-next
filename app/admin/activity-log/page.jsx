@@ -2,7 +2,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import ActivityLogClient from './ActivityLogClient'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Activity Log — Admin' }
+export const metadata = { title: 'Activity Log' }
 
 export default async function ActivityLogPage() {
   const supabase = createAdminClient()

@@ -4,7 +4,7 @@ import StatNumber from './StatNumber'
 import DeviceChart from './DeviceChart'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Dashboard — Admin' }
+export const metadata = { title: 'Dashboard' }
 
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03)' }

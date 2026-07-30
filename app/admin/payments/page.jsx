@@ -20,7 +20,7 @@ const PI_FETCH_LIMIT = 10000
 // arrive after the window expires, which can lag well past the nominal TTL
 // when admin visits are infrequent).
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Payments — Admin' }
+export const metadata = { title: 'Payments' }
 
 export default async function PaymentsPage() {
   const records = []

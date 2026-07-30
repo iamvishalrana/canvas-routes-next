@@ -3,7 +3,7 @@ import EmailActivityClient from './EmailActivityClient'
 
 // Auth is already enforced by middleware.js — no need to re-check here.
 export const revalidate = 30
-export const metadata = { title: 'Email Activity — Admin' }
+export const metadata = { title: 'Email Activity' }
 
 export default async function EmailActivityPage() {
   let events = []

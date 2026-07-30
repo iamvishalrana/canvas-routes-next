@@ -2,7 +2,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import MembersClient from './MembersClient'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Members — Admin' }
+export const metadata = { title: 'Members' }
 
 const PAGE_SIZE = 50
 const SORT_COLUMNS = {
