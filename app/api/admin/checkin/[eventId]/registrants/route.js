@@ -51,11 +51,11 @@ export async function POST(request, { params }) {
   return Response.json({ success: true })
 }
 
-// Sets (or clears) the convoy group and/or the car year/make/model on a
-// road-trip registrant — both live inside their matched registrations[]
-// entry, same as `attended`/`paid`. Member-portal (event_registrations)
-// registrants have no group/car-edit support; this is a no-op for them
-// since they never have a matching applications row here.
+// Sets (or clears) the convoy group, group-lead flag, and/or the car
+// year/make/model on a road-trip registrant — all live inside their matched
+// registrations[] entry, same as `attended`/`paid`. Member-portal
+// (event_registrations) registrants have no group/car-edit support; this is
+// a no-op for them since they never have a matching applications row here.
 //
 // Car edits write into registrations[].details — the per-EVENT snapshot —
 // not the flat applications.car_year/car_make/car_model columns, so
@@ -73,8 +73,9 @@ export async function PATCH(request, { params }) {
   if (!email) return Response.json({ error: 'Missing email.' }, { status: 400 })
 
   const hasGroup = Object.prototype.hasOwnProperty.call(body, 'group')
+  const hasLead = Object.prototype.hasOwnProperty.call(body, 'group_lead')
   const hasCar = ['car_year', 'car_make', 'car_model'].some(k => Object.prototype.hasOwnProperty.call(body, k))
-  if (!hasGroup && !hasCar) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
+  if (!hasGroup && !hasLead && !hasCar) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
 
   let group = null
   if (hasGroup) {
@@ -94,6 +95,7 @@ export async function PATCH(request, { params }) {
     if (!isSameEvent(r.event, event.name)) return r
     const next = { ...r }
     if (hasGroup) next.convoy_group = group
+    if (hasLead) next.group_lead = !!body.group_lead
     if (hasCar) {
       const details = { ...(r.details || {}) }
       if ('car_year' in body)  details.car_year  = (body.car_year  || '').toString().trim() || null

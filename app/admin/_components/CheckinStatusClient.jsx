@@ -99,6 +99,7 @@ export default function CheckinStatusClient({ eventId }) {
   const [reminding, setReminding] = useState(null) // 'all' | email | null
   const [remindResult, setRemindResult] = useState(null) // { email or 'all', count }
   const [groupBusy, setGroupBusy] = useState(null) // email
+  const [leadBusy, setLeadBusy] = useState(null) // email
   const [groupDrafts, setGroupDrafts] = useState({}) // email -> string, while typing
   const [photoBusy, setPhotoBusy] = useState(null) // email
   const photoInputRef = useRef(null)
@@ -126,6 +127,20 @@ export default function CheckinStatusClient({ eventId }) {
       await load({ silent: true })
     } catch { setActionError('Network error.') }
     finally { setGroupBusy(null); clearDraft() }
+  }
+
+  async function toggleLead(p) {
+    setLeadBusy(p.email); setActionError(null)
+    try {
+      const res = await fetch(`/api/admin/checkin/${eventId}/registrants`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: p.email, group_lead: !p.group_lead }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setActionError(d.error || 'Failed to set lead.'); return }
+      await load({ silent: true })
+    } catch { setActionError('Network error.') }
+    finally { setLeadBusy(null) }
   }
 
   // Lets an admin swap the car a registrant is bringing — e.g. someone
@@ -531,6 +546,14 @@ export default function CheckinStatusClient({ eventId }) {
                         disabled={groupBusy === p.email}
                         style={{ width: '32px', padding: '3px 4px', textAlign: 'center', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#333' }}
                       />
+                      <button type="button" onClick={() => toggleLead(p)} disabled={leadBusy === p.email}
+                        title={p.group_lead ? 'Group lead — click to unset' : 'Mark as group lead'}
+                        aria-label={p.group_lead ? 'Group lead — click to unset' : 'Mark as group lead'}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', padding: 0, background: 'none', border: 'none', cursor: leadBusy === p.email ? 'wait' : 'pointer', opacity: leadBusy === p.email ? 0.5 : 1 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill={p.group_lead ? '#c5a882' : 'none'} stroke={p.group_lead ? '#c5a882' : '#ccc'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m2 4 5 5 5-8 5 8 5-5-2 12H4Z"/>
+                        </svg>
+                      </button>
                     </div>
                   )}
                   {p.paymentStatus && PAYMENT_LABEL[p.paymentStatus] && (

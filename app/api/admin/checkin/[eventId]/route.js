@@ -42,6 +42,7 @@ export async function GET(request, { params }) {
       paymentStatus: r.paymentStatus,
       applicationId: r.applicationId,
       convoy_group: r.convoy_group ?? null,
+      group_lead: !!r.group_lead,
       amountPaid: r.amountPaid,
       registration: r.registration || null,
       isMember: !!r.isMember,

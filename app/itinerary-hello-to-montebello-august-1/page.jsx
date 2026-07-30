@@ -11,20 +11,23 @@ const PASSWORD = 'montebello'
 const ROUTE_SLUG = 'hello-to-montebello'
 
 // Only real venues so this one array can drive both the itinerary timeline
-// and the map markers. Meetup is the McDonald's on the south service road of
-// Autoroute 440 in Laval (4610 Desserte Sud Autoroute 440 O, Laval, QC
-// H7T 2Z8) — confirmed via https://maps.app.goo.gl/H1MhTqXNUzvxheCq7. Porte
-// du Nord is the service area on Autoroute des Laurentides (A-15) reached
-// directly from A-440 — confirmed via https://maps.app.goo.gl/frM6FQAgCirv7a359.
-// Stop lat/lng are geocoded estimates, NOT independently verified against a
-// traced route — confirm/correct the pins before relying on them for real
-// navigation. The drawn road path in routePath.js is a routed polyline
-// through this same route's waypoints (via OSRM, since Google's own
-// turn-by-turn path isn't exposed through a shared link) — it approximates
-// the real roads but is not a pixel-perfect copy of Google's route.
+// and the map markers. Meetup is the Starbucks on the south service road of
+// Autoroute 440 in Laval (4630 Desserte Sud Autoroute 440, Laval, QC
+// H7T 2Z8) — confirmed via https://maps.app.goo.gl/dj4LKV6nTD6GwnVD8. It's
+// right next to the McDonald's the pin used to point to, so the lat/lng
+// below (and the traced route in routePath.js) are left as-is — only the
+// label/address text changed. Porte du Nord is the service area on
+// Autoroute des Laurentides (A-15) reached directly from A-440 — confirmed
+// via https://maps.app.goo.gl/frM6FQAgCirv7a359. Stop lat/lng are geocoded
+// estimates, NOT independently verified against a traced route — confirm/
+// correct the pins before relying on them for real navigation. The drawn
+// road path in routePath.js is a routed polyline through this same route's
+// waypoints (via OSRM, since Google's own turn-by-turn path isn't exposed
+// through a shared link) — it approximates the real roads but is not a
+// pixel-perfect copy of Google's route.
 const ROUTE_LINK = 'https://maps.app.goo.gl/zpYKNJS6U4jaL7tq9'
 const STOPS = [
-  { label: "McDonald's — 440 Ouest, Back Parking", note: '9:00 AM · Laval', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4610+Desserte+Sud+Autoroute+440+Ouest+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
+  { label: "Starbucks — 440 Ouest, Back Parking", note: '9:00 AM · Laval · Departure 9:30 AM sharp', tag: 'Meetup & Departure', start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
   { label: 'Porte du Nord', note: 'Saint-Jérôme · Fuel & regroup', href: 'https://maps.app.goo.gl/frM6FQAgCirv7a359', lat: 45.8419779, lng: -74.0682029 },
   { label: "L'Atelier des Deux P", note: 'Amherst · Coffee stop — coffee & snacks on you', href: 'https://www.google.com/maps/search/?api=1&query=270+Rue+Amherst,+Amherst,+QC+J0T+2L0', lat: 46.0105673, lng: -74.7612215 },
   { label: 'Fairmont Le Château Montebello', note: 'Montebello · Lunch at Aux Chantignoles', tag: 'Lunch & self-parking included', feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=392+Rue+Notre-Dame+Montebello+QC', lat: 45.6455317, lng: -74.9494418 },
@@ -76,8 +79,8 @@ const CAR_FACTS = {
 }
 
 const DRIVE_BULLETS = [
-  { emoji: '📸', text: "Get there a few minutes early — the McDonald's lot fills up with the whole convoy lined up before roll-out, and it makes for some great photos before the engines even start." },
-  { emoji: '🛣️', text: "We meet at 9:00 AM at McDonald's in Laval, then convoy up A-440 and A-15 together to Porte du Nord in Saint-Jérôme for one last regroup. That's where the highway ends and the real drive begins — the convoy peels off onto backroads and heads east into the Laurentian hills." },
+  { emoji: '📸', text: "Arrive on time — it's a great chance to catch up with everyone, talk cars, and get to know the group before we roll out together." },
+  { emoji: '🛣️', text: "We meet at 9:00 AM at Starbucks in Laval — departure is 9:30 AM sharp, so don't be late. From there, the convoy heads up A-440 and A-15 together to Porte du Nord in Saint-Jérôme for one last regroup. That's where the highway ends and the real drive begins — the convoy peels off onto backroads and heads east into the Laurentian hills." },
   { emoji: '☕', text: "A coffee stop at L'Atelier des Deux P in Amherst breaks up the drive right as things get good — long, flowing curves through forest and farmland, with the Laurentians opening up all around on the approach to the Outaouais." },
   { emoji: '🏰', text: "The convoy rolls into Montebello together for lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars self-park together in a display area out front for the afternoon. Enjoy a three-course lunch, with parking covered by Canvas Routes. Gourmet coffee and Lot 35 tea are included — any other beverages, including alcohol, can be purchased directly from the venue at your own cost." },
   { emoji: '🍫', text: 'A stroll around Montebello before the drive home — the convoy stops together at Chocomotive, an artisan chocolate workshop in the old train station. Also worth a look nearby: the Lieu historique national du Manoir-Papineau.' },
@@ -416,9 +419,13 @@ export default function HelloToMontebelloItineraryPage() {
   // Jerry is now a real registrant (see lib/jerryRegistrant.js) so he comes
   // back from the roster fetch too — his richer hardcoded entry above (lead
   // flag, fact blurb, fixed photo) is what's actually shown, so drop the
-  // fetched duplicate rather than listing him twice.
+  // fetched duplicate rather than listing him twice. His convoy group is
+  // still pulled live from the fetch, though — it used to be hardcoded to
+  // null on MANUAL_PARTICIPANTS, so setting his group in the admin panel
+  // silently had no effect on the itinerary page.
+  const jerryFromRoster = fetchedParticipants.find(p => p.name === 'Jerry')
   const allParticipants = [
-    ...MANUAL_PARTICIPANTS,
+    ...MANUAL_PARTICIPANTS.map(p => p.name === 'Jerry' ? { ...p, group: jerryFromRoster?.group ?? p.group } : p),
     ...fetchedParticipants
       .filter(p => p.name !== 'Jerry')
       .map(p => CAR_FACTS[p.name] ? { ...p, fact: CAR_FACTS[p.name] } : p),
@@ -759,8 +766,9 @@ export default function HelloToMontebelloItineraryPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 140px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Meetup</h2>
-              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>McDonald's — 440 Ouest, Back Parking</p>
+              <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.4', margin: 0 }}>Starbucks — 440 Ouest, Back Parking</p>
               <p style={{ fontSize: '11px', color: '#bbb', marginTop: '3px', marginBottom: 0 }}>9:00 AM · Laval, QC</p>
+              <p style={{ fontSize: '11px', color: '#93333E', marginTop: '2px', marginBottom: 0, fontWeight: '600' }}>Departure 9:30 AM sharp</p>
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 160px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem', borderTop: '2px solid #93333E' }}>
               <h2 style={{ ...SECTION_LABEL, color: '#93333E', marginBottom: '5px', fontWeight: '600' }}>Contact</h2>
@@ -880,6 +888,20 @@ export default function HelloToMontebelloItineraryPage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Photography */}
+        <section className="scroll-reveal" style={{ padding: '2rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '5px' }}>Photography</h2>
+          <p style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6', margin: '0 0 0.6rem' }}>Revpix Media is capturing photos and video throughout the day — give them a follow:</p>
+          <a
+            href="https://www.instagram.com/revpix.media?igsh=bjl3MHN5NDN0eXZ5"
+            target="_blank" rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '700' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F1E14" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            @revpix.media →
+          </a>
         </section>
 
         {/* Who's Coming */}
