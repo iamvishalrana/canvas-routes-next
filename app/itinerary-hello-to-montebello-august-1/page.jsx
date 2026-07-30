@@ -85,7 +85,7 @@ const DRIVE_BULLETS = [
   { emoji: '🏰', text: "The convoy rolls into Montebello together for lunch at Aux Chantignoles, inside Fairmont Le Château Montebello — the largest log château in the world, right on the Ottawa River. Cars park together in a display area out front for the afternoon, with parking fully covered by Canvas Routes. Inside, enjoy a three-course lunch — gourmet coffee and Lot 35 tea are included, and any other beverages, including alcohol, can be purchased directly from the venue at your own cost." },
   { emoji: '🍫', text: 'Leaving Fairmont, the convoy may stop by Chocomotive, an artisan chocolate workshop in the old train station — optional, decided on the day. Also worth a look nearby: the Lieu historique national du Manoir-Papineau.' },
   { emoji: '🏁', text: "From Chocomotive, the fun starts all over again on a completely different road home — A-50 flows into Route 329, a twisting run north through Morin-Heights and the heart of the Laurentians, before dropping back down to Porte du Nord for one last regroup before everyone heads home." },
-  { emoji: '🌅', text: "By the time the convoy rolls through Morin-Heights on the way back, the light starts turning golden — one last stretch of good driving through the Laurentians before everyone peels off for home." },
+  { emoji: '🌅', text: "By the time the convoy rolls through Morin-Heights on the way back, the light starts turning golden — one last stretch of good driving through the Laurentians before everyone heads home." },
 ]
 
 const CONVOY_RULES = [
