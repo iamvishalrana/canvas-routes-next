@@ -684,7 +684,11 @@ export default function HelloToMontebelloItineraryPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#F5F1EC', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
+    <div style={{
+      minHeight: '100dvh',
+      background: 'repeating-linear-gradient(45deg, rgba(15,30,20,0.028) 0px, rgba(15,30,20,0.028) 1px, transparent 1px, transparent 13px), #F5F1EC',
+      fontFamily: 'sans-serif', color: '#1a1a1a',
+    }}>
       <PageLoader images={['/montebello-itinerary.jpg', ...allParticipants.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
 
       {/* Scroll indicator */}
