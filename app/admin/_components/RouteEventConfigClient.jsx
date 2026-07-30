@@ -21,12 +21,17 @@ const LUNCH_FIELD_DEFS = [
   { key: 'personName', label: 'Passenger' },
   { key: 'age', label: 'Age' },
   { key: 'dish', label: 'Lunch Selection' },
+  { key: 'dietary', label: 'Dietary Notes' },
   { key: 'paymentStatus', label: 'Payment Status' },
   { key: 'isMember', label: 'Member' },
 ]
+// dietary defaults ON (unlike the other opt-in fields) — an allergy or
+// restriction is safety-relevant, not just nice-to-have, so it shouldn't be
+// something an admin has to remember to switch on before sending the list
+// to the venue/caterer.
 const DEFAULT_LUNCH_FIELDS = {
   registrant: true, email: true, phone: false, car: false, convoyGroup: false,
-  personName: true, age: true, dish: true, paymentStatus: false, isMember: false,
+  personName: true, age: true, dish: true, dietary: true, paymentStatus: false, isMember: false,
 }
 
 // Flattens each registrant's per-passenger lunch pick into one row per
@@ -53,6 +58,9 @@ function buildLunchRows(participants) {
         personName: entry.name || (i === 0 ? 'Driver' : `Passenger ${i + 1}`),
         age: passenger?.age || '',
         dish: entry.dish_name || '',
+        // Dietary is collected once per registrant (Trip Details step), not
+        // per passenger — same value repeats on every row for this person.
+        dietary: p.trip_details?.dietary || '',
         paymentStatus: p.paymentStatus || '',
         isMember: p.isMember ? 'Yes' : 'No',
       })
@@ -425,6 +433,11 @@ export default function RouteEventConfigClient({ eventId }) {
                     {participants.filter(p => p.lunch?.length > 0).map((p, i, arr) => (
                       <div key={p.email} style={{ padding: '0.85rem 1rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                         <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '0.3rem' }}>{p.name || p.email}</div>
+                        {p.trip_details?.dietary && (
+                          <div style={{ fontSize: '11px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', borderRadius: '6px', padding: '3px 8px', marginBottom: '0.4rem', display: 'inline-block' }}>
+                            ⚠ Dietary: {p.trip_details.dietary}
+                          </div>
+                        )}
                         <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.7 }}>
                           {p.lunch.map((entry, li) => {
                             const passenger = (p.trip_details?.passengers_list || []).find(pp => pp.name === entry.name) || (p.trip_details?.passengers_list || [])[li]
