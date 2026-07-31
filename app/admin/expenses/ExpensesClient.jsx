@@ -120,6 +120,14 @@ export default function ExpensesClient() {
   const [folderEvent, setFolderEvent]   = useState('General')
   const folderManualRef                 = useRef(false)
   const taxManualRef                    = useRef(false)
+  // Set once the admin picks a province by hand, so a receipt scan won't
+  // overwrite it. Default 'QC' is truthy, so the scan's `|| data.province`
+  // pattern could never apply a scanned province without this.
+  const provinceManualRef               = useRef(false)
+  // Signature of the last add-form state the admin confirmed past the
+  // duplicate warning, so re-clicking Save adds it, but editing any key field
+  // re-arms the check.
+  const dupAckSigRef                    = useRef(null)
   const [submitting, setSubmitting]     = useState(false)
   const [formErr, setFormErr]           = useState(null)
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -394,6 +402,8 @@ export default function ExpensesClient() {
     const total = parseFloat(expense.amount || 0) + taxOf(expense)
     taxManualRef.current = true
     folderManualRef.current = true
+    provinceManualRef.current = true
+    dupAckSigRef.current = null
     setFolderEvent(expense.event_name || 'General')
     setForm({
       ...EMPTY_FORM,
@@ -512,12 +522,19 @@ export default function ExpensesClient() {
       if (data.gst != null || data.qst != null) taxManualRef.current = true
       setForm(p => ({
         ...p,
-        vendor:       p.vendor       || data.vendor   || '',
-        expense_date: p.expense_date || data.date     || '',
-        category:     p.category     || data.category || '',
-        paid:         p.paid         || (total   != null ? String(total)   : ''),
-        gst_amount:   p.gst_amount   || (data.gst != null ? String(data.gst) : ''),
-        qst_amount:   p.qst_amount   || (data.qst != null ? String(data.qst) : ''),
+        vendor:         p.vendor         || data.vendor   || '',
+        expense_date:   p.expense_date   || data.date     || '',
+        category:       p.category       || data.category || '',
+        paid:           p.paid           || (total   != null ? String(total)   : ''),
+        gst_amount:     p.gst_amount     || (data.gst != null ? String(data.gst) : ''),
+        qst_amount:     p.qst_amount     || (data.qst != null ? String(data.qst) : ''),
+        payment_method: p.payment_method || data.payment_method || '',
+        // Scanned province wins ONLY if the admin hasn't picked one by hand —
+        // then a total-only receipt from, say, Ontario splits at ON rates, not
+        // the QC default. Scanning never sets provinceManualRef, so re-scanning
+        // a different receipt still updates it.
+        province:       provinceManualRef.current ? p.province : (data.province || p.province),
+        notes:          p.notes          || data.notes    || '',
       }))
 
       // Also store the scanned file so it's attached to the expense in one step
@@ -547,6 +564,26 @@ export default function ExpensesClient() {
     if (gstNum < 0 || qstNum < 0) { setFormErr('Tax amounts cannot be negative.'); return }
     const subtotal = round2(paidNum - gstNum - qstNum)
     if (subtotal < 0) { setFormErr('Taxes are more than the amount paid.'); return }
+
+    // Duplicate guard — scanning the same receipt twice, or a double-tap on
+    // Save, would otherwise silently create two identical rows. Warn once; a
+    // second Save with the same vendor+date+total goes through, and editing any
+    // of those fields re-arms the check.
+    const totalPaid = round2(paidNum)
+    const vendorKey = (form.vendor || '').trim().toLowerCase()
+    const sig = `${vendorKey}|${form.expense_date}|${totalPaid}`
+    if (vendorKey && dupAckSigRef.current !== sig) {
+      const dup = expenses.find(x =>
+        (x.vendor || '').trim().toLowerCase() === vendorKey &&
+        x.expense_date === form.expense_date &&
+        Math.abs((parseFloat(x.amount || 0) + taxOf(x)) - totalPaid) < 0.01
+      )
+      if (dup) {
+        setFormErr(`Looks like a duplicate — a ${fmt(totalPaid)} expense from “${form.vendor.trim()}” on ${form.expense_date} already exists. Click Save again to add it anyway.`)
+        dupAckSigRef.current = sig
+        return
+      }
+    }
     setSubmitting(true); setFormErr(null)
     try {
       const res = await fetch('/api/admin/expenses', {
@@ -583,6 +620,8 @@ export default function ExpensesClient() {
       setFolderEvent('General')
       folderManualRef.current = false
       taxManualRef.current = false
+      provinceManualRef.current = false
+      dupAckSigRef.current = null
       setReceiptName('')
       setScanNotice(null)
       if (fileRef.current) fileRef.current.value = ''
@@ -701,6 +740,12 @@ export default function ExpensesClient() {
         }
         .exp-new { animation: expFadeIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
         .exp-edit-panel { animation: expPanelIn 0.2s ease both; }
+        /* iOS zooms in when a focused input's font-size is under 16px. These
+           inputs are 13px, so bump them to 16px on touch devices only — keeps
+           desktop density, kills zoom-on-focus in the home-screen app. */
+        @media (pointer: coarse) {
+          .exp-wrap input, .exp-wrap select, .exp-wrap textarea { font-size: 16px !important; }
+        }
         .exp-filter-chip { transition: background 0.15s, color 0.15s, border-color 0.15s; }
         .exp-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .exp-tap { min-height: 44px; }
@@ -767,7 +812,7 @@ export default function ExpensesClient() {
             style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', border: 'none', borderRadius: '6px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
             {scanning ? 'Scanning…' : '⚡ Scan receipt'}
           </button>
-          <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount &amp; tax.</span>
+          <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount, tax, payment method, province &amp; a note. Just review &amp; save.</span>
         </div>
 
         {scanNotice && (
@@ -824,7 +869,7 @@ export default function ExpensesClient() {
             <L>Province</L>
             <div style={{ position: 'relative' }}>
               <select style={sel} value={form.province}
-                onChange={e => { taxManualRef.current = false; setForm(p => ({ ...p, province: e.target.value })) }}>
+                onChange={e => { taxManualRef.current = false; provinceManualRef.current = true; setForm(p => ({ ...p, province: e.target.value })) }}>
                 {PROVINCES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
               <SelectChevron />

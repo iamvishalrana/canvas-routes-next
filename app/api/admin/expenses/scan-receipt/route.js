@@ -10,20 +10,27 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf
 const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
 
 const CATEGORIES = EXPENSE_CATEGORIES
+// Canadian province/territory codes — used to validate the scanned merchant
+// address so the client can pick the right tax rates automatically.
+const PROVINCES = ['QC', 'ON', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU']
+const PAYMENT_METHODS = ['cash', 'credit', 'etransfer', 'other']
 
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
 const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exactly these keys:
-{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"total":number|null,"category":string|null}
+{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"total":number|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
 
 Rules:
 - "is_receipt" = true ONLY if the image is clearly a purchase receipt, invoice, bill, or order confirmation showing amounts paid or payable. If it is anything else — an article, a menu, a screenshot, a random document, a photo, a business card — set is_receipt to false and EVERY other key to null. Never guess values from something that is not a receipt.
 - "vendor" = the business/merchant name.
 - "date" = the transaction date in YYYY-MM-DD. If the year is missing, infer the most likely recent year.
 - "amount" = the PRE-TAX subtotal (goods/services before taxes). If only a grand total is shown with no tax lines, set "amount" to that total and leave "gst" and "qst" null.
-- "gst" = the GST / TPS amount (federal, ~5%) only. "qst" = the QST / TVQ amount (Quebec, ~9.975%) only. If a single combined tax line is shown, put the whole amount in "gst" and leave "qst" null.
+- "gst" = the GST / TPS / HST-federal amount (federal, ~5%) only. "qst" = the QST / TVQ / PST / HST-provincial amount only. If a single combined tax line is shown (e.g. HST) and you can't split it, put the whole amount in "gst" and leave "qst" null.
 - "total" = the grand total actually paid.
 - "category" MUST be exactly one of: ${CATEGORIES.join(', ')}. Pick the best fit, or null if unclear.
+- "payment_method" MUST be exactly one of: cash, credit, etransfer, other. Map the tender shown on the receipt: VISA/Mastercard/Amex/Discover/"CREDIT" → "credit"; "CASH"/"ESPÈCES" → "cash"; Interac e-Transfer → "etransfer"; Interac/DEBIT or anything else → "other". null if not shown.
+- "province" = the 2-letter Canadian province/territory code of the MERCHANT's address (one of: ${PROVINCES.join(', ')}), or null if no Canadian address is visible.
+- "notes" = a very short (max ~90 chars) plain-text summary of the main items or purpose (e.g. "Fuel — 42L premium" or "Coffee & pastries for meetup"), or null.
 - Use null for anything not clearly present. All numbers must be plain decimals with no currency symbols (e.g. 12.34).`
 
 function toNum(v) {
@@ -99,6 +106,9 @@ export async function POST(request) {
     const gst = toNum(parsed.gst)
     const qst = toNum(parsed.qst)
     const total = toNum(parsed.total)
+    const payment_method = PAYMENT_METHODS.includes(parsed.payment_method) ? parsed.payment_method : null
+    const province = (typeof parsed.province === 'string' && PROVINCES.includes(parsed.province.toUpperCase())) ? parsed.province.toUpperCase() : null
+    const notes = typeof parsed.notes === 'string' && parsed.notes.trim() ? parsed.notes.trim().slice(0, 200) : null
 
     // A "receipt" with no usable numbers is another non-receipt signal
     if (amount == null && total == null) {
@@ -113,7 +123,7 @@ export async function POST(request) {
 
     return Response.json({
       vendor: typeof parsed.vendor === 'string' ? parsed.vendor.slice(0, 100) : null,
-      date, amount, gst, qst, total, category, mismatch,
+      date, amount, gst, qst, total, category, payment_method, province, notes, mismatch,
     })
   } catch (err) {
     captureException(err, { context: 'expenses-scan-receipt' })
