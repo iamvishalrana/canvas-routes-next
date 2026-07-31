@@ -23,7 +23,19 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Payments' }
 
 export default async function PaymentsPage() {
+  const supabase = createAdminClient()
   const records = []
+
+  // The manual (e-transfer) payments query doesn't depend on Stripe, so start
+  // it now and let it run concurrently with the slow account-wide PI scan
+  // below instead of serializing after it.
+  const manualAppsPromise = supabase
+    .from('applications')
+    .select('id, name, email, stripe_payment_status, stripe_amount_paid, stripe_payment_type, stripe_paid_at, stripe_payment_intent_id')
+    .not('stripe_payment_status', 'is', null)
+    .not('stripe_amount_paid', 'is', null)
+    .then(r => r.data || [])
+    .catch(() => [])
 
   // Fetch from Stripe
   if (stripe) {
@@ -44,7 +56,6 @@ export default async function PaymentsPage() {
       try {
         const piIds = canvasPIs.map(pi => pi.id)
         if (piIds.length > 0) {
-          const supabase = createAdminClient()
           const { data: disputes } = await supabase.from('applications')
             .select('stripe_payment_intent_id, stripe_payment_status')
             .in('stripe_payment_intent_id', piIds)
@@ -101,15 +112,9 @@ export default async function PaymentsPage() {
   // ALSO has any unrelated Stripe payment (e.g. a membership paid by card,
   // and a separate route paid by e-transfer).
   try {
-    const supabase = createAdminClient()
+    const manualApps = await manualAppsPromise
     const stripePiIds = new Set(records.map(r => r.stripe_payment_intent_id).filter(Boolean))
-    const { data: manualApps } = await supabase
-      .from('applications')
-      .select('id, name, email, stripe_payment_status, stripe_amount_paid, stripe_payment_type, stripe_paid_at, stripe_payment_intent_id')
-      .not('stripe_payment_status', 'is', null)
-      .not('stripe_amount_paid', 'is', null)
-
-    for (const a of (manualApps || [])) {
+    for (const a of manualApps) {
       const email = a.email?.toLowerCase().trim()
       if (!email) continue
       if (a.stripe_payment_intent_id && stripePiIds.has(a.stripe_payment_intent_id)) continue

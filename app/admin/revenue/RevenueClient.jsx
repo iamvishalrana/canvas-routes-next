@@ -106,9 +106,290 @@ function PaymentDetailPanel({ p }) {
   )
 }
 
+// Categorical palette — validated colorblind-safe against the light surface
+// (green is the brand green, red the brand red). Each donut also carries a
+// legend + direct values, so identity is never colour-alone.
+const CHART = {
+  member:    '#3B6B2F',
+  nonmember: '#C0871F',
+  unknown:   '#B7AE9F',
+  card:      '#2C6FA8',
+  etransfer: '#C0871F',
+  subtotal:  '#3B6B2F',
+  gst:       '#C0871F',
+  qst:       '#2C6FA8',
+}
+
+function pct(part, total) {
+  return total > 0 ? Math.round((part / total) * 100) : 0
+}
+
+// Self-contained SVG donut — no chart library. `data` is [{ label, value, color }].
+// Slices are separated by a 4px surface gap; hovering a slice (or its legend row)
+// surfaces that slice's value + share in the centre.
+function Donut({ data, size = 168, centerTop, centerBottom }) {
+  const [hover, setHover] = useState(null)
+  const total = data.reduce((s, d) => s + d.value, 0)
+  const r = size / 2
+  const stroke = Math.round(size * 0.2)
+  const radius = r - stroke / 2 - 2
+  const circ = 2 * Math.PI * radius
+  const liveSlices = data.filter(d => d.value > 0).length
+  const gap = total > 0 && liveSlices > 1 ? 4 : 0
+  let offset = 0
+  const shown = hover != null && data[hover] ? data[hover] : null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.9rem' }}>
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+          {total <= 0 ? (
+            <circle cx={r} cy={r} r={radius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={stroke} />
+          ) : data.map((d, i) => {
+            if (d.value <= 0) return null
+            const frac = d.value / total
+            const dash = Math.max(0, frac * circ - gap)
+            const el = (
+              <circle key={i} cx={r} cy={r} r={radius} fill="none"
+                stroke={d.color} strokeWidth={hover === i ? stroke + 5 : stroke}
+                strokeDasharray={`${dash} ${circ - dash}`} strokeDashoffset={-offset} strokeLinecap="butt"
+                onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+                style={{ transition: 'stroke-width 0.15s' }} />
+            )
+            offset += frac * circ
+            return el
+          })}
+        </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', textAlign: 'center', padding: '0 0.5rem' }}>
+          {shown ? (
+            <>
+              <div style={{ fontSize: '9px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{shown.label}</div>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.35rem', color: shown.color, lineHeight: 1.15 }}>{fmt(shown.value)}</div>
+              <div style={{ fontSize: '11px', color: '#aaa' }}>{pct(shown.value, total)}%</div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.6rem', color: '#1a1a1a', lineHeight: 1.1 }}>{centerTop}</div>
+              {centerBottom && <div style={{ fontSize: '9px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: '3px' }}>{centerBottom}</div>}
+            </>
+          )}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', width: '100%' }}>
+        {data.map((d, i) => (
+          <div key={i} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', opacity: hover == null || hover === i ? 1 : 0.45, transition: 'opacity 0.15s' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: d.color, flexShrink: 0 }} />
+            <span style={{ color: '#555', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.label}</span>
+            <span style={{ color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(d.value)}</span>
+            <span style={{ color: '#aaa', width: '36px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{pct(d.value, total)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StatTile({ label, value, color = '#1a1a1a', sub }) {
+  return (
+    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '10px', padding: '0.9rem 1rem', boxShadow: '0 1px 5px rgba(15,30,20,0.05)' }}>
+      <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.4rem', letterSpacing: '0.03em', color, lineHeight: 1.1, wordBreak: 'break-word' }}>{value}</div>
+      <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.35rem' }}>{label}</div>
+      {sub && <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px' }}>{sub}</div>}
+    </div>
+  )
+}
+
+function ChartCard({ title, note, children }) {
+  return (
+    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '12px', padding: '1.25rem 1.25rem 1.4rem', boxShadow: '0 2px 12px rgba(15,30,20,0.06)' }}>
+      <div style={{ ...SECTION_LABEL, marginBottom: note ? '0.35rem' : '1.1rem' }}>{title}</div>
+      {note && <div style={{ fontSize: '10px', color: '#bbb', marginBottom: '1.1rem' }}>{note}</div>}
+      {children}
+    </div>
+  )
+}
+
+function MemberBadge({ isMember }) {
+  const map = isMember === true
+    ? { t: 'Member', c: '#3B6B2F', b: 'rgba(59,107,47,0.09)', br: 'rgba(59,107,47,0.28)' }
+    : isMember === false
+      ? { t: 'Non-member', c: '#8A6535', b: 'rgba(197,168,130,0.12)', br: 'rgba(197,168,130,0.35)' }
+      : { t: 'Unknown', c: '#999', b: 'rgba(0,0,0,0.04)', br: 'rgba(0,0,0,0.12)' }
+  return (
+    <span style={{ fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: map.c, background: map.b, border: `0.5px solid ${map.br}`, padding: '2px 7px', borderRadius: '5px', whiteSpace: 'nowrap' }}>{map.t}</span>
+  )
+}
+
+// Full drill-down for a single payment type / route. Given the payments already
+// filtered to this type, it derives member-vs-non-member, payment-method and
+// tax composition, all on NET amounts (refunds already subtracted upstream), so
+// no chart or total ever counts a refunded dollar as earned.
+function TypeDetailModal({ typeRow, payments, onClose }) {
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [onClose])
+
+  const agg = useMemo(() => {
+    const sum = (arr, f) => arr.reduce((s, x) => s + (f(x) || 0), 0)
+    const withTax = payments.filter(r => r.taxSubtotal != null)
+    const members = payments.filter(r => r.isMember === true)
+    const nonMembers = payments.filter(r => r.isMember === false)
+    const unknown = payments.filter(r => r.isMember == null)
+    const card = payments.filter(r => !r.manual)
+    const etransfer = payments.filter(r => r.manual)
+    const coupons = payments.filter(r => r.hasCoupon)
+    const codeMap = new Map()
+    for (const r of coupons) {
+      const key = r.promoCode || '(unnamed code)'
+      if (!codeMap.has(key)) codeMap.set(key, { code: key, count: 0, discount: 0 })
+      const e = codeMap.get(key); e.count += 1; e.discount += (r.taxDiscount || 0)
+    }
+    return {
+      gross: sum(payments, r => r.gross),
+      refunded: sum(payments, r => r.refunded),
+      net: sum(payments, r => r.amount),
+      withTax,
+      subtotal: sum(withTax, r => r.taxSubtotal),
+      gst: sum(withTax, r => r.taxGst),
+      qst: sum(withTax, r => r.taxQst),
+      discount: sum(payments, r => r.taxDiscount),
+      members, nonMembers, unknown, card, etransfer, coupons,
+      codes: Array.from(codeMap.values()).sort((a, b) => b.count - a.count),
+    }
+  }, [payments])
+
+  const netOf = arr => arr.reduce((s, r) => s + r.amount, 0)
+
+  const memberData = [
+    { label: 'Members', value: netOf(agg.members), color: CHART.member },
+    { label: 'Non-members', value: netOf(agg.nonMembers), color: CHART.nonmember },
+    ...(agg.unknown.length ? [{ label: 'Unknown', value: netOf(agg.unknown), color: CHART.unknown }] : []),
+  ]
+  const showMemberChart = agg.members.length > 0 || agg.nonMembers.length > 0
+  const methodData = [
+    { label: 'Card', value: netOf(agg.card), color: CHART.card },
+    { label: 'E-transfer', value: netOf(agg.etransfer), color: CHART.etransfer },
+  ]
+  const showMethodChart = agg.card.length > 0 && agg.etransfer.length > 0
+  const taxData = [
+    { label: 'Subtotal (ex-tax)', value: agg.subtotal, color: CHART.subtotal },
+    { label: 'GST', value: agg.gst, color: CHART.gst },
+    { label: 'QST', value: agg.qst, color: CHART.qst },
+  ]
+  const showTaxChart = agg.withTax.length > 0 && (agg.subtotal + agg.gst + agg.qst) > 0
+  const totalTax = agg.gst + agg.qst
+  const sortedPayments = useMemo(() => [...payments].sort((a, b) => new Date(b.date) - new Date(a.date)), [payments])
+
+  return (
+    <div onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,30,20,0.45)', WebkitBackdropFilter: 'blur(2px)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 'max(env(safe-area-inset-top),1.5rem) 1rem calc(env(safe-area-inset-bottom) + 1rem)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', fontFamily: 'var(--font-inter),sans-serif', animation: 'rev-overlay-in 0.2s ease' }}>
+      <div onClick={e => e.stopPropagation()}
+        style={{ background: '#F7F5F1', borderRadius: '16px', width: '100%', maxWidth: '860px', boxShadow: '0 24px 70px rgba(15,30,20,0.32), 0 4px 14px rgba(0,0,0,0.12)', overflow: 'hidden', marginBottom: '2rem', animation: 'rev-modal-in 0.28s cubic-bezier(0.2,0.7,0.2,1) both' }}>
+        {/* Header */}
+        <div style={{ background: '#0F1E14', padding: '1.5rem 1.5rem 1.6rem', position: 'relative' }}>
+          <button type="button" onClick={onClose} aria-label="Close"
+            style={{ position: 'absolute', top: '1rem', right: '1rem', width: '32px', height: '32px', borderRadius: '50%', border: '0.5px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.06)', color: '#F5F1EC', cursor: 'pointer', fontSize: '16px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.75)', marginBottom: '0.5rem' }}>Revenue Detail</div>
+          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '26px', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, paddingRight: '2.5rem' }}>{typeRow.label}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', marginTop: '0.9rem', flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', color: '#8FBF7F', letterSpacing: '0.03em', lineHeight: 1 }}>{fmt(agg.net)}</span>
+            <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)' }}>net · {payments.length} payment{payments.length === 1 ? '' : 's'}{agg.refunded > 0 ? ` · after ${fmt(agg.refunded)} refunded` : ''}</span>
+          </div>
+        </div>
+
+        <div style={{ padding: '1.5rem' }}>
+          {/* Stat tiles */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <StatTile label="Net Revenue" value={fmt(agg.net)} color="#3B6B2F" sub="after refunds" />
+            <StatTile label="Gross Collected" value={fmt(agg.gross)} />
+            <StatTile label="Refunded" value={agg.refunded > 0 ? '−' + fmt(agg.refunded) : fmt(0)} color={agg.refunded > 0 ? '#93333E' : '#1a1a1a'} />
+            <StatTile label="Transactions" value={payments.length} />
+            <StatTile label="Members" value={agg.members.length} sub={agg.members.length ? fmt(netOf(agg.members)) : undefined} />
+            <StatTile label="Non-members" value={agg.nonMembers.length} sub={agg.nonMembers.length ? fmt(netOf(agg.nonMembers)) : undefined} />
+            {agg.withTax.length > 0 && <StatTile label="Subtotal (ex-tax)" value={fmt(agg.subtotal)} sub={`${agg.withTax.length} of ${payments.length} w/ receipt`} />}
+            {agg.withTax.length > 0 && <StatTile label="Tax Collected" value={fmt(totalTax)} sub={`GST ${fmt(agg.gst)} · QST ${fmt(agg.qst)}`} />}
+            <StatTile label="Coupons Used" value={agg.coupons.length} sub={agg.discount > 0 ? fmt(agg.discount) + ' off' : undefined} color={agg.coupons.length ? '#8A5CA8' : '#1a1a1a'} />
+          </div>
+
+          {/* Charts */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: agg.coupons.length ? '1.5rem' : 0 }}>
+            {showMemberChart && (
+              <ChartCard title="Members vs Non-members">
+                <Donut data={memberData} centerTop={fmt(agg.net)} centerBottom="net" />
+              </ChartCard>
+            )}
+            {showMethodChart && (
+              <ChartCard title="Payment Method">
+                <Donut data={methodData} centerTop={fmt(agg.net)} centerBottom="net" />
+              </ChartCard>
+            )}
+            {showTaxChart && (
+              <ChartCard title="Revenue Composition" note={agg.withTax.length < payments.length ? `Tax breakdown for ${agg.withTax.length} of ${payments.length} payments with a receipt` : 'Subtotal + taxes = amount charged'}>
+                <Donut data={taxData} centerTop={fmt(agg.subtotal + agg.gst + agg.qst)} centerBottom="w/ tax" />
+              </ChartCard>
+            )}
+          </div>
+
+          {/* Coupons breakdown */}
+          {agg.coupons.length > 0 && (
+            <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '12px', padding: '1.25rem 1.25rem 0.5rem', marginBottom: '1.5rem', boxShadow: '0 2px 12px rgba(15,30,20,0.06)' }}>
+              <div style={{ ...SECTION_LABEL, marginBottom: '0.75rem' }}>Coupons Applied</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead><tr>
+                  <th style={TH}>Code</th>
+                  <th style={{ ...TH, textAlign: 'right' }}>Times Used</th>
+                  <th style={{ ...TH, textAlign: 'right' }}>Total Discount</th>
+                </tr></thead>
+                <tbody>
+                  {agg.codes.map(c => (
+                    <tr key={c.code}>
+                      <td style={{ ...TD, fontFamily: 'monospace', fontSize: '12px' }}>{c.code}</td>
+                      <td style={{ ...TD, textAlign: 'right', color: '#555' }}>{c.count}</td>
+                      <td style={{ ...TD, textAlign: 'right', color: '#8A5CA8' }}>{c.discount > 0 ? '−' + fmt(c.discount) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Per-payment list */}
+          <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(15,30,20,0.06)' }}>
+            <div style={{ ...SECTION_LABEL, padding: '1.25rem 1.25rem 0' }}>All Payments ({payments.length})</div>
+            <div style={{ maxHeight: '340px', overflowY: 'auto', marginTop: '0.5rem' }}>
+              {sortedPayments.map((p, i) => (
+                <div key={`${p.email}-${p.date}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.7rem 1.25rem', borderTop: i > 0 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '13px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                      <MemberBadge isMember={p.isMember} />
+                      {p.manual && <span style={{ fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 6px', borderRadius: '5px' }}>E-transfer</span>}
+                      {p.hasCoupon && <span style={{ fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A5CA8', background: 'rgba(138,92,168,0.09)', border: '0.5px solid rgba(138,92,168,0.28)', padding: '2px 6px', borderRadius: '5px' }}>{p.promoCode || 'Coupon'}</span>}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.email} · {fmtDate(p.date)}</div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.amount)}</div>
+                    {p.refunded > 0 && <div style={{ fontSize: '10px', color: '#93333E', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.refunded)} refunded</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function RevenueClient({ payments = [], stripeError = false }) {
   const [isMobile, setIsMobile] = useState(false)
   const [expanded, setExpanded] = useState(null) // index of the recent payment row currently open
+  const [selectedType, setSelectedType] = useState(null) // typeKey whose drill-down modal is open
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   useEffect(() => {
@@ -268,10 +549,11 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
           )}
         </div>
 
-        {/* By type */}
+        {/* By type — each row opens a full drill-down for that route/type */}
         <div style={{ ...CARD }}>
           <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
             <div style={SECTION_LABEL}>By Payment Type</div>
+            <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.2rem' }}>Tap a route for a full breakdown</div>
           </div>
           {byType.length === 0 ? (
             <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No data yet.</div>
@@ -283,14 +565,18 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
                     <th style={TH}>Type</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Count</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Revenue</th>
+                    <th style={{ ...TH, width: '20px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {byType.map(t => (
-                    <tr key={t.key}>
-                      <td style={TD}>{t.label}</td>
+                    <tr key={t.key} onClick={() => setSelectedType(t.key)} className="rev-type-row" style={{ cursor: 'pointer' }}>
+                      <td style={{ ...TD, fontWeight: '400' }}>{t.label}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#555' }}>{t.count}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(t.revenue)}</td>
+                      <td style={{ ...TD, textAlign: 'right', color: '#ccc', paddingLeft: 0 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18" /></svg>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -372,6 +658,25 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
           </div>
         )}
       </div>
+
+      {selectedType && (
+        <TypeDetailModal
+          typeRow={byType.find(t => t.key === selectedType) || { key: selectedType, label: '—' }}
+          payments={filteredPayments.filter(p => (p.typeKey || 'unknown') === selectedType)}
+          onClose={() => setSelectedType(null)}
+        />
+      )}
+
+      <style>{`
+        .rev-type-row { transition: background 0.15s ease; }
+        @media (hover: hover) { .rev-type-row:hover { background: rgba(197,168,130,0.06); } }
+        .rev-type-row:active { background: rgba(197,168,130,0.1); }
+        @keyframes rev-modal-in {
+          from { opacity: 0; transform: translateY(14px) scale(0.985); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes rev-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
     </div>
   )
 }
