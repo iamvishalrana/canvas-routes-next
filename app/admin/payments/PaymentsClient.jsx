@@ -92,10 +92,10 @@ function PaymentDetails({ r }) {
             Stripe receipt ↗
           </a>
         )}
-        {r.id && (
-          <a href="/admin/applications"
+        {r.email && (
+          <a href={`/admin/applications?q=${encodeURIComponent(r.email)}`}
             style={{ fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'none', borderBottom: '0.5px solid rgba(138,101,53,0.4)', paddingBottom: '1px' }}>
-            Application →
+            Application / Member →
           </a>
         )}
       </div>
@@ -331,6 +331,20 @@ export default function PaymentsClient({ initialRecords = [] }) {
     finally { setReceiptBusy(null) }
   }
 
+  // Quick date-range presets. Uses the browser's local calendar date, which for
+  // Montreal admins matches the Montreal day the YYYY-MM-DD inputs compare
+  // against (montrealDateKey).
+  function setDatePreset(preset) {
+    const now = new Date()
+    const pad = n => String(n).padStart(2, '0')
+    const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    if (preset === 'all') { setDateFrom(''); setDateTo(''); return }
+    const today = ymd(now)
+    if (preset === 'month') { setDateFrom(`${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`); setDateTo(today) }
+    else if (preset === 'year') { setDateFrom(`${now.getFullYear()}-01-01`); setDateTo(today) }
+    else if (preset === '30d') { setDateFrom(ymd(new Date(now.getTime() - 29 * 86400000))); setDateTo(today) }
+  }
+
   // Date range scopes every stat/table below — applied once here rather than
   // separately in each derived list, so the cards and the table always agree.
   const recordsInRange = (dateFrom || dateTo)
@@ -382,6 +396,8 @@ export default function PaymentsClient({ initialRecords = [] }) {
     if (sort === 'name_az')     return (a.name || '').localeCompare(b.name || '')
     return 0
   })
+  // Net total of exactly what's shown (post search/status/date filter)
+  const filteredNet = filtered.reduce((s, r) => s + ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)), 0)
 
   const TH = { padding: '0.65rem 1rem', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#999', fontWeight: '400', textAlign: 'left', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf8', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }
   const TD = { padding: '0.75rem 1rem', fontSize: '13px', color: '#1a1a1a', borderBottom: '0.5px solid rgba(0,0,0,0.05)', fontFamily: 'var(--font-inter),sans-serif', verticalAlign: 'middle' }
@@ -494,11 +510,18 @@ export default function PaymentsClient({ initialRecords = [] }) {
         />
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
         <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>Date Range</span>
         <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} style={DATE_INPUT} />
         <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
         <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} style={DATE_INPUT} />
+        {/* Quick presets — matches the Montreal-local day the date inputs compare against */}
+        {[['month', 'This month'], ['30d', 'Last 30d'], ['year', 'This year'], ['all', 'All time']].map(([key, label]) => (
+          <button key={key} type="button" onClick={() => setDatePreset(key)}
+            style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', color: '#666', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '0.35rem 0.7rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            {label}
+          </button>
+        ))}
         {(dateFrom || dateTo) && (
           <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }}
             style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -506,6 +529,17 @@ export default function PaymentsClient({ initialRecords = [] }) {
           </button>
         )}
       </div>
+
+      {/* Live summary of exactly what the table is showing right now — reflects
+          the search + status + date filters together, which the range-only stat
+          cards above don't. */}
+      {!loading && filtered.length > 0 && (
+        <div style={{ fontSize: '12px', color: '#777', marginBottom: '1.25rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+          Showing <strong style={{ color: '#1a1a1a', fontWeight: 500 }}>{filtered.length}</strong> payment{filtered.length !== 1 ? 's' : ''}
+          {' · '}<span style={{ color: '#3B6B2F' }}>{fmt(filteredNet)} net</span>
+          {(search || filter || dateFrom || dateTo) && <span style={{ color: '#bbb' }}> (filtered)</span>}
+        </div>
+      )}
 
       {/* Table / Cards */}
       {loading ? (
@@ -522,7 +556,14 @@ export default function PaymentsClient({ initialRecords = [] }) {
               style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', marginBottom: '0.5rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', overflow: 'hidden' }}>
               <div style={{ padding: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
-                <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{r.name || '—'}</div>
+                {r.email ? (
+                  <a href={`/admin/applications?q=${encodeURIComponent(r.email)}`} onClick={e => e.stopPropagation()}
+                    style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a', textDecoration: 'none', borderBottom: '0.5px dotted rgba(0,0,0,0.35)', paddingBottom: '1px' }}>
+                    {r.name || r.email}
+                  </a>
+                ) : (
+                  <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a' }}>{r.name || '—'}</div>
+                )}
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
                     {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
@@ -572,7 +613,15 @@ export default function PaymentsClient({ initialRecords = [] }) {
                 return (
                 <React.Fragment key={k}>
                 <tr onClick={() => toggleExpanded(k)} style={{ background: open ? 'rgba(197,168,130,0.05)' : i % 2 === 0 ? '#fff' : '#fafaf8', cursor: 'pointer' }}>
-                  <td style={TD}>{r.name || <span style={{ color: '#ccc' }}>—</span>}</td>
+                  <td style={TD}>
+                    {r.email ? (
+                      <a href={`/admin/applications?q=${encodeURIComponent(r.email)}`} onClick={e => e.stopPropagation()}
+                        title="Open this person's application / membership"
+                        style={{ color: '#1a1a1a', textDecoration: 'none', borderBottom: '0.5px dotted rgba(0,0,0,0.35)', paddingBottom: '1px' }}>
+                        {r.name || r.email}
+                      </a>
+                    ) : (r.name || <span style={{ color: '#ccc' }}>—</span>)}
+                  </td>
                   <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email || <span style={{ color: '#ccc' }}>—</span>}</td>
                   <td style={{ ...TD, fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
                     {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
@@ -586,7 +635,6 @@ export default function PaymentsClient({ initialRecords = [] }) {
                   <td style={TD} onClick={e => e.stopPropagation()}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
                   <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
                     <Actions r={r} ctx={actionsCtx} />
-                    {r.id && <a href={`/admin/applications`} style={{ marginLeft: '0.5rem', fontSize: '11px', color: '#8A6535', textDecoration: 'underline', textUnderlineOffset: '2px' }}>Application →</a>}
                   </td>
                 </tr>
                 {open && (
