@@ -127,6 +127,7 @@ const UI = {
     openRoute: view => `Open ${view} Route in Google Maps →`,
     modalEyebrow: 'Canvas Routes · Hello to Montebello 2026',
     heroTags: ['Scenic Backroads', '~300km Drive', 'Château Lunch'],
+    countdownUnits: ['Days', 'Hrs', 'Min', 'Sec'],
   },
   fr: {
     meetupLabel: 'Rendez-vous', meetupLine: 'Rendez-vous — 9 h · Laval, QC', departure: 'Départ à 9 h 30 précises',
@@ -144,6 +145,7 @@ const UI = {
     openRoute: view => `Ouvrir l'itinéraire ${view === 'Vers Montebello' ? 'vers Montebello' : 'du retour'} dans Google Maps →`,
     modalEyebrow: 'Canvas Routes · Hello to Montebello 2026',
     heroTags: ['Routes panoramiques', '~300 km de route', 'Dîner au Château'],
+    countdownUnits: ['Jours', 'Hres', 'Min', 'Sec'],
   },
 }
 
@@ -175,6 +177,31 @@ function CopyButton({ text, label, copiedLabel }) {
 
 // Extracted so the "Who's Coming" section can render either one flat grid or
 // one grid per convoy group without duplicating the card markup.
+// Car thumbnail with a graceful fallback: roster photos come from the live car
+// garage, so a URL can 404 (deleted/replaced file). Without onError the grid
+// showed the browser's broken-image icon; fall back to the person's initials.
+function CarThumb({ p }) {
+  const [errored, setErrored] = useState(false)
+  const initials = (p.name || '?').split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 3) || '?'
+  if (!p.photo || errored) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span aria-hidden="true" style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>{initials}</span>
+      </div>
+    )
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={p.photo} alt={`${p.name}'s ${p.car}`} className="car-img"
+      draggable={false}
+      onContextMenu={e => e.preventDefault()}
+      onError={() => setErrored(true)}
+      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+    />
+  )
+}
+
 function CarGrid({ cars, onSelect, groupLeadLabel }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
@@ -185,21 +212,7 @@ function CarGrid({ cars, onSelect, groupLeadLabel }) {
             aria-label={`${p.name} — ${p.car}`}
             style={{ background: '#fff', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.09)', width: '100%' }}>
             <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e8e4de', position: 'relative' }}>
-              {p.photo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.photo} alt={`${p.name}'s ${p.car}`} className="car-img"
-                  draggable={false}
-                  onContextMenu={e => e.preventDefault()}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
-                />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span aria-hidden="true" style={{ fontSize: '28px', fontFamily: 'Georgia, serif', color: 'rgba(0,0,0,0.22)', letterSpacing: '0.04em' }}>
-                    {p.name.split(' ').map(w => w[0]).join('')}
-                  </span>
-                </div>
-              )}
+              <CarThumb p={p} />
             </div>
             <div style={{ padding: '0.6rem 0.75rem 0.75rem' }}>
               {p.lead && (
@@ -217,17 +230,24 @@ function CarGrid({ cars, onSelect, groupLeadLabel }) {
 
 function ModalImage({ src, alt }) {
   const [loaded, setLoaded] = useState(false)
+  const [errored, setErrored] = useState(false)
   return (
-    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#e8e4de', flexShrink: 0 }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src} alt={alt}
-        loading="eager" decoding="sync"
-        onLoad={() => setLoaded(true)}
-        draggable={false}
-        onContextMenu={e => e.preventDefault()}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
-      />
+    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#e8e4de', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {errored ? (
+        // Without this, a broken photo left the box stuck at opacity 0 forever.
+        <span style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.3)' }}>Photo unavailable</span>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src} alt={alt}
+          loading="eager" decoding="sync"
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+          draggable={false}
+          onContextMenu={e => e.preventDefault()}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+        />
+      )}
     </div>
   )
 }
@@ -843,10 +863,10 @@ export default function HelloToMontebelloItineraryPage() {
           {countdown && (
             <div className="itin-hero-countdown" style={{ display: 'inline-flex', gap: 0, marginTop: '1.75rem', border: '0.5px solid rgba(197,168,130,0.25)', overflow: 'hidden' }}>
               {[
-                { label: 'Days', val: countdown.d },
-                { label: 'Hrs', val: countdown.h },
-                { label: 'Min', val: countdown.m },
-                { label: 'Sec', val: countdown.s },
+                { label: t.countdownUnits[0], val: countdown.d },
+                { label: t.countdownUnits[1], val: countdown.h },
+                { label: t.countdownUnits[2], val: countdown.m },
+                { label: t.countdownUnits[3], val: countdown.s },
               ].map(({ label, val }, i, arr) => (
                 <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.55rem 0.9rem', borderRight: i < arr.length - 1 ? '0.5px solid rgba(197,168,130,0.15)' : 'none', minWidth: '54px' }}>
                   <div key={val} className="itin-countdown-num" style={{ fontFamily: 'var(--font-bebas),sans-serif', fontSize: '1.8rem', fontWeight: '400', color: '#F5F1EC', lineHeight: 1, letterSpacing: '0.05em' }}>{String(val).padStart(2, '0')}</div>
