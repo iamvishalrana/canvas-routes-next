@@ -22,7 +22,7 @@ const smallInput = { ...inp, fontSize: '12px', padding: '0.4rem 0.6rem' }
 const smallTextarea = { ...smallInput, resize: 'vertical' }
 const smallSelect = { ...smallInput, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none' }
 
-const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '', is_past: false, cars_rolled_out: '', photo_url: '', recap_href: '', registration_url: '' }
+const EMPTY = { name: '', destination: '', month_label: '', duration_label: '', distance_label: '', target_count: '12', sort_order: '', trip_type: 'day', price_range: '', price_per_car: '', max_cars: '', itinerary: '', activity_options: '', dest_lat: '', dest_lng: '', description: '', is_past: false, cars_rolled_out: '', photo_url: '', recap_href: '', registration_url: '' }
 
 const splitActs = v => (v || '').split(',').map(x => x.trim()).filter(Boolean)
 
@@ -110,6 +110,17 @@ export default function RoadtripsAdminClient() {
       .catch(() => setLoading(false))
   }, [])
   useEffect(() => { load() }, [load])
+
+  // Detail popup: lock the background from scrolling and close on Escape — on
+  // the iOS home-screen app an unlocked body scrolls behind the modal.
+  useEffect(() => {
+    if (!person) return
+    const onKey = e => { if (e.key === 'Escape') { setPerson(null); setPersonConfirm(false) } }
+    window.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [person])
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -367,6 +378,14 @@ export default function RoadtripsAdminClient() {
         @media (hover: hover) {
           .rta-interest-row:hover { background: rgba(0,0,0,0.03); }
         }
+
+        /* iOS zooms the page in when a focused input's font-size is under 16px.
+           These admin inputs are a dense 12px on desktop, so bump them to 16px
+           on touch devices only — keeps the desktop density, kills the jarring
+           zoom-and-reflow on the home-screen app. */
+        @media (pointer: coarse) {
+          .rta-wrap input, .rta-wrap select, .rta-wrap textarea { font-size: 16px; }
+        }
       `}</style>
 
       <div style={{ marginBottom: '1.75rem' }}>
@@ -543,15 +562,9 @@ export default function RoadtripsAdminClient() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {routes.map((r, i) => {
-            const pct = Math.min(100, Math.round((r.interested_count / r.target_count) * 100))
+            const pct = r.target_count > 0 ? Math.min(100, Math.round((r.interested_count / r.target_count) * 100)) : 0
             const isEditing = editId === r.id
             const isOpen = !!expanded[r.id]
-            const arrowBtn = (dir, disabled) => (
-              <button onClick={() => move(r.id, dir)} disabled={disabled} aria-label={`Move ${dir}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', background: 'none', border: 'none', cursor: disabled ? 'default' : 'pointer', color: disabled ? '#ddd' : '#888', fontSize: '14px', lineHeight: 1 }}>
-                {dir === 'up' ? '↑' : '↓'}
-              </button>
-            )
             return (
               <div key={r.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', opacity: r.is_active ? 1 : 0.6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -562,8 +575,9 @@ export default function RoadtripsAdminClient() {
                       {r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Past</span>}
                       {r.launched && !r.is_past && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Launched</span>}
                       {!r.is_active && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '99px' }}>Hidden</span>}
-                      {r.launched && r.registration_open === false && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Public Registration Closed</span>}
-                      {r.launched && r.member_registration_open === false && <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.35)', padding: '2px 7px', borderRadius: '99px' }}>Member Registration Closed</span>}
+                      {/* The "registration closed" states aren't chips here — the
+                          Members/Public toggle row below shows and controls them,
+                          so duplicating them as red chips just crowded the header. */}
                     </div>
                     <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>{r.destination} · {r.month_label} · {r.duration_label || '—'} · {r.distance_label || '—'}</div>
                   </div>
@@ -597,14 +611,9 @@ export default function RoadtripsAdminClient() {
                 )}
 
                 {/* actions — only what's used most (Edit, Check-in, Launch) stays
-                    visible; everything else (interested list, visibility,
-                    registration, email, export, delete) lives in the "•••" menu */}
+                    visible; everything else (reorder, interested list, visibility,
+                    email, export, delete) lives in the "•••" menu */}
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', overflow: 'hidden' }} title="Reorder">
-                    {arrowBtn('up', i === 0)}
-                    <div style={{ width: '0.5px', background: 'rgba(0,0,0,0.1)' }} />
-                    {arrowBtn('down', i === routes.length - 1)}
-                  </div>
                   <GhostBtn small onClick={() => (isEditing ? setEditId(null) : startEdit(r))}>{isEditing ? 'Close' : 'Edit'}</GhostBtn>
                   {(r.slug === WTET_SLUG || r.event_id) && (
                     <GhostBtn small onClick={() => setShowEventPanel(p => ({ ...p, [r.id]: !p[r.id] }))}>
@@ -621,6 +630,8 @@ export default function RoadtripsAdminClient() {
                       </span>
                     )}
                     <KebabMenu items={[
+                      { label: 'Move Up',   onClick: () => move(r.id, 'up'),   disabled: i === 0 },
+                      { label: 'Move Down', onClick: () => move(r.id, 'down'), disabled: i === routes.length - 1 },
                       { label: isOpen ? 'Hide Interested List' : `Interested (${r.interested_count})`, onClick: () => setExpanded(p => ({ ...p, [r.id]: !p[r.id] })) },
                       { label: r.is_active ? 'Hide From Site' : 'Show On Site', onClick: () => toggleActive(r), disabled: busyId === r.id },
                       { label: 'Email Interested', onClick: () => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }, disabled: r.interested_count === 0 },
@@ -823,9 +834,9 @@ export default function RoadtripsAdminClient() {
         ]
         return (
           <div onClick={() => setPerson(null)}
-            style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(15,30,20,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+            style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(15,30,20,0.55)', WebkitBackdropFilter: 'blur(3px)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'max(env(safe-area-inset-top),16px) 16px max(env(safe-area-inset-bottom),16px)' }}>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 24px 80px rgba(0,0,0,0.35)', width: '100%', maxWidth: '440px', maxHeight: '86vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1.4rem 1.5rem 1.25rem' }}>
+              style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 24px 80px rgba(0,0,0,0.35)', width: '100%', maxWidth: '440px', maxHeight: '86dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1.4rem 1.5rem 1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div>
                   <div style={{ fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '6px' }}>Route Interest</div>
