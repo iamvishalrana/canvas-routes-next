@@ -17,11 +17,15 @@ export async function GET() {
     // promo_redemptions, written whenever a payment with this code actually
     // succeeds (lib/paymentLedger.js).
     const supabase = createAdminClient()
-    const { data: redemptions } = await supabase.from('promo_redemptions').select('promo_code_id')
+    const { data: redemptions } = await supabase.from('promo_redemptions').select('promo_code_id, discount_amount')
     const counts = {}
-    for (const r of (redemptions || [])) counts[r.promo_code_id] = (counts[r.promo_code_id] || 0) + 1
+    const discounts = {}
+    for (const r of (redemptions || [])) {
+      counts[r.promo_code_id] = (counts[r.promo_code_id] || 0) + 1
+      discounts[r.promo_code_id] = (discounts[r.promo_code_id] || 0) + (r.discount_amount || 0)
+    }
 
-    const enriched = promoCodes.data.map(pc => ({ ...pc, times_redeemed: counts[pc.id] || 0 }))
+    const enriched = promoCodes.data.map(pc => ({ ...pc, times_redeemed: counts[pc.id] || 0, total_discount: discounts[pc.id] || 0 }))
     return Response.json(enriched)
   } catch (err) {
     captureException(err, { context: 'admin-promo-codes-list' })
@@ -43,6 +47,14 @@ export async function POST(request) {
 
   if (!code?.trim()) return Response.json({ error: 'Code is required.' }, { status: 400 })
   if (!percentOff && !amountOff) return Response.json({ error: 'A discount value is required.' }, { status: 400 })
+  // Validate discount server-side too — the client guards these, but Stripe's
+  // own errors for an out-of-range percent are cryptic, so fail fast and clear.
+  if (percentOff && (!Number.isFinite(percentOff) || percentOff <= 0 || percentOff > 100)) {
+    return Response.json({ error: 'Percent off must be between 1 and 100.' }, { status: 400 })
+  }
+  if (amountOff && (!Number.isFinite(amountOff) || amountOff <= 0)) {
+    return Response.json({ error: 'Amount off must be a positive value.' }, { status: 400 })
+  }
   const minAmt = minimumAmount === undefined || minimumAmount === '' ? null : parseFloat(minimumAmount)
   if (minAmt !== null && (!Number.isFinite(minAmt) || minAmt <= 0)) {
     return Response.json({ error: 'Minimum purchase must be a positive amount.' }, { status: 400 })

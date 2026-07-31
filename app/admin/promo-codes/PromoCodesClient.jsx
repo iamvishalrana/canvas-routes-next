@@ -193,6 +193,7 @@ export default function PromoCodesClient() {
   const activeList     = codes.filter(c => c.active).filter(matchesSearch)
   const inactiveList   = codes.filter(c => !c.active).filter(matchesSearch)
   const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)
+  const totalDiscount  = codes.reduce((s, c) => s + (c.total_discount || 0), 0)
   const liveCount      = codes.filter(c => codeStatus(c) === 'active').length
 
   // Auto-dismiss success banner after 5 seconds
@@ -487,9 +488,10 @@ export default function PromoCodesClient() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
         {[
           // "Live" = still redeemable: active AND not expired AND not fully used
-          { label: 'Live Codes',        value: liveCount,     color: '#3B6B2F' },
-          { label: 'Total Redemptions', value: totalRedeemed, color: '#1a1a1a' },
-          { label: 'Total Codes',       value: codes.length,  color: '#1a1a1a' },
+          { label: 'Live Codes',         value: liveCount,                 color: '#3B6B2F' },
+          { label: 'Total Redemptions',  value: totalRedeemed,             color: '#1a1a1a' },
+          { label: 'Total Discount Given', value: fmtCents(totalDiscount), color: '#8A6535' },
+          { label: 'Total Codes',        value: codes.length,              color: '#1a1a1a' },
         ].map(s => (
           <div key={s.label} style={CARD}>
             <div style={{ fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>{s.value}</div>
@@ -531,7 +533,7 @@ export default function PromoCodesClient() {
                 {c.restrictions?.minimum_amount ? <span style={{ color: '#aaa' }}> · min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</span> : null}
               </div>
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.2rem' }}>
-                {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
+                {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed{c.total_discount > 0 ? ` · −${fmtCents(c.total_discount)} given` : ''} · Expires {fmtDate(c.expires_at)}
               </div>
               <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '0.6rem' }}>
                 Applies to: {fmtAppliesTo(c.metadata, appliesToOptions)}
@@ -608,7 +610,7 @@ export default function PromoCodesClient() {
                 {c.restrictions?.minimum_amount ? <span style={{ color: '#aaa' }}> · min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</span> : null}
               </div>
                   <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.2rem' }}>
-                    {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed · Expires {fmtDate(c.expires_at)}
+                    {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'} redeemed{c.total_discount > 0 ? ` · −${fmtCents(c.total_discount)} given` : ''} · Expires {fmtDate(c.expires_at)}
                   </div>
                   <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '0.6rem' }}>Applies to: {fmtAppliesTo(c.metadata, appliesToOptions)}</div>
                   <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -659,7 +661,10 @@ export default function PromoCodesClient() {
                     {c.restrictions?.minimum_amount ? <div style={{ fontSize: '10px', color: '#aaa' }}>min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</div> : null}
                   </td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata, appliesToOptions)}</td>
-                  <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
+                  <td style={{ ...TD, color: '#555' }}>
+                    {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}
+                    {c.total_discount > 0 ? <div style={{ fontSize: '10px', color: '#8A6535' }}>−{fmtCents(c.total_discount)} given</div> : null}
+                  </td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
                   <td style={TD}><StatusChip code={c} /></td>
@@ -734,7 +739,10 @@ export default function PromoCodesClient() {
                     {c.restrictions?.minimum_amount ? <div style={{ fontSize: '10px', color: '#aaa' }}>min ${(c.restrictions.minimum_amount / 100).toFixed(2)}</div> : null}
                   </td>
                     <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtAppliesTo(c.metadata, appliesToOptions)}</td>
-                    <td style={{ ...TD, color: '#555' }}>{c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}</td>
+                    <td style={{ ...TD, color: '#555' }}>
+                    {c.times_redeemed ?? 0}{c.max_redemptions ? ` / ${c.max_redemptions}` : ' / ∞'}
+                    {c.total_discount > 0 ? <div style={{ fontSize: '10px', color: '#8A6535' }}>−{fmtCents(c.total_discount)} given</div> : null}
+                  </td>
                     <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                     <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
                     <td style={TD}><StatusChip code={c} /></td>

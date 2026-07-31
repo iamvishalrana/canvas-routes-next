@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { stripe } from '../../../../../lib/stripe.js'
@@ -59,6 +60,32 @@ export async function PATCH(request, { params }) {
         await stripe.promotionCodes.update(id, { active: true }).catch(() => {})
         throw createErr
       }
+
+      // The recreated code has a NEW Stripe id, but its redemption history lives
+      // in our own tables keyed by the OLD id. Re-point that history to the new
+      // id so the code keeps its real usage count. WITHOUT this, editing max
+      // uses / expiry silently reset the redemption counter to zero — letting a
+      // maxed-out code be redeemed all over again (apply-promo enforces the
+      // limit by counting promo_redemptions for the current id) — and orphaned
+      // the code's usage list and revenue receipts.
+      try {
+        const admin = createAdminClient()
+        const { data: moved } = await admin.from('promo_redemptions')
+          .update({ promo_code_id: newCode.id }).eq('promo_code_id', id).select('stripe_payment_intent_id')
+        await admin.from('payment_receipts').update({ promo_code_id: newCode.id }).eq('promo_code_id', id)
+        // The usage view reads promo_code_id straight off each PaymentIntent's
+        // metadata, so bring those in line too. Best-effort and off the response
+        // path — the DB re-point above is the authoritative fix for the count.
+        const piIds = (moved || []).map(m => m.stripe_payment_intent_id).filter(Boolean)
+        if (piIds.length) {
+          after(() => Promise.allSettled(piIds.map(pid =>
+            stripe.paymentIntents.update(pid, { metadata: { promo_code_id: newCode.id } })
+          )))
+        }
+      } catch (migrateErr) {
+        captureException(migrateErr, { context: 'promo-code-edit-migrate', oldId: id, newId: newCode.id })
+      }
+
       await logAdminAction(createAdminClient(), adminUser?.email, { action: 'promo.edit', entityType: 'promo_code', entityId: id, entityName: existing.code })
       return Response.json({ oldId: id, newCode })
     } catch (err) {

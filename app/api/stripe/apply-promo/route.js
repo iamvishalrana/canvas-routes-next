@@ -56,7 +56,7 @@ export async function POST(request) {
       const { gst, qst, tax, total: canonicalAmount } = computeTax(baseSubtotal)
       await stripe.paymentIntents.update(paymentIntentId, {
         amount: canonicalAmount,
-        metadata: { ...pi.metadata, promo_code_id: '', discount_amount: '' },
+        metadata: { ...pi.metadata, promo_code_id: '', promo_code: '', discount_amount: '' },
       })
       await releaseLock(removeLockKey)
       return Response.json({ success: true, originalAmount: canonicalAmount, subtotal: baseSubtotal, gst, qst, tax })
@@ -211,7 +211,10 @@ export async function POST(request) {
     // Update the payment intent in-place and record the applied promo to prevent stacking
     await stripe.paymentIntents.update(paymentIntentId, {
       amount: discountedAmount,
-      metadata: { ...pi.metadata, promo_code_id: promoCode.id, discount_amount: String(discountAmount) },
+      // Store the human code too (not just the Stripe id) — it's what the
+      // ledger persists to promo_redemptions.code and what the revenue
+      // drill-down / receipts display, and it stays stable across code edits.
+      metadata: { ...pi.metadata, promo_code_id: promoCode.id, promo_code: promoCode.code, discount_amount: String(discountAmount) },
     })
     try { await releaseLock(lockKey) } catch {}
     try { await releaseLock(codeLockKey) } catch {}
