@@ -591,7 +591,11 @@ export default function BroadcastsClient() {
         body: JSON.stringify({ subject: subject.trim() || '(Test)', html: buildHtml(bodyHtml), body_html: bodyHtml, audience: 'specific_emails', specificEmails: [email], fromEmail, ...(attachments.length > 0 ? { attachments: attachmentPayload() } : {}) }),
       })
       const data = await res.json().catch(() => ({}))
-      setTestResult(res.ok ? 'sent' : (data.error || 'Failed.'))
+      // res.ok with sent:0 means the address was filtered out (unsubscribed) —
+      // report that instead of a misleading "Sent ✓".
+      setTestResult(!res.ok ? (data.error || 'Failed.')
+        : data.sent > 0 ? 'sent'
+        : 'Not sent — that address may be unsubscribed.')
     } catch { setTestResult('Network error.') }
     finally { setTestSending(false) }
   }
@@ -669,6 +673,26 @@ export default function BroadcastsClient() {
     setResult(null)
     setError(null)
     setTab('compose')
+  }
+
+  // Reload a past broadcast targeting ONLY the recipients it failed to reach —
+  // one click to resend after a partial failure (rate-limit blip, a bad address
+  // in the batch, etc.) instead of re-sending to the whole audience.
+  function retryFailed(h) {
+    const emails = [...new Set((h.failed_recipients || []).map(f => (f.email || '').toLowerCase().trim()).filter(Boolean))]
+    if (emails.length === 0) return
+    setSubject(h.subject || '')
+    if (editor) {
+      if (h.body_html) { editor.commands.setContent(h.body_html); setBodyHtml(h.body_html) }
+      else { editor.commands.clearContent(); setBodyHtml('') }
+    }
+    setAudience('specific_emails')
+    setChipEmails(emails)
+    setExcludeChipEmails([])
+    setResult(null); setError(null)
+    setTab('compose')
+    if (!h.body_html) setError('The original message body wasn’t saved for this broadcast — re-add it before resending.')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // Filter → sort → group by send month
@@ -937,8 +961,14 @@ export default function BroadcastsClient() {
                             )}
                             {h.failed_recipients?.length > 0 && (
                               <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.75rem 0.9rem', background: 'rgba(147,51,62,0.04)', border: '0.5px solid rgba(147,51,62,0.18)' }}>
-                                <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#93333E', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                  {h.failed_recipients.length} failed recipient{h.failed_recipients.length !== 1 ? 's' : ''}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                                  <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                    {h.failed_recipients.length} failed recipient{h.failed_recipients.length !== 1 ? 's' : ''}
+                                  </div>
+                                  <button type="button" onClick={() => retryFailed(h)}
+                                    style={{ background: '#93333E', color: '#F5F1EC', border: 'none', borderRadius: '5px', padding: '3px 10px', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                    Retry these →
+                                  </button>
                                 </div>
                                 {h.failed_recipients.map((f, fi) => (
                                   <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < h.failed_recipients.length - 1 ? '0.35rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>

@@ -28,16 +28,23 @@ export async function GET(request) {
         .eq('membership_status', 'pending')
       count = c || 0
     } else if (audience === 'all_contacts') {
-      const { count: c } = await supabase.from('contacts').select('*', { count: 'exact', head: true })
-      count = c || 0
+      // Count UNIQUE emails, not contact rows — there can be more than one
+      // contact row per person, and the send dedupes by email, so a raw row
+      // count would overstate how many actually get the email.
+      const { data: contacts } = await supabase.from('contacts').select('applications(email)')
+      const seen = new Set()
+      for (const c of (contacts || [])) { const e = c.applications?.email?.toLowerCase(); if (e) seen.add(e) }
+      count = seen.size
     } else if (audience === 'contacts_non_members') {
       const { data: members } = await supabase.from('members').select('email').eq('membership_status', 'active')
       const memberEmails = new Set((members || []).map(m => m.email?.toLowerCase()))
       const { data: contacts } = await supabase.from('contacts').select('applications(email)')
-      count = (contacts || []).filter(c => {
+      const seen = new Set()
+      for (const c of (contacts || [])) {
         const email = c.applications?.email?.toLowerCase()
-        return email && !memberEmails.has(email)
-      }).length
+        if (email && !memberEmails.has(email)) seen.add(email)
+      }
+      count = seen.size
     } else if (audience === 'everyone') {
       const [{ data: members }, { data: contacts }] = await Promise.all([
         supabase.from('members').select('email').eq('membership_status', 'active'),

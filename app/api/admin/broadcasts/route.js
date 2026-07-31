@@ -147,6 +147,21 @@ export async function POST(request) {
     return Response.json({ error: err.message }, { status: 500 })
   }
 
+  // Dedupe by email across the whole list. 'all_contacts' and
+  // 'contacts_non_members' can legitimately contain the same address twice (two
+  // contact rows for one person, or a contact whose email also appears via a
+  // second application), which would send that person duplicate copies. Also
+  // drops any blank emails. First occurrence wins so the name is preserved.
+  {
+    const seen = new Set()
+    recipients = recipients.filter(r => {
+      const key = (r.email || '').toLowerCase().trim()
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
   // Filter out manually excluded emails
   if (Array.isArray(excludeEmails) && excludeEmails.length > 0) {
     const excludeSet = new Set(excludeEmails.map(e => e.toLowerCase().trim()))
@@ -227,6 +242,11 @@ export async function POST(request) {
         failed += batch.length
         for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
       }
+      // Space out batches — Resend's account default is ~2 requests/second, and
+      // firing 20 batch calls back-to-back for a large audience can trip a 429
+      // that fails an entire 100-person batch. A short pause keeps big sends
+      // reliable without meaningfully slowing them.
+      if (i + RESEND_BATCH_SIZE < recipients.length) await new Promise(r => setTimeout(r, 500))
     }
   }
 
