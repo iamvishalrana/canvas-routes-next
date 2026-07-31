@@ -19,10 +19,9 @@ export default async function DashboardPage() {
   const todayStr = today.toISOString().slice(0, 10)
   const in180Str = in180.toISOString().slice(0, 10)
   const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7)
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
 
   let totalMembers = 0, activeMembers = 0, totalContacts = 0, newMembersWeek = 0, authorizedHolds = 0
-  let recentMembers = [], recentContacts = [], upcomingEvents = [], deviceRows = [], receipts = [], birthdayRows = []
+  let recentMembers = [], recentContacts = [], upcomingEvents = [], deviceRows = [], birthdayRows = []
 
   try {
     ;[
@@ -35,7 +34,6 @@ export default async function DashboardPage() {
       { data: recentContacts },
       { data: upcomingEvents },
       { data: deviceRows },
-      { data: receipts },
       { data: birthdayRows },
     ] = await Promise.all([
       supabase.from('members').select('*', { count: 'exact', head: true }),
@@ -47,22 +45,11 @@ export default async function DashboardPage() {
       supabase.from('contacts').select('id, created_at, applications(name, email)').order('created_at', { ascending: false }).limit(5),
       supabase.from('events').select('id, name, date, type').gte('date', todayStr).lte('date', in180Str).order('date').limit(8),
       supabase.from('applications').select('device_type').not('device_type', 'is', null),
-      supabase.from('payment_receipts').select('total_amount, paid_at'),
       supabase.from('members').select('name, dob_day, dob_month').eq('membership_status', 'active').not('dob_day', 'is', null).not('dob_month', 'is', null),
     ])
   } catch {
     // Partial failures degrade gracefully — stats will show 0/empty
   }
-
-  // Revenue collected (from our own receipts ledger — fast + refund-agnostic
-  // gross; the Revenue page is the authoritative net view).
-  let revAll = 0, revMonth = 0
-  for (const r of receipts || []) {
-    const amt = r.total_amount || 0
-    revAll += amt
-    if (r.paid_at && new Date(r.paid_at) >= monthStart) revMonth += amt
-  }
-  const fmtMoney = cents => '$' + Math.round((cents || 0) / 100).toLocaleString('en-CA')
 
   // Upcoming birthdays in the next 21 days (active members), so the club can
   // send a note. dob_year isn't needed — just month/day.
@@ -99,8 +86,6 @@ export default async function DashboardPage() {
   const stats = [
     { label: 'Active Members', value: activeMembers ?? 0, href: '/admin/members?status=active', color: '#3B6B2F' },
     { label: 'New This Week', value: newMembersWeek ?? 0, href: '/admin/members', color: '#1a1a1a' },
-    { label: 'Revenue · This Month', value: fmtMoney(revMonth), href: '/admin/revenue', color: '#3B6B2F', small: true },
-    { label: 'Revenue · All Time', value: fmtMoney(revAll), href: '/admin/revenue', color: '#1a1a1a', small: true },
     { label: 'Holds to Capture', value: authorizedHolds ?? 0, href: '/admin/payments', color: (authorizedHolds ?? 0) > 0 ? '#8A6535' : '#1a1a1a' },
     { label: 'Total Contacts', value: totalContacts ?? 0, href: '/admin/contacts', color: '#1a1a1a' },
   ]
