@@ -124,6 +124,25 @@ function pct(part, total) {
   return total > 0 ? Math.round((part / total) * 100) : 0
 }
 
+// Montreal calendar year-month for a payment, matching the monthly breakdown's
+// own grouping — used to filter a month's payments for its drill-down.
+function monthKeyOf(iso) {
+  if (!iso) return ''
+  const parts = monthKeyFormatter.formatToParts(new Date(iso))
+  return `${parts.find(x => x.type === 'year').value}-${parts.find(x => x.type === 'month').value}`
+}
+
+// Coupon breakdown for one payment: the code applied, the dollars off, and the
+// percent off (derived from the pre-discount subtotal, since taxSubtotal is
+// stored post-discount). Returns null when no coupon was applied.
+function couponInfo(p) {
+  if (!p.hasCoupon) return null
+  const disc = p.taxDiscount || 0
+  const preDiscount = (p.taxSubtotal != null && disc) ? p.taxSubtotal + disc : null
+  const pctOff = preDiscount ? Math.round((disc / preDiscount) * 100) : null
+  return { code: p.promoCode || 'Coupon', disc, pctOff }
+}
+
 // Self-contained SVG donut — no chart library. `data` is [{ label, value, color }].
 // Slices are separated by a 4px surface gap; hovering a slice (or its legend row)
 // surfaces that slice's value + share in the centre.
@@ -224,17 +243,41 @@ function MemberBadge({ isMember }) {
 // filtered to this type, it derives member-vs-non-member, payment-method and
 // tax composition, all on NET amounts (refunds already subtracted upstream), so
 // no chart or total ever counts a refunded dollar as earned.
-function TypeDetailModal({ typeRow, payments, onClose }) {
+function DetailModal({ title, filenameBase, payments, onClose }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+    // iOS-proof scroll lock: `overflow:hidden` on <body> alone doesn't stop
+    // touch scrolling in Safari / the home-screen app, and the admin's real
+    // scroller isn't always <body> anyway. Pinning <body> with position:fixed
+    // freezes the page behind the modal everywhere; restore the exact scroll
+    // position on close.
+    const body = document.body
+    const scrollY = window.scrollY
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow }
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
+    body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      body.style.position = prev.position
+      body.style.top = prev.top
+      body.style.left = prev.left
+      body.style.right = prev.right
+      body.style.width = prev.width
+      body.style.overflow = prev.overflow
+      window.scrollTo(0, scrollY)
+    }
   }, [onClose])
 
   const agg = useMemo(() => {
     const sum = (arr, f) => arr.reduce((s, x) => s + (f(x) || 0), 0)
+    // Fraction of a payment that was kept (not refunded) — taxes are scaled by
+    // this so a refunded payment never inflates the subtotal/GST/QST totals.
+    const keptFrac = r => (r.gross > 0 ? r.amount / r.gross : 1)
     const withTax = payments.filter(r => r.taxSubtotal != null)
     const members = payments.filter(r => r.isMember === true)
     const nonMembers = payments.filter(r => r.isMember === false)
@@ -253,9 +296,11 @@ function TypeDetailModal({ typeRow, payments, onClose }) {
       refunded: sum(payments, r => r.refunded),
       net: sum(payments, r => r.amount),
       withTax,
-      subtotal: sum(withTax, r => r.taxSubtotal),
-      gst: sum(withTax, r => r.taxGst),
-      qst: sum(withTax, r => r.taxQst),
+      // Refund-adjusted (prorated) — refunds are shown only as their own tile,
+      // never folded into revenue or taxes.
+      subtotal: sum(withTax, r => (r.taxSubtotal || 0) * keptFrac(r)),
+      gst: sum(withTax, r => (r.taxGst || 0) * keptFrac(r)),
+      qst: sum(withTax, r => (r.taxQst || 0) * keptFrac(r)),
       discount: sum(payments, r => r.taxDiscount),
       members, nonMembers, unknown, card, etransfer, coupons,
       codes: Array.from(codeMap.values()).sort((a, b) => b.count - a.count),
@@ -284,6 +329,26 @@ function TypeDetailModal({ typeRow, payments, onClose }) {
   const totalTax = agg.gst + agg.qst
   const sortedPayments = useMemo(() => [...payments].sort((a, b) => new Date(b.date) - new Date(a.date)), [payments])
 
+  // Rich per-payment export — one row per payment with the coupon code + how
+  // much off, plus gross / refunded / net so refunds are visible but never
+  // folded into a revenue column. Downloadable as CSV / Excel / PDF / Word.
+  const exportHeaders = ['Name', 'Email', 'Member', 'Method', 'Coupon', 'Discount (CAD)', '% Off', 'Gross (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Date']
+  const exportRows = sortedPayments.map(p => {
+    const ci = couponInfo(p)
+    return [
+      p.name || '', p.email || '',
+      p.isMember === true ? 'Member' : p.isMember === false ? 'Non-member' : 'Unknown',
+      p.manual ? 'E-transfer' : 'Card',
+      ci ? ci.code : '',
+      ci ? ci.disc.toFixed(2) : '',
+      ci && ci.pctOff != null ? `${ci.pctOff}%` : '',
+      (p.gross || 0).toFixed(2),
+      (p.refunded || 0).toFixed(2),
+      (p.amount || 0).toFixed(2),
+      p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
+    ]
+  })
+
   return (
     <div onClick={onClose}
       style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,30,20,0.45)', WebkitBackdropFilter: 'blur(2px)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 'max(env(safe-area-inset-top),1.5rem) 1rem calc(env(safe-area-inset-bottom) + 1rem)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', fontFamily: 'var(--font-inter),sans-serif', animation: 'rev-overlay-in 0.2s ease' }}>
@@ -294,17 +359,17 @@ function TypeDetailModal({ typeRow, payments, onClose }) {
           <button type="button" onClick={onClose} aria-label="Close"
             style={{ position: 'absolute', top: '1rem', right: '1rem', width: '32px', height: '32px', borderRadius: '50%', border: '0.5px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.06)', color: '#F5F1EC', cursor: 'pointer', fontSize: '16px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
           <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.75)', marginBottom: '0.5rem' }}>Revenue Detail</div>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '26px', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, paddingRight: '2.5rem' }}>{typeRow.label}</div>
+          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '26px', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, paddingRight: '2.5rem' }}>{title}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', marginTop: '0.9rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', color: '#8FBF7F', letterSpacing: '0.03em', lineHeight: 1 }}>{fmt(agg.net)}</span>
-            <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)' }}>net · {payments.length} payment{payments.length === 1 ? '' : 's'}{agg.refunded > 0 ? ` · after ${fmt(agg.refunded)} refunded` : ''}</span>
+            <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)' }}>revenue · {payments.length} payment{payments.length === 1 ? '' : 's'}{agg.refunded > 0 ? ` · ${fmt(agg.refunded)} refunded (excluded)` : ''}</span>
           </div>
         </div>
 
         <div style={{ padding: '1.5rem' }}>
           {/* Stat tiles */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <StatTile label="Net Revenue" value={fmt(agg.net)} color="#3B6B2F" sub="after refunds" />
+            <StatTile label="Net Revenue" value={fmt(agg.net)} color="#3B6B2F" sub="refunds excluded" />
             <StatTile label="Gross Collected" value={fmt(agg.gross)} />
             <StatTile label="Refunded" value={agg.refunded > 0 ? '−' + fmt(agg.refunded) : fmt(0)} color={agg.refunded > 0 ? '#93333E' : '#1a1a1a'} />
             <StatTile label="Transactions" value={payments.length} />
@@ -359,25 +424,39 @@ function TypeDetailModal({ typeRow, payments, onClose }) {
 
           {/* Per-payment list */}
           <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(15,30,20,0.06)' }}>
-            <div style={{ ...SECTION_LABEL, padding: '1.25rem 1.25rem 0' }}>All Payments ({payments.length})</div>
-            <div style={{ maxHeight: '340px', overflowY: 'auto', marginTop: '0.5rem' }}>
-              {sortedPayments.map((p, i) => (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '1.25rem 1.25rem 0.5rem' }}>
+              <div style={{ ...SECTION_LABEL, margin: 0 }}>All Payments ({payments.length})</div>
+              {payments.length > 0 && (
+                <ExportButton filename={filenameBase} title={title} headers={exportHeaders} rows={exportRows} style={{ padding: '0.4rem 0.8rem', fontSize: '10px' }} />
+              )}
+            </div>
+            <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
+              {sortedPayments.map((p, i) => {
+                const ci = couponInfo(p)
+                return (
                 <div key={`${p.email}-${p.date}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.7rem 1.25rem', borderTop: i > 0 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <span style={{ fontSize: '13px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                       <MemberBadge isMember={p.isMember} />
                       {p.manual && <span style={{ fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 6px', borderRadius: '5px' }}>E-transfer</span>}
-                      {p.hasCoupon && <span style={{ fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A5CA8', background: 'rgba(138,92,168,0.09)', border: '0.5px solid rgba(138,92,168,0.28)', padding: '2px 6px', borderRadius: '5px' }}>{p.promoCode || 'Coupon'}</span>}
                     </div>
                     <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.email} · {fmtDate(p.date)}</div>
+                    {ci && (
+                      <div style={{ fontSize: '11px', color: '#8A5CA8', marginTop: '3px', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                        <span style={{ fontFamily: 'monospace', letterSpacing: '0.02em' }}>{ci.code}</span>
+                        <span>· −{fmt(ci.disc)}{ci.pctOff != null ? ` (${ci.pctOff}% off)` : ''}</span>
+                      </div>
+                    )}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.amount)}</div>
                     {p.refunded > 0 && <div style={{ fontSize: '10px', color: '#93333E', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.refunded)} refunded</div>}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>
@@ -389,7 +468,7 @@ function TypeDetailModal({ typeRow, payments, onClose }) {
 export default function RevenueClient({ payments = [], stripeError = false }) {
   const [isMobile, setIsMobile] = useState(false)
   const [expanded, setExpanded] = useState(null) // index of the recent payment row currently open
-  const [selectedType, setSelectedType] = useState(null) // typeKey whose drill-down modal is open
+  const [detail, setDetail] = useState(null) // { title, filenameBase, payments } for the drill-down modal
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   useEffect(() => {
@@ -523,6 +602,7 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
           <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
             <div style={SECTION_LABEL}>Monthly Breakdown</div>
           </div>
+          <div style={{ fontSize: '10px', color: '#bbb', padding: '0 1.5rem 0.6rem' }}>Tap a month for a full breakdown</div>
           {byMonth.length === 0 ? (
             <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No data yet.</div>
           ) : (
@@ -533,14 +613,19 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
                     <th style={TH}>Month</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Transactions</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Revenue</th>
+                    <th style={{ ...TH, width: '20px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {byMonth.map(m => (
-                    <tr key={m.ym}>
+                    <tr key={m.ym} className="rev-type-row" style={{ cursor: 'pointer' }}
+                      onClick={() => setDetail({ title: m.label, filenameBase: `revenue-${m.ym}`, payments: filteredPayments.filter(p => monthKeyOf(p.date) === m.ym) })}>
                       <td style={TD}>{m.label}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#555' }}>{m.count}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F', fontWeight: '400' }}>{fmt(m.revenue)}</td>
+                      <td style={{ ...TD, textAlign: 'right', color: '#ccc', paddingLeft: 0 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18" /></svg>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -570,7 +655,8 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
                 </thead>
                 <tbody>
                   {byType.map(t => (
-                    <tr key={t.key} onClick={() => setSelectedType(t.key)} className="rev-type-row" style={{ cursor: 'pointer' }}>
+                    <tr key={t.key} className="rev-type-row" style={{ cursor: 'pointer' }}
+                      onClick={() => setDetail({ title: t.label, filenameBase: `revenue-${t.key}`, payments: filteredPayments.filter(p => (p.typeKey || 'unknown') === t.key) })}>
                       <td style={{ ...TD, fontWeight: '400' }}>{t.label}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#555' }}>{t.count}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(t.revenue)}</td>
@@ -659,11 +745,12 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
         )}
       </div>
 
-      {selectedType && (
-        <TypeDetailModal
-          typeRow={byType.find(t => t.key === selectedType) || { key: selectedType, label: '—' }}
-          payments={filteredPayments.filter(p => (p.typeKey || 'unknown') === selectedType)}
-          onClose={() => setSelectedType(null)}
+      {detail && (
+        <DetailModal
+          title={detail.title}
+          filenameBase={detail.filenameBase}
+          payments={detail.payments}
+          onClose={() => setDetail(null)}
         />
       )}
 
