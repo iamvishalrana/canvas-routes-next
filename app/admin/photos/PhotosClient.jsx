@@ -154,6 +154,14 @@ function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDele
           }}>
           {armedPhoto === photo.id ? 'Delete?' : '×'}
         </span>
+        {photo.original_url && armedPhoto !== photo.id && (
+          <span
+            onClick={e => { e.stopPropagation(); const a = document.createElement('a'); a.href = `${photo.original_url}?download`; a.rel = 'noreferrer'; a.click() }}
+            role="button" aria-label="Download original"
+            style={{ position: 'absolute', bottom: '6px', right: '6px', width: '26px', height: '26px', borderRadius: '99px', background: 'rgba(15,30,20,0.65)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+          </span>
+        )}
       </button>
       <CaptionInput photo={photo} onSaved={onSaved} />
       {showTags && <TagPicker photo={photo} members={members} onSaved={onSaved} />}
@@ -175,6 +183,9 @@ export default function PhotosClient() {
   const [deleteAlbum, setDeleteAlbum] = useState(null)
   const [armedPhoto, setArmedPhoto] = useState(null)
   const [personalMember, setPersonalMember] = useState(null)
+  const [albumSearch, setAlbumSearch] = useState('')
+  const [openAlbums, setOpenAlbums] = useState(() => new Set()) // expanded album names
+  const autoOpenedRef = useRef(false)
   // { kind: 'event', key: albumName } | { kind: 'personal', key: memberId }, plus index —
   // stores a lookup key rather than a snapshot of the photos array so a
   // delete from inside the lightbox stays in sync with the live list.
@@ -212,6 +223,23 @@ export default function PhotosClient() {
     return [...map.values()].sort((x, y) => (y.date || '0000').localeCompare(x.date || '0000'))
   }, [photos])
 
+  // Album name filter (event tab). Personal folders use MemberSearchSelect.
+  const albumQuery = albumSearch.trim().toLowerCase()
+  const visibleAlbums = albumQuery ? albums.filter(a => (a.name || '').toLowerCase().includes(albumQuery)) : albums
+
+  function toggleAlbum(name) {
+    setOpenAlbums(prev => { const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n })
+  }
+
+  // Open the newest album on first load so the page isn't a wall of collapsed
+  // headers, but keep the rest collapsed so many-event galleries stay scannable.
+  useEffect(() => {
+    if (!autoOpenedRef.current && albums.length > 0) {
+      autoOpenedRef.current = true
+      setOpenAlbums(new Set([albums[0].name]))
+    }
+  }, [albums])
+
   const personalGroups = useMemo(() => {
     const map = new Map()
     for (const p of photos) {
@@ -222,6 +250,13 @@ export default function PhotosClient() {
     }
     return [...map.values()].sort((a, b) => (a.member?.name || '').localeCompare(b.member?.name || ''))
   }, [photos])
+
+  const stats = useMemo(() => ({
+    albums: albums.length,
+    total: photos.length,
+    folders: personalGroups.length,
+    untagged: photos.filter(p => p.category === 'event' && !(p.tags || []).length).length,
+  }), [albums.length, photos, personalGroups.length])
 
   // Looked up live from `photos` (via albums/personalGroups) rather than a
   // snapshot, so deleting a photo from inside the lightbox stays in sync.
@@ -361,6 +396,10 @@ export default function PhotosClient() {
         .ph-body { animation: phFadeUp 0.25s ease both; }
         .ph-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
         @media (max-width: 480px) { .ph-grid { grid-template-columns: repeat(2, 1fr); } }
+        .ph-albumhead:hover { background: #f5f4f2 !important; }
+        /* iOS zooms in when a focused input's font-size is under 16px. Caption
+           and search inputs here are 11–13px, so bump to 16px on touch only. */
+        @media (pointer: coarse) { .ph-wrap input, .ph-wrap select, .ph-wrap textarea { font-size: 16px !important; } }
       `}</style>
 
       <div style={{ marginBottom: '1.5rem' }}>
@@ -370,6 +409,23 @@ export default function PhotosClient() {
           Event Photos are visible to members who attended that event. Car &amp; Personal photos are private to that one member.
         </div>
       </div>
+
+      {/* Stats bar */}
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          {[
+            { label: 'Event Albums', value: stats.albums, color: '#1a1a1a' },
+            { label: 'Total Photos', value: stats.total, color: '#45643C' },
+            { label: 'Member Folders', value: stats.folders, color: '#1a1a1a' },
+            { label: 'Untagged Event', value: stats.untagged, color: stats.untagged ? '#8A6535' : '#1a1a1a' },
+          ].map(s => (
+            <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', boxShadow: '0 1px 5px rgba(0,0,0,0.04)', padding: '0.85rem 1rem' }}>
+              <div style={{ fontSize: '1.6rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '1.5rem' }}>
         {tabBtn('event', 'Event Photos')}
@@ -414,7 +470,11 @@ export default function PhotosClient() {
 
       ) : mode === 'event' ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            {albums.length > 0 ? (
+              <input value={albumSearch} onChange={e => setAlbumSearch(e.target.value)} placeholder="Search albums…"
+                style={{ ...inp, maxWidth: '260px', padding: '0.5rem 0.85rem' }} />
+            ) : <span />}
             <PrimaryBtn onClick={() => { setAdding(v => !v); setFormErr('') }}>{adding ? 'Cancel' : '+ New Event Album'}</PrimaryBtn>
           </div>
 
@@ -455,9 +515,15 @@ export default function PhotosClient() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {albums.map(album => (
+              {visibleAlbums.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#bbb', fontSize: '13px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px' }}>
+                  No albums match “{albumSearch.trim()}”.
+                </div>
+              ) : visibleAlbums.map(album => {
+                const isOpen = openAlbums.has(album.name) || editing?.orig === album.name
+                return (
                 <div key={album.name} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-                  <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: isOpen ? '0.5px solid rgba(0,0,0,0.06)' : 'none', background: '#fafaf9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                     {editing?.orig === album.name ? (
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', flex: 1 }}>
                         <input style={{ ...inp, flex: '1 1 200px' }} value={editing.name} maxLength={120} onChange={e => setEditing(ed => ({ ...ed, name: e.target.value }))} />
@@ -467,12 +533,16 @@ export default function PhotosClient() {
                       </div>
                     ) : (
                       <>
-                        <div>
-                          <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{album.name}</div>
-                          <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                            {formatDate(album.date) ? `${formatDate(album.date)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}
+                        <button type="button" className="ph-albumhead" onClick={() => toggleAlbum(album.name)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '0.25rem', margin: '-0.25rem', borderRadius: '8px', transition: 'background 0.12s' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5" style={{ flexShrink: 0, transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none' }}><polyline points="9 6 15 12 9 18" /></svg>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{album.name}</div>
+                            <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                              {formatDate(album.date) ? `${formatDate(album.date)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}
+                            </div>
                           </div>
-                        </div>
+                        </button>
                         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                           <GhostBtn small onClick={() => { addTargetRef.current = album; addFilesRef.current?.click() }}>+ Add Photos</GhostBtn>
                           <GhostBtn small onClick={() => setEditing({ orig: album.name, name: album.name, date: album.date || '' })}>Edit</GhostBtn>
@@ -490,15 +560,31 @@ export default function PhotosClient() {
                     </div>
                   )}
 
-                  <div className="ph-grid" style={{ padding: '1.25rem' }}>
-                    {album.photos.map((photo, i) => (
-                      <PhotoTile key={photo.id} photo={photo} members={members} showTags
-                        armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
-                        onImageClick={() => setLightbox({ kind: 'event', key: album.name, index: i })} />
-                    ))}
-                  </div>
+                  {isOpen ? (
+                    <div className="ph-grid" style={{ padding: '1.25rem' }}>
+                      {album.photos.map((photo, i) => (
+                        <PhotoTile key={photo.id} photo={photo} members={members} showTags
+                          armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
+                          onImageClick={() => setLightbox({ kind: 'event', key: album.name, index: i })} />
+                      ))}
+                    </div>
+                  ) : (
+                    /* Collapsed: a scannable thumbnail strip; click to expand */
+                    <button type="button" onClick={() => toggleAlbum(album.name)}
+                      style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', width: '100%', padding: '0.85rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer', overflowX: 'auto' }}>
+                      {album.photos.slice(0, 8).map(photo => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={photo.id} src={photo.photo_url} alt="" loading="lazy" onError={onImgError(photo.original_url)}
+                          style={{ width: '54px', height: '54px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                      ))}
+                      {album.photos.length > 8 && (
+                        <span style={{ fontSize: '11px', color: '#8A6535', flexShrink: 0, paddingLeft: '0.35rem', whiteSpace: 'nowrap' }}>+{album.photos.length - 8} more</span>
+                      )}
+                    </button>
+                  )}
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </>
