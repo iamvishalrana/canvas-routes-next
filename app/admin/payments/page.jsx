@@ -45,24 +45,32 @@ export default async function PaymentsPage() {
         captureMessage('Payments page hit its PaymentIntent fetch cap — results may be missing older payments', { context: 'admin-payments-list', limit: PI_FETCH_LIMIT })
       }
       const canvasPIs = piList.filter(pi => pi.metadata?.type)
+      const piIds = canvasPIs.map(pi => pi.id)
+      const emails = [...new Set(canvasPIs.map(pi => pi.metadata.email?.toLowerCase().trim()).filter(Boolean))]
 
-      // Disputes are only recorded by the Stripe webhook (charge.dispute.*
-      // handlers) — Stripe's PaymentIntent/charge itself never changes for a
-      // dispute, so without this every disputed charge (even a lost one)
-      // showed as plain "paid" here. Matched by stripe_payment_intent_id,
-      // NOT email — applications is one row per email, so email matching
-      // would wrongly flag a person's other, undisputed payments too.
-      let disputeStatusByPi = {}
-      try {
-        const piIds = canvasPIs.map(pi => pi.id)
-        if (piIds.length > 0) {
-          const { data: disputes } = await supabase.from('applications')
-            .select('stripe_payment_intent_id, stripe_payment_status')
-            .in('stripe_payment_intent_id', piIds)
-            .in('stripe_payment_status', ['disputed', 'disputed_won', 'disputed_lost'])
-          if (disputes) for (const d of disputes) disputeStatusByPi[d.stripe_payment_intent_id] = d.stripe_payment_status
-        }
-      } catch {}
+      // These three lookups are independent, so run them in one parallel batch.
+      // Each is resilient (a DB hiccup on one must not drop the Stripe rows).
+      //  - disputes (by PI id, NOT email — applications is one row per email, so
+      //    email matching would wrongly flag a person's other undisputed
+      //    payments): Stripe's PaymentIntent never changes status for a dispute,
+      //    so without this a disputed/lost charge shows as plain "paid".
+      //  - payment_receipts: the tax split shown in the expandable detail.
+      //  - applications by email: the row id, so the "Application →" link works.
+      // Enriching these HERE (rather than only in the client GET route) is what
+      // makes the detail panel, card info, tax, and app links populate on first
+      // load — the client only refetches on a realtime change, never on mount.
+      const empty = { data: [] }
+      const [disputeRes, receiptRes, appsRes] = await Promise.all([
+        piIds.length ? supabase.from('applications').select('stripe_payment_intent_id, stripe_payment_status').in('stripe_payment_intent_id', piIds).in('stripe_payment_status', ['disputed', 'disputed_won', 'disputed_lost']).then(r => r, () => empty) : Promise.resolve(empty),
+        piIds.length ? supabase.from('payment_receipts').select('stripe_payment_intent_id, subtotal_amount, gst_amount, qst_amount, discount_amount').in('stripe_payment_intent_id', piIds).then(r => r, () => empty) : Promise.resolve(empty),
+        emails.length ? supabase.from('applications').select('id, email').in('email', emails).then(r => r, () => empty) : Promise.resolve(empty),
+      ])
+      const disputeStatusByPi = {}
+      for (const d of (disputeRes.data || [])) disputeStatusByPi[d.stripe_payment_intent_id] = d.stripe_payment_status
+      const receiptsByPi = {}
+      for (const r of (receiptRes.data || [])) receiptsByPi[r.stripe_payment_intent_id] = r
+      const appIdByEmail = {}
+      for (const a of (appsRes.data || [])) if (a.email) appIdByEmail[a.email.toLowerCase().trim()] = a.id
 
       for (const pi of canvasPIs) {
         const email = pi.metadata.email?.toLowerCase().trim() || ''
@@ -70,6 +78,8 @@ export default async function PaymentsPage() {
         const amountRefunded = (charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0
         const fullyRefunded  = (charge && typeof charge === 'object') ? charge.refunded : false
         const disputeStatus = disputeStatusByPi[pi.id] || null
+        const receipt = receiptsByPi[pi.id] || null
+        const card = (charge && typeof charge === 'object') ? charge.payment_method_details?.card : null
 
         let stripe_payment_status
         if (disputeStatus)        stripe_payment_status = disputeStatus
@@ -89,7 +99,7 @@ export default async function PaymentsPage() {
         const effectiveRefunded = stripe_payment_status === 'disputed_lost' ? stripeAmountPaid : amountRefunded
 
         records.push({
-          id:                       null,
+          id:                       appIdByEmail[email] || null,
           stripe_payment_intent_id: pi.id,
           name:                     pi.metadata.name || '',
           email,
@@ -97,8 +107,20 @@ export default async function PaymentsPage() {
           stripe_amount_refunded:   effectiveRefunded,
           stripe_payment_status,
           stripe_payment_type:      pi.metadata.type || '',
-          stripe_paid_at:           new Date(pi.created * 1000).toISOString(),
+          stripe_paid_at:           (charge && typeof charge === 'object' && charge.created)
+            ? new Date(charge.created * 1000).toISOString()
+            : new Date(pi.created * 1000).toISOString(),
           manual:                   false,
+          // Extras for the expandable detail view (admin-only page)
+          card_brand:   card?.brand || null,
+          card_last4:   card?.last4 || null,
+          wallet:       card?.wallet?.type || null,
+          receipt_url:  (charge && typeof charge === 'object') ? (charge.receipt_url || null) : null,
+          metadata:     pi.metadata || {},
+          tax_subtotal: receipt?.subtotal_amount ?? null,
+          tax_gst:      receipt?.gst_amount ?? null,
+          tax_qst:      receipt?.qst_amount ?? null,
+          tax_discount: receipt?.discount_amount ?? null,
         })
       }
     } catch (e) {

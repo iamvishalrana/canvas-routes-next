@@ -53,6 +53,7 @@ function PaymentDetails({ r }) {
     ['Amount',     r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : null],
     ['Subtotal',   r.tax_subtotal != null ? fmt(r.tax_subtotal) : null],
     ['Discount',   r.tax_discount > 0 ? `−${fmt(r.tax_discount)}` : null],
+    ['Coupon',     m.promo_code || null],
     ['GST',        r.tax_gst != null ? fmt(r.tax_gst) : null],
     ['QST',        r.tax_qst != null ? fmt(r.tax_qst) : null],
     ['Refunded',   r.stripe_amount_refunded > 0 ? `−${fmt(r.stripe_amount_refunded)}` : null],
@@ -159,7 +160,7 @@ function Actions({ r, ctx }) {
   if (refunding === r.stripe_payment_intent_id) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
-        <div style={{ fontSize: '11px', color: '#93333E' }}>Refund {fmt(r.stripe_amount_paid)}?</div>
+        <div style={{ fontSize: '11px', color: '#93333E' }}>Refund {fmt((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0))}?</div>
         {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#93333E' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
         <select value={refundReason} onChange={e => setRefundReason(e.target.value)}
           style={{ fontSize: '11px', padding: '0.3rem 0.5rem', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff', fontFamily: 'var(--font-inter),sans-serif', color: '#555', cursor: 'pointer' }}>
@@ -307,7 +308,9 @@ export default function PaymentsClient({ initialRecords = [] }) {
       })
       const data = await res.json()
       if (!res.ok) { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: data.error || 'Refund failed.' })); setRefunding(null); setRefundReason('requested_by_customer'); return }
-      setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'refunded' } : x))
+      // Full-remaining refund → reflect the full amount as refunded so the Net
+      // line updates immediately, not just the status chip.
+      setRecords(prev => prev.map(x => x.stripe_payment_intent_id === r.stripe_payment_intent_id ? { ...x, stripe_payment_status: 'refunded', stripe_amount_refunded: x.stripe_amount_paid } : x))
       setRefunding(null)
       setRefundReason('requested_by_customer')
     } catch { setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: 'Network error.' })); setRefunding(null); setRefundReason('requested_by_customer') }
@@ -351,20 +354,23 @@ export default function PaymentsClient({ initialRecords = [] }) {
     .reduce((s, r) => s + (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0), 0)
   const paidCount      = recordsInRange.filter(r => COLLECTED_STATUSES.includes(r.stripe_payment_status)).length
   const otherCount     = recordsInRange.filter(r => r.stripe_payment_status && !COLLECTED_STATUSES.includes(r.stripe_payment_status) && !['failed','rejected'].includes(r.stripe_payment_status)).length
+  const totalRefunded  = recordsInRange.reduce((s, r) => s + (r.stripe_amount_refunded || 0), 0)
 
   const FAILED_STATUSES = ['failed', 'rejected']
   let filtered = recordsInRange.filter(r => !FAILED_STATUSES.includes(r.stripe_payment_status))
   let failedRecords = recordsInRange.filter(r => FAILED_STATUSES.includes(r.stripe_payment_status))
   if (filter) filtered = filtered.filter(r => r.stripe_payment_status === filter)
   if (search) {
-    filtered = filtered.filter(r =>
-      (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (r.email || '').toLowerCase().includes(search.toLowerCase())
-    )
-    failedRecords = failedRecords.filter(r =>
-      (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (r.email || '').toLowerCase().includes(search.toLowerCase())
-    )
+    const q = search.toLowerCase()
+    // Match name/email plus the payment-intent id and type, so an admin can
+    // paste a pi_… from Stripe or filter by "membership"/"road_trip_…".
+    const match = r =>
+      (r.name || '').toLowerCase().includes(q) ||
+      (r.email || '').toLowerCase().includes(q) ||
+      (r.stripe_payment_intent_id || '').toLowerCase().includes(q) ||
+      (r.stripe_payment_type || '').toLowerCase().includes(q)
+    filtered = filtered.filter(match)
+    failedRecords = failedRecords.filter(match)
   }
   filtered = [...filtered].sort((a, b) => {
     if (sort === 'date_desc')   return new Date(b.stripe_paid_at || 0) - new Date(a.stripe_paid_at || 0)
@@ -387,7 +393,16 @@ export default function PaymentsClient({ initialRecords = [] }) {
   }
 
   return (
-    <div style={SECTION}>
+    <div className="pay-wrap" style={SECTION}>
+      <style>{`
+        /* iOS zooms in when a focused input's font-size is under 16px. The
+           filter/search/date inputs here are 12–13px, so bump them to 16px on
+           touch devices only — keeps desktop density, kills the home-screen
+           app's zoom-on-focus. */
+        @media (pointer: coarse) {
+          .pay-wrap input, .pay-wrap select { font-size: 16px !important; }
+        }
+      `}</style>
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Payments</h1>
@@ -407,6 +422,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {[
           { label: 'Total Collected', value: fmt(totalCollected), color: '#3B6B2F' },
+          { label: 'Refunded',       value: fmt(totalRefunded),   color: '#4040aa' },
           { label: 'Paid',           value: paidCount,            color: '#1a1a1a' },
           { label: 'Other Statuses', value: otherCount,           color: '#8A6535' },
           { label: 'Total Records',  value: recordsInRange.length, color: '#1a1a1a' },
@@ -450,18 +466,29 @@ export default function PaymentsClient({ initialRecords = [] }) {
         <ExportButton
           filename="payments"
           title="Payments"
-          headers={['Name', 'Email', 'Amount (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Status', 'Type', 'Payment Intent', 'Date']}
-          rows={filtered.map(r => [
-            r.name || '',
-            r.email || '',
-            r.stripe_amount_paid ? `$${(r.stripe_amount_paid / 100).toFixed(2)}` : '',
-            r.stripe_amount_refunded ? `$${(r.stripe_amount_refunded / 100).toFixed(2)}` : '',
-            `$${(((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100).toFixed(2)}`,
-            r.stripe_payment_status || '',
-            r.stripe_payment_type || '',
-            r.stripe_payment_intent_id || '',
-            r.stripe_paid_at ? new Date(r.stripe_paid_at).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) : '',
-          ])}
+          headers={['Name', 'Email', 'Method', 'Amount (CAD)', 'Discount (CAD)', 'GST (CAD)', 'QST (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Coupon', 'Status', 'Type', 'Payment Intent', 'Date']}
+          rows={filtered.map(r => {
+            const money = c => (c != null ? (c / 100).toFixed(2) : '')
+            const method = r.manual ? 'E-transfer'
+              : r.card_brand ? `${r.card_brand} ****${r.card_last4 || ''}${r.wallet ? ` (${WALLET_LABELS[r.wallet] || r.wallet})` : ''}`
+              : ''
+            return [
+              r.name || '',
+              r.email || '',
+              method,
+              money(r.stripe_amount_paid),
+              r.tax_discount > 0 ? money(r.tax_discount) : '',
+              money(r.tax_gst),
+              money(r.tax_qst),
+              r.stripe_amount_refunded ? money(r.stripe_amount_refunded) : '',
+              (((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100).toFixed(2),
+              r.metadata?.promo_code || '',
+              r.stripe_payment_status || '',
+              r.stripe_payment_type || '',
+              r.stripe_payment_intent_id || '',
+              r.stripe_paid_at ? new Date(r.stripe_paid_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
+            ]
+          })}
         />
       </div>
 
