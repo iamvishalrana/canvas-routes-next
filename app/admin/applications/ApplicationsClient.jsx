@@ -10,6 +10,11 @@ import {
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
+// Montreal calendar date (YYYY-MM-DD) an application was submitted, for the
+// applied-date range filter. en-CA already formats as YYYY-MM-DD.
+const APPLIED_FMT = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: MONTREAL_TZ })
+const appliedKey = iso => (iso ? APPLIED_FMT.format(new Date(iso)) : '')
+
 // The tier the customer actually paid for lives on stripe_payment_type
 // (set directly from the Stripe PI's metadata at checkout) — no need to make
 // an admin re-pick it after capture when we already know which one they chose.
@@ -122,6 +127,10 @@ export default function ApplicationsClient() {
   const [showFilter, setShowFilter] = useState('all') // 'all' | 'unseen' | 'pending'
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
   const [eventFilter, setEventFilter] = useState('all')
+  const [appliedFrom, setAppliedFrom] = useState('')
+  const [appliedTo, setAppliedTo] = useState('')
+  const [bulkContactsBusy, setBulkContactsBusy] = useState(false)
+  const [bulkContactsMsg, setBulkContactsMsg] = useState(null)
   const [rejectConfirm, setRejectConfirm] = useState(null)
   const [rejecting, setRejecting]   = useState(null)
   const [rejectErr, setRejectErr]   = useState({})
@@ -235,7 +244,11 @@ export default function ApplicationsClient() {
     const app = apps.find(a => a.id === appId)
     if (!app) return
     const existing = app.registrations || []
-    const idx = existing.findIndex(r => normalizeEventName(r.event) === eventName)
+    // Normalize BOTH sides: canonical rows pass an already-normalized ev.name,
+    // but "extra" (non-canonical) rows pass the raw r.event. Comparing raw to
+    // normalized could miss the existing entry and silently append a duplicate
+    // registration instead of updating attendance on the real one.
+    const idx = existing.findIndex(r => normalizeEventName(r.event) === normalizeEventName(eventName))
     let newRegs
     if (idx !== -1) {
       newRegs = existing.map((r, i) =>
@@ -330,6 +343,23 @@ export default function ApplicationsClient() {
     } finally {
       setAddingContact(prev => { const n = new Set(prev); n.delete(appId); return n })
     }
+  }
+
+  // Add every selected application that isn't already a contact to the CRM in
+  // one go — the per-row "Add to Contacts" is tedious for a batch of new leads.
+  async function bulkAddToContacts() {
+    const targets = filtered.filter(a => selected.has(a.id) && !a.is_contact)
+    if (targets.length === 0) { setBulkContactsMsg('All selected are already contacts.'); return }
+    setBulkContactsBusy(true); setBulkContactsMsg(null)
+    const results = await Promise.allSettled(targets.map(a =>
+      fetch('/api/admin/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ application_id: a.id }) })
+        .then(r => { if (!r.ok) throw new Error(); return r })
+    ))
+    const ok = results.filter(r => r.status === 'fulfilled').length
+    setBulkContactsBusy(false)
+    setBulkContactsMsg(`Added ${ok} of ${targets.length} to Contacts.`)
+    setSelected(new Set())
+    loadApps()
   }
 
   function previewEmailHtml(subject, body) {
@@ -445,6 +475,12 @@ export default function ApplicationsClient() {
       if (showFilter === 'pending' && a.is_member) return false
       if (paymentStatusFilter !== 'all' && (a.stripe_payment_status || 'none') !== paymentStatusFilter) return false
       if (eventFilter !== 'all' && !(a.registrations || []).some(r => r.event === eventFilter)) return false
+      if (appliedFrom || appliedTo) {
+        const key = appliedKey(a.created_at)
+        if (!key) return false
+        if (appliedFrom && key < appliedFrom) return false
+        if (appliedTo && key > appliedTo) return false
+      }
       return !search || [a.name, a.email, a.car_year, a.car_model, a.car_paint, a.instagram, a.source, a.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && a.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,'')))
     })
     .sort((a, b) => {
@@ -494,7 +530,12 @@ export default function ApplicationsClient() {
 
 
   return (
-    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+    <div className="app-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      <style>{`
+        /* iOS zooms in when a focused input's font-size is under 16px; several
+           filter/search inputs here are 11–13px. Bump to 16px on touch only. */
+        @media (pointer: coarse) { .app-wrap input, .app-wrap select, .app-wrap textarea { font-size: 16px !important; } }
+      `}</style>
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Applications</h1>
@@ -520,6 +561,8 @@ export default function ApplicationsClient() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
           <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
           <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
+          <button onClick={bulkAddToContacts} disabled={bulkContactsBusy} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: bulkContactsBusy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{bulkContactsBusy ? 'Adding…' : 'Add to Contacts'}</button>
+          {bulkContactsMsg && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>{bulkContactsMsg}</span>}
           <ExportButton
             filename="applications"
             title="Applications (selected)"
@@ -615,6 +658,17 @@ export default function ApplicationsClient() {
               <option value="amount_low">Amount paid: Low → High</option>
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          {/* Applied date range */}
+          <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexShrink: 0 }}>
+            <input type="date" value={appliedFrom} max={appliedTo || undefined} onChange={e => setAppliedFrom(e.target.value)} aria-label="Applied from"
+              style={{ ...inp, width: '140px', fontSize: '11px', padding: '0.55rem 0.6rem' }} />
+            <span style={{ fontSize: '11px', color: '#bbb' }}>–</span>
+            <input type="date" value={appliedTo} min={appliedFrom || undefined} onChange={e => setAppliedTo(e.target.value)} aria-label="Applied to"
+              style={{ ...inp, width: '140px', fontSize: '11px', padding: '0.55rem 0.6rem' }} />
+            {(appliedFrom || appliedTo) && (
+              <button onClick={() => { setAppliedFrom(''); setAppliedTo('') }} style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+            )}
           </div>
           <div style={{ position: 'relative', width: isMobile ? '100%' : '280px' }}>
             <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
