@@ -2,6 +2,7 @@ import { stripe } from '../../../lib/stripe.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { captureMessage } from '../../../lib/sentry.js'
 import RevenueClient from './RevenueClient'
+import { formatPaymentType } from '../../../lib/paymentTypeLabels'
 
 // .list() has no metadata filter, so this fetches every PaymentIntent on the
 // whole Stripe account (test charges, abandoned checkouts, everything) before
@@ -21,17 +22,6 @@ const PI_FETCH_LIMIT = 10000
 // when admin visits are infrequent).
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Revenue' }
-
-const TYPE_LABELS = {
-  membership_routes:       'Routes Member',
-  membership_inner_circle: 'Inner Circle',
-  road_trip_standard:      'Route (Standard)',
-  road_trip_member:        'Route (Member)',
-  road_trip_inner_circle:  'Route (Inner Circle)',
-  road_trip_wtet:          'WTET — July 5, 2026',
-  'road_trip_hello-to-montebello': 'Hello to Montebello — 2026',
-  event_registration:      'Event Registration',
-}
 
 export default async function RevenuePage() {
   const supabase = createAdminClient()
@@ -166,7 +156,7 @@ export default async function RevenuePage() {
       gross:     (r.stripe_amount_paid || 0) / 100,
       refunded:  (r.stripe_amount_refunded || 0) / 100,
       typeKey:   r.stripe_payment_type || '',
-      type:      TYPE_LABELS[r.stripe_payment_type] || r.stripe_payment_type || '—',
+      type:      formatPaymentType(r.stripe_payment_type),
       date:      r.stripe_paid_at,
       // 'yes' → member, 'no' → non-member, '' → unknown (manual/older payments)
       isMember:  r.is_member === 'yes' ? true : r.is_member === 'no' ? false : null,

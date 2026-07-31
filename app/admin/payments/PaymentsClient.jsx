@@ -4,6 +4,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, GhostBtn, DangerBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { formatPaymentType } from '../../../lib/paymentTypeLabels'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem 1.5rem' }
@@ -48,7 +49,7 @@ function PaymentDetails({ r }) {
     ['Name',       r.name],
     ['Email',      r.email],
     ['Phone',      m.phone],
-    ['Type',       r.stripe_payment_type],
+    ['Type',       r.stripe_payment_type ? formatPaymentType(r.stripe_payment_type) : null],
     ['Event',      m.event_name],
     ['Amount',     r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : null],
     ['Subtotal',   r.tax_subtotal != null ? fmt(r.tax_subtotal) : null],
@@ -368,7 +369,8 @@ export default function PaymentsClient({ initialRecords = [] }) {
       (r.name || '').toLowerCase().includes(q) ||
       (r.email || '').toLowerCase().includes(q) ||
       (r.stripe_payment_intent_id || '').toLowerCase().includes(q) ||
-      (r.stripe_payment_type || '').toLowerCase().includes(q)
+      (r.stripe_payment_type || '').toLowerCase().includes(q) ||
+      formatPaymentType(r.stripe_payment_type).toLowerCase().includes(q)
     filtered = filtered.filter(match)
     failedRecords = failedRecords.filter(match)
   }
@@ -484,7 +486,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
               (((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100).toFixed(2),
               r.metadata?.promo_code || '',
               r.stripe_payment_status || '',
-              r.stripe_payment_type || '',
+              r.stripe_payment_type ? formatPaymentType(r.stripe_payment_type) : '',
               r.stripe_payment_intent_id || '',
               r.stripe_paid_at ? new Date(r.stripe_paid_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
             ]
@@ -533,7 +535,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
               <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.5rem', wordBreak: 'break-all' }}>{r.email}</div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                 <StatusChip status={r.stripe_payment_status} />
-                {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{r.stripe_payment_type}</span>}
+                {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{formatPaymentType(r.stripe_payment_type)}</span>}
                 <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                   {fmtDate(r.stripe_paid_at)}
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
@@ -579,7 +581,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                     )}
                   </td>
                   <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
-                  <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type || '—'}</td>
+                  <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type ? formatPaymentType(r.stripe_payment_type) : '—'}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtDate(r.stripe_paid_at)}</td>
                   <td style={TD} onClick={e => e.stopPropagation()}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>
                   <td style={{ ...TD, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
