@@ -146,6 +146,27 @@ export default function ProfilePage() {
       .catch(() => setError('Could not load your profile. Please refresh.'))
   }, [])
 
+  // Warn before a full-page unload (refresh / tab close / home-screen swipe
+  // away) if there are unsaved edits in the form — photos already persist on
+  // their own, this only guards the text fields being edited.
+  const dirty = editing && (
+    JSON.stringify(form) !== JSON.stringify(savedForm.current) ||
+    JSON.stringify(cars) !== JSON.stringify(savedCars.current)
+  )
+  useEffect(() => {
+    if (!dirty) return
+    const handler = e => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirty])
+
+  // Auto-dismiss the "Changes saved" confirmation so it doesn't linger.
+  useEffect(() => {
+    if (!saved) return
+    const t = setTimeout(() => setSaved(false), 4000)
+    return () => clearTimeout(t)
+  }, [saved])
+
   function formatPhone(v) {
     let d = v.replace(/\D/g, '')
     // The '+1 ' prefix echoes back through onChange as a leading 1, and users
@@ -300,8 +321,12 @@ export default function ProfilePage() {
         body: JSON.stringify({ kind: 'car', carIndex: idx, fileType: file.type }),
       })
       const data = await res.json()
-      if (res.ok) setCars(prev => prev.map((c, i) => i === idx ? { ...c, photo_url: data.url } : c))
-      else setPhotoErrors(p => ({ ...p, [idx]: data.error || 'Upload failed.' }))
+      if (res.ok) {
+        setCars(prev => prev.map((c, i) => i === idx ? { ...c, photo_url: data.url } : c))
+        // The photo is already persisted server-side, so a later Cancel of the
+        // text form must NOT revert it — bake the new URL into the snapshot too.
+        if (savedCars.current?.[idx]) savedCars.current = savedCars.current.map((c, i) => i === idx ? { ...c, photo_url: data.url } : c)
+      } else setPhotoErrors(p => ({ ...p, [idx]: data.error || 'Upload failed.' }))
     } catch {
       setPhotoErrors(p => ({ ...p, [idx]: 'Upload failed. Please check your connection.' }))
     } finally {
@@ -340,6 +365,12 @@ export default function ProfilePage() {
         .cr-input:focus, .cr-select:focus {
           border-color: rgba(197,168,130,0.55) !important;
           box-shadow: 0 0 0 2.5px rgba(197,168,130,0.08);
+        }
+        /* iOS zooms in when a focused input's font-size is under 16px. These
+           inputs are 13px, so bump them to 16px on touch devices only — keeps
+           the desktop density, kills the jarring zoom on the home-screen app. */
+        @media (pointer: coarse) {
+          .cr-input, .cr-select { font-size: 16px !important; }
         }
         .info-row:hover { background: rgba(197,168,130,0.025); }
         .car-view-card:hover { border-color: rgba(197,168,130,0.35) !important; }
@@ -856,7 +887,7 @@ export default function ProfilePage() {
             <button
               type="button"
               className="pw-toggle"
-              onClick={() => { setPwOpen(o => !o); setPwError(null); setSavedPw(false); setPwForm({ password: '', confirm: '' }) }}
+              onClick={() => { setPwOpen(o => !o); setPwError(null); setSavedPw(false); setPwForm({ currentPassword: '', password: '', confirm: '' }) }}
               style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', textAlign: 'left', transition: 'background 0.1s' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
