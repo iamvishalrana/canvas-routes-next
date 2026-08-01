@@ -792,7 +792,14 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#999', marginBottom: '24px' }}>{t.pastRoutes}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '20px' }}>
               {pastRoutes.map((p, i) => (
-                <Link key={p.slug} href={p.href} onClick={e => { e.preventDefault(); setRecapRoute(p) }}
+                /* href falls back to '#' when recap_href is unset (e.g. a route
+                   marked "already ran" before its recap page exists) — Next.js's
+                   <Link> throws a hard render error on a null/undefined href,
+                   which took down this entire page for every visitor. The click
+                   handler always intercepts navigation and opens the modal
+                   instead, so the fallback is never actually followed — it just
+                   has to be a valid string. */
+                <Link key={p.slug} href={p.href || '#'} onClick={e => { e.preventDefault(); setRecapRoute(p) }}
                   className="rt-card rt-reveal" style={{ animationDelay: `${(i % 3) * 0.08 + 0.05}s`, textDecoration: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.82 }}>
                   <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
                     <img src={p.photo} alt="" className="rt-card-photo" loading="lazy" decoding="async" style={{ filter: 'grayscale(0.65) brightness(0.85)' }} />

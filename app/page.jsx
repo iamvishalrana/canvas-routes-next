@@ -863,7 +863,12 @@ export default function Home() {
               <div className="events-grid">
                 {combined.map((r, i) => (
                   <FadeUp key={r.slug || r.id} delay={i * 70}>
-                    <Link href={r._past ? r.href : (r.launched && r.registration_url ? r.registration_url : '/routes')}
+                    {/* r.href falls back to '#' when recap_href is unset (a route
+                        marked "already ran" before its recap page exists) — Next.js's
+                        <Link> throws a hard render error on a null/undefined href,
+                        which took down this entire page. Click always intercepts and
+                        opens the modal instead, so the fallback is never followed. */}
+                    <Link href={r._past ? (r.href || '#') : (r.launched && r.registration_url ? r.registration_url : '/routes')}
                       onClick={r._past ? (e => { e.preventDefault(); setRecapRoute(r) }) : undefined}
                       className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer",opacity:r._past?0.82:1}}>
                       <div style={{position:"relative",aspectRatio:"16/9",overflow:"hidden",background:ACCENT_BGS[i % ACCENT_BGS.length]}}>
