@@ -22,6 +22,8 @@ export default async function MembersPage({ searchParams }) {
   const q = (params.q || '').trim()
   const status = params.status || ''
   const tier = params.tier || ''
+  const dateFrom = params.from || ''
+  const dateTo = params.to || ''
   // Members section always opens sorted by membership number, lowest first —
   // the standing default, not just an option in the dropdown.
   const sortKey = SORT_COLUMNS[params.sort] ? params.sort : 'member_num_asc'
@@ -37,6 +39,10 @@ export default async function MembersPage({ searchParams }) {
   }
   if (status) query = query.eq('membership_status', status)
   if (tier) query = query.eq('tier', tier)
+  // join_date has a DB-level DEFAULT NOW(), so it's always populated —
+  // safe to filter on directly with no null-handling needed.
+  if (dateFrom) query = query.gte('join_date', dateFrom)
+  if (dateTo) query = query.lte('join_date', `${dateTo}T23:59:59`)
 
   const { column, ascending } = SORT_COLUMNS[sortKey]
 

@@ -259,7 +259,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', membership_status: 'pending', tier: 'routes_member' })
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState(null)
-  const [inviteSuccess, setInviteSuccess] = useState(false)
+  const [inviteSuccess, setInviteSuccess] = useState(null)
   const [inviteConfirm, setInviteConfirm] = useState(false)
   const [resendConfirm, setResendConfirm] = useState(null)
   const [appData, setAppData] = useState(null)
@@ -276,6 +276,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   const [sort, setSort] = useState(() => searchParams.get('sort') || 'member_num_asc')
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || 'all')
   const [tierFilter, setTierFilter] = useState(() => searchParams.get('tier') || 'all')
+  const [dateFrom, setDateFrom] = useState(() => searchParams.get('from') || '')
+  const [dateTo, setDateTo] = useState(() => searchParams.get('to') || '')
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
   const [noteErr, setNoteErr] = useState(null)
@@ -324,11 +326,20 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
     setStatusFilter(searchParams.get('status') || 'all')
     setTierFilter(searchParams.get('tier') || 'all')
     setSort(searchParams.get('sort') || 'member_num_asc')
+    setDateFrom(searchParams.get('from') || '')
+    setDateTo(searchParams.get('to') || '')
   }, [searchParams])
 
   function onStatusFilterChange(v) { setStatusFilter(v); pushQuery({ status: v }) }
   function onTierFilterChange(v) { setTierFilter(v); pushQuery({ tier: v }) }
   function onSortChange(v) { setSort(v); pushQuery({ sort: v }) }
+  function onDateFromChange(v) { setDateFrom(v); pushQuery({ from: v }) }
+  function onDateToChange(v) { setDateTo(v); pushQuery({ to: v }) }
+  // Must clear both in ONE pushQuery call — two back-to-back calls would each
+  // read the same stale `searchParams` closure (pushQuery hasn't re-rendered
+  // yet between them), so the second call's copy-then-patch would silently
+  // resurrect the field the first call just cleared.
+  function clearDateRange() { setDateFrom(''); setDateTo(''); pushQuery({ from: '', to: '' }) }
 
   async function lookupApplication(email) {
     if (!email?.trim() || !email.includes('@')) { setAppData(null); return }
@@ -478,12 +489,14 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
     const data = await res.json()
     setInviting(false)
     if (!res.ok) { setInviteError(data.error || 'Failed to send invite.'); return }
-    setInviteSuccess(true)
+    setInviteSuccess(data.membershipNumber
+      ? `Invite sent — assigned member #${formatForDisplay(data.membershipNumber)}.`
+      : 'Invite sent successfully.')
     setInviteForm({ name: '', email: '', membership_status: 'pending', tier: 'routes_member' })
     setAppData(null)
     setAppLookupEmail('')
     router.refresh()
-    setTimeout(() => setInviteSuccess(false), 4000)
+    setTimeout(() => setInviteSuccess(null), 4000)
   }
 
   // Search/status/tier/sort are all applied server-side (see page.jsx +
@@ -543,7 +556,13 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   })()
 
   return (
-    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+    <div className="mem-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      <style>{`
+        /* iOS zooms in when a focused input's font-size is under 16px; these
+           inputs are 12-13px. Bump to 16px on touch devices only — keeps
+           desktop density, kills zoom-on-focus in the home-screen app. */
+        @media (pointer: coarse) { .mem-wrap input, .mem-wrap select { font-size: 16px !important; } }
+      `}</style>
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Members</h1>
@@ -618,7 +637,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
               </div>
             )}
             <Err msg={inviteError} />
-            <Success msg={inviteSuccess ? 'Invite sent successfully.' : null} />
+            <Success msg={inviteSuccess} />
           </div>
         )}
       </div>
@@ -748,6 +767,22 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
           </div>
         </div>
+      </div>
+
+      {/* Joined date range */}
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>Joined</span>
+        <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => onDateFromChange(e.target.value)}
+          style={{ padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
+        <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
+        <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => onDateToChange(e.target.value)}
+          style={{ padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
+        {(dateFrom || dateTo) && (
+          <button type="button" onClick={clearDateRange}
+            style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Clear
+          </button>
+        )}
       </div>
 
       {/* No loading-spinner swap here on purpose — startTransition keeps this
