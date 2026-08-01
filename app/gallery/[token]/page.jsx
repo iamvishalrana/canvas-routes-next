@@ -51,10 +51,12 @@ function Shell({ children }) {
 // This page only ever confirms the token maps to a real person — never the
 // photos themselves, and never their email. The actual galleries (photo
 // URLs, grouped by event folder) only ever get fetched client-side, after
-// the visitor's entered email is verified server-side by
-// /api/gallery/[token]/verify — see that route and
-// components/GalleryPasswordGate.jsx. Folder-level expiry is checked there
-// too (each event folder has its own 30-day clock), not here.
+// the visitor proves they own the recipient's email via a one-time code:
+// /api/gallery/[token]/request-code emails the code, /verify-code checks it
+// and mints a session, /verify silently re-checks that session on return
+// visits — see those three routes and components/GalleryPasswordGate.jsx.
+// Folder-level expiry is checked there too (each event folder has its own
+// 30-day clock), not here.
 export default async function GallerySharePage({ params }) {
   const { token } = await params
   const admin = createAdminClient()

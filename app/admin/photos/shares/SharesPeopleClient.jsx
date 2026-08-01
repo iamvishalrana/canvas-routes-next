@@ -43,7 +43,7 @@ export default function SharesPeopleClient() {
   async function handleCreate(e) {
     e.preventDefault()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      setFormErr('A valid email is required — it doubles as the access password.')
+      setFormErr('A valid email is required — this is where their access code is sent.')
       return
     }
     setSubmitting(true); setFormErr('')
@@ -70,8 +70,8 @@ export default function SharesPeopleClient() {
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', margin: '0.75rem 0 0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Non-Member Shares</h1>
         <div style={{ fontSize: '12px', color: '#999', marginTop: '0.5rem', maxWidth: '620px', lineHeight: 1.7 }}>
-          Share photos with someone who isn't a member. Each person gets one link and one password (their email) —
-          add a folder under them for every event they attend, so they never need a second link.
+          Share photos with someone who isn't a member. Each person gets one link, gated by a one-time code sent to
+          their email — add a folder under them for every event they attend, so they never need a second link.
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export default function SharesPeopleClient() {
               <input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} maxLength={120} />
             </div>
             <div style={{ flex: '1 1 200px' }}>
-              <L>Email (required — this is the access password)</L>
+              <L>Email (required — their access code is sent here)</L>
               <input style={inp} type="email" required value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} maxLength={200} />
             </div>
           </div>

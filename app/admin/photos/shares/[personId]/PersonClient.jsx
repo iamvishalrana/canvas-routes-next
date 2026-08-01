@@ -163,7 +163,7 @@ export default function PersonClient() {
               <input style={inp} value={personDraft.name} onChange={e => setPersonDraft(p => ({ ...p, name: e.target.value }))} maxLength={120} />
             </div>
             <div style={{ flex: '1 1 200px' }}>
-              <L>Email (password)</L>
+              <L>Email (code sent here)</L>
               <input style={inp} type="email" value={personDraft.email} onChange={e => setPersonDraft(p => ({ ...p, email: e.target.value }))} maxLength={200} />
             </div>
             <PrimaryBtn onClick={saveEditPerson} disabled={savingPerson}>{savingPerson ? 'Saving…' : 'Save'}</PrimaryBtn>
