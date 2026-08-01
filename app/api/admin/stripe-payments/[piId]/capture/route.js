@@ -5,10 +5,12 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException, captureMessage } from '../../../../../../lib/sentry.js'
 import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
+import { buildCaptureDeclinedEmailHtml } from '../../../../../../lib/captureDeclinedEmail.js'
 import { logAdminAction } from '../../../../../../lib/adminAudit.js'
 import { recordPaymentSuccess } from '../../../../../../lib/paymentLedger.js'
 import { markRegistrationPaid } from '../../../../../../lib/markRegistrationPaid.js'
 import { getRouteCheckinUrl } from '../../../../../../lib/routeEventLink.js'
+import { MEMBERSHIP_TYPE_TIER } from '../../../../../../lib/prices.js'
 
 export async function POST(request, { params }) {
   const admin = await requireAdmin()
@@ -85,6 +87,37 @@ export async function POST(request, { params }) {
     // Roll back the claim so a retry (or the webhook) can still send the email
     await supabase.from('applications').update({ stripe_paid_at: null }).eq('id', app.id)
     captureException(err, { context: 'admin-capture-stripe', piId })
+
+    // Only StripeCardError means the card was genuinely declined at capture
+    // (expired/cancelled/insufficient funds since the hold was placed) — any
+    // other error type (network blip, rate limit, Stripe outage) is OUR
+    // problem, not the customer's, and telling them their card was declined
+    // would just be wrong. Before this, a decline here only reached Sentry —
+    // the customer never found out their registration/membership never
+    // actually went through.
+    const email = (pi.metadata?.email?.toLowerCase().trim()) || app.email
+    if (process.env.RESEND_API_KEY && err.type === 'StripeCardError' && email) {
+      const name = pi.metadata?.name || app.name || ''
+      const firstName = name.trim().split(' ')[0] || 'there'
+      const lang = pi.metadata?.lang === 'fr' ? 'fr' : 'en'
+      const itemLabel = pi.metadata?.event_name
+        || (MEMBERSHIP_TYPE_TIER[pi.metadata?.type] ? `${MEMBERSHIP_TYPE_TIER[pi.metadata.type]} Membership` : 'your Canvas Routes payment')
+      after(() =>
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Canvas Routes <info@canvasroutes.com>',
+            to: email,
+            reply_to: 'info@canvasroutes.com',
+            subject: lang === 'fr' ? 'Problème avec votre paiement Canvas Routes' : 'There was an issue with your Canvas Routes payment',
+            html: buildCaptureDeclinedEmailHtml({ lang, firstName, itemLabel }),
+          }),
+        }).then(r => { if (r && !r.ok) captureMessage('Resend non-200 — admin-capture-declined-email', { status: r.status }) })
+          .catch(e => captureException(e, { context: 'admin-capture-declined-email', piId }))
+      )
+    }
+
     return Response.json({ error: err.message || 'Capture failed.' }, { status: 500 })
   }
 
