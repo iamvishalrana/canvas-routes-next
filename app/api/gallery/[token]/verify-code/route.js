@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { checkCode, createSession } from '../../../../../lib/otp'
 import { loadPersonFolders } from '../../../../../lib/gallerySharePhotos'
+import { captureException } from '../../../../../lib/sentry'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -44,6 +45,13 @@ export async function POST(request, { params }) {
   if (result === 'invalid') return Response.json({ error: 'Incorrect code. Please try again.' }, { status: 400 })
   if (result === 'expired') return Response.json({ error: 'That code has expired. Request a new one.' }, { status: 400 })
   if (result === 'locked') return Response.json({ error: 'Too many incorrect attempts. Request a new code.' }, { status: 400 })
+  if (result === 'error') {
+    // Genuinely ambiguous (e.g. a transient Redis blip) — not the visitor's
+    // mistake, so don't tell them the code was wrong or expired; ask them to
+    // just retry the same code rather than burning a resend on our own hiccup.
+    captureException(new Error('gallery OTP check errored'), { context: 'gallery-verify-code', token })
+    return Response.json({ error: 'Something went wrong. Please try again in a moment.' }, { status: 500 })
+  }
 
   const sessionId = await createSession(token, entered)
   const folders = await loadPersonFolders(admin, person)
