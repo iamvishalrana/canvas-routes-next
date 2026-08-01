@@ -68,7 +68,13 @@ export async function POST(request) {
   // screen doesn't show an empty note for someone who already has one.
   if (body.application_id) {
     const { data: appRow } = await supabase.from('applications').select('notes').eq('id', body.application_id).maybeSingle()
-    const { error } = await supabase.from('contacts').insert({ application_id: body.application_id, notes: appRow?.notes ?? null })
+    // upsert+ignoreDuplicates (not a plain insert) — application_id is UNIQUE,
+    // so a stale-state double click (or a second admin having already added
+    // this person) would otherwise surface a raw constraint-violation error
+    // instead of just quietly no-opping, unlike the other creation path
+    // below which already handles this correctly.
+    const { error } = await supabase.from('contacts')
+      .upsert({ application_id: body.application_id, notes: appRow?.notes ?? null }, { onConflict: 'application_id', ignoreDuplicates: true })
     if (error) return Response.json({ error: error.message }, { status: 500 })
     return Response.json({ success: true })
   }

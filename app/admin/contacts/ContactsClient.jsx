@@ -16,6 +16,14 @@ import { MONTREAL_TZ } from '../../../lib/mtlTime'
 const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 const INTERESTED_IN_LABELS = { cars_coffee: 'Cars & Coffee', routes: 'Routes', both: 'Both' }
 
+// Compared against the Montreal calendar date, not raw UTC — matches the
+// same pattern used for date-range filters elsewhere in this admin panel.
+function montrealDateKey(iso) {
+  if (!iso) return null
+  const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: MONTREAL_TZ }).formatToParts(new Date(iso))
+  return `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}-${parts.find(p => p.type === 'day').value}`
+}
+
 // ─── Admin notes wired to the applications API ────────────────────────────────
 
 function AppAdminNotes({ appId, initialNotes, onSaved }) {
@@ -90,6 +98,8 @@ export default function ContactsClient() {
   const [removeContactConfirm, setRemoveContactConfirm] = useState(null)
   const [removeContactError, setRemoveContactError] = useState(null)
   const [deleteSelectedConfirm, setDeleteSelectedConfirm] = useState(false)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const letterRefsMap = useRef({})
   const lastTouchedLetter = useRef(null)
 
@@ -351,6 +361,14 @@ export default function ContactsClient() {
 
   const filtered = contacts
     .filter(c => !search || [c.name, c.email, c.car_year, c.car_model, c.phone].some(v => v?.toLowerCase().includes(search.toLowerCase())) || (search.replace(/\D/g,'') && c.phone?.replace(/\D/g,'').includes(search.replace(/\D/g,''))))
+    .filter(c => {
+      if (!dateFrom && !dateTo) return true
+      const key = montrealDateKey(c.created_at)
+      if (!key) return false
+      if (dateFrom && key < dateFrom) return false
+      if (dateTo && key > dateTo) return false
+      return true
+    })
     .sort((a, b) => {
       if (sortContacts === 'name_az') return (a.name || '').localeCompare(b.name || '')
       if (sortContacts === 'name_za') return (b.name || '').localeCompare(a.name || '')
@@ -369,7 +387,13 @@ export default function ContactsClient() {
   }
 
   return (
-    <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+    <div className="con-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
+      <style>{`
+        /* iOS zooms in when a focused input's font-size is under 16px; these
+           inputs are 12-13px. Bump to 16px on touch devices only — keeps
+           desktop density, kills zoom-on-focus in the home-screen app. */
+        @media (pointer: coarse) { .con-wrap input, .con-wrap select, .con-wrap textarea { font-size: 16px !important; } }
+      `}</style>
       {/* Invite confirm overlay */}
       {contactInviteConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -470,6 +494,22 @@ export default function ContactsClient() {
             {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
           </div>
         </div>
+      </div>
+
+      {/* Applied date range */}
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>Applied</span>
+        <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)}
+          style={{ padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
+        <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
+        <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)}
+          style={{ padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
+        {(dateFrom || dateTo) && (
+          <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }}
+            style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Clear
+          </button>
+        )}
       </div>
 
       {addingNew && (
