@@ -7,7 +7,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
-import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog } from '../_components/shared'
+import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn } from '../_components/shared'
 import { EMAIL_SIGNATURE_HTML } from '../../../lib/emailSignature.js'
 
 const MAX_RECIPIENTS = 2000
@@ -974,6 +974,7 @@ export default function BroadcastsClient() {
                                   <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < h.failed_recipients.length - 1 ? '0.35rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>
                                     <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{f.name || f.email}</span>
                                     {f.name && <span style={{ color: '#999' }}> · {f.email}</span>}
+                                    <CopyBtn value={f.email} />
                                     {f.reason && <span style={{ color: '#93333E' }}> — {f.reason}</span>}
                                   </div>
                                 ))}

@@ -1,5 +1,6 @@
 'use client'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { CopyBtn } from './shared'
 
 function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -90,7 +91,7 @@ export default function GenericWaiverViewerModal({ eventName, name, email, waive
               <div><div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>Signed</div>{signedAt}</div>
               <div><div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>IP Address</div>{waiver.ip_address}</div>
               <div><div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>Vehicle</div>{vehicle}</div>
-              <div><div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>Emergency Contact</div>{waiver.emergency_contact?.name} · {waiver.emergency_contact?.phone}</div>
+              <div><div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>Emergency Contact</div><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{waiver.emergency_contact?.name} · {waiver.emergency_contact?.phone}<CopyBtn value={waiver.emergency_contact?.phone} /></span></div>
             </div>
             {waiver.passengers?.length > 0 && (
               <div style={{ marginTop: '0.75rem' }}>

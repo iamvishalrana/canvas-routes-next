@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
-import { inp, GhostBtn, DangerBtn } from '../_components/shared'
+import { inp, GhostBtn, DangerBtn, CopyBtn } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import { formatPaymentType } from '../../../lib/paymentTypeLabels'
@@ -573,7 +573,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                   )}
                 </div>
               </div>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.5rem', wordBreak: 'break-all' }}>{r.email}</div>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.5rem', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{r.email}<CopyBtn value={r.email} /></div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                 <StatusChip status={r.stripe_payment_status} />
                 {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{formatPaymentType(r.stripe_payment_type)}</span>}
@@ -622,7 +622,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                       </a>
                     ) : (r.name || <span style={{ color: '#ccc' }}>—</span>)}
                   </td>
-                  <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email || <span style={{ color: '#ccc' }}>—</span>}</td>
+                  <td style={{ ...TD, fontSize: '12px', color: '#555' }}>{r.email ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{r.email}<CopyBtn value={r.email} /></span> : <span style={{ color: '#ccc' }}>—</span>}</td>
                   <td style={{ ...TD, fontWeight: '500', color: ['paid','partially_refunded'].includes(r.stripe_payment_status) ? '#3B6B2F' : '#1a1a1a' }}>
                     {r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}
                     {r.stripe_amount_refunded > 0 && (
@@ -673,7 +673,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                     <div style={{ fontSize: '13px', color: '#888', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name || '—'}</div>
                     <div style={{ fontSize: '12px', color: '#bbb', flexShrink: 0 }}>{r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}</div>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#bbb', margin: '2px 0 8px', wordBreak: 'break-all' }}>{r.email}</div>
+                  <div style={{ fontSize: '11px', color: '#bbb', margin: '2px 0 8px', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{r.email}<CopyBtn value={r.email} /></div>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <StatusChip status={r.stripe_payment_status} />
                     <PiLink id={r.stripe_payment_intent_id} manual={r.manual} />
@@ -689,7 +689,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
                   {failedRecords.map((r, i) => (
                     <tr key={r.stripe_payment_intent_id || i} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                       <td style={{ ...TD, color: '#aaa' }}>{r.name || '—'}</td>
-                      <td style={{ ...TD, fontSize: '12px', color: '#bbb' }}>{r.email}</td>
+                      <td style={{ ...TD, fontSize: '12px', color: '#bbb' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{r.email}<CopyBtn value={r.email} /></span></td>
                       <td style={{ ...TD, fontSize: '12px', color: '#bbb' }}>{r.stripe_amount_paid ? fmt(r.stripe_amount_paid) : '—'}</td>
                       <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
                       <td style={{ ...TD, fontSize: '12px', color: '#bbb' }}>{fmtDate(r.stripe_paid_at)}</td>

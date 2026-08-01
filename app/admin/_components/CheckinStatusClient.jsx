@@ -649,7 +649,12 @@ export default function CheckinStatusClient({ eventId }) {
                               )}
                             </div>
                           )}
-                          {p.registration.phone && <>Phone: {p.registration.phone}<br /></>}
+                          {p.registration.phone && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>
+                              Phone: {p.registration.phone}<CopyBtn value={p.registration.phone} />
+                            </span>
+                          )}
+                          {p.registration.phone && <br />}
                           {p.registration.instagram && <>Instagram: @{p.registration.instagram}<br /></>}
                           {p.registration.passengers && <>Passengers: {p.registration.passengers}<br /></>}
                           {p.registration.hasChildren && (
@@ -688,7 +693,10 @@ export default function CheckinStatusClient({ eventId }) {
                             Signed by <strong>{p.waiver.full_name}</strong><br />
                             {new Date(p.waiver.signed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })} · IP {p.waiver.ip_address}<br />
                             Vehicle: {[p.waiver.vehicle?.year, p.waiver.vehicle?.make, p.waiver.vehicle?.model].filter(Boolean).join(' ') || '—'}<br />
-                            Emergency contact: {p.waiver.emergency_contact?.name} · {p.waiver.emergency_contact?.phone}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>
+                              Emergency contact: {p.waiver.emergency_contact?.name} · {p.waiver.emergency_contact?.phone}
+                              {p.waiver.emergency_contact?.phone && <CopyBtn value={p.waiver.emergency_contact.phone} />}
+                            </span>
                             <br />
                             <button type="button" onClick={() => setViewingWaiver({ name: p.name, email: p.email, waiver: p.waiver })}
                               style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.4rem', marginRight: '1rem', cursor: 'pointer', color: '#8A6535', textDecoration: 'underline', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>

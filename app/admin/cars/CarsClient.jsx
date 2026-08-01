@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
-import { inp, GhostBtn } from '../_components/shared'
+import { inp, GhostBtn, CopyBtn } from '../_components/shared'
 
 export default function CarsClient() {
   const [isMobile, setIsMobile] = useState(false)
@@ -161,9 +161,9 @@ export default function CarsClient() {
                     <div>
                       <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
                       {isMobile && <div style={{ fontSize: '11px', color: '#888', marginTop: '1px' }}>{[car.year, car.model].filter(Boolean).join(' ') || '—'}{car.mods?.length > 0 && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}{car.paint && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.paint}</span>}</div>}
-                      {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{m.email}</div>}
+                      {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
                     </div>
-                    {!isMobile && <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>}
+                    {!isMobile && <div style={{ fontSize: '12px', color: '#666', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
                     {!isMobile && (
                       <div style={{ fontSize: '12px', color: '#888' }}>
                         <div>
@@ -236,9 +236,9 @@ export default function CarsClient() {
                 <div key={m.id} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1.5fr 1fr', padding: '0.75rem 1.25rem', borderBottom: i < unassigned.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center', gap: '0.5rem' }}>
                   <div>
                     <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
-                    {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px' }}>{m.email}</div>}
+                    {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
                   </div>
-                  {!isMobile && <div style={{ fontSize: '12px', color: '#666' }}>{m.email}</div>}
+                  {!isMobile && <div style={{ fontSize: '12px', color: '#666', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
                   <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                     <input
                       style={{ ...inp, width: '120px', padding: '0.4rem 0.6rem', fontSize: '12px' }}

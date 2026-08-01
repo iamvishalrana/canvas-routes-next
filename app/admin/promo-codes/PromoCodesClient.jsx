@@ -94,7 +94,7 @@ function UsageList({ rows, mobile }) {
         {rows.map((u, ui) => (
           <div key={ui} style={{ fontSize: '12px', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingBottom: '0.5rem', borderBottom: ui < rows.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
             <div style={{ fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a' }}>{u.name}</div>
-            <div style={{ fontFamily: 'var(--font-inter),sans-serif', wordBreak: 'break-all' }}>{u.email}</div>
+            <div style={{ fontFamily: 'var(--font-inter),sans-serif', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{u.email}<CopyBtn value={u.email} /></div>
             <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
               <span style={{ color: '#3B6B2F' }}>Paid {fmtCents(u.amount)}</span>
               <span style={{ color: '#8A6535' }}>−{fmtCents(u.discount)}</span>
@@ -116,7 +116,7 @@ function UsageList({ rows, mobile }) {
           {rows.map((u, ui) => (
             <tr key={ui}>
               <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{u.name}</td>
-              <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>{u.email}</td>
+              <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{u.email}<CopyBtn value={u.email} /></span></td>
               <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>{fmtCents(u.amount)}</td>
               <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter),sans-serif' }}>−{fmtCents(u.discount)}</td>
               <td style={{ padding: '0.5rem 0.75rem', fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{u.date ? new Date(u.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</td>

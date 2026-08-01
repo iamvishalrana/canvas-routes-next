@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { GhostBtn, Err } from '../_components/shared'
+import { GhostBtn, Err, CopyBtn } from '../_components/shared'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
 import { formatCarLabel } from '../../../lib/carLabel'
@@ -200,7 +200,7 @@ export default function WtetClient() {
                 >
                   <div style={{ minWidth: 0, flex: '1 1 200px' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.name || '—'}</div>
-                    <div style={{ fontSize: '11px', color: '#999' }}>{p.email}</div>
+                    <div style={{ fontSize: '11px', color: '#999', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{p.email}<CopyBtn value={p.email} /></div>
                   </div>
                   <div style={{ fontSize: '12px', color: '#888', flex: '0 0 auto', minWidth: '120px' }}>
                     {formatCarLabel(p.car_year, p.car_make, p.car_model) || '—'}
@@ -235,7 +235,10 @@ export default function WtetClient() {
                           Signed by <strong>{p.wtet_waiver.full_name}</strong><br />
                           {new Date(p.wtet_waiver.signed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })} · IP {p.wtet_waiver.ip_address}<br />
                           Vehicle: {[p.wtet_waiver.vehicle?.year, p.wtet_waiver.vehicle?.make, p.wtet_waiver.vehicle?.model].filter(Boolean).join(' ') || '—'}<br />
-                          Emergency contact: {p.wtet_waiver.emergency_contact?.name} · {p.wtet_waiver.emergency_contact?.phone}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>
+                            Emergency contact: {p.wtet_waiver.emergency_contact?.name} · {p.wtet_waiver.emergency_contact?.phone}
+                            <CopyBtn value={p.wtet_waiver.emergency_contact?.phone} />
+                          </span>
                           {p.wtet_waiver.passengers?.length > 0 && (
                             <><br />Passengers: {p.wtet_waiver.passengers.map(pp => `${pp.name} (${pp.age || '—'})`).join(', ')}</>
                           )}

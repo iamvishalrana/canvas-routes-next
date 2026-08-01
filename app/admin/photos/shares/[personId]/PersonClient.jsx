@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../../../_components/shared'
+import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, CopyBtn } from '../../../_components/shared'
 
 const LIFETIME_OPTIONS = [7, 14, 30, 60, 90]
 
@@ -152,7 +152,7 @@ export default function PersonClient() {
               {person.name || '(no name)'}
             </h1>
             <div style={{ fontSize: '12px', color: '#999' }}>
-              Password: <span style={{ color: '#8a7a5c' }}>{person.email}</span>
+              Password: <span style={{ color: '#8a7a5c' }}>{person.email}</span><CopyBtn value={person.email} />
               {' · '}<button type="button" onClick={startEditPerson} style={{ background: 'none', border: 'none', color: '#8a7a5c', textDecoration: 'underline', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Edit</button>
             </div>
           </>

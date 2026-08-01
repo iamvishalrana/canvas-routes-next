@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu, ToggleSwitch } from '../_components/shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu, ToggleSwitch, CopyBtn } from '../_components/shared'
 import RouteEventConfigClient from '../_components/RouteEventConfigClient'
 import WtetClient from '../wtet/WtetClient'
 import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
@@ -765,12 +765,13 @@ export default function RoadtripsAdminClient() {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         {r.interest.map((p, i) => (
-                          <button key={p.id || i} type="button" className="rta-interest-row"
+                          <div key={p.id || i} role="button" tabIndex={0} className="rta-interest-row"
                             onClick={() => { setPerson({ route: r, p }); setPersonConfirm(false) }}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPerson({ route: r, p }); setPersonConfirm(false) } }}
                             style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', width: '100%', minHeight: '44px', padding: '0.5rem 0.6rem', margin: '0 -0.6rem', background: 'none', border: 'none', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
                             <div style={{ minWidth: 0 }}>
                               <span style={{ fontSize: '13px', color: '#333' }}>{p.name || '—'}</span>
-                              <span style={{ fontSize: '12px', color: '#888', marginLeft: '0.5rem' }}>{p.email}</span>
+                              <span style={{ fontSize: '12px', color: '#888', marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{p.email}<CopyBtn value={p.email} /></span>
                               {(p.car || p.preferences?.budget) && (
                                 <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {[p.car, p.preferences?.budget].filter(Boolean).join(' · ')}
@@ -781,7 +782,7 @@ export default function RoadtripsAdminClient() {
                               <span style={{ fontSize: '10px', color: '#bbb' }}>{p.is_member ? 'Member' : (p.membership_optin ? 'Membership lead' : 'Public')}</span>
                               <span style={{ color: '#c5a882', fontSize: '12px' }}>›</span>
                             </div>
-                          </button>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -821,8 +822,8 @@ export default function RoadtripsAdminClient() {
         const rows = [
           ['Route', pr.name],
           ['Name', p.name || '—'],
-          ['Email', <a key="e" href={`mailto:${p.email}`} style={{ color: '#8A6535', textDecoration: 'none' }}>{p.email}</a>],
-          ['Phone', p.phone ? <a key="t" href={`tel:${p.phone}`} style={{ color: '#8A6535', textDecoration: 'none' }}>{p.phone}</a> : '—'],
+          ['Email', <span key="e" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}><a href={`mailto:${p.email}`} style={{ color: '#8A6535', textDecoration: 'none' }}>{p.email}</a><CopyBtn value={p.email} /></span>],
+          ['Phone', p.phone ? <span key="t" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}><a href={`tel:${p.phone}`} style={{ color: '#8A6535', textDecoration: 'none' }}>{p.phone}</a><CopyBtn value={p.phone} /></span> : '—'],
           ['Car', p.car || '—'],
           ['Status', p.is_member ? 'Member' : (p.membership_optin ? 'Public · interested in membership' : 'Public')],
           ['Budget', prefs.budget || '—'],

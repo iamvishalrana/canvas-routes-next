@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { Err, ToggleSwitch } from '../_components/shared'
+import { Err, ToggleSwitch, CopyBtn } from '../_components/shared'
 import { CATEGORY_DISCOUNT_PCT } from '../../../lib/wtetAwardsContent'
 
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }
@@ -188,7 +188,7 @@ export default function WtetAwardsClient() {
                   <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a' }}>
                     {p.name}{p.car && <span style={{ color: '#999', fontWeight: '400' }}> — {p.car}</span>}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#bbb' }}>{p.email}</div>
+                  <div style={{ fontSize: '11px', color: '#bbb', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{p.email}<CopyBtn value={p.email} /></div>
                 </div>
               </div>
             ))}
@@ -211,7 +211,7 @@ export default function WtetAwardsClient() {
             ) : data.voters.map(v => (
               <div key={v.email} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.05)', paddingBottom: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#555', marginBottom: '0.4rem' }}>
-                  <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{v.name} <span style={{ color: '#bbb', fontWeight: '400' }}>· {v.email}</span></span>
+                  <span style={{ fontWeight: '500', color: '#1a1a1a', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{v.name} <span style={{ color: '#bbb', fontWeight: '400' }}>· {v.email}</span><CopyBtn value={v.email} /></span>
                   <span style={{ color: '#bbb', flexShrink: 0 }}>{new Date(v.votedAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>

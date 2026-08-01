@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { inp, sel, L, PrimaryBtn, Err } from '../../_components/shared'
+import { inp, sel, L, PrimaryBtn, Err, CopyBtn } from '../../_components/shared'
 import ContactSearchSelect from '../../_components/ContactSearchSelect'
 
 const EMPTY_FORM = { name: '', email: '' }
@@ -133,16 +133,21 @@ export default function SharesPeopleClient() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {filtered.map(person => (
-            <Link key={person.id} href={`/admin/photos/shares/${person.id}`} className="shp-row"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.9rem 1.1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', textDecoration: 'none', transition: 'border-color 0.15s, background 0.15s' }}>
+            <div key={person.id} role="link" tabIndex={0} onClick={() => router.push(`/admin/photos/shares/${person.id}`)}
+              onKeyDown={e => { if (e.key === 'Enter') router.push(`/admin/photos/shares/${person.id}`) }}
+              className="shp-row"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.9rem 1.1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', textDecoration: 'none', transition: 'border-color 0.15s, background 0.15s', cursor: 'pointer' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.name || '(no name)'}</div>
-                <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</div>
+                <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.1rem', minWidth: 0 }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</span>
+                  <CopyBtn value={person.email} />
+                </div>
               </div>
               <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#bbb', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 {person.folderCount} folder{person.folderCount !== 1 ? 's' : ''} · {person.photoCount} photo{person.photoCount !== 1 ? 's' : ''}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

@@ -1652,7 +1652,7 @@ export default function EventsClient() {
                                     <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 150px', padding: '0.85rem 1.5rem', alignItems: 'start', gap: '0.5rem', minWidth: '560px' }}>
                                       <div>
                                         <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.1rem' }}>{app.name || '—'}</div>
-                                        <div style={{ fontSize: '11px', color: '#aaa' }}>{app.email}</div>
+                                        <div style={{ fontSize: '11px', color: '#aaa', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{app.email}<CopyBtn value={app.email} /></div>
                                         {app.rsvp?.answers && <RsvpAnswers answers={app.rsvp.answers} />}
                                       </div>
                                       <div style={{ fontSize: '12px', color: '#666' }}>{car || '—'}</div>

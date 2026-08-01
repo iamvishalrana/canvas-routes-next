@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, CopyBtn } from '../_components/shared'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
@@ -610,7 +610,7 @@ export default function PhotosClient() {
               <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{personalMember.name || '(no name)'}</div>
-                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{personalMember.email}</div>
+                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{personalMember.email}<CopyBtn value={personalMember.email} /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   <GhostBtn small onClick={() => personalFilesRef.current?.click()}>+ Add Photos</GhostBtn>
@@ -640,14 +640,15 @@ export default function PhotosClient() {
               <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Existing folders</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {personalGroups.map(g => (
-                  <button key={g.member?.id || 'unknown'} type="button" onClick={() => setPersonalMember(g.member)}
+                  <div key={g.member?.id || 'unknown'} role="button" tabIndex={0} onClick={() => setPersonalMember(g.member)}
+                    onKeyDown={e => { if (e.key === 'Enter') setPersonalMember(g.member) }}
                     style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                     <div>
                       <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{g.member?.name || '(no name)'}</div>
-                      <div style={{ fontSize: '10px', color: '#999' }}>{g.member?.email}</div>
+                      <div style={{ fontSize: '10px', color: '#999', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{g.member?.email}<CopyBtn value={g.member?.email} /></div>
                     </div>
                     <div style={{ fontSize: '11px', color: '#999' }}>{g.photos.length} {g.photos.length === 1 ? 'photo' : 'photos'}</div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>

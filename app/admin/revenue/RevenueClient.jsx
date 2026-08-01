@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Fragment } from 'react'
 import { ExportButton } from '../_components/ExportModal'
+import { CopyBtn } from '../_components/shared'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: MONTREAL_TZ })
@@ -441,7 +442,10 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
                       <MemberBadge isMember={p.isMember} />
                       {p.manual && <span style={{ fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 6px', borderRadius: '5px' }}>E-transfer</span>}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.email} · {fmtDate(p.date)}</div>
+                    <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.1rem', minWidth: 0 }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.email} · {fmtDate(p.date)}</span>
+                      <CopyBtn value={p.email} />
+                    </div>
                     {ci && (
                       <div style={{ fontSize: '11px', color: '#8A5CA8', marginTop: '3px', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
@@ -690,7 +694,7 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
                     <div style={{ fontSize: '13px', color: '#1a1a1a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                     <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(p.amount)}</div>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', wordBreak: 'break-all' }}>{p.email}</div>
+                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }} onClick={e => e.stopPropagation()}>{p.email}<CopyBtn value={p.email} /></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginTop: '3px' }}>
                     <span style={{ fontSize: '11px', color: '#8A6535' }}>{p.type}</span>
                     <span style={{ fontSize: '11px', color: '#bbb', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -725,7 +729,7 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" style={{ transition: 'transform 0.2s', transform: expanded === i ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
                       </td>
                       <td style={{ ...TD, fontWeight: '400' }}>{p.name}</td>
-                      <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.email}</td>
+                      <td style={{ ...TD, color: '#666', fontSize: '12px' }} onClick={e => e.stopPropagation()}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{p.email}<CopyBtn value={p.email} /></span></td>
                       <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.type}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(p.amount)}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#999', fontSize: '12px', whiteSpace: 'nowrap' }}>{fmtDate(p.date)}</td>
