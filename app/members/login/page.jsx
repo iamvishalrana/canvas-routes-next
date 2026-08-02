@@ -90,6 +90,13 @@ export default function LoginPage() {
 
   const formContent = (
     <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '360px' }}>
+      {/* iOS zooms in when a focused input's font-size is under 16px — these
+          inputs are 13px on desktop, so bump to 16px on touch devices only. */}
+      <style>{`
+        @media (pointer: coarse) {
+          .cr-auth-input { font-size: 16px !important; }
+        }
+      `}</style>
 
       {mode === 'login' && (
         <>
@@ -108,14 +115,14 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             <div style={{ marginBottom: '1.1rem' }}>
               <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#888', marginBottom: '0.45rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
+              <input className="cr-auth-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
                 style={inputStyle('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
             </div>
 
             <div style={{ marginBottom: '0.5rem' }}>
               <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#888', marginBottom: '0.45rem', fontFamily: 'var(--font-inter),sans-serif' }}>Password</label>
               <div style={{ position: 'relative' }}>
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"
+                <input className="cr-auth-input" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"
                   style={{ ...inputStyle('password'), paddingRight: '2.8rem' }}
                   onFocus={() => setFocused('password')} onBlur={() => setFocused(null)} />
                 <button type="button" onClick={() => setShowPassword(p => !p)}
@@ -168,7 +175,7 @@ export default function LoginPage() {
           <form onSubmit={handleForgot}>
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#888', marginBottom: '0.45rem', fontFamily: 'var(--font-inter),sans-serif' }}>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
+              <input className="cr-auth-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
                 style={inputStyle('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
             </div>
             {error && <div style={{ fontSize: '12px', color: '#93333E', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>{error}</div>}

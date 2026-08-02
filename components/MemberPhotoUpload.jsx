@@ -75,7 +75,9 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
       setDone({ count: succeeded, album })
       setCaption('')
     }
-    setUpload(null)
+    // Keep the errors visible if any files failed/were skipped — clearing
+    // unconditionally here wiped them before the member could ever read why.
+    setUpload(u => (u && u.errors.length > 0) ? { ...u, finished: true } : null)
     if (filesRef.current) filesRef.current.value = ''
   }
 
@@ -123,10 +125,14 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
 
           {upload && (
             <div className="mpu-form" style={{ marginTop: '0.85rem' }}>
-              <div style={{ fontSize: '12px', color: '#555' }}>Uploading {upload.done} / {upload.total}…</div>
-              <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', marginTop: '0.4rem', overflow: 'hidden' }}>
-                <div className="mpu-progress-fill" style={{ height: '100%', width: `${upload.total ? (upload.done / upload.total) * 100 : 100}%`, background: '#45643C', borderRadius: '99px' }} />
+              <div style={{ fontSize: '12px', color: '#555' }}>
+                {upload.finished ? `${upload.errors.length} of ${upload.total || upload.errors.length} couldn't be uploaded:` : `Uploading ${upload.done} / ${upload.total}…`}
               </div>
+              {!upload.finished && (
+                <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', marginTop: '0.4rem', overflow: 'hidden' }}>
+                  <div className="mpu-progress-fill" style={{ height: '100%', width: `${upload.total ? (upload.done / upload.total) * 100 : 100}%`, background: '#45643C', borderRadius: '99px' }} />
+                </div>
+              )}
               {upload.errors.map((e, i) => <div key={i} className="mpu-error" style={{ fontSize: '11px', color: '#93333E', marginTop: '0.4rem' }}>{e}</div>)}
             </div>
           )}

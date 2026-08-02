@@ -82,6 +82,13 @@ export default function ResetPasswordPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0F1E14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 2rem calc(2rem + env(safe-area-inset-bottom))', fontFamily: 'var(--font-inter),sans-serif' }}>
+      {/* iOS zooms in when a focused input's font-size is under 16px — these
+          inputs are 13px on desktop, so bump to 16px on touch devices only. */}
+      <style>{`
+        @media (pointer: coarse) {
+          .cr-auth-input { font-size: 16px !important; }
+        }
+      `}</style>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(197,168,130,0.5),transparent)' }} />
 
       <Link href="/" style={{ marginBottom: '3rem', display: 'block' }}>
@@ -119,7 +126,7 @@ export default function ResetPasswordPage() {
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>New Password</label>
                 <div style={{ position: 'relative' }}>
-                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                  <input className="cr-auth-input" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                     required autoComplete="new-password" style={inputStyle} />
                   <button type="button" onClick={() => setShowPassword(p => !p)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', padding: 0, display: 'flex', alignItems: 'center' }}>
                     <EyeIcon open={showPassword} />
@@ -141,7 +148,7 @@ export default function ResetPasswordPage() {
               <div style={{ marginBottom: '0.5rem' }}>
                 <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '0.5rem' }}>Confirm Password</label>
                 <div style={{ position: 'relative' }}>
-                  <input type={showConfirm ? 'text' : 'password'} value={confirm} onChange={e => setConfirm(e.target.value)}
+                  <input className="cr-auth-input" type={showConfirm ? 'text' : 'password'} value={confirm} onChange={e => setConfirm(e.target.value)}
                     required autoComplete="new-password" style={inputStyle} />
                   <button type="button" onClick={() => setShowConfirm(p => !p)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', padding: 0, display: 'flex', alignItems: 'center' }}>
                     <EyeIcon open={showConfirm} />
