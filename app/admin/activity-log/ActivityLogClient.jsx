@@ -212,21 +212,21 @@ export default function ActivityLogClient({ logs }) {
           {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
         </div>
         <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
-          <select style={{ ...sel, width: isMobile ? '100%' : '140px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+          <select style={{ ...sel, width: isMobile ? '100%' : '140px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
             <option value="all">All activity</option>
             {categories.map(c => <option key={c} value={c}>{CATEGORY_META[c]?.label || c}</option>)}
           </select>
           <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
-          <select style={{ ...sel, width: isMobile ? '100%' : '130px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }} value={entityTypeFilter} onChange={e => setEntityTypeFilter(e.target.value)}>
+          <select style={{ ...sel, width: isMobile ? '100%' : '130px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }} value={entityTypeFilter} onChange={e => setEntityTypeFilter(e.target.value)}>
             <option value="all">All types</option>
             {entityTypes.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>)}
           </select>
           <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
-          <select style={{ ...sel, width: isMobile ? '100%' : '110px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }} value={sort} onChange={e => setSort(e.target.value)}>
+          <select style={{ ...sel, width: isMobile ? '100%' : '110px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }} value={sort} onChange={e => setSort(e.target.value)}>
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
           </select>

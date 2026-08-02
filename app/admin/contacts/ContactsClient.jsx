@@ -481,7 +481,7 @@ export default function ContactsClient() {
           </button>
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={sortContacts} onChange={e => setSortContacts(e.target.value)}
-              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="name_az">Name A → Z</option>
               <option value="name_za">Name Z → A</option>
               <option value="newest">Newest first</option>

@@ -278,14 +278,14 @@ export default function LinksClient() {
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
           <input style={{ ...inp, flex: '1 1 160px', maxWidth: isMobile ? 'none' : '280px', width: isMobile ? '100%' : undefined }} placeholder="Search name, URL, notes…" value={search} onChange={e => setSearch(e.target.value)} />
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
-            <select style={{ ...sel, width: isMobile ? '100%' : '140px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+            <select style={{ ...sel, width: isMobile ? '100%' : '140px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
               <option value="all">All types</option>
               {LINK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
-            <select style={{ ...sel, width: isMobile ? '100%' : '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }} value={sort} onChange={e => setSort(e.target.value)}>
+            <select style={{ ...sel, width: isMobile ? '100%' : '150px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }} value={sort} onChange={e => setSort(e.target.value)}>
               <option value="date_desc">Date (newest)</option>
               <option value="date_asc">Date (oldest)</option>
               <option value="name_az">Name A → Z</option>

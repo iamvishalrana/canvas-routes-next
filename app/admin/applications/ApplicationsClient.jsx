@@ -612,7 +612,7 @@ export default function ApplicationsClient() {
           />
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={paymentStatusFilter} onChange={e => setPaymentStatusFilter(e.target.value)}
-              style={{ ...sel, width: isMobile ? '100%' : '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '150px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">Any payment status</option>
               <option value="paid">Paid</option>
               <option value="authorized">Authorized (hold)</option>
@@ -630,7 +630,7 @@ export default function ApplicationsClient() {
           </div>
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={eventFilter} onChange={e => setEventFilter(e.target.value)}
-              style={{ ...sel, width: isMobile ? '100%' : '170px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '170px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">Any event</option>
               {eventOptions.map(ev => <option key={ev} value={ev}>{ev}</option>)}
             </select>
@@ -638,7 +638,7 @@ export default function ApplicationsClient() {
           </div>
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={sortApps} onChange={e => setSortApps(e.target.value)}
-              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name_az">Name A → Z</option>

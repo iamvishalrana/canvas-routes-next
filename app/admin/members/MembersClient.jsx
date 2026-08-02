@@ -738,7 +738,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined, flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={statusFilter} onChange={e => onStatusFilterChange(e.target.value)}
-              style={{ ...sel, width: isMobile ? '100%' : '130px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '130px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">All statuses</option>
               <option value="active">Active</option>
               <option value="pending">Pending</option>
@@ -749,7 +749,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
           </div>
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={tierFilter} onChange={e => onTierFilterChange(e.target.value)}
-              style={{ ...sel, width: isMobile ? '100%' : '140px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '140px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">All tiers</option>
               <option value="routes_member">Routes Member</option>
               <option value="inner_circle">Inner Circle</option>
@@ -758,7 +758,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
           </div>
           <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={sort} onChange={e => onSortChange(e.target.value)}
-              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: isMobile ? '0.4rem 2rem 0.4rem 0.75rem' : '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="member_num_asc">Member # ↑ (lowest first)</option>
               <option value="member_num_desc">Member # ↓ (highest first)</option>
               <option value="newest">Newest first</option>
