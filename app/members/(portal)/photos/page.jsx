@@ -1,7 +1,7 @@
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
-import { attendanceKey } from '../../../../lib/eventMeta'
+import { attendanceKey, attendanceKeyToEventName } from '../../../../lib/eventMeta'
 import MembersGalleryTabs from '../../../../components/MembersGalleryTabs'
 
 export const dynamic = 'force-dynamic'
@@ -51,10 +51,18 @@ export default async function PhotosPage() {
     photos: (personalPhotos || []).map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })),
   }
 
+  // Independent of gallery_photos — a member may have attended an event
+  // nothing's been posted for yet, and should still be able to reach this
+  // page to submit photos of their own for it.
+  const attendedEventNames = Object.entries(attendance)
+    .filter(([, attended]) => attended === true)
+    .map(([key]) => attendanceKeyToEventName(key))
+
   // Mirrors the nav link's visibility (see memberHasGalleryPhotos) — a direct
   // hit on this URL (bookmark, stale link) shouldn't land on an empty page
-  // just because the nav correctly hid the link.
-  if (eventAlbums.length === 0 && personalAlbum.photos.length === 0) redirect('/members/dashboard')
+  // just because the nav correctly hid the link. Attended-but-photo-less
+  // members still get in, so they can use the upload feature below.
+  if (eventAlbums.length === 0 && personalAlbum.photos.length === 0 && attendedEventNames.length === 0) redirect('/members/dashboard')
 
   return (
     <div>
@@ -68,7 +76,7 @@ export default async function PhotosPage() {
         Event Photos from meets and drives you attended, plus your own private Car &amp; Personal folder.
       </p>
 
-      <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} />
+      <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} attendedEventNames={attendedEventNames} />
     </div>
   )
 }

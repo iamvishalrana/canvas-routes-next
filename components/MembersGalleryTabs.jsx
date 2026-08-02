@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import MembersGallery from './MembersGallery'
+import MemberPhotoUpload from './MemberPhotoUpload'
 
 const EMPTY_COPY = {
   event: {
@@ -13,7 +14,7 @@ const EMPTY_COPY = {
   },
 }
 
-export default function MembersGalleryTabs({ eventAlbums, personalAlbum }) {
+export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attendedEventNames = [] }) {
   const [tab, setTab] = useState('event')
   const albums = tab === 'event' ? eventAlbums : (personalAlbum.photos.length ? [personalAlbum] : [])
   const copy = EMPTY_COPY[tab]
@@ -39,6 +40,8 @@ export default function MembersGalleryTabs({ eventAlbums, personalAlbum }) {
         To get a photo removed, please reach out to us at{' '}
         <a href="mailto:info@canvasroutes.com" style={{ color: '#bbb' }}>info@canvasroutes.com</a>.
       </div>
+
+      {tab === 'event' && <MemberPhotoUpload attendedEventNames={attendedEventNames} />}
 
       {albums.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-inter), sans-serif' }}>

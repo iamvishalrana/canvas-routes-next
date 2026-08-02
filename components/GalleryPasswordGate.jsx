@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import MembersGallery from './MembersGallery'
+import NonMemberPhotoUpload from './NonMemberPhotoUpload'
 
 const inp = {
   width: '100%', boxSizing: 'border-box', padding: '0.95rem 1.1rem',
@@ -37,6 +38,7 @@ export default function GalleryPasswordGate({ token, children }) {
   const [checking, setChecking] = useState(false)
   const [errMsg, setErrMsg] = useState(null)
   const [folders, setFolders] = useState([])
+  const [sessionId, setSessionId] = useState(null)
   const [cooldown, setCooldown] = useState(0)
   const cooldownTimerRef = useRef(null)
 
@@ -64,6 +66,7 @@ export default function GalleryPasswordGate({ token, children }) {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { localStorage.removeItem(sessionStorageKey); setPhase('gate'); return }
       setFolders(data.folders || [])
+      setSessionId(sessionId)
       setPhase('authed')
     } catch {
       // Network hiccup on the silent check — don't strand the visitor on a
@@ -108,6 +111,7 @@ export default function GalleryPasswordGate({ token, children }) {
       if (!res.ok) { setErrMsg(data.error || 'Something went wrong. Please try again.'); setChecking(false); return }
       localStorage.setItem(sessionStorageKey, data.sessionId)
       setFolders(data.folders || [])
+      setSessionId(data.sessionId)
       setPhase('authed')
     } catch {
       setErrMsg('Network error — please try again.')
@@ -269,6 +273,14 @@ export default function GalleryPasswordGate({ token, children }) {
           return { name: f.title, date: null, photos: f.photos, note: left <= 5 ? `${left <= 0 ? 'expiring today' : `${left}d left`}` : null }
         })} />
       )}
+
+      {/* One uploader per folder — kept separate from MembersGallery (a pure
+          display component shared with the members portal) rather than
+          threaded through it. */}
+      {folders.map(f => (
+        <NonMemberPhotoUpload key={f.id} token={token} sessionId={sessionId} folderId={f.id} folderTitle={f.title} />
+      ))}
+
       {children}
     </div>
   )

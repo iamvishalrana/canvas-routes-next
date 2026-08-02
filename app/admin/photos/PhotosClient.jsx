@@ -183,6 +183,8 @@ export default function PhotosClient() {
   const [deleteAlbum, setDeleteAlbum] = useState(null)
   const [armedPhoto, setArmedPhoto] = useState(null)
   const [personalMember, setPersonalMember] = useState(null)
+  const [notifyStatus, setNotifyStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | <error string> }
+  const [submissionsCount, setSubmissionsCount] = useState(0)
   const [albumSearch, setAlbumSearch] = useState('')
   const [openAlbums, setOpenAlbums] = useState(() => new Set()) // expanded album names
   const autoOpenedRef = useRef(false)
@@ -207,6 +209,7 @@ export default function PhotosClient() {
         setLoading(false)
       })
       .catch(() => { setListErr('Failed to load photos.'); setLoading(false) })
+    fetch('/api/admin/gallery-submissions').then(r => r.ok ? r.json() : []).then(d => setSubmissionsCount(Array.isArray(d) ? d.length : 0)).catch(() => {})
   }, [])
 
   useEffect(() => () => clearTimeout(armTimerRef.current), [])
@@ -377,6 +380,18 @@ export default function PhotosClient() {
     setPhotos(prev => prev.map(p => p.id === row.id ? { ...p, ...row } : p))
   }
 
+  async function notifyMember(m) {
+    setNotifyStatus(s => ({ ...s, [m.id]: 'sending' }))
+    try {
+      const res = await fetch(`/api/admin/members/${m.id}/notify-photos`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      setNotifyStatus(s => ({ ...s, [m.id]: res.ok ? 'sent' : (data.error || 'Failed to send.') }))
+      if (res.ok) setTimeout(() => setNotifyStatus(s => ({ ...s, [m.id]: undefined })), 3000)
+    } catch {
+      setNotifyStatus(s => ({ ...s, [m.id]: 'Network error.' }))
+    }
+  }
+
   const tabBtn = (key, label) => (
     <button type="button" onClick={() => { setMode(key); setAdding(false); setFormErr(''); setPersonalMember(null) }}
       style={{
@@ -437,6 +452,14 @@ export default function PhotosClient() {
           fontFamily: 'var(--font-inter),sans-serif', fontWeight: '400',
         }}>
           Non-Member Shares →
+        </Link>
+        <Link href="/admin/photos/submissions" style={{
+          padding: '0.5rem 1.1rem', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+          border: 'none', borderBottom: '2px solid transparent',
+          color: '#999', textDecoration: 'none',
+          fontFamily: 'var(--font-inter),sans-serif', fontWeight: '400',
+        }}>
+          Submissions{submissionsCount > 0 ? ` (${submissionsCount})` : ''} →
         </Link>
       </div>
 
@@ -612,10 +635,19 @@ export default function PhotosClient() {
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{personalMember.name || '(no name)'}</div>
                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{personalMember.email}<CopyBtn value={personalMember.email} /></div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <GhostBtn small onClick={() => personalFilesRef.current?.click()}>+ Add Photos</GhostBtn>
+                  <GhostBtn small disabled={notifyStatus[personalMember.id] === 'sending'} onClick={() => notifyMember(personalMember)}>
+                    {notifyStatus[personalMember.id] === 'sending' ? 'Sending…'
+                      : notifyStatus[personalMember.id] === 'sent' ? '✓ Sent'
+                      : notifyStatus[personalMember.id] ? 'Retry'
+                      : `Notify ${personalMember.name?.split(' ')[0] || 'member'}`}
+                  </GhostBtn>
                   <GhostBtn small onClick={() => setPersonalMember(null)}>Close</GhostBtn>
                 </div>
+                {notifyStatus[personalMember.id] && !['sending', 'sent'].includes(notifyStatus[personalMember.id]) && (
+                  <div style={{ fontSize: '11px', color: '#93333E', width: '100%' }}>{notifyStatus[personalMember.id]}</div>
+                )}
               </div>
               <div className="ph-grid" style={{ padding: '1.25rem' }}>
                 {photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id).length === 0 ? (
