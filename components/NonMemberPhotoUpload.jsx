@@ -71,7 +71,7 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
     <div style={{ marginTop: '1rem', marginBottom: '2rem', padding: '1rem 1.1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-inter), sans-serif' }}>
       {!open ? (
         <button type="button" onClick={() => setOpen(true)}
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+          style={{ background: 'none', border: 'none', padding: '0.5rem 0', margin: '-0.5rem 0', minHeight: '44px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent' }}>
           <span style={{ width: '28px', height: '28px', borderRadius: '99px', background: 'rgba(69,100,60,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </span>
