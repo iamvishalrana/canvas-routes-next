@@ -6,7 +6,7 @@ import {
   CAR_MAKES, MONTHS, DOB_YEARS, CANONICAL_EVENTS,
   normalizeEventName, parseCarMakeModel,
   inp, sel, L, CopyBtn, AdminNotesPanel,
-  GhostBtn, PrimaryBtn, DangerBtn, Err, AttendanceToggle,
+  GhostBtn, PrimaryBtn, DangerBtn, Err, AttendanceToggle, DateRangeMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -489,27 +489,12 @@ export default function ContactsClient() {
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
+          <DateRangeMenu label="Applied" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
           <div style={{ position: 'relative', width: isMobile ? '100%' : '280px' }}>
             <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car…" value={search} onChange={e => setSearch(e.target.value)} />
             {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
           </div>
         </div>
-      </div>
-
-      {/* Applied date range */}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>Applied</span>
-        <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)}
-          style={{ padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
-        <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
-        <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)}
-          style={{ padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
-        {(dateFrom || dateTo) && (
-          <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }}
-            style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>
-            Clear
-          </button>
-        )}
       </div>
 
       {addingNew && (

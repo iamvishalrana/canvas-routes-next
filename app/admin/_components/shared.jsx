@@ -179,7 +179,12 @@ export function FilterMenu({ options, value, onChange }) {
 // actual from/to date inputs, instead of showing two date inputs + a
 // separator + a clear button inline all the time. Usage:
 // <DateRangeMenu label="Applied" from={appliedFrom} to={appliedTo} onFromChange={setAppliedFrom} onToChange={setAppliedTo} />
-export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, onToChange }) {
+// Pass onClear when from/to are backed by a single combined setter (e.g. a
+// pushQuery-style URL-diffing pattern) — calling onFromChange('') then
+// onToChange('') separately in that case can race (the second call reads a
+// stale snapshot from before the first's URL update lands), so this never
+// assumes two independent setters are safe to call back to back.
+export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, onToChange, onClear }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   useEffect(() => {
@@ -208,7 +213,7 @@ export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, on
             <input type="date" value={to} min={from || undefined} onChange={e => onToChange(e.target.value)} aria-label={`${label} to`} style={rangeInp} />
           </div>
           {active && (
-            <button type="button" onClick={() => { onFromChange(''); onToChange('') }}
+            <button type="button" onClick={() => onClear ? onClear() : (onFromChange(''), onToChange(''))}
               style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '4px 0', textDecoration: 'underline', minHeight: '30px' }}>
               Clear
             </button>
