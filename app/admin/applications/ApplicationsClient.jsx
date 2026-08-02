@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
-  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu,
+  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu, FilterMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -599,20 +599,15 @@ export default function ApplicationsClient() {
           )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined, flexWrap: 'wrap' }}>
-          {[
-            { key: 'all', label: 'All' },
-            { key: 'unseen', label: `Unseen${unseenCount > 0 ? ` (${unseenCount})` : ''}` },
-            { key: 'pending', label: 'Not Invited' },
-          ].map(f => (
-            <button key={f.key} onClick={() => setShowFilter(f.key)}
-              style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: '0.5px solid', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
-                background: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(147,51,62,0.07)' : 'rgba(0,0,0,0.06)') : 'none',
-                color: showFilter === f.key ? (f.key === 'unseen' ? '#93333E' : '#1a1a1a') : '#888',
-                borderColor: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(147,51,62,0.3)' : 'rgba(0,0,0,0.25)') : 'rgba(0,0,0,0.15)',
-              }}>
-              {f.label}
-            </button>
-          ))}
+          <FilterMenu
+            value={showFilter}
+            onChange={setShowFilter}
+            options={[
+              { id: 'all', label: 'All' },
+              { id: 'unseen', label: `Unseen${unseenCount > 0 ? ` (${unseenCount})` : ''}` },
+              { id: 'pending', label: 'Not Invited' },
+            ]}
+          />
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <select value={paymentStatusFilter} onChange={e => setPaymentStatusFilter(e.target.value)}
               style={{ ...sel, width: '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>

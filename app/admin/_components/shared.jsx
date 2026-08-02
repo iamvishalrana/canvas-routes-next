@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { EVENT_ATTENDANCE_KEYS, EVENT_NAME_ALIASES, normalizeEventName as _normalizeEventName } from '../../../lib/eventMeta.js'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
@@ -129,6 +129,44 @@ export function KebabMenu({ items }) {
               onClick={() => { setOpen(false); it.onClick() }}
               style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: '44px', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: i < items.filter(Boolean).length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', color: it.danger ? '#93333E' : '#333', cursor: it.disabled ? 'not-allowed' : 'pointer', opacity: it.disabled ? 0.4 : 1, fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
               {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Filter menu — single button showing the current selection, opening a
+// small dropdown to switch — replaces a row of mutually-exclusive filter
+// pill buttons all shown at once. Usage:
+// <FilterMenu value={filter} onChange={setFilter} options={[{ id: 'all', label: 'All' }, ...]} />
+export function FilterMenu({ options, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e) { if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false) }
+    function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDocClick)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDocClick); window.removeEventListener('keydown', onKey) }
+  }, [open])
+  const current = options.find(o => o.id === value)
+  const isFiltered = value !== (options[0]?.id ?? 'all')
+  return (
+    <div ref={rootRef} style={{ position: 'relative' }}>
+      <button type="button" onClick={() => setOpen(v => !v)}
+        style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', borderRadius: '99px', border: `0.5px solid ${isFiltered ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: isFiltered ? '#0F1E14' : 'transparent', color: isFiltered ? '#F5F1EC' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'inline-flex', alignItems: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+        {current?.label || 'Filter'}
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, minWidth: '210px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
+          {options.map((o, i) => (
+            <button key={o.id} type="button" onClick={() => { onChange(o.id); setOpen(false) }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '40px', padding: '0.6rem 0.9rem', background: value === o.id ? 'rgba(15,30,20,0.05)' : 'none', border: 'none', borderBottom: i < options.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', fontSize: '12px', color: value === o.id ? '#0F1E14' : '#444', fontWeight: value === o.id ? '600' : '400', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+              {o.label}
             </button>
           ))}
         </div>
