@@ -78,17 +78,29 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
   }
 
   return (
-    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '2px', padding: '1.25rem 1.5rem', marginBottom: '2.5rem' }}>
+    <div className="mpu-card" style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '2px', padding: '1.25rem 1.5rem', marginBottom: '2.5rem' }}>
+      <style>{`
+        @keyframes mpu-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes mpu-icon-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(69,100,60,0.22); } 50% { box-shadow: 0 0 0 6px rgba(69,100,60,0); } }
+        @keyframes mpu-pop-in { 0% { opacity: 0; transform: scale(0.9); } 60% { opacity: 1; transform: scale(1.03); } 100% { transform: scale(1); } }
+        .mpu-card { animation: mpu-fade-in 0.55s cubic-bezier(0.23,1,0.32,1) both; }
+        .mpu-toggle { transition: transform 0.15s ease; }
+        .mpu-toggle:active { transform: scale(0.985); }
+        .mpu-icon { animation: mpu-icon-pulse 2.6s ease-in-out infinite; }
+        .mpu-form { animation: mpu-fade-in 0.4s cubic-bezier(0.23,1,0.32,1) both; }
+        .mpu-progress-fill { transition: width 0.3s ease; }
+        .mpu-error, .mpu-done { animation: mpu-fade-in 0.35s ease both; }
+      `}</style>
       {!open ? (
-        <button type="button" onClick={() => setOpen(true)}
-          style={{ background: 'none', border: 'none', padding: '0.5rem 0', margin: '-0.5rem 0', minHeight: '44px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent' }}>
-          <span style={{ width: '30px', height: '30px', borderRadius: '99px', background: 'rgba(69,100,60,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <button type="button" className="mpu-toggle" onClick={() => setOpen(true)}
+          style={{ background: 'none', border: 'none', padding: '0.5rem 0', margin: '-0.5rem 0', minHeight: '44px', width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent' }}>
+          <span className="mpu-icon" style={{ width: '30px', height: '30px', borderRadius: '99px', background: 'rgba(69,100,60,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </span>
           <span style={{ fontSize: '13px', color: '#1a1a1a' }}>Have photos from an event? Share them here.</span>
         </button>
       ) : (
-        <div>
+        <div className="mpu-form">
           <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.75rem' }}>
             Share photos you have from an event — we'll add them to the album once reviewed.
           </div>
@@ -105,17 +117,17 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
           <div style={{ fontSize: '10.5px', color: '#bbb', marginTop: '0.6rem' }}>Up to {MAX_FILES} photos, 40MB each.</div>
 
           {upload && (
-            <div style={{ marginTop: '0.85rem' }}>
+            <div className="mpu-form" style={{ marginTop: '0.85rem' }}>
               <div style={{ fontSize: '12px', color: '#555' }}>Uploading {upload.done} / {upload.total}…</div>
               <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', marginTop: '0.4rem', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${upload.total ? (upload.done / upload.total) * 100 : 100}%`, background: '#45643C', borderRadius: '99px', transition: 'width 0.3s ease' }} />
+                <div className="mpu-progress-fill" style={{ height: '100%', width: `${upload.total ? (upload.done / upload.total) * 100 : 100}%`, background: '#45643C', borderRadius: '99px' }} />
               </div>
-              {upload.errors.map((e, i) => <div key={i} style={{ fontSize: '11px', color: '#93333E', marginTop: '0.4rem' }}>{e}</div>)}
+              {upload.errors.map((e, i) => <div key={i} className="mpu-error" style={{ fontSize: '11px', color: '#93333E', marginTop: '0.4rem' }}>{e}</div>)}
             </div>
           )}
 
           {done && (
-            <div style={{ marginTop: '0.85rem', fontSize: '12px', color: '#45643C' }}>
+            <div className="mpu-done" style={{ marginTop: '0.85rem', fontSize: '12px', color: '#45643C' }}>
               Thanks — {done.count} photo{done.count === 1 ? '' : 's'} submitted for review. We'll add them to {done.album} once approved.
             </div>
           )}

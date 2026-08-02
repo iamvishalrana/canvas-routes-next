@@ -262,7 +262,11 @@ export default function GalleryPasswordGate({ token, children }) {
   const totalPhotos = folders.reduce((s, f) => s + f.photos.length, 0)
 
   return (
-    <div>
+    <div className="gpg-authed">
+      <style>{`
+        @keyframes gpg-authed-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .gpg-authed { animation: gpg-authed-in 0.5s cubic-bezier(0.23,1,0.32,1) both; }
+      `}</style>
       {totalPhotos === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)' }}>
           <div style={{ fontSize: '13px', color: '#999' }}>No photos have been added yet.</div>
@@ -276,9 +280,9 @@ export default function GalleryPasswordGate({ token, children }) {
 
       {/* One uploader per folder — kept separate from MembersGallery (a pure
           display component shared with the members portal) rather than
-          threaded through it. */}
-      {folders.map(f => (
-        <NonMemberPhotoUpload key={f.id} token={token} sessionId={sessionId} folderId={f.id} folderTitle={f.title} />
+          threaded through it. Staggered like FadeUp-based lists elsewhere. */}
+      {folders.map((f, i) => (
+        <NonMemberPhotoUpload key={f.id} token={token} sessionId={sessionId} folderId={f.id} folderTitle={f.title} entranceDelay={i * 60} />
       ))}
 
       {children}

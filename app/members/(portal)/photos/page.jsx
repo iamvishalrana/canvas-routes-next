@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { attendanceKey, attendanceKeyToEventName } from '../../../../lib/eventMeta'
 import MembersGalleryTabs from '../../../../components/MembersGalleryTabs'
+import FadeUp from '../../../../components/FadeUp'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Photos | Canvas Routes' } }
@@ -66,17 +67,25 @@ export default async function PhotosPage() {
 
   return (
     <div>
-      <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-        Canvas Routes
-      </div>
-      <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.6rem, 5.5vw, 3.6rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
-        Photos
-      </h1>
-      <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.8, maxWidth: '520px', margin: '0 0 3rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-        Event Photos from meets and drives you attended, plus your own private Car &amp; Personal folder.
-      </p>
+      <FadeUp delay={0}>
+        <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+          Canvas Routes
+        </div>
+      </FadeUp>
+      <FadeUp delay={80}>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.6rem, 5.5vw, 3.6rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
+          Photos
+        </h1>
+      </FadeUp>
+      <FadeUp delay={160}>
+        <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.8, maxWidth: '520px', margin: '0 0 3rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+          Event Photos from meets and drives you attended, plus your own private Car &amp; Personal folder.
+        </p>
+      </FadeUp>
 
-      <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} attendedEventNames={attendedEventNames} />
+      <FadeUp delay={220}>
+        <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} attendedEventNames={attendedEventNames} />
+      </FadeUp>
     </div>
   )
 }
