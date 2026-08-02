@@ -136,6 +136,7 @@ export default function RouteEventConfigClient({ eventId }) {
   const [showAwardsConfig, setShowAwardsConfig] = useState(false)
   const [showWaiverText, setShowWaiverText] = useState(false)
   const [lunchFields, setLunchFields] = useState(DEFAULT_LUNCH_FIELDS)
+  const [lunchSort, setLunchSort] = useState('name_az')
   const [editingLunchEmail, setEditingLunchEmail] = useState(null)
   const [lunchEditDraft, setLunchEditDraft] = useState([])
   const [lunchEditBusy, setLunchEditBusy] = useState(false)
@@ -498,12 +499,27 @@ export default function RouteEventConfigClient({ eventId }) {
           {(() => {
             const lunchRows = buildLunchRows(participants, form.checkin_lunch_extras)
             const dishOptions = form.checkin_lunch_options || []
+            const lunchParticipants = participants.filter(p => p.lunch?.length > 0).sort((a, b) => {
+              if (lunchSort === 'name_za') return (b.name || b.email || '').localeCompare(a.name || a.email || '')
+              if (lunchSort === 'dish') {
+                const da = a.lunch[0]?.dish_name || ''
+                const db = b.lunch[0]?.dish_name || ''
+                return da.localeCompare(db) || (a.name || a.email || '').localeCompare(b.name || b.email || '')
+              }
+              return (a.name || a.email || '').localeCompare(b.name || b.email || '')
+            })
             return (
               <div style={{ marginTop: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                  <L>Lunch Selections ({participants.filter(p => p.lunch?.length > 0).length}/{participants.length})</L>
+                  <L>Lunch Selections ({lunchParticipants.length}/{participants.length})</L>
                   {lunchRows.length > 0 && (
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <select value={lunchSort} onChange={e => setLunchSort(e.target.value)}
+                        style={{ ...smallInput, width: 'auto', cursor: 'pointer' }}>
+                        <option value="name_az">Sort: Name (A–Z)</option>
+                        <option value="name_za">Sort: Name (Z–A)</option>
+                        <option value="dish">Sort: Dish</option>
+                      </select>
                       <GhostBtn small onClick={exportLunchCSV}>Export CSV</GhostBtn>
                       <GhostBtn small onClick={exportLunchTXT}>Export Text</GhostBtn>
                       <GhostBtn small onClick={exportLunchPrint}>Print / PDF</GhostBtn>
@@ -523,11 +539,11 @@ export default function RouteEventConfigClient({ eventId }) {
                     })}
                   </div>
                 )}
-                {participants.filter(p => p.lunch?.length > 0).length === 0 ? (
+                {lunchParticipants.length === 0 ? (
                   <div style={{ fontSize: '12px', color: '#bbb', padding: '0.75rem 0' }}>No lunch selections yet.</div>
                 ) : (
                   <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', overflow: 'hidden' }}>
-                    {participants.filter(p => p.lunch?.length > 0).map((p, i, arr) => (
+                    {lunchParticipants.map((p, i, arr) => (
                       <div key={p.email} style={{ padding: '0.85rem 1rem', borderBottom: i < arr.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
                           <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '0.3rem' }}>{p.name || p.email}</div>
