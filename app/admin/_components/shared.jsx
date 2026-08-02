@@ -175,6 +175,50 @@ export function FilterMenu({ options, value, onChange }) {
   )
 }
 
+// ── Date range menu — a calendar icon that opens a small popover with the
+// actual from/to date inputs, instead of showing two date inputs + a
+// separator + a clear button inline all the time. Usage:
+// <DateRangeMenu label="Applied" from={appliedFrom} to={appliedTo} onFromChange={setAppliedFrom} onToChange={setAppliedTo} />
+export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, onToChange }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e) { if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false) }
+    function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDocClick)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDocClick); window.removeEventListener('keydown', onKey) }
+  }, [open])
+  const active = !!(from || to)
+  const rangeInp = { padding: '0.5rem 0.55rem', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', width: '116px' }
+  return (
+    <div ref={rootRef} style={{ position: 'relative', flexShrink: 0 }}>
+      <button type="button" onClick={() => setOpen(v => !v)} aria-label={label}
+        title={active ? `${label}: ${from || '…'} – ${to || '…'}` : label}
+        style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '99px', border: `0.5px solid ${active ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: active ? '#0F1E14' : 'transparent', color: active ? '#F5F1EC' : '#666', cursor: 'pointer', padding: 0, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '240px' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>{label}</div>
+          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+            <input type="date" value={from} max={to || undefined} onChange={e => onFromChange(e.target.value)} aria-label={`${label} from`} style={rangeInp} />
+            <span style={{ fontSize: '11px', color: '#bbb' }}>–</span>
+            <input type="date" value={to} min={from || undefined} onChange={e => onToChange(e.target.value)} aria-label={`${label} to`} style={rangeInp} />
+          </div>
+          {active && (
+            <button type="button" onClick={() => { onFromChange(''); onToChange('') }}
+              style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '4px 0', textDecoration: 'underline', minHeight: '30px' }}>
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Confirm dialog — yes/no gate for sends, deletes, and money actions ─────────
 // Usage: {confirm && <ConfirmDialog title="Send invite?" message="…" onConfirm={…} onCancel={() => setConfirm(null)} />}
 

@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
-  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu, FilterMenu,
+  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu, FilterMenu, DateRangeMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -647,17 +647,7 @@ export default function ApplicationsClient() {
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          {/* Applied date range */}
-          <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexShrink: 0 }}>
-            <input type="date" value={appliedFrom} max={appliedTo || undefined} onChange={e => setAppliedFrom(e.target.value)} aria-label="Applied from"
-              style={{ ...inp, width: '140px', fontSize: '11px', padding: '0.55rem 0.6rem' }} />
-            <span style={{ fontSize: '11px', color: '#bbb' }}>–</span>
-            <input type="date" value={appliedTo} min={appliedFrom || undefined} onChange={e => setAppliedTo(e.target.value)} aria-label="Applied to"
-              style={{ ...inp, width: '140px', fontSize: '11px', padding: '0.55rem 0.6rem' }} />
-            {(appliedFrom || appliedTo) && (
-              <button onClick={() => { setAppliedFrom(''); setAppliedTo('') }} aria-label="Clear date range" style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '15px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '8px', minHeight: '34px', minWidth: '34px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>×</button>
-            )}
-          </div>
+          <DateRangeMenu label="Applied" from={appliedFrom} to={appliedTo} onFromChange={setAppliedFrom} onToChange={setAppliedTo} />
           <div style={{ position: 'relative', width: isMobile ? '100%' : '280px' }}>
             <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
             {search && <button onClick={() => setSearch('')} aria-label="Clear search" style={{ position: 'absolute', right: '2px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '10px', minHeight: '34px', minWidth: '34px', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>×</button>}
