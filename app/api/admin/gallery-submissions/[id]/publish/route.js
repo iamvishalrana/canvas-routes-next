@@ -35,6 +35,7 @@ export async function POST(request, { params }) {
       category: 'event',
       album: claimed.album,
       album_date: claimed.album_date,
+      caption: claimed.caption,
       photo_url: claimed.photo_url,
       storage_path: claimed.storage_path,
       original_path: claimed.original_path,
@@ -50,6 +51,7 @@ export async function POST(request, { params }) {
   } else {
     const { error: insertErr } = await supabase.from('photo_share_items').insert({
       folder_id: claimed.photo_share_folder_id,
+      caption: claimed.caption,
       storage_path: claimed.storage_path,
       original_path: claimed.original_path,
     })

@@ -25,7 +25,8 @@ export async function POST(request, { params }) {
   if (await checkRateLimit(ip, 60, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
   if (!UUID_RE.test(token)) return Response.json({ error: 'Not found.' }, { status: 404 })
 
-  const { sessionId, folderId, originalPath, displayPath } = await request.json().catch(() => ({}))
+  const { sessionId, folderId, originalPath, displayPath, caption: rawCaption } = await request.json().catch(() => ({}))
+  const caption = (rawCaption || '').toString().trim().slice(0, 300) || null
   const email = await readSession(token, sessionId)
   if (!email) return Response.json({ error: 'Session expired.' }, { status: 401 })
 
@@ -63,6 +64,7 @@ export async function POST(request, { params }) {
     source: 'non_member',
     photo_share_folder_id: folder.id,
     contributor_name: person.name || person.email,
+    caption,
     photo_url: displayUrl,
     storage_path: displayPath,
     original_path: originalPath,

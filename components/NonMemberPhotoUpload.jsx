@@ -15,6 +15,7 @@ const MAX_FILES = 20
 // app/api/gallery/[token]/submit-*/route.js.
 export default function NonMemberPhotoUpload({ token, sessionId, folderId, folderTitle, entranceDelay = 0 }) {
   const [open, setOpen] = useState(false)
+  const [caption, setCaption] = useState('')
   const [upload, setUpload] = useState(null)
   const [done, setDone] = useState(null)
   const filesRef = useRef(null)
@@ -46,7 +47,7 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
         ])
         const res = await fetch(`/api/gallery/${token}/submit-photo`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, folderId, originalPath: urls.originalPath, displayPath: urls.displayPath }),
+          body: JSON.stringify({ sessionId, folderId, caption, originalPath: urls.originalPath, displayPath: urls.displayPath }),
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
@@ -62,6 +63,7 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
         body: JSON.stringify({ sessionId, folderId, count: succeeded }),
       }).catch(() => {})
       setDone({ count: succeeded })
+      setCaption('')
     }
     setUpload(null)
     if (filesRef.current) filesRef.current.value = ''
@@ -94,6 +96,9 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
           </div>
           <input ref={filesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleFiles}
             disabled={!!upload} style={{ fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
+          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload} maxLength={300}
+            placeholder="Caption (optional) — applies to all photos in this upload"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 0.85rem', marginTop: '0.6rem', border: '0.5px solid rgba(0,0,0,0.16)', background: '#fff', fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif', color: '#1a1a1a', outline: 'none' }} />
           <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.5rem' }}>Up to {MAX_FILES} photos, 40MB each.</div>
 
           {upload && (

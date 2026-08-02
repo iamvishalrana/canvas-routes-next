@@ -23,6 +23,7 @@ const inp = {
 export default function MemberPhotoUpload({ attendedEventNames }) {
   const [open, setOpen] = useState(false)
   const [album, setAlbum] = useState(attendedEventNames[0] || '')
+  const [caption, setCaption] = useState('')
   const [upload, setUpload] = useState(null) // { done, total, errors: [] }
   const [done, setDone] = useState(null) // { count, album } after a batch finishes
   const filesRef = useRef(null)
@@ -56,7 +57,7 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
         ])
         const res = await fetch('/api/member/gallery-submission', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ album, originalPath: urls.originalPath, displayPath: urls.displayPath }),
+          body: JSON.stringify({ album, caption, originalPath: urls.originalPath, displayPath: urls.displayPath }),
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
@@ -72,6 +73,7 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
         body: JSON.stringify({ album, count: succeeded }),
       }).catch(() => {})
       setDone({ count: succeeded, album })
+      setCaption('')
     }
     setUpload(null)
     if (filesRef.current) filesRef.current.value = ''
@@ -114,6 +116,9 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
             <input ref={filesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleFiles}
               disabled={!!upload} style={{ flex: '1 1 200px', fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
           </div>
+          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload} maxLength={300}
+            placeholder="Caption (optional) — applies to all photos in this upload"
+            style={{ ...inp, cursor: 'text', marginTop: '0.6rem' }} />
           <div style={{ fontSize: '10.5px', color: '#bbb', marginTop: '0.6rem' }}>Up to {MAX_FILES} photos, 40MB each.</div>
 
           {upload && (

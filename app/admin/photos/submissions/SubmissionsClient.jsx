@@ -129,6 +129,11 @@ export default function SubmissionsClient() {
                         <img src={item.photo_url} alt="" onError={onImgError(item.original_url)}
                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: busy.has(item.id) ? 0.4 : 1 }} />
                       </div>
+                      {item.caption && (
+                        <div style={{ fontSize: '11px', color: '#666', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {item.caption}
+                        </div>
+                      )}
                       <div style={{ display: 'flex', gap: '0.35rem' }}>
                         <GhostBtn small disabled={busy.has(item.id)} onClick={() => publish(item.id)}>Publish</GhostBtn>
                         <DangerBtn small disabled={busy.has(item.id)} onClick={() => reject(item.id)}>Reject</DangerBtn>

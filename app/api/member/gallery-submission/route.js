@@ -32,6 +32,7 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}))
   const album = (body.album || '').toString().trim()
   const albumDate = (body.albumDate || '').toString().trim()
+  const caption = (body.caption || '').toString().trim().slice(0, 300) || null
   const { originalPath, displayPath } = body
 
   const admin = createAdminClient()
@@ -71,6 +72,7 @@ export async function POST(request) {
     contributor_name: member.name || member.email,
     album,
     album_date: albumDate || null,
+    caption,
     photo_url: displayUrl,
     storage_path: displayPath,
     original_path: originalPath,
