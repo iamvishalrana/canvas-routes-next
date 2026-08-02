@@ -535,6 +535,11 @@ export default function ApplicationsClient() {
         /* iOS zooms in when a focused input's font-size is under 16px; several
            filter/search inputs here are 11–13px. Bump to 16px on touch only. */
         @media (pointer: coarse) { .app-wrap input, .app-wrap select, .app-wrap textarea { font-size: 16px !important; } }
+        /* The "mark as seen" dot is deliberately tiny visually (7px) — this
+           extends its actual tap target to ~44px via an invisible
+           absolutely-positioned overlay, without growing the dot itself or
+           disturbing the surrounding flex row (checkbox, badges, name). */
+        .app-seen-dot::before { content: ''; position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); }
       `}</style>
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
@@ -560,8 +565,8 @@ export default function ApplicationsClient() {
       {selected.size > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.6rem 1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
           <span style={{ fontSize: '11px', color: '#8A6535', letterSpacing: '0.06em' }}>{selected.size} selected</span>
-          <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
-          <button onClick={bulkAddToContacts} disabled={bulkContactsBusy} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '4px 10px', cursor: bulkContactsBusy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{bulkContactsBusy ? 'Adding…' : 'Add to Contacts'}</button>
+          <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '9px 12px', minHeight: '34px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
+          <button onClick={bulkAddToContacts} disabled={bulkContactsBusy} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '9px 12px', minHeight: '34px', cursor: bulkContactsBusy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>{bulkContactsBusy ? 'Adding…' : 'Add to Contacts'}</button>
           {bulkContactsMsg && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>{bulkContactsMsg}</span>}
           <ExportButton
             filename="applications"
@@ -575,7 +580,7 @@ export default function ApplicationsClient() {
             ])}
             style={{ padding: '4px 10px', fontSize: '10px' }}
           />
-          <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto' }}>Clear</button>
+          <button onClick={() => setSelected(new Set())} style={{ fontSize: '10px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', marginLeft: 'auto', padding: '9px 6px', minHeight: '34px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Clear</button>
         </div>
       )}
 
@@ -612,7 +617,7 @@ export default function ApplicationsClient() {
             { key: 'pending', label: 'Not Invited' },
           ].map(f => (
             <button key={f.key} onClick={() => setShowFilter(f.key)}
-              style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: '0.5px solid', transition: 'all 0.15s',
+              style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', border: '0.5px solid', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
                 background: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(147,51,62,0.07)' : 'rgba(0,0,0,0.06)') : 'none',
                 color: showFilter === f.key ? (f.key === 'unseen' ? '#93333E' : '#1a1a1a') : '#888',
                 borderColor: showFilter === f.key ? (f.key === 'unseen' ? 'rgba(147,51,62,0.3)' : 'rgba(0,0,0,0.25)') : 'rgba(0,0,0,0.15)',
@@ -667,12 +672,12 @@ export default function ApplicationsClient() {
             <input type="date" value={appliedTo} min={appliedFrom || undefined} onChange={e => setAppliedTo(e.target.value)} aria-label="Applied to"
               style={{ ...inp, width: '140px', fontSize: '11px', padding: '0.55rem 0.6rem' }} />
             {(appliedFrom || appliedTo) && (
-              <button onClick={() => { setAppliedFrom(''); setAppliedTo('') }} style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+              <button onClick={() => { setAppliedFrom(''); setAppliedTo('') }} aria-label="Clear date range" style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '15px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '8px', minHeight: '34px', minWidth: '34px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>×</button>
             )}
           </div>
           <div style={{ position: 'relative', width: isMobile ? '100%' : '280px' }}>
             <input style={{ ...inp, width: '100%', paddingRight: search ? '2rem' : undefined }} placeholder="Search name, email, car, source…" value={search} onChange={e => setSearch(e.target.value)} />
-            {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>}
+            {search && <button onClick={() => setSearch('')} aria-label="Clear search" style={{ position: 'absolute', right: '2px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '10px', minHeight: '34px', minWidth: '34px', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>×</button>}
           </div>
         </div>
       </div>
@@ -729,11 +734,11 @@ export default function ApplicationsClient() {
                       <span style={{ fontSize: '10px', color: '#bbb' }}>…</span>
                     )}
                     {rejectConfirm === a.id && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         <div style={{ fontSize: '10px', color: '#93333E' }}>Reject &amp; cancel hold?</div>
-                        <div style={{ display: 'flex', gap: '0.3rem' }}>
-                          <button onClick={() => handleReject(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.1)', border: '0.5px solid rgba(147,51,62,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif' }}>Confirm</button>
-                          <button onClick={() => setRejectConfirm(null)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '3px 7px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Cancel</button>
+                        <div style={{ display: 'flex', gap: '0.6rem' }}>
+                          <button onClick={() => handleReject(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.1)', border: '0.5px solid rgba(147,51,62,0.4)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Confirm</button>
+                          <button onClick={() => setRejectConfirm(null)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Cancel</button>
                         </div>
                       </div>
                     )}
@@ -745,10 +750,10 @@ export default function ApplicationsClient() {
                       capturing === a.id ? (
                         <span style={{ fontSize: '10px', color: '#bbb' }}>Capturing…</span>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          <div style={{ display: 'flex', gap: '0.3rem' }}>
-                            <button onClick={() => setCaptureConfirm(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '3px 7px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif' }}>Capture</button>
-                            <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.3)', padding: '3px 7px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif' }}>Reject</button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          <div style={{ display: 'flex', gap: '0.6rem' }}>
+                            <button onClick={() => setCaptureConfirm(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Capture</button>
+                            <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.3)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Reject</button>
                           </div>
                           {captureErr[a.id] && <span style={{ fontSize: '10px', color: '#93333E' }}>{captureErr[a.id]}</span>}
                         </div>
@@ -759,17 +764,17 @@ export default function ApplicationsClient() {
                     a.is_member || inviteStatus[a.id] === 'success' ? (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
                     ) : appTierPick === a.id ? (
-                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <button onClick={() => setInviteTierConfirm({ app: a, tier: 'routes_member' })}
-                          style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                          style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
                           Routes
                         </button>
                         <button onClick={() => setInviteTierConfirm({ app: a, tier: 'inner_circle' })}
-                          style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
+                          style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
                           Inner Circle
                         </button>
-                        <button onClick={() => setAppTierPick(null)}
-                          style={{ fontSize: '11px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+                        <button onClick={() => setAppTierPick(null)} aria-label="Cancel"
+                          style={{ fontSize: '15px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', padding: '9px', minHeight: '34px', minWidth: '34px', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>×</button>
                       </div>
                     ) : (
                       <div>
@@ -798,9 +803,11 @@ export default function ApplicationsClient() {
                           </div>
                           {!seenAppIds.has(a.id) && (
                           <button
+                            className="app-seen-dot"
                             onClick={e => { e.stopPropagation(); markSeen(a.id) }}
                             title="Mark as seen"
-                            style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#93333E', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
+                            aria-label="Mark as seen"
+                            style={{ position: 'relative', width: '7px', height: '7px', borderRadius: '50%', background: '#93333E', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                           />
                         )}
                           {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-reg</span>}
@@ -832,9 +839,11 @@ export default function ApplicationsClient() {
                   <div style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                     {!seenAppIds.has(a.id) && (
                       <button
+                        className="app-seen-dot"
                         onClick={e => { e.stopPropagation(); markSeen(a.id) }}
                         title="Mark as seen"
-                        style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#93333E', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer' }}
+                        aria-label="Mark as seen"
+                        style={{ position: 'relative', width: '7px', height: '7px', borderRadius: '50%', background: '#93333E', flexShrink: 0, display: 'inline-block', border: 'none', padding: 0, cursor: 'pointer', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                       />
                     )}
                     {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-registered</span>}
@@ -986,7 +995,7 @@ export default function ApplicationsClient() {
                               )}
                               {reg && (
                                 <button type="button" onClick={() => setExpandedEventDetail(detailOpen ? null : detailKey)}
-                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'underline', fontFamily: 'inherit' }}>
+                                  style={{ background: 'none', border: 'none', padding: '9px 0', minHeight: '34px', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'underline', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
                                   {detailOpen ? 'Hide details' : 'What was submitted?'}
                                 </button>
                               )}
@@ -1086,19 +1095,19 @@ export default function ApplicationsClient() {
                       {/* Email composer */}
                       {emailComposerId === a.id && (
                         <div style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.02)', border: '0.5px solid rgba(0,0,0,0.1)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-                            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap', padding: '0.75rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', wordBreak: 'break-word', minWidth: 0 }}>
                               From: Jerry — Canvas Routes &lt;jerry@canvasroutes.com&gt; &nbsp;·&nbsp; To: {a.email}
                             </div>
                             <button
                               onClick={() => setEmailPreviewExpanded(v => !v)}
-                              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '3px 10px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}
+                              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '9px 12px', minHeight: '34px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', flexShrink: 0 }}
                             >
                               {emailPreviewExpanded ? 'Collapse Preview' : 'Expand Preview'}
                             </button>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: emailPreviewExpanded ? '1fr 1fr' : '1fr', gap: 0 }}>
-                            <div style={{ padding: '1.25rem', borderRight: emailPreviewExpanded ? '0.5px solid rgba(0,0,0,0.08)' : 'none' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: emailPreviewExpanded && !isMobile ? '1fr 1fr' : '1fr', gap: 0 }}>
+                            <div style={{ padding: '1.25rem', borderRight: emailPreviewExpanded && !isMobile ? '0.5px solid rgba(0,0,0,0.08)' : 'none' }}>
                               <div style={{ marginBottom: '0.6rem' }}>
                                 <L>Subject</L>
                                 <input
@@ -1114,13 +1123,13 @@ export default function ApplicationsClient() {
                                   <button
                                     onClick={() => generateEmail(a.id)}
                                     disabled={emailGenerating || emailSending}
-                                    style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '3px 10px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: emailGenerating ? 'default' : 'pointer', color: emailGenerating ? '#bbb' : '#555', display: 'flex', alignItems: 'center', gap: '5px', transition: 'border-color 0.15s', fontFamily: 'var(--font-inter),sans-serif' }}
+                                    style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '9px 12px', minHeight: '34px', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: emailGenerating ? 'default' : 'pointer', color: emailGenerating ? '#bbb' : '#555', display: 'flex', alignItems: 'center', gap: '5px', transition: 'border-color 0.15s', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                                   >
                                     {emailGenerating ? '…writing' : '✦ Write with AI'}
                                   </button>
                                 </div>
                                 <textarea
-                                  style={{ ...inp, height: emailPreviewExpanded ? '360px' : '220px', resize: 'vertical', lineHeight: '1.65' }}
+                                  style={{ ...inp, height: emailPreviewExpanded && !isMobile ? '360px' : '220px', resize: 'vertical', lineHeight: '1.65' }}
                                   value={emailBody}
                                   onChange={e => setEmailBody(e.target.value)}
                                   placeholder="Email body…"
