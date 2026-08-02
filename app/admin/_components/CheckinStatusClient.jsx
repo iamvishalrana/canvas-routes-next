@@ -68,6 +68,44 @@ function ResetLink({ email, section, resetConfirm, setResetConfirm, resetBusy, r
   )
 }
 
+// Single button showing the current filter, opening a small dropdown to
+// pick another — replaces what used to be one pill button per filter
+// option (All / Anything missing / Trip details missing / Waiver missing /
+// Lunch missing / Car photo missing all shown at once).
+function FilterMenu({ options, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e) { if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false) }
+    function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDocClick)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDocClick); window.removeEventListener('keydown', onKey) }
+  }, [open])
+  const current = options.find(o => o.id === value)
+  const isFiltered = value !== 'all'
+  return (
+    <div ref={rootRef} style={{ position: 'relative' }}>
+      <button type="button" onClick={() => setOpen(v => !v)}
+        style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', borderRadius: '99px', border: `0.5px solid ${isFiltered ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: isFiltered ? '#0F1E14' : 'transparent', color: isFiltered ? '#F5F1EC' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'inline-flex', alignItems: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+        {current?.label || 'Filter'}
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, minWidth: '210px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
+          {options.map((o, i) => (
+            <button key={o.id} type="button" onClick={() => { onChange(o.id); setOpen(false) }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '40px', padding: '0.6rem 0.9rem', background: value === o.id ? 'rgba(15,30,20,0.05)' : 'none', border: 'none', borderBottom: i < options.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', fontSize: '12px', color: value === o.id ? '#0F1E14' : '#444', fontWeight: value === o.id ? '600' : '400', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const PAYMENT_LABEL = {
   authorized: { text: 'Hold — awaiting capture', color: '#7B5B2E' },
   pending:    { text: 'Payment pending', color: '#999' },
@@ -482,19 +520,18 @@ export default function CheckinStatusClient({ eventId }) {
           <option value="car">Sort: Car</option>
           <option value="payment">Sort: Payment Status</option>
         </select>
-        {[
-          { id: 'all', label: 'All' },
-          { id: 'incomplete', label: 'Anything missing' },
-          ...(hasTrip ? [{ id: 'trip_missing', label: 'Trip details missing' }] : []),
-          ...(hasWaiver ? [{ id: 'waiver_missing', label: 'Waiver missing' }] : []),
-          ...(hasLunch ? [{ id: 'lunch_missing', label: 'Lunch missing' }] : []),
-          ...(hasCarPhoto ? [{ id: 'car_photo_missing', label: 'Car photo missing' }] : []),
-        ].map(f => (
-          <button key={f.id} onClick={() => setFilter(f.id)}
-            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '99px', border: `0.5px solid ${filter === f.id ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: filter === f.id ? '#0F1E14' : 'transparent', color: filter === f.id ? '#F5F1EC' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-            {f.label}
-          </button>
-        ))}
+        <FilterMenu
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { id: 'all', label: 'All' },
+            { id: 'incomplete', label: 'Anything missing' },
+            ...(hasTrip ? [{ id: 'trip_missing', label: 'Trip details missing' }] : []),
+            ...(hasWaiver ? [{ id: 'waiver_missing', label: 'Waiver missing' }] : []),
+            ...(hasLunch ? [{ id: 'lunch_missing', label: 'Lunch missing' }] : []),
+            ...(hasCarPhoto ? [{ id: 'car_photo_missing', label: 'Car photo missing' }] : []),
+          ]}
+        />
         <span style={{ fontSize: '11px', color: '#aaa' }}>{filtered.length} of {total}</span>
         {incompleteCount > 0 && (
           <button type="button" onClick={() => sendReminders(null)} disabled={reminding === 'all'}
