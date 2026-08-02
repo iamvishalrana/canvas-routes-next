@@ -5,43 +5,57 @@ import { captureException } from '../../../../../../lib/sentry'
 
 // Copies a pending submission into the real, visible destination
 // (gallery_photos for a member's event album, photo_share_items for a
-// non-member's folder) and deletes the staging row — never leaves the same
-// photo living in two places. Member submissions also get auto-tagged
+// non-member's folder). Member submissions also get auto-tagged
 // (gallery_photo_tags) so "Featuring: [name]" shows automatically, reusing
 // the existing tag display in the members portal.
+//
+// The status flip (pending -> published) is a conditional UPDATE, done
+// BEFORE the destination insert — this is the actual lock. Only one request
+// can ever match `.eq('status', 'pending')` on a given row; a double-click,
+// a slow retry, or two admin tabs all race on that same conditional update,
+// and every loser gets 0 affected rows back and no-ops instead of publishing
+// the same photo twice. If the destination insert then fails, the claim is
+// rolled back to 'pending' so the row is still reviewable. The final row
+// delete is best-effort cleanup only — even if it fails, the row is left
+// with status='published', which the review-queue GET already filters out
+// (.eq('status','pending')), so a failed delete can never cause a re-publish.
 export async function POST(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const supabase = createAdminClient()
 
-  const { data: sub } = await supabase.from('gallery_photo_submissions').select('*').eq('id', id).maybeSingle()
-  if (!sub) return Response.json({ error: 'Submission not found.' }, { status: 404 })
+  const { data: claimed, error: claimErr } = await supabase.from('gallery_photo_submissions')
+    .update({ status: 'published' }).eq('id', id).eq('status', 'pending').select('*').maybeSingle()
+  if (claimErr) return Response.json({ error: claimErr.message }, { status: 500 })
+  if (!claimed) return Response.json({ success: true }) // already published/rejected by another request — no-op
 
-  if (sub.source === 'member') {
+  if (claimed.source === 'member') {
     const { data: row, error: insertErr } = await supabase.from('gallery_photos').insert({
       category: 'event',
-      album: sub.album,
-      album_date: sub.album_date,
-      photo_url: sub.photo_url,
-      storage_path: sub.storage_path,
-      original_path: sub.original_path,
-      original_url: sub.original_url,
+      album: claimed.album,
+      album_date: claimed.album_date,
+      photo_url: claimed.photo_url,
+      storage_path: claimed.storage_path,
+      original_path: claimed.original_path,
+      original_url: claimed.original_url,
     }).select('id').single()
     if (insertErr) {
       captureException(insertErr, { context: 'gallery-submission-publish-member', submissionId: id })
+      await supabase.from('gallery_photo_submissions').update({ status: 'pending' }).eq('id', id)
       return Response.json({ error: 'Could not publish this photo.' }, { status: 500 })
     }
-    const { error: tagErr } = await supabase.from('gallery_photo_tags').insert({ photo_id: row.id, member_id: sub.member_id })
+    const { error: tagErr } = await supabase.from('gallery_photo_tags').insert({ photo_id: row.id, member_id: claimed.member_id })
     if (tagErr) captureException(tagErr, { context: 'gallery-submission-publish-tag', submissionId: id })
   } else {
     const { error: insertErr } = await supabase.from('photo_share_items').insert({
-      folder_id: sub.photo_share_folder_id,
-      storage_path: sub.storage_path,
-      original_path: sub.original_path,
+      folder_id: claimed.photo_share_folder_id,
+      storage_path: claimed.storage_path,
+      original_path: claimed.original_path,
     })
     if (insertErr) {
       captureException(insertErr, { context: 'gallery-submission-publish-nonmember', submissionId: id })
+      await supabase.from('gallery_photo_submissions').update({ status: 'pending' }).eq('id', id)
       return Response.json({ error: 'Could not publish this photo.' }, { status: 500 })
     }
   }
@@ -51,7 +65,7 @@ export async function POST(request, { params }) {
 
   await logAdminAction(supabase, adminUser?.email, {
     action: 'gallery_submission.publish', entityType: 'gallery_photo_submission', entityId: id,
-    entityName: sub.contributor_name,
+    entityName: claimed.contributor_name,
   })
   return Response.json({ success: true })
 }

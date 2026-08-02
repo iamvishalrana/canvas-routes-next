@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/photo-shares-cleanup",
       "schedule": "30 10 * * *"
+    },
+    {
+      "path": "/api/cron/gallery-submissions-digest",
+      "schedule": "0 */6 * * *"
     }
   ],
   "headers": [

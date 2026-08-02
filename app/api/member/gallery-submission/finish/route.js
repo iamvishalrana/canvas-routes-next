@@ -7,8 +7,16 @@ import { buildAdminNotifyHtml } from '../../../../../lib/adminEmail'
 
 // Called once after a member's upload batch finishes (not per-photo) — fires
 // a single admin alert summarizing the whole batch, per the explicit "one
-// batched email per upload session" requirement rather than spamming Vishal
-// per photo.
+// batched email per upload session" requirement rather than spamming the
+// admin inbox per photo.
+//
+// The count/album come from the DB, never trusted from the client — a
+// client-supplied count could otherwise be used to spam the admin inbox with
+// fake "N photos uploaded" alerts without uploading anything. Querying
+// pending + not-yet-notified rows also means a batch that never called this
+// route (tab closed mid-upload) still gets swept up the next time this
+// member submits anything for the same event, since notified_at only gets
+// set on rows this call actually includes.
 export async function POST(request) {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -19,10 +27,17 @@ export async function POST(request) {
 
   const body = await request.json().catch(() => ({}))
   const album = (body.album || '').toString().trim()
-  const count = Math.max(0, Math.min(20, parseInt(body.count, 10) || 0))
-  if (!album || count === 0) return Response.json({ success: true }) // nothing succeeded — no email
+  if (!album) return Response.json({ success: true })
 
   const admin = createAdminClient()
+  const { data: pending } = await admin.from('gallery_photo_submissions')
+    .select('id').eq('member_id', user.id).eq('album', album).eq('status', 'pending').is('notified_at', null)
+  const ids = (pending || []).map(p => p.id)
+  const count = ids.length
+  if (count === 0) return Response.json({ success: true }) // nothing new to notify about
+
+  await admin.from('gallery_photo_submissions').update({ notified_at: new Date().toISOString() }).in('id', ids)
+
   const { data: member } = await admin.from('members').select('name, email').eq('id', user.id).maybeSingle()
   const name = member?.name || member?.email || 'A member'
 

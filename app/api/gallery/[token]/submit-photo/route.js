@@ -7,6 +7,10 @@ import { ALLOWED_EXTS } from '../../../../../lib/allowedImageTypes'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const BUCKET = 'photo-shares'
+// Ceiling on how many un-reviewed submissions one person can have sitting in
+// the queue at once, across all their folders — see the matching comment in
+// app/api/member/gallery-submission/route.js for why this exists.
+const MAX_PENDING_PER_PERSON = 50
 
 function pathRegexFor(personId, folderId) {
   return new RegExp(`^submissions/${personId}/${folderId}/(originals|display)/[\\w-]+\\.(${ALLOWED_EXTS.join('|')})$`)
@@ -42,6 +46,15 @@ export async function POST(request, { params }) {
     admin.storage.from(BUCKET).exists(displayPath),
   ])
   if (!origExists || !dispExists) return Response.json({ error: 'Upload incomplete — please retry.' }, { status: 400 })
+
+  const { data: personFolders } = await admin.from('photo_share_folders').select('id').eq('person_id', person.id)
+  const folderIds = (personFolders || []).map(f => f.id)
+  const { count: pendingCount } = folderIds.length
+    ? await admin.from('gallery_photo_submissions').select('id', { count: 'exact', head: true }).in('photo_share_folder_id', folderIds).eq('status', 'pending')
+    : { count: 0 }
+  if ((pendingCount || 0) >= MAX_PENDING_PER_PERSON) {
+    return Response.json({ error: 'Too many photos awaiting review — wait for some to be published before submitting more.' }, { status: 429 })
+  }
 
   const { data: { publicUrl: originalUrl } } = admin.storage.from(BUCKET).getPublicUrl(originalPath)
   const { data: { publicUrl: displayUrl } } = admin.storage.from(BUCKET).getPublicUrl(displayPath)

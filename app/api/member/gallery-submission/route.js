@@ -6,6 +6,12 @@ import { ALLOWED_EXTS } from '../../../../lib/allowedImageTypes'
 import { attendanceKey } from '../../../../lib/eventMeta'
 
 const BUCKET = 'gallery-photos'
+// Ceiling on how many un-reviewed submissions one member can have sitting in
+// the queue at once — the 20-per-batch UI cap only slows a single upload
+// screen, it doesn't stop someone from re-running batches indefinitely, so
+// this is the real backstop against unbounded storage growth/review-queue
+// spam.
+const MAX_PENDING_PER_MEMBER = 50
 
 function pathRegexFor(memberId) {
   return new RegExp(`^submissions/${memberId}/(originals|display)/[\\w-]+\\.(${ALLOWED_EXTS.join('|')})$`)
@@ -49,6 +55,12 @@ export async function POST(request) {
     admin.storage.from(BUCKET).exists(displayPath),
   ])
   if (!origExists || !dispExists) return Response.json({ error: 'Upload incomplete — please retry.' }, { status: 400 })
+
+  const { count: pendingCount } = await admin.from('gallery_photo_submissions')
+    .select('id', { count: 'exact', head: true }).eq('member_id', user.id).eq('status', 'pending')
+  if ((pendingCount || 0) >= MAX_PENDING_PER_MEMBER) {
+    return Response.json({ error: 'You have too many photos awaiting review — wait for some to be published before submitting more.' }, { status: 429 })
+  }
 
   const { data: { publicUrl: originalUrl } } = admin.storage.from(BUCKET).getPublicUrl(originalPath)
   const { data: { publicUrl: displayUrl } } = admin.storage.from(BUCKET).getPublicUrl(displayPath)
