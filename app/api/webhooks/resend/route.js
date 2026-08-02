@@ -9,9 +9,9 @@ export async function POST(request) {
   if (!secret) return new Response('Not configured.', { status: 503 })
 
   const rawBody = await request.text()
-  const { valid, svixId, reason, diagnostics } = verifyResendWebhook(rawBody, request.headers, secret)
+  const { valid, svixId, reason } = verifyResendWebhook(rawBody, request.headers, secret)
   if (!valid) {
-    captureMessage('Resend webhook signature verification failed', { reason, ...diagnostics })
+    captureMessage('Resend webhook signature verification failed', { reason })
     return new Response('Invalid signature.', { status: 400 })
   }
 
