@@ -595,6 +595,7 @@ export default function ApplicationsClient() {
                 a.stripe_amount_paid ? `$${(a.stripe_amount_paid / 100).toFixed(2)}` : '',
                 a.created_at ? new Date(a.created_at).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
               ])}
+              style={isMobile ? { padding: '4px 10px', fontSize: '10px' } : undefined}
             />
           )}
         </div>
@@ -602,6 +603,7 @@ export default function ApplicationsClient() {
           <FilterMenu
             value={showFilter}
             onChange={setShowFilter}
+            compact={isMobile}
             options={[
               { id: 'all', label: 'All' },
               { id: 'unseen', label: `Unseen${unseenCount > 0 ? ` (${unseenCount})` : ''}` },

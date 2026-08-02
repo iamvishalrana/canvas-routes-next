@@ -141,7 +141,7 @@ export function KebabMenu({ items }) {
 // small dropdown to switch — replaces a row of mutually-exclusive filter
 // pill buttons all shown at once. Usage:
 // <FilterMenu value={filter} onChange={setFilter} options={[{ id: 'all', label: 'All' }, ...]} />
-export function FilterMenu({ options, value, onChange }) {
+export function FilterMenu({ options, value, onChange, compact }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   useEffect(() => {
@@ -157,7 +157,7 @@ export function FilterMenu({ options, value, onChange }) {
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
       <button type="button" onClick={() => setOpen(v => !v)}
-        style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', borderRadius: '99px', border: `0.5px solid ${isFiltered ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: isFiltered ? '#0F1E14' : 'transparent', color: isFiltered ? '#F5F1EC' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'inline-flex', alignItems: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+        style={{ fontSize: compact ? '9px' : '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: compact ? '3px 8px' : '5px 11px', minHeight: compact ? '24px' : '30px', borderRadius: '99px', border: `0.5px solid ${isFiltered ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: isFiltered ? '#0F1E14' : 'transparent', color: isFiltered ? '#F5F1EC' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'inline-flex', alignItems: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
         {current?.label || 'Filter'}
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
       </button>
