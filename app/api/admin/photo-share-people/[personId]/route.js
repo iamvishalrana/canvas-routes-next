@@ -70,11 +70,20 @@ export async function DELETE(request, { params }) {
   const { data: items } = folderIds.length
     ? await supabase.from('photo_share_items').select('storage_path, original_path').in('folder_id', folderIds)
     : { data: [] }
+  // gallery_photo_submissions.photo_share_folder_id also cascades when the
+  // folders are cascade-deleted below — any still-pending (unreviewed)
+  // uploads for this person leak in storage forever unless read out now.
+  const { data: pendingSubmissions } = folderIds.length
+    ? await supabase.from('gallery_photo_submissions').select('storage_path, original_path').in('photo_share_folder_id', folderIds)
+    : { data: [] }
 
   const { error } = await supabase.from('photo_share_people').delete().eq('id', personId)
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
-  const paths = [...new Set((items || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
+  const paths = [...new Set([
+    ...(items || []).flatMap(i => [i.storage_path, i.original_path]),
+    ...(pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]),
+  ].filter(Boolean))]
   if (paths.length) {
     await supabase.storage.from(BUCKET).remove(paths).catch(err =>
       captureException(err, { context: 'admin-photo-share-person-delete-storage', personId }))

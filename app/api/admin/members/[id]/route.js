@@ -169,6 +169,13 @@ export async function DELETE(request, { params }) {
     .from('gallery_photos').select('storage_path, original_path')
     .eq('category', 'personal').eq('member_id', id)
 
+  // Same reasoning for any of this member's still-pending (unreviewed)
+  // self-uploaded photos — gallery_photo_submissions.member_id also cascades
+  // on deleteUser().
+  const { data: pendingSubmissions } = await supabase
+    .from('gallery_photo_submissions').select('storage_path, original_path')
+    .eq('member_id', id)
+
   // Delete auth user — cascade-deletes the members row via FK
   const { error } = await supabase.auth.admin.deleteUser(id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
@@ -205,8 +212,10 @@ export async function DELETE(request, { params }) {
   // Same cleanup for the gallery-photos bucket (Car & Personal folder) — the
   // DB rows are already gone via cascade, so this is the only remaining
   // record of these paths (see fetch above, before deleteUser()).
-  const galleryPaths = [...new Set((personalGalleryPhotos || [])
-    .flatMap(p => [p.storage_path, p.original_path]).filter(Boolean))]
+  const galleryPaths = [...new Set([
+    ...(personalGalleryPhotos || []).flatMap(p => [p.storage_path, p.original_path]),
+    ...(pendingSubmissions || []).flatMap(p => [p.storage_path, p.original_path]),
+  ].filter(Boolean))]
   if (galleryPaths.length) {
     try { await supabase.storage.from('gallery-photos').remove(galleryPaths) } catch {}
   }

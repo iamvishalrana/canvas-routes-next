@@ -21,7 +21,15 @@ async function cleanupExpiredShares() {
   const touchedPersonIds = new Set()
   for (const folder of (expired || [])) {
     const { data: items } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('folder_id', folder.id)
-    const paths = [...new Set((items || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
+    // gallery_photo_submissions.photo_share_folder_id cascades away with this
+    // folder too — any still-pending (never reviewed) upload's storage files
+    // would otherwise leak forever, and the submission would silently vanish
+    // from the admin review queue with no one ever having seen it.
+    const { data: pendingSubmissions } = await supabase.from('gallery_photo_submissions').select('storage_path, original_path').eq('photo_share_folder_id', folder.id)
+    const paths = [...new Set([
+      ...(items || []).flatMap(i => [i.storage_path, i.original_path]),
+      ...(pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]),
+    ].filter(Boolean))]
     if (paths.length) {
       const { error: removeErr } = await supabase.storage.from(BUCKET).remove(paths)
       if (removeErr) {

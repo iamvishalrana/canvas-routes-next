@@ -73,11 +73,18 @@ export async function DELETE(request, { params }) {
   const { data: folder } = await supabase.from('photo_share_folders').select('title').eq('id', folderId).eq('person_id', personId).maybeSingle()
   if (!folder) return Response.json({ error: 'Not found.' }, { status: 404 })
   const { data: items } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('folder_id', folderId)
+  // gallery_photo_submissions.photo_share_folder_id also cascades on this
+  // folder's deletion — read out any still-pending upload's storage paths
+  // now or they leak forever.
+  const { data: pendingSubmissions } = await supabase.from('gallery_photo_submissions').select('storage_path, original_path').eq('photo_share_folder_id', folderId)
 
   const { error } = await supabase.from('photo_share_folders').delete().eq('id', folderId).eq('person_id', personId)
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
-  const paths = [...new Set((items || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
+  const paths = [...new Set([
+    ...(items || []).flatMap(i => [i.storage_path, i.original_path]),
+    ...(pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]),
+  ].filter(Boolean))]
   if (paths.length) {
     await supabase.storage.from(BUCKET).remove(paths).catch(err =>
       captureException(err, { context: 'admin-photo-share-folder-delete-storage', folderId }))
