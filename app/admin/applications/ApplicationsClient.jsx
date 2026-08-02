@@ -114,8 +114,6 @@ export default function ApplicationsClient() {
   const [editAppForm, setEditAppForm] = useState({})
   const [savingApp, setSavingApp] = useState(false)
   const [saveAppErr, setSaveAppErr] = useState(null)
-  const [seenAppIds, setSeenAppIds] = useState(new Set())
-  const seenInitRef = useRef(false)
   const [addingContact, setAddingContact] = useState(new Set())
   const [addContactError, setAddContactError] = useState({})
   const [sortApps, setSortApps] = useState('newest')
@@ -162,28 +160,18 @@ export default function ApplicationsClient() {
   useEffect(() => { loadApps() }, [loadApps])
   useRealtimeSync(['applications', 'members'], loadApps)
 
-  useEffect(() => {
-    if (loading || seenInitRef.current) return
-    seenInitRef.current = true
-    try {
-      const stored = localStorage.getItem('admin_seen_app_ids')
-      if (stored === null) {
-        const allIds = apps.map(a => a.id)
-        localStorage.setItem('admin_seen_app_ids', JSON.stringify(allIds))
-        setSeenAppIds(new Set(allIds))
-      } else {
-        setSeenAppIds(new Set(JSON.parse(stored)))
-      }
-    } catch {}
-  }, [loading, apps])
-
+  // "Seen" lives on the row itself (applications.seen_at) — shared across
+  // every admin device/session, not per-browser like the old localStorage
+  // version. Optimistic update first, PATCH after; revert on failure.
   function markSeen(appId) {
-    setSeenAppIds(prev => {
-      if (prev.has(appId)) return prev
-      const next = new Set([...prev, appId])
-      try { localStorage.setItem('admin_seen_app_ids', JSON.stringify([...next])) } catch {}
-      return next
-    })
+    const app = apps.find(a => a.id === appId)
+    if (!app || app.seen_at) return
+    const now = new Date().toISOString()
+    setApps(prev => prev.map(a => a.id === appId ? { ...a, seen_at: now } : a))
+    fetch(`/api/admin/applications/${appId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seen_at: now }),
+    }).then(r => { if (!r.ok) setApps(prev => prev.map(a => a.id === appId ? { ...a, seen_at: null } : a)) })
+      .catch(() => setApps(prev => prev.map(a => a.id === appId ? { ...a, seen_at: null } : a)))
   }
 
   async function deleteApp(app) {
@@ -471,7 +459,7 @@ export default function ApplicationsClient() {
 
   const filtered = apps
     .filter(a => {
-      if (showFilter === 'unseen' && seenAppIds.has(a.id)) return false
+      if (showFilter === 'unseen' && a.seen_at) return false
       if (showFilter === 'pending' && a.is_member) return false
       if (paymentStatusFilter !== 'all' && (a.stripe_payment_status || 'none') !== paymentStatusFilter) return false
       if (eventFilter !== 'all' && !(a.registrations || []).some(r => r.event === eventFilter)) return false
@@ -525,7 +513,7 @@ export default function ApplicationsClient() {
       setTimeout(() => setEmailsCopied(false), 1500)
     }).catch(() => {})
   }
-  const unseenCount = apps.filter(a => !seenAppIds.has(a.id)).length
+  const unseenCount = apps.filter(a => !a.seen_at).length
 
 
 
@@ -801,7 +789,7 @@ export default function ApplicationsClient() {
                               style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
                             />
                           </div>
-                          {!seenAppIds.has(a.id) && (
+                          {!a.seen_at && (
                           <button
                             className="app-seen-dot"
                             onClick={e => { e.stopPropagation(); markSeen(a.id) }}
@@ -837,7 +825,7 @@ export default function ApplicationsClient() {
                     />
                   </div>
                   <div style={{ fontSize: '13px', color: isGreyed ? '#bbb' : '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    {!seenAppIds.has(a.id) && (
+                    {!a.seen_at && (
                       <button
                         className="app-seen-dot"
                         onClick={e => { e.stopPropagation(); markSeen(a.id) }}
@@ -1058,14 +1046,14 @@ export default function ApplicationsClient() {
                         ) : (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>✓ In Contacts</span>
                         )}
-                        {seenAppIds.has(a.id) && !a.is_contact && !a.is_member && (
+                        {a.seen_at && !a.is_contact && !a.is_member && (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Reviewed</span>
                         )}
                         {isMobile ? (
                           <KebabMenu items={[
                             !a.is_contact && { label: addingContact.has(a.id) ? '…' : 'Add to Contacts', onClick: () => addToContact(a.id), disabled: addingContact.has(a.id) },
                             { label: emailComposerId === a.id ? 'Cancel Email' : 'Send Email', onClick: () => emailComposerId === a.id ? setEmailComposerId(null) : openEmailComposer(a) },
-                            !seenAppIds.has(a.id) && { label: 'Mark as Seen', onClick: () => { markSeen(a.id); setExpanded(null) } },
+                            !a.seen_at && { label: 'Mark as Seen', onClick: () => { markSeen(a.id); setExpanded(null) } },
                             { label: 'Edit', onClick: () => startEditApp(a) },
                             { label: 'Delete', danger: true, onClick: () => setDeleteAppConfirm(a.id) },
                           ]} />
@@ -1074,7 +1062,7 @@ export default function ApplicationsClient() {
                             <GhostBtn small onClick={() => emailComposerId === a.id ? setEmailComposerId(null) : openEmailComposer(a)}>
                               {emailComposerId === a.id ? 'Cancel Email' : '✉ Send Email'}
                             </GhostBtn>
-                            {!seenAppIds.has(a.id) && (
+                            {!a.seen_at && (
                               <GhostBtn small onClick={() => { markSeen(a.id); setExpanded(null) }}>Mark as Seen</GhostBtn>
                             )}
                             <GhostBtn onClick={() => startEditApp(a)} small>Edit</GhostBtn>
