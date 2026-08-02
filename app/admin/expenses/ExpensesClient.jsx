@@ -1006,22 +1006,22 @@ export default function ExpensesClient() {
 
           {/* Date range + category filters */}
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '0.85rem' }}>
-            <div style={{ width: '190px' }}>
+            <div style={{ width: isMobile ? '100%' : '190px' }}>
               <L>Search</L>
               <input style={inp} value={searchQuery} placeholder="Vendor, event, category, notes…"
                 onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <div style={{ width: '150px' }}>
+            <div style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
               <L>From</L>
               <input type="date" style={inp} value={dateFrom} max={dateTo || today}
                 onChange={e => setDateFrom(e.target.value)} />
             </div>
-            <div style={{ width: '150px' }}>
+            <div style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
               <L>To</L>
               <input type="date" style={inp} value={dateTo} min={dateFrom || undefined} max={today}
                 onChange={e => setDateTo(e.target.value)} />
             </div>
-            <div style={{ width: '180px' }}>
+            <div style={{ width: isMobile ? '100%' : '180px' }}>
               <L>Category</L>
               <div style={{ position: 'relative' }}>
                 <select style={sel} value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
@@ -1031,7 +1031,7 @@ export default function ExpensesClient() {
                 <SelectChevron />
               </div>
             </div>
-            <div style={{ width: '170px' }}>
+            <div style={{ width: isMobile ? '100%' : '170px' }}>
               <L>Sort</L>
               <div style={{ position: 'relative' }}>
                 <select style={sel} value={sortBy} onChange={e => setSortBy(e.target.value)}>

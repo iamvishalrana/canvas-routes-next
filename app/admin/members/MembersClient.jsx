@@ -669,9 +669,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
           />
           <button onClick={copyEmails} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: emailsCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${emailsCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{emailsCopied ? 'Copied!' : 'Copy Emails'}</button>
           <button onClick={copyPhones} style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: phonesCopied ? '#3B6B2F' : '#888', background: 'none', border: `0.5px solid ${phonesCopied ? 'rgba(59,107,47,0.3)' : 'rgba(0,0,0,0.15)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>{phonesCopied ? 'Copied!' : 'Copy Phones'}</button>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={bulkStatus} onChange={e => { const v = e.target.value; setBulkStatus(v); if (v) setBulkConfirm({ field: 'membership_status', value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }) }}
-              style={{ ...sel, width: '150px', fontSize: '10px', padding: '4px 1.75rem 4px 8px' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '150px', fontSize: '10px', padding: '4px 1.75rem 4px 8px' }}>
               <option value="">Set status…</option>
               <option value="active">Active</option>
               <option value="pending">Pending</option>
@@ -680,9 +680,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             </select>
             <svg style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={bulkTier} onChange={e => { const v = e.target.value; setBulkTier(v); if (v) setBulkConfirm({ field: 'tier', value: v, label: v === 'inner_circle' ? 'Inner Circle' : 'Routes Member' }) }}
-              style={{ ...sel, width: '150px', fontSize: '10px', padding: '4px 1.75rem 4px 8px' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '150px', fontSize: '10px', padding: '4px 1.75rem 4px 8px' }}>
               <option value="">Set tier…</option>
               <option value="routes_member">Routes Member</option>
               <option value="inner_circle">Inner Circle</option>
@@ -736,9 +736,9 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
           )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined, flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={statusFilter} onChange={e => onStatusFilterChange(e.target.value)}
-              style={{ ...sel, width: '130px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '130px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">All statuses</option>
               <option value="active">Active</option>
               <option value="pending">Pending</option>
@@ -747,18 +747,18 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={tierFilter} onChange={e => onTierFilterChange(e.target.value)}
-              style={{ ...sel, width: '140px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '140px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">All tiers</option>
               <option value="routes_member">Routes Member</option>
               <option value="inner_circle">Inner Circle</option>
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={sort} onChange={e => onSortChange(e.target.value)}
-              style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="member_num_asc">Member # ↑ (lowest first)</option>
               <option value="member_num_desc">Member # ↓ (highest first)</option>
               <option value="newest">Newest first</option>

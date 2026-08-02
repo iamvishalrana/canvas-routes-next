@@ -610,9 +610,9 @@ export default function ApplicationsClient() {
               { id: 'pending', label: 'Not Invited' },
             ]}
           />
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={paymentStatusFilter} onChange={e => setPaymentStatusFilter(e.target.value)}
-              style={{ ...sel, width: '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '150px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">Any payment status</option>
               <option value="paid">Paid</option>
               <option value="authorized">Authorized (hold)</option>
@@ -628,17 +628,17 @@ export default function ApplicationsClient() {
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={eventFilter} onChange={e => setEventFilter(e.target.value)}
-              style={{ ...sel, width: '170px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '170px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="all">Any event</option>
               {eventOptions.map(ev => <option key={ev} value={ev}>{ev}</option>)}
             </select>
             <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={sortApps} onChange={e => setSortApps(e.target.value)}
-              style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name_az">Name A → Z</option>

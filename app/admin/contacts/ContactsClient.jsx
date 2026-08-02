@@ -474,14 +474,14 @@ export default function ContactsClient() {
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: isMobile ? '100%' : undefined, flexWrap: 'wrap' }}>
           <button onClick={() => { setAddingNew(v => !v); setNewErr(null) }}
             style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: addingNew ? '#93333E' : '#3B6B2F', background: 'none', border: `0.5px solid ${addingNew ? 'rgba(147,51,62,0.35)' : 'rgba(59,107,47,0.35)'}`, padding: '4px 10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
             {addingNew ? 'Cancel' : '+ New Contact'}
           </button>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, width: isMobile ? '100%' : undefined }}>
             <select value={sortContacts} onChange={e => setSortContacts(e.target.value)}
-              style={{ ...sel, width: '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
+              style={{ ...sel, width: isMobile ? '100%' : '160px', fontSize: '11px', padding: '0.62rem 2rem 0.62rem 0.75rem' }}>
               <option value="name_az">Name A → Z</option>
               <option value="name_za">Name Z → A</option>
               <option value="newest">Newest first</option>
