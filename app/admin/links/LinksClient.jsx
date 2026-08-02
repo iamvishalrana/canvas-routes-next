@@ -220,7 +220,7 @@ export default function LinksClient() {
             { label: 'Archived', value: links.filter(l => l.archived).length, color: '#999' },
           ].map(s => (
             <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem' }}>
-              <div style={{ fontSize: '1.55rem', fontWeight: '300', color: s.color, lineHeight: 1.1 }}>{s.value}</div>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.55rem', fontWeight: '400', color: s.color, lineHeight: 1.1, letterSpacing: '0.03em' }}>{s.value}</div>
               <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.35rem' }}>{s.label}</div>
             </div>
           ))}

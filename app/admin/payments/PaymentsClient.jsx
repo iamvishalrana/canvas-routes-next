@@ -446,7 +446,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
           { label: 'Total Records',  value: recordsInRange.length, color: '#1a1a1a' },
         ].map(s => (
           <div key={s.label} style={CARD}>
-            <div style={{ fontSize: '2rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', fontWeight: '400', color: s.color, lineHeight: 1, letterSpacing: '0.03em' }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>{s.label}</div>
           </div>
         ))}

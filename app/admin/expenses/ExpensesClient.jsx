@@ -793,7 +793,7 @@ export default function ExpensesClient() {
             <div key={s.label} className="exp-stat-card" onClick={s.onClick}
               role={s.onClick ? 'button' : undefined}
               style={{ background: '#fff', border: s.active ? '0.5px solid rgba(147,51,62,0.5)' : '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: s.active ? '0 2px 12px rgba(147,51,62,0.12)' : '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem', cursor: s.onClick ? 'pointer' : 'default', WebkitTapHighlightColor: 'transparent' }}>
-              <div style={{ fontSize: '1.55rem', fontWeight: '300', color: s.color, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{s.value}</div>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.55rem', fontWeight: '400', color: s.color, lineHeight: 1.1, letterSpacing: '0.03em', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{s.value}</div>
               <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: s.active ? '#93333E' : '#999', marginTop: '0.35rem' }}>{s.label}</div>
             </div>
           ))}

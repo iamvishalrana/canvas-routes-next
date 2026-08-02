@@ -435,7 +435,7 @@ export default function PhotosClient() {
             { label: 'Untagged Event', value: stats.untagged, color: stats.untagged ? '#8A6535' : '#1a1a1a' },
           ].map(s => (
             <div key={s.label} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', boxShadow: '0 1px 5px rgba(0,0,0,0.04)', padding: '0.85rem 1rem' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: '300', color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.6rem', fontWeight: '400', color: s.color, lineHeight: 1, letterSpacing: '0.03em' }}>{s.value}</div>
               <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.4rem' }}>{s.label}</div>
             </div>
           ))}
