@@ -7,6 +7,8 @@ import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 import { formatForDisplay } from '../../../../lib/memberNumber.js'
 import { uploadToSupabaseStorage } from '../../../../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded } from '../../../../lib/convertHeicIfNeeded'
+import { useLanguage } from '../../../../lib/i18n/LanguageContext'
+import { membersProfileT } from '../../../../lib/i18n/membersProfile'
 
 const CAR_YEARS = Array.from({ length: 2027 - 1940 + 1 }, (_, i) => 2027 - i)
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -55,6 +57,7 @@ function SectionDivider({ children, extra }) {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { lang, setLang } = useLanguage()
   const [user, setUser] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', instagram: '', instagram_opted_out: false, dob_day: '', dob_month: '', dob_year: '' })
   const [cars, setCars] = useState([{ ...EMPTY_CAR }])
@@ -73,11 +76,23 @@ export default function ProfilePage() {
 
   const [pwOpen, setPwOpen] = useState(false)
   const [pwForm, setPwForm] = useState({ currentPassword: '', password: '', confirm: '' })
+
+  // Buried under Settings — reuses the same LanguageContext the portal
+  // layout already syncs from this member's stored account preference (see
+  // PortalLanguageSync in the layout), so `lang` here is already correct on
+  // mount. Changing it persists to the account (not just this device) via
+  // PATCH /api/member/profile.
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [savingLang, setSavingLang] = useState(false)
+  const [savedLang, setSavedLang] = useState(false)
+  const [langError, setLangError] = useState(null)
+  const t = membersProfileT[lang]
+
   const pwRules = [
-    { label: 'At least 8 characters', pass: pwForm.password.length >= 8 },
-    { label: 'Under 72 characters', pass: pwForm.password.length > 0 && pwForm.password.length <= 72 },
-    { label: 'One uppercase letter', pass: /[A-Z]/.test(pwForm.password) },
-    { label: 'One number', pass: /[0-9]/.test(pwForm.password) },
+    { label: t.pwRuleLength, pass: pwForm.password.length >= 8 },
+    { label: t.pwRuleMax, pass: pwForm.password.length > 0 && pwForm.password.length <= 72 },
+    { label: t.pwRuleUpper, pass: /[A-Z]/.test(pwForm.password) },
+    { label: t.pwRuleNumber, pass: /[0-9]/.test(pwForm.password) },
   ]
   const pwAllPass = pwRules.every(r => r.pass)
   const [savingPw, setSavingPw] = useState(false)
@@ -94,6 +109,32 @@ export default function ProfilePage() {
   const avatarInputRef = useRef(null)
 
   useEffect(() => { document.title = 'Your Profile — Canvas Routes' }, [])
+
+  async function saveLanguage(next) {
+    if (next === lang) return
+    const prev = lang
+    setLang(next) // optimistic — the toggle should feel instant, and updates the shared context immediately
+    setSavingLang(true); setLangError(null); setSavedLang(false)
+    try {
+      const res = await fetch('/api/member/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: next }),
+      })
+      if (!res.ok) {
+        setLang(prev)
+        const data = await res.json().catch(() => ({}))
+        setLangError(data.error || t.errLanguage)
+      } else {
+        setSavedLang(true)
+      }
+    } catch {
+      setLang(prev)
+      setLangError(t.errConnection)
+    } finally {
+      setSavingLang(false)
+    }
+  }
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -143,7 +184,7 @@ export default function ProfilePage() {
         }
         if (data.stats) setStats(data.stats)
       })
-      .catch(() => setError('Could not load your profile. Please refresh.'))
+      .catch(() => setError(t.errLoadProfile))
   }, [])
 
   // Warn before a full-page unload (refresh / tab close / home-screen swipe
@@ -166,6 +207,12 @@ export default function ProfilePage() {
     const t = setTimeout(() => setSaved(false), 4000)
     return () => clearTimeout(t)
   }, [saved])
+
+  useEffect(() => {
+    if (!savedLang) return
+    const timer = setTimeout(() => setSavedLang(false), 3000)
+    return () => clearTimeout(timer)
+  }, [savedLang])
 
   function formatPhone(v) {
     let d = v.replace(/\D/g, '')
@@ -229,7 +276,7 @@ export default function ProfilePage() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(data.error || 'Could not save. Please try again.')
+        setError(data.error || t.errSave)
       } else {
         setSaved(true)
         savedForm.current = { ...form }
@@ -238,7 +285,7 @@ export default function ProfilePage() {
         setEditing(false)
       }
     } catch {
-      setError('Connection error. Please check your network and try again.')
+      setError(t.errConnection)
     } finally {
       setSaving(false)
     }
@@ -246,9 +293,9 @@ export default function ProfilePage() {
 
   async function savePassword(e) {
     e.preventDefault()
-    if (!pwForm.currentPassword) { setPwError('Please enter your current password.'); return }
-    if (!pwAllPass) { setPwError('Please meet all password requirements.'); return }
-    if (pwForm.password !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
+    if (!pwForm.currentPassword) { setPwError(t.errCurrentPasswordRequired); return }
+    if (!pwAllPass) { setPwError(t.errPasswordRequirements); return }
+    if (pwForm.password !== pwForm.confirm) { setPwError(t.errPasswordsMismatch); return }
     setSavingPw(true); setPwError(null); setSavedPw(false)
     try {
       const res = await fetch('/api/member/password', {
@@ -257,10 +304,10 @@ export default function ProfilePage() {
         body: JSON.stringify({ currentPassword: pwForm.currentPassword, password: pwForm.password }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) setPwError(data.error || 'Could not update password.')
+      if (!res.ok) setPwError(data.error || t.errUpdatePassword)
       else { setSavedPw(true); setPwForm({ currentPassword: '', password: '', confirm: '' }) }
     } catch {
-      setPwError('Connection error. Please check your network and try again.')
+      setPwError(t.errConnection)
     } finally {
       setSavingPw(false)
     }
@@ -273,13 +320,13 @@ export default function ProfilePage() {
     setAvatarUploading(true); setAvatarError(null)
     try {
       file = await convertHeicIfNeeded(file)
-      if (file.size > 15 * 1024 * 1024) { setAvatarError('File must be under 15 MB.'); return }
+      if (file.size > 15 * 1024 * 1024) { setAvatarError(t.errFileSize); return }
       const urlRes = await fetch('/api/member/photo/upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'avatar', fileType: file.type }),
       })
       const urls = await urlRes.json().catch(() => ({}))
-      if (!urlRes.ok) { setAvatarError(urls.error || 'Upload failed.'); return }
+      if (!urlRes.ok) { setAvatarError(urls.error || t.errUploadFailed); return }
       await uploadToSupabaseStorage({ bucket: 'member-photos', path: urls.path, token: urls.token, file })
       const res = await fetch('/api/member/photo', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -287,9 +334,9 @@ export default function ProfilePage() {
       })
       const data = await res.json()
       if (res.ok) setAvatarUrl(data.url)
-      else setAvatarError(data.error || 'Upload failed.')
+      else setAvatarError(data.error || t.errUploadFailed)
     } catch {
-      setAvatarError('Upload failed. Please check your connection.')
+      setAvatarError(t.errUploadFailedConnection)
     } finally {
       setAvatarUploading(false)
     }
@@ -308,13 +355,13 @@ export default function ProfilePage() {
     setPhotoUploadingIdx(idx); setPhotoErrors(p => ({ ...p, [idx]: null }))
     try {
       file = await convertHeicIfNeeded(file)
-      if (file.size > 15 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: 'File must be under 15 MB.' })); return }
+      if (file.size > 15 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: t.errFileSize })); return }
       const urlRes = await fetch('/api/member/photo/upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'car', carIndex: idx, fileType: file.type }),
       })
       const urls = await urlRes.json().catch(() => ({}))
-      if (!urlRes.ok) { setPhotoErrors(p => ({ ...p, [idx]: urls.error || 'Upload failed.' })); return }
+      if (!urlRes.ok) { setPhotoErrors(p => ({ ...p, [idx]: urls.error || t.errUploadFailed })); return }
       await uploadToSupabaseStorage({ bucket: 'member-photos', path: urls.path, token: urls.token, file })
       const res = await fetch('/api/member/photo', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -326,9 +373,9 @@ export default function ProfilePage() {
         // The photo is already persisted server-side, so a later Cancel of the
         // text form must NOT revert it — bake the new URL into the snapshot too.
         if (savedCars.current?.[idx]) savedCars.current = savedCars.current.map((c, i) => i === idx ? { ...c, photo_url: data.url } : c)
-      } else setPhotoErrors(p => ({ ...p, [idx]: data.error || 'Upload failed.' }))
+      } else setPhotoErrors(p => ({ ...p, [idx]: data.error || t.errUploadFailed }))
     } catch {
-      setPhotoErrors(p => ({ ...p, [idx]: 'Upload failed. Please check your connection.' }))
+      setPhotoErrors(p => ({ ...p, [idx]: t.errUploadFailedConnection }))
     } finally {
       setPhotoUploadingIdx(null)
     }
@@ -468,17 +515,17 @@ export default function ProfilePage() {
         {/* Season chip + edit button */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <span style={{ fontSize: '8px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-inter), sans-serif', padding: '0.35rem 0.85rem', border: '0.5px solid rgba(197,168,130,0.25)', borderRadius: '99px' }}>
-            Season 2026
+            {t.season}
           </span>
           <button
             type="button"
             className="cr-hero-editbtn"
             onClick={startEditing}
-            aria-label="Edit profile"
+            aria-label={t.editProfileAria}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: '0.5px solid rgba(245,241,236,0.2)', borderRadius: '99px', padding: '0.45rem 1rem', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter), sans-serif', transition: 'border-color 0.2s, color 0.2s' }}
           >
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-            Edit
+            {t.edit}
           </button>
         </div>
 
@@ -499,7 +546,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => !avatarUploading && avatarInputRef.current?.click()}
-              aria-label={avatarUrl ? 'Change profile photo' : 'Add profile photo'}
+              aria-label={avatarUrl ? t.changeProfilePhotoAria : t.addProfilePhotoAria}
               style={{ position: 'absolute', bottom: '-2px', right: '-6px', width: '32px', height: '32px', borderRadius: '50%', background: '#16261b', border: '1.5px solid rgba(197,168,130,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: avatarUploading ? 'wait' : 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.4)', zIndex: 2 }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -509,7 +556,7 @@ export default function ProfilePage() {
 
           {/* Name */}
           <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.05, letterSpacing: '-0.01em', marginBottom: '0.85rem' }}>
-            {displayName || 'Your Profile'}
+            {displayName || t.yourProfile}
           </div>
 
           {/* Instagram pill */}
@@ -526,7 +573,7 @@ export default function ProfilePage() {
             </a>
           ) : form.instagram_opted_out ? (
             <div style={{ fontSize: '10px', letterSpacing: '0.1em', color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '1.35rem' }}>
-              Instagram not shared
+              {t.instagramNotShared}
             </div>
           ) : (
             <button
@@ -535,7 +582,7 @@ export default function ProfilePage() {
               className="cr-hero-pill"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(245,241,236,0.06)', border: 'none', borderRadius: '99px', padding: '0.5rem 1.2rem', fontSize: '11px', color: 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', cursor: 'pointer', letterSpacing: '0.03em', marginBottom: '1.35rem', transition: 'background 0.2s' }}
             >
-              + Add Instagram
+              {t.addInstagram}
             </button>
           )}
 
@@ -543,13 +590,13 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8L12 2z"/></svg>
             <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', fontWeight: '500' }}>
-              {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
+              {isInnerCircle ? t.innerCircle : t.routesMember}
             </span>
             {membershipNumber && (
               <>
                 <span style={{ color: 'rgba(245,241,236,0.25)' }}>·</span>
                 <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', fontFamily: 'var(--font-inter), sans-serif' }}>
-                  No. {formatForDisplay(membershipNumber)}
+                  {t.memberNo} {formatForDisplay(membershipNumber)}
                 </span>
               </>
             )}
@@ -561,7 +608,7 @@ export default function ProfilePage() {
               <div className="cr-progress-fill" style={{ width: `${completePct}%`, height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg, #8A6535, #c5a882)', boxShadow: '0 0 12px rgba(197,168,130,0.5)' }} />
             </div>
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', color: completePct === 100 ? '#c5a882' : 'rgba(245,241,236,0.45)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '0.6rem', textTransform: 'uppercase' }}>
-              {completePct === 100 ? 'Profile complete' : `Profile ${completeCount} / ${completeness.length} complete`}
+              {completePct === 100 ? t.profileComplete : t.profileCompleteOf(completeCount, completeness.length)}
             </div>
           </div>
         </div>
@@ -570,9 +617,9 @@ export default function ProfilePage() {
       {/* ── My Garage card ── */}
       <div className="cr-garage-card" style={{ background: '#0F1E14', borderRadius: '20px', border: '0.5px solid rgba(197,168,130,0.18)', padding: isMobile ? '1.35rem 1.25rem' : '1.75rem', marginBottom: '1rem', boxShadow: '0 8px 32px rgba(15,30,20,0.18)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.1rem' }}>
-          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.45rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.01em' }}>My Garage</div>
+          <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.45rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.01em' }}>{t.myGarage}</div>
           <button type="button" onClick={startEditing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-            Edit
+            {t.edit}
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
@@ -586,13 +633,13 @@ export default function ProfilePage() {
             {/* Featured chip */}
             <div style={{ position: 'absolute', top: '0.85rem', left: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(10,18,12,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', borderRadius: '99px', padding: '0.35rem 0.85rem' }}>
               <svg width="9" height="9" viewBox="0 0 24 24" fill="#c5a882" stroke="#c5a882" strokeWidth="1"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8L12 2z"/></svg>
-              <span style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.9)', fontFamily: 'var(--font-inter), sans-serif' }}>Featured</span>
+              <span style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.9)', fontFamily: 'var(--font-inter), sans-serif' }}>{t.featured}</span>
             </div>
             {/* Change photo */}
             <button
               type="button"
               onClick={() => photoUploadingIdx === null && triggerCarPhotoUpload(primaryCarIdx)}
-              aria-label="Change car photo"
+              aria-label={t.changeCarPhotoAria}
               style={{ position: 'absolute', bottom: '0.85rem', right: '0.85rem', width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(10,18,12,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', border: '0.5px solid rgba(197,168,130,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploadingIdx === primaryCarIdx ? 'wait' : 'pointer', animation: photoUploadingIdx === primaryCarIdx ? 'ring-pulse 1.4s ease-out infinite' : 'none' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -622,7 +669,7 @@ export default function ProfilePage() {
               <circle cx="17.5" cy="17.5" r="1.5"/>
             </svg>
             <span style={{ fontSize: '12px', color: 'rgba(245,241,236,0.45)', letterSpacing: '0.04em', fontFamily: 'var(--font-inter), sans-serif' }}>
-              {photoUploadingIdx === primaryCarIdx ? 'Uploading…' : primaryCar ? `Add a photo of your ${primaryCar.model || primaryCar.make}` : 'No photo yet — tap to upload'}
+              {photoUploadingIdx === primaryCarIdx ? t.uploading : primaryCar ? t.addPhotoOf(primaryCar.model || primaryCar.make) : t.noPhotoYet}
             </span>
           </div>
         )}
@@ -657,16 +704,16 @@ export default function ProfilePage() {
 
       {/* ── Season Stats card ── */}
       <div className="cr-stats-card" style={{ background: '#0F1E14', borderRadius: '20px', border: '0.5px solid rgba(197,168,130,0.18)', padding: isMobile ? '1.35rem 1.25rem' : '1.75rem', marginBottom: '3rem', boxShadow: '0 8px 32px rgba(15,30,20,0.18)' }}>
-        <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.45rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.01em', marginBottom: '1.1rem' }}>Season Stats</div>
+        <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.45rem', fontWeight: '400', color: '#F5F1EC', letterSpacing: '0.01em', marginBottom: '1.1rem' }}>{t.seasonStats}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           {[
             {
               icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
-              value: stats ? stats.attended : null, label: 'Events attended',
+              value: stats ? stats.attended : null, label: t.eventsAttended,
             },
             {
               icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 15 11 17 15 13"/></svg>,
-              value: stats ? stats.registered : null, label: 'Registrations',
+              value: stats ? stats.registered : null, label: t.registrations,
             },
           ].map(tile => (
             <div key={tile.label} className="cr-stat-tile" style={{ background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)', borderRadius: '14px', padding: '1.1rem 1.2rem' }}>
@@ -680,7 +727,7 @@ export default function ProfilePage() {
           <div className="cr-stat-tile" style={{ gridColumn: '1 / -1', background: 'rgba(245,241,236,0.045)', border: '0.5px solid rgba(197,168,130,0.12)', borderRadius: '14px', padding: '1rem 1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', fontFamily: 'var(--font-inter), sans-serif' }}>Member since</span>
+              <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', fontFamily: 'var(--font-inter), sans-serif' }}>{t.memberSince}</span>
             </div>
             <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.2rem', fontWeight: '400', color: '#F5F1EC' }}>{memberSinceStr || '—'}</span>
           </div>
@@ -694,11 +741,11 @@ export default function ProfilePage() {
         {/* ── Left: Profile Info ── */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>Personal Info</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>{t.personalInfo}</div>
             {!editing && (
               <button onClick={startEditing}
                 style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.38rem 1rem', cursor: 'pointer', color: '#666', fontFamily: 'var(--font-inter), sans-serif' }}>
-                Edit
+                {t.edit}
               </button>
             )}
           </div>
@@ -707,11 +754,11 @@ export default function ProfilePage() {
             /* ── View mode ── */
             <div>
               {[
-                { label: 'Email', value: user?.email },
-                { label: 'Name', value: form.name || null },
-                { label: 'Phone', value: form.phone || null },
-                { label: 'Instagram', value: form.instagram ? `@${form.instagram.replace(/^@/, '')}` : null },
-                { label: 'Birthday', value: dobDisplay },
+                { label: t.rowEmail, value: user?.email },
+                { label: t.rowName, value: form.name || null },
+                { label: t.rowPhone, value: form.phone || null },
+                { label: t.rowInstagram, value: form.instagram ? `@${form.instagram.replace(/^@/, '')}` : null },
+                { label: t.rowBirthday, value: dobDisplay },
               ].map((row, ri) => row.value ? (
                 <div key={row.label} className="info-row" style={{
                   animationName: 'cr-fade-up', animationDuration: '0.32s', animationFillMode: 'both', animationTimingFunction: 'ease',
@@ -729,101 +776,101 @@ export default function ProfilePage() {
 
               {!form.name && !form.phone && !dobDisplay && !hasCar && (
                 <div style={{ fontSize: '13px', color: '#bbb', paddingTop: '0.5rem', lineHeight: 1.75 }}>
-                  No profile info yet. Click Edit to add your details.
+                  {t.noProfileInfo}
                 </div>
               )}
 
               {saved && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#3B6B2F', marginTop: '1.25rem' }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  Changes saved.
+                  {t.changesSaved}
                 </div>
               )}
             </div>
           ) : (
             /* ── Edit mode ── */
             <form onSubmit={saveProfile}>
-              <Field label="Email *">
+              <Field label={t.emailField}>
                 <input type="email" value={user?.email || ''} disabled
                   style={{ ...inp, background: 'rgba(0,0,0,0.02)', color: '#bbb', cursor: 'not-allowed', borderColor: 'rgba(0,0,0,0.08)' }} />
               </Field>
-              <Field label="Full Name *">
+              <Field label={t.fullNameField}>
                 <input className="cr-input" type="text" value={form.name}
                   onChange={e => setForm(p => ({ ...p, name: e.target.value.replace(/\b\w/g, c => c.toUpperCase()) }))}
                   maxLength={100} autoCapitalize="words" style={inp} />
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem' }}>
-                <Field label="Phone *">
+                <Field label={t.phoneField}>
                   <input className="cr-input" type="tel" value={form.phone}
                     onChange={e => setForm(p => ({ ...p, phone: formatPhone(e.target.value) }))}
-                    placeholder="+1 (514) 000-0000" maxLength={18} style={inp} />
+                    placeholder={t.phonePlaceholder} maxLength={18} style={inp} />
                 </Field>
-                <Field label="Instagram">
+                <Field label={t.instagramField}>
                   <input className="cr-input" type="text" value={form.instagram}
                     onChange={e => setForm(p => ({ ...p, instagram: e.target.value, instagram_opted_out: e.target.value ? false : p.instagram_opted_out }))}
-                    maxLength={50} placeholder={form.instagram_opted_out ? 'Not shared' : '@yourhandle'} style={inp} />
+                    maxLength={50} placeholder={form.instagram_opted_out ? t.instagramPlaceholderNotShared : t.instagramPlaceholder} style={inp} />
                   {!form.instagram && (
                     <button type="button"
                       onClick={() => setForm(p => ({ ...p, instagram_opted_out: !p.instagram_opted_out }))}
                       style={{ background: 'none', border: 'none', padding: '0.35rem 0 0', fontSize: '10px', letterSpacing: '0.04em', color: form.instagram_opted_out ? '#3B6B2F' : '#bbb', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}
                     >
-                      {form.instagram_opted_out ? "✓ Won't share Instagram" : "Don't share Instagram"}
+                      {form.instagram_opted_out ? t.wontShareInstagram : t.dontShareInstagram}
                     </button>
                   )}
                 </Field>
               </div>
 
-              <SectionDivider>Date of Birth *</SectionDivider>
+              <SectionDivider>{t.dobSection}</SectionDivider>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
-                  <FieldLabel>Month</FieldLabel>
+                  <FieldLabel>{t.month}</FieldLabel>
                   <SelectWrap value={form.dob_month} onChange={e => setForm(p => ({ ...p, dob_month: e.target.value }))}>
-                    <option value="">Month</option>
+                    <option value="">{t.month}</option>
                     {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
                   </SelectWrap>
                 </div>
                 <div>
-                  <FieldLabel>Day</FieldLabel>
+                  <FieldLabel>{t.day}</FieldLabel>
                   <SelectWrap value={form.dob_day} onChange={e => setForm(p => ({ ...p, dob_day: e.target.value }))}>
-                    <option value="">Day</option>
+                    <option value="">{t.day}</option>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
                   </SelectWrap>
                 </div>
                 <div>
-                  <FieldLabel>Year</FieldLabel>
+                  <FieldLabel>{t.year}</FieldLabel>
                   <SelectWrap value={form.dob_year} onChange={e => setForm(p => ({ ...p, dob_year: e.target.value }))}>
-                    <option value="">Optional</option>
+                    <option value="">{t.optional}</option>
                     {DOB_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
                   </SelectWrap>
                 </div>
               </div>
 
-              <SectionDivider extra={`(${cars.length}/5)`}>Your Cars</SectionDivider>
+              <SectionDivider extra={`(${cars.length}/5)`}>{t.yourCars}</SectionDivider>
 
               {cars.map((car, idx) => (
                 <div key={idx} style={{ border: '0.5px solid rgba(0,0,0,0.1)', padding: '1.2rem', marginBottom: '0.65rem', background: '#fff' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>Car {idx + 1}</div>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>{t.car} {idx + 1}</div>
                     {(cars.length > 1 || car.year || car.make || car.model || car.license_plate) && (
                       <button type="button" onClick={() => removeCar(idx)}
                         style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#93333E', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: 0.75 }}>
-                        Remove
+                        {t.remove}
                       </button>
                     )}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
-                    {[['Year', 'year', true], ['Make', 'make', false], ['Model', 'model', false], ['Plate', 'license_plate', false], ['Paint', 'paint', false]].map(([label, field, isSelect]) => (
+                    {[[t.fieldYear, 'year', true], [t.fieldMake, 'make', false], [t.fieldModel, 'model', false], [t.fieldPlate, 'license_plate', false], [t.fieldPaint, 'paint', false]].map(([label, field, isSelect]) => (
                       <div key={field}>
                         <FieldLabel>{label}{idx === 0 && ['year', 'make', 'model'].includes(field) ? ' *' : ''}</FieldLabel>
                         {isSelect ? (
                           <SelectWrap value={car[field]} onChange={e => updateCar(idx, field, e.target.value)}>
-                            <option value="">Select</option>
+                            <option value="">{t.select}</option>
                             {CAR_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
                           </SelectWrap>
                         ) : (
                           <input className="cr-input" type="text" value={car[field]}
                             onChange={e => updateCar(idx, field, e.target.value)}
-                            placeholder={field === 'make' ? 'e.g. Porsche' : field === 'model' ? 'e.g. 911' : field === 'paint' ? 'e.g. Guards Red' : 'ABC-123'}
+                            placeholder={field === 'make' ? t.makePlaceholder : field === 'model' ? t.modelPlaceholder : field === 'paint' ? t.paintPlaceholder : t.platePlaceholder}
                             maxLength={field === 'license_plate' ? 15 : 100}
                             style={{ ...inp, ...(field === 'license_plate' ? { textTransform: 'uppercase' } : {}) }} />
                         )}
@@ -832,11 +879,11 @@ export default function ProfilePage() {
                   </div>
 
                   <div style={{ marginTop: '0.6rem' }}>
-                    <FieldLabel>Mods</FieldLabel>
+                    <FieldLabel>{t.fieldMods}</FieldLabel>
                     <input className="cr-input" type="text"
                       value={(car.mods || []).join(', ')}
                       onChange={e => updateCar(idx, 'mods', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                      placeholder="e.g. Coilovers, Exhaust, Wheels — separate with commas"
+                      placeholder={t.modsPlaceholder}
                       maxLength={300}
                       style={inp} />
                   </div>
@@ -849,7 +896,7 @@ export default function ProfilePage() {
                     )}
                     <button type="button" onClick={() => photoUploadingIdx === null && triggerCarPhotoUpload(idx)}
                       style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '0.5rem 0.9rem', cursor: photoUploadingIdx === idx ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
-                      {photoUploadingIdx === idx ? 'Uploading…' : car.photo_url ? 'Change Photo' : 'Upload Photo'}
+                      {photoUploadingIdx === idx ? t.uploading : car.photo_url ? t.changePhoto : t.uploadPhoto}
                     </button>
                     {photoErrors[idx] && <span style={{ fontSize: '11px', color: '#93333E' }}>{photoErrors[idx]}</span>}
                   </div>
@@ -860,7 +907,7 @@ export default function ProfilePage() {
                 <button type="button" onClick={addCar}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#3B6B2F', background: 'none', border: '0.5px solid rgba(59,107,47,0.35)', padding: '0.55rem 1.1rem', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.5rem' }}>
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add Car
+                  {t.addCar}
                 </button>
               )}
 
@@ -870,11 +917,11 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', gap: '0.65rem', marginTop: '1.25rem' }}>
                 <button type="submit" disabled={saving}
                   style={{ padding: '0.9rem 2rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: saving ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: saving ? 0.6 : 1 }}>
-                  {saving ? 'Saving…' : 'Save Changes'}
+                  {saving ? t.saving : t.saveChanges}
                 </button>
                 <button type="button" onClick={cancelEditing} disabled={saving}
                   style={{ padding: '0.9rem 1.5rem', background: 'none', color: '#888', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif' }}>
-                  Cancel
+                  {t.cancel}
                 </button>
               </div>
             </form>
@@ -894,7 +941,7 @@ export default function ProfilePage() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
-                <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>Change Password</span>
+                <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>{t.changePassword}</span>
               </div>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 style={{ transform: pwOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
@@ -905,12 +952,12 @@ export default function ProfilePage() {
             {pwOpen && (
               <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)', padding: '1.4rem 1.25rem', background: 'rgba(250,250,248,0.8)' }}>
                 <form onSubmit={savePassword}>
-                  <Field label="Current Password">
+                  <Field label={t.currentPassword}>
                     <input className="cr-input" type="password" value={pwForm.currentPassword}
                       onChange={e => setPwForm(p => ({ ...p, currentPassword: e.target.value }))}
                       autoComplete="current-password" style={inp} />
                   </Field>
-                  <Field label="New Password">
+                  <Field label={t.newPassword}>
                     <input className="cr-input" type="password" value={pwForm.password}
                       onChange={e => setPwForm(p => ({ ...p, password: e.target.value }))}
                       minLength={8} autoComplete="new-password" style={inp} />
@@ -925,7 +972,7 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   )}
-                  <Field label="Confirm Password">
+                  <Field label={t.confirmPassword}>
                     <input className="cr-input" type="password" value={pwForm.confirm}
                       onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
                       minLength={8} autoComplete="new-password" style={inp} />
@@ -934,14 +981,65 @@ export default function ProfilePage() {
                   {savedPw && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#3B6B2F', marginBottom: '0.75rem' }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      Password updated.
+                      {t.passwordUpdated}
                     </div>
                   )}
                   <button type="submit" disabled={savingPw}
                     style={{ padding: '0.85rem 1.75rem', background: '#45643c', color: '#F5F1EC', border: 'none', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: savingPw ? 'wait' : 'pointer', fontFamily: 'var(--font-inter), sans-serif', opacity: savingPw ? 0.6 : 1 }}>
-                    {savingPw ? 'Updating…' : 'Update Password'}
+                    {savingPw ? t.updating : t.updatePassword}
                   </button>
                 </form>
+              </div>
+            )}
+          </div>
+
+          {/* ── Settings (buried) — language toggle lives here, not in the
+              main profile view, per the "only discoverable if you go looking"
+              requirement. Mirrors the Change Password card's collapse pattern. ── */}
+          <div style={{ border: '0.5px solid rgba(0,0,0,0.09)', overflow: 'hidden', background: '#fff', boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03)', marginTop: '0.85rem' }}>
+            <button
+              type="button"
+              className="pw-toggle"
+              onClick={() => { setSettingsOpen(o => !o); setLangError(null) }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.25rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter), sans-serif', textAlign: 'left', transition: 'background 0.1s' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555' }}>{t.settings}</span>
+              </div>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transform: settingsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {settingsOpen && (
+              <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)', padding: '1.4rem 1.25rem', background: 'rgba(250,250,248,0.8)' }}>
+                <FieldLabel>{t.language}</FieldLabel>
+                <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5, marginBottom: '0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>{t.languageDescription}</div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {[['en', t.english], ['fr', t.french]].map(([code, label]) => (
+                    <button key={code} type="button" disabled={savingLang}
+                      onClick={() => saveLanguage(code)}
+                      style={{
+                        padding: '0.6rem 1.25rem', fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif',
+                        background: lang === code ? '#45643c' : '#fff', color: lang === code ? '#F5F1EC' : '#555',
+                        border: `0.5px solid ${lang === code ? '#45643c' : 'rgba(0,0,0,0.16)'}`,
+                        cursor: savingLang ? 'wait' : 'pointer', opacity: savingLang ? 0.7 : 1,
+                      }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {langError && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.75rem' }}>{langError}</div>}
+                {savedLang && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#3B6B2F', marginTop: '0.75rem' }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    {t.languageSaved}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -3,10 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import JSZip from 'jszip'
 import FadeUp from './FadeUp'
 import { onImgError } from '../lib/imgFallback'
+import { membersPhotosT } from '../lib/i18n/membersPhotos'
 
-function formatDate(d) {
+function formatDate(d, lang) {
   if (!d) return null
-  return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+  return new Date(d + 'T12:00:00').toLocaleDateString(lang === 'fr' ? 'fr-CA' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 function downloadName(album, idx, url) {
@@ -15,7 +16,7 @@ function downloadName(album, idx, url) {
   return `${slug}-${idx + 1}.${ext}`
 }
 
-export default function MembersGallery({ albums }) {
+export default function MembersGallery({ albums, lang = 'en' }) {
   // lightbox: { albumIdx, photoIdx } or null
   const [lightbox, setLightbox] = useState(null)
   // { albumIdx, done, total, failed } or null — one zip download at a time
@@ -23,6 +24,7 @@ export default function MembersGallery({ albums }) {
   // { albumIdx, failed, total } or null — set after a zip finishes with skipped photos
   const [zipResult, setZipResult] = useState(null)
   const touchStartX = useRef(null)
+  const t = membersPhotosT[lang]
 
   const close = useCallback(() => setLightbox(null), [])
   const step = useCallback(dir => {
@@ -159,7 +161,7 @@ export default function MembersGallery({ albums }) {
                     {album.name}
                   </h2>
                   <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-inter), sans-serif' }}>
-                    {formatDate(album.date) ? `${formatDate(album.date)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? 'photo' : 'photos'}{album.note ? ` · ${album.note}` : ''}
+                    {formatDate(album.date, lang) ? `${formatDate(album.date, lang)} · ` : ''}{album.photos.length} {album.photos.length === 1 ? t.photo : t.photos}{album.note ? ` · ${album.note}` : ''}
                   </div>
                 </div>
                 {album.photos.length > 0 && (
@@ -173,11 +175,11 @@ export default function MembersGallery({ albums }) {
                       fontFamily: 'var(--font-inter), sans-serif',
                     }}>
                     {isZippingThis ? (
-                      <>Zipping {zipping.done}/{zipping.total}…</>
+                      <>{t.zipping(zipping.done, zipping.total)}</>
                     ) : (
                       <>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download all
+                        {t.downloadAll}
                       </>
                     )}
                   </button>
@@ -185,7 +187,7 @@ export default function MembersGallery({ albums }) {
               </div>
               {zipResult?.albumIdx === ai && (
                 <div style={{ fontSize: '10.5px', color: '#93333E', textAlign: 'right', marginBottom: '0.75rem' }}>
-                  {zipResult.failed} of {zipResult.total} photo{zipResult.total === 1 ? '' : 's'} couldn't be included in the zip — try downloading {zipResult.failed === 1 ? 'it' : 'them'} individually.
+                  {t.zipFailed(zipResult.failed, zipResult.total, zipResult.total === 1 ? '' : 's')}
                 </div>
               )}
               <div className="mg-grid">
@@ -223,7 +225,7 @@ export default function MembersGallery({ albums }) {
             padding: 'calc(1rem + env(safe-area-inset-top)) 1rem calc(1.5rem + env(safe-area-inset-bottom))',
             animation: 'mg-lb-in 0.25s ease both',
           }}>
-          <button type="button" onClick={close} aria-label="Close"
+          <button type="button" onClick={close} aria-label={t.close}
             style={{
               position: 'absolute', top: 'calc(0.75rem + env(safe-area-inset-top))', right: '0.9rem',
               background: 'none', border: 'none', cursor: 'pointer', zIndex: 2,
@@ -236,9 +238,9 @@ export default function MembersGallery({ albums }) {
           {current.photos.length > 1 && (
             <>
               <button type="button" className="mg-lb-nav" style={{ left: 'max(0.25rem, env(safe-area-inset-left))', zIndex: 2 }}
-                onClick={e => { e.stopPropagation(); step(-1) }} aria-label="Previous photo">‹</button>
+                onClick={e => { e.stopPropagation(); step(-1) }} aria-label={t.previousPhoto}>‹</button>
               <button type="button" className="mg-lb-nav" style={{ right: 'max(0.25rem, env(safe-area-inset-right))', zIndex: 2 }}
-                onClick={e => { e.stopPropagation(); step(1) }} aria-label="Next photo">›</button>
+                onClick={e => { e.stopPropagation(); step(1) }} aria-label={t.nextPhoto}>›</button>
             </>
           )}
 
@@ -260,7 +262,7 @@ export default function MembersGallery({ albums }) {
             )}
             {currentPhoto.tags?.length > 0 && (
               <div style={{ fontSize: '11px', color: 'rgba(197,168,130,0.75)', letterSpacing: '0.02em', marginBottom: '0.4rem' }}>
-                Featuring {currentPhoto.tags.join(', ')}
+                {t.featuring(currentPhoto.tags.join(', '))}
               </div>
             )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
@@ -279,7 +281,7 @@ export default function MembersGallery({ albums }) {
                   WebkitTapHighlightColor: 'transparent',
                 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download
+                {t.download}
               </a>
             </div>
           </div>

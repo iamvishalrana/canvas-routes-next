@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import FadeUp from './FadeUp'
+import { membersEventsT } from '../lib/i18n/membersEvents'
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -38,7 +39,7 @@ function DateBlock({ rawDate }) {
   return <div style={{ fontSize: '10px', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>{rawDate}</div>
 }
 
-function EventCard({ ev, isRegistered, isPast, isAttended, onClick }) {
+function EventCard({ ev, isRegistered, isPast, isAttended, onClick, t }) {
   const rawDate = ev.date_display || ev.date || ''
   return (
     <div
@@ -72,17 +73,17 @@ function EventCard({ ev, isRegistered, isPast, isAttended, onClick }) {
             {isAttended && (
               <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                Attended
+                {t.attended}
               </span>
             )}
             {!isPast && isRegistered && (
               <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                Registered
+                {t.registered}
               </span>
             )}
             <span style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter), sans-serif', marginLeft: 'auto' }}>
-              View details →
+              {t.viewDetails}
             </span>
           </div>
         </div>
@@ -91,8 +92,9 @@ function EventCard({ ev, isRegistered, isPast, isAttended, onClick }) {
   )
 }
 
-export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames = [], paidRoadTripEventName = null }) {
+export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames = [], paidRoadTripEventName = null, lang = 'en' }) {
   const router = useRouter()
+  const t = membersEventsT[lang]
 
   function isAttendedEvent(ev) {
     const evLower = (ev.name || '').toLowerCase()
@@ -109,12 +111,12 @@ export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames
   return (
     <>
       {upcoming.length === 0 && past.length === 0 && (
-        <p style={{ fontSize: '13px', color: '#ccc', lineHeight: 1.7 }}>No events scheduled yet — check back soon.</p>
+        <p style={{ fontSize: '13px', color: '#ccc', lineHeight: 1.7 }}>{t.noEvents}</p>
       )}
 
       {upcoming.length > 0 && (
         <section style={{ marginBottom: '3.5rem' }}>
-          <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>Upcoming</div>
+          <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>{t.upcoming}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {upcoming.map((ev, i) => (
               <FadeUp key={ev.id} delay={i * 70}>
@@ -122,6 +124,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames
                   ev={ev}
                   isRegistered={isRegisteredForEvent(ev)}
                   isPast={false}
+                  t={t}
                   onClick={() => {
                     // Events with a full registration URL go there directly — skip the detail page
                     if (ev.registration_url?.startsWith('http')) window.location.href = ev.registration_url
@@ -136,7 +139,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames
 
       {past.length > 0 && (
         <section>
-          <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>Past</div>
+          <div style={{ fontSize: '8px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>{t.past}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', opacity: 0.6 }}>
             {past.map((ev, i) => (
               <FadeUp key={ev.id} delay={i * 60}>
@@ -145,6 +148,7 @@ export default function EventsGrid({ upcoming, past, regMap, tier, attendedNames
                   isRegistered={isRegisteredForEvent(ev)}
                   isPast={true}
                   isAttended={isAttendedEvent(ev)}
+                  t={t}
                   onClick={() => router.push(`/members/events/${ev.id}`)}
                 />
               </FadeUp>

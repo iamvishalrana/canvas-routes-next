@@ -1,8 +1,12 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '../lib/i18n/LanguageContext'
+import { membersEventsT } from '../lib/i18n/membersEvents'
 
 function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCancel }) {
+  const { lang } = useLanguage()
+  const t = membersEventsT[lang]
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape' && !loading) onCancel() }
     window.addEventListener('keydown', onKey)
@@ -24,13 +28,13 @@ function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCanc
         maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
       }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.75rem' }}>
-          Confirm Registration
+          {t.confirmRegistration}
         </div>
         <p style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#0F1E14', lineHeight: 1.25, marginBottom: '0.6rem' }}>
-          Register for <strong style={{ fontWeight: '400' }}>{eventName}</strong>?
+          {t.registerForQuestion(eventName)}
         </p>
         <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.7, fontFamily: 'var(--font-inter), sans-serif', marginBottom: '1.5rem' }}>
-          We&apos;ll use your profile information — no form needed.
+          {t.useProfileInfo}
         </p>
         {error && <p style={{ fontSize: '12px', color: '#93333E', marginBottom: '0.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>{error}</p>}
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -44,7 +48,7 @@ function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCanc
               cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.65 : 1,
             }}
           >
-            {loading ? 'Registering…' : 'Yes, register me'}
+            {loading ? t.registering : t.yesRegisterMe}
           </button>
           <button
             onClick={onCancel}
@@ -56,7 +60,7 @@ function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCanc
               cursor: 'pointer',
             }}
           >
-            Cancel
+            {t.cancel}
           </button>
         </div>
       </div>
@@ -65,6 +69,8 @@ function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCanc
 }
 
 function RegistrationConfirmPopup({ eventName, onClose }) {
+  const { lang } = useLanguage()
+  const t = membersEventsT[lang]
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -92,13 +98,13 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
           </div>
         </div>
         <div style={{ fontSize: '8px', letterSpacing: '0.32em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.75rem' }}>
-          You&apos;re registered
+          {t.youreRegistered}
         </div>
         <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.4rem, 4vw, 1.9rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, margin: '0 0 1.75rem', letterSpacing: '-0.01em' }}>
           {eventName}
         </h2>
         <p style={{ fontSize: '12px', color: 'rgba(245,241,236,0.55)', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, marginBottom: '2rem' }}>
-          A confirmation email is on its way. We&apos;ll see you there.
+          {t.confirmationEmailBody}
         </p>
         <button
           onClick={onClose}
@@ -110,7 +116,7 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
             cursor: 'pointer',
           }}
         >
-          Close
+          {t.close}
         </button>
       </div>
     </div>
@@ -119,6 +125,8 @@ function RegistrationConfirmPopup({ eventName, onClose }) {
 
 export default function EventFreeRegister({ eventId, eventName, initiallyRegistered }) {
   const router = useRouter()
+  const { lang } = useLanguage()
+  const t = membersEventsT[lang]
   const [state, setState] = useState(initiallyRegistered ? 'done' : 'idle')
   const [error, setError] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -132,11 +140,11 @@ export default function EventFreeRegister({ eventId, eventName, initiallyRegiste
     try {
       const res = await fetch(`/api/member/events/${eventId}/free-register`, { method: 'POST' })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setError(data.error || 'Registration failed. Please try again.'); setState('confirm'); return }
+      if (!res.ok) { setError(data.error || t.registrationFailed); setState('confirm'); return }
       setState('done')
       setShowConfirm(true)
     } catch {
-      setError('Network error — please try again.')
+      setError(t.networkError)
       setState('confirm')
     }
   }
@@ -157,7 +165,7 @@ export default function EventFreeRegister({ eventId, eventName, initiallyRegiste
           fontFamily: 'var(--font-inter), sans-serif',
         }}>
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Registered
+          {t.registered}
         </span>
         {showConfirm && <RegistrationConfirmPopup eventName={eventName} onClose={handleClose} />}
       </>
@@ -176,7 +184,7 @@ export default function EventFreeRegister({ eventId, eventName, initiallyRegiste
           marginBottom: '2rem',
         }}
       >
-        Register
+        {t.register}
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </button>
 

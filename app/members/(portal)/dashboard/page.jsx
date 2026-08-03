@@ -8,6 +8,7 @@ import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 import FadeUp from '../../../../components/FadeUp'
 import CountUp from '../../../../components/CountUp'
 import { formatForDisplay } from '../../../../lib/memberNumber.js'
+import { membersDashboardT } from '../../../../lib/i18n/membersDashboard'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Dashboard | Canvas Routes' } }
@@ -96,6 +97,9 @@ export default async function DashboardPage() {
     ? (ROAD_TRIP_TYPE_TO_NAME[application.stripe_payment_type] || null)
     : null
 
+  const lang = member?.language === 'fr' ? 'fr' : 'en'
+  const t = membersDashboardT[lang]
+
   const status = member?.membership_status || 'pending'
   const statusStyle = STATUS_COLORS[status] || STATUS_COLORS.pending
   const statusDot = STATUS_CARD_DOT[status] || STATUS_CARD_DOT.pending
@@ -163,11 +167,11 @@ export default async function DashboardPage() {
   // Profile completeness nudge — only counts fields a member can fill themselves
   const missingProfileFields = []
   if (member) {
-    if (!member.phone) missingProfileFields.push('phone number')
-    if (!member.instagram) missingProfileFields.push('Instagram')
-    if (!member.dob_month) missingProfileFields.push('date of birth')
-    if (!carList.length) missingProfileFields.push('car details')
-    if (!carPhotoUrl) missingProfileFields.push('car photo')
+    if (!member.phone) missingProfileFields.push(t.missingFieldPhone)
+    if (!member.instagram) missingProfileFields.push(t.missingFieldInstagram)
+    if (!member.dob_month) missingProfileFields.push(t.missingFieldDob)
+    if (!carList.length) missingProfileFields.push(t.missingFieldCar)
+    if (!carPhotoUrl) missingProfileFields.push(t.missingFieldCarPhoto)
   }
 
   // Prefer the precise `date` field — date_display ("July 2026") parses to
@@ -295,19 +299,19 @@ export default async function DashboardPage() {
       {/* ── Header ── */}
       <header className="dash-header dash-anim-header" style={{ marginBottom: '3.5rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-          Canvas Routes &mdash; Season 2026
+          {t.seasonEyebrow}
         </div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.8rem, 6vw, 4rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
-          Welcome back,<br />
+          {t.welcomeBack}<br />
           <span style={{ fontStyle: 'italic' }}>{firstName}.</span>
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.38rem 1rem', border: `0.5px solid ${statusStyle.border}`, background: statusStyle.bg, color: statusStyle.text, fontFamily: 'var(--font-inter), sans-serif' }}>
             <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: statusStyle.text, flexShrink: 0 }} />
-            {status}
+            {t.statusLabel[status] || status}
           </span>
           <span className="tier-shimmer" style={{ fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.38rem 1rem', border: isInnerCircle ? '0.5px solid rgba(197,168,130,0.55)' : '0.5px solid rgba(197,168,130,0.28)', background: isInnerCircle ? 'rgba(197,168,130,0.09)' : 'transparent', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>
-            {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
+            {isInnerCircle ? t.innerCircle : t.routesMember}
           </span>
           {primaryCar && (
             <span style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.04em', paddingLeft: '0.6rem', borderLeft: '0.5px solid rgba(0,0,0,0.12)' }}>
@@ -331,13 +335,13 @@ export default async function DashboardPage() {
                 <div style={{ position: 'relative', padding: '1.5rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-                      Registration Open
+                      {t.registrationOpen}
                     </div>
                     <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.5rem', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.2 }}>{r.name}</div>
                     <div style={{ fontSize: '12px', color: 'rgba(245,241,236,0.6)', marginTop: '0.3rem', fontFamily: 'var(--font-inter), sans-serif' }}>{r.destination} · {r.month_label}</div>
                   </div>
                   <span style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#0F1E14', background: '#F5F1EC', padding: '0.65rem 1.4rem', flexShrink: 0, fontWeight: '600', fontFamily: 'var(--font-inter), sans-serif', whiteSpace: 'nowrap' }}>
-                    Register Now →
+                    {t.registerNow}
                   </span>
                 </div>
               </Link>
@@ -352,10 +356,10 @@ export default async function DashboardPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem', background: 'rgba(197,168,130,0.06)', border: '0.5px solid rgba(197,168,130,0.3)', borderLeft: '2px solid #c5a882', flexWrap: 'wrap' }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <span style={{ fontSize: '12px', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6, flex: 1, minWidth: '200px' }}>
-                Complete your profile — add your {missingProfileFields.slice(0, 3).join(', ')}{missingProfileFields.length > 3 ? ` and ${missingProfileFields.length - 3} more` : ''}.
+                {t.completeProfile(missingProfileFields.slice(0, 3).join(', '), missingProfileFields.length > 3 ? missingProfileFields.length - 3 : 0)}
               </span>
               <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter), sans-serif', whiteSpace: 'nowrap' }}>
-                Update →
+                {t.update}
               </span>
             </div>
           </Link>
@@ -371,7 +375,7 @@ export default async function DashboardPage() {
           {announcements?.length > 0 && (
             <FadeUp delay={60}><div className="dash-card">
               <div className="card-head">
-                <span className="section-label">Announcements</span>
+                <span className="section-label">{t.announcements}</span>
                 <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.1rem', fontWeight: '400', color: '#ddd', lineHeight: 1, letterSpacing: '0.03em' }}>{announcements.length}</span>
               </div>
               <div className="card-pad">
@@ -396,15 +400,15 @@ export default async function DashboardPage() {
           {/* Upcoming Events */}
           <FadeUp delay={120}><div className="dash-card">
             <div className="card-head">
-              <span className="section-label">Upcoming Meets &amp; Events</span>
+              <span className="section-label">{t.upcomingEvents}</span>
               <Link href="/members/events" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                View all
+                {t.viewAll}
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </Link>
             </div>
             <div className="card-pad">
               {!upcomingEvents.length ? (
-                <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>No upcoming meets &amp; events yet.</p>
+                <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>{t.noUpcomingEvents}</p>
               ) : upcomingEvents.map((ev, i) => {
                 const rawDate = ev.date_display || ev.date || ''
                 const ds = rawDate.trim()
@@ -463,19 +467,19 @@ export default async function DashboardPage() {
                           : (paidRoadTripEventName === ev.name || ['free', 'paid'].includes(eventRegMap[ev.id])) ? (
                           <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                             <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            Registered
+                            {t.registered}
                           </span>
                         ) : ev.registration_opens_at && (() => { const now = new Date(); const opens = new Date(ev.registration_opens_at); const closes = ev.registration_closes_at ? new Date(ev.registration_closes_at) : null; return now >= opens && (!closes || now <= closes) })() ? (
                           <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#555', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 8px', fontFamily: 'var(--font-inter), sans-serif' }}>
-                            Registration Open →
+                            {t.registrationOpenArrow}
                           </span>
                         ) : ev.registration_url ? (
                           <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#555', border: '0.5px solid rgba(0,0,0,0.15)', padding: '2px 8px', fontFamily: 'var(--font-inter), sans-serif' }}>
-                            Register →
+                            {t.registerArrow}
                           </span>
                         ) : ev.registration_enabled ? (
                           <span style={{ fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px', fontFamily: 'var(--font-inter), sans-serif', background: 'rgba(197,168,130,0.04)' }}>
-                            Opening Soon
+                            {t.openingSoon}
                           </span>
                         ) : null}
                       </div>
@@ -490,15 +494,15 @@ export default async function DashboardPage() {
               calendar above (gold left edge marks it as a different kind of listing) */}
           <FadeUp delay={160}><div className="dash-card" style={{ borderLeft: '3px solid #c5a882' }}>
             <div className="card-head">
-              <span className="section-label">Routes</span>
+              <span className="section-label">{t.routes}</span>
               <Link href="/members/routes" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                View all
+                {t.viewAll}
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </Link>
             </div>
             <div className="card-pad">
               {!upcomingRoutes.length ? (
-                <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>No upcoming routes right now — check back soon.</p>
+                <p style={{ fontSize: '13px', color: '#ccc', margin: '1.5rem 0', letterSpacing: '0.02em', lineHeight: 1.7 }}>{t.noUpcomingRoutes}</p>
               ) : upcomingRoutes.map((r, i) => {
                 const pct = Math.min(100, Math.round((r.interested_count / r.target_count) * 100))
                 return (
@@ -509,15 +513,15 @@ export default async function DashboardPage() {
                         <div style={{ fontSize: '11px', color: '#999', marginTop: '0.15rem' }}>{r.destination} · {r.month_label}</div>
                       </div>
                       {r.registered ? (
-                        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', flexShrink: 0, whiteSpace: 'nowrap' }}>You're In</span>
+                        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', flexShrink: 0, whiteSpace: 'nowrap' }}>{t.youreIn}</span>
                       ) : (
-                        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px', background: 'rgba(197,168,130,0.04)', fontFamily: 'var(--font-inter), sans-serif', flexShrink: 0, whiteSpace: 'nowrap' }}>Add Your Name</span>
+                        <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 8px', background: 'rgba(197,168,130,0.04)', fontFamily: 'var(--font-inter), sans-serif', flexShrink: 0, whiteSpace: 'nowrap' }}>{t.addYourName}</span>
                       )}
                     </div>
                     <div style={{ height: '3px', background: 'rgba(0,0,0,0.05)', borderRadius: '99px', overflow: 'hidden', marginTop: '0.5rem' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#c5a882,#e8c99a)' }} />
                     </div>
-                    <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>{r.interested_count} / {r.target_count} drivers in</div>
+                    <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>{t.driversIn(r.interested_count, r.target_count)}</div>
                   </Link>
                 )
               })}
@@ -542,14 +546,14 @@ export default async function DashboardPage() {
               {/* Card header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.75rem' }}>
                 <div>
-                  <div style={{ fontSize: '7.5px', letterSpacing: '0.44em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>Canvas Routes</div>
+                  <div style={{ fontSize: '7.5px', letterSpacing: '0.44em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif' }}>{t.canvasRoutes}</div>
                   {member?.membership_number && (
-                    <div style={{ fontSize: '7px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '5px' }}>No. <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '0.95rem', fontWeight: '400', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.1em', fontStyle: 'normal' }}><CountUp to={member.membership_number} pad={3} prefix="#" duration={800} /></span></div>
+                    <div style={{ fontSize: '7px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '5px' }}>{t.memberNo} <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '0.95rem', fontWeight: '400', color: 'rgba(197,168,130,0.72)', letterSpacing: '0.1em', fontStyle: 'normal' }}><CountUp to={member.membership_number} pad={3} prefix="#" duration={800} /></span></div>
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '6.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter), sans-serif' }}>Season</div>
-                  <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.15rem', fontWeight: '300', fontStyle: 'italic', color: 'rgba(197,168,130,0.72)', lineHeight: 1.1, marginTop: '2px' }}>2026</div>
+                  <div style={{ fontSize: '6.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.4)', fontFamily: 'var(--font-inter), sans-serif' }}>{t.season}</div>
+                  <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.15rem', fontWeight: '300', fontStyle: 'italic', color: 'rgba(197,168,130,0.72)', lineHeight: 1.1, marginTop: '2px' }}>{t.seasonYear}</div>
                 </div>
               </div>
 
@@ -586,10 +590,10 @@ export default async function DashboardPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusDot, boxShadow: `0 0 7px ${statusDot}55` }} />
-                  <span style={{ fontSize: '7.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.38)', fontFamily: 'var(--font-inter), sans-serif' }}>{status}</span>
+                  <span style={{ fontSize: '7.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.38)', fontFamily: 'var(--font-inter), sans-serif' }}>{t.statusLabel[status] || status}</span>
                 </div>
                 <span className="tier-shimmer" style={{ fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: isInnerCircle ? 'rgba(197,168,130,0.58)' : 'rgba(197,168,130,0.32)', fontFamily: 'var(--font-inter), sans-serif' }}>
-                  {isInnerCircle ? 'Inner Circle' : 'Routes Member'}
+                  {isInnerCircle ? t.innerCircle : t.routesMember}
                 </span>
               </div>
             </div>
@@ -625,7 +629,7 @@ export default async function DashboardPage() {
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
-              <span style={{ fontSize: '8.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#999' }}>Edit Profile</span>
+              <span style={{ fontSize: '8.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#999' }}>{t.editProfile}</span>
             </div>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
@@ -634,7 +638,7 @@ export default async function DashboardPage() {
           {attendedEvents.length > 0 && (
             <FadeUp delay={80}><div className="dash-card">
               <div className="card-head">
-                <span className="section-label">Events Attended</span>
+                <span className="section-label">{t.eventsAttended}</span>
                 <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.5rem', fontWeight: '400', color: '#c5a882', lineHeight: 1, letterSpacing: '0.03em' }}>{attendedEvents.length}</span>
               </div>
               <div className="card-pad">
@@ -651,12 +655,12 @@ export default async function DashboardPage() {
           {/* Personal details */}
           {(dob || member?.phone || member?.instagram) && (
             <FadeUp delay={120}><div className="dash-card">
-              <div className="card-head"><span className="section-label">Your Details</span></div>
+              <div className="card-head"><span className="section-label">{t.yourDetails}</span></div>
               <div style={{ padding: '0.25rem 1.75rem 0.5rem' }}>
                 {[
-                  dob && { label: 'Birthday', value: dob, href: null },
-                  member?.phone && { label: 'Phone', value: member.phone, href: null },
-                  member?.instagram && { label: 'Instagram', value: `@${member.instagram.replace(/^@/, '')}`, href: `https://instagram.com/${member.instagram.replace(/^@/, '')}` },
+                  dob && { label: t.birthday, value: dob, href: null },
+                  member?.phone && { label: t.phone, value: member.phone, href: null },
+                  member?.instagram && { label: t.instagram, value: `@${member.instagram.replace(/^@/, '')}`, href: `https://instagram.com/${member.instagram.replace(/^@/, '')}` },
                 ].filter(Boolean).map((item) => (
                   <div key={item.label} className="detail-row">
                     <span style={{ fontSize: '8.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>{item.label}</span>
@@ -674,9 +678,9 @@ export default async function DashboardPage() {
           {/* Partner Discounts */}
           <FadeUp delay={160}><div className="dash-card">
             <div className="card-head">
-              <span className="section-label">Partner Perks</span>
+              <span className="section-label">{t.partnerPerks}</span>
               <Link href="/members/perks" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c5a882', textDecoration: 'none', fontFamily: 'var(--font-inter), sans-serif' }}>
-                View all
+                {t.viewAll}
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </Link>
             </div>

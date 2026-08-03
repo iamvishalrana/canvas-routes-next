@@ -2,6 +2,7 @@ import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import EventsGrid from '../../../../components/EventsGrid'
+import { membersEventsT } from '../../../../lib/i18n/membersEvents'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Meets & Events | Canvas Routes' } }
@@ -30,9 +31,12 @@ export default async function EventsPage() {
   const [{ data: events }, { data: registrations }, { data: member }, { data: application }] = await Promise.all([
     admin.from('events').select('*').order('date', { ascending: true }).limit(50),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
-    admin.from('members').select('tier, name').eq('id', user.id).maybeSingle(),
+    admin.from('members').select('tier, name, language').eq('id', user.id).maybeSingle(),
     admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle(),
   ])
+
+  const lang = member?.language === 'fr' ? 'fr' : 'en'
+  const t = membersEventsT[lang]
 
   const regMap = {}
   for (const r of (registrations || [])) regMap[r.event_id] = r.stripe_payment_status
@@ -84,14 +88,14 @@ export default async function EventsPage() {
     <div>
       <header style={{ marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-          Canvas Routes &mdash; Season 2026
+          {t.seasonEyebrow}
         </div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.4rem, 5vw, 3.4rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: 0, letterSpacing: '-0.01em' }}>
-          Meets &amp; Events
+          {t.title}
         </h1>
       </header>
 
-      <EventsGrid upcoming={upcoming} past={past} regMap={regMap} tier={tier} attendedNames={Array.from(attendedNames)} paidRoadTripEventName={paidRoadTripEventName} />
+      <EventsGrid upcoming={upcoming} past={past} regMap={regMap} tier={tier} attendedNames={Array.from(attendedNames)} paidRoadTripEventName={paidRoadTripEventName} lang={lang} />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { attendanceKey, attendanceKeyToEventName } from '../../../../lib/eventMeta'
 import MembersGalleryTabs from '../../../../components/MembersGalleryTabs'
 import FadeUp from '../../../../components/FadeUp'
+import { membersPhotosT } from '../../../../lib/i18n/membersPhotos'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Photos | Canvas Routes' } }
@@ -15,7 +16,7 @@ export default async function PhotosPage() {
 
   const admin = createAdminClient()
   const [{ data: member }, { data: eventPhotos }, { data: personalPhotos }, { data: tagRows }, { data: members }] = await Promise.all([
-    admin.from('members').select('event_attendance').eq('id', user.id).maybeSingle(),
+    admin.from('members').select('event_attendance, language').eq('id', user.id).maybeSingle(),
     admin.from('gallery_photos').select('id, album, album_date, caption, photo_url, original_url')
       .eq('category', 'event').order('created_at', { ascending: true }),
     admin.from('gallery_photos').select('id, caption, photo_url, original_url')
@@ -23,6 +24,9 @@ export default async function PhotosPage() {
     admin.from('gallery_photo_tags').select('photo_id, member_id'),
     admin.from('members').select('id, name'),
   ])
+
+  const lang = member?.language === 'fr' ? 'fr' : 'en'
+  const tt = membersPhotosT[lang]
 
   // Event albums are only shown to members confirmed as attendees — the same
   // members.event_attendance flag the admin panel already maintains post-event.
@@ -47,7 +51,7 @@ export default async function PhotosPage() {
   const eventAlbums = [...map.values()].sort((x, y) => (y.date || '0000').localeCompare(x.date || '0000'))
 
   const personalAlbum = {
-    name: 'My Car & Personal',
+    name: tt.myCarAndPersonal,
     date: null,
     photos: (personalPhotos || []).map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })),
   }
@@ -69,22 +73,22 @@ export default async function PhotosPage() {
     <div>
       <FadeUp delay={0}>
         <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-          Canvas Routes
+          {tt.eyebrow}
         </div>
       </FadeUp>
       <FadeUp delay={80}>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.6rem, 5.5vw, 3.6rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
-          Photos
+          {tt.title}
         </h1>
       </FadeUp>
       <FadeUp delay={160}>
         <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.8, maxWidth: '520px', margin: '0 0 3rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-          Event Photos from meets and drives you attended, plus your own private Car &amp; Personal folder.
+          {tt.subtitle}
         </p>
       </FadeUp>
 
       <FadeUp delay={220}>
-        <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} attendedEventNames={attendedEventNames} />
+        <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} attendedEventNames={attendedEventNames} lang={lang} />
       </FadeUp>
     </div>
   )

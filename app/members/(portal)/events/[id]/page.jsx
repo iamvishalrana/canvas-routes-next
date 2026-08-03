@@ -7,6 +7,7 @@ import EventFreeRegister from '../../../../../components/EventFreeRegister'
 import LocationMap from '../../../../../components/LocationMap'
 import AddToCalendar from '../../../../../components/AddToCalendar'
 import { MONTREAL_TZ } from '../../../../../lib/mtlTime'
+import { membersEventsT } from '../../../../../lib/i18n/membersEvents'
 
 const OUR_DOMAIN = 'canvasroutes.com'
 function isInternalUrl(url) {
@@ -39,10 +40,13 @@ export default async function EventDetailPage({ params }) {
   const [{ data: ev }, { data: registration }, { data: member }] = await Promise.all([
     admin.from('events').select('*').eq('id', id).single(),
     admin.from('event_registrations').select('stripe_payment_status').eq('event_id', id).eq('member_id', user.id).maybeSingle(),
-    admin.from('members').select('tier, name').eq('id', user.id).maybeSingle(),
+    admin.from('members').select('tier, name, language').eq('id', user.id).maybeSingle(),
   ])
 
   if (!ev) notFound()
+
+  const lang = member?.language === 'fr' ? 'fr' : 'en'
+  const t = membersEventsT[lang]
 
   const now = new Date()
 
@@ -85,7 +89,7 @@ export default async function EventDetailPage({ params }) {
       <div style={{ marginBottom: '1.5rem' }}>
         <Link href="/members/events" style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', textDecoration: 'none', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Events
+          {t.events}
         </Link>
       </div>
 
@@ -102,7 +106,7 @@ export default async function EventDetailPage({ params }) {
           {isRegistered && (
             <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 10px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
               <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Registered
+              {t.registered}
             </span>
           )}
         </div>
@@ -137,13 +141,13 @@ export default async function EventDetailPage({ params }) {
       {/* Past event — registration closed, link to the route page */}
       {isPast && ev.registration_url && !isMembersPortalUrl(ev.registration_url) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem', border: '0.5px solid rgba(0,0,0,0.09)', background: '#fafaf8', marginBottom: '2rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)' }}>Registration closed</span>
+          <span style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)' }}>{t.registrationClosed}</span>
           <span style={{ width: '1px', height: '14px', background: 'rgba(0,0,0,0.1)', flexShrink: 0 }} />
           <Link
             href={ev.registration_url}
             style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7B5B2E', fontFamily: 'var(--font-inter)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
           >
-            View route page
+            {t.viewRoutePage}
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
         </div>
@@ -157,7 +161,7 @@ export default async function EventDetailPage({ params }) {
           Cases 2 & 3 respect registration_enabled. */}
       {!isPast && ev.registration_url && isMembersPortalUrl(ev.registration_url) ? (
         <Link href={ev.registration_url} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#45643c', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', marginBottom: '2rem' }}>
-          Register
+          {t.register}
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </Link>
       ) : !isPast && ev.registration_url && ev.registration_enabled !== false && (
@@ -171,7 +175,7 @@ export default async function EventDetailPage({ params }) {
           />
         ) : (
           <a href={ev.registration_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#F5F1EC', background: '#45643c', padding: '0.8rem 2rem', textDecoration: 'none', fontFamily: 'var(--font-inter)', marginBottom: '2rem' }}>
-            Register
+            {t.register}
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         )
@@ -181,14 +185,14 @@ export default async function EventDetailPage({ params }) {
       {!isPast && !ev.registration_url && ev.registration_enabled !== false && ev.registration_opens_at && (
         <div className="ev-reg-card" style={{ border: '0.5px solid rgba(0,0,0,0.09)', padding: '1.75rem 2rem', background: '#fff', marginBottom: '2rem', boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#888', fontFamily: 'var(--font-inter)', marginBottom: '1.25rem' }}>
-            Registration
+            {t.registration}
           </div>
 
           <div style={{ display: 'flex', gap: '2.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
             <div>
-              <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.3rem' }}>Member Price</div>
+              <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.3rem' }}>{t.memberPrice}</div>
               <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '2rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>
-                {ev.member_price ? `$${(ev.member_price / 100).toFixed(2)}` : 'Free'}
+                {ev.member_price ? `$${(ev.member_price / 100).toFixed(2)}` : t.free}
               </div>
               {ev.member_price > 0 && (
                 <div style={{ fontSize: '8.5px', color: '#999', fontFamily: 'var(--font-inter)', marginTop: '0.2rem' }}>CAD</div>
@@ -196,7 +200,7 @@ export default async function EventDetailPage({ params }) {
             </div>
             {ev.capacity && (
               <div>
-                <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.3rem' }}>Capacity</div>
+                <div style={{ fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#bbb', fontFamily: 'var(--font-inter)', marginBottom: '0.3rem' }}>{t.capacity}</div>
                 <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', fontWeight: '400', color: '#1a1a1a', lineHeight: 1, letterSpacing: '0.03em' }}>{ev.capacity}</div>
               </div>
             )}
@@ -206,11 +210,11 @@ export default async function EventDetailPage({ params }) {
             <div style={{ marginBottom: '1.25rem', padding: '0.75rem 1rem', background: isInnerCircle ? 'rgba(197,168,130,0.06)' : 'rgba(0,0,0,0.03)', border: `0.5px solid ${isInnerCircle ? 'rgba(197,168,130,0.3)' : 'rgba(0,0,0,0.1)'}` }}>
               {isInnerCircle ? (
                 <p style={{ fontSize: '12px', color: '#8A6535', lineHeight: 1.6, margin: 0, fontFamily: 'var(--font-inter)' }}>
-                  You have priority access as an Inner Circle member. Registration opens to all members on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })}.
+                  {t.priorityInnerCircle(new Date(ev.priority_window_end).toLocaleString(lang === 'fr' ? 'fr-CA' : 'en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ }))}
                 </p>
               ) : (
                 <p style={{ fontSize: '12px', color: '#777', lineHeight: 1.6, margin: 0, fontFamily: 'var(--font-inter)' }}>
-                  Registration opens on {new Date(ev.priority_window_end).toLocaleString('en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ })}.
+                  {t.priorityGeneral(new Date(ev.priority_window_end).toLocaleString(lang === 'fr' ? 'fr-CA' : 'en-CA', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: MONTREAL_TZ }))}
                 </p>
               )}
             </div>
@@ -227,7 +231,7 @@ export default async function EventDetailPage({ params }) {
 
       {!isPast && !ev.registration_url && ev.registration_enabled !== false && !ev.registration_opens_at && (
         <div style={{ border: '0.5px solid rgba(197,168,130,0.3)', padding: '1.25rem 1.75rem', background: 'rgba(197,168,130,0.04)', marginBottom: '2rem' }}>
-          <span style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter)' }}>Registration Opening Soon</span>
+          <span style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#8A6535', fontFamily: 'var(--font-inter)' }}>{t.registrationOpeningSoon}</span>
         </div>
       )}
 

@@ -111,6 +111,12 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
               Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
             </span>
           )}
+          {/* Portal language — set by the member themselves under buried
+              Settings on their profile page; defaults to English. */}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.3)', padding: '2px 7px', borderRadius: '5px' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            {m.language === 'fr' ? 'Français' : 'English'}
+          </span>
         </div>
       )}
 

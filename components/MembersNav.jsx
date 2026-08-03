@@ -2,10 +2,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { membersNavT } from '../lib/i18n/membersNav'
 
-export default function MembersNav({ email, isAdmin, showPhotos }) {
+export default function MembersNav({ email, isAdmin, showPhotos, lang = 'en' }) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+  const t = membersNavT[lang]
 
   useEffect(() => {
     function onResize() { if (window.innerWidth > 640) setMenuOpen(false) }
@@ -53,13 +55,13 @@ export default function MembersNav({ email, isAdmin, showPhotos }) {
 
         {/* Desktop links */}
         <div className="members-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          {navLink('/members/dashboard', 'Dashboard')}
-          {navLink('/members/events', 'Meets & Events')}
-          {navLink('/members/routes', 'Routes')}
-          {navLink('/members/perks', 'Perks')}
-          {navLink('/members/profile', 'Profile')}
-          {navLink('/members/card', 'My Card')}
-          {showPhotos && navLink('/members/photos', 'Photos')}
+          {navLink('/members/dashboard', t.dashboard)}
+          {navLink('/members/events', t.events)}
+          {navLink('/members/routes', t.routes)}
+          {navLink('/members/perks', t.perks)}
+          {navLink('/members/profile', t.profile)}
+          {navLink('/members/card', t.card)}
+          {showPhotos && navLink('/members/photos', t.photos)}
           {isAdmin && (
             <Link href="/admin" style={{
               fontSize: '11px', letterSpacing: '0.13em', textTransform: 'uppercase',
@@ -68,7 +70,7 @@ export default function MembersNav({ email, isAdmin, showPhotos }) {
               borderBottom: `0.5px solid ${pathname.startsWith('/admin') ? 'rgba(197,168,130,0.55)' : 'transparent'}`,
               paddingBottom: '1px',
             }}>
-              Admin
+              {t.admin}
             </Link>
           )}
           <div style={{ width: '0.5px', height: '16px', background: 'rgba(197,168,130,0.2)' }} />
@@ -84,7 +86,7 @@ export default function MembersNav({ email, isAdmin, showPhotos }) {
             cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
             transition: 'border-color 0.15s, color 0.15s',
           }}>
-            Sign out
+            {t.signOut}
           </button>
         </div>
 
@@ -93,7 +95,7 @@ export default function MembersNav({ email, isAdmin, showPhotos }) {
           className="members-hamburger"
           onClick={() => setMenuOpen(o => !o)}
           style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', flexDirection: 'column', gap: '5px', position: 'relative', width: '28px', height: '28px', alignItems: 'center', justifyContent: 'center' }}
-          aria-label="Toggle menu"
+          aria-label={t.toggleMenu}
         >
           <span style={{ display: 'block', width: '20px', height: '1px', background: 'rgba(245,241,236,0.7)', position: 'absolute', transformOrigin: 'center', transition: 'transform 0.28s cubic-bezier(0.23,1,0.32,1), opacity 0.2s', transform: menuOpen ? 'rotate(45deg) translateY(0)' : 'translateY(-4px)' }} />
           <span style={{ display: 'block', width: '20px', height: '1px', background: 'rgba(245,241,236,0.7)', position: 'absolute', transformOrigin: 'center', transition: 'opacity 0.15s', opacity: menuOpen ? 0 : 1 }} />
@@ -124,17 +126,17 @@ export default function MembersNav({ email, isAdmin, showPhotos }) {
         pointerEvents: menuOpen ? 'auto' : 'none',
         transition: 'transform 0.32s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.25s ease',
       }}>
-        <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/dashboard' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Dashboard</Link>
-        <Link href="/members/events" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname.startsWith('/members/events') ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Meets &amp; Events</Link>
-        <Link href="/members/routes" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/routes' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Routes</Link>
-        <Link href="/members/perks" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/perks' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Perks</Link>
-        <Link href="/members/profile" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/profile' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Profile</Link>
-        <Link href="/members/card" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/card' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>My Card</Link>
-        {showPhotos && <Link href="/members/photos" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/photos' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>Photos</Link>}
-        {isAdmin && <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: 'rgba(197,168,130,0.7)', textDecoration: 'none' }}>Admin</Link>}
+        <Link href="/members/dashboard" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/dashboard' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>{t.dashboard}</Link>
+        <Link href="/members/events" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname.startsWith('/members/events') ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>{t.events}</Link>
+        <Link href="/members/routes" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/routes' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>{t.routes}</Link>
+        <Link href="/members/perks" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/perks' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>{t.perks}</Link>
+        <Link href="/members/profile" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/profile' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>{t.profile}</Link>
+        <Link href="/members/card" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/card' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>{t.card}</Link>
+        {showPhotos && <Link href="/members/photos" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: pathname === '/members/photos' ? '#c5a882' : 'rgba(245,241,236,0.6)', textDecoration: 'none' }}>{t.photos}</Link>}
+        {isAdmin && <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 0', color: 'rgba(197,168,130,0.7)', textDecoration: 'none' }}>{t.admin}</Link>}
         <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.12)' }} />
         {email && <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.3)', letterSpacing: '0.02em' }}>{email}</span>}
-        <button onClick={signOut} style={{ background: 'none', border: 'none', padding: '0.5rem 0', fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>Sign out</button>
+        <button onClick={signOut} style={{ background: 'none', border: 'none', padding: '0.5rem 0', fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.4)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}>{t.signOut}</button>
       </div>
 
       <style>{`

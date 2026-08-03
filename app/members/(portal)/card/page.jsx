@@ -5,6 +5,7 @@ import Link from 'next/link'
 import CardInteractive from './CardInteractive'
 import { formatCarLabel } from '../../../../lib/carLabel'
 import { formatForDisplay } from '../../../../lib/memberNumber.js'
+import { membersCardT } from '../../../../lib/i18n/membersCard'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Member Card | Canvas Routes' } }
@@ -21,7 +22,7 @@ export default async function CardPage() {
   const [{ data: member }, { data: application }] = await Promise.all([
     admin
       .from('members')
-      .select('id, name, tier, membership_status, membership_number, created_at, car_year, car_make, car_model, cars')
+      .select('id, name, tier, membership_status, membership_number, created_at, car_year, car_make, car_model, cars, language')
       .eq('id', user.id)
       .maybeSingle(),
     admin
@@ -33,7 +34,10 @@ export default async function CardPage() {
 
   if (!member) redirect('/members/dashboard')
 
-  const tierLabel = member.tier === 'inner_circle' ? 'Inner Circle' : 'Routes Member'
+  const lang = member.language === 'fr' ? 'fr' : 'en'
+  const t = membersCardT[lang]
+
+  const tierLabel = member.tier === 'inner_circle' ? t.innerCircle : t.routesMember
   const status = member.membership_status || 'pending'
   const isActive = status === 'active'
   const memberNumber = formatForDisplay(member.membership_number)
@@ -61,7 +65,7 @@ export default async function CardPage() {
       <div style={{ width: '100%', maxWidth: '396px', padding: '0 8px', marginBottom: '1.25rem' }}>
         <Link href="/members/dashboard" style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(139,109,71,0.65)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-          Dashboard
+          {t.dashboard}
         </Link>
       </div>
 
@@ -88,8 +92,8 @@ export default async function CardPage() {
         {/* Logo row — season is absolute so logo owns full width */}
         <div style={{ padding: 'clamp(1rem, 3.5vw, 1.25rem) clamp(1.25rem, 4vw, 1.75rem) 0.5rem', position: 'relative', zIndex: 1 }}>
           <div style={{ position: 'absolute', top: 'clamp(1rem, 3.5vw, 1.25rem)', right: 'clamp(1.25rem, 4vw, 1.75rem)', textAlign: 'right' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.15rem' }}>Season</div>
-            <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>2026</div>
+            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.15rem' }}>{t.season}</div>
+            <div style={{ fontSize: '18px', fontFamily: 'var(--font-cormorant),serif', fontWeight: '300', color: 'rgba(245,241,236,0.75)', letterSpacing: '0.04em' }}>{t.seasonYear}</div>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '162px', height: 'auto', opacity: 0.92, display: 'block' }} />
@@ -100,9 +104,9 @@ export default async function CardPage() {
 
           {/* Name + badges */}
           <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.3rem' }}>Member</div>
+            <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.5)', marginBottom: '0.3rem' }}>{t.member}</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem, 6vw, 2rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, marginBottom: '0.55rem' }}>
-              {member.name?.trim() || 'Canvas Routes Member'}
+              {member.name?.trim() || t.defaultName}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <span className="tier-shimmer" style={{
@@ -119,10 +123,10 @@ export default async function CardPage() {
               {isActive ? (
                 <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7EC87A', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#7EC87A', flexShrink: 0, display: 'inline-block' }} />
-                  Active
+                  {t.active}
                 </span>
               ) : (
-                <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#d06070' }}>{status}</span>
+                <span style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#d06070' }}>{t.statusLabel[status] || status}</span>
               )}
             </div>
           </div>
@@ -131,12 +135,12 @@ export default async function CardPage() {
           <div style={{ display: 'flex', gap: '2rem', marginBottom: carLine ? '1.1rem' : 0 }}>
             {memberNumber && (
               <div>
-                <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>No.</div>
+                <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>{t.memberNo}</div>
                 <div style={{ fontSize: '14px', color: 'rgba(245,241,236,0.65)', letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums' }}>#{memberNumber}</div>
               </div>
             )}
             <div>
-              <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>Member since</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>{t.memberSince}</div>
               <div style={{ fontSize: '14px', color: 'rgba(245,241,236,0.65)', letterSpacing: '0.04em' }}>{joinYear}</div>
             </div>
           </div>
@@ -144,7 +148,7 @@ export default async function CardPage() {
           {/* Car */}
           {carLine && (
             <div>
-              <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>Car</div>
+              <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.45)', marginBottom: '0.2rem' }}>{t.car}</div>
               <div style={{ fontSize: '14px', color: 'rgba(245,241,236,0.65)', letterSpacing: '0.02em' }}>{carLine}</div>
               {carPaint && (
                 <div style={{ fontSize: '12px', color: 'rgba(197,168,130,0.55)', letterSpacing: '0.02em', marginTop: '0.2rem' }}>{carPaint}</div>
@@ -171,7 +175,7 @@ export default async function CardPage() {
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: '11px', color: 'rgba(245,241,236,0.55)', lineHeight: '1.65', marginBottom: '0.35rem' }}>
-              Partners scan this code to verify your membership.
+              {t.verifyHint}
             </div>
             <div style={{ fontSize: '10px', color: 'rgba(197,168,130,0.45)', letterSpacing: '0.04em' }}>
               canvasroutes.com
@@ -184,7 +188,7 @@ export default async function CardPage() {
 
       {/* Home screen hint */}
       <p style={{ margin: '1.25rem 0 0', fontSize: '11px', color: 'rgba(0,0,0,0.3)', textAlign: 'center', maxWidth: '260px', lineHeight: '1.6' }}>
-        Add this page to your home screen for quick access. On iPhone, tap Share → Add to Home Screen.
+        {t.homeScreenHint}
       </p>
     </div>
   )

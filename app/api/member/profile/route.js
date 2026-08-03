@@ -7,10 +7,11 @@ export async function PATCH(request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json().catch(() => ({}))
-  const allowed = ['name', 'phone', 'instagram', 'instagram_opted_out', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars']
+  const allowed = ['name', 'phone', 'instagram', 'instagram_opted_out', 'car_year', 'car_make', 'car_model', 'dob_day', 'dob_month', 'dob_year', 'cars', 'language']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if ('name' in update && !update.name?.trim()) return Response.json({ error: 'Name cannot be empty.' }, { status: 400 })
+  if ('language' in update && !['en', 'fr'].includes(update.language)) return Response.json({ error: 'Invalid language.' }, { status: 400 })
 
   const admin = createAdminClient()
   const { error, count } = await admin.from('members').update({ ...update }, { count: 'exact' }).eq('id', user.id)

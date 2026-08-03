@@ -2,21 +2,16 @@
 import { useState } from 'react'
 import MembersGallery from './MembersGallery'
 import MemberPhotoUpload from './MemberPhotoUpload'
+import { membersPhotosT } from '../lib/i18n/membersPhotos'
 
-const EMPTY_COPY = {
-  event: {
-    title: 'Nothing here yet',
-    body: 'Photos from events you’ve attended will appear here once we post them. Check back soon.',
-  },
-  personal: {
-    title: 'No photos yet',
-    body: 'Your car and personal photos will appear here once we’ve added them — only you can see this folder.',
-  },
-}
-
-export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attendedEventNames = [] }) {
+export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attendedEventNames = [], lang = 'en' }) {
   const [tab, setTab] = useState('event')
   const albums = tab === 'event' ? eventAlbums : (personalAlbum.photos.length ? [personalAlbum] : [])
+  const t = membersPhotosT[lang]
+  const EMPTY_COPY = {
+    event: { title: t.eventEmptyTitle, body: t.eventEmptyBody },
+    personal: { title: t.personalEmptyTitle, body: t.personalEmptyBody },
+  }
   const copy = EMPTY_COPY[tab]
 
   return (
@@ -28,7 +23,7 @@ export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attende
       `}</style>
 
       <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '1rem' }}>
-        {[['event', 'Event Photos'], ['personal', 'My Car & Personal']].map(([key, label]) => (
+        {[['event', t.eventPhotos], ['personal', t.myCarAndPersonal]].map(([key, label]) => (
           <button key={key} type="button" className="mgt-tab-btn" onClick={() => setTab(key)}
             style={{
               padding: '0.6rem 1.2rem', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase',
@@ -45,11 +40,11 @@ export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attende
       {/* Keyed on tab so the fade-in replays every time the tab changes */}
       <div key={tab} className="mgt-tab-content">
         <div style={{ fontSize: '10.5px', color: '#bbb', marginBottom: '1.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-          To get a photo removed, please reach out to us at{' '}
+          {t.removeNotice}{' '}
           <a href="mailto:info@canvasroutes.com" style={{ color: '#bbb' }}>info@canvasroutes.com</a>.
         </div>
 
-        {tab === 'event' && <MemberPhotoUpload attendedEventNames={attendedEventNames} />}
+        {tab === 'event' && <MemberPhotoUpload attendedEventNames={attendedEventNames} lang={lang} />}
 
         {albums.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem 1.5rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-inter), sans-serif' }}>
@@ -61,7 +56,7 @@ export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attende
             </div>
           </div>
         ) : (
-          <MembersGallery albums={albums} />
+          <MembersGallery albums={albums} lang={lang} />
         )}
       </div>
     </div>

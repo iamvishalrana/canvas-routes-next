@@ -4,6 +4,7 @@ import { uploadToSupabaseStorage } from '../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded, isHeicFile } from '../lib/convertHeicIfNeeded'
 import { compressImageClient } from '../lib/compressImageClient'
 import { MIME_TO_EXT } from '../lib/allowedImageTypes'
+import { membersPhotosT } from '../lib/i18n/membersPhotos'
 
 const ALLOWED = MIME_TO_EXT
 const MAX_FILES = 20
@@ -20,13 +21,14 @@ const inp = {
 // admin publishes it from /admin/photos/submissions — see
 // app/api/member/gallery-submission/*/route.js and
 // supabase/migrations/20260810_gallery_photo_submissions.sql.
-export default function MemberPhotoUpload({ attendedEventNames }) {
+export default function MemberPhotoUpload({ attendedEventNames, lang = 'en' }) {
   const [open, setOpen] = useState(false)
   const [album, setAlbum] = useState(attendedEventNames[0] || '')
   const [caption, setCaption] = useState('')
   const [upload, setUpload] = useState(null) // { done, total, errors: [] }
   const [done, setDone] = useState(null) // { count, album } after a batch finishes
   const filesRef = useRef(null)
+  const t = membersPhotosT[lang]
 
   if (!attendedEventNames.length) return null
 
@@ -34,9 +36,9 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
     const rawAll = Array.from(e.target.files || [])
     const all = rawAll.slice(0, MAX_FILES)
     const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
-    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — unsupported format`)
+    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — ${t.unsupportedFormat}`)
     const truncated = rawAll.length - all.length
-    if (truncated > 0) skipped.push(`${truncated} more photo${truncated === 1 ? '' : 's'} skipped — up to ${MAX_FILES} per upload`)
+    if (truncated > 0) skipped.push(t.photosSkipped(truncated, truncated === 1 ? '' : 's', MAX_FILES))
     if (!rawAll.length) return
     setDone(null)
     setUpload({ done: 0, total: files.length, errors: skipped })
@@ -45,8 +47,8 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
       let file = files[i]
       try {
         file = await convertHeicIfNeeded(file)
-        if (!ALLOWED[file.type]) throw new Error('could not be converted — try exporting as JPEG first')
-        if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
+        if (!ALLOWED[file.type]) throw new Error(t.couldNotConvert)
+        if (file.size > 40 * 1024 * 1024) throw new Error(t.overSizeLimit)
         const display = await compressImageClient(file)
         const urlRes = await fetch('/api/member/gallery-submission/upload-url', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -104,12 +106,12 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
           <span className="mpu-icon" style={{ width: '30px', height: '30px', borderRadius: '99px', background: 'rgba(69,100,60,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </span>
-          <span style={{ fontSize: '13px', color: '#1a1a1a' }}>Have photos from an event? Share them here.</span>
+          <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{t.haveEventPhotos}</span>
         </button>
       ) : (
         <div className="mpu-form">
           <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.75rem' }}>
-            Share photos you have from an event — we'll add them to the album once reviewed.
+            {t.shareDescriptionEvent}
           </div>
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ position: 'relative', flex: '1 1 220px', minWidth: '180px' }}>
@@ -122,14 +124,14 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
               disabled={!!upload && !upload.finished} style={{ flex: '1 1 200px', fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
           </div>
           <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload && !upload.finished} maxLength={300}
-            placeholder="Caption (optional) — applies to all photos in this upload"
+            placeholder={t.captionPlaceholder}
             style={{ ...inp, cursor: 'text', marginTop: '0.6rem' }} />
-          <div style={{ fontSize: '10.5px', color: '#bbb', marginTop: '0.6rem' }}>Up to {MAX_FILES} photos, 40MB each.</div>
+          <div style={{ fontSize: '10.5px', color: '#bbb', marginTop: '0.6rem' }}>{t.upToPhotos(MAX_FILES)}</div>
 
           {upload && (
             <div className="mpu-form" style={{ marginTop: '0.85rem' }}>
               <div style={{ fontSize: '12px', color: '#555' }}>
-                {upload.finished ? `${upload.errors.length} of ${upload.total || upload.errors.length} couldn't be uploaded:` : `Uploading ${upload.done} / ${upload.total}…`}
+                {upload.finished ? t.couldntUpload(upload.errors.length, upload.total || upload.errors.length) : t.uploading(upload.done, upload.total)}
               </div>
               {!upload.finished && (
                 <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', marginTop: '0.4rem', overflow: 'hidden' }}>
@@ -142,7 +144,7 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
 
           {done && (
             <div className="mpu-done" style={{ marginTop: '0.85rem', fontSize: '12px', color: '#45643C' }}>
-              Thanks — {done.count} photo{done.count === 1 ? '' : 's'} submitted for review. We'll add them to {done.album} once approved.
+              {t.thanksSubmitted(done.count, done.count === 1 ? '' : 's', done.album)}
             </div>
           )}
         </div>

@@ -1,7 +1,11 @@
 'use client'
 import Link from 'next/link'
+import { useLanguage } from '../../../../lib/i18n/LanguageContext'
+import { membersCardT } from '../../../../lib/i18n/membersCard'
 
 export default function CardError({ reset }) {
+  const { lang } = useLanguage()
+  const t = membersCardT[lang]
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -11,20 +15,20 @@ export default function CardError({ reset }) {
         Canvas Routes
       </div>
       <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.6rem', fontWeight: '300', color: '#1a1a1a', marginBottom: '0.75rem' }}>
-        Couldn't load your card
+        {t.errorTitle}
       </div>
       <p style={{ fontSize: '13px', color: '#888', lineHeight: '1.7', maxWidth: '280px', marginBottom: '1.5rem' }}>
-        Something went wrong fetching your membership. Try again or return to the dashboard.
+        {t.errorBody}
       </p>
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         <button
           onClick={reset}
           style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '0.65rem 1.5rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}
         >
-          Try again
+          {t.tryAgain}
         </button>
         <Link href="/members/dashboard" style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '0.65rem 1.5rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', fontFamily: 'var(--font-inter),sans-serif' }}>
-          Dashboard
+          {t.dashboard}
         </Link>
       </div>
     </div>

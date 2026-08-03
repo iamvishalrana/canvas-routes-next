@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { PARTNERS } from '../../../../lib/partners'
 import FadeUp from '../../../../components/FadeUp'
+import { membersPerksT } from '../../../../lib/i18n/membersPerks'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Member Perks | Canvas Routes' } }
@@ -13,11 +14,14 @@ export default async function PerksPage() {
   if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
-  const { data: member } = await admin.from('members').select('tier, membership_status').eq('id', user.id).maybeSingle()
+  const { data: member } = await admin.from('members').select('tier, membership_status, language').eq('id', user.id).maybeSingle()
+
+  const lang = member?.language === 'fr' ? 'fr' : 'en'
+  const t = membersPerksT[lang]
 
   const tier = member?.tier || 'routes_member'
   const isInnerCircle = tier === 'inner_circle'
-  const tierLabel = isInnerCircle ? 'Inner Circle' : 'Routes Member'
+  const tierLabel = isInnerCircle ? t.innerCircle : t.routesMember
 
   const eligiblePartners = PARTNERS.filter(p =>
     isInnerCircle ? true : p.tiers.includes('Routes Member')
@@ -115,11 +119,11 @@ export default async function PerksPage() {
       {/* Header */}
       <header className="perks-header" style={{ marginBottom: '3.5rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-          Canvas Routes &mdash; Season 2026
+          {t.seasonEyebrow}
         </div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.6rem, 5.5vw, 3.6rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
-          Member perks,<br />
-          <span style={{ fontStyle: 'italic' }}>exclusively yours.</span>
+          {t.titleLine1}<br />
+          <span style={{ fontStyle: 'italic' }}>{t.titleLine2}</span>
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
           <span style={{
@@ -132,14 +136,14 @@ export default async function PerksPage() {
             {tierLabel}
           </span>
           <span style={{ fontSize: '8.5px', letterSpacing: '0.14em', color: '#ccc', fontFamily: 'var(--font-inter), sans-serif' }}>
-            {eligiblePartners.length} {eligiblePartners.length === 1 ? 'partner' : 'partners'}
+            {eligiblePartners.length} {eligiblePartners.length === 1 ? t.partner : t.partners}
           </span>
         </div>
       </header>
 
       {eligiblePartners.length === 0 ? (
         <p style={{ fontSize: '14px', color: '#aaa', lineHeight: 1.7 }}>
-          No partner perks available yet — check back soon.
+          {t.noPerks}
         </p>
       ) : (
         <div>
@@ -165,7 +169,7 @@ export default async function PerksPage() {
                     {p.discount}
                   </div>
                   <div style={{ fontSize: '7px', letterSpacing: '0.26em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.36)', fontFamily: 'var(--font-inter), sans-serif', marginTop: '0.45rem' }}>
-                    {p.tiers.includes('Routes Member') ? 'All Members' : 'Inner Circle'}
+                    {p.tiers.includes('Routes Member') ? t.allMembers : t.innerCircle}
                   </div>
                 </div>
               </div>
@@ -186,7 +190,7 @@ export default async function PerksPage() {
 
                 <div>
                   <div style={{ fontSize: '8px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.8rem' }}>
-                    How to redeem
+                    {t.howToRedeem}
                   </div>
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.2)', marginBottom: '1.25rem' }} />
                   <p style={{ fontSize: '14px', color: '#444', lineHeight: 1.85, letterSpacing: '0.01em', margin: 0 }}>
@@ -222,13 +226,13 @@ export default async function PerksPage() {
           <div style={{ background: 'rgba(197,168,130,0.04)', border: '0.5px solid rgba(197,168,130,0.18)', borderLeft: '2px solid rgba(197,168,130,0.4)', padding: '1.75rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <div style={{ fontSize: '8px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.5rem' }}>
-                Inner Circle
+                {t.innerCircle}
               </div>
               <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '1.25rem', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.2 }}>
-                Additional perks available at this tier.
+                {t.innerCircleTeaserTitle}
               </div>
               <div style={{ fontSize: '12px', color: '#aaa', marginTop: '0.4rem', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.6 }}>
-                Inner Circle members have access to exclusive partner discounts not available on this tier.
+                {t.innerCircleTeaserBody}
               </div>
             </div>
             <div style={{ flexShrink: 0 }}>
@@ -241,7 +245,7 @@ export default async function PerksPage() {
       )}
 
       <p style={{ marginTop: '2.5rem', fontSize: '11px', color: '#c0b9b0', lineHeight: 1.7, letterSpacing: '0.01em', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '1.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-        Partner perks are exclusive to Canvas Routes members. New partners are added throughout the season.
+        {t.footer}
       </p>
     </div>
   )
