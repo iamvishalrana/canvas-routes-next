@@ -41,6 +41,107 @@ function TripSelect({ value, onChange }) {
   )
 }
 
+// Mode selector + route/event picker for one popup card slot. `prefix` is
+// the settings-key prefix ('routes_popup' for card 1, 'routes_popup2' for
+// card 2) — same component renders both, so there's one implementation to
+// get right instead of two hand-duplicated copies.
+function PopupModeEditor({ prefix, routes, events, popupStrVal, savePopupSetting, popupSaving, popupErrors, popupSaved, slugDraft, setSlugDraft, eventDraft, setEventDraft }) {
+  const modeKey = `${prefix}_mode`
+  const slugKey = `${prefix}_route_slug`
+  const eventKey = `${prefix}_event_id`
+  const mode = popupStrVal(modeKey, 'general')
+  return (
+    <div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+        {[
+          { val: 'general',  label: 'General — all routes' },
+          { val: 'specific', label: 'Specific route' },
+          { val: 'event',    label: 'Specific event (Cars & Coffee, etc.)' },
+        ].map(({ val, label }) => {
+          const active = mode === val
+          return (
+            <button
+              key={val}
+              type="button"
+              onClick={() => savePopupSetting(modeKey, val)}
+              disabled={popupSaving[modeKey]}
+              style={{
+                padding: '0.7rem 1rem', minHeight: '44px', borderRadius: '8px',
+                border: `1px solid ${active ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`,
+                background: active ? '#0F1E14' : '#fff',
+                color: active ? '#F5F1EC' : '#555',
+                fontSize: '12px', cursor: popupSaving[modeKey] ? 'wait' : 'pointer',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+      {popupErrors[modeKey] && <Err msg={popupErrors[modeKey]} />}
+      {popupSaved[modeKey] && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+
+      {mode === 'specific' && (
+        <div style={{ marginTop: '0.5rem' }}>
+          <L>Featured Route</L>
+          <select
+            style={{ ...smallSelect, marginBottom: '0.5rem' }}
+            value={slugDraft}
+            onChange={e => setSlugDraft(e.target.value)}
+          >
+            <option value="">Select a route…</option>
+            {routes.map(r => (
+              <option key={r.slug} value={r.slug}>{r.name} — {r.destination}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => savePopupSetting(slugKey, slugDraft)}
+            disabled={popupSaving[slugKey]}
+            style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: popupSaving[slugKey] ? 'wait' : 'pointer', opacity: popupSaving[slugKey] ? 0.6 : 1 }}
+          >
+            {popupSaving[slugKey] ? 'Saving…' : 'Save'}
+          </button>
+          {routes.length === 0 && (
+            <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.5rem' }}>No routes yet — add one below first.</div>
+          )}
+          {popupErrors[slugKey] && <Err msg={popupErrors[slugKey]} />}
+          {popupSaved[slugKey] && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+        </div>
+      )}
+
+      {mode === 'event' && (
+        <div style={{ marginTop: '0.5rem' }}>
+          <L>Featured Event</L>
+          <select
+            style={{ ...smallSelect, marginBottom: '0.5rem' }}
+            value={eventDraft}
+            onChange={e => setEventDraft(e.target.value)}
+          >
+            <option value="">Select an event…</option>
+            {events.map(ev => (
+              <option key={ev.id} value={ev.id}>{ev.name} — {ev.date_display || ev.date}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => savePopupSetting(eventKey, eventDraft)}
+            disabled={popupSaving[eventKey]}
+            style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: popupSaving[eventKey] ? 'wait' : 'pointer', opacity: popupSaving[eventKey] ? 0.6 : 1 }}
+          >
+            {popupSaving[eventKey] ? 'Saving…' : 'Save'}
+          </button>
+          {events.length === 0 && (
+            <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.5rem' }}>No events yet.</div>
+          )}
+          {popupErrors[eventKey] && <Err msg={popupErrors[eventKey]} />}
+          {popupSaved[eventKey] && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PopupToggle({ label, description, value, onChange, saving }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2rem' }}>
@@ -96,9 +197,15 @@ export default function RoadtripsAdminClient() {
   const [personConfirm, setPersonConfirm] = useState(false)
   const [personDeleting, setPersonDeleting] = useState(false)
 
-  // Homepage routes popup settings
+  // Homepage routes popup settings — card 1 (original) + optional card 2,
+  // which runs alongside card 1 inside the same popup rather than as a
+  // second separate one.
+  const [events, setEvents] = useState([]) // for the "Specific event" picker
   const [popupSettings, setPopupSettings] = useState({})
   const [popupSlugDraft, setPopupSlugDraft] = useState('')
+  const [popupEventDraft, setPopupEventDraft] = useState('')
+  const [popup2SlugDraft, setPopup2SlugDraft] = useState('')
+  const [popup2EventDraft, setPopup2EventDraft] = useState('')
   const [popupSaving, setPopupSaving] = useState({})
   const [popupErrors, setPopupErrors] = useState({})
   const [popupSaved, setPopupSaved] = useState({})
@@ -125,7 +232,17 @@ export default function RoadtripsAdminClient() {
   useEffect(() => {
     fetch('/api/admin/settings')
       .then(r => r.ok ? r.json() : {})
-      .then(data => { setPopupSettings(data); setPopupSlugDraft(data.routes_popup_route_slug || '') })
+      .then(data => {
+        setPopupSettings(data)
+        setPopupSlugDraft(data.routes_popup_route_slug || '')
+        setPopupEventDraft(data.routes_popup_event_id || '')
+        setPopup2SlugDraft(data.routes_popup2_route_slug || '')
+        setPopup2EventDraft(data.routes_popup2_event_id || '')
+      })
+      .catch(() => {})
+    fetch('/api/admin/events')
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setEvents(Array.isArray(d) ? d : []))
       .catch(() => {})
   }, [])
 
@@ -408,7 +525,7 @@ export default function RoadtripsAdminClient() {
         {showPopupCard && (
         <>
         <PopupToggle
-          label="Show Routes Popup"
+          label="Show Homepage Popup"
           description="The homepage popup nudging visitors toward the Routes page. Shown once per session, a couple seconds after the page loads."
           value={popupBoolVal('routes_popup_enabled', true)}
           saving={popupSaving.routes_popup_enabled}
@@ -418,63 +535,57 @@ export default function RoadtripsAdminClient() {
         {popupSaved.routes_popup_enabled && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
 
         <div style={{ marginTop: '1.1rem', paddingTop: '1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>Card 1</div>
           <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5, marginBottom: '0.75rem' }}>
-            General promotes the whole season's routes. Specific route features one route by name — pick it below.
+            General promotes the whole season's routes. Specific route or specific event features one item by name — pick it below.
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            {[
-              { val: 'general',  label: 'General — all routes' },
-              { val: 'specific', label: 'Specific route' },
-            ].map(({ val, label }) => {
-              const active = popupStrVal('routes_popup_mode', 'general') === val
-              return (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => savePopupSetting('routes_popup_mode', val)}
-                  disabled={popupSaving.routes_popup_mode}
-                  style={{
-                    padding: '0.7rem 1rem', minHeight: '44px', borderRadius: '8px',
-                    border: `1px solid ${active ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`,
-                    background: active ? '#0F1E14' : '#fff',
-                    color: active ? '#F5F1EC' : '#555',
-                    fontSize: '12px', cursor: popupSaving.routes_popup_mode ? 'wait' : 'pointer',
-                  }}
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-          {popupErrors.routes_popup_mode && <Err msg={popupErrors.routes_popup_mode} />}
-          {popupSaved.routes_popup_mode && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+          <PopupModeEditor
+            prefix="routes_popup"
+            routes={routes}
+            events={events}
+            popupStrVal={popupStrVal}
+            savePopupSetting={savePopupSetting}
+            popupSaving={popupSaving}
+            popupErrors={popupErrors}
+            popupSaved={popupSaved}
+            slugDraft={popupSlugDraft}
+            setSlugDraft={setPopupSlugDraft}
+            eventDraft={popupEventDraft}
+            setEventDraft={setPopupEventDraft}
+          />
+        </div>
 
-          {popupStrVal('routes_popup_mode', 'general') === 'specific' && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <L>Featured Route</L>
-              <select
-                style={{ ...smallSelect, marginBottom: '0.5rem' }}
-                value={popupSlugDraft}
-                onChange={e => setPopupSlugDraft(e.target.value)}
-              >
-                <option value="">Select a route…</option>
-                {routes.map(r => (
-                  <option key={r.slug} value={r.slug}>{r.name} — {r.destination}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => savePopupSetting('routes_popup_route_slug', popupSlugDraft)}
-                disabled={popupSaving.routes_popup_route_slug}
-                style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: popupSaving.routes_popup_route_slug ? 'wait' : 'pointer', opacity: popupSaving.routes_popup_route_slug ? 0.6 : 1 }}
-              >
-                {popupSaving.routes_popup_route_slug ? 'Saving…' : 'Save'}
-              </button>
-              {routes.length === 0 && (
-                <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.5rem' }}>No routes yet — add one below first.</div>
-              )}
-              {popupErrors.routes_popup_route_slug && <Err msg={popupErrors.routes_popup_route_slug} />}
-              {popupSaved.routes_popup_route_slug && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+        {/* Optional second card — runs alongside card 1 inside the SAME
+            popup dialog, not a separate overlapping one. Off by default so
+            a site that's never touched this renders exactly as before. */}
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <PopupToggle
+            label="Add a Second Card"
+            description="Shows a second route or event alongside Card 1, in the same popup — e.g. one route and one Cars & Coffee together. Off by default."
+            value={popupBoolVal('routes_popup2_enabled', false)}
+            saving={popupSaving.routes_popup2_enabled}
+            onChange={v => savePopupSetting('routes_popup2_enabled', v ? 'true' : 'false')}
+          />
+          {popupErrors.routes_popup2_enabled && <Err msg={popupErrors.routes_popup2_enabled} />}
+          {popupSaved.routes_popup2_enabled && <span style={{ fontSize: '11px', color: '#3B6B2F' }}>✓ Saved</span>}
+
+          {popupBoolVal('routes_popup2_enabled', false) && (
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>Card 2</div>
+              <PopupModeEditor
+                prefix="routes_popup2"
+                routes={routes}
+                events={events}
+                popupStrVal={popupStrVal}
+                savePopupSetting={savePopupSetting}
+                popupSaving={popupSaving}
+                popupErrors={popupErrors}
+                popupSaved={popupSaved}
+                slugDraft={popup2SlugDraft}
+                setSlugDraft={setPopup2SlugDraft}
+                eventDraft={popup2EventDraft}
+                setEventDraft={setPopup2EventDraft}
+              />
             </div>
           )}
         </div>

@@ -33,6 +33,15 @@ export async function PATCH(request) {
     'routes_popup_enabled',
     'routes_popup_mode',
     'routes_popup_route_slug',
+    'routes_popup_event_id',
+    // Second, optional popup card — shown alongside the first inside the
+    // same homepage popup (not a separate overlapping dialog). Off by
+    // default so existing single-popup behavior is unchanged unless an
+    // admin explicitly turns it on.
+    'routes_popup2_enabled',
+    'routes_popup2_mode',
+    'routes_popup2_route_slug',
+    'routes_popup2_event_id',
   ]
   if (!ALLOWED_KEYS.includes(key)) return Response.json({ error: 'Unknown setting key.' }, { status: 400 })
 

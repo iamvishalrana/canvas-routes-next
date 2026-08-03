@@ -39,6 +39,120 @@ function parseEventDate(str) {
   return isNaN(d) ? null : d
 }
 
+// Resolves one popup "slot" (mode + its already-fetched route/event data)
+// into the display fields a popup card needs — shared by both the first and
+// (optional) second card so the general/route/event branching exists in
+// exactly one place. Falls back to the general card if a specific/event
+// reference didn't resolve (e.g. a deleted route or event) — a stale admin
+// config never shows a broken/empty card, it just shows the generic one.
+function resolvePopupCard(mode, route, event, t) {
+  if (mode === 'specific' && route) {
+    const launched = !!(route.launched && route.registration_url)
+    return {
+      ariaLabel: t.popupSpecificAriaLabel,
+      eyebrow: launched ? t.popupSpecificEyebrowLaunched : t.popupSpecificEyebrow,
+      heading: route.name,
+      sub: route.destination,
+      body: launched ? t.popupSpecificBodyLaunched : t.popupSpecificBody,
+      monthLine: route.month_label,
+      ctaLabel: launched ? t.popupSpecificCtaLaunched : t.popupSpecificCta,
+      ctaHref: launched ? route.registration_url : '/routes',
+      photo: route.photo_url || ROUTE_PHOTOS[route.slug] || null,
+    }
+  }
+  if (mode === 'event' && event) {
+    const open = !!(event.public_registration_enabled && event.registration_url)
+    return {
+      ariaLabel: t.popupEventAriaLabel,
+      eyebrow: open ? t.popupEventEyebrowOpen : t.popupEventEyebrow,
+      heading: event.name,
+      sub: event.location,
+      body: open ? t.popupEventBodyOpen : t.popupEventBody,
+      monthLine: event.date_display,
+      ctaLabel: open ? t.popupEventCtaOpen : t.popupEventCta,
+      ctaHref: open ? event.registration_url : '/#events',
+      photo: event.photo_url || null,
+    }
+  }
+  return {
+    ariaLabel: t.popupAriaLabel,
+    eyebrow: t.popupEyebrow,
+    heading: null, // null signals the two-line hardcoded title in PopupCardInner
+    sub: t.popupSub,
+    body: t.popupBody,
+    monthLine: 'Charlevoix · Gaspésie · Tobermory · Calabogie · Cabot Trail',
+    ctaLabel: t.popupCta,
+    ctaHref: '/routes',
+    photo: null,
+  }
+}
+
+// One popup card's photo + text block. `showMaybeLater` keeps the soft-
+// dismiss link inside this same block (original single-card layout) when
+// there's only one card; the two-card layout renders one shared dismiss
+// link below both cards instead and passes showMaybeLater={false} here.
+function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
+  return (
+    <>
+      {card.photo && (
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
+          <img src={card.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.1) 0%, rgba(15,30,20,0.75) 100%)' }} />
+        </div>
+      )}
+      <div style={{ padding: 'clamp(1.75rem,5vw,2.75rem)' }}>
+        <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem' }}>
+          {card.eyebrow}
+        </div>
+        <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem,4vw,2.4rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, margin: '0 0 0.6rem' }}>
+          {card.heading !== null ? card.heading : <>{t.popupTitle}<br />{t.popupTitleLine2}</>}
+        </h2>
+        <div style={{ fontSize: '13px', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', marginBottom: '1.25rem' }}>
+          {card.sub}
+        </div>
+        <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.4)', marginBottom: '1.25rem' }} />
+        <p style={{ fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8', fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem' }}>
+          {card.body}
+        </p>
+        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 2, margin: '0 0 1.5rem' }}>
+          {card.monthLine}
+        </div>
+        <a
+          href={card.ctaHref}
+          onClick={onDismiss}
+          className="routes-popup-cta"
+          style={{
+            display: 'block', textAlign: 'center', padding: '0.95rem 2rem',
+            background: '#F5F1EC', color: '#0F1E14',
+            fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase',
+            fontFamily: 'var(--font-inter),sans-serif', fontWeight: '600',
+            textDecoration: 'none', transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
+          onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
+        >
+          {card.ctaLabel} →
+        </a>
+        {showMaybeLater && (
+          <button
+            onClick={onDismiss}
+            style={{
+              display: 'block', width: '100%', marginTop: '0.4rem',
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '0.8rem', minHeight: '44px',
+              fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase',
+              color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter),sans-serif',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {t.popupMaybeLater}
+          </button>
+        )}
+      </div>
+    </>
+  )
+}
+
 function isEventPast(ev) {
   const d = parseEventDate(ev.date || ev.date_display)
   if (!d) return false
@@ -119,11 +233,19 @@ export default function Home() {
         // Default stays on/general — matches this popup's pre-existing
         // always-on behavior before the admin toggle existed.
         setRoutesPopupEnabled(s.routes_popup_enabled !== 'false')
-        if (s.routes_popup_mode === 'specific') setRoutesPopupMode('specific')
+        if (s.routes_popup_mode === 'specific' || s.routes_popup_mode === 'event') setRoutesPopupMode(s.routes_popup_mode)
         // Resolved server-side by /api/public/settings — the popup needs no
         // other fetch to have its specific-route content ready, so its timer
         // below depends on nothing but this one response settling.
         if (s.routes_popup_route) setRoutesPopupRoute(s.routes_popup_route)
+        if (s.routes_popup_event) setRoutesPopupEvent(s.routes_popup_event)
+        // Second card — off unless an admin explicitly enables it, so a site
+        // that's never touched this setting renders the exact same single-
+        // card popup as before.
+        setRoutesPopup2Enabled(s.routes_popup2_enabled === 'true')
+        if (s.routes_popup2_mode === 'specific' || s.routes_popup2_mode === 'event') setRoutesPopup2Mode(s.routes_popup2_mode)
+        if (s.routes_popup2_route) setRoutesPopup2Route(s.routes_popup2_route)
+        if (s.routes_popup2_event) setRoutesPopup2Event(s.routes_popup2_event)
       })
       .catch(() => {})
       // Runs regardless of success/failure — the popup timer below waits on
@@ -137,6 +259,13 @@ export default function Home() {
   const [routesPopupEnabled, setRoutesPopupEnabled] = useState(true)
   const [routesPopupMode, setRoutesPopupMode] = useState('general')
   const [routesPopupRoute, setRoutesPopupRoute] = useState(null)
+  const [routesPopupEvent, setRoutesPopupEvent] = useState(null)
+  // Optional second card shown alongside the first, inside the same popup —
+  // off by default (see the settings-fetch handler above).
+  const [routesPopup2Enabled, setRoutesPopup2Enabled] = useState(false)
+  const [routesPopup2Mode, setRoutesPopup2Mode] = useState('general')
+  const [routesPopup2Route, setRoutesPopup2Route] = useState(null)
+  const [routesPopup2Event, setRoutesPopup2Event] = useState(null)
   const [showStickyCta, setShowStickyCta] = useState(false)
   const [membershipLive, setMembershipLive] = useState(false)
   const [homepageBanner, setHomepageBanner] = useState(null)
@@ -449,22 +578,24 @@ export default function Home() {
         ]}
       />
 
-      {/* 2026 ROUTES POPUP — leads every visitor to /routes to express interest.
-          Admin-configurable: general (all routes) or featuring one specific
-          route by slug (Settings → Routes Popup), resolved server-side into
-          the settings response — no dependency on the page's separate
-          teaserRoutes fetch (used only by the unrelated routes-teaser
-          section), so this only falls back to general content if the
-          configured route slug genuinely doesn't exist (e.g. deleted). */}
+      {/* 2026 ROUTES POPUP — leads every visitor to /routes (or a featured
+          route/event) to express interest. Admin-configurable per card:
+          general (all routes), one specific route, or one specific event
+          (e.g. Cars & Coffee) — resolved server-side into the settings
+          response. A second, optional card can run alongside the first
+          inside this SAME dialog (not a second overlapping popup) — see
+          Settings → Routes Popup in the admin. When the second card is off
+          (the default), this renders exactly as the original single-card
+          popup always has. */}
       {showRoutesPopup && (() => {
-        const featuredRoute = routesPopupMode === 'specific' ? routesPopupRoute : null
-        const featuredPhoto = featuredRoute && (featuredRoute.photo_url || ROUTE_PHOTOS[featuredRoute.slug])
-        const featuredLaunched = !!(featuredRoute?.launched && featuredRoute.registration_url)
+        const cards = [resolvePopupCard(routesPopupMode, routesPopupRoute, routesPopupEvent, t)]
+        if (routesPopup2Enabled) cards.push(resolvePopupCard(routesPopup2Mode, routesPopup2Route, routesPopup2Event, t))
+        const hasSecond = cards.length > 1
         return (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={featuredRoute ? t.popupSpecificAriaLabel : t.popupAriaLabel}
+          aria-label={cards[0].ariaLabel}
           style={{
             position: 'fixed', inset: 0, zIndex: 999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -477,12 +608,18 @@ export default function Home() {
           <style>{`
             .routes-popup-scroll { scrollbar-width: none; -ms-overflow-style: none; }
             .routes-popup-scroll::-webkit-scrollbar { display: none; }
+            .routes-popup-cards { display: flex; flex-direction: column; }
+            .routes-popup-cards > div:first-child { border-bottom: 0.5px solid rgba(197,168,130,0.18); }
+            @media (min-width: 641px) {
+              .routes-popup-cards.has-second { flex-direction: row; }
+              .routes-popup-cards.has-second > div:first-child { border-bottom: none; border-right: 0.5px solid rgba(197,168,130,0.18); }
+            }
           `}</style>
           <div
             className="routes-popup-scroll"
             onClick={e => e.stopPropagation()}
             style={{
-              background: '#0F1E14', maxWidth: '480px', width: '100%',
+              background: '#0F1E14', maxWidth: hasSecond ? '900px' : '480px', width: '100%',
               position: 'relative', overflow: 'hidden',
               maxHeight: '86vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
               boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
@@ -491,114 +628,53 @@ export default function Home() {
             {/* Gold top line */}
             <div style={{ height: '2px', background: 'linear-gradient(90deg, transparent, #c5a882, transparent)' }} />
 
-            {/* Hero image — specific-route mode only, when the route has a photo */}
-            {featuredPhoto && (
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
-                <img src={featuredPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.1) 0%, rgba(15,30,20,0.75) 100%)' }} />
-              </div>
+            {/* Close — 44px target for iOS. One button dismisses the whole
+                dialog, both cards together — never per-card, so there's no
+                "close one, leave the other open" state to reason about. */}
+            <button
+              onClick={dismissRoutesPopup}
+              aria-label={t.popupClose}
+              style={{
+                position: 'absolute', top: '0.4rem', right: '0.4rem', zIndex: 2,
+                background: 'rgba(15,20,15,0.35)', borderRadius: '50%', border: 'none', cursor: 'pointer',
+                color: 'rgba(245,241,236,0.7)', fontSize: '20px', lineHeight: 1, padding: '12px',
+                minWidth: '44px', minHeight: '44px',
+                fontFamily: 'var(--font-inter),sans-serif',
+                transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = '#F5F1EC'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.7)'}
+            >
+              ×
+            </button>
+
+            {hasSecond ? (
+              <>
+                <div className="routes-popup-cards has-second">
+                  {cards.map((card, i) => (
+                    <div key={i} style={{ flex: 1, minWidth: 0 }}>
+                      <PopupCardInner card={card} t={t} onDismiss={dismissRoutesPopup} showMaybeLater={false} />
+                    </div>
+                  ))}
+                </div>
+                {/* One shared soft-dismiss below both cards */}
+                <button
+                  onClick={dismissRoutesPopup}
+                  style={{
+                    display: 'block', width: '100%',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '0.8rem', minHeight: '44px',
+                    fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase',
+                    color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter),sans-serif',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  {t.popupMaybeLater}
+                </button>
+              </>
+            ) : (
+              <PopupCardInner card={cards[0]} t={t} onDismiss={dismissRoutesPopup} showMaybeLater />
             )}
-
-            <div style={{ padding: 'clamp(1.75rem,5vw,2.75rem)' }}>
-              {/* Close — 44px target for iOS */}
-              <button
-                onClick={dismissRoutesPopup}
-                aria-label={t.popupClose}
-                style={{
-                  position: 'absolute', top: '0.4rem', right: '0.4rem',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'rgba(245,241,236,0.35)', fontSize: '20px', lineHeight: 1, padding: '12px',
-                  minWidth: '44px', minHeight: '44px',
-                  fontFamily: 'var(--font-inter),sans-serif',
-                  transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent',
-                }}
-                onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,241,236,0.75)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(245,241,236,0.35)'}
-              >
-                ×
-              </button>
-
-              {/* Eyebrow */}
-              <div style={{
-                fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
-                color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem',
-              }}>
-                {featuredRoute ? (featuredLaunched ? t.popupSpecificEyebrowLaunched : t.popupSpecificEyebrow) : t.popupEyebrow}
-              </div>
-
-              {/* Heading */}
-              <h2 style={{
-                fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem,4vw,2.4rem)',
-                fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1,
-                margin: '0 0 0.6rem',
-              }}>
-                {featuredRoute ? featuredRoute.name : <>{t.popupTitle}<br />{t.popupTitleLine2}</>}
-              </h2>
-
-              {/* Sub */}
-              <div style={{
-                fontSize: '13px', color: 'rgba(197,168,130,0.7)',
-                fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic',
-                marginBottom: '1.25rem',
-              }}>
-                {featuredRoute ? featuredRoute.destination : t.popupSub}
-              </div>
-
-              {/* Divider */}
-              <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.4)', marginBottom: '1.25rem' }} />
-
-              {/* Body */}
-              <p style={{
-                fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8',
-                fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem',
-              }}>
-                {featuredRoute ? (featuredLaunched ? t.popupSpecificBodyLaunched : t.popupSpecificBody) : t.popupBody}
-              </p>
-
-              {/* Route names (general) / month label (specific) */}
-              <div style={{
-                fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
-                color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif',
-                lineHeight: 2, margin: '0 0 1.5rem',
-              }}>
-                {featuredRoute ? featuredRoute.month_label : 'Charlevoix · Gaspésie · Tobermory · Calabogie · Cabot Trail'}
-              </div>
-
-              {/* CTA — full-width on mobile. Once a featured route has launched
-                  and has its own registration page, send people straight there
-                  instead of the general /routes interest list. */}
-              <a
-                href={featuredLaunched ? featuredRoute.registration_url : '/routes'}
-                onClick={dismissRoutesPopup}
-                className="routes-popup-cta"
-                style={{
-                  display: 'block', textAlign: 'center', padding: '0.95rem 2rem',
-                  background: '#F5F1EC', color: '#0F1E14',
-                  fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase',
-                  fontFamily: 'var(--font-inter),sans-serif', fontWeight: '600',
-                  textDecoration: 'none', transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#EDE8E1'}
-                onMouseLeave={e => e.currentTarget.style.background = '#F5F1EC'}
-              >
-                {featuredRoute ? (featuredLaunched ? t.popupSpecificCtaLaunched : t.popupSpecificCta) : t.popupCta} →
-              </a>
-
-              {/* Soft dismiss */}
-              <button
-                onClick={dismissRoutesPopup}
-                style={{
-                  display: 'block', width: '100%', marginTop: '0.4rem',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  padding: '0.8rem', minHeight: '44px',
-                  fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase',
-                  color: 'rgba(245,241,236,0.3)', fontFamily: 'var(--font-inter),sans-serif',
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                {t.popupMaybeLater}
-              </button>
-            </div>
           </div>
         </div>
         )
