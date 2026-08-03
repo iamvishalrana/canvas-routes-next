@@ -26,10 +26,6 @@ export async function PATCH(request) {
   const ALLOWED_KEYS = [
     'membership_open',
     'membership_closed_message',
-    'event_registration_open',
-    'event_closed_message',
-    'notify_email',
-    'founder_promo_code',
     'admin_banner',
     'homepage_banner',
     'event_page_url',

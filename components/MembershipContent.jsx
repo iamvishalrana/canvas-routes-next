@@ -375,7 +375,7 @@ function CheckIcon({ gold, green }) {
 
 const INIT_FORM = { name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', carPaint:'', tier:'', source:'', referredBy:'', more:'' }
 
-export default function MembershipContent() {
+export default function MembershipContent({ membershipOpen = true, closedMessage }) {
   const { lang } = useLanguage()
   const t = membershipT[lang]
 
@@ -446,6 +446,26 @@ export default function MembershipContent() {
       window.fbq('track', 'Purchase', { value: purchasePriceRef.current, currency: 'CAD' })
     }
   }, [status])
+
+  // All hooks above this point run regardless — this only short-circuits the
+  // render, so nothing about the 3DS-return/pixel effects above is skipped.
+  if (!membershipOpen) {
+    return (
+      <div style={{ minHeight: '100dvh', background: '#0F1E14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(2rem,6vw,4rem) 1.25rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '480px' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Canvas Routes
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2rem,5vw,2.6rem)', fontWeight: '300', color: '#F5F1EC', margin: '0 0 1.25rem', lineHeight: 1.15 }}>
+            Applications Paused
+          </h1>
+          <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.6)', lineHeight: 1.8, fontFamily: 'var(--font-inter),sans-serif' }}>
+            {closedMessage?.trim() || 'Membership applications are currently paused. Check back soon.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   function set(field, val) {
     setForm(f => ({ ...f, [field]: val }))

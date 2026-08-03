@@ -90,10 +90,7 @@ export default function SettingsClient() {
       .then(data => {
         setSettings(data)
         setDrafts({
-          notify_email:              data.notify_email              || '',
           membership_closed_message: data.membership_closed_message || '',
-          event_closed_message:      data.event_closed_message      || '',
-          founder_promo_code:        data.founder_promo_code        || '',
           admin_banner:              data.admin_banner              || '',
           homepage_banner:           data.homepage_banner           || '',
           event_page_url:            data.event_page_url            || '',
@@ -131,10 +128,6 @@ export default function SettingsClient() {
     return settings[key] !== 'false'
   }
 
-  function strVal(key, fallback = '') {
-    return (key in settings) ? settings[key] : fallback
-  }
-
   function SavedIndicator({ k }) {
     return saved[k] ? <span style={{ fontSize: '11px', color: '#3B6B2F', marginLeft: '0.75rem', fontFamily: 'var(--font-inter),sans-serif' }}>✓ Saved</span> : null
   }
@@ -162,13 +155,13 @@ export default function SettingsClient() {
         <h1 style={{ fontSize: '22px', fontWeight: '400', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', margin: 0 }}>Settings</h1>
       </div>
 
-      {/* Registration */}
+      {/* Membership */}
       <div style={CARD}>
-        <div style={SECTION_LABEL}>Registration</div>
+        <div style={SECTION_LABEL}>Membership</div>
 
         <ToggleSetting
           label="Membership Applications Open"
-          description="When off, the membership form shows a paused message and stops accepting submissions."
+          description="When off, the membership form shows a paused message before the payment step instead of accepting submissions."
           value={boolVal('membership_open', true)}
           saving={saving.membership_open}
           onChange={v => !loadError && saveSetting('membership_open', v ? 'true' : 'false')}
@@ -176,74 +169,19 @@ export default function SettingsClient() {
         {errors.membership_open && <Err msg={errors.membership_open} />}
         <SavedIndicator k="membership_open" />
 
-        <TextSetting
-          label="Membership Closed Message"
-          description="Shown when membership applications are off. Leave blank for the default."
-          value={drafts.membership_closed_message}
-          onChange={v => setDrafts(p => ({ ...p, membership_closed_message: v }))}
-          onSave={() => saveSetting('membership_closed_message', drafts.membership_closed_message)}
-          saving={saving.membership_closed_message}
-          placeholder="Membership applications are currently paused. Check back soon."
-          type="textarea"
-        />
-        {errors.membership_closed_message && <Err msg={errors.membership_closed_message} />}
-        <SavedIndicator k="membership_closed_message" />
-
-        <ToggleSetting
-          label="Event Registration Open"
-          description="When off, the standalone event registration form is hidden and the page shows a closed notice. Reuse this for each new one-off event page."
-          value={boolVal('event_registration_open', true)}
-          saving={saving.event_registration_open}
-          onChange={v => !loadError && saveSetting('event_registration_open', v ? 'true' : 'false')}
-        />
-        {errors.event_registration_open && <Err msg={errors.event_registration_open} />}
-        <SavedIndicator k="event_registration_open" />
-
         <div style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
           <TextSetting
-            label="Event Closed Message"
-            description="Shown on the event page when registration is off. Update this for each new event."
-            value={drafts.event_closed_message}
-            onChange={v => setDrafts(p => ({ ...p, event_closed_message: v }))}
-            onSave={() => saveSetting('event_closed_message', drafts.event_closed_message)}
-            saving={saving.event_closed_message}
-            placeholder="Registration for this event is now closed."
+            label="Membership Closed Message"
+            description="Shown when membership applications are off. Leave blank for the default."
+            value={drafts.membership_closed_message}
+            onChange={v => setDrafts(p => ({ ...p, membership_closed_message: v }))}
+            onSave={() => saveSetting('membership_closed_message', drafts.membership_closed_message)}
+            saving={saving.membership_closed_message}
+            placeholder="Membership applications are currently paused. Check back soon."
             type="textarea"
           />
-          {errors.event_closed_message && <Err msg={errors.event_closed_message} />}
-          <SavedIndicator k="event_closed_message" />
-        </div>
-      </div>
-
-      {/* Email */}
-      <div style={CARD}>
-        <div style={SECTION_LABEL}>Email</div>
-
-        <TextSetting
-          label="Event Promo Code"
-          description="Promo code included in event registration confirmation emails. Update before each new event."
-          value={drafts.founder_promo_code}
-          onChange={v => setDrafts(p => ({ ...p, founder_promo_code: v.toUpperCase() }))}
-          onSave={() => saveSetting('founder_promo_code', drafts.founder_promo_code)}
-          saving={saving.founder_promo_code}
-          placeholder="e.g. FOUNDING"
-        />
-        {errors.founder_promo_code && <Err msg={errors.founder_promo_code} />}
-        <SavedIndicator k="founder_promo_code" />
-
-        <div style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
-          <TextSetting
-            label="Admin Notification Email"
-            description="Where internal registration and event notification emails are sent. Note: changing this only affects routes that read from settings; hardcoded addresses in email templates are unaffected."
-            value={drafts.notify_email}
-            onChange={v => setDrafts(p => ({ ...p, notify_email: v }))}
-            onSave={() => saveSetting('notify_email', drafts.notify_email)}
-            saving={saving.notify_email}
-            placeholder="info@canvasroutes.com"
-            type="email"
-          />
-          {errors.notify_email && <Err msg={errors.notify_email} />}
-          <SavedIndicator k="notify_email" />
+          {errors.membership_closed_message && <Err msg={errors.membership_closed_message} />}
+          <SavedIndicator k="membership_closed_message" />
         </div>
       </div>
 

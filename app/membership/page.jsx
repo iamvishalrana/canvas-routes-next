@@ -1,4 +1,13 @@
 import MembershipContent from '../../components/MembershipContent'
+import { createAdminClient } from '../../lib/supabase/admin'
+import { captureException } from '../../lib/sentry'
+
+// Matches every other page in this codebase that calls createAdminClient()
+// (see app/admin/revenue/page.jsx, app/admin/payments/page.jsx, etc.) —
+// the service-role key isn't available during the build's static-generation
+// pass, only at request time, and an admin flipping membership_open off
+// should take effect immediately rather than waiting on a stale cache.
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: { absolute: 'Membership | Canvas Routes' },
@@ -20,6 +29,25 @@ export const metadata = {
   },
 }
 
-export default function MembershipPage() {
-  return <MembershipContent />
+// membership_open used to only be checked by the membership-waitlist API route
+// — after the card was already authorized via Stripe. Checking it here too
+// means a paused membership program actually stops people before they pay,
+// matching what this toggle's own description on the Settings page promises.
+//
+// Fails open on any Supabase hiccup (missing env, transient DB error) rather
+// than crashing the whole page — this is a public marketing/application page,
+// not an admin tool, so it must stay up even if the settings lookup can't
+// complete. membership-waitlist's own check of the same setting already
+// follows this same fail-open pattern.
+export default async function MembershipPage() {
+  let settings = {}
+  try {
+    const supabase = createAdminClient()
+    const { data } = await supabase.from('settings').select('key, value').in('key', ['membership_open', 'membership_closed_message'])
+    settings = Object.fromEntries((data || []).map(r => [r.key, r.value]))
+  } catch (err) {
+    captureException(err, { context: 'membership-page-settings-check' })
+  }
+  const membershipOpen = settings.membership_open !== 'false'
+  return <MembershipContent membershipOpen={membershipOpen} closedMessage={settings.membership_closed_message} />
 }
