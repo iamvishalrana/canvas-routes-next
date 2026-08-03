@@ -21,10 +21,13 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
   const filesRef = useRef(null)
 
   async function handleFiles(e) {
-    const all = Array.from(e.target.files || []).slice(0, MAX_FILES)
+    const rawAll = Array.from(e.target.files || [])
+    const all = rawAll.slice(0, MAX_FILES)
     const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
     const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — unsupported format`)
-    if (!all.length) return
+    const truncated = rawAll.length - all.length
+    if (truncated > 0) skipped.push(`${truncated} more photo${truncated === 1 ? '' : 's'} skipped — up to ${MAX_FILES} per upload`)
+    if (!rawAll.length) return
     setDone(null)
     setUpload({ done: 0, total: files.length, errors: skipped })
     let succeeded = 0
@@ -65,7 +68,9 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
       setDone({ count: succeeded })
       setCaption('')
     }
-    setUpload(null)
+    // Keep errors visible if any files failed/were skipped — clearing
+    // unconditionally here wiped them before the visitor could ever read why.
+    setUpload(u => (u && u.errors.length > 0) ? { ...u, finished: true } : null)
     if (filesRef.current) filesRef.current.value = ''
   }
 
@@ -95,18 +100,22 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
             We'll add your photos to this gallery once reviewed.
           </div>
           <input ref={filesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleFiles}
-            disabled={!!upload} style={{ fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
-          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload} maxLength={300}
+            disabled={!!upload && !upload.finished} style={{ fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
+          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload && !upload.finished} maxLength={300}
             placeholder="Caption (optional) — applies to all photos in this upload"
             style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 0.85rem', marginTop: '0.6rem', border: '0.5px solid rgba(0,0,0,0.16)', background: '#fff', fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif', color: '#1a1a1a', outline: 'none' }} />
           <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.5rem' }}>Up to {MAX_FILES} photos, 40MB each.</div>
 
           {upload && (
             <div className="nmp-form" style={{ marginTop: '0.75rem' }}>
-              <div style={{ fontSize: '11.5px', color: '#555' }}>Uploading {upload.done} / {upload.total}…</div>
+              <div style={{ fontSize: '11.5px', color: '#555' }}>
+                {upload.finished ? `${upload.errors.length} of ${upload.total || upload.errors.length} couldn't be uploaded:` : `Uploading ${upload.done} / ${upload.total}…`}
+              </div>
+              {!upload.finished && (
               <div style={{ height: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', marginTop: '0.4rem', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${upload.total ? (upload.done / upload.total) * 100 : 100}%`, background: '#45643C', borderRadius: '99px', transition: 'width 0.3s ease' }} />
               </div>
+              )}
               {upload.errors.map((e, i) => <div key={i} className="nmp-error" style={{ fontSize: '10.5px', color: '#93333E', marginTop: '0.35rem' }}>{e}</div>)}
             </div>
           )}
