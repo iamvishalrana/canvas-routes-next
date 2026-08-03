@@ -95,12 +95,12 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
   return (
     <>
       {card.photo && (
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
+        <div className="routes-popup-photo" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
           <img src={card.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.1) 0%, rgba(15,30,20,0.75) 100%)' }} />
         </div>
       )}
-      <div style={{ padding: 'clamp(1.75rem,5vw,2.75rem)' }}>
+      <div className="routes-popup-card-body" style={{ padding: 'clamp(1.75rem,5vw,2.75rem)' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem' }}>
           {card.eyebrow}
         </div>
@@ -111,7 +111,7 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
           {card.sub}
         </div>
         <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.4)', marginBottom: '1.25rem' }} />
-        <p style={{ fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8', fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem' }}>
+        <p className="routes-popup-card-text" style={{ fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8', fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem' }}>
           {card.body}
         </p>
         <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 2, margin: '0 0 1.5rem' }}>
@@ -295,7 +295,7 @@ export default function Home() {
     // Storage access can throw in strict in-app browsers / private modes —
     // never let that take down the homepage.
     try { if (sessionStorage.getItem('routes_popup_seen')) return } catch {}
-    const t = setTimeout(() => setShowRoutesPopup(true), 1600)
+    const t = setTimeout(() => setShowRoutesPopup(true), 1100)
     return () => clearTimeout(t)
   }, [settingsLoaded, routesPopupEnabled])
 
@@ -613,6 +613,15 @@ export default function Home() {
             @media (min-width: 641px) {
               .routes-popup-cards.has-second { flex-direction: row; }
               .routes-popup-cards.has-second > div:first-child { border-bottom: none; border-right: 0.5px solid rgba(197,168,130,0.18); }
+            }
+            /* Two stacked cards on a phone screen can run long — trim the
+               photo and padding so both cards plus the shared CTA/dismiss
+               fit with less scrolling, without touching the single-card
+               layout (which never gets the has-second class). */
+            @media (max-width: 640px) {
+              .routes-popup-cards.has-second .routes-popup-photo { aspect-ratio: 21/9; }
+              .routes-popup-cards.has-second .routes-popup-card-body { padding: 1.5rem 1.5rem 1.75rem; }
+              .routes-popup-cards.has-second .routes-popup-card-text { -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
             }
           `}</style>
           <div
