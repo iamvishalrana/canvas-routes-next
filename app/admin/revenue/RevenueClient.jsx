@@ -209,6 +209,32 @@ function Donut({ data, size = 168, centerTop, centerBottom }) {
   )
 }
 
+// Self-contained horizontal bar list — no chart library, and no fixed-width
+// bars to side-scroll on mobile (each row is just label + proportional fill,
+// full container width). Rows are clickable when `onRowClick` is given, so
+// the same interaction the Monthly Breakdown table already offers (drill
+// into that month's DetailModal) works from the chart too.
+function RevenueBarList({ data, onRowClick, color = '#3B6B2F' }) {
+  const max = Math.max(1, ...data.map(d => d.value))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+      {data.map(d => (
+        <div key={d.key} onClick={onRowClick ? () => onRowClick(d) : undefined}
+          className={onRowClick ? 'rev-bar-row' : undefined}
+          style={{ cursor: onRowClick ? 'pointer' : 'default', padding: '0.2rem 0.3rem', borderRadius: '6px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', fontSize: '11px', marginBottom: '3px' }}>
+            <span style={{ color: '#555' }}>{d.label}</span>
+            <span style={{ color: '#1a1a1a', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(d.value)}{d.count != null ? ` · ${d.count}` : ''}</span>
+          </div>
+          <div style={{ height: '7px', background: 'rgba(0,0,0,0.055)', borderRadius: '99px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${Math.max(2, (d.value / max) * 100)}%`, background: color, borderRadius: '99px', transition: 'width 0.4s cubic-bezier(0.23,1,0.32,1)' }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function StatTile({ label, value, color = '#1a1a1a', sub }) {
   return (
     <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '10px', padding: '0.9rem 1rem', boxShadow: '0 1px 5px rgba(15,30,20,0.05)' }}>
@@ -305,7 +331,29 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       discount: sum(payments, r => r.taxDiscount),
       members, nonMembers, unknown, card, etransfer, coupons,
       codes: Array.from(codeMap.values()).sort((a, b) => b.count - a.count),
+      avgTicket: payments.length ? sum(payments, r => r.amount) / payments.length : 0,
+      largest: payments.reduce((m, r) => Math.max(m, r.amount || 0), 0),
     }
+  }, [payments])
+
+  // Monthly trend for this drill-down — only meaningful (and only rendered)
+  // when the payments span more than one calendar month, since a single-month
+  // drill-down (clicking a Monthly Breakdown row) would just be one bar.
+  const trendByMonth = useMemo(() => {
+    const map = new Map()
+    for (const p of payments) {
+      if (!p.date) continue
+      const ym = monthKeyOf(p.date)
+      if (!map.has(ym)) map.set(ym, 0)
+      map.set(ym, map.get(ym) + p.amount)
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([ym, revenue]) => {
+        const [year, month] = ym.split('-')
+        const label = new Date(Date.UTC(Number(year), Number(month) - 1, 1, 12)).toLocaleDateString('en-CA', { month: 'short', year: 'numeric', timeZone: 'UTC' })
+        return { key: ym, label, value: revenue }
+      })
   }, [payments])
 
   const netOf = arr => arr.reduce((s, r) => s + r.amount, 0)
@@ -379,10 +427,12 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
             {agg.withTax.length > 0 && <StatTile label="Subtotal (ex-tax)" value={fmt(agg.subtotal)} sub={`${agg.withTax.length} of ${payments.length} w/ receipt`} />}
             {agg.withTax.length > 0 && <StatTile label="Tax Collected" value={fmt(totalTax)} sub={`GST ${fmt(agg.gst)} · QST ${fmt(agg.qst)}`} />}
             <StatTile label="Coupons Used" value={agg.coupons.length} sub={agg.discount > 0 ? fmt(agg.discount) + ' off' : undefined} color={agg.coupons.length ? '#8A5CA8' : '#1a1a1a'} />
+            <StatTile label="Average Ticket" value={fmt(agg.avgTicket)} />
+            <StatTile label="Largest Payment" value={fmt(agg.largest)} />
           </div>
 
           {/* Charts */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: agg.coupons.length ? '1.5rem' : 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: (agg.coupons.length || trendByMonth.length > 1) ? '1.5rem' : 0 }}>
             {showMemberChart && (
               <ChartCard title="Members vs Non-members">
                 <Donut data={memberData} centerTop={fmt(agg.net)} centerBottom="net" />
@@ -391,6 +441,11 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
             {showMethodChart && (
               <ChartCard title="Payment Method">
                 <Donut data={methodData} centerTop={fmt(agg.net)} centerBottom="net" />
+              </ChartCard>
+            )}
+            {trendByMonth.length > 1 && (
+              <ChartCard title="Revenue Over Time" note="Net revenue by month">
+                <RevenueBarList data={trendByMonth} color="#3B6B2F" />
               </ChartCard>
             )}
             {showTaxChart && (
@@ -469,12 +524,13 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
   )
 }
 
-export default function RevenueClient({ payments = [], stripeError = false }) {
+export default function RevenueClient({ payments = [], pendingPayments = [], stripeError = false }) {
   const [isMobile, setIsMobile] = useState(false)
   const [expanded, setExpanded] = useState(null) // index of the recent payment row currently open
   const [detail, setDetail] = useState(null) // { title, filenameBase, payments } for the drill-down modal
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [showAllMembers, setShowAllMembers] = useState(false)
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check(); window.addEventListener('resize', check)
@@ -534,6 +590,35 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
     return (dateFrom || dateTo) ? sorted : sorted.slice(0, 10)
   }, [filteredPayments, dateFrom, dateTo])
 
+  // Chronological order (oldest→newest) for the trend chart — `byMonth` above
+  // is newest-first because that reads better as a table.
+  const monthChartData = useMemo(() =>
+    [...byMonth].reverse().map(m => ({ key: m.ym, label: m.label, value: m.revenue, count: m.count })),
+  [byMonth])
+
+  // Lifetime-in-range totals per member, across every payment type — the
+  // "top members" leaderboard. Keyed by email since that's the one stable
+  // identifier every payment row carries (name can be a placeholder '—').
+  const topMembers = useMemo(() => {
+    const map = new Map()
+    for (const p of filteredPayments) {
+      if (!p.email) continue
+      if (!map.has(p.email)) map.set(p.email, { email: p.email, name: p.name, isMember: null, revenue: 0, count: 0, payments: [] })
+      const e = map.get(p.email)
+      e.revenue += p.amount
+      e.count += 1
+      e.payments.push(p)
+      if (p.name && p.name !== '—') e.name = p.name
+      if (p.isMember === true) e.isMember = true
+      else if (p.isMember === false && e.isMember !== true) e.isMember = false
+    }
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue)
+  }, [filteredPayments])
+
+  // Not date-filtered — these are live holds that need attention right now,
+  // independent of whatever historical range is selected above.
+  const pendingTotal = pendingPayments.reduce((s, p) => s + p.amount, 0)
+
   const routesRevenue = byType.find(t => t.key === 'membership_routes')?.revenue ?? 0
   const innerCircleRevenue = byType.find(t => t.key === 'membership_inner_circle')?.revenue ?? 0
   const roadTripRevenue = byType.filter(t => t.key?.startsWith('road_trip')).reduce((sum, t) => sum + (t.revenue ?? 0), 0)
@@ -546,6 +631,7 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
     { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
     { label: 'Route Revenue', value: fmt(roadTripRevenue), color: '#1a1a1a', big: false },
     { label: 'Event Revenue', value: fmt(eventRevenue), color: '#1a1a1a', big: false },
+    ...(pendingPayments.length ? [{ label: 'Pending Holds', value: fmt(pendingTotal), color: '#8A6535', big: false }] : []),
   ]
 
   return (
@@ -607,6 +693,12 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
             <div style={SECTION_LABEL}>Monthly Breakdown</div>
           </div>
           <div style={{ fontSize: '10px', color: '#bbb', padding: '0 1.5rem 0.6rem' }}>Tap a month for a full breakdown</div>
+          {monthChartData.length > 1 && (
+            <div style={{ padding: '0 1.5rem 1.25rem' }}>
+              <RevenueBarList data={monthChartData}
+                onRowClick={m => setDetail({ title: m.label, filenameBase: `revenue-${m.key}`, payments: filteredPayments.filter(p => monthKeyOf(p.date) === m.key) })} />
+            </div>
+          )}
           {byMonth.length === 0 ? (
             <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No data yet.</div>
           ) : (
@@ -674,7 +766,114 @@ export default function RevenueClient({ payments = [], stripeError = false }) {
             </div>
           )}
         </div>
+
+        {/* Top members — lifetime-in-range spend across every payment type, not
+            just one route/month. Each row opens the same drill-down modal used
+            everywhere else on this page, scoped to that one member's payments. */}
+        <div style={{ ...CARD }}>
+          <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
+            <div style={SECTION_LABEL}>Top Members</div>
+            <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.2rem' }}>Tap a member for their full payment history</div>
+          </div>
+          {topMembers.length === 0 ? (
+            <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No data yet.</div>
+          ) : (
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={TH}>Member</th>
+                      <th style={{ ...TH, textAlign: 'right' }}>Txns</th>
+                      <th style={{ ...TH, textAlign: 'right' }}>Revenue</th>
+                      <th style={{ ...TH, width: '20px' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(showAllMembers ? topMembers.slice(0, 50) : topMembers.slice(0, 10)).map((m, i) => (
+                      <tr key={m.email} className="rev-type-row" style={{ cursor: 'pointer' }}
+                        onClick={() => setDetail({ title: m.name, filenameBase: `revenue-member-${m.email.replace(/[^a-z0-9]+/gi, '-')}`, payments: m.payments })}>
+                        <td style={{ ...TD, maxWidth: '220px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span style={{ color: '#bbb', fontSize: '11px', width: '14px', flexShrink: 0 }}>{i + 1}</span>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ fontWeight: '400', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                                <MemberBadge isMember={m.isMember} />
+                              </div>
+                              <div style={{ fontSize: '10.5px', color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ ...TD, textAlign: 'right', color: '#555' }}>{m.count}</td>
+                        <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(m.revenue)}</td>
+                        <td style={{ ...TD, textAlign: 'right', color: '#ccc', paddingLeft: 0 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18" /></svg>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {topMembers.length > 10 && (
+                <div style={{ padding: '0.75rem 1.5rem 1.1rem' }}>
+                  <button type="button" onClick={() => setShowAllMembers(v => !v)}
+                    style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>
+                    {showAllMembers ? 'Show top 10' : `Show more (${Math.min(topMembers.length, 50)} of ${topMembers.length})`}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Pending / authorized holds — money committed but not yet captured.
+          Kept visually and numerically separate from realized revenue above. */}
+      {pendingPayments.length > 0 && (
+        <div style={{ ...CARD, marginBottom: '2rem' }}>
+          <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
+            <div style={SECTION_LABEL}>Pending / Authorized Holds</div>
+            <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.2rem' }}>
+              Authorized on card but not yet captured — {fmt(pendingTotal)} across {pendingPayments.length} hold{pendingPayments.length === 1 ? '' : 's'}. Not counted in revenue above.
+            </div>
+          </div>
+          {/* Flex-wrapping rows, not a table — a 6-column table has no room to
+              breathe under ~500px and was getting silently clipped (Authorized/
+              Expires/Capture pushed off-screen with no scroll affordance).
+              Wrapping lets every field reflow onto its own line at any width
+              instead of requiring horizontal scroll inside the card. */}
+          {pendingPayments.map((p, i) => {
+            const daysLeft = Math.ceil((new Date(p.expiresAt) - Date.now()) / 86400000)
+            const urgent = daysLeft <= 2
+            return (
+              <div key={p.id} style={{ padding: '0.85rem 1.5rem', borderTop: i > 0 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{p.name}</span>
+                    <span style={{ fontSize: '11px', color: '#999', marginLeft: '0.5rem' }}>{p.type}</span>
+                  </div>
+                  <span style={{ fontSize: '13px', color: '#8A6535', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(p.amount)}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '2px' }}>
+                  <span style={{ fontSize: '11px', color: '#aaa' }}>{p.email}</span>
+                  <CopyBtn value={p.email} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap', marginTop: '5px' }}>
+                  <span style={{ fontSize: '10.5px', color: '#bbb' }}>Authorized {fmtDate(p.createdAt)}</span>
+                  <span style={{ fontSize: '10.5px', color: urgent ? '#93333E' : '#bbb' }}>
+                    {daysLeft <= 0 ? 'Expired' : `Expires in ${daysLeft}d`}{!p.expiryIsExact ? ' (est.)' : ''}
+                  </span>
+                  <a href={`/admin/applications?q=${encodeURIComponent(p.email)}`}
+                    style={{ fontSize: '10.5px', color: '#8A6535', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+                    Capture →
+                  </a>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Recent payments */}
       <div style={{ ...CARD }}>

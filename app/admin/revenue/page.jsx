@@ -34,6 +34,10 @@ export default async function RevenuePage() {
   let stripeError = false
   let receiptsByPi = {}
   let promoByPi = {}
+  // Authorized-but-not-yet-captured holds (capture_method: 'manual') — money
+  // that's committed but not yet realized. Kept entirely separate from
+  // `rows`/revenue totals below; surfaced read-only in its own section.
+  let pendingRows = []
 
   // The manual (e-transfer) payments query doesn't depend on Stripe at all, so
   // kick it off NOW and let it run concurrently with the (much slower)
@@ -103,6 +107,35 @@ export default async function RevenuePage() {
           }
         })
         .sort((a, b) => new Date(b.stripe_paid_at) - new Date(a.stripe_paid_at))
+
+      // Authorization holds still awaiting a manual capture (see rule 10 in
+      // CLAUDE.md — this must never be folded into `rows`/revenue, since the
+      // money hasn't actually moved). `capture_before` on the charge is
+      // Stripe's authoritative expiry for the hold; falls back to a 7-day
+      // estimate from authorization (the default validity window for most
+      // card networks) when the charge hasn't been expanded/isn't present.
+      pendingRows = allPIs
+        .filter(pi => pi.metadata?.type && pi.status === 'requires_capture')
+        .map(pi => {
+          const charge = pi.latest_charge
+          const captureBeforeTs = (charge && typeof charge === 'object')
+            ? charge.payment_method_details?.card?.capture_before
+            : null
+          return {
+            id:            pi.id,
+            name:          pi.metadata.name || '—',
+            email:         pi.metadata.email?.toLowerCase().trim() || '',
+            phone:         pi.metadata.phone || '',
+            amount:        pi.amount / 100,
+            typeKey:       pi.metadata.type || '',
+            type:          formatPaymentType(pi.metadata.type),
+            isMember:      pi.metadata.is_member === 'yes' ? true : pi.metadata.is_member === 'no' ? false : null,
+            createdAt:     new Date(pi.created * 1000).toISOString(),
+            expiresAt:     new Date((captureBeforeTs || (pi.created + 7 * 86400)) * 1000).toISOString(),
+            expiryIsExact: !!captureBeforeTs,
+          }
+        })
+        .sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt))
     } catch (err) {
       console.error('Revenue page Stripe fetch failed:', err.message)
       stripeError = true
@@ -170,5 +203,5 @@ export default async function RevenuePage() {
       hasCoupon:   !!(promo?.code) || !!(receipt?.discount_amount),
     }
   }
-  return <RevenueClient payments={rows.map(toPaymentRow)} stripeError={stripeError} />
+  return <RevenueClient payments={rows.map(toPaymentRow)} pendingPayments={pendingRows} stripeError={stripeError} />
 }
