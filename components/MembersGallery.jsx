@@ -20,6 +20,8 @@ export default function MembersGallery({ albums }) {
   const [lightbox, setLightbox] = useState(null)
   // { albumIdx, done, total, failed } or null — one zip download at a time
   const [zipping, setZipping] = useState(null)
+  // { albumIdx, failed, total } or null — set after a zip finishes with skipped photos
+  const [zipResult, setZipResult] = useState(null)
   const touchStartX = useRef(null)
 
   const close = useCallback(() => setLightbox(null), [])
@@ -61,7 +63,9 @@ export default function MembersGallery({ albums }) {
   // (jsPDF, docx, xlsx). One failed photo just gets skipped rather than
   // aborting the whole download.
   async function downloadAlbum(album, ai) {
+    setZipResult(null)
     setZipping({ albumIdx: ai, done: 0, total: album.photos.length, failed: 0 })
+    let failedCount = 0
     try {
       const zip = new JSZip()
       for (let i = 0; i < album.photos.length; i++) {
@@ -73,6 +77,7 @@ export default function MembersGallery({ albums }) {
           const blob = await res.blob()
           zip.file(downloadName(album.name, i, url), blob)
         } catch {
+          failedCount += 1
           setZipping(z => z ? { ...z, failed: z.failed + 1 } : z)
         }
         setZipping(z => z ? { ...z, done: i + 1 } : z)
@@ -86,6 +91,7 @@ export default function MembersGallery({ albums }) {
       URL.revokeObjectURL(a.href)
     } finally {
       setZipping(null)
+      if (failedCount > 0) setZipResult({ albumIdx: ai, failed: failedCount, total: album.photos.length })
     }
   }
 
@@ -177,6 +183,11 @@ export default function MembersGallery({ albums }) {
                   </button>
                 )}
               </div>
+              {zipResult?.albumIdx === ai && (
+                <div style={{ fontSize: '10.5px', color: '#93333E', textAlign: 'right', marginBottom: '0.75rem' }}>
+                  {zipResult.failed} of {zipResult.total} photo{zipResult.total === 1 ? '' : 's'} couldn't be included in the zip — try downloading {zipResult.failed === 1 ? 'it' : 'them'} individually.
+                </div>
+              )}
               <div className="mg-grid">
                 {album.photos.map((photo, pi) => (
                   <button key={photo.id} type="button" className="mg-tile" style={{ animationDelay: `${Math.min(pi, 12) * 35}ms` }}

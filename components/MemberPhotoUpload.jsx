@@ -31,10 +31,13 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
   if (!attendedEventNames.length) return null
 
   async function handleFiles(e) {
-    const all = Array.from(e.target.files || []).slice(0, MAX_FILES)
+    const rawAll = Array.from(e.target.files || [])
+    const all = rawAll.slice(0, MAX_FILES)
     const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
     const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — unsupported format`)
-    if (!all.length) return
+    const truncated = rawAll.length - all.length
+    if (truncated > 0) skipped.push(`${truncated} more photo${truncated === 1 ? '' : 's'} skipped — up to ${MAX_FILES} per upload`)
+    if (!rawAll.length) return
     setDone(null)
     setUpload({ done: 0, total: files.length, errors: skipped })
     let succeeded = 0
@@ -116,9 +119,9 @@ export default function MemberPhotoUpload({ attendedEventNames }) {
               <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <input ref={filesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleFiles}
-              disabled={!!upload} style={{ flex: '1 1 200px', fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
+              disabled={!!upload && !upload.finished} style={{ flex: '1 1 200px', fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
           </div>
-          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload} maxLength={300}
+          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload && !upload.finished} maxLength={300}
             placeholder="Caption (optional) — applies to all photos in this upload"
             style={{ ...inp, cursor: 'text', marginTop: '0.6rem' }} />
           <div style={{ fontSize: '10.5px', color: '#bbb', marginTop: '0.6rem' }}>Up to {MAX_FILES} photos, 40MB each.</div>
