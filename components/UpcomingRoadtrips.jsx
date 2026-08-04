@@ -451,20 +451,27 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         }
         .rt-track { background:rgba(0,0,0,0.06); height:3px; overflow:hidden; }
         .rt-fill { height:100%; width:0%; transition:width 1.2s cubic-bezier(.4,0,.2,1); background:linear-gradient(90deg, #c5a882 25%, #f0ddb8 50%, #c5a882 75%); background-size:400px 100%; animation:rtShimmer 2s ease-in-out infinite; }
-        .rt-btn { background:#0F1E14; color:#F5F1EC; border:none; font-family:inherit; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:13px 20px; cursor:pointer; transition:background .2s, transform .1s; width:100%; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
-        .rt-btn:hover { background:#1a3322; } .rt-btn:active { transform:scale(0.98); } .rt-btn:disabled { opacity:0.6; cursor:default; }
-        .rt-ghost { background:transparent; color:#888; border:0.5px solid rgba(0,0,0,0.15); font-family:inherit; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; padding:13px 16px; cursor:pointer; transition:border-color .2s, color .2s; }
-        .rt-ghost:hover { border-color:#999; color:#555; }
+        .rt-btn { background:#0F1E14; color:#F5F1EC; border:none; font-family:inherit; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:13px 20px; min-height:44px; cursor:pointer; transition:background .2s, transform .1s; width:100%; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+        .rt-btn:active { transform:scale(0.98); } .rt-btn:disabled { opacity:0.6; cursor:default; }
+        .rt-ghost { background:transparent; color:#888; border:0.5px solid rgba(0,0,0,0.15); font-family:inherit; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; padding:13px 16px; min-height:44px; cursor:pointer; transition:border-color .2s, color .2s; }
         .rt-form { overflow:hidden; animation:rtFormDown .35s ease forwards; }
         .rt-input { width:100%; padding:11px 12px; border:0.5px solid rgba(0,0,0,0.15); background:#faf9f7; font-family:inherit; font-size:12px; color:#1a1a1a; outline:none; transition:border-color .2s, background .2s; margin-bottom:8px; }
         .rt-input:focus { border-color:#c5a882; background:#fff; }
+        .rt-input:disabled { opacity:0.65; cursor:not-allowed; }
         .rt-success { animation:rtSuccessPop .4s cubic-bezier(.22,.68,0,1.2) forwards; }
-        .rt-pill { background:transparent; border:0.5px solid rgba(0,0,0,0.18); font-family:inherit; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; padding:9px 22px; min-height:38px; cursor:pointer; color:#666; transition:all .2s; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+        .rt-pill { background:transparent; border:0.5px solid rgba(0,0,0,0.18); font-family:inherit; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; padding:9px 22px; min-height:44px; cursor:pointer; color:#666; transition:all .2s; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
         .rt-pill-active { background:#0F1E14; color:#F5F1EC; border-color:#0F1E14; }
         .rt-maprow { border:0.5px solid rgba(0,0,0,0.07); background:#fff; padding:14px 18px; cursor:pointer; transition:border-color .2s, background .2s, box-shadow .2s; border-left:3px solid transparent; box-shadow:0 3px 14px rgba(15,30,20,0.06); }
         .rt-maprow-active { box-shadow:0 8px 24px rgba(15,30,20,0.12); }
-        .rt-maprow:hover { background:#faf9f7; border-color:rgba(197,168,130,0.4); }
         .rt-maprow-active { border-left-color:#c5a882 !important; background:#faf9f7; }
+        /* Hover-only — unguarded :hover rules stick "on" after a tap on touch
+           devices until the next tap lands elsewhere (no mouseleave to clear
+           it). Same guard already used on .rt-card just above. */
+        @media (hover:hover) {
+          .rt-btn:hover { background:#1a3322; }
+          .rt-ghost:hover { border-color:#999; color:#555; }
+          .rt-maprow:hover { background:#faf9f7; border-color:rgba(197,168,130,0.4); }
+        }
         @keyframes rtSheetUp { from { transform:translateY(100%);} to { transform:translateY(0);} }
         .rt-sheet-backdrop { position:fixed; inset:0; background:rgba(15,30,20,0.55); backdrop-filter:blur(3px); z-index:1100; animation:rtFadeIn .2s ease forwards; }
         .rt-sheet { position:fixed; left:0; right:0; bottom:0; z-index:1101; background:#F5F1EC; border-radius:18px 18px 0 0; max-height:88vh; max-height:88dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px 20px calc(24px + env(safe-area-inset-bottom)); animation:rtSheetUp .32s cubic-bezier(.22,.68,0,1) forwards; box-shadow:0 -8px 40px rgba(0,0,0,0.25); }
@@ -759,7 +766,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                             <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
                               <CheckIcon /><span style={{ fontSize: '10px', color: '#7B5B2E', letterSpacing: '0.18em', textTransform: 'uppercase' }}>{t.onTheList}</span>
                             </div>
-                            <button onClick={() => shareInterest(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', padding: '8px 10px' }} aria-label={t.share}>↗</button>
+                            <button onClick={() => shareInterest(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', padding: '12px', minWidth: '44px', minHeight: '44px', WebkitTapHighlightColor: 'transparent' }} aria-label={t.share}>↗</button>
                           </div>
                         )
                       }
@@ -864,7 +871,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{sheetRoute.month_label} · {sheetRoute.destination}</div>
               </div>
               <button onClick={() => setSheetId(null)} aria-label={t.close}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '20px', lineHeight: 1, padding: '10px', margin: '-10px -10px 0 0', flexShrink: 0 }}>✕</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '20px', lineHeight: 1, padding: '12px', minWidth: '44px', minHeight: '44px', margin: '-12px -12px 0 0', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>✕</button>
             </div>
 
             {sheetSuccess && sheetRoute.interested ? (
@@ -904,7 +911,12 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
             <form onSubmit={e => { e.preventDefault(); submitInterest(sheetRoute) }}>
             <input ref={hpRef} type="text" name="cr_routes_field" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }} />
             <input type="text" name="name" autoComplete="name" placeholder={t.placeholderName} value={sheetRoute.formName} onChange={e => patch(sheetRoute.id, { formName: e.target.value, error: null })} className="rt-input" />
-            <input type="email" name="email" inputMode="email" autoComplete="email" placeholder={t.placeholderEmail} value={sheetRoute.formEmail} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" />
+            {/* Members: email is the auth identity, same locked treatment as
+                /members/profile — editing it here would let a member submit
+                someone else's address while still claiming member priority
+                (the API also re-verifies this server-side, but this is the
+                first line of defence). Guests can freely type any email. */}
+            <input type="email" name="email" inputMode="email" autoComplete="email" placeholder={t.placeholderEmail} value={sheetRoute.formEmail} disabled={isMember} onChange={e => patch(sheetRoute.id, { formEmail: e.target.value, error: null })} className="rt-input" style={isMember ? { opacity: 0.65, cursor: 'not-allowed' } : undefined} />
             {!isMember && emailIsMember && (
               <div style={{ background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', padding: '12px 14px', margin: '2px 0 10px' }}>
                 <div style={{ fontSize: '11.5px', color: '#6b5535', lineHeight: 1.7 }}>
@@ -944,7 +956,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                     return (
                       <button type="button" key={a}
                         onClick={() => patch(sheetRoute.id, s => ({ formActivities: on ? s.formActivities.filter(x => x !== a) : [...(s.formActivities || []), a] }))}
-                        style={{ fontSize: '11px', letterSpacing: '0.03em', padding: '8px 12px', minHeight: '36px', border: `0.5px solid ${on ? ACCENT : 'rgba(0,0,0,0.15)'}`, background: on ? 'rgba(197,168,130,0.12)' : 'transparent', color: on ? '#8a6535' : '#888', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        style={{ fontSize: '11px', letterSpacing: '0.03em', padding: '8px 12px', minHeight: '44px', border: `0.5px solid ${on ? ACCENT : 'rgba(0,0,0,0.15)'}`, background: on ? 'rgba(197,168,130,0.12)' : 'transparent', color: on ? '#8a6535' : '#888', cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
                         {label}
                       </button>
                     )
@@ -989,7 +1001,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
               <button onClick={copyShare} className="rt-btn" style={{ flex: 1, padding: '12px' }}>{copied ? t.copied : t.copyText}</button>
               <button onClick={shareTwitter} className="rt-ghost" style={{ flex: 1 }}>{t.twitterX}</button>
             </div>
-            <button onClick={() => setShareRoute(null)} style={{ width: '100%', background: 'transparent', border: 'none', fontFamily: 'inherit', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', padding: '8px', cursor: 'pointer' }}>{t.close}</button>
+            <button onClick={() => setShareRoute(null)} style={{ width: '100%', background: 'transparent', border: 'none', fontFamily: 'inherit', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', padding: '12px', minHeight: '44px', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{t.close}</button>
           </div>
         </div>
       )}

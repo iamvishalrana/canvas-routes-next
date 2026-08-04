@@ -1,5 +1,6 @@
 import { after } from 'next/server'
 import { deviceType } from '../../../../lib/deviceType'
+import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
@@ -30,7 +31,17 @@ export async function POST(request) {
   const email = normalizeEmail(body.email)
   const phone = (body.phone || '').trim()
   const car = (body.car || '').trim()
-  const isMember = !!body.is_member
+  // Never trust the client's is_member claim — anyone can POST is_member:true
+  // directly to this endpoint. Re-derive it from the actual session and only
+  // honor it when the logged-in user's email matches the submitted one (the
+  // member portal locks the email field to match, but this is what actually
+  // closes the loophole for direct API calls / a tampered request).
+  let isMember = false
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    isMember = !!(user?.email && normalizeEmail(user.email) === email)
+  } catch {}
 
   // Sanitize the trip-preference survey answers into a known shape.
   const pIn = body.preferences && typeof body.preferences === 'object' ? body.preferences : {}
