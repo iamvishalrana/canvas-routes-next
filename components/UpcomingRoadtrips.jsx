@@ -664,6 +664,12 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         </div>
       ) : view === 'grid' ? (
         <div key="grid" style={{ maxWidth: '1200px', margin: '0 auto', padding: `clamp(32px,5vw,56px) ${PADX}`, animation: 'rtFadeIn .3s ease' }}>
+          {/* No active routes — without this the grid was just blank space
+              between the toggle bar and the past-routes section (or the
+              footer, if there's no past-routes history either). */}
+          {routes.length === 0 && (
+            <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px) 0', fontSize: '13px', color: '#bbb' }}>{t.noRoutesOpen}</div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '20px' }}>
             {routes.map((r, i) => {
               const pct = Math.min(100, Math.round((r.interested_count / r.target_count) * 100))
