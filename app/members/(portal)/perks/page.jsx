@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { PARTNERS } from '../../../../lib/partners'
 import FadeUp from '../../../../components/FadeUp'
+import PartnerCodeReveal from '../../../../components/PartnerCodeReveal'
 import { membersPerksT } from '../../../../lib/i18n/membersPerks'
 
 export const dynamic = 'force-dynamic'
@@ -73,14 +74,20 @@ export default async function PerksPage() {
           z-index: 2;
           opacity: 0;
         }
-        .perks-card:hover .perks-card-left::before {
-          animation: perks-shimmer 0.75s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
         .perks-card-left {
           transition: filter 0.3s ease;
         }
-        .perks-card:hover .perks-card-left {
-          filter: brightness(1.06);
+        /* Hover-only — on a touch device, tapping a card has no mouseleave to
+           clear a plain :hover, so the shimmer/brightness (and the partner
+           link color below) would otherwise stick "on" until the next tap
+           lands elsewhere. */
+        @media (hover: hover) {
+          .perks-card:hover .perks-card-left::before {
+            animation: perks-shimmer 0.75s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          }
+          .perks-card:hover .perks-card-left {
+            filter: brightness(1.06);
+          }
         }
         .perks-card-right {
           background: #fff;
@@ -103,29 +110,46 @@ export default async function PerksPage() {
           text-decoration: none;
           font-family: var(--font-inter), sans-serif;
           border-bottom: 0.5px solid rgba(15,30,20,0.22);
-          padding-bottom: 1px;
+          padding: 0.6rem 0 1px;
+          min-height: 44px;
           align-self: flex-start;
+          -webkit-tap-highlight-color: transparent;
           transition: color 0.15s, border-color 0.15s;
         }
-        .perks-ig-link:hover { color: #c5a882; border-color: rgba(197,168,130,0.5); }
+        @media (hover: hover) {
+          .perks-ig-link:hover { color: #c5a882; border-color: rgba(197,168,130,0.5); }
+        }
         @media (max-width: 640px) {
           .perks-card { grid-template-columns: 1fr; }
           .perks-card-left { min-height: 180px; padding: 1.75rem 1.5rem; }
           .perks-card-right { border-left: 0.5px solid rgba(0,0,0,0.07); border-top: 0.5px solid rgba(197,168,130,0.2); padding: 1.75rem 1.5rem; }
           .perks-header { margin-bottom: 2.25rem !important; padding-bottom: 2rem !important; }
         }
+        /* On-mount entrance for the header — same staggered-fade pattern as
+           the dashboard header, since this is above the fold (scroll-
+           triggered FadeUp, used below for the cards, wouldn't fire here). */
+        @keyframes perks-fade-up {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .perks-header-eyebrow { animation: perks-fade-up 0.4s ease both; }
+        .perks-header-title   { animation: perks-fade-up 0.45s ease both; animation-delay: 0.07s; }
+        .perks-header-badges  { animation: perks-fade-up 0.4s ease both; animation-delay: 0.16s; }
+        @media (prefers-reduced-motion: reduce) {
+          .perks-header-eyebrow, .perks-header-title, .perks-header-badges { animation: none !important; opacity: 1 !important; transform: none !important; }
+        }
       `}</style>
 
       {/* Header */}
       <header className="perks-header" style={{ marginBottom: '3.5rem', paddingBottom: '2.5rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-        <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+        <div className="perks-header-eyebrow" style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
           {t.seasonEyebrow}
         </div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.6rem, 5.5vw, 3.6rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
+        <h1 className="perks-header-title" style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2.6rem, 5.5vw, 3.6rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.05, margin: '0 0 1.5rem', letterSpacing: '-0.01em' }}>
           {t.titleLine1}<br />
           <span style={{ fontStyle: 'italic' }}>{t.titleLine2}</span>
         </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <div className="perks-header-badges" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
           <span style={{
             fontSize: '8.5px', letterSpacing: '0.2em', textTransform: 'uppercase',
             padding: '0.38rem 1rem',
@@ -193,25 +217,52 @@ export default async function PerksPage() {
                     {t.howToRedeem}
                   </div>
                   <div style={{ height: '0.5px', background: 'rgba(197,168,130,0.2)', marginBottom: '1.25rem' }} />
-                  <p style={{ fontSize: '14px', color: '#444', lineHeight: 1.85, letterSpacing: '0.01em', margin: 0 }}>
-                    {p.how}
-                  </p>
+                  {p.hasCode ? (
+                    <PartnerCodeReveal
+                      slug={p.slug}
+                      instructions={p.how}
+                      t={{ revealCode: t.revealCode, revealingCode: t.revealingCode, copyCode: t.copyCode, copiedCode: t.copiedCode, codeError: t.codeError }}
+                    />
+                  ) : (
+                    <p style={{ fontSize: '14px', color: '#444', lineHeight: 1.85, letterSpacing: '0.01em', margin: 0 }}>
+                      {p.how}
+                    </p>
+                  )}
                 </div>
 
-                {p.instagram && (
-                  <a
-                    href={`https://instagram.com/${p.instagram}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="perks-ig-link"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="5"/>
-                      <circle cx="12" cy="12" r="4"/>
-                      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
-                    </svg>
-                    @{p.instagram}
-                  </a>
+                {(p.instagram || p.website) && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem' }}>
+                    {p.instagram && (
+                      <a
+                        href={`https://instagram.com/${p.instagram}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="perks-ig-link"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="2" width="20" height="20" rx="5"/>
+                          <circle cx="12" cy="12" r="4"/>
+                          <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                        </svg>
+                        @{p.instagram}
+                      </a>
+                    )}
+                    {p.website && (
+                      <a
+                        href={p.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="perks-ig-link"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                          <line x1="2" y1="12" x2="22" y2="12"/>
+                          <path d="M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/>
+                        </svg>
+                        {t.visitWebsite}
+                      </a>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -222,7 +273,7 @@ export default async function PerksPage() {
 
       {/* Inner Circle teaser for Routes Members */}
       {!isInnerCircle && (
-        <div style={{ marginTop: '1.5px' }}>
+        <FadeUp style={{ marginTop: '1.5px' }}>
           <div style={{ background: 'rgba(197,168,130,0.04)', border: '0.5px solid rgba(197,168,130,0.18)', borderLeft: '2px solid rgba(197,168,130,0.4)', padding: '1.75rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <div style={{ fontSize: '8px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter), sans-serif', marginBottom: '0.5rem' }}>
@@ -241,7 +292,7 @@ export default async function PerksPage() {
               </svg>
             </div>
           </div>
-        </div>
+        </FadeUp>
       )}
 
       <p style={{ marginTop: '2.5rem', fontSize: '11px', color: '#c0b9b0', lineHeight: 1.7, letterSpacing: '0.01em', borderTop: '0.5px solid rgba(0,0,0,0.06)', paddingTop: '1.75rem', fontFamily: 'var(--font-inter), sans-serif' }}>

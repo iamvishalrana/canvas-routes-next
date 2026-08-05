@@ -33,6 +33,7 @@ const SECTIONS = [
       { href: '/admin/revenue',     label: 'Revenue'     },
       { href: '/admin/expenses',    label: 'Expenses'    },
       { href: '/admin/promo-codes', label: 'Promo Codes' },
+      { href: '/admin/partners',    label: 'Partner Codes' },
     ],
   },
   {
