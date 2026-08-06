@@ -491,7 +491,7 @@ export default function EventsClient() {
     setUploadingPhoto(eventId); setPhotoError(p => ({ ...p, [eventId]: null }))
     try {
       file = await convertHeicIfNeeded(file)
-      if (file.size > 20 * 1024 * 1024) { setPhotoError(p => ({ ...p, [eventId]: 'File must be under 20 MB.' })); return }
+      if (file.size > 50 * 1024 * 1024) { setPhotoError(p => ({ ...p, [eventId]: 'File must be under 50 MB.' })); return }
       const urlRes = await fetch(`/api/admin/events/${eventId}/photo/upload-url`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileType: file.type }),

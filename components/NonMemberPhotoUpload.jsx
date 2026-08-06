@@ -36,7 +36,7 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
       try {
         file = await convertHeicIfNeeded(file)
         if (!ALLOWED[file.type]) throw new Error('could not be converted — try exporting as JPEG first')
-        if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
+        if (file.size > 100 * 1024 * 1024) throw new Error('over the 100 MB per-file limit')
         const display = await compressImageClient(file)
         const urlRes = await fetch(`/api/gallery/${token}/submit-upload-url`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

@@ -19,7 +19,7 @@ export async function POST(request, { params }) {
   if (!ext) return Response.json({ error: 'Unsupported image format.' }, { status: 400 })
 
   const admin = createAdminClient()
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '20MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '50MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
   // updateBucket() for the already-exists case.

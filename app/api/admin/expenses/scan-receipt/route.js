@@ -7,7 +7,12 @@ import { EXPENSE_CATEGORIES } from '../../../../../lib/expenseCategories'
 // Vision-capable image types Anthropic accepts. HEIC (common on iPhone) is NOT
 // supported by the vision API, so it's rejected with a clear message below.
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
-const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
+// This route posts straight to this API route's body (no signed-Storage-URL
+// option for a one-shot OCR call), so it's bound by Vercel's serverless
+// function request-body cap (~4.5MB) — a check above that is unreachable in
+// practice; the client already downscales images before sending (see
+// ExpensesClient.jsx handleScan), so this is just the honest backstop.
+const MAX_BYTES = 4 * 1024 * 1024 // 4 MB
 
 const CATEGORIES = EXPENSE_CATEGORIES
 // Canadian province/territory codes — used to validate the scanned merchant
@@ -74,7 +79,7 @@ export async function POST(request) {
   }
 
   const arrayBuffer = await file.arrayBuffer()
-  if (arrayBuffer.byteLength > MAX_BYTES) return Response.json({ error: 'File too large (max 10 MB).' }, { status: 400 })
+  if (arrayBuffer.byteLength > MAX_BYTES) return Response.json({ error: 'File too large to scan (max 4 MB) — attach it below instead and enter the details manually.' }, { status: 400 })
   const b64 = Buffer.from(arrayBuffer).toString('base64')
 
   const mediaBlock = file.type === 'application/pdf'

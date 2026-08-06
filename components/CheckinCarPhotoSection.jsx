@@ -35,8 +35,8 @@ export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }
     e.preventDefault()
     setError(null)
     if (!file) { setError(t.carPhotoErrMissing); return }
-    if (!ALLOWED[file.type]) { setError(t.genericError); return }
-    if (file.size > 15 * 1024 * 1024) { setError(t.genericError); return }
+    if (!ALLOWED[file.type]) { setError(t.carPhotoErrFormat); return }
+    if (file.size > 40 * 1024 * 1024) { setError(t.carPhotoErrSize); return }
     setSubmitting(true)
     try {
       const urlRes = await fetch(`/api/checkin/${identifier.eventId}/car-photo/upload-url`, {

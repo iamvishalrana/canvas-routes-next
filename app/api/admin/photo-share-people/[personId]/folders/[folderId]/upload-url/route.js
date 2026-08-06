@@ -23,7 +23,7 @@ export async function POST(request, { params }) {
   if (!folder) return Response.json({ error: 'Folder not found.' }, { status: 404 })
   if (new Date(folder.expires_at) <= new Date()) return Response.json({ error: 'This folder has already expired.' }, { status: 400 })
 
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '100MB' }
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
     admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
 

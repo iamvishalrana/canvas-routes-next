@@ -28,7 +28,7 @@ export async function POST(request) {
   }
 
   const admin = createAdminClient()
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_TYPES, fileSizeLimit: '10MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_TYPES, fileSizeLimit: '25MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
   // updateBucket() for the already-exists case.

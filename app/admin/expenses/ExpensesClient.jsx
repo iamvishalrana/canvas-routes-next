@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
+import { compressImageClient } from '../../../lib/compressImageClient'
 
 const CATEGORIES = EXPENSE_CATEGORIES
 
@@ -83,6 +84,7 @@ const COL = '22px 96px 1fr 1fr 88px 88px 88px 78px'
 // larger than a request body limit should have to accommodate), then a
 // confirm step verifies the file landed and hands back its public URL.
 async function uploadReceipt(file, folderPath) {
+  if (file.size > 25 * 1024 * 1024) throw new Error('File must be under 25 MB.')
   const urlRes = await fetch('/api/admin/expenses/upload-receipt/upload-url', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ folderPath, fileName: file.name, fileType: file.type }),
@@ -508,11 +510,25 @@ export default function ExpensesClient() {
     if (!file) return
     setScanning(true); setFormErr(null); setScanNotice(null)
     try {
+      // Claude's vision API doesn't need full camera resolution to read a
+      // receipt, and this route posts straight to a Next.js API route body —
+      // unlike every other upload on this page, it can't use a signed
+      // Storage URL, so it's stuck with Vercel's ~4.5MB serverless request
+      // cap. A downscaled copy comfortably clears that; the untouched
+      // original is still what gets attached to the expense below via
+      // uploadReceipt(). PDFs can't be canvas-compressed, so those are
+      // capped client-side instead of silently hitting the platform wall.
+      let scanFile = file
+      if (file.type === 'application/pdf') {
+        if (file.size > 4 * 1024 * 1024) { setFormErr('PDF is too large to scan (max 4 MB) — attach it below instead and enter the details manually.'); return }
+      } else {
+        scanFile = await compressImageClient(file)
+      }
       const sfd = new FormData()
-      sfd.append('file', file)
+      sfd.append('file', scanFile)
       const res = await fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setFormErr(data.error || 'Scan failed.'); return }
+      if (!res.ok) { setFormErr(data.error || (res.status === 413 ? 'That file is too large to scan.' : 'Scan failed.')); return }
       setScanNotice(data.mismatch
         ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
         : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — $${data.total.toFixed(2)}` : ''}. Review the fields before saving.` })

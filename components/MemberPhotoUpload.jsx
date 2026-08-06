@@ -48,7 +48,7 @@ export default function MemberPhotoUpload({ attendedEventNames, lang = 'en' }) {
       try {
         file = await convertHeicIfNeeded(file)
         if (!ALLOWED[file.type]) throw new Error(t.couldNotConvert)
-        if (file.size > 40 * 1024 * 1024) throw new Error(t.overSizeLimit)
+        if (file.size > 100 * 1024 * 1024) throw new Error(t.overSizeLimit)
         const display = await compressImageClient(file)
         const urlRes = await fetch('/api/member/gallery-submission/upload-url', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

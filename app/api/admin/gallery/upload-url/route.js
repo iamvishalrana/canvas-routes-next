@@ -26,7 +26,7 @@ export async function POST(request) {
   }
 
   const supabase = createAdminClient()
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '100MB' }
   // createBucket() silently no-ops once the bucket already exists — a limit
   // raised here in code would never actually reach it without falling back
   // to updateBucket() for the already-exists case.

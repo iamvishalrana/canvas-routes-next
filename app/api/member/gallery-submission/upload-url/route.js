@@ -33,7 +33,7 @@ export async function POST(request) {
     return Response.json({ error: 'You can only submit photos for an event you attended.' }, { status: 400 })
   }
 
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '100MB' }
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
     admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
 

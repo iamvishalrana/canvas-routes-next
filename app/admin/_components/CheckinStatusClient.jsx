@@ -200,13 +200,19 @@ export default function CheckinStatusClient({ eventId }) {
     setPhotoBusy(email); setActionError(null)
     try {
       file = await convertHeicIfNeeded(file)
+      if (file.size > 40 * 1024 * 1024) { setActionError('File must be under 40 MB.'); return }
       const urlRes = await fetch(`/api/admin/checkin/${eventId}/car-photo/upload-url`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, fileType: file.type }),
       })
       const urls = await urlRes.json().catch(() => ({}))
       if (!urlRes.ok) { setActionError(urls.error || 'Failed to upload photo.'); return }
-      await uploadToSupabaseStorage({ bucket: 'route-car-photos', path: urls.path, token: urls.token, file })
+      try {
+        await uploadToSupabaseStorage({ bucket: 'route-car-photos', path: urls.path, token: urls.token, file })
+      } catch (err) {
+        setActionError(err?.message || 'Upload to storage failed — the file may be too large or the connection dropped.')
+        return
+      }
       const res = await fetch(`/api/admin/checkin/${eventId}/car-photo`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, path: urls.path }),

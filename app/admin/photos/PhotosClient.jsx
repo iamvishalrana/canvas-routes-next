@@ -288,7 +288,7 @@ export default function PhotosClient() {
       try {
         file = await convertHeicIfNeeded(file)
         if (!ALLOWED[file.type]) throw new Error('could not be converted from HEIC — try exporting as JPEG first')
-        if (file.size > 40 * 1024 * 1024) throw new Error('over the 40 MB per-file limit')
+        if (file.size > 100 * 1024 * 1024) throw new Error('over the 100 MB per-file limit')
         const display = await compressImageClient(file)
         const urlRes = await fetch('/api/admin/gallery/upload-url', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -567,7 +567,7 @@ export default function PhotosClient() {
                           </div>
                         </button>
                         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                          <GhostBtn small onClick={() => { addTargetRef.current = album; addFilesRef.current?.click() }}>+ Add Photos</GhostBtn>
+                          <GhostBtn small disabled={!!upload} onClick={() => { addTargetRef.current = album; addFilesRef.current?.click() }}>+ Add Photos</GhostBtn>
                           <GhostBtn small onClick={() => setEditing({ orig: album.name, name: album.name, date: album.date || '' })}>Edit</GhostBtn>
                           <DangerBtn small onClick={() => setDeleteAlbum(album.name)}>Delete</DangerBtn>
                         </div>
@@ -636,7 +636,7 @@ export default function PhotosClient() {
                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{personalMember.email}<CopyBtn value={personalMember.email} /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <GhostBtn small onClick={() => personalFilesRef.current?.click()}>+ Add Photos</GhostBtn>
+                  <GhostBtn small disabled={!!upload} onClick={() => personalFilesRef.current?.click()}>+ Add Photos</GhostBtn>
                   <GhostBtn small disabled={notifyStatus[personalMember.id] === 'sending'} onClick={() => notifyMember(personalMember)}>
                     {notifyStatus[personalMember.id] === 'sending' ? 'Sending…'
                       : notifyStatus[personalMember.id] === 'sent' ? '✓ Sent'

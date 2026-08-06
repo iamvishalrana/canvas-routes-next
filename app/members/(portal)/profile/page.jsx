@@ -320,7 +320,7 @@ export default function ProfilePage() {
     setAvatarUploading(true); setAvatarError(null)
     try {
       file = await convertHeicIfNeeded(file)
-      if (file.size > 15 * 1024 * 1024) { setAvatarError(t.errFileSize); return }
+      if (file.size > 40 * 1024 * 1024) { setAvatarError(t.errFileSize); return }
       const urlRes = await fetch('/api/member/photo/upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'avatar', fileType: file.type }),
@@ -355,7 +355,7 @@ export default function ProfilePage() {
     setPhotoUploadingIdx(idx); setPhotoErrors(p => ({ ...p, [idx]: null }))
     try {
       file = await convertHeicIfNeeded(file)
-      if (file.size > 15 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: t.errFileSize })); return }
+      if (file.size > 40 * 1024 * 1024) { setPhotoErrors(p => ({ ...p, [idx]: t.errFileSize })); return }
       const urlRes = await fetch('/api/member/photo/upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'car', carIndex: idx, fileType: file.type }),

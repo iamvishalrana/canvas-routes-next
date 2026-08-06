@@ -21,7 +21,7 @@ export async function POST(request, { params }) {
   const { data: event } = await admin.from('events').select('id').eq('id', eventId).maybeSingle()
   if (!event) return Response.json({ error: 'Event not found.' }, { status: 404 })
 
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '15MB' }
+  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
   // updateBucket() for the already-exists case.
