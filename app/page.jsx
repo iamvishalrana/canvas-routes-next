@@ -95,7 +95,12 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
   return (
     <>
       {card.photo && (
-        <div className="routes-popup-photo" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
+        // Capped by viewport-relative height (not a fluid aspect-ratio) so
+        // the photo can't grow tall enough on its own to push the card past
+        // the dialog's max-height and force an internal scroll — the whole
+        // point of a popup is that it's readable at a glance, not a page you
+        // have to scroll through.
+        <div className="routes-popup-photo" style={{ position: 'relative', width: '100%', height: 'clamp(110px, 20vh, 190px)', overflow: 'hidden' }}>
           <img src={card.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.1) 0%, rgba(15,30,20,0.75) 100%)' }} />
         </div>
@@ -619,7 +624,7 @@ export default function Home() {
                fit with less scrolling, without touching the single-card
                layout (which never gets the has-second class). */
             @media (max-width: 640px) {
-              .routes-popup-cards.has-second .routes-popup-photo { aspect-ratio: 21/9; }
+              .routes-popup-cards.has-second .routes-popup-photo { height: clamp(80px, 12vh, 120px); }
               .routes-popup-cards.has-second .routes-popup-card-body { padding: 1.5rem 1.5rem 1.75rem; }
               .routes-popup-cards.has-second .routes-popup-card-text { -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
             }
