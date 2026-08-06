@@ -60,7 +60,7 @@ export default async function DashboardPage() {
       ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle()
       : Promise.resolve({ data: null }),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
-    admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type, launched, photo_url, registration_url').eq('is_active', true).order('sort_order', { ascending: true }),
+    admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type, launched, photo_url, registration_url').eq('is_active', true).eq('is_past', false).order('sort_order', { ascending: true }),
     admin.from('route_interest').select('route_id, email'),
   ])
 
