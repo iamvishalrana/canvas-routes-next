@@ -41,7 +41,7 @@ export async function POST(request, { params }) {
 
   const { data: ev, error: evErr } = await admin
     .from('events')
-    .select('name, type, date, location')
+    .select('name, type, date, location, member_price')
     .eq('id', id)
     .maybeSingle()
   if (evErr) return Response.json({ error: evErr.message }, { status: 500 })
@@ -65,12 +65,21 @@ export async function POST(request, { params }) {
 
   // Only write payment fields when there's no existing real Stripe payment to preserve
   const hasRealStripePayment = existing?.stripe_payment_type && !existing.stripe_payment_type.startsWith('external_')
+  // Cash/e-transfer money collected outside Stripe still needs an amount +
+  // paid-at recorded — without these, Admin -> Payments and Revenue both
+  // filter on `stripe_amount_paid IS NOT NULL` and silently exclude this
+  // payment from every total/breakdown/export forever, even though it's
+  // real collected money. Defaults to the event's listed price; there's no
+  // UI yet to record a different amount if the admin actually collected less/more.
   const { data: appData, error: appErr } = await admin.from('applications').upsert({
     email: normalEmail,
     name: trimmedName,
     registrations: [...prevRegs, newReg],
     source: existing?.source || 'Manual — Admin',
-    ...(!hasRealStripePayment && isPaid ? { stripe_payment_status: 'paid', stripe_payment_type: `external_${paymentMethod}` } : {}),
+    ...(!hasRealStripePayment && isPaid ? {
+      stripe_payment_status: 'paid', stripe_payment_type: `external_${paymentMethod}`,
+      stripe_amount_paid: ev.member_price ?? null, stripe_paid_at: new Date().toISOString(),
+    } : {}),
     ...(!hasRealStripePayment && isFree ? { stripe_payment_status: 'free' } : {}),
     ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
   }, { onConflict: 'email' }).select('id').maybeSingle()
@@ -105,7 +114,7 @@ export async function POST(request, { params }) {
       email: normalEmail,
       name: trimmedName,
       stripe_payment_status: isPaid ? 'paid' : 'free',
-      amount_paid: null,
+      amount_paid: isPaid ? (ev.member_price ?? null) : null,
     }, { onConflict: 'event_id,member_id' })
     if (evRegErr) captureException(new Error(evRegErr.message), { context: 'registrant-add-event-registrations-mirror', appId, eventId: id })
   }

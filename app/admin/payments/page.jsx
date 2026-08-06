@@ -60,13 +60,20 @@ export default async function PaymentsPage() {
       // makes the detail panel, card info, tax, and app links populate on first
       // load — the client only refetches on a realtime change, never on mount.
       const empty = { data: [] }
-      const [disputeRes, receiptRes, appsRes] = await Promise.all([
+      const [disputeRes, eventRegDisputeRes, receiptRes, appsRes] = await Promise.all([
         piIds.length ? supabase.from('applications').select('stripe_payment_intent_id, stripe_payment_status').in('stripe_payment_intent_id', piIds).in('stripe_payment_status', ['disputed', 'disputed_won', 'disputed_lost']).then(r => r, () => empty) : Promise.resolve(empty),
+        // Disputes on an `event_registration`-type PI are written into
+        // event_registrations, not applications (see the webhook's
+        // charge.dispute.* handlers) — without this second lookup, a lost
+        // dispute on an event payment never shows as anything but "paid"
+        // here, and the clawed-back amount keeps counting as collected.
+        piIds.length ? supabase.from('event_registrations').select('stripe_payment_intent_id, stripe_payment_status').in('stripe_payment_intent_id', piIds).in('stripe_payment_status', ['disputed', 'disputed_won', 'disputed_lost']).then(r => r, () => empty) : Promise.resolve(empty),
         piIds.length ? supabase.from('payment_receipts').select('stripe_payment_intent_id, subtotal_amount, gst_amount, qst_amount, discount_amount').in('stripe_payment_intent_id', piIds).then(r => r, () => empty) : Promise.resolve(empty),
         emails.length ? supabase.from('applications').select('id, email').in('email', emails).then(r => r, () => empty) : Promise.resolve(empty),
       ])
       const disputeStatusByPi = {}
       for (const d of (disputeRes.data || [])) disputeStatusByPi[d.stripe_payment_intent_id] = d.stripe_payment_status
+      for (const d of (eventRegDisputeRes.data || [])) disputeStatusByPi[d.stripe_payment_intent_id] = d.stripe_payment_status
       const receiptsByPi = {}
       for (const r of (receiptRes.data || [])) receiptsByPi[r.stripe_payment_intent_id] = r
       const appIdByEmail = {}

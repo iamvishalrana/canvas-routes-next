@@ -74,6 +74,15 @@ export async function GET() {
       .in('stripe_payment_intent_id', piIds)
       .in('stripe_payment_status', ['disputed', 'disputed_won', 'disputed_lost'])
     if (disputes) for (const d of disputes) disputeStatusByPi[d.stripe_payment_intent_id] = d.stripe_payment_status
+    // Disputes on an `event_registration`-type PI are written into
+    // event_registrations instead of applications (see the webhook's
+    // charge.dispute.* handlers) — without this, a lost dispute on an event
+    // payment never surfaces here, on this route's own realtime-refresh path.
+    const { data: eventRegDisputes } = await supabase.from('event_registrations')
+      .select('stripe_payment_intent_id, stripe_payment_status')
+      .in('stripe_payment_intent_id', piIds)
+      .in('stripe_payment_status', ['disputed', 'disputed_won', 'disputed_lost'])
+    if (eventRegDisputes) for (const d of eventRegDisputes) disputeStatusByPi[d.stripe_payment_intent_id] = d.stripe_payment_status
   }
 
   const records = canvasPIs.map(pi => {
@@ -114,7 +123,15 @@ export async function GET() {
     }
 
     const card = (charge && typeof charge === 'object') ? charge.payment_method_details?.card : null
-    const stripeAmountPaid = pi.status === 'requires_capture' ? pi.amount : pi.amount_received
+    // Matches app/admin/payments/page.jsx's SSR formula exactly — amount_received
+    // is only meaningful once a PI has actually succeeded; for anything else
+    // (authorized hold, canceled, failed) it's 0, so pi.amount (the real
+    // attempted/held amount) is what should display. Using requires_capture
+    // as the sole "not succeeded" branch (as this route did before) meant a
+    // canceled/failed PI rendered its amount as 0 on this route's own
+    // realtime-refresh path even though the initial SSR load showed the
+    // correct figure — the dollar amount would visibly disappear on refresh.
+    const stripeAmountPaid = pi.status === 'succeeded' ? pi.amount_received : pi.amount
     // A lost dispute withdraws the funds just like a refund would, but
     // Stripe's charge object never sets amount_refunded/refunded for a
     // dispute (that's a separate mechanism) — without this, a charged-back
@@ -126,7 +143,6 @@ export async function GET() {
       stripe_payment_intent_id: pi.id,
       name: pi.metadata.name || '',
       email,
-      // amount_received is 0 until captured; use pi.amount for authorized holds
       stripe_amount_paid: stripeAmountPaid,
       stripe_amount_refunded: effectiveRefunded,
       stripe_payment_status,

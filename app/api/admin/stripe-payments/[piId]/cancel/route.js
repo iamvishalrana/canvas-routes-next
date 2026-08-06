@@ -20,6 +20,24 @@ export async function POST(request, { params }) {
   if (app.stripe_payment_status === 'paid') return Response.json({ error: 'Payment has already been captured — use refund instead.' }, { status: 400 })
   if (app.stripe_payment_status === 'refunded') return Response.json({ error: 'Payment has already been refunded.' }, { status: 400 })
 
+  // Authoritative Stripe-side status check — the DB status is only a proxy
+  // and can be stale (e.g. a payment_intent.succeeded webhook capturing the
+  // hold via a different path can land before the DB sync does). Checking
+  // this before calling cancel gives a clean, specific error instead of
+  // Stripe's own rejection message, matching the capture route's pattern.
+  let pi
+  try {
+    pi = await stripe.paymentIntents.retrieve(piId)
+  } catch (err) {
+    captureException(err, { context: 'admin-cancel-pi-retrieve', piId })
+    return Response.json({ error: 'Could not verify payment.' }, { status: 500 })
+  }
+  if (pi.status === 'succeeded') return Response.json({ error: 'Payment has already been captured — use refund instead.' }, { status: 400 })
+  if (pi.status === 'canceled') return Response.json({ error: 'Already cancelled.' }, { status: 400 })
+  if (!['requires_payment_method', 'requires_confirmation', 'requires_action', 'requires_capture'].includes(pi.status)) {
+    return Response.json({ error: `Payment cannot be cancelled (Stripe status: ${pi.status}).` }, { status: 400 })
+  }
+
   try {
     await stripe.paymentIntents.cancel(piId, {}, { idempotencyKey: `cancel-${piId}` })
   } catch (err) {

@@ -73,14 +73,23 @@ export default async function RevenuePage() {
       //  - payment_receipts / promo_redemptions: tax split + human promo code,
       //    only present for payments made after the ledger shipped.
       const empty = { data: [] }
-      const [disputedRes, receiptsRes, promoRes] = piIds.length > 0
+      const [disputedRes, eventRegDisputedRes, receiptsRes, promoRes] = piIds.length > 0
         ? await Promise.all([
             supabase.from('applications').select('stripe_payment_intent_id').in('stripe_payment_intent_id', piIds).eq('stripe_payment_status', 'disputed_lost').then(r => r, () => empty),
+            // Disputes on an `event_registration`-type PI are written into
+            // event_registrations instead of applications (see the webhook's
+            // charge.dispute.* handlers) — without this second lookup, a lost
+            // dispute on an event payment keeps counting its full amount as
+            // revenue forever.
+            supabase.from('event_registrations').select('stripe_payment_intent_id').in('stripe_payment_intent_id', piIds).eq('stripe_payment_status', 'disputed_lost').then(r => r, () => empty),
             supabase.from('payment_receipts').select('stripe_payment_intent_id, subtotal_amount, gst_amount, qst_amount, discount_amount').in('stripe_payment_intent_id', piIds).then(r => r, () => empty),
             supabase.from('promo_redemptions').select('stripe_payment_intent_id, code, discount_amount').in('stripe_payment_intent_id', piIds).then(r => r, () => empty),
           ])
-        : [empty, empty, empty]
-      const disputedLostPiIds = new Set((disputedRes.data || []).map(a => a.stripe_payment_intent_id))
+        : [empty, empty, empty, empty]
+      const disputedLostPiIds = new Set([
+        ...(disputedRes.data || []).map(a => a.stripe_payment_intent_id),
+        ...(eventRegDisputedRes.data || []).map(a => a.stripe_payment_intent_id),
+      ])
       for (const r of (receiptsRes.data || [])) receiptsByPi[r.stripe_payment_intent_id] = r
       for (const r of (promoRes.data || [])) promoByPi[r.stripe_payment_intent_id] = r
 

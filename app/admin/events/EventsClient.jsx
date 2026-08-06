@@ -874,8 +874,14 @@ export default function EventsClient() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const isEventPast = item => !!item.date && new Date(item.date) < today
+  // Plain string compare of YYYY-MM-DD in Montreal time — item.date is a bare
+  // date string, and `new Date(item.date)` parses that as UTC midnight while
+  // `new Date()` is the browser's local time; comparing the two directly
+  // misfiled an event happening today as "past" for most of the day for any
+  // admin west of UTC (e.g. Montreal), since UTC midnight for today's date
+  // is already yesterday evening local time.
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ })
+  const isEventPast = item => !!item.date && item.date < todayStr
   const displayItems = [...items.filter(i => !isEventPast(i)), ...items.filter(i => isEventPast(i))]
   const pastCount = displayItems.filter(isEventPast).length
   const nonPastCount = displayItems.length - pastCount

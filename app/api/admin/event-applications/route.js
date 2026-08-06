@@ -32,7 +32,10 @@ export async function GET() {
   // Build a lookup: event_id → Set of registrant emails from the member-portal registration flow.
   // These registrants never get a matching entry in applications.registrations, so they must be
   // counted separately or "Applied" undercounts events that use member-portal registration (e.g. WTET).
-  // Also track which of those are actually paid, for the Confirmed count below.
+  // Also track which of those hold a secured spot, for the Confirmed count below — 'free' counts
+  // same as 'paid' here because both consume real capacity (see the register_for_event RPC, which
+  // blocks new signups once COUNT(*) WHERE status IN ('free','paid') >= capacity); 'authorized' is
+  // a payment hold that hasn't been captured yet, so it doesn't count as confirmed.
   const regEmailsByEvent = {}
   const paidRegEmailsByEvent = {}
   for (const r of (eventRegs || [])) {
@@ -40,7 +43,7 @@ export async function GET() {
     const email = r.email.toLowerCase()
     if (!regEmailsByEvent[r.event_id]) regEmailsByEvent[r.event_id] = new Set()
     regEmailsByEvent[r.event_id].add(email)
-    if (r.stripe_payment_status === 'paid') {
+    if (r.stripe_payment_status === 'paid' || r.stripe_payment_status === 'free') {
       if (!paidRegEmailsByEvent[r.event_id]) paidRegEmailsByEvent[r.event_id] = new Set()
       paidRegEmailsByEvent[r.event_id].add(email)
     }
