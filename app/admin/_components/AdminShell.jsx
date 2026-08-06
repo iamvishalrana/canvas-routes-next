@@ -43,6 +43,7 @@ const SECTIONS = [
       { href: '/admin/broadcasts',      label: 'Broadcasts'     },
       { href: '/admin/photos',          label: 'Photo Gallery'  },
       { href: '/admin/email-activity',  label: 'Email Activity' },
+      { href: '/admin/unsubscribes',    label: 'Unsubscribes'   },
     ],
   },
   {
