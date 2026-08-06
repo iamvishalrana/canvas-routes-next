@@ -31,7 +31,8 @@ function MembershipCta() {
 
 function Shell({ children }) {
   return (
-    <div style={{ minHeight: '100dvh', background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div className="gallery-shell" style={{ background: '#F5F1EC', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', flexDirection: 'column' }}>
+      <style>{`.gallery-shell { min-height: 100vh; min-height: 100dvh; }`}</style>
       <div style={{ padding: '1.25rem 1.75rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
         <Link href="/" style={{ display: 'inline-flex', alignItems: 'center' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

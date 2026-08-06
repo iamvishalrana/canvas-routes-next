@@ -17,7 +17,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export async function POST(request, { params }) {
   const { token } = await params
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip, 20, 60)) {
+  if (await checkRateLimit(ip, 20, 60, 'gallery-verify')) {
     return Response.json({ error: 'Too many requests.' }, { status: 429 })
   }
   if (!UUID_RE.test(token)) {

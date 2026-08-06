@@ -153,7 +153,7 @@ export default function GalleryPasswordGate({ token, children }) {
             background: linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.35) 50%, transparent 90%);
             transform: skewX(-10deg); animation: gpg-shimmer 2.6s ease-in-out 1.1s infinite; pointer-events: none;
           }
-          .gpg-link { background: none; border: none; padding: 0; cursor: pointer; font-family: var(--font-inter),sans-serif; }
+          .gpg-link { background: none; border: none; padding: 0.75rem 0.25rem; min-height: 44px; cursor: pointer; font-family: var(--font-inter),sans-serif; -webkit-tap-highlight-color: transparent; }
           .gpg-link:disabled { cursor: default; opacity: 0.4; }
         `}</style>
         <div className="gpg-card" style={{
@@ -209,7 +209,7 @@ export default function GalleryPasswordGate({ token, children }) {
               )}
               <button type="submit" className="gpg-submit" disabled={checking || code.length !== 6}
                 style={{
-                  width: '100%', padding: '0.95rem', background: '#F5F1EC', color: '#0F1E14', border: 'none', borderRadius: '2px',
+                  width: '100%', padding: '0.95rem', minHeight: '44px', boxSizing: 'border-box', background: '#F5F1EC', color: '#0F1E14', border: 'none', borderRadius: '2px',
                   fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: (checking || code.length !== 6) ? 'default' : 'pointer',
                   opacity: (checking || code.length !== 6) ? 0.55 : 1, fontFamily: 'var(--font-inter),sans-serif', fontWeight: '600',
                   boxShadow: (checking || code.length !== 6) ? 'none' : '0 6px 20px -6px rgba(197,168,130,0.4)',
@@ -245,7 +245,7 @@ export default function GalleryPasswordGate({ token, children }) {
               )}
               <button type="submit" className="gpg-submit" disabled={checking || !email.trim()}
                 style={{
-                  width: '100%', padding: '0.95rem', background: '#F5F1EC', color: '#0F1E14', border: 'none', borderRadius: '2px',
+                  width: '100%', padding: '0.95rem', minHeight: '44px', boxSizing: 'border-box', background: '#F5F1EC', color: '#0F1E14', border: 'none', borderRadius: '2px',
                   fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: (checking || !email.trim()) ? 'default' : 'pointer',
                   opacity: (checking || !email.trim()) ? 0.55 : 1, fontFamily: 'var(--font-inter),sans-serif', fontWeight: '600',
                   boxShadow: (checking || !email.trim()) ? 'none' : '0 6px 20px -6px rgba(197,168,130,0.4)',

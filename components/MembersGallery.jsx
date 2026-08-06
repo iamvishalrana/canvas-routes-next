@@ -23,8 +23,24 @@ export default function MembersGallery({ albums, lang = 'en' }) {
   const [zipping, setZipping] = useState(null)
   // { albumIdx, failed, total } or null — set after a zip finishes with skipped photos
   const [zipResult, setZipResult] = useState(null)
+  // { [albumIdx]: tagString } — "Featuring: X" tags (member-tagged photos
+  // only; non-member share links carry no tags, so these chips just never
+  // render there) turned from display-only text into an actual filter.
+  const [tagFilters, setTagFilters] = useState({})
+  const [shareCopied, setShareCopied] = useState(false)
   const touchStartX = useRef(null)
   const t = membersPhotosT[lang]
+
+  function sharePhoto(photo, albumName) {
+    const url = photo.url
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({ title: albumName, text: photo.caption || albumName, url }).catch(() => {})
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        setShareCopied(true); setTimeout(() => setShareCopied(false), 1800)
+      }).catch(() => {})
+    }
+  }
 
   const close = useCallback(() => setLightbox(null), [])
   const step = useCallback(dir => {
@@ -43,16 +59,25 @@ export default function MembersGallery({ albums, lang = 'en' }) {
       else if (e.key === 'ArrowRight') step(1)
     }
     window.addEventListener('keydown', onKey)
-    // Lock background scroll while the lightbox is open (html + body — iOS
-    // Safari ignores overflow on body alone)
-    const prevBody = document.body.style.overflow
-    const prevHtml = document.documentElement.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
+    // Lock background scroll while the lightbox is open — plain
+    // overflow:hidden alone doesn't stop iOS Safari's rubber-band scroll and
+    // loses the page's scroll position; position:fixed + restoring the
+    // stored scrollY (same technique used for every other modal on the site)
+    // fixes both.
+    const scrollY = window.scrollY
+    const body = document.body
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
     return () => {
       window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prevBody
-      document.documentElement.style.overflow = prevHtml
+      const top = body.style.top
+      body.style.overflow = ''
+      body.style.position = ''
+      body.style.top = ''
+      body.style.width = ''
+      if (top) window.scrollTo(0, -parseInt(top, 10))
     }
   }, [lightbox, close, step])
 
@@ -144,9 +169,22 @@ export default function MembersGallery({ albums, lang = 'en' }) {
           transition: color 0.15s;
         }
         @media (hover: hover) { .mg-lb-nav:hover { color: #F5F1EC; } }
-        @media (max-width: 640px) { .mg-lb-nav { padding: 0.75rem 0.5rem; font-size: 24px; } }
+        @media (max-width: 640px) { .mg-lb-nav { padding: 0.75rem 0.65rem; font-size: 24px; min-width: 44px; box-sizing: border-box; } }
         .mg-dl-all { transition: border-color 0.15s, color 0.15s, background 0.15s; }
         @media (hover: hover) { .mg-dl-all:hover:not(:disabled) { border-color: rgba(197,168,130,0.8) !important; color: #8a7a5c !important; background: rgba(197,168,130,0.06) !important; } }
+        .mg-tag-chip {
+          background: none; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 99px;
+          padding: 0.5rem 1rem; min-height: 44px; box-sizing: border-box;
+          font-size: 10.5px; letter-spacing: 0.04em; color: #777; cursor: pointer;
+          font-family: var(--font-inter), sans-serif; transition: all 0.15s;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .mg-tag-chip[data-active="true"] { background: #0F1E14; border-color: #0F1E14; color: #F5F1EC; }
+        @media (hover: hover) {
+          .mg-tag-chip:not([data-active="true"]):hover { border-color: rgba(197,168,130,0.6); color: #8a7a5c; }
+        }
+        .mg-share-btn { transition: color 0.15s, border-color 0.15s; }
+        @media (hover: hover) { .mg-share-btn:hover { color: #F5F1EC !important; border-color: rgba(197,168,130,0.85) !important; } }
       `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
@@ -171,8 +209,9 @@ export default function MembersGallery({ albums, lang = 'en' }) {
                       fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
                       color: isZippingThis ? '#8a7a5c' : '#666', background: 'none',
                       border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '99px', padding: '0.5rem 1rem',
+                      minHeight: '44px', boxSizing: 'border-box',
                       cursor: zipping ? 'default' : 'pointer', opacity: (zipping && !isZippingThis) ? 0.4 : 1,
-                      fontFamily: 'var(--font-inter), sans-serif',
+                      fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent',
                     }}>
                     {isZippingThis ? (
                       <>{t.zipping(zipping.done, zipping.total)}</>
@@ -190,15 +229,37 @@ export default function MembersGallery({ albums, lang = 'en' }) {
                   {t.zipFailed(zipResult.failed, zipResult.total, zipResult.total === 1 ? '' : 's')}
                 </div>
               )}
+              {(() => {
+                const allTags = [...new Set(album.photos.flatMap(p => p.tags || []))]
+                if (allTags.length === 0) return null
+                const active = tagFilters[ai]
+                return (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.1rem' }}>
+                    <button type="button" className="mg-tag-chip" data-active={!active}
+                      onClick={() => setTagFilters(f => ({ ...f, [ai]: undefined }))}>
+                      {t.allPhotos}
+                    </button>
+                    {allTags.map(tag => (
+                      <button key={tag} type="button" className="mg-tag-chip" data-active={active === tag}
+                        onClick={() => setTagFilters(f => ({ ...f, [ai]: f[ai] === tag ? undefined : tag }))}>
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )
+              })()}
               <div className="mg-grid">
-                {album.photos.map((photo, pi) => (
-                  <button key={photo.id} type="button" className="mg-tile" style={{ animationDelay: `${Math.min(pi, 12) * 35}ms` }}
-                    onClick={() => setLightbox({ albumIdx: ai, photoIdx: pi })}
-                    aria-label={photo.caption || `Photo ${pi + 1} — ${album.name}`}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo.url} alt={photo.caption || album.name} loading="lazy" onError={onImgError(photo.originalUrl)} />
-                  </button>
-                ))}
+                {album.photos
+                  .map((photo, pi) => ({ photo, pi }))
+                  .filter(({ photo }) => !tagFilters[ai] || (photo.tags || []).includes(tagFilters[ai]))
+                  .map(({ photo, pi }, vi) => (
+                    <button key={photo.id} type="button" className="mg-tile" style={{ animationDelay: `${Math.min(vi, 12) * 35}ms` }}
+                      onClick={() => setLightbox({ albumIdx: ai, photoIdx: pi })}
+                      aria-label={photo.caption || `Photo ${pi + 1} — ${album.name}`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photo.url} alt={photo.caption || album.name} loading="lazy" onError={onImgError(photo.originalUrl)} />
+                    </button>
+                  ))}
               </div>
             </div>
           </FadeUp>
@@ -278,11 +339,24 @@ export default function MembersGallery({ albums, lang = 'en' }) {
                   fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase',
                   color: '#F5F1EC', textDecoration: 'none',
                   border: '0.5px solid rgba(197,168,130,0.5)', padding: '0.45rem 1rem',
+                  minHeight: '44px', boxSizing: 'border-box',
                   WebkitTapHighlightColor: 'transparent',
                 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 {t.download}
               </a>
+              <button type="button" className="mg-share-btn" onClick={() => sharePhoto(currentPhoto, current.name)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase',
+                  color: 'rgba(245,241,236,0.7)', background: 'none', cursor: 'pointer',
+                  border: '0.5px solid rgba(245,241,236,0.3)', padding: '0.45rem 1rem',
+                  minHeight: '44px', boxSizing: 'border-box',
+                  fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent',
+                }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+                {shareCopied ? t.linkCopied : t.share}
+              </button>
             </div>
           </div>
         </div>

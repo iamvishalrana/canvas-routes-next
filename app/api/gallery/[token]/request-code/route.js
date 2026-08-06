@@ -62,7 +62,7 @@ function otpEmailHtml({ firstName, code }) {
 export async function POST(request, { params }) {
   const { token } = await params
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip, 8, 60)) {
+  if (await checkRateLimit(ip, 8, 60, 'gallery-request-code')) {
     return Response.json({ error: 'Too many attempts. Please try again in a minute.' }, { status: 429 })
   }
 

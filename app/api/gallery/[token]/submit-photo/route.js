@@ -22,7 +22,7 @@ function pathRegexFor(personId, folderId) {
 export async function POST(request, { params }) {
   const { token } = await params
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip, 60, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
+  if (await checkRateLimit(ip, 60, 60, 'gallery-submit-photo')) return Response.json({ error: 'Too many requests.' }, { status: 429 })
   if (!UUID_RE.test(token)) return Response.json({ error: 'Not found.' }, { status: 404 })
 
   const { sessionId, folderId, originalPath, displayPath, caption: rawCaption } = await request.json().catch(() => ({}))

@@ -19,7 +19,7 @@ export async function POST(request, { params }) {
   // Looser than request-code's limit — wrong-code retries are expected during
   // normal typos, but still bounded; the per-code MAX_ATTEMPTS in lib/otp.js
   // does the real brute-force defense.
-  if (await checkRateLimit(ip, 15, 60)) {
+  if (await checkRateLimit(ip, 15, 60, 'gallery-verify-code')) {
     return Response.json({ error: 'Too many attempts. Please try again in a minute.' }, { status: 429 })
   }
   if (!UUID_RE.test(token)) {
