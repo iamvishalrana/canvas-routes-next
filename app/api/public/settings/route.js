@@ -5,6 +5,10 @@ const PUBLIC_KEYS = [
   'routes_popup_enabled', 'routes_popup_mode', 'routes_popup_route_slug', 'routes_popup_event_id',
   // Second, optional popup card — see the comment in app/api/admin/settings/route.js.
   'routes_popup2_enabled', 'routes_popup2_mode', 'routes_popup2_route_slug', 'routes_popup2_event_id',
+  // "Into the Laurentians" itinerary page's self-serve car-photo replacement
+  // (app/api/drive/upload-photo) — written outside the admin PATCH route
+  // since that flow is password-gated, not admin-authenticated.
+  'drive_frederic_photo_url',
 ]
 
 // Resolves one popup "slot" (mode + its route slug / event id) into real

@@ -3,6 +3,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { ROUTE_PATH } from './routePath'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
+import { uploadToSupabaseStorage } from '../../lib/uploadToSupabaseStorage'
+import { convertHeicIfNeeded } from '../../lib/convertHeicIfNeeded'
+import { compressImageClient } from '../../lib/compressImageClient'
+import { MIME_TO_EXT } from '../../lib/allowedImageTypes'
 
 const PASSWORD = 'laurentians'
 
@@ -60,42 +64,74 @@ function CopyButton({ text, label, dark }) {
   )
 }
 
-function CarPlaceholder({ color, name }) {
-  const isFrederic = name === 'Frederic Lefebvre'
+function CarPlaceholder({ color }) {
+  return (
+    <div style={{ height: '140px', background: '#f4f2ef', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+      <CarIcon />
+      {color ? <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.08em' }}>{color}</div> : null}
+    </div>
+  )
+}
+
+// Frederic's own self-serve photo replacement — password-gated (same shared
+// password as the page itself, there's no stronger auth model here to
+// match). Uploads straight to Supabase Storage via a signed URL, then
+// records the public URL in the settings table so it shows for every future
+// visitor, not just this browser session.
+function PhotoReplaceButton({ onUploaded }) {
   const [uploading, setUploading] = useState(false)
-  const [uploaded, setUploaded] = useState(false)
+  const [error, setError] = useState(null)
   const inputRef = useRef(null)
 
   async function handleFile(e) {
-    const file = e.target.files?.[0]
+    let file = e.target.files?.[0]
+    if (inputRef.current) inputRef.current.value = ''
     if (!file) return
-    setUploading(true)
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('pw', 'laurentians')
-    const res = await fetch('/api/drive/upload-photo', { method: 'POST', body: fd })
-    setUploading(false)
-    if (res.ok) setUploaded(true)
+    setUploading(true); setError(null)
+    try {
+      file = await convertHeicIfNeeded(file)
+      const ext = MIME_TO_EXT[file.type]
+      if (!ext) throw new Error('Please upload a JPG, PNG, or WebP image.')
+      if (file.size > 40 * 1024 * 1024) throw new Error('Image is too large (40MB max).')
+      const display = await compressImageClient(file)
+
+      const urlRes = await fetch('/api/drive/upload-photo/upload-url', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pw: 'laurentians', fileType: display.type || file.type }),
+      })
+      const urls = await urlRes.json().catch(() => ({}))
+      if (!urlRes.ok) throw new Error(urls.error || 'Upload failed.')
+
+      await uploadToSupabaseStorage({ bucket: 'drive-photos', path: urls.path, token: urls.token, file: display })
+
+      const res = await fetch('/api/drive/upload-photo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pw: 'laurentians', path: urls.path }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Upload failed.')
+      onUploaded(data.url)
+    } catch (err) {
+      setError(err.message || 'Upload failed — please send the photo to Jerry directly.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
-    <div style={{ height: '140px', background: '#f4f2ef', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', position: 'relative' }}>
-      <CarIcon />
-      {color ? <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.08em' }}>{color}</div> : null}
-      {isFrederic && !uploaded && (
-        <>
-          <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
-          <button
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-            style={{ marginTop: '4px', background: 'none', border: '0.5px solid rgba(0,0,0,0.2)', padding: '3px 10px', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', color: '#666' }}
-          >
-            {uploading ? 'Uploading…' : '+ Add Photo'}
-          </button>
-        </>
-      )}
-      {isFrederic && uploaded && (
-        <div style={{ fontSize: '10px', color: '#3B6B2F', letterSpacing: '0.08em' }}>✓ Uploaded — refresh to see</div>
+    <div style={{ position: 'absolute', bottom: '6px', right: '6px', zIndex: 1 }}>
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        style={{ background: 'rgba(15,20,15,0.65)', border: 'none', padding: '5px 10px', minHeight: '28px', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: uploading ? 'default' : 'pointer', color: '#F5F1EC', opacity: uploading ? 0.7 : 1 }}
+      >
+        {uploading ? 'Uploading…' : 'Replace Photo'}
+      </button>
+      {error && (
+        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '4px', width: '160px', fontSize: '10px', color: '#fff', background: '#93333E', padding: '5px 7px', lineHeight: '1.4' }}>
+          {error}
+        </div>
       )}
     </div>
   )
@@ -303,12 +339,23 @@ export default function DrivePage() {
   const [lightbox, setLightbox] = useState(null)
   const closeLightbox = useCallback(() => setLightbox(null), [])
   const [rulesOpen, setRulesOpen] = useState(false)
+  // Frederic's self-serve photo replacement (see PhotoReplaceButton) —
+  // null until fetched, so his static fallback photo is what shows by
+  // default; overridden once a visitor-submitted photo has been recorded.
+  const [frederPhotoUrl, setFrederPhotoUrl] = useState(null)
 
   useEffect(() => {
     const urlPw = new URLSearchParams(window.location.search).get('pw')
     if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
     if (localStorage.getItem('drive_auth') === '1') { setAuthed(true) }
     setChecked(true)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/public/settings')
+      .then(r => r.json())
+      .then(s => { if (s.drive_frederic_photo_url) setFrederPhotoUrl(s.drive_frederic_photo_url) })
+      .catch(() => {})
   }, [])
 
   function submit(e) {
@@ -523,19 +570,25 @@ export default function DrivePage() {
             <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic' }}>Every car has a story — tap to find out</div>
           </div>
           <div className="cars-grid">
-            {REGISTRANTS.map((r, i) => (
+            {REGISTRANTS.map((r, i) => {
+              const isFrederic = r.name === 'Frederic Lefebvre'
+              const effectivePhoto = isFrederic ? (frederPhotoUrl || r.photo) : r.photo
+              return (
               <div key={i} style={{ background: '#fff', overflow: 'hidden' }}>
-                {r.photo ? (
-                  <img
-                    src={r.photo} alt={r.car}
-                    onClick={() => setLightbox({ src: r.photo, alt: r.car, name: r.name, car: r.car, desc: r.desc })}
-                    onContextMenu={e => e.preventDefault()}
-                    draggable={false}
-                    style={{ width: '100%', height: '140px', objectFit: r.photoFit || 'cover', background: r.photoBg || 'transparent', display: 'block', transform: r.photoScale ? `scale(${r.photoScale})` : undefined, cursor: 'zoom-in', userSelect: 'none', WebkitUserSelect: 'none' }}
-                  />
-                ) : (
-                  <CarPlaceholder color={r.color} name={r.name} />
-                )}
+                <div style={{ position: 'relative' }}>
+                  {effectivePhoto ? (
+                    <img
+                      src={effectivePhoto} alt={r.car}
+                      onClick={() => setLightbox({ src: effectivePhoto, alt: r.car, name: r.name, car: r.car, desc: r.desc })}
+                      onContextMenu={e => e.preventDefault()}
+                      draggable={false}
+                      style={{ width: '100%', height: '140px', objectFit: r.photoFit || 'cover', background: r.photoBg || 'transparent', display: 'block', transform: r.photoScale ? `scale(${r.photoScale})` : undefined, cursor: 'zoom-in', userSelect: 'none', WebkitUserSelect: 'none' }}
+                    />
+                  ) : (
+                    <CarPlaceholder color={r.color} />
+                  )}
+                  {isFrederic && <PhotoReplaceButton onUploaded={setFrederPhotoUrl} />}
+                </div>
                 <div style={{ padding: '0.8rem 0.85rem' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '4px' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '600', lineHeight: '1.3' }}>{r.name}</div>
@@ -546,7 +599,8 @@ export default function DrivePage() {
                   {!r.photo && r.desc && <div style={{ fontSize: '11px', color: '#aaa', lineHeight: '1.6', marginTop: '6px', fontStyle: 'italic' }}>{r.desc}</div>}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
