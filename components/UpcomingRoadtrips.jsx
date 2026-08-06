@@ -626,7 +626,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
         <div style={{ background: '#0F1E14', padding: '13px clamp(1.5rem,4vw,3rem)' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <p style={{ fontSize: '11px', color: 'rgba(245,241,236,0.5)', margin: 0, letterSpacing: '0.05em' }}>{t.membershipNudge}</p>
-            <a href="/membership" style={{ fontSize: '10px', color: ACCENT, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', border: '0.5px solid rgba(197,168,130,0.35)', padding: '7px 18px' }}>{t.applyForMembership} →</a>
+            <a href="/membership" style={{ fontSize: '10px', color: ACCENT, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', border: '0.5px solid rgba(197,168,130,0.35)', padding: '0.85rem 18px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', boxSizing: 'border-box', WebkitTapHighlightColor: 'transparent' }}>{t.applyForMembership} →</a>
           </div>
         </div>
       ) : (
@@ -737,7 +737,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                     {r.itinerary && (
                       <div style={{ marginBottom: '18px' }}>
                         <button onClick={() => patch(r.id, s => ({ showItinerary: !s.showItinerary }))}
-                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT, display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'inherit' }}>
+                          style={{ background: 'none', border: 'none', padding: '10px 0', margin: '-10px 0', minHeight: '44px', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT, display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>
                           {r.showItinerary ? t.hideItinerary : t.viewItinerary}
                           <span style={{ display: 'inline-block', transform: r.showItinerary ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>↓</span>
                         </button>

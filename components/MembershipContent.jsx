@@ -278,8 +278,8 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
             </span>
           </div>
           <button type="button" onClick={handleRemovePromo} disabled={removingPromo}
-            style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '11px', cursor: removingPromo ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0 0.2rem', transition: 'color 0.15s', opacity: removingPromo ? 0.5 : 1 }}
-            onMouseEnter={e => { if (!removingPromo) e.currentTarget.style.color = '#555' }}
+            style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '11px', cursor: removingPromo ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.5rem', minHeight: '44px', minWidth: '44px', transition: 'color 0.15s', opacity: removingPromo ? 0.5 : 1, WebkitTapHighlightColor: 'transparent' }}
+            onMouseEnter={e => { if (!removingPromo && window.matchMedia?.('(hover: hover)').matches) e.currentTarget.style.color = '#555' }}
             onMouseLeave={e => e.currentTarget.style.color = '#aaa'}>
             {removingPromo ? t.promoRemoving : t.promoRemove}
           </button>
@@ -297,7 +297,7 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
             />
             <button type="button" onClick={handleApplyPromo}
               disabled={applyingPromo || !promoInput.trim()}
-              style={{ padding: '0.65rem 1.1rem', background: promoInput.trim() ? '#45643c' : '#f5f5f3', border: `0.5px solid ${promoInput.trim() ? '#45643c' : 'rgba(0,0,0,0.15)'}`, color: promoInput.trim() ? '#fff' : '#aaa', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo ? 0.5 : 1, flexShrink: 0, fontWeight: '500', transition: 'all 0.15s', borderRadius: 0 }}>
+              style={{ padding: '0.65rem 1.1rem', minHeight: '44px', background: promoInput.trim() ? '#45643c' : '#f5f5f3', border: `0.5px solid ${promoInput.trim() ? '#45643c' : 'rgba(0,0,0,0.15)'}`, color: promoInput.trim() ? '#fff' : '#aaa', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', cursor: applyingPromo || !promoInput.trim() ? 'default' : 'pointer', opacity: applyingPromo ? 0.5 : 1, flexShrink: 0, fontWeight: '500', transition: 'all 0.15s', borderRadius: 0, boxSizing: 'border-box', WebkitTapHighlightColor: 'transparent' }}>
               {applyingPromo ? '…' : t.promoApply}
             </button>
           </div>
@@ -344,8 +344,8 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       <button type="button"
         disabled={paying || removingPromo}
         onClick={async () => { if (promoApplied) { const ok = await handleRemovePromo(); if (!ok) return } onBack() }}
-        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.3)', fontSize: '11px', letterSpacing: '0.1em', cursor: paying || removingPromo ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.25rem', transition: 'color 0.15s', opacity: paying || removingPromo ? 0.4 : 1 }}
-        onMouseEnter={e => { if (!paying && !removingPromo) e.currentTarget.style.color = 'rgba(0,0,0,0.6)' }}
+        style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.3)', fontSize: '11px', letterSpacing: '0.1em', cursor: paying || removingPromo ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', padding: '0.6rem', minHeight: '44px', display: 'block', margin: '0 auto', transition: 'color 0.15s', opacity: paying || removingPromo ? 0.4 : 1, WebkitTapHighlightColor: 'transparent' }}
+        onMouseEnter={e => { if (!paying && !removingPromo && window.matchMedia?.('(hover: hover)').matches) e.currentTarget.style.color = 'rgba(0,0,0,0.6)' }}
         onMouseLeave={e => e.currentTarget.style.color = 'rgba(0,0,0,0.3)'}>
         {t.backToApplication}
       </button>
@@ -491,7 +491,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
   }
 
   function inp(field) {
-    const base = { width:'100%', padding:'0.6rem 0', fontSize:'15px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
+    const base = { width:'100%', padding:'0.6rem 0', minHeight:'44px', fontSize:'15px', fontFamily:'var(--font-inter),sans-serif', color:'#1a1a1a', outline:'none', background:'transparent', border:'none', borderBottom:'1px solid rgba(0,0,0,0.12)', WebkitAppearance:'none', MozAppearance:'none', appearance:'none', transition:'border-color 0.2s', boxSizing:'border-box', borderRadius: 0 }
     if (errors[field]) return { ...base, borderBottom:'1px solid rgba(208,96,112,0.8)' }
     // Gold focus/filled underlines — matches the phone field so the whole form
     // signals state consistently (was a mix of gold and dark green)
@@ -590,8 +590,11 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
           .mem-tier-body  { padding: 0 1.5rem 1.5rem !important; }
           .mem-photo-break img { object-position: center 20% !important; }
           .mem-car3-grid  { grid-template-columns: 1fr 1fr !important; }
-        }
-        @media(max-width:580px){
+          /* Same breakpoint as .mem-tiers above — these buttons sit right
+             below those display cards and select the same two tiers, so
+             they should collapse to one column together. Previously this
+             stayed 2-column down to 580px, squeezing price + tagline into a
+             ~150px-wide button on most phones (390-428px logical width). */
           .mem-tier-btns  { grid-template-columns: 1fr !important; }
         }
         @media(max-width:480px){
@@ -608,6 +611,10 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
           input::placeholder, textarea::placeholder { font-size: 13px !important; }
         }
         input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.28); }
+        /* dvh fallback — on iOS Safari with the address bar visible, a plain
+           90vh is computed against the larger toolbar-collapsed viewport, so
+           the hero can render taller than what's actually visible on load. */
+        .mem-hero { min-height: 90vh; min-height: 90dvh; }
       `}</style>
 
       <SiteNav ctaLabel={t.navCtaLabel}
@@ -615,7 +622,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
       bannerHref="#register" />
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
+      <section className="mem-hero" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
           <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
@@ -851,7 +858,12 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                     colorIconTab: '#888',
                     colorIconTabSelected: '#0F1E14',
                     fontFamily: 'Inter, system-ui, sans-serif',
-                    fontSizeBase: '13px',
+                    // 16px — PaymentElement renders in a cross-origin iframe,
+                    // so the site's global mobile-input font-size rule can't
+                    // reach it. Anything smaller triggers iOS Safari's
+                    // auto-zoom-on-focus on the highest-stakes screen in the
+                    // funnel.
+                    fontSizeBase: '16px',
                     borderRadius: '0px',
                     spacingUnit: '5px',
                     spacingGridRow: '14px',
@@ -860,7 +872,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                     '.Input': {
                       border: '0.5px solid rgba(0,0,0,0.15)',
                       padding: '10px 12px',
-                      fontSize: '13px',
+                      fontSize: '16px',
                       transition: 'border-color 0.15s',
                     },
                     '.Input:focus': {
@@ -883,10 +895,12 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                       boxShadow: 'none',
                       padding: '8px 12px',
                     },
-                    '.Tab:hover': {
-                      border: '0.5px solid rgba(0,0,0,0.25)',
-                      boxShadow: 'none',
-                    },
+                    // No '.Tab:hover' rule — Stripe's Appearance API rules
+                    // can't be scoped to @media(hover:hover) like our own
+                    // CSS, and a plain :hover here would stick "on" after a
+                    // tap on a touch device until the next tap lands
+                    // elsewhere. '.Tab--selected' already gives the active
+                    // tab a distinct look.
                     '.Tab--selected': {
                       border: '0.5px solid #0F1E14',
                       boxShadow: 'none',
@@ -965,7 +979,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                   <div style={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${errors.phone ? 'rgba(208,96,112,0.8)' : focusedField === 'phone' || focusedField === 'countryCode' ? 'rgba(197,168,130,0.9)' : form.phone ? 'rgba(197,168,130,0.6)' : 'rgba(0,0,0,0.12)'}`, transition: 'border-color 0.2s' }}>
                     <select aria-label={t.countryCodeAriaLabel} autoComplete="off" value={countryCode} onChange={e => { setCountryCode(e.target.value); set('phone', '') }}
                       onFocus={() => setFocusedField('countryCode')} onBlur={() => setFocusedField(null)}
-                      style={{ padding: '0.6rem 0.2rem 0.6rem 0', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', flexShrink: 0 }}>
+                      style={{ padding: '0.6rem 0.2rem 0.6rem 0', minHeight: '44px', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', flexShrink: 0 }}>
                       {COUNTRY_CODES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <span style={{ color: 'rgba(0,0,0,0.18)', margin: '0 0.5rem', fontSize: '13px', userSelect: 'none' }}>|</span>
@@ -975,7 +989,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                       aria-invalid={errors.phone ? 'true' : 'false'} aria-required="true"
                       onChange={e => set('phone', formatPhone(e.target.value, countryCode))}
                       onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
-                      style={{ flex: 1, padding: '0.6rem 0', fontSize: '15px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', boxSizing: 'border-box' }} />
+                      style={{ flex: 1, padding: '0.6rem 0', minHeight: '44px', fontSize: '15px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', background: 'transparent', border: 'none', outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                 </div>
               </div>
