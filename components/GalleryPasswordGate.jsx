@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import MembersGallery from './MembersGallery'
 import NonMemberPhotoUpload from './NonMemberPhotoUpload'
+import TermsPrivacyNote from './TermsPrivacyNote'
 
 const inp = {
   width: '100%', boxSizing: 'border-box', padding: '0.95rem 1.1rem',
@@ -252,6 +253,7 @@ export default function GalleryPasswordGate({ token, children }) {
                 }}>
                 {checking ? 'Sending…' : 'Send Code'}
               </button>
+              <TermsPrivacyNote dark style={{ marginTop: '1rem' }} />
             </form>
           )}
         </div>

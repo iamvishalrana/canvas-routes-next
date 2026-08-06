@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { formatCarLabel } from '../../../../lib/carLabel'
+import TermsPrivacyNote from '../../../../components/TermsPrivacyNote'
 
 const INP = {
   width: '100%', boxSizing: 'border-box', padding: '0.75rem 1rem',
@@ -245,6 +246,7 @@ export default function EventProfilePage() {
                       Select a WhatsApp preference to save
                     </p>
                   )}
+                  <TermsPrivacyNote />
                 </form>
               </div>
             </>

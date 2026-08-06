@@ -8,6 +8,7 @@ import SiteFooter from '../../components/SiteFooter'
 import FadeUp from '../../components/FadeUp'
 import SiteNav from '../../components/SiteNav'
 import PageLoader from '../../components/PageLoader'
+import TermsPrivacyNote from '../../components/TermsPrivacyNote'
 import { computeTax } from '../../lib/tax'
 import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { routeEventSharedT } from '../../lib/i18n/routeEventShared'
@@ -273,6 +274,8 @@ function PaymentForm({ name, email, price, clientSecret, isMember, onSuccess, on
           </>
         )}
       </button>
+
+      <TermsPrivacyNote style={{ marginBottom: '0.5rem' }} />
 
       <button type="button" onClick={onBack} disabled={paying}
         style={{background:'none',border:'none',padding:'0.5rem',fontSize:'11px',color:'#aaa',cursor:paying?'not-allowed':'pointer',fontFamily:'var(--font-inter),sans-serif',textDecoration:'underline',textDecorationColor:'rgba(0,0,0,0.15)',textUnderlineOffset:'2px'}}>

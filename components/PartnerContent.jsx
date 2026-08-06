@@ -4,6 +4,7 @@ import Link from 'next/link'
 import SiteFooter from './SiteFooter'
 import SiteNav from './SiteNav'
 import PageLoader from './PageLoader'
+import TermsPrivacyNote from './TermsPrivacyNote'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { partnersT } from '../lib/i18n/partners'
 
@@ -427,6 +428,7 @@ export default function PartnerContent() {
                   style={{ width: '100%', padding: '1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', cursor: status === 'loading' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: status === 'loading' ? 0.6 : 1, transition: 'opacity 0.2s' }}>
                   {status === 'loading' ? t.form.sending : t.form.sendInquiry}
                 </button>
+                <TermsPrivacyNote style={{ marginTop: '0.75rem' }} />
               </form>
             )}
           </div>

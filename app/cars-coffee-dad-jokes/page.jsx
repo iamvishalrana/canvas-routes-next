@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
+import TermsPrivacyNote from '../../components/TermsPrivacyNote'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -438,6 +439,7 @@ export default function CCDPage() {
               <p style={{ textAlign:'center', fontSize:'11px', color:'#bbb', fontFamily:'var(--font-inter), sans-serif', lineHeight:1.6, margin:0 }}>
                 Entry is strictly invite-only. Submitting is not a guarantee of attendance — we&apos;ll confirm by email.
               </p>
+              <TermsPrivacyNote style={{ marginTop: '0.5rem' }} />
             </form>
           )}
         </div>

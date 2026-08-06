@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { membersEventsT } from '../lib/i18n/membersEvents'
+import TermsPrivacyNote from './TermsPrivacyNote'
 
 function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCancel }) {
   const { lang } = useLanguage()
@@ -63,6 +64,7 @@ function ConfirmRegistrationModal({ eventName, loading, error, onConfirm, onCanc
             {t.cancel}
           </button>
         </div>
+        <TermsPrivacyNote style={{ marginTop: '1.25rem' }} />
       </div>
     </div>
   )

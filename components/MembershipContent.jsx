@@ -1177,7 +1177,9 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                   style={{ accentColor: '#c5a882', width: '16px', height: '16px', flexShrink: 0, marginTop: '1px' }} />
                 <span style={{ fontSize: '12px', color: 'rgba(0,0,0,0.45)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.6 }}>
                   {t.termsPrefix}{' '}
-                  <a href="/terms" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>{t.termsLink}</a>
+                  <a href="/terms" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>{t.termsLink}</a>{' '}
+                  {t.termsAnd}{' '}
+                  <a href="/privacy" style={{ color: '#c5a882', textDecoration: 'underline', textUnderlineOffset: '3px' }}>{t.privacyLink}</a>
                 </span>
               </label>
 

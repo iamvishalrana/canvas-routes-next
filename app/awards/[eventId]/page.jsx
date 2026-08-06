@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import PageLoader from '../../../components/PageLoader'
+import TermsPrivacyNote from '../../../components/TermsPrivacyNote'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
 import { captureException } from '../../../lib/sentry'
 import { useLanguage } from '../../../lib/i18n/LanguageContext'
@@ -241,6 +242,7 @@ export default function EventAwardsPage() {
             <button type="submit" disabled={submitting || !allPicked} style={{ width: '100%', padding: '0.9rem', background: '#45643c', color: '#fff', border: 'none', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: '600', cursor: (submitting || !allPicked) ? 'not-allowed' : 'pointer', opacity: (submitting || !allPicked) ? 0.5 : 1, fontFamily: 'var(--font-inter), sans-serif' }}>
               {submitting ? t.submittingBtn : (verified.existingVote ? t.updateBtn : t.submitBtn)}
             </button>
+            <TermsPrivacyNote style={{ marginTop: '1rem' }} />
           </form>
         )}
       </div>

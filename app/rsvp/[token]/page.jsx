@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import TermsPrivacyNote from '../../../components/TermsPrivacyNote'
 
 const INP = {
   width: '100%', boxSizing: 'border-box', padding: '0.75rem 1rem',
@@ -382,6 +383,7 @@ export default function RsvpPage() {
                     Select an option above to continue
                   </p>
                 )}
+                <TermsPrivacyNote />
               </form>
             </div>
           )}

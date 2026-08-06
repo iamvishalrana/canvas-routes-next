@@ -7,6 +7,7 @@ import { MONTREAL_TZ } from '../lib/mtlTime'
 import { computeTax } from '../lib/tax'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { eventRegisterT } from '../lib/i18n/eventRegister'
+import TermsPrivacyNote from './TermsPrivacyNote'
 
 let _stripePromise = null
 function getStripe() {
@@ -167,6 +168,7 @@ function PayForm({ event, onSuccess, onClose, onPayingChange, onPaySuccessRegFai
           {t.cancel}
         </button>
       </div>
+      <TermsPrivacyNote style={{ marginTop: '1rem' }} />
     </form>
   )
 }

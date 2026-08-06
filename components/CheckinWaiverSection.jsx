@@ -3,6 +3,7 @@ import { useState } from 'react'
 import SectionCard from './WtetSectionCard'
 import { CHECKIN_T, checkinDateLocale } from '../lib/genericCheckinContent'
 import { useLanguage } from '../lib/i18n/LanguageContext'
+import TermsPrivacyNote from './TermsPrivacyNote'
 
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
@@ -193,6 +194,7 @@ export default function CheckinWaiverSection({ waiverText, waiverTextFr, identif
         <button type="submit" disabled={submitting} className="wtetci-btn-primary" style={{ alignSelf: 'flex-start', padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
           {submitting ? t.signingBtn : t.signWaiverBtn}
         </button>
+        <TermsPrivacyNote style={{ textAlign: 'left' }} />
       </form>
     </SectionCard>
   )

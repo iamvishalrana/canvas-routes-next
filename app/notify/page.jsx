@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { User, Mail, Phone, Car, Share2 } from 'lucide-react'
 import SiteFooter from '../../components/SiteFooter'
 import SiteNav from '../../components/SiteNav'
+import TermsPrivacyNote from '../../components/TermsPrivacyNote'
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -385,6 +386,7 @@ export default function NotifyPage() {
                   {status === 'loading' ? 'Signing up…' : 'Notify Me'}
                 </button>
                 {status === 'error' && <div style={{fontSize:"12px",color:"#93333E",textAlign:"center",marginBottom:"0.5rem"}}>{serverError}</div>}
+                <TermsPrivacyNote />
 
               </form>
             </>

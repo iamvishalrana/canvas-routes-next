@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import PastRouteRecapModal from './PastRouteRecapModal'
+import TermsPrivacyNote from './TermsPrivacyNote'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { routesT } from '../lib/i18n/routes'
 
@@ -987,6 +988,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
               {sheetRoute.submitting ? t.addingYou : t.addMyName}
             </button>
             <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'center', marginTop: '10px', lineHeight: 1.6 }}>{t.noPaymentNote}</div>
+            <TermsPrivacyNote style={{ marginTop: '8px' }} />
             </form>
             )}
           </div>
