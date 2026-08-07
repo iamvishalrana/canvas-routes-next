@@ -27,14 +27,14 @@ const COUNTRY_CODES = [
 ]
 
 const STATS = [
-  { num: '21',  unit: 'cars max' },
+  { num: '5.05', unit: 'km circuit' },
   { num: '2',   unit: 'hrs on track' },
   { num: '12',  unit: 'noon meetup' },
   { num: '1',   unit: 'day' },
   { num: '2',   unit: 'rental cars' },
 ]
 const STATS_FR = [
-  { num: '21',  unit: 'voitures max' },
+  { num: '5,05', unit: 'km de circuit' },
   { num: '2',   unit: 'h sur piste' },
   { num: '12',  unit: 'midi — rendez-vous' },
   { num: '1',   unit: 'jour' },
@@ -148,7 +148,7 @@ function PaymentForm({ email, price, clientSecret, isMember, onSuccess, onBack, 
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/calabogie-boogie?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/the-calabogie-boogie?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError(t.paymentErrorGeneric)
@@ -370,7 +370,7 @@ export default function CalabogieBoogiePage() {
     const piSecret       = params.get('payment_intent_client_secret')
     const redirectStatus = params.get('redirect_status')
     if (!piId) return
-    window.history.replaceState({}, '', '/calabogie-boogie')
+    window.history.replaceState({}, '', '/the-calabogie-boogie')
     if (redirectStatus === 'succeeded') {
       const memberPiParam = params.get('member_pi')
       if (memberPiParam === piId) {
@@ -1015,7 +1015,7 @@ export default function CalabogieBoogiePage() {
                     <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
                       {t.logInForMemberRateBody(MEMBER_PRICE)}
                     </p>
-                    <a href={`/members/login?redirect=${encodeURIComponent('/calabogie-boogie')}`}
+                    <a href={`/members/login?redirect=${encodeURIComponent('/the-calabogie-boogie')}`}
                       style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
                       {t.logInToRegister}
                     </a>
