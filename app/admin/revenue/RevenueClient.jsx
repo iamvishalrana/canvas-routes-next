@@ -318,20 +318,30 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       if (!codeMap.has(key)) codeMap.set(key, { code: key, count: 0, discount: 0 })
       const e = codeMap.get(key); e.count += 1; e.discount += (r.taxDiscount || 0)
     }
+    const net = sum(payments, r => r.amount)
+    const hasTaxData = withTax.length > 0
+    // Refund-adjusted (prorated) — refunds are shown only as their own tile,
+    // never folded into revenue or taxes.
+    const subtotal = sum(withTax, r => (r.taxSubtotal || 0) * keptFrac(r))
+    // Total Stripe processing fees for this slice (null fees count as 0). Fees
+    // are a real cost Stripe keeps regardless of refunds, so this is deducted
+    // from net to get true take-home, but never added back on a refund.
+    const fees = sum(payments, r => r.fee)
     return {
       gross: sum(payments, r => r.gross),
       refunded: sum(payments, r => r.refunded),
-      net: sum(payments, r => r.amount),
-      // Total Stripe processing fees for this slice (null fees count as 0). Fees
-      // are a real cost Stripe keeps regardless of refunds, so this is deducted
-      // from net to get true take-home, but never added back on a refund.
-      fees: sum(payments, r => r.fee),
+      net,
+      fees,
       withTax,
-      // Refund-adjusted (prorated) — refunds are shown only as their own tile,
-      // never folded into revenue or taxes.
-      subtotal: sum(withTax, r => (r.taxSubtotal || 0) * keptFrac(r)),
+      hasTaxData,
+      subtotal,
       gst: sum(withTax, r => (r.taxGst || 0) * keptFrac(r)),
       qst: sum(withTax, r => (r.taxQst || 0) * keptFrac(r)),
+      // True bottom line — what's actually left after remitting the tax
+      // collected on the government's behalf AND paying Stripe's cut. Uses the
+      // ex-tax subtotal when known (see hasTaxData); only falls back to the
+      // tax-inclusive net for payments that predate the tax ledger.
+      netAfterFees: (hasTaxData ? subtotal : net) - fees,
       discount: sum(payments, r => r.taxDiscount),
       members, nonMembers, unknown, card, etransfer, coupons,
       codes: Array.from(codeMap.values()).sort((a, b) => b.count - a.count),
@@ -427,7 +437,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
             <StatTile label="Gross Collected" value={fmt(agg.gross)} />
             <StatTile label="Refunded" value={agg.refunded > 0 ? '−' + fmt(agg.refunded) : fmt(0)} color={agg.refunded > 0 ? '#93333E' : '#1a1a1a'} />
             {agg.fees > 0 && <StatTile label="Stripe Fees" value={'−' + fmt(agg.fees)} color="#93333E" />}
-            {agg.fees > 0 && <StatTile label="Net After Fees" value={fmt(agg.net - agg.fees)} color="#3B6B2F" sub="after Stripe fees" />}
+            {agg.fees > 0 && <StatTile label={agg.hasTaxData ? 'Net After Fees (ex-tax)' : 'Net After Fees'} value={fmt(agg.netAfterFees)} color="#3B6B2F" sub={agg.hasTaxData ? 'what you actually keep' : 'tax not yet broken out'} />}
             <StatTile label="Transactions" value={payments.length} />
             <StatTile label="Members" value={agg.members.length} sub={agg.members.length ? fmt(netOf(agg.members)) : undefined} />
             <StatTile label="Non-members" value={agg.nonMembers.length} sub={agg.nonMembers.length ? fmt(netOf(agg.nonMembers)) : undefined} />
@@ -559,14 +569,28 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   const totalRevenue = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
   const totalPaid = filteredPayments.length
 
+  // Ex-tax subtotal — only known for payments with a payment_receipts row
+  // (everything since the payment ledger shipped; older payments have none).
+  // Prorated by the kept-fraction so a refunded payment never inflates it.
+  const keptFrac = p => (p.gross > 0 ? p.amount / p.gross : 1)
+  const taxKnownPayments = filteredPayments.filter(p => p.taxSubtotal != null)
+  const totalSubtotal = taxKnownPayments.reduce((s, p) => s + (p.taxSubtotal || 0) * keptFrac(p), 0)
+  const hasTaxData = taxKnownPayments.length > 0
+
   // Stripe processing fees across the selected range (all-time by default,
   // since no date filter = every payment ever). Only card charges carry a fee;
   // e-transfers and fee-unknown rows contribute nothing.
   const feePayments = filteredPayments.filter(p => (p.fee || 0) > 0)
   const totalFees = feePayments.reduce((s, p) => s + p.fee, 0)
-  const netAfterFees = totalRevenue - totalFees
   const feeCardGross = feePayments.reduce((s, p) => s + p.gross, 0)
   const effectiveFeeRate = feeCardGross > 0 ? (totalFees / feeCardGross) * 100 : 0
+
+  // The true bottom line: what's actually left after remitting the tax you
+  // collected on the government's behalf AND paying Stripe. Uses the ex-tax
+  // subtotal when it's known; only falls back to the tax-inclusive total
+  // revenue (clearly labeled where shown) for payments that predate the tax
+  // ledger and have no receipt row to back tax out of.
+  const netAfterFees = (hasTaxData ? totalSubtotal : totalRevenue) - totalFees
 
   const byType = useMemo(() => {
     const map = new Map()
@@ -642,11 +666,23 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   const eventRevenue = byType.find(t => t.key === 'event_registration')?.revenue ?? 0
 
   const stats = [
-    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true },
+    // "Total Revenue" is gross charged minus refunds — it still includes GST/QST
+    // collected (owed to the government, not really yours) and hasn't had
+    // Stripe's cut taken out. The sub-label says so explicitly; the tiles below
+    // back both of those out to the true bottom line.
+    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: 'tax included · refunds excluded' },
     { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false },
+    ...(hasTaxData ? [{
+      label: 'Subtotal (ex-tax)', value: fmt(totalSubtotal), color: '#1a1a1a', big: false,
+      sub: taxKnownPayments.length < totalPaid ? `${taxKnownPayments.length} of ${totalPaid} w/ tax data` : 'GST/QST backed out',
+    }] : []),
     ...(feePayments.length ? [
-      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false },
-      { label: 'Net After Fees', value: fmt(netAfterFees), color: '#3B6B2F', big: false },
+      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: `${effectiveFeeRate.toFixed(1)}% of card volume` },
+      {
+        label: hasTaxData ? 'Net After Fees (ex-tax)' : 'Net After Fees',
+        value: fmt(netAfterFees), color: '#3B6B2F', big: false,
+        sub: hasTaxData ? 'what you actually keep' : 'tax not yet broken out',
+      },
     ] : []),
     { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
     { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
@@ -703,6 +739,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
           <div key={s.label} style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
             <div style={{ fontSize: s.big ? '1.7rem' : '1.5rem', fontWeight: '400', color: s.color, lineHeight: 1.1, fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", letterSpacing: '0.03em', wordBreak: 'break-word' }}>{s.value}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.5rem' }}>{s.label}</div>
+            {s.sub && <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px' }}>{s.sub}</div>}
           </div>
         ))}
       </div>
@@ -860,7 +897,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
               <div style={SECTION_LABEL}>Stripe Processing Fees {(dateFrom || dateTo) ? '(in range)' : '(all time)'}</div>
               <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', letterSpacing: '0.03em', color: '#93333E', lineHeight: 1.05 }}>−{fmt(totalFees)}</div>
               <div style={{ fontSize: '11px', color: '#999', marginTop: '0.35rem', lineHeight: 1.6 }}>
-                {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · {effectiveFeeRate.toFixed(1)}% of card volume · net after fees <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
+                {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · {effectiveFeeRate.toFixed(1)}% of card volume · {hasTaxData ? 'net after tax + fees' : 'net after fees'} <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
               </div>
             </div>
             <div style={{ fontSize: '11px', color: '#8A6535', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
