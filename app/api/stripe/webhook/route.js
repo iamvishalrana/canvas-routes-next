@@ -269,7 +269,10 @@ export async function POST(request) {
               .is('stripe_paid_at', null)
               .select('id')
             if ((memberClaim || []).length > 0) {
-              captureMessage('Member road-trip webhook rescue fired — client confirm did not win the race', { email: normalEmail, type, piId: pi.id })
+              // 'info', not error — same self-healing race as the membership
+              // rescue below: the member is saved and emailed exactly once via
+              // the atomic stripe_paid_at claim above. Trackable, but not a page.
+              captureMessage('Member road-trip webhook rescue fired — client confirm did not win the race', { email: normalEmail, type, piId: pi.id }, 'info')
 
               // Meta CAPI Purchase — HTM only for now. Its client (app/hello-to-montebello/page.jsx)
               // passes eventId=pi.id to fbq('track','Purchase',...) for dedup; WTET's client doesn't
@@ -554,7 +557,15 @@ export async function POST(request) {
           // in-app browsers — see the useEffect in MembershipContent.jsx that
           // re-POSTs membership-waitlist after such a redirect) rather than
           // only being visible via this one-off email landing in an inbox.
-          captureMessage('Membership webhook rescue fired — normal flow did not win the race', { email: normalEmail, type, piId: pi.id })
+          // 'info', not error — the webhook winning this race is a designed,
+          // self-healing outcome (the applicant is still saved and emailed
+          // exactly once via the atomic waitlist_notified_pi gate above). It
+          // fires often because the webhook reaches its claim faster than the
+          // browser's slower membership-waitlist call, and spikes with
+          // 3DS-redirect traffic (Instagram/Facebook in-app browsers). Logged
+          // so rescue frequency stays trackable in Sentry — but it must not
+          // page as a high-priority error.
+          captureMessage('Membership webhook rescue fired — normal flow did not win the race', { email: normalEmail, type, piId: pi.id }, 'info')
           const firstName  = (name || '').trim().split(' ')[0] || 'there'
           const tierLabel  = type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
           const amountFmt  = `$${(amountHeld / 100).toFixed(2)} CAD`
