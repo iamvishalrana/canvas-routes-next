@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
+import { isAdminUser } from './lib/adminAccess.js'
 
 export async function middleware(request) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -51,8 +52,7 @@ export async function middleware(request) {
   }
   if (isAdminLogin && user) {
     // Already signed in — admins go to the dashboard, everyone else to the portal
-    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
-    return NextResponse.redirect(new URL(adminEmails.includes(user.email) ? '/admin/dashboard' : '/members/dashboard', request.url))
+    return NextResponse.redirect(new URL(isAdminUser(user) ? '/admin/dashboard' : '/members/dashboard', request.url))
   }
 
   if ((isMembers || isAdmin) && !user) {
@@ -67,8 +67,7 @@ export async function middleware(request) {
   }
 
   if (isAdmin && user) {
-    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
-    if (!adminEmails.includes(user.email)) {
+    if (!isAdminUser(user)) {
       if (isApiAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       return NextResponse.redirect(new URL('/members/dashboard', request.url))
     }
