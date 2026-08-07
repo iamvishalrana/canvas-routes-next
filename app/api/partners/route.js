@@ -1,5 +1,6 @@
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
+import { emailShell, p, FONT, COLOR } from '../../../lib/emailLayout.js'
 
 function h(str) {
   return String(str ?? '')
@@ -55,80 +56,20 @@ function notifyHtml({ name, business, city, type, email, phone, message }) {
 
 function confirmHtml({ name, business }) {
   const firstName = name.split(' ')[0]
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Partner inquiry received — Canvas Routes</title>
-</head>
-<body style="margin:0;padding:0;background-color:#0F1E14;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0F1E14;">
-  <tr><td align="center" style="padding:48px 16px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
-
-      <!-- Logo -->
-      <tr><td style="padding-bottom:36px;">
-        <img src="https://canvasroutes.com/white-outline.png" alt="Canvas Routes" width="200" style="display:block;width:200px;height:auto;border:0;"/>
-      </td></tr>
-
-      <!-- Gold divider -->
-      <tr><td style="padding-bottom:32px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40">
-          <tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:#c5a882;">&nbsp;</td></tr>
-        </table>
-      </td></tr>
-
-      <!-- Heading -->
-      <tr><td style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#F5F1EC;line-height:1.2;padding-bottom:20px;">
-        Inquiry received.
-      </td></tr>
-
-      <!-- Body -->
-      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(245,241,236,0.65);line-height:1.85;padding-bottom:16px;">
-        Hi ${h(firstName)},
-      </td></tr>
-      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(245,241,236,0.65);line-height:1.85;padding-bottom:16px;">
-        Thank you for reaching out about a partnership with Canvas Routes. We've received your inquiry for <span style="color:#F5F1EC;">${h(business)}</span> and will review it personally.
-      </td></tr>
-      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(245,241,236,0.65);line-height:1.85;padding-bottom:32px;">
-        We take care with every partnership — if there's a genuine fit, you'll hear from us within a few days to set up a conversation. In the meantime, feel free to follow us on Instagram at <a href="https://www.instagram.com/canvasroutes" style="color:#c5a882;text-decoration:none;">@canvasroutes</a> to get a feel for what we do.
-      </td></tr>
-
-      <!-- Divider -->
-      <tr><td style="padding-bottom:28px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-          <tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:rgba(197,168,130,0.18);">&nbsp;</td></tr>
-        </table>
-      </td></tr>
-
-      <!-- Sign-off -->
-      <tr><td style="font-family:Georgia,'Times New Roman',serif;font-size:16px;font-style:italic;color:rgba(245,241,236,0.5);line-height:1.6;padding-bottom:8px;">
-        The road is the product. We build the community around it.
-      </td></tr>
-      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.3);letter-spacing:0.1em;padding-bottom:36px;">
-        CANVAS ROUTES — MONTREAL
-      </td></tr>
-
-      <!-- Divider -->
-      <tr><td style="padding-bottom:24px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-          <tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background-color:rgba(197,168,130,0.12);">&nbsp;</td></tr>
-        </table>
-      </td></tr>
-
-      <!-- Footer -->
-      <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:rgba(245,241,236,0.22);line-height:1.7;">
-        Canvas Routes &nbsp;·&nbsp; Montreal, QC &nbsp;·&nbsp;
-        <a href="https://canvasroutes.com" style="color:rgba(245,241,236,0.22);text-decoration:none;">canvasroutes.com</a>
-        &nbsp;·&nbsp;
-        <a href="mailto:info@canvasroutes.com" style="color:rgba(245,241,236,0.22);text-decoration:none;">info@canvasroutes.com</a>
-      </td></tr>
-
-    </table>
-  </td></tr>
-</table>
-</body></html>`
+  const body = `
+    ${p(`Hi ${h(firstName)},`)}
+    ${p(`Thank you for reaching out about a partnership with Canvas Routes. We&rsquo;ve received your inquiry for <strong style="color:${COLOR.head};font-weight:600;">${h(business)}</strong> and will review it personally.`)}
+    ${p(`We take care with every partnership &mdash; if there&rsquo;s a genuine fit, you&rsquo;ll hear from us within a few days to set up a conversation. In the meantime, feel free to follow us on Instagram at <a href="https://www.instagram.com/canvasroutes" style="color:#3B6B2F;text-decoration:none;">@canvasroutes</a> to get a feel for what we do.`, { mb: '26px' })}
+    <div style="font-family:${FONT};font-size:16px;font-style:italic;line-height:1.6;color:${COLOR.muted};margin:0 0 6px;">The road is the product. We build the community around it.</div>
+    <div style="font-family:${FONT};font-size:11px;letter-spacing:0.14em;color:${COLOR.faint};text-transform:uppercase;">Canvas Routes &mdash; Montreal</div>
+  `
+  return emailShell({
+    title: 'Partner inquiry received — Canvas Routes',
+    preheader: `We've received your partnership inquiry for ${business} and will review it personally.`,
+    eyebrow: 'Canvas Routes &middot; Partnerships',
+    heading: 'Inquiry received.',
+    body,
+  })
 }
 
 export async function POST(req) {

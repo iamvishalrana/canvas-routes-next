@@ -2,6 +2,7 @@ import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { deviceType } from '../../../lib/deviceType'
 import { captureException } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { emailShell, p, button, infoCard, accentCard, eyebrow, COLOR } from '../../../lib/emailLayout.js'
 
 const EVENT_NAME = 'Cars, Coffee & Dad Jokes — June 20, 2026'
 
@@ -13,93 +14,29 @@ function h(str) {
 
 function confirmHtml(firstName, { year, carMake, carModel }) {
   const car = [year, carMake, carModel].filter(Boolean).join(' ')
-
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registration received — Canvas Routes</title>
-</head>
-<body style="margin:0;padding:0;background-color:#F5F1EC;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
-  <tr>
-    <td align="center" style="padding:32px 16px 48px;">
-
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:580px;">
-
-        <!-- ── Header ─────────────────────────────────────────── -->
-        <tr>
-          <td style="background:#0F1E14;padding:36px 40px 32px;">
-            <img src="https://canvasroutes.com/white-outline.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;margin-bottom:28px;opacity:0.92;" />
-            <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#c5a882;">Father&rsquo;s Day Weekend &middot; June 20</p>
-            <h1 style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#F5F1EC;line-height:1.15;">Cars, Coffee<br/>&amp; Dad Jokes</h1>
-            <!-- Event detail chips -->
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td style="padding-right:24px;vertical-align:top;">
-                  <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(197,168,130,0.55);">Time</p>
-                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.8);">9:00 – 11:30 AM</p>
-                </td>
-                <td style="padding-right:24px;padding-left:24px;border-left:1px solid rgba(197,168,130,0.18);vertical-align:top;">
-                  <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(197,168,130,0.55);">Venue</p>
-                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.8);">Cafe Napoleon, LaSalle</p>
-                </td>
-                <td style="padding-left:24px;border-left:1px solid rgba(197,168,130,0.18);vertical-align:top;">
-                  <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(197,168,130,0.55);">Entry</p>
-                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(245,241,236,0.8);">Invite only &middot; Free</p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <!-- ── Body ──────────────────────────────────────────── -->
-        <tr>
-          <td style="background:#ffffff;padding:40px 40px 36px;">
-            <p style="margin:0 0 1.3em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">Hi ${h(firstName)},</p>
-            <p style="margin:0 0 1.3em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">We&rsquo;ve received your registration. Entry is invite-only, so we&rsquo;ll review your details and follow up with confirmation before the event.</p>
-
-            ${car ? `<!-- Car card -->
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 1.5em;background:#F5F1EC;border-left:3px solid #c5a882;">
-              <tr>
-                <td style="padding:16px 20px;">
-                  <p style="margin:0 0 5px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Your car</p>
-                  <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:400;color:#1a1a1a;">${h(car)}</p>
-                </td>
-              </tr>
-            </table>` : ''}
-
-            <p style="margin:0 0 1.3em;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">Add <a href="mailto:jerry@canvasroutes.com" style="color:#3B6B2F;text-decoration:underline;text-underline-offset:3px;">jerry@canvasroutes.com</a> to your contacts so our follow-up doesn&rsquo;t land in spam.</p>
-            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">See you on June 20,<br/>Jerry<br/>Canvas Routes</p>
-          </td>
-        </tr>
-
-        <!-- ── Founding offer ─────────────────────────────────── -->
-        <tr>
-          <td style="background:#0F1E14;padding:28px 40px 32px;">
-            <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:#c5a882;">Founding Member Offer</p>
-            <p style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.75;color:rgba(245,241,236,0.7);">As a thank-you for coming out, use code <strong style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;color:#F5F1EC;font-weight:600;">FOUNDING</strong> when you apply for a Canvas Routes membership for a special discount.</p>
-            <a href="https://canvasroutes.com/membership" style="display:inline-block;background:#c5a882;color:#0F1E14;padding:11px 26px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;font-weight:700;">Apply for Membership &rarr;</a>
-          </td>
-        </tr>
-
-        <!-- ── Footer ─────────────────────────────────────────── -->
-        <tr>
-          <td style="background:#EDE8E1;padding:18px 40px;">
-            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaa;line-height:1.6;">
-              Canvas Routes &nbsp;&middot;&nbsp; Montreal, QC &nbsp;&middot;&nbsp;
-              <a href="mailto:info@canvasroutes.com" style="color:#aaa;text-decoration:none;">info@canvasroutes.com</a>
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-</body>
-</html>`
+  const body = `
+    ${p(`Hi ${h(firstName)},`)}
+    ${p(`We&rsquo;ve received your registration. Entry is invite-only, so we&rsquo;ll review your details and follow up with confirmation before the event.`)}
+    ${infoCard([
+      ['Time', '9:00 – 11:30 AM'],
+      ['Venue', 'Cafe Napoleon, LaSalle'],
+      ['Entry', 'Invite only &middot; Free'],
+      car && ['Your car', h(car)],
+    ])}
+    ${p(`Add <a href="mailto:jerry@canvasroutes.com" style="color:#3B6B2F;text-decoration:none;">jerry@canvasroutes.com</a> to your contacts so our follow-up doesn&rsquo;t land in spam.`)}
+    ${p(`See you on June 20,<br/>Jerry<br/><span style="color:${COLOR.muted};">Canvas Routes</span>`, { mb: '26px' })}
+    ${accentCard(`
+      ${eyebrow('Founding Member Offer', { mb: '8px' })}
+      ${p(`As a thank-you for coming out, use code <strong style="color:${COLOR.head};font-weight:600;letter-spacing:0.06em;">FOUNDING</strong> when you apply for a Canvas Routes membership for a special discount.`, { tone: 'muted' })}
+      ${button('https://canvasroutes.com/membership', 'Apply for Membership &rarr;', { variant: 'green', mb: '0' })}`)}
+  `
+  return emailShell({
+    title: 'Registration received — Canvas Routes',
+    preheader: `We've received your Cars, Coffee & Dad Jokes registration — we'll follow up with confirmation before the event.`,
+    eyebrow: 'Canvas Routes &middot; Father&rsquo;s Day Weekend',
+    heading: 'Cars, Coffee &amp; Dad Jokes',
+    body,
+  })
 }
 
 function notifyHtml({ name, email, year, carMake, carModel, phone, instagram, more, source }) {
