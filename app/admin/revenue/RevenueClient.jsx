@@ -322,6 +322,10 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       gross: sum(payments, r => r.gross),
       refunded: sum(payments, r => r.refunded),
       net: sum(payments, r => r.amount),
+      // Total Stripe processing fees for this slice (null fees count as 0). Fees
+      // are a real cost Stripe keeps regardless of refunds, so this is deducted
+      // from net to get true take-home, but never added back on a refund.
+      fees: sum(payments, r => r.fee),
       withTax,
       // Refund-adjusted (prorated) — refunds are shown only as their own tile,
       // never folded into revenue or taxes.
@@ -381,7 +385,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
   // Rich per-payment export — one row per payment with the coupon code + how
   // much off, plus gross / refunded / net so refunds are visible but never
   // folded into a revenue column. Downloadable as CSV / Excel / PDF / Word.
-  const exportHeaders = ['Name', 'Email', 'Member', 'Method', 'Coupon', 'Discount (CAD)', '% Off', 'Gross (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Date']
+  const exportHeaders = ['Name', 'Email', 'Member', 'Method', 'Coupon', 'Discount (CAD)', '% Off', 'Gross (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Stripe Fee (CAD)', 'Date']
   const exportRows = sortedPayments.map(p => {
     const ci = couponInfo(p)
     return [
@@ -394,6 +398,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       (p.gross || 0).toFixed(2),
       (p.refunded || 0).toFixed(2),
       (p.amount || 0).toFixed(2),
+      p.fee != null ? p.fee.toFixed(2) : '',
       p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
     ]
   })
@@ -421,6 +426,8 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
             <StatTile label="Net Revenue" value={fmt(agg.net)} color="#3B6B2F" sub="refunds excluded" />
             <StatTile label="Gross Collected" value={fmt(agg.gross)} />
             <StatTile label="Refunded" value={agg.refunded > 0 ? '−' + fmt(agg.refunded) : fmt(0)} color={agg.refunded > 0 ? '#93333E' : '#1a1a1a'} />
+            {agg.fees > 0 && <StatTile label="Stripe Fees" value={'−' + fmt(agg.fees)} color="#93333E" />}
+            {agg.fees > 0 && <StatTile label="Net After Fees" value={fmt(agg.net - agg.fees)} color="#3B6B2F" sub="after Stripe fees" />}
             <StatTile label="Transactions" value={payments.length} />
             <StatTile label="Members" value={agg.members.length} sub={agg.members.length ? fmt(netOf(agg.members)) : undefined} />
             <StatTile label="Non-members" value={agg.nonMembers.length} sub={agg.nonMembers.length ? fmt(netOf(agg.nonMembers)) : undefined} />
@@ -512,6 +519,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.amount)}</div>
                     {p.refunded > 0 && <div style={{ fontSize: '10px', color: '#93333E', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.refunded)} refunded</div>}
+                    {p.fee > 0 && <div style={{ fontSize: '10px', color: '#999', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.fee)} Stripe fee</div>}
                   </div>
                 </div>
                 )
@@ -550,6 +558,15 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
 
   const totalRevenue = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
   const totalPaid = filteredPayments.length
+
+  // Stripe processing fees across the selected range (all-time by default,
+  // since no date filter = every payment ever). Only card charges carry a fee;
+  // e-transfers and fee-unknown rows contribute nothing.
+  const feePayments = filteredPayments.filter(p => (p.fee || 0) > 0)
+  const totalFees = feePayments.reduce((s, p) => s + p.fee, 0)
+  const netAfterFees = totalRevenue - totalFees
+  const feeCardGross = feePayments.reduce((s, p) => s + p.gross, 0)
+  const effectiveFeeRate = feeCardGross > 0 ? (totalFees / feeCardGross) * 100 : 0
 
   const byType = useMemo(() => {
     const map = new Map()
@@ -627,6 +644,10 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   const stats = [
     { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true },
     { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false },
+    ...(feePayments.length ? [
+      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false },
+      { label: 'Net After Fees', value: fmt(netAfterFees), color: '#3B6B2F', big: false },
+    ] : []),
     { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
     { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
     { label: 'Route Revenue', value: fmt(roadTripRevenue), color: '#1a1a1a', big: false },
@@ -827,6 +848,28 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
           )}
         </div>
       </div>
+
+      {/* Stripe processing fees — the real cost Stripe deducted, straight from
+          each charge's balance transaction. Clicking opens the full history:
+          every fee-bearing payment with its individual fee. */}
+      {feePayments.length > 0 && (
+        <div style={{ ...CARD, marginBottom: '2rem', cursor: 'pointer' }} className="rev-type-row"
+          onClick={() => setDetail({ title: 'Stripe Processing Fees', filenameBase: 'stripe-fees', payments: feePayments })}>
+          <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={SECTION_LABEL}>Stripe Processing Fees {(dateFrom || dateTo) ? '(in range)' : '(all time)'}</div>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', letterSpacing: '0.03em', color: '#93333E', lineHeight: 1.05 }}>−{fmt(totalFees)}</div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '0.35rem', lineHeight: 1.6 }}>
+                {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · {effectiveFeeRate.toFixed(1)}% of card volume · net after fees <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '11px', color: '#8A6535', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
+              View full history
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18" /></svg>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pending / authorized holds — money committed but not yet captured.
           Kept visually and numerically separate from realized revenue above. */}
