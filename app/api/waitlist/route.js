@@ -59,7 +59,7 @@ function customerText(firstName) {
 
 Thank you for applying to Canvas Routes. We've received your application and will review it shortly — once we do, expect a personal email from our team.
 
-To make sure our reply reaches your inbox, add jerry@canvasroutes.com to your contacts. In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes:
+To make sure our reply reaches your inbox, add info@canvasroutes.com to your contacts. In the meantime, follow us on Instagram to stay up to date on everything happening with Canvas Routes:
 https://www.instagram.com/canvasroutes
 
 If this email landed in your spam folder, please move it to your inbox and mark it as Not Spam — so you don't miss our reply.
