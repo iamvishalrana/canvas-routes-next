@@ -16,6 +16,23 @@ function montrealDateKey(iso) {
   return `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}-${parts.find(p => p.type === 'day').value}`
 }
 
+// True (ex-tax) revenue for one payment — the pre-tax subtotal, prorated for
+// any refund. Payments with a payment_receipts row (every Stripe payment
+// since GST/QST launched July 19 2026) use the exact stored subtotal.
+// Payments with none never had tax charged in the first place —
+// recordPaymentSuccess (lib/paymentLedger.js) only writes a receipt when
+// pi.metadata.original_amount exists, which itself is only present on PIs
+// created after that launch — so for those, the full kept amount already IS
+// the subtotal (tax = $0). This gives 100% coverage, not just the payments
+// with a receipt, and needs no estimation.
+function exTaxOf(p) {
+  if (p.taxSubtotal != null) {
+    const keptFrac = p.gross > 0 ? p.amount / p.gross : 1
+    return p.taxSubtotal * keptFrac
+  }
+  return p.amount
+}
+
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }
 const DATE_INPUT = { padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }
@@ -85,8 +102,8 @@ function PaymentDetailPanel({ p }) {
         </div>
       )}
       <div>
-        <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Net</div>
-        <div style={{ fontSize: '13px', color: '#3B6B2F', fontWeight: '500' }}>{fmt(p.amount)}</div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Revenue (ex-tax)</div>
+        <div style={{ fontSize: '13px', color: '#3B6B2F', fontWeight: '500' }}>{fmt(exTaxOf(p))}</div>
       </div>
       <div>
         <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '3px' }}>Payment</div>
@@ -318,14 +335,17 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       if (!codeMap.has(key)) codeMap.set(key, { code: key, count: 0, discount: 0 })
       const e = codeMap.get(key); e.count += 1; e.discount += (r.taxDiscount || 0)
     }
+    // Tax-inclusive net-of-refund — what actually hit the Stripe balance
+    // before tax remittance. Kept as a separate reconciliation figure; never
+    // the headline "revenue" number below.
     const net = sum(payments, r => r.amount)
-    const hasTaxData = withTax.length > 0
-    // Refund-adjusted (prorated) — refunds are shown only as their own tile,
-    // never folded into revenue or taxes.
-    const subtotal = sum(withTax, r => (r.taxSubtotal || 0) * keptFrac(r))
+    // True (ex-tax) revenue — see exTaxOf() above. 100% coverage: payments
+    // with no receipt never had tax charged, so their full amount already IS
+    // the subtotal — no partial-data caveat needed.
+    const subtotal = sum(payments, exTaxOf)
     // Total Stripe processing fees for this slice (null fees count as 0). Fees
     // are a real cost Stripe keeps regardless of refunds, so this is deducted
-    // from net to get true take-home, but never added back on a refund.
+    // from revenue to get true take-home, but never added back on a refund.
     const fees = sum(payments, r => r.fee)
     return {
       gross: sum(payments, r => r.gross),
@@ -333,20 +353,17 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       net,
       fees,
       withTax,
-      hasTaxData,
       subtotal,
       gst: sum(withTax, r => (r.taxGst || 0) * keptFrac(r)),
       qst: sum(withTax, r => (r.taxQst || 0) * keptFrac(r)),
-      // True bottom line — what's actually left after remitting the tax
-      // collected on the government's behalf AND paying Stripe's cut. Uses the
-      // ex-tax subtotal when known (see hasTaxData); only falls back to the
-      // tax-inclusive net for payments that predate the tax ledger.
-      netAfterFees: (hasTaxData ? subtotal : net) - fees,
+      // True bottom line — ex-tax revenue minus Stripe's cut. Full coverage,
+      // no fallback needed now that `subtotal` itself always has it.
+      netAfterFees: subtotal - fees,
       discount: sum(payments, r => r.taxDiscount),
       members, nonMembers, unknown, card, etransfer, coupons,
       codes: Array.from(codeMap.values()).sort((a, b) => b.count - a.count),
-      avgTicket: payments.length ? sum(payments, r => r.amount) / payments.length : 0,
-      largest: payments.reduce((m, r) => Math.max(m, r.amount || 0), 0),
+      avgTicket: payments.length ? subtotal / payments.length : 0,
+      largest: payments.reduce((m, r) => Math.max(m, exTaxOf(r) || 0), 0),
     }
   }, [payments])
 
@@ -359,7 +376,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       if (!p.date) continue
       const ym = monthKeyOf(p.date)
       if (!map.has(ym)) map.set(ym, 0)
-      map.set(ym, map.get(ym) + p.amount)
+      map.set(ym, map.get(ym) + exTaxOf(p))
     }
     return Array.from(map.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
@@ -370,7 +387,9 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       })
   }, [payments])
 
-  const netOf = arr => arr.reduce((s, r) => s + r.amount, 0)
+  // Ex-tax revenue for a group of payments — used by every breakdown chart
+  // below so "revenue by X" always means the same thing as the headline figure.
+  const netOf = arr => arr.reduce((s, r) => s + exTaxOf(r), 0)
 
   const memberData = [
     { label: 'Members', value: netOf(agg.members), color: CHART.member },
@@ -384,7 +403,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
   ]
   const showMethodChart = agg.card.length > 0 && agg.etransfer.length > 0
   const taxData = [
-    { label: 'Subtotal (ex-tax)', value: agg.subtotal, color: CHART.subtotal },
+    { label: 'Revenue (ex-tax)', value: agg.subtotal, color: CHART.subtotal },
     { label: 'GST', value: agg.gst, color: CHART.gst },
     { label: 'QST', value: agg.qst, color: CHART.qst },
   ]
@@ -393,9 +412,10 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
   const sortedPayments = useMemo(() => [...payments].sort((a, b) => new Date(b.date) - new Date(a.date)), [payments])
 
   // Rich per-payment export — one row per payment with the coupon code + how
-  // much off, plus gross / refunded / net so refunds are visible but never
-  // folded into a revenue column. Downloadable as CSV / Excel / PDF / Word.
-  const exportHeaders = ['Name', 'Email', 'Member', 'Method', 'Coupon', 'Discount (CAD)', '% Off', 'Gross (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Stripe Fee (CAD)', 'Date']
+  // much off, plus gross / refunded / net (Stripe-reconciliation figures,
+  // tax-inclusive) alongside the true ex-tax Revenue column. Downloadable as
+  // CSV / Excel / PDF / Word.
+  const exportHeaders = ['Name', 'Email', 'Member', 'Method', 'Coupon', 'Discount (CAD)', '% Off', 'Gross (CAD)', 'Refunded (CAD)', 'Net (CAD)', 'Revenue ex-tax (CAD)', 'Stripe Fee (CAD)', 'Date']
   const exportRows = sortedPayments.map(p => {
     const ci = couponInfo(p)
     return [
@@ -408,6 +428,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
       (p.gross || 0).toFixed(2),
       (p.refunded || 0).toFixed(2),
       (p.amount || 0).toFixed(2),
+      exTaxOf(p).toFixed(2),
       p.fee != null ? p.fee.toFixed(2) : '',
       p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
     ]
@@ -425,27 +446,27 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
           <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.75)', marginBottom: '0.5rem' }}>Revenue Detail</div>
           <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '26px', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.15, paddingRight: '2.5rem' }}>{title}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', marginTop: '0.9rem', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', color: '#8FBF7F', letterSpacing: '0.03em', lineHeight: 1 }}>{fmt(agg.net)}</span>
-            <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)' }}>revenue · {payments.length} payment{payments.length === 1 ? '' : 's'}{agg.refunded > 0 ? ` · ${fmt(agg.refunded)} refunded (excluded)` : ''}</span>
+            <span style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2.2rem', color: '#8FBF7F', letterSpacing: '0.03em', lineHeight: 1 }}>{fmt(agg.subtotal)}</span>
+            <span style={{ fontSize: '11px', color: 'rgba(245,241,236,0.6)' }}>revenue (ex-tax) · {payments.length} payment{payments.length === 1 ? '' : 's'}{agg.refunded > 0 ? ` · ${fmt(agg.refunded)} refunded (excluded)` : ''}</span>
           </div>
         </div>
 
         <div style={{ padding: '1.5rem' }}>
           {/* Stat tiles */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <StatTile label="Net Revenue" value={fmt(agg.net)} color="#3B6B2F" sub="refunds excluded" />
-            <StatTile label="Gross Collected" value={fmt(agg.gross)} />
+            <StatTile label="Revenue (ex-tax)" value={fmt(agg.subtotal)} color="#3B6B2F" sub="refunds excluded" />
+            <StatTile label="Collected (incl. tax)" value={fmt(agg.net)} sub="before Stripe fees" />
+            <StatTile label="Gross (before refunds)" value={fmt(agg.gross)} />
             <StatTile label="Refunded" value={agg.refunded > 0 ? '−' + fmt(agg.refunded) : fmt(0)} color={agg.refunded > 0 ? '#93333E' : '#1a1a1a'} />
             {agg.fees > 0 && <StatTile label="Stripe Fees" value={'−' + fmt(agg.fees)} color="#93333E" />}
-            {agg.fees > 0 && <StatTile label={agg.hasTaxData ? 'Net After Fees (ex-tax)' : 'Net After Fees'} value={fmt(agg.netAfterFees)} color="#3B6B2F" sub={agg.hasTaxData ? 'what you actually keep' : 'tax not yet broken out'} />}
+            {agg.fees > 0 && <StatTile label="Net After Fees" value={fmt(agg.netAfterFees)} color="#3B6B2F" sub="ex-tax, what you actually keep" />}
             <StatTile label="Transactions" value={payments.length} />
             <StatTile label="Members" value={agg.members.length} sub={agg.members.length ? fmt(netOf(agg.members)) : undefined} />
             <StatTile label="Non-members" value={agg.nonMembers.length} sub={agg.nonMembers.length ? fmt(netOf(agg.nonMembers)) : undefined} />
-            {agg.withTax.length > 0 && <StatTile label="Subtotal (ex-tax)" value={fmt(agg.subtotal)} sub={`${agg.withTax.length} of ${payments.length} w/ receipt`} />}
             {agg.withTax.length > 0 && <StatTile label="Tax Collected" value={fmt(totalTax)} sub={`GST ${fmt(agg.gst)} · QST ${fmt(agg.qst)}`} />}
             <StatTile label="Coupons Used" value={agg.coupons.length} sub={agg.discount > 0 ? fmt(agg.discount) + ' off' : undefined} color={agg.coupons.length ? '#8A5CA8' : '#1a1a1a'} />
-            <StatTile label="Average Ticket" value={fmt(agg.avgTicket)} />
-            <StatTile label="Largest Payment" value={fmt(agg.largest)} />
+            <StatTile label="Average Ticket" value={fmt(agg.avgTicket)} sub="ex-tax" />
+            <StatTile label="Largest Payment" value={fmt(agg.largest)} sub="ex-tax" />
           </div>
 
           {/* Charts */}
@@ -527,7 +548,7 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
                     )}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.amount)}</div>
+                    <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums' }}>{fmt(exTaxOf(p))}</div>
                     {p.refunded > 0 && <div style={{ fontSize: '10px', color: '#93333E', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.refunded)} refunded</div>}
                     {p.fee > 0 && <div style={{ fontSize: '10px', color: '#999', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.fee)} Stripe fee</div>}
                   </div>
@@ -566,16 +587,17 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
     })
   }, [payments, dateFrom, dateTo])
 
-  const totalRevenue = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
   const totalPaid = filteredPayments.length
 
-  // Ex-tax subtotal — only known for payments with a payment_receipts row
-  // (everything since the payment ledger shipped; older payments have none).
-  // Prorated by the kept-fraction so a refunded payment never inflates it.
-  const keptFrac = p => (p.gross > 0 ? p.amount / p.gross : 1)
-  const taxKnownPayments = filteredPayments.filter(p => p.taxSubtotal != null)
-  const totalSubtotal = taxKnownPayments.reduce((s, p) => s + (p.taxSubtotal || 0) * keptFrac(p), 0)
-  const hasTaxData = taxKnownPayments.length > 0
+  // True (ex-tax) revenue — the headline number. See exTaxOf() at the top of
+  // this file: 100% coverage, since a payment with no payment_receipts row
+  // never had tax charged in the first place (pre-July-19-2026), so its full
+  // amount already IS the subtotal — nothing here is estimated.
+  const totalRevenue = filteredPayments.reduce((sum, p) => sum + exTaxOf(p), 0)
+  // Tax-inclusive net-of-refund — what actually hit the Stripe balance before
+  // remitting tax. Kept only as a separate reconciliation figure.
+  const totalCollected = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+  const totalTaxCollected = totalCollected - totalRevenue
 
   // Stripe processing fees across the selected range (all-time by default,
   // since no date filter = every payment ever). Only card charges carry a fee;
@@ -585,12 +607,10 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   const feeCardGross = feePayments.reduce((s, p) => s + p.gross, 0)
   const effectiveFeeRate = feeCardGross > 0 ? (totalFees / feeCardGross) * 100 : 0
 
-  // The true bottom line: what's actually left after remitting the tax you
-  // collected on the government's behalf AND paying Stripe. Uses the ex-tax
-  // subtotal when it's known; only falls back to the tax-inclusive total
-  // revenue (clearly labeled where shown) for payments that predate the tax
-  // ledger and have no receipt row to back tax out of.
-  const netAfterFees = (hasTaxData ? totalSubtotal : totalRevenue) - totalFees
+  // The true bottom line: ex-tax revenue minus Stripe's cut — what's actually
+  // left after remitting the tax you collected on the government's behalf AND
+  // paying Stripe. Full coverage now that totalRevenue itself is ex-tax.
+  const netAfterFees = totalRevenue - totalFees
 
   const byType = useMemo(() => {
     const map = new Map()
@@ -599,7 +619,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       if (!map.has(key)) map.set(key, { key, label: p.type, count: 0, revenue: 0 })
       const entry = map.get(key)
       entry.count += 1
-      entry.revenue += p.amount
+      entry.revenue += exTaxOf(p)
     }
     return Array.from(map.values())
   }, [filteredPayments])
@@ -613,7 +633,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       if (!map.has(ym)) map.set(ym, { count: 0, revenue: 0 })
       const entry = map.get(ym)
       entry.count += 1
-      entry.revenue += p.amount
+      entry.revenue += exTaxOf(p)
     }
     return Array.from(map.entries())
       .sort((a, b) => b[0].localeCompare(a[0]))
@@ -646,7 +666,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       if (!p.email) continue
       if (!map.has(p.email)) map.set(p.email, { email: p.email, name: p.name, isMember: null, revenue: 0, count: 0, payments: [] })
       const e = map.get(p.email)
-      e.revenue += p.amount
+      e.revenue += exTaxOf(p)
       e.count += 1
       e.payments.push(p)
       if (p.name && p.name !== '—') e.name = p.name
@@ -666,23 +686,17 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   const eventRevenue = byType.find(t => t.key === 'event_registration')?.revenue ?? 0
 
   const stats = [
-    // "Total Revenue" is gross charged minus refunds — it still includes GST/QST
-    // collected (owed to the government, not really yours) and hasn't had
-    // Stripe's cut taken out. The sub-label says so explicitly; the tiles below
-    // back both of those out to the true bottom line.
-    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: 'tax included · refunds excluded' },
+    // "Total Revenue" is the true ex-tax figure — GST/QST collected on the
+    // government's behalf is backed out (see exTaxOf()), not counted as if it
+    // were earned. "Collected" below is the old tax-inclusive number, kept
+    // only for reconciling against what Stripe/the bank actually shows.
+    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: 'ex-tax · refunds excluded' },
     { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false },
-    ...(hasTaxData ? [{
-      label: 'Subtotal (ex-tax)', value: fmt(totalSubtotal), color: '#1a1a1a', big: false,
-      sub: taxKnownPayments.length < totalPaid ? `${taxKnownPayments.length} of ${totalPaid} w/ tax data` : 'GST/QST backed out',
-    }] : []),
+    { label: 'Collected (incl. tax)', value: fmt(totalCollected), color: '#1a1a1a', big: false, sub: 'before Stripe fees' },
+    ...(totalTaxCollected > 0 ? [{ label: 'Tax Collected', value: fmt(totalTaxCollected), color: '#1a1a1a', big: false, sub: 'GST + QST, owed to gov’t' }] : []),
     ...(feePayments.length ? [
       { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: `${effectiveFeeRate.toFixed(1)}% of card volume` },
-      {
-        label: hasTaxData ? 'Net After Fees (ex-tax)' : 'Net After Fees',
-        value: fmt(netAfterFees), color: '#3B6B2F', big: false,
-        sub: hasTaxData ? 'what you actually keep' : 'tax not yet broken out',
-      },
+      { label: 'Net After Fees', value: fmt(netAfterFees), color: '#3B6B2F', big: false, sub: 'ex-tax, what you actually keep' },
     ] : []),
     { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
     { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
@@ -703,12 +717,13 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
           <ExportButton
             filename="revenue"
             title="Revenue"
-            headers={['Name', 'Email', 'Type', 'Amount (CAD)', 'Date']}
+            headers={['Name', 'Email', 'Type', 'Collected incl. tax (CAD)', 'Revenue ex-tax (CAD)', 'Date']}
             rows={filteredPayments.map(p => [
               p.name || '',
               p.email || '',
               p.type || '',
               (p.amount ?? 0).toFixed(2),
+              exTaxOf(p).toFixed(2),
               p.date ? new Date(p.date).toLocaleDateString('en-CA', { timeZone: MONTREAL_TZ }) : '',
             ])}
           />
@@ -897,7 +912,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
               <div style={SECTION_LABEL}>Stripe Processing Fees {(dateFrom || dateTo) ? '(in range)' : '(all time)'}</div>
               <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', letterSpacing: '0.03em', color: '#93333E', lineHeight: 1.05 }}>−{fmt(totalFees)}</div>
               <div style={{ fontSize: '11px', color: '#999', marginTop: '0.35rem', lineHeight: 1.6 }}>
-                {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · {effectiveFeeRate.toFixed(1)}% of card volume · {hasTaxData ? 'net after tax + fees' : 'net after fees'} <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
+                {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · {effectiveFeeRate.toFixed(1)}% of card volume · net after tax + fees <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
               </div>
             </div>
             <div style={{ fontSize: '11px', color: '#8A6535', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
@@ -971,7 +986,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
                   style={{ padding: '0.75rem 0.25rem', borderTop: i > 0 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                    <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(p.amount)}</div>
+                    <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmt(exTaxOf(p))}</div>
                   </div>
                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }} onClick={e => e.stopPropagation()}>{p.email}<CopyBtn value={p.email} /></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginTop: '3px' }}>
@@ -995,7 +1010,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
                   <th style={TH}>Name</th>
                   <th style={TH}>Email</th>
                   <th style={TH}>Type</th>
-                  <th style={{ ...TH, textAlign: 'right' }}>Amount</th>
+                  <th style={{ ...TH, textAlign: 'right' }}>Revenue</th>
                   <th style={{ ...TH, textAlign: 'right' }}>Date</th>
                 </tr>
               </thead>
@@ -1010,7 +1025,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
                       <td style={{ ...TD, fontWeight: '400' }}>{p.name}</td>
                       <td style={{ ...TD, color: '#666', fontSize: '12px' }} onClick={e => e.stopPropagation()}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{p.email}<CopyBtn value={p.email} /></span></td>
                       <td style={{ ...TD, color: '#666', fontSize: '12px' }}>{p.type}</td>
-                      <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(p.amount)}</td>
+                      <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F' }}>{fmt(exTaxOf(p))}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#999', fontSize: '12px', whiteSpace: 'nowrap' }}>{fmtDate(p.date)}</td>
                     </tr>
                     {expanded === i && (
