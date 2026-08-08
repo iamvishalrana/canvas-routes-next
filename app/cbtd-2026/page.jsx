@@ -148,7 +148,7 @@ function PaymentForm({ email, price, clientSecret, isMember, onSuccess, onBack, 
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/the-calabogie-boogie?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/cbtd-2026?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError(t.paymentErrorGeneric)
@@ -354,7 +354,11 @@ export default function CalabogieBoogiePage() {
     fetch('/api/public/events')
       .then(r => r.ok ? r.json() : [])
       .then(events => {
-        const ev = events.find(e => e.name?.toLowerCase().includes('calabogie boogie'))
+        // Match on 'calabogie boogie' AND '2026' — this event repeats yearly,
+        // and matching on the name alone would also pick up a future season's
+        // events-table row (e.g. 2027), wrongly applying that row's
+        // registration-open toggle to this page.
+        const ev = events.find(e => e.name?.toLowerCase().includes('calabogie boogie') && e.name?.includes('2026'))
         if (ev) {
           if (ev.registration_enabled === false) setMemberRegOpen(false)
           if (ev.public_registration_enabled === false) setRegOpen(false)
@@ -370,12 +374,12 @@ export default function CalabogieBoogiePage() {
     const piSecret       = params.get('payment_intent_client_secret')
     const redirectStatus = params.get('redirect_status')
     if (!piId) return
-    window.history.replaceState({}, '', '/the-calabogie-boogie')
+    window.history.replaceState({}, '', '/cbtd-2026')
     if (redirectStatus === 'succeeded') {
       const memberPiParam = params.get('member_pi')
       if (memberPiParam === piId) {
         wasMemberRef.current = true
-        const doConfirm3ds = () => fetch('/api/calabogie-boogie-member-confirm', {
+        const doConfirm3ds = () => fetch('/api/calabogie-boogie-2026-member-confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentIntentId: piId }),
@@ -415,7 +419,7 @@ export default function CalabogieBoogiePage() {
             ? m.car_model.replace(new RegExp(`^${(m.car_make || '').trim()}\\s*`, 'i'), '').trim()
             : f.carModel,
         }))
-        fetch('/api/calabogie-boogie-member-register')
+        fetch('/api/calabogie-boogie-2026-member-register')
           .then(r => r.ok ? r.json() : null)
           .then(d => { if (d?.alreadyRegistered) setAlreadyRegistered(true) })
           .catch(() => {})
@@ -507,7 +511,7 @@ export default function CalabogieBoogiePage() {
       const memberController = new AbortController()
       const memberTimeout = setTimeout(() => memberController.abort(), 30000)
       try {
-        const res = await fetch('/api/calabogie-boogie-member-register', {
+        const res = await fetch('/api/calabogie-boogie-2026-member-register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -542,7 +546,7 @@ export default function CalabogieBoogiePage() {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30000)
     try {
-      const res = await fetch('/api/calabogie-boogie-register', {
+      const res = await fetch('/api/calabogie-boogie-2026-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -945,7 +949,7 @@ export default function CalabogieBoogiePage() {
                   onSuccess={() => setStatus('success')}
                   onBack={() => { setStatus(null); setClientSecret(null) }}
                   onMemberConfirm={piId => {
-                    const confirm = () => fetch('/api/calabogie-boogie-member-confirm', {
+                    const confirm = () => fetch('/api/calabogie-boogie-2026-member-confirm', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ paymentIntentId: piId }),
@@ -1015,7 +1019,7 @@ export default function CalabogieBoogiePage() {
                     <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
                       {t.logInForMemberRateBody(MEMBER_PRICE)}
                     </p>
-                    <a href={`/members/login?redirect=${encodeURIComponent('/the-calabogie-boogie')}`}
+                    <a href={`/members/login?redirect=${encodeURIComponent('/cbtd-2026')}`}
                       style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
                       {t.logInToRegister}
                     </a>
