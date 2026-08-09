@@ -27,7 +27,11 @@ export async function POST(request) {
   // Check registration open via events table (Reg toggle in admin Events section)
   try {
     const supabase = createAdminClient()
-    const { data: ev } = await supabase.from('events').select('public_registration_enabled').ilike('name', `${EVENT_NAME.split(' — ')[0]}%`).maybeSingle()
+    // Match on the FULL event name (not just 'The Calabogie Boogie') — this
+    // event repeats yearly, and a loose prefix match would also catch a
+    // future season's events-table row (e.g. the 2027 edition), silently
+    // applying this year's registration-open toggle to next year's event.
+    const { data: ev } = await supabase.from('events').select('public_registration_enabled').ilike('name', `${EVENT_NAME}%`).maybeSingle()
     if (ev && ev.public_registration_enabled === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
@@ -150,7 +154,7 @@ export async function POST(request) {
       currency: 'cad',
       receipt_email: normalEmail,
       metadata: {
-        type: 'road_trip_the-calabogie-boogie',
+        type: 'road_trip_the-calabogie-boogie-2026',
         email: normalEmail,
         name: name.trim(),
         event_name: EVENT_NAME,
@@ -182,7 +186,7 @@ export async function POST(request) {
     // cancelling — a blind cancel can release a live hold from another flow.
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
       stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id).then(prev => {
-        if (prev.metadata?.type === 'road_trip_the-calabogie-boogie' && prev.status !== 'succeeded') {
+        if (prev.metadata?.type === 'road_trip_the-calabogie-boogie-2026' && prev.status !== 'succeeded') {
           return stripe.paymentIntents.cancel(existing.stripe_payment_intent_id)
         }
       }).catch(() => {})
@@ -193,7 +197,7 @@ export async function POST(request) {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       const _sb = createAdminClient()
       const { error: piStoreErr } = await _sb.from('applications')
-        .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_the-calabogie-boogie' })
+        .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_the-calabogie-boogie-2026' })
         .eq('email', normalEmail)
       if (piStoreErr) captureException(piStoreErr, { context: 'calabogie-register-pi-store', email: normalEmail })
     }
