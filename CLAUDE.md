@@ -253,6 +253,27 @@ Any route that retrieves/verifies a PaymentIntent from Stripe for any reason (wh
 
 The WTET page (`app/wtet/page.jsx`) is the established template for paid road-trip/event registration pages. Reuse its structure for every future event — only swap out the route name, date, hero image, stops, pricing, and copy.
 
+### In-app browser polyfill — required in every event page's `layout.jsx`
+
+Every page using `<PaymentElement>` with Apple Pay enabled needs this in its `layout.jsx`, rendered before `{children}`. Without it, Stripe.js's Apple Pay availability check crashes on `window.webkit.messageHandlers[...].postMessage()` in Instagram (undefined `window.webkit`) and Facebook (partially-defined `messageHandlers`) in-app browsers — breaking **all** JS hydration on the page, not just Apple Pay. This was missed when Calabogie Boogie was first cloned from this template (added to the template only after that bug was found) — add it immediately on every future clone, don't wait for a bug-check pass to catch its absence:
+
+```jsx
+<script dangerouslySetInnerHTML={{ __html: `
+  try {
+    if (!window.webkit) {
+      window.webkit = {};
+    }
+    var existingHandlers = window.webkit.messageHandlers || {};
+    window.webkit.messageHandlers = new Proxy(existingHandlers, {
+      get: function(target, prop) {
+        if (prop in target) return target[prop];
+        return { postMessage: function() {} };
+      }
+    });
+  } catch(e) {}
+`}} />
+```
+
 ### Page structure (5 sections in order)
 
 ```
