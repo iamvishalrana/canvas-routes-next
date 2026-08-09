@@ -512,6 +512,15 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
           <div style={{ fontSize: '9px', letterSpacing: '0.38em', textTransform: 'uppercase', color: ACCENT, marginBottom: '1rem' }}>{t.seasonEyebrow}</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond',var(--font-cormorant),serif", fontSize: 'clamp(2.4rem,5vw,3.4rem)', fontWeight: 300, color: '#1a1a1a', lineHeight: 1.05, margin: 0, letterSpacing: '-0.01em' }}>{t.heroTitle}</h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '0.9rem', maxWidth: '520px', lineHeight: 1.75 }}>{t.intro}</p>
+          {/* The full public page explains the longer-vs-shorter-route interest
+              rule inside the "How It Works" section, but that whole section is
+              suppressed here (embedded=true) — members still need this,
+              so it's surfaced as a standalone note instead. */}
+          <div style={{ background: 'rgba(197,168,130,0.06)', border: '0.5px solid rgba(197,168,130,0.25)', borderLeft: '2px solid rgba(197,168,130,0.5)', padding: '0.9rem 1.1rem', marginTop: '1.25rem', maxWidth: '560px' }}>
+            <p style={{ fontSize: '11.5px', color: '#6b5535', lineHeight: 1.75, margin: 0 }}>
+              {t.howItWorksBodyPre} <em>{t.routesItalicWord}</em> {t.howItWorksBodyPost}
+            </p>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '1.25rem' }}>
             <span style={{ width: '6px', height: '6px', background: ACCENT, borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />
             <span style={{ fontSize: '9px', color: '#8a7a5c', letterSpacing: '0.22em', textTransform: 'uppercase' }}>{t.memberAccessBadge}</span>
@@ -681,7 +690,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                   <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9', background: ACCENT_BGS[i % ACCENT_BGS.length] }}>
                     <div className="rt-card-img" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative' }}>
                       {(r.photo_url || ROUTE_PHOTOS[r.slug]) && (
-                        <img src={r.photo_url || ROUTE_PHOTOS[r.slug]} alt="" className="rt-card-photo"
+                        <img src={r.photo_url || ROUTE_PHOTOS[r.slug]} alt={r.name || 'Canvas Routes route'} className="rt-card-photo"
                           loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
                       )}
                       {(r.photo_url || ROUTE_PHOTOS[r.slug]) ? (
@@ -816,7 +825,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
                 <Link key={p.slug} href={p.href || '#'} onClick={e => { e.preventDefault(); setRecapRoute(p) }}
                   className="rt-card rt-reveal" style={{ animationDelay: `${(i % 3) * 0.08 + 0.05}s`, textDecoration: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.82 }}>
                   <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9' }}>
-                    <img src={p.photo} alt="" className="rt-card-photo" loading="lazy" decoding="async" style={{ filter: 'grayscale(0.65) brightness(0.85)' }} />
+                    <img src={p.photo} alt={p.name || 'Canvas Routes route'} className="rt-card-photo" loading="lazy" decoding="async" style={{ filter: 'grayscale(0.65) brightness(0.85)' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.35) 0%, rgba(15,30,20,0.15) 45%, rgba(15,30,20,0.6) 100%)' }} />
                     <div style={{ position: 'absolute', bottom: '14px', left: '14px', background: 'rgba(90,90,90,0.85)', padding: '5px 12px' }}>
                       <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#F5F1EC', fontWeight: 600 }}>{t.pastRouteBadge(p.month_label)}</span>

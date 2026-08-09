@@ -101,7 +101,7 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
         // point of a popup is that it's readable at a glance, not a page you
         // have to scroll through.
         <div className="routes-popup-photo" style={{ position: 'relative', width: '100%', height: 'clamp(110px, 20vh, 190px)', overflow: 'hidden' }}>
-          <img src={card.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={card.photo} alt={card.heading || 'Canvas Routes'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.1) 0%, rgba(15,30,20,0.75) 100%)' }} />
         </div>
       )}
@@ -970,7 +970,7 @@ export default function Home() {
                       className="route-teaser-card btn-push" style={{textDecoration:"none",display:"block",background:"#F5F1EC",border:"0.5px solid rgba(0,0,0,0.1)",overflow:"hidden",cursor:"pointer",opacity:r._past?0.82:1}}>
                       <div style={{position:"relative",aspectRatio:"16/9",overflow:"hidden",background:ACCENT_BGS[i % ACCENT_BGS.length]}}>
                         {(r._past ? r.photo : (r.photo_url || ROUTE_PHOTOS[r.slug])) && (
-                          <img src={r._past ? r.photo : (r.photo_url || ROUTE_PHOTOS[r.slug])} alt="" className="route-teaser-photo"
+                          <img src={r._past ? r.photo : (r.photo_url || ROUTE_PHOTOS[r.slug])} alt={r.name || 'Canvas Routes route'} className="route-teaser-photo"
                             style={{width:"100%",height:"100%",objectFit:"cover",filter:r._past?"grayscale(0.65) brightness(0.85)":"none"}} loading="lazy" />
                         )}
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg, rgba(15,30,20,0.3) 0%, rgba(15,30,20,0.05) 45%, rgba(15,30,20,0.55) 100%)"}} />
@@ -1070,7 +1070,7 @@ export default function Home() {
             <div className="ig-strip">
               {[...igPosts, ...igPosts].map((post, i) => (
                 <div key={i} className="ig-strip-photo">
-                  {post.image && <img src={post.image} alt="" loading="lazy" />}
+                  {post.image && <img src={post.image} alt="Canvas Routes on Instagram" loading="lazy" />}
                 </div>
               ))}
             </div>
