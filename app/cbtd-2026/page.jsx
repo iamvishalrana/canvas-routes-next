@@ -500,7 +500,14 @@ export default function CalabogieBoogiePage() {
         ? ['vehicleChoice','year','carMake','carModel','rentalCar']
         : ['isMember','name','email','phone','dob_month','dob_day','vehicleChoice','year','carMake','carModel','rentalCar','source']
       const first = order.find(f => errs[f])
-      if (first) document.getElementById(`field-${first}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
+      // dob_day has no element of its own — id="field-dob_month" wraps both
+      // DOB selects and their shared error message, so a dob_day-only error
+      // (month filled, day left empty) must resolve to that same wrapper or
+      // getElementById returns null and the page silently fails to scroll —
+      // easy to hit on mobile, where an abandoned day-dropdown is common and
+      // the error text can be far off-screen with no visible feedback.
+      const scrollTarget = first === 'dob_day' ? 'dob_month' : first
+      if (scrollTarget) document.getElementById(`field-${scrollTarget}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
       return
     }
 
