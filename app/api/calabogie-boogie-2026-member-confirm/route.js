@@ -4,7 +4,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
-import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
+import { buildRoadTripConfirmHtml } from '../../../lib/roadTripConfirmEmail.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { markRegistrationPaid } from '../../../lib/markRegistrationPaid.js'
 import { getRouteCheckinUrl } from '../../../lib/routeEventLink.js'
@@ -95,7 +95,7 @@ export async function POST(request) {
         to: normalEmail,
         reply_to: 'jerry@canvasroutes.com',
         subject: `Payment confirmed — ${EVENT_NAME}`,
-        html: buildWtetConfirmHtml(firstName, amount, checkinUrl, EVENT_NAME),
+        html: buildRoadTripConfirmHtml(firstName, amount, checkinUrl, EVENT_NAME),
         text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\n${checkinUrl ? `Complete your trip details here: ${checkinUrl}\n\n` : ''}Meetup is at 12 PM in LaSalle — full details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
       }),
     }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — calabogie-member-confirm-member-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'calabogie-member-confirm-member-email', email: normalEmail })),

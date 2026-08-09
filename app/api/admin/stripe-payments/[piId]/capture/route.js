@@ -3,7 +3,7 @@ import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { stripe } from '../../../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException, captureMessage } from '../../../../../../lib/sentry.js'
-import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
+import { buildRoadTripConfirmHtml } from '../../../../../../lib/roadTripConfirmEmail.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 import { buildCaptureDeclinedEmailHtml } from '../../../../../../lib/captureDeclinedEmail.js'
 import { logAdminAction } from '../../../../../../lib/adminAudit.js'
@@ -189,7 +189,7 @@ export async function POST(request, { params }) {
           to: email,
           reply_to: 'jerry@canvasroutes.com',
           subject: `Payment confirmed — ${eventLabel}`,
-          html: buildWtetConfirmHtml(firstName, amount, checkinUrl, eventLabel),
+          html: buildRoadTripConfirmHtml(firstName, amount, checkinUrl, eventLabel),
           text: `Hey ${firstName},\n\nYour payment of ${amount} for ${eventLabel} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
         }),
       }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — admin-capture-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'admin-capture-confirm-email', piId })),

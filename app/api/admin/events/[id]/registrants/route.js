@@ -3,7 +3,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../lib/sentry'
 import { buildInviteHtml } from '../../../../../../lib/inviteEmail'
-import { buildWtetConfirmHtml } from '../../../../../../lib/wtetEmail.js'
+import { buildRoadTripConfirmHtml } from '../../../../../../lib/roadTripConfirmEmail.js'
 import { isWtetEventName } from '../../../../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName, attendanceKey } from '../../../../../../lib/eventMeta.js'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail.js'
@@ -169,7 +169,7 @@ export async function POST(request, { params }) {
           : paymentMethod === 'comped' ? 'Complimentary'
           : 'No Charge'
         subject = `You're confirmed — ${ev.name}`
-        html = buildWtetConfirmHtml(firstName, paymentLabel, checkinUrl, ev.name)
+        html = buildRoadTripConfirmHtml(firstName, paymentLabel, checkinUrl, ev.name)
         text = `Hey ${firstName},\n\nYou're confirmed for ${ev.name}. Complete your trip details, liability waiver, and lunch selection here:\n${checkinUrl}\n\nSee you on the road,\nJerry`
       } else {
         const rsvpUrl = `${SITE}/rsvp/${tokenRow.token}`

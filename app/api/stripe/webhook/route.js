@@ -2,7 +2,7 @@ import { after } from 'next/server'
 import { stripe } from '../../../../lib/stripe.js'
 import { createAdminClient } from '../../../../lib/supabase/admin.js'
 import { captureException, captureMessage } from '../../../../lib/sentry.js'
-import { buildWtetHoldHtml, buildWtetConfirmHtml } from '../../../../lib/wtetEmail.js'
+import { buildRoadTripHoldHtml, buildRoadTripConfirmHtml } from '../../../../lib/roadTripConfirmEmail.js'
 import { buildAdminNotifyHtml } from '../../../../lib/adminEmail.js'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail.js'
 import { MEMBERSHIP_TYPE_TIER } from '../../../../lib/prices.js'
@@ -247,7 +247,7 @@ export async function POST(request) {
                   to: normalEmail,
                   reply_to: 'jerry@canvasroutes.com',
                   subject: `Payment confirmed — ${eventLabel}`,
-                  html: buildWtetConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
+                  html: buildRoadTripConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
                   text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                 }),
               }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-payment-confirm-email', email: normalEmail })),
@@ -309,7 +309,7 @@ export async function POST(request) {
                       to: normalEmail,
                       reply_to: 'jerry@canvasroutes.com',
                       subject: `Payment confirmed — ${eventLabel}`,
-                      html: buildWtetConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
+                      html: buildRoadTripConfirmHtml(firstName, amountFormatted, checkinUrl, eventLabel),
                       text: `Hey ${firstName},\n\nYour payment of ${amountFormatted} for ${eventLabel} is confirmed.\n\n${checkinUrl ? `Complete your trip details, waiver, and lunch selection here: ${checkinUrl}\n\n` : ''}You'll receive a full itinerary and all event details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                     }),
                   }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-member-payment-confirm-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-member-payment-confirm-email', email: normalEmail })),
@@ -501,7 +501,7 @@ export async function POST(request) {
                   to: normalEmail,
                   reply_to: 'jerry@canvasroutes.com',
                   subject: `Registration received — ${eventLabel}`,
-                  html: buildWtetHoldHtml(firstName, amountFmt, eventLabel),
+                  html: buildRoadTripHoldHtml(firstName, amountFmt, eventLabel),
                   text: `Hey ${firstName},\n\nWe've received your registration for ${eventLabel}.\n\nYour ${amountFmt} hold is placed — your card has not been charged. We review every registration personally. If you're confirmed, the charge goes through and you'll receive full event details. If not, the hold is released with no charge.\n\nAdd jerry@canvasroutes.com to your contacts so our reply gets through.\n\nQuestions? Reply to this email.\n\nSee you on the road,\nJerry\nCanvas Routes`,
                 }),
               }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — road-trip-hold-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'road-trip-hold-email', email: normalEmail })),
