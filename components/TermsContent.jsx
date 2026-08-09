@@ -19,7 +19,7 @@ export default function TermsContent() {
       <SiteNav />
       <div style={{maxWidth:"720px",margin:"0 auto",padding:"4rem 2rem"}}>
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"1rem"}}>{c.eyebrow}</div>
-        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",marginBottom:"0.5rem",lineHeight:"1.2"}}>{t.pageTitle}</div>
+        <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"2.8rem",fontWeight:"300",color:"#1a1a1a",margin:"0 0 0.5rem",lineHeight:"1.2"}}>{t.pageTitle}</h1>
         <div style={{width:"40px",height:"1px",background:"#c5a882",margin:"1.5rem 0"}}></div>
         <div style={{fontSize:"12px",color:"#888",marginBottom:"3rem"}}>{c.lastUpdated}</div>
         {t.sections.map((s,i) => (

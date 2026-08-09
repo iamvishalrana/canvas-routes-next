@@ -3,6 +3,9 @@ const OG_IMAGE = 'https://canvasroutes.com/api/og?type=event&title=Route+Awards&
 export const metadata = {
   title: 'Route Awards — Whips to Eastern Townships',
   description: "Vote for the route's best — Most Beautiful, Best Driver, Best Energy. Whips to Eastern Townships · July 5, 2026 · Canvas Routes",
+  // Stays indexed even though the event has passed — Vishal wants past events
+  // discoverable in search as a track-record/credibility signal, not hidden.
+  alternates: { canonical: 'https://canvasroutes.com/wtet-awards' },
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',

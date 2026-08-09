@@ -31,7 +31,9 @@ const eventSchema = {
   name: 'Hello to Montebello — Canvas Routes Route',
   startDate: '2026-08-01T08:00:00-04:00',
   endDate: '2026-08-01T20:00:00-04:00',
-  eventStatus: 'https://schema.org/EventScheduled',
+  // Event was August 1, 2026 and has passed. Page stays indexed on purpose
+  // (past events showcase track record) — only the factual status changed.
+  eventStatus: 'https://schema.org/EventCompleted',
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
   description: 'A curated convoy from Montreal to Fairmont Le Château Montebello — coffee at L\'Atelier des Deux P in Amherst, lunch at Aux Chantignoles inside the largest log château in the world, and a stroll around Montebello before the drive home.',
   image: HERO_IMAGE,

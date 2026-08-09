@@ -3,6 +3,7 @@ const OG_IMAGE = 'https://canvasroutes.com/api/og'
 export const metadata = {
   title: 'Get Notified — Canvas Routes',
   description: "We'll email you when new car meets and routes are announced — no membership required. Priority is always given to Canvas Routes members.",
+  alternates: { canonical: 'https://canvasroutes.com/notify' },
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',

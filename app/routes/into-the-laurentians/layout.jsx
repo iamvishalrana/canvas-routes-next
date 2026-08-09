@@ -23,7 +23,9 @@ const eventSchema = {
   name: 'Into the Laurentians — Canvas Routes Route',
   startDate: '2026-06-07T07:00:00-04:00',
   endDate: '2026-06-07T21:00:00-04:00',
-  eventStatus: 'https://schema.org/EventScheduled',
+  // Event was June 7, 2026 and has passed. Page stays indexed on purpose
+  // (past events showcase track record) — only the factual status changed.
+  eventStatus: 'https://schema.org/EventCompleted',
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
   description: 'A curated convoy through the Laurentians — premium breakfast in LaSalle, scenic backroads to Mont-Tremblant, a Horology stop, artisanal lunch, full media coverage of your car on the road, and farewell drinks. Canvas Routes organizes exclusive routes for passionate drivers from Montreal.',
   image: 'https://canvasroutes.com/june7-poster.png',

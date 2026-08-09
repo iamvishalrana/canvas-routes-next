@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: { absolute: 'Membership | Canvas Routes' },
   description: 'Apply to join Canvas Routes — the Montreal automotive community. Curated road trips, Cars & Coffee events, and a network of drivers who care about the craft.',
-  robots: { index: false, follow: false },
+  alternates: { canonical: 'https://canvasroutes.com/membership' },
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',

@@ -1,6 +1,8 @@
 export const metadata = {
   title: 'Cars, Coffee & Dad Jokes — June 20 | Canvas Routes',
   description: "Register for Cars, Coffee & Dad Jokes — Father's Day Weekend Special at Cafe Napoleon, LaSalle. June 20, 9:00 AM – 11:30 AM. Presented by Canvas Routes.",
+  // Stays indexed even though the event has passed — Vishal wants past events
+  // discoverable in search as a track-record/credibility signal, not hidden.
   alternates: { canonical: 'https://canvasroutes.com/cars-coffee-dad-jokes' },
   openGraph: {
     title: "Cars, Coffee & Dad Jokes — Father's Day Weekend Special",

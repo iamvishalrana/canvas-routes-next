@@ -4,6 +4,8 @@ export const metadata = {
   title: 'Whips to Eastern Townships — July 5, 2026',
   description: 'A curated convoy route from Montreal through the Eastern Townships — July 5, 2026. Private winery experience at Vignoble Domaine du Brésée, Chemin des Cantons backroads through the Sutton Mountains, and lunch at Auberge & Restaurant McGowan in Georgeville with a chef from Michelin-starred kitchens. $179 members / $199.',
   keywords: 'Eastern Townships route Montreal, route from Montreal 2026, Canvas Routes route, curated driving event Quebec, Lac Memphremagog drive, scenic drive Eastern Townships, convoy drive Quebec, car route Montreal, Quebec backroads driving, Chemin des Cantons, Frelighsburg winery drive, Georgeville restaurant',
+  // Stays indexed even though the event has passed — Vishal wants past events
+  // discoverable in search as a track-record/credibility signal, not hidden.
   alternates: { canonical: 'https://canvasroutes.com/wtet' },
   openGraph: {
     type: 'website',
@@ -27,7 +29,8 @@ const eventSchema = {
   name: 'Whips to Eastern Townships — Canvas Routes Route',
   startDate: '2026-07-05T08:00:00-04:00',
   endDate: '2026-07-05T20:00:00-04:00',
-  eventStatus: 'https://schema.org/EventScheduled',
+  // Event was July 5, 2026 and has passed.
+  eventStatus: 'https://schema.org/EventCompleted',
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
   description: 'A curated convoy through the Eastern Townships — private winery experience at Vignoble Domaine du Brésée in Frelighsburg, Chemin des Cantons backroads through the Sutton Mountains, and lunch at Auberge & Restaurant McGowan overlooking Lac Memphrémagog.',
   image: OG_IMAGE,

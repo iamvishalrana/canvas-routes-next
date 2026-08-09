@@ -44,6 +44,10 @@ export const viewport = {
 }
 
 export const metadata = {
+  // Resolves relative OG/canonical URLs on any page that doesn't spell out
+  // a full https:// URL itself — every page currently does, but this is the
+  // correct baseline so a future page can't silently ship a broken relative one.
+  metadataBase: new URL('https://canvasroutes.com'),
   title: {
     default: 'Canvas Routes | Car Meets, Road Trips & Scenic Drives — Montreal',
     template: '%s | Canvas Routes',
