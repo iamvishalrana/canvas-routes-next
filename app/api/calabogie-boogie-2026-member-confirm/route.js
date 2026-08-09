@@ -7,11 +7,12 @@ import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { buildWtetConfirmHtml } from '../../../lib/wtetEmail.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { markRegistrationPaid } from '../../../lib/markRegistrationPaid.js'
+import { getRouteCheckinUrl } from '../../../lib/routeEventLink.js'
 
 const EVENT_NAME = 'The Calabogie Boogie — Track Day — September 13, 2026'
 
 // Called by the Calabogie Boogie page immediately after stripe.confirmPayment()
-// succeeds for members. Mirrors app/api/wtet-member-confirm/route.js.
+// succeeds for members. Mirrors app/api/hello-to-montebello-member-confirm/route.js.
 export async function POST(request) {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -73,11 +74,18 @@ export async function POST(request) {
     stripe_paid_at: new Date().toISOString(),
   }).eq('email', normalEmail).is('stripe_paid_at', null).select('id')
 
-  if (!process.env.RESEND_API_KEY || !claimedRows?.length) return Response.json({ ok: true })
+  if (!claimedRows?.length) return Response.json({ ok: true })
+
+  if (!process.env.RESEND_API_KEY) return Response.json({ ok: true })
+
+  // Resolves via upcoming_routes.event_id — currently no row for this slug
+  // (page is unlaunched/unlinked), so this returns null today. Using the
+  // generic helper instead of hardcoding null means the check-in button
+  // appears automatically once the route is added to upcoming_routes with a
+  // linked check-in event, no code change needed. See lib/routeEventLink.js.
+  const checkinUrl = await getRouteCheckinUrl(admin, 'road_trip_the-calabogie-boogie-2026', normalEmail).catch(() => null)
 
   // Fire emails after response — after() keeps the function alive until both fetches settle.
-  // No check-in URL — Calabogie Boogie isn't wired to a bespoke check-in page
-  // yet (buildWtetConfirmHtml simply omits the button when checkinUrl is falsy).
   after(() => Promise.allSettled([
     fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -87,8 +95,8 @@ export async function POST(request) {
         to: normalEmail,
         reply_to: 'jerry@canvasroutes.com',
         subject: `Payment confirmed — ${EVENT_NAME}`,
-        html: buildWtetConfirmHtml(firstName, amount, null, EVENT_NAME),
-        text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\nMeetup is at 12 PM in LaSalle — full details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
+        html: buildWtetConfirmHtml(firstName, amount, checkinUrl, EVENT_NAME),
+        text: `Hey ${firstName},\n\nYour payment of ${amount} for ${EVENT_NAME} is confirmed.\n\n${checkinUrl ? `Complete your trip details here: ${checkinUrl}\n\n` : ''}Meetup is at 12 PM in LaSalle — full details closer to the date. Follow @canvasroutes on Instagram for updates.\n\nSee you on the road,\nJerry\nCanvas Routes`,
       }),
     }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — calabogie-member-confirm-member-email`, { status: r.status }) }).catch(err => captureException(err, { context: 'calabogie-member-confirm-member-email', email: normalEmail })),
     fetch('https://api.resend.com/emails', {

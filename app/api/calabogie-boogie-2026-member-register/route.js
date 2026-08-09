@@ -1,10 +1,12 @@
+import { after } from 'next/server'
 import { createClient } from '../../../lib/supabase/server'
 import { deviceType } from '../../../lib/deviceType'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
-import { captureException } from '../../../lib/sentry.js'
+import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { computeTax } from '../../../lib/tax.js'
+import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 
 const EVENT_NAME = 'The Calabogie Boogie — Track Day — September 13, 2026'
 const MEMBER_PRICE_CENTS = 34900 // $349 CAD
@@ -192,6 +194,36 @@ export async function POST(request) {
       .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_the-calabogie-boogie-2026' })
       .eq('email', normalEmail)
     if (piStoreErr) captureException(piStoreErr, { context: 'calabogie-member-register-pi-store', email: normalEmail })
+
+    // Notify Jerry immediately when a member reaches the payment step — same
+    // belt-and-suspenders heads-up the non-member route already sends
+    // (calabogie-boogie-2026-register/route.js). Members use automatic
+    // capture, so calabogie-boogie-2026-member-confirm normally sends the
+    // "payment confirmed" notify moments later — this is the earlier
+    // "someone's paying right now" signal that route never had, closing the
+    // same member-vs-non-member notify gap HTM's register route fixed.
+    if (process.env.RESEND_API_KEY && !_health_check) {
+      after(() =>
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Canvas Routes <info@canvasroutes.com>',
+            to: 'jerry@canvasroutes.com',
+            subject: `Registration Started — ${memberName} (Member)`,
+            html: buildAdminNotifyHtml('Member registration started — payment processing', [
+              ['Name',    `<strong>${memberName}</strong>`],
+              ['Email',   `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+              ['Amount',  `$${(memberTotalWithTax / 100).toFixed(2)} CAD incl. tax`],
+              ['Vehicle', fullCar],
+              ['Message', more || '—'],
+              ['PI',      pi.id],
+            ]),
+          }),
+        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — calabogie-member-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'calabogie-member-register-admin-notify', email: normalEmail }))
+      )
+    }
+
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {
     captureException(err, { context: 'calabogie-member-create-pi', email: normalEmail })
