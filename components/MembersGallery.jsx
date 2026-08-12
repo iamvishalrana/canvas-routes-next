@@ -150,7 +150,9 @@ export default function MembersGallery({ albums, lang = 'en' }) {
           box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 20px -8px rgba(0,0,0,0.14);
           transition: box-shadow 0.35s cubic-bezier(0.23,1,0.32,1), transform 0.35s cubic-bezier(0.23,1,0.32,1);
           animation: mg-tile-in 0.5s cubic-bezier(0.16,1,0.3,1) both;
+          -webkit-tap-highlight-color: transparent;
         }
+        .mg-tile:active { transform: scale(0.97); }
         .mg-tile img {
           width: 100%; height: 100%;
           object-fit: cover; display: block;
@@ -185,6 +187,13 @@ export default function MembersGallery({ albums, lang = 'en' }) {
         }
         .mg-share-btn { transition: color 0.15s, border-color 0.15s; }
         @media (hover: hover) { .mg-share-btn:hover { color: #F5F1EC !important; border-color: rgba(197,168,130,0.85) !important; } }
+        /* Download/Share/counter row — three bordered pills plus French copy
+           ("Télécharger"/"Partager") can exceed 85vw on sub-380px phones;
+           flexWrap (set inline) lets it break onto two centered lines
+           instead of squeezing or clipping past the viewport edge. */
+        @media (max-width: 380px) {
+          .mg-lb-actions { gap: 0.6rem; }
+        }
       `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
@@ -326,7 +335,7 @@ export default function MembersGallery({ albums, lang = 'en' }) {
                 {t.featuring(currentPhoto.tags.join(', '))}
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+            <div className="mg-lb-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem' }}>
               <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)' }}>
                 {lightbox.photoIdx + 1} / {current.photos.length}
               </div>
