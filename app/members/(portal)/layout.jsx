@@ -21,7 +21,7 @@ export default async function PortalLayout({ children }) {
   // The Photos nav link only appears once there's actually something to see —
   // a personal photo, or at least one photo from an event they attended.
   const [hasPhotos, { data: langRow }] = await Promise.all([
-    memberHasGalleryPhotos(admin, user.id),
+    memberHasGalleryPhotos(admin, user.id, user.email),
     admin.from('members').select('language').eq('id', user.id).maybeSingle(),
   ])
   const lang = langRow?.language === 'fr' ? 'fr' : 'en'
