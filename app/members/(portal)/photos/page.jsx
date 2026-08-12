@@ -12,11 +12,13 @@ const SHARES_BUCKET = 'photo-shares'
 // If this member was previously sent photos as a non-member (before they
 // had a portal account) via the photo-shares feature
 // (app/api/admin/photo-share-people), surface those photos here too —
-// live, not copied. photo_share_folders auto-expire and get deleted by the
-// photo-shares-cleanup cron 30 days after creation; this only reads
-// still-live folders, so a photo shows up here for exactly as long as it
-// would have anyway. Once the folder expires it just stops appearing (and
-// is deleted on the next cron run) — nothing to reconcile.
+// live, not copied. Each folder's expires_at is admin-set per folder
+// (defaults to 30 days, 1-365 day range — see ./folders/route.js) and the
+// photo-shares-cleanup cron deletes folders once expired; this only reads
+// still-live folders, so a photo shows up here for exactly as long as its
+// own folder's expiry says it should. Once that folder expires it just
+// stops appearing (and is deleted on the next cron run) — nothing to
+// reconcile.
 async function fetchLiveSharedPhotos(admin, email) {
   const { data: person } = await admin.from('photo_share_people').select('id').eq('email', email).maybeSingle()
   if (!person) return []
