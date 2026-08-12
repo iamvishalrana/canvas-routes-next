@@ -105,6 +105,19 @@ export async function POST(request) {
     captureException(err, { context: 'member-create-attendance-backfill', email: memberData.email })
   }
 
+  // Claim any non-member photos this person was previously sent via the
+  // photo-shares feature (app/api/admin/photo-share-people) — those are
+  // mirrored into gallery_photos with pending_email set the moment they're
+  // uploaded, precisely so they can be handed off to a member account here.
+  try {
+    const { error: photoClaimErr } = await supabase.from('gallery_photos')
+      .update({ member_id: invited.user.id, pending_email: null })
+      .eq('pending_email', memberData.email)
+    if (photoClaimErr) captureMessage('Member create: photo backfill failed', { error: photoClaimErr.message, email: memberData.email })
+  } catch (err) {
+    captureException(err, { context: 'member-create-photo-backfill', email: memberData.email })
+  }
+
   // Invite email in after() — rule #8: bare fire-and-forget gets killed when
   // Vercel tears the function down after the response; after() keeps it alive.
   if (process.env.RESEND_API_KEY) {
