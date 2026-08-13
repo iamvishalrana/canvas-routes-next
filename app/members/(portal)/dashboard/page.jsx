@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
 import { attendanceKeyToEventName, normalizeEventName as resolveEventName } from '../../../../lib/eventMeta.js'
 import { MONTREAL_TZ } from '../../../../lib/mtlTime'
+import { normalizeEmail } from '../../../../lib/normalizeEmail'
 import FadeUp from '../../../../components/FadeUp'
 import CountUp from '../../../../components/CountUp'
-import { formatForDisplay } from '../../../../lib/memberNumber.js'
 import { membersDashboardT } from '../../../../lib/i18n/membersDashboard'
 
 export const dynamic = 'force-dynamic'
@@ -57,7 +57,7 @@ export default async function DashboardPage() {
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(12),
     admin.from('events').select('*').order('date', { ascending: true }),
     user.email
-      ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle()
+      ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', normalizeEmail(user.email)).maybeSingle()
       : Promise.resolve({ data: null }),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
     admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type, launched, photo_url, registration_url').eq('is_active', true).eq('is_past', false).order('sort_order', { ascending: true }),
@@ -75,7 +75,7 @@ export default async function DashboardPage() {
   const myRouteIds = new Set()
   for (const r of (routeInterestRows || [])) {
     routeInterestCounts[r.route_id] = (routeInterestCounts[r.route_id] || 0) + 1
-    if (user.email && r.email === user.email.toLowerCase()) myRouteIds.add(r.route_id)
+    if (user.email && r.email === normalizeEmail(user.email)) myRouteIds.add(r.route_id)
   }
   // Once a route launches it moves out of the "gathering interest" list and
   // into a prominent banner at the top of the dashboard instead — members
@@ -87,15 +87,6 @@ export default async function DashboardPage() {
 
   const eventRegMap = {}
   for (const r of (eventRegs || [])) eventRegMap[r.event_id] = r.stripe_payment_status
-
-  // WTET registrations live in applications (not event_registrations) — map payment type to event name
-  const ROAD_TRIP_TYPE_TO_NAME = {
-    'road_trip_wtet': 'Whips to Eastern Townships — July 5, 2026',
-    'road_trip_hello-to-montebello': 'Hello to Montebello — 2026',
-  }
-  const paidRoadTripEventName = (['paid', 'authorized'].includes(application?.stripe_payment_status) && application?.stripe_payment_type)
-    ? (ROAD_TRIP_TYPE_TO_NAME[application.stripe_payment_type] || null)
-    : null
 
   const lang = member?.language === 'fr' ? 'fr' : 'en'
   const t = membersDashboardT[lang]
@@ -145,7 +136,6 @@ export default async function DashboardPage() {
   const tier = member?.tier || 'routes_member'
   const isInnerCircle = tier === 'inner_circle'
   const carPhotoUrl = member?.car_photo_url || null
-  const membershipNumber = formatForDisplay(member?.membership_number)
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
@@ -464,7 +454,7 @@ export default async function DashboardPage() {
                       )}
                       <div style={{ marginTop: '0.85rem' }}>
                         {ev.registration_enabled === false ? null
-                          : (paidRoadTripEventName === ev.name || ['free', 'paid'].includes(eventRegMap[ev.id])) ? (
+                          : ['free', 'paid'].includes(eventRegMap[ev.id]) ? (
                           <span style={{ fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '2px 8px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter), sans-serif', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                             <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             {t.registered}
