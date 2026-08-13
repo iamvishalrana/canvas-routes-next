@@ -7,6 +7,20 @@ import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: MONTREAL_TZ })
 
+// Montreal calendar Y-M-D for a Date, so quick-range presets line up with the
+// same Montreal-day boundaries montrealDateKey() uses to filter payments.
+const mtlYmd = d => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: MONTREAL_TZ }).format(d)
+
+// Quick date-range presets. Each returns { from, to } as Montreal YYYY-MM-DD
+// (empty strings = all-time / no bound), matching the date inputs' format.
+const DATE_PRESETS = [
+  { key: 'this_month', label: 'This month', range: () => { const n = new Date(); const p = mtlYmd(n).slice(0, 7); return { from: `${p}-01`, to: mtlYmd(n) } } },
+  { key: 'last_month', label: 'Last month', range: () => { const n = new Date(); const first = new Date(n.getFullYear(), n.getMonth(), 1); const lastMonthEnd = new Date(first.getTime() - 86400000); const p = mtlYmd(lastMonthEnd).slice(0, 7); return { from: `${p}-01`, to: mtlYmd(lastMonthEnd) } } },
+  { key: 'last_30', label: 'Last 30 days', range: () => { const n = new Date(); const s = new Date(n.getTime() - 29 * 86400000); return { from: mtlYmd(s), to: mtlYmd(n) } } },
+  { key: 'ytd', label: 'Year to date', range: () => { const n = new Date(); return { from: `${mtlYmd(n).slice(0, 4)}-01-01`, to: mtlYmd(n) } } },
+  { key: 'all', label: 'All time', range: () => ({ from: '', to: '' }) },
+]
+
 // Date range is compared against the Montreal calendar date of each payment
 // (not raw UTC), matching how the monthly breakdown already groups — a
 // payment at 11pm Montreal time on the last day of a range must still count
@@ -692,6 +706,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
     // only for reconciling against what Stripe/the bank actually shows.
     { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: 'ex-tax · refunds excluded' },
     { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false },
+    { label: 'Avg. Payment', value: fmt(totalPaid ? totalRevenue / totalPaid : 0), color: '#1a1a1a', big: false, sub: 'ex-tax per transaction' },
     { label: 'Collected (incl. tax)', value: fmt(totalCollected), color: '#1a1a1a', big: false, sub: 'before Stripe fees' },
     ...(totalTaxCollected > 0 ? [{ label: 'Tax Collected', value: fmt(totalTaxCollected), color: '#1a1a1a', big: false, sub: 'GST + QST, owed to gov’t' }] : []),
     ...(feePayments.length ? [
@@ -740,6 +755,21 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
             </button>
           )}
         </div>
+        {/* Quick presets — Montreal-day aligned, so they match the filter above */}
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.6rem' }}>
+          {DATE_PRESETS.map(preset => {
+            const r = preset.range()
+            const active = (r.from || '') === (dateFrom || '') && (r.to || '') === (dateTo || '')
+            return (
+              <button key={preset.key} type="button" onClick={() => { setDateFrom(r.from); setDateTo(r.to) }}
+                style={{ padding: '0.35rem 0.8rem', minHeight: '32px', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', fontSize: '11px', letterSpacing: '0.02em', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
+                  border: active ? '0.5px solid #45643c' : '0.5px solid rgba(0,0,0,0.15)',
+                  background: active ? '#45643c' : '#fff', color: active ? '#F5F1EC' : '#666' }}>
+                {preset.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {stripeError && (
@@ -782,21 +812,34 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
                     <th style={TH}>Month</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Transactions</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Revenue</th>
+                    <th style={{ ...TH, textAlign: 'right' }}>vs Prev</th>
                     <th style={{ ...TH, width: '20px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {byMonth.map(m => (
+                  {byMonth.map((m, i) => {
+                    // byMonth is newest-first, so the chronologically previous
+                    // month with data is the next row down. Growth is null for
+                    // the oldest month (nothing to compare) or when the prior
+                    // month earned $0 (a %-change off zero is meaningless).
+                    const prev = byMonth[i + 1]
+                    const growth = prev && prev.revenue > 0 ? ((m.revenue - prev.revenue) / prev.revenue) * 100 : null
+                    const up = growth != null && growth >= 0
+                    return (
                     <tr key={m.ym} className="rev-type-row" style={{ cursor: 'pointer' }}
                       onClick={() => setDetail({ title: m.label, filenameBase: `revenue-${m.ym}`, payments: filteredPayments.filter(p => monthKeyOf(p.date) === m.ym) })}>
                       <td style={TD}>{m.label}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#555' }}>{m.count}</td>
                       <td style={{ ...TD, textAlign: 'right', color: '#3B6B2F', fontWeight: '400' }}>{fmt(m.revenue)}</td>
+                      <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: growth == null ? '#ccc' : up ? '#3B6B2F' : '#93333E' }}>
+                        {growth == null ? '—' : `${up ? '▲' : '▼'} ${Math.abs(growth).toFixed(0)}%`}
+                      </td>
                       <td style={{ ...TD, textAlign: 'right', color: '#ccc', paddingLeft: 0 }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18" /></svg>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
