@@ -156,7 +156,7 @@ export async function POST(request) {
       currency: 'cad',
       receipt_email: normalEmail,
       metadata: {
-        type: 'road_trip_the-calabogie-boogie',
+        type: 'road_trip_the-calabogie-boogie-2026',
         email: normalEmail,
         name: memberName,
         event_name: EVENT_NAME,
@@ -183,7 +183,7 @@ export async function POST(request) {
     // cancelling — a blind cancel can release a live hold from another flow.
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
       stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id).then(prev => {
-        if (prev.metadata?.type === 'road_trip_the-calabogie-boogie' && prev.status !== 'succeeded') {
+        if (prev.metadata?.type === 'road_trip_the-calabogie-boogie-2026' && prev.status !== 'succeeded') {
           return stripe.paymentIntents.cancel(existing.stripe_payment_intent_id)
         }
       }).catch(() => {})
@@ -191,7 +191,7 @@ export async function POST(request) {
 
     // Store PI ID immediately so calabogie-boogie-member-confirm can find this row after payment
     const { error: piStoreErr } = await admin.from('applications')
-      .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_the-calabogie-boogie' })
+      .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_the-calabogie-boogie-2026' })
       .eq('email', normalEmail)
     if (piStoreErr) captureException(piStoreErr, { context: 'calabogie-member-register-pi-store', email: normalEmail })
 

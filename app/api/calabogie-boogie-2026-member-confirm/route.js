@@ -41,7 +41,7 @@ export async function POST(request) {
 
   // Guard: must be a succeeded member Calabogie Boogie payment belonging to this user
   if (pi.status !== 'succeeded') return Response.json({ error: 'Payment not yet confirmed' }, { status: 400 })
-  if (pi.metadata?.type !== 'road_trip_the-calabogie-boogie') return Response.json({ error: 'Invalid payment type' }, { status: 400 })
+  if (pi.metadata?.type !== 'road_trip_the-calabogie-boogie-2026') return Response.json({ error: 'Invalid payment type' }, { status: 400 })
   if (pi.metadata?.is_member !== 'yes') return Response.json({ error: 'Not a member payment' }, { status: 400 })
   if (pi.metadata?.email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
     return Response.json({ error: 'Unauthorized' }, { status: 403 })
@@ -59,7 +59,7 @@ export async function POST(request) {
     stripe_payment_intent_id: pi.id,
     stripe_payment_status: 'paid',
     stripe_amount_paid: pi.amount_received,
-    stripe_payment_type: 'road_trip_the-calabogie-boogie',
+    stripe_payment_type: 'road_trip_the-calabogie-boogie-2026',
   }).eq('email', normalEmail)
   if (confirmDbErr) captureException(confirmDbErr, { context: 'calabogie-member-confirm-db', piId: pi.id })
 
@@ -83,7 +83,7 @@ export async function POST(request) {
   // generic helper instead of hardcoding null means the check-in button
   // appears automatically once the route is added to upcoming_routes with a
   // linked check-in event, no code change needed. See lib/routeEventLink.js.
-  const checkinUrl = await getRouteCheckinUrl(admin, 'road_trip_the-calabogie-boogie', normalEmail).catch(() => null)
+  const checkinUrl = await getRouteCheckinUrl(admin, 'road_trip_the-calabogie-boogie-2026', normalEmail).catch(() => null)
 
   // Fire emails after response — after() keeps the function alive until both fetches settle.
   after(() => Promise.allSettled([
