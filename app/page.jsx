@@ -728,7 +728,7 @@ export default function Home() {
             real <h1> for SEO/accessibility. Zero visual impact: clipped off-
             screen, same technique as any standard sr-only utility. */}
         <h1 style={{position:"absolute",width:"1px",height:"1px",padding:0,margin:"-1px",overflow:"hidden",clip:"rect(0,0,0,0)",whiteSpace:"nowrap",border:0}}>
-          Canvas Routes — Montreal Car Club: Road Trips, Cars &amp; Coffee, and Scenic Drives
+          Canvas Routes — Montreal&rsquo;s Premier Car Community: Road Trips, Cars &amp; Coffee, and Scenic Drives
         </h1>
         <div style={{fontSize:"11px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#888",marginBottom:"2rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",animation:"cr-fade-up 0.65s ease both",animationDelay:"100ms"}}><MapPin size={12} strokeWidth={1.5} />{t.heroLocation}</div>
         <div style={{width:"1px",height:"80px",background:"#c5a882",margin:"0 auto 2rem",animation:"cr-fade-in 0.6s ease both",animationDelay:"280ms"}}></div>

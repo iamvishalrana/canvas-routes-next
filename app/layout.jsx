@@ -49,7 +49,7 @@ export const metadata = {
   // correct baseline so a future page can't silently ship a broken relative one.
   metadataBase: new URL('https://canvasroutes.com'),
   title: {
-    default: 'Canvas Routes | Car Meets, Road Trips & Scenic Drives — Montreal',
+    default: "Canvas Routes | Montreal's Premier Car Community — Road Trips & Car Meets",
     template: '%s | Canvas Routes',
   },
   description: "Canvas Routes is Montreal's premier car community. Curated road trips through the Laurentians and Eastern Townships, invite-only Cars and Coffee events, scenic convoy drives across Quebec, Ontario, Vermont and beyond. Join a community of drivers who love the road.",
@@ -59,7 +59,7 @@ export const metadata = {
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',
-    title: 'Canvas Routes | Car Meets, Road Trips & Scenic Drives — Montreal',
+    title: "Canvas Routes | Montreal's Premier Car Community",
     description: "Montreal's premier car community. Curated road trips through the Laurentians and Eastern Townships, invite-only Cars and Coffee events, and scenic convoy drives across Quebec and beyond.",
     url: 'https://canvasroutes.com',
     images: [{ url: 'https://canvasroutes.com/api/og', width: 1200, height: 630, alt: 'Canvas Routes — Car Meets & Road Trips Montreal' }],
@@ -67,7 +67,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Canvas Routes | Car Meets, Road Trips & Scenic Drives — Montreal',
+    title: "Canvas Routes | Montreal's Premier Car Community",
     description: "Montreal's premier car community. Curated road trips, invite-only Cars and Coffee, scenic drives through the Laurentians and Eastern Townships.",
     images: ['https://canvasroutes.com/api/og'],
   },
@@ -99,6 +99,8 @@ const jsonLd = {
       '@id': 'https://canvasroutes.com/#organization',
       name: 'Canvas Routes',
       alternateName: 'Canvas Routes Montreal',
+      slogan: "Montreal's Premier Car Community",
+      description: "Montreal's premier car community — curated road trips, invite-only Cars and Coffee events, and scenic convoy drives across Quebec and beyond.",
       url: 'https://canvasroutes.com',
       logo: { '@type': 'ImageObject', url: 'https://canvasroutes.com/logo-color.png' },
       image: 'https://canvasroutes.com/logo-color.png',
@@ -127,6 +129,7 @@ const jsonLd = {
       '@type': ['LocalBusiness', 'SportsActivityLocation'],
       '@id': 'https://canvasroutes.com/#business',
       name: 'Canvas Routes',
+      slogan: "Montreal's Premier Car Community",
       description: "Canvas Routes is Montreal's premier car community, organizing invite-only Cars and Coffee events, curated road trips through the Laurentians and Eastern Townships, and scenic convoy drives across Quebec, Ontario, Vermont, Maine, New York and beyond. Whether you're searching for road trips from Montreal, cars and coffee events in Quebec, scenic driving routes through the Laurentians, or an overnight car convoy to Nova Scotia's Cabot Trail, Canvas Routes brings passionate drivers together for unforgettable experiences on the road.",
       url: 'https://canvasroutes.com',
       logo: 'https://canvasroutes.com/logo-color.png',
