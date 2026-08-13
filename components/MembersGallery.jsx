@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Image from 'next/image'
 import JSZip from 'jszip'
 import FadeUp from './FadeUp'
 import { onImgError } from '../lib/imgFallback'
@@ -265,8 +266,13 @@ export default function MembersGallery({ albums, lang = 'en' }) {
                     <button key={photo.id} type="button" className="mg-tile" style={{ animationDelay: `${Math.min(vi, 12) * 35}ms` }}
                       onClick={() => setLightbox({ albumIdx: ai, photoIdx: pi })}
                       aria-label={photo.caption || `Photo ${pi + 1} — ${album.name}`}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.url} alt={photo.caption || album.name} loading="lazy" onError={onImgError(photo.originalUrl)} />
+                      {/* next/image fill → Vercel resizes the heavy display copy
+                          (~1.5MB/2000px) down to the tile's actual size (a tiny
+                          WebP, edge-cached), so the grid loads fast. The
+                          full-resolution original is untouched — it's still what
+                          the lightbox download button serves. */}
+                      <Image src={photo.url} alt={photo.caption || album.name} fill
+                        sizes="(max-width: 640px) 50vw, 320px" style={{ objectFit: 'cover' }} />
                     </button>
                   ))}
               </div>

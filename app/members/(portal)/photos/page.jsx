@@ -127,6 +127,19 @@ export default async function PhotosPage() {
         </p>
       </FadeUp>
 
+      <FadeUp delay={200}>
+        {/* Reassurance: grid/lightbox previews are downsized (next/image) so
+            the page loads fast — the Download button always serves the full-
+            resolution original. Hardcoded bilingually here rather than in the
+            shared i18n file, which has unrelated uncommitted edits. */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '11px', color: '#8A6535', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.25)', borderRadius: '8px', padding: '0.6rem 0.8rem', marginBottom: '1.5rem', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1.55 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A6535" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>{lang === 'fr'
+            ? 'Les aperçus sont compressés pour un chargement rapide — chaque téléchargement est l’original en pleine résolution.'
+            : 'Previews are compressed so they load quickly — every download is the full-resolution original.'}</span>
+        </div>
+      </FadeUp>
+
       <FadeUp delay={220}>
         <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} attendedEventNames={attendedEventNames} lang={lang} />
       </FadeUp>
