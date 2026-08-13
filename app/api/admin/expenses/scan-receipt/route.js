@@ -40,7 +40,26 @@ Rules:
 
 function toNum(v) {
   if (v == null) return null
-  const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9.\-]/g, ''))
+  let n
+  if (typeof v === 'number') {
+    n = v
+  } else {
+    // Strip everything but digits, separators and sign, then reconcile comma
+    // vs dot. A Quebec receipt often prints "12,99" (comma decimal) — blindly
+    // deleting commas turned that into 1299 ($1,299.00). Rules:
+    //   both , and .  → comma is the thousands sep, drop it   (1,234.56 → 1234.56)
+    //   only commas   → a single trailing group of ≤2 digits is a decimal
+    //                   (12,99 → 12.99); otherwise commas are thousands
+    //                   (1,234 → 1234 ; 1,234,567 → 1234567)
+    let s = String(v).replace(/[^0-9.,\-]/g, '')
+    if (s.includes(',') && s.includes('.')) {
+      s = s.replace(/,/g, '')
+    } else if (s.includes(',')) {
+      const parts = s.split(',')
+      s = (parts.length === 2 && parts[1].length <= 2) ? `${parts[0]}.${parts[1]}` : parts.join('')
+    }
+    n = parseFloat(s)
+  }
   if (!Number.isFinite(n)) return null
   // Expense amounts are always positive and sane — a negative or absurd value
   // means the model misread something; better to leave the field blank
@@ -61,7 +80,11 @@ export async function POST(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip, 20, 60)) return Response.json({ error: 'Too many requests.' }, { status: 429 })
+  // Own scope — without one this shares the default `rl:${ip}` bucket that
+  // every other default-scope admin GET (applications, search, contacts…)
+  // also increments, so a dozen dashboard fetches could push it past 20 and
+  // 429 the first real scan. This budget must only count scans.
+  if (await checkRateLimit(ip, 20, 60, 'expenses-scan')) return Response.json({ error: 'Too many requests.' }, { status: 429 })
 
   const anthropic = getAnthropic()
   if (!anthropic) return Response.json({ error: 'Receipt scanning is not configured.' }, { status: 503 })

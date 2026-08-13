@@ -9,7 +9,14 @@ export async function GET(request) {
   if (await checkRateLimit(ip, 200, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
   const { searchParams } = new URL(request.url)
-  const q = searchParams.get('q')?.trim()
+  const rawQ = searchParams.get('q')?.trim()
+  // Strip the two characters that can't be neutralised by value-quoting below
+  // (a double quote closes the quoted value; a backslash is the PostgREST
+  // escape char). Everything else — commas, dots, parens — is preserved and
+  // kept literal by wrapping the value in double quotes in the .or() filter,
+  // so a query like `Smith, John (M3)` searches for that exact text instead of
+  // being parsed as extra OR/grouping conditions (PostgREST .or() injection).
+  const q = rawQ?.replace(/["\\]/g, '')
   if (!q || q.length < 2) return Response.json({ members: [], applications: [], contacts: [] })
 
   const supabase = createAdminClient()
@@ -19,14 +26,14 @@ export async function GET(request) {
   const memberOr = [
     'name', 'email', 'phone', 'instagram',
     'car_make', 'car_model', 'car_year',
-  ].map(f => `${f}.ilike.${pattern}`).join(',')
+  ].map(f => `${f}.ilike."${pattern}"`).join(',')
 
   // Applications: text columns including notes and free-text fields
   const appOr = [
     'name', 'email', 'phone', 'instagram',
     'car_make', 'car_model', 'car_year',
     'notes', 'more',
-  ].map(f => `${f}.ilike.${pattern}`).join(',')
+  ].map(f => `${f}.ilike."${pattern}"`).join(',')
 
   const [
     { data: memberRows },

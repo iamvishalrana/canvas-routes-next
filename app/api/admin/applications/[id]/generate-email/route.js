@@ -25,7 +25,9 @@ Jerry
 export async function POST(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const ip = getClientIp(request)
-  if (await checkRateLimit(ip, 30, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
+  // Own scope so this AI-draft budget isn't drained by ordinary default-scope
+  // admin GETs sharing the same `rl:${ip}` bucket (see expenses-scan).
+  if (await checkRateLimit(ip, 30, 60, 'generate-email')) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })

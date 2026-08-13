@@ -4,6 +4,7 @@ import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { compressImageClient } from '../../../lib/compressImageClient'
+import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
 
 const CATEGORIES = EXPENSE_CATEGORIES
 
@@ -229,11 +230,15 @@ export default function ExpensesClient() {
   const totalOf = e => parseFloat(e.amount || 0) + taxOf(e)
   const sortItems = items => {
     const arr = [...items]
-    if (sortBy === 'date_asc')    return arr.sort((a, b) => a.expense_date.localeCompare(b.expense_date))
+    // Guard the date sort keys — expense_date is NOT NULL in the DB today, but
+    // a null slipping in (bad import, future schema change) would throw on
+    // .localeCompare and blank the whole list rather than just mis-order a row.
+    const d = e => e.expense_date || ''
+    if (sortBy === 'date_asc')    return arr.sort((a, b) => d(a).localeCompare(d(b)))
     if (sortBy === 'amount_desc') return arr.sort((a, b) => totalOf(b) - totalOf(a))
     if (sortBy === 'amount_asc')  return arr.sort((a, b) => totalOf(a) - totalOf(b))
-    if (sortBy === 'vendor_az')   return arr.sort((a, b) => (a.vendor || '').localeCompare(b.vendor || '') || b.expense_date.localeCompare(a.expense_date))
-    return arr.sort((a, b) => b.expense_date.localeCompare(a.expense_date))
+    if (sortBy === 'vendor_az')   return arr.sort((a, b) => (a.vendor || '').localeCompare(b.vendor || '') || d(b).localeCompare(d(a)))
+    return arr.sort((a, b) => d(b).localeCompare(d(a)))
   }
   const sortEventGroups = evs => {
     if (sortBy === 'vendor_az')   return evs.sort((a, b) => a.name.localeCompare(b.name))
@@ -522,7 +527,10 @@ export default function ExpensesClient() {
       if (file.type === 'application/pdf') {
         if (file.size > 4 * 1024 * 1024) { setFormErr('PDF is too large to scan (max 4 MB) — attach it below instead and enter the details manually.'); return }
       } else {
-        scanFile = await compressImageClient(file)
+        // iPhone receipt photos are usually HEIC — the scan route can't read
+        // those and compressImageClient passes small ones through untouched,
+        // so convert to JPEG first (no-op for already-web formats).
+        scanFile = await compressImageClient(await convertHeicIfNeeded(file))
       }
       const sfd = new FormData()
       sfd.append('file', scanFile)
@@ -823,7 +831,7 @@ export default function ExpensesClient() {
 
         {/* Scan-to-fill banner */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.7rem 0.85rem', marginBottom: '1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', borderRadius: '8px' }}>
-          <input ref={scanRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style={{ display: 'none' }} onChange={handleScan} />
+          <input ref={scanRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf" style={{ display: 'none' }} onChange={handleScan} />
           <button type="button" className="exp-tap" onClick={() => scanRef.current?.click()} disabled={scanning}
             style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', border: 'none', borderRadius: '6px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
             {scanning ? 'Scanning…' : '⚡ Scan receipt'}
