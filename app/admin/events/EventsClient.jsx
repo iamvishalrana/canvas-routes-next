@@ -7,6 +7,7 @@ import {
   parseCarMakeModel,
   inp, sel, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu, CopyBtn,
 } from '../_components/shared'
+import { useConfirm } from '../_components/ConfirmProvider'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
@@ -262,6 +263,7 @@ const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', descrip
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function EventsClient() {
+  const confirm = useConfirm()
   const router = useRouter()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -312,7 +314,6 @@ export default function EventsClient() {
   // Individual registrant confirm email (key = `${eventId}::${email}`)
   const [sendingConfirmEmail, setSendingConfirmEmail] = useState({})
   const [confirmEmailResult, setConfirmEmailResult] = useState({})
-  const [confirmEmailPending, setConfirmEmailPending] = useState(null) // key pending confirmation
 
   // Manual add registrant
   const [addRegOpen, setAddRegOpen] = useState({})
@@ -633,6 +634,12 @@ export default function EventsClient() {
   }
 
   async function sendConfirmEmail(eventId, r) {
+    if (!(await confirm({
+      title: r.inviteSent ? 'Re-send this invite?' : 'Send this invite?',
+      message: 'This emails the registrant a Confirm-My-Spot invite immediately.',
+      details: <><strong>{r.name || '—'}</strong> · {r.email}</>,
+      confirmLabel: r.inviteSent ? 'Yes, re-send' : 'Yes, send invite',
+    }))) return
     const key = `${eventId}::${r.email}`
     setSendingConfirmEmail(p => ({ ...p, [key]: true }))
     setConfirmEmailResult(p => ({ ...p, [key]: null }))
@@ -1295,7 +1302,6 @@ export default function EventsClient() {
                               const indivKey = `${item.id}::${r.email}`
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
-                              const isPending = confirmEmailPending === indivKey
                               const canSend = r.email && r.email !== '—' && r.status !== 'confirmed'
                               const isDeletePending = deleteRegConfirm === indivKey
                               const isDeleting = !!deletingReg[indivKey]
@@ -1329,11 +1335,7 @@ export default function EventsClient() {
                                           </div>
                                           <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                                             {canSend && !result?.sent && (
-                                              isPending
-                                                ? <><span style={{ fontSize: '10px', color: '#555' }}>{r.inviteSent ? 'Resend?' : 'Send?'}</span>
-                                                    <PrimaryBtn small disabled={sending} onClick={() => { setConfirmEmailPending(null); sendConfirmEmail(item.id, r) }}>{sending ? '…' : 'Yes'}</PrimaryBtn>
-                                                    <GhostBtn small onClick={() => setConfirmEmailPending(null)}>No</GhostBtn></>
-                                                : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>{r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
+                                              <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                             )}
                                             {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
                                             {isDeletePending
@@ -1362,13 +1364,7 @@ export default function EventsClient() {
                                         <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                           {canSend && !result?.sent && (
-                                            isPending
-                                              ? <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                                  <span style={{ fontSize: '10px', color: '#555' }}>Send?</span>
-                                                  <PrimaryBtn small disabled={sending} onClick={() => { setConfirmEmailPending(null); sendConfirmEmail(item.id, r) }}>{sending ? '…' : 'Yes'}</PrimaryBtn>
-                                                  <GhostBtn small onClick={() => setConfirmEmailPending(null)}>No</GhostBtn>
-                                                </div>
-                                              : <GhostBtn small onClick={() => setConfirmEmailPending(indivKey)}>{r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
+                                            <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                           )}
                                           {result?.sent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
                                           {result?.error && <span style={{ fontSize: '10px', color: '#93333E' }}>{result.error}</span>}

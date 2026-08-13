@@ -10,6 +10,7 @@ import {
   L, Badge, CopyBtn, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
   AdminNotesPanel, Pagination, AttendanceToggle, KebabMenu, DateRangeMenu,
 } from '../_components/shared'
+import { useConfirm } from '../_components/ConfirmProvider'
 import { ExportButton } from '../_components/ExportModal'
 import MemberProfilePreview from '../../../components/MemberProfilePreview'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -229,6 +230,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
 // ─── Members Client ───────────────────────────────────────────────────────────
 
 export default function MembersClient({ initialMembers, total, page, pageSize, statusCounts }) {
+  const confirm = useConfirm()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [members, setMembers] = useState(initialMembers)
@@ -272,7 +274,6 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState(null)
   const [inviteSuccess, setInviteSuccess] = useState(null)
-  const [inviteConfirm, setInviteConfirm] = useState(false)
   const [resendConfirm, setResendConfirm] = useState(null)
   const [appData, setAppData] = useState(null)
   const [appLookupEmail, setAppLookupEmail] = useState('')
@@ -437,6 +438,12 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   }
 
   async function resendInvite(m) {
+    if (!(await confirm({
+      title: 'Re-send the member invite?',
+      message: 'This emails a fresh account-setup invite link.',
+      details: <><strong>{m.name || '—'}</strong> · {m.email}</>,
+      confirmLabel: 'Yes, re-send',
+    }))) return
     setResendStatus(p => ({ ...p, [m.id]: 'sending' }))
     const res = await fetch(`/api/admin/members/${m.id}/resend-invite`, { method: 'POST' })
     const d = await res.json().catch(() => ({}))
@@ -480,8 +487,12 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
   async function invite(e) {
     e.preventDefault()
     if (!inviteForm.email.trim()) { setInviteError('Email required.'); return }
-    if (!inviteConfirm) { setInviteConfirm(true); return }
-    setInviteConfirm(false)
+    if (!(await confirm({
+      title: 'Send this member invite?',
+      message: 'This creates a member account and emails them an invite to set up their portal.',
+      details: <>To: <strong>{inviteForm.email.trim()}</strong></>,
+      confirmLabel: 'Yes, send invite',
+    }))) return
     setInviting(true); setInviteError(null); setInviteSuccess(false)
     const payload = { ...inviteForm }
     if (appData) {
@@ -607,40 +618,30 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
             <form onSubmit={invite} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr 160px 160px auto', gap: '0.75rem', alignItems: 'end' }}>
               <div>
                 <L>Full Name</L>
-                <input style={inp} value={inviteForm.name} onChange={e => { setInviteForm(p => ({ ...p, name: e.target.value })); setInviteConfirm(false) }} placeholder="Name" />
+                <input style={inp} value={inviteForm.name} onChange={e => { setInviteForm(p => ({ ...p, name: e.target.value })) }} placeholder="Name" />
               </div>
               <div>
                 <L>Email *</L>
                 <input style={inp} type="email" value={inviteForm.email}
-                  onChange={e => { setInviteForm(p => ({ ...p, email: e.target.value })); setInviteConfirm(false); if (appData) setAppData(null) }}
+                  onChange={e => { setInviteForm(p => ({ ...p, email: e.target.value })); if (appData) setAppData(null) }}
                   onBlur={e => lookupApplication(e.target.value)}
                   placeholder="email@example.com" />
               </div>
               <div>
                 <L>Initial Status</L>
-                <SelectWrap value={inviteForm.membership_status} onChange={e => { setInviteForm(p => ({ ...p, membership_status: e.target.value })); setInviteConfirm(false) }} options={STATUS_OPTIONS} />
+                <SelectWrap value={inviteForm.membership_status} onChange={e => { setInviteForm(p => ({ ...p, membership_status: e.target.value })) }} options={STATUS_OPTIONS} />
               </div>
               <div>
                 <L>Tier</L>
                 <div style={{ position: 'relative' }}>
-                  <select style={sel} value={inviteForm.tier} onChange={e => { setInviteForm(p => ({ ...p, tier: e.target.value })); setInviteConfirm(false) }}>
+                  <select style={sel} value={inviteForm.tier} onChange={e => { setInviteForm(p => ({ ...p, tier: e.target.value })) }}>
                     <option value="routes_member">Routes Member</option>
                     <option value="inner_circle">Inner Circle</option>
                   </select>
                   <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </div>
-              {inviteConfirm ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.3)' }}>
-                  <span style={{ fontSize: '12px', color: '#8A6535' }}>Send invite to <strong>{inviteForm.email}</strong>?</span>
-                  <div style={{ display: 'flex', gap: '0.4rem' }}>
-                    <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Confirm'}</PrimaryBtn>
-                    <GhostBtn type="button" onClick={() => setInviteConfirm(false)}>Cancel</GhostBtn>
-                  </div>
-                </div>
-              ) : (
-                <PrimaryBtn type="submit" disabled={inviting}>Send Invite</PrimaryBtn>
-              )}
+              <PrimaryBtn type="submit" disabled={inviting}>{inviting ? 'Sending…' : 'Send Invite'}</PrimaryBtn>
             </form>
             {appData && (
               <div style={{ marginTop: '0.75rem', fontSize: '12px', color: '#3B6B2F', background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.25)', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

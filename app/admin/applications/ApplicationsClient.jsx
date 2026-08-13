@@ -8,6 +8,7 @@ import {
   inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu, FilterMenu, DateRangeMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
+import { useConfirm } from '../_components/ConfirmProvider'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 // Montreal calendar date (YYYY-MM-DD) an application was submitted, for the
@@ -96,6 +97,7 @@ const APP_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google'
 const INTERESTED_IN_LABELS = { cars_coffee: 'Cars & Coffee', routes: 'Routes', both: 'Both' }
 
 export default function ApplicationsClient() {
+  const confirm = useConfirm()
   const searchParams = useSearchParams()
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
@@ -129,7 +131,6 @@ export default function ApplicationsClient() {
   const [appliedTo, setAppliedTo] = useState('')
   const [bulkContactsBusy, setBulkContactsBusy] = useState(false)
   const [bulkContactsMsg, setBulkContactsMsg] = useState(null)
-  const [rejectConfirm, setRejectConfirm] = useState(null)
   const [rejecting, setRejecting]   = useState(null)
   const [rejectErr, setRejectErr]   = useState({})
   const [capturing, setCapturing]   = useState(null)
@@ -305,8 +306,14 @@ export default function ApplicationsClient() {
   }
 
   async function handleReject(a) {
+    if (!(await confirm({
+      title: 'Reject this application?',
+      message: 'This releases the card hold and emails the applicant that they were not approved. It cannot be undone.',
+      details: <><strong>{a.name || '—'}</strong> · {a.email}</>,
+      confirmLabel: 'Yes, reject',
+      danger: true,
+    }))) return
     setRejecting(a.id)
-    setRejectConfirm(null)
     setRejectErr(p => ({ ...p, [a.id]: null }))
     try {
       const res = await fetch(`/api/admin/applications/${a.id}/reject`, { method: 'POST' })
@@ -693,7 +700,6 @@ export default function ApplicationsClient() {
                   setAppTierPick(null)
                   if (isCollapsing) {
                     if (deleteAppConfirm === a.id) setDeleteAppConfirm(null)
-                    if (rejectConfirm === a.id) setRejectConfirm(null)
                     if (editingNote === a.id) setEditingNote(null)
                   }
                   if (a.reregistered_at) {
@@ -708,27 +714,18 @@ export default function ApplicationsClient() {
                     {rejecting === a.id && (
                       <span style={{ fontSize: '10px', color: '#bbb' }}>…</span>
                     )}
-                    {rejectConfirm === a.id && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <div style={{ fontSize: '10px', color: '#93333E' }}>Reject &amp; cancel hold?</div>
-                        <div style={{ display: 'flex', gap: '0.6rem' }}>
-                          <button onClick={() => handleReject(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.1)', border: '0.5px solid rgba(147,51,62,0.4)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Confirm</button>
-                          <button onClick={() => setRejectConfirm(null)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Cancel</button>
-                        </div>
-                      </div>
-                    )}
                     {a.stripe_payment_status === 'rejected' && (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#93333E', border: '0.5px solid rgba(147,51,62,0.3)', padding: '3px 9px', background: 'rgba(147,51,62,0.06)' }}>Rejected</span>
                     )}
-                    {/* Capture / Reject for authorized holds */}
-                    {a.stripe_payment_status === 'authorized' && rejectConfirm !== a.id && rejecting !== a.id && (
+                    {/* Capture / Reject for authorized holds — both ask via popup */}
+                    {a.stripe_payment_status === 'authorized' && rejecting !== a.id && (
                       capturing === a.id ? (
                         <span style={{ fontSize: '10px', color: '#bbb' }}>Capturing…</span>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                           <div style={{ display: 'flex', gap: '0.6rem' }}>
                             <button onClick={() => setCaptureConfirm(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Capture</button>
-                            <button onClick={() => setRejectConfirm(a.id)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.3)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Reject</button>
+                            <button onClick={() => handleReject(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.3)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Reject</button>
                           </div>
                           {captureErr[a.id] && <span style={{ fontSize: '10px', color: '#93333E' }}>{captureErr[a.id]}</span>}
                         </div>

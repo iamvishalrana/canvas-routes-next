@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import GlobalSearch from './GlobalSearch'
 import PullToRefresh from './PullToRefresh'
+import { ConfirmProvider } from './ConfirmProvider'
 
 const SECTIONS = [
   {
@@ -345,6 +346,7 @@ export default function AdminShell({ children }) {
   if (pathname === '/admin/login') return children
 
   return (
+    <ConfirmProvider>
     <div className="admin-shell" style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3', fontFamily: 'var(--font-inter),sans-serif' }}>
 
       <button
@@ -417,5 +419,6 @@ export default function AdminShell({ children }) {
         </PullToRefresh>
       </main>
     </div>
+    </ConfirmProvider>
   )
 }

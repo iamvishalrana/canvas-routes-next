@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, CopyBtn } from '../../../_components/shared'
+import { useConfirm } from '../../../_components/ConfirmProvider'
 
 const LIFETIME_OPTIONS = [7, 14, 30, 60, 90]
 
@@ -20,6 +21,7 @@ function fmtDate(d) {
 }
 
 export default function PersonClient() {
+  const confirm = useConfirm()
   const { personId } = useParams()
   const router = useRouter()
   const [person, setPerson] = useState(null)
@@ -58,6 +60,12 @@ export default function PersonClient() {
   }
 
   async function sendLink() {
+    if (!(await confirm({
+      title: 'Email the photo link?',
+      message: 'This emails this person their private photo-share link.',
+      details: person ? <><strong>{person.name || '—'}</strong>{person.email ? <> · {person.email}</> : null}</> : null,
+      confirmLabel: 'Yes, email link',
+    }))) return
     setSendingLink(true); setSendLinkResult(null)
     try {
       const res = await fetch(`/api/admin/photo-share-people/${personId}/send-link`, { method: 'POST' })

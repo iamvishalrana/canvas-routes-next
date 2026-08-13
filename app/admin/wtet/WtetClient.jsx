@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { GhostBtn, Err, CopyBtn } from '../_components/shared'
+import { useConfirm } from '../_components/ConfirmProvider'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import WaiverViewerModal from '../_components/WaiverViewerModal'
 import { formatCarLabel } from '../../../lib/carLabel'
@@ -25,6 +26,7 @@ function Pill({ done, doneLabel, pendingLabel }) {
 }
 
 export default function WtetClient() {
+  const confirm = useConfirm()
   const [participants, setParticipants] = useState([])
   const [loading, setLoading] = useState(true)
   const [lunchCutoff, setLunchCutoff] = useState('')
@@ -60,7 +62,12 @@ export default function WtetClient() {
   }
 
   async function resetWaiver(id, name) {
-    if (!window.confirm(`Reset the signed waiver for ${name || 'this participant'}? They will need to sign it again from the check-in page.`)) return
+    if (!(await confirm({
+      title: 'Reset this signed waiver?',
+      message: `${name || 'This participant'} will need to sign it again from the check-in page.`,
+      confirmLabel: 'Yes, reset',
+      danger: true,
+    }))) return
     try {
       const res = await fetch('/api/admin/wtet/reset-waiver', {
         method: 'POST',

@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRealtimeSync } from './useRealtimeSync'
 import GenericWaiverViewerModal from './GenericWaiverViewerModal'
 import { CopyBtn, FilterMenu } from './shared'
+import { useConfirm } from './ConfirmProvider'
 import ContactSearchSelect from './ContactSearchSelect'
 import { formatCarLabel } from '../../../lib/carLabel'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
@@ -76,6 +77,7 @@ const PAYMENT_LABEL = {
 
 // eventId: the event this status view is scoped to.
 export default function CheckinStatusClient({ eventId }) {
+  const confirm = useConfirm()
   const [event, setEvent] = useState(null)
   const [participants, setParticipants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -225,6 +227,14 @@ export default function CheckinStatusClient({ eventId }) {
   }
 
   async function sendReminders(emails) {
+    if (!(await confirm({
+      title: emails ? 'Send a check-in reminder?' : 'Send check-in reminders to all?',
+      message: emails
+        ? 'This emails this participant a reminder to complete check-in.'
+        : 'This emails a check-in reminder to every participant who has not finished checking in.',
+      details: emails ? <strong>{emails[0]}</strong> : null,
+      confirmLabel: 'Yes, send',
+    }))) return
     const key = emails ? emails[0] : 'all'
     setReminding(key); setActionError(null); setRemindResult(null)
     try {

@@ -8,6 +8,7 @@ import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn } from '../_components/shared'
+import { useConfirm } from '../_components/ConfirmProvider'
 import { EMAIL_SIGNATURE_HTML } from '../../../lib/emailSignature.js'
 
 const MAX_RECIPIENTS = 2000
@@ -352,6 +353,7 @@ function Toolbar({ editor }) {
 }
 
 export default function BroadcastsClient() {
+  const confirm = useConfirm()
   const [tab, setTab]                           = useState('compose')
   const [audience, setAudience]                 = useState('specific_emails')
   const [fromEmail, setFromEmail]               = useState('info@canvasroutes.com')
@@ -359,7 +361,6 @@ export default function BroadcastsClient() {
   const [excludeChipEmails, setExcludeChipEmails] = useState([])        // exclude list
   const [subject, setSubject]                   = useState('')
   const [bodyHtml, setBodyHtml]                 = useState('')          // explicit state for draft save
-  const [showConfirm, setShowConfirm]           = useState(false)
   const [sending, setSending]                   = useState(false)
   const [error, setError]                       = useState(null)
   const [result, setResult]                     = useState(null)
@@ -525,7 +526,7 @@ export default function BroadcastsClient() {
   }
 
   async function deleteTemplate(id) {
-    if (!window.confirm('Delete this template?')) return
+    if (!(await confirm({ title: 'Delete this template?', message: 'This removes the saved template. It cannot be undone.', confirmLabel: 'Yes, delete', danger: true }))) return
     await fetch('/api/admin/broadcasts/templates', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -606,18 +607,26 @@ export default function BroadcastsClient() {
     ? `${parsedEmails.length} specific email${parsedEmails.length !== 1 ? 's' : ''}`
     : AUDIENCE_OPTIONS.find(o => o.value === audience)?.label || audience
 
-  function handleSendClick() {
+  async function handleSendClick() {
     setError(null)
     if (!subject.trim()) { setError('Subject is required.'); return }
     if (bodyEmpty) { setError('Message body is required.'); return }
     if (audience === 'specific_emails' && parsedEmails.length === 0) { setError('Enter at least one valid email.'); return }
-    setShowConfirm(true)
+    const countStr = recipientCount !== null ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}` : null
+    if (!(await confirm({
+      title: 'Send this broadcast?',
+      message: `This emails everyone in the selected audience and cannot be undone.`,
+      details: <>To: <strong>{audienceLabel}</strong>{countStr ? <> · {countStr}</> : null}<br />Subject: {subject.trim() || '—'}</>,
+      confirmLabel: 'Yes, send broadcast',
+      danger: true,
+    }))) return
+    confirmSend()
   }
 
   async function confirmSend() {
     if (sendingRef.current) return
     sendingRef.current = true
-    setShowConfirm(false); setSending(true); setError(null); setResult(null)
+    setSending(true); setError(null); setResult(null)
     try {
       const res = await fetch('/api/admin/broadcasts', {
         method: 'POST',
@@ -1219,23 +1228,10 @@ export default function BroadcastsClient() {
 
                 <Err msg={error} />
 
-                {/* Send / Confirm */}
-                {showConfirm ? (
-                  <div style={{ padding: '1.1rem 1.25rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', borderLeft: '2px solid #93333E' }}>
-                    <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.85rem', lineHeight: '1.5' }}>
-                      Send to <strong>{audienceLabel}</strong>?<br />
-                      <span style={{ fontSize: '11px', color: '#888' }}>This cannot be undone.</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <PrimaryBtn onClick={confirmSend} disabled={sending}>{sending ? 'Sending…' : 'Confirm Send'}</PrimaryBtn>
-                      <GhostBtn onClick={() => setShowConfirm(false)} disabled={sending}>Cancel</GhostBtn>
-                    </div>
-                  </div>
-                ) : (
-                  <PrimaryBtn onClick={handleSendClick} disabled={sending}>
-                    {sending ? 'Sending…' : 'Send Broadcast'}
-                  </PrimaryBtn>
-                )}
+                {/* Send — the Yes/No gate is a popup (see handleSendClick) */}
+                <PrimaryBtn onClick={handleSendClick} disabled={sending}>
+                  {sending ? 'Sending…' : 'Send Broadcast'}
+                </PrimaryBtn>
               </div>
 
               {/* ── Right column — live preview ── */}

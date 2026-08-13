@@ -759,6 +759,23 @@ html { -webkit-text-size-adjust: 100%; }
   animation: adminModalIn 0.22s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
 }
 
+/* Confirmation modal action row — comfortable tap targets on every device,
+   and on narrow phones the two buttons stack full-width (primary/confirm on
+   top via column-reverse, since it's the last child in the DOM) instead of
+   crowding into a cramped row that can clip longer labels. */
+.admin-confirm-actions .admin-btn { min-height: 44px; }
+@media (max-width: 480px) {
+  .admin-confirm-actions {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+    gap: 0.6rem !important;
+  }
+  .admin-confirm-actions .admin-btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+}
+
 /* Staggered card entrance (stat cards, panels) */
 .admin-card-enter {
   opacity: 0;

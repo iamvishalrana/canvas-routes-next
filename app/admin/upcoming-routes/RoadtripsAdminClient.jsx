@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu, ToggleSwitch, CopyBtn } from '../_components/shared'
+import { useConfirm } from '../_components/ConfirmProvider'
 import RouteEventConfigClient from '../_components/RouteEventConfigClient'
 import WtetClient from '../wtet/WtetClient'
 import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
@@ -171,6 +172,7 @@ function PopupToggle({ label, description, value, onChange, saving }) {
 }
 
 export default function RoadtripsAdminClient() {
+  const confirm = useConfirm()
   const [routes, setRoutes]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [form, setForm]           = useState(EMPTY)
@@ -403,6 +405,13 @@ export default function RoadtripsAdminClient() {
   }
 
   async function launch(id) {
+    const route = routes.find(r => r.id === id)
+    if (!(await confirm({
+      title: 'Launch this route?',
+      message: 'This opens registration and emails every interested driver that the route is live. It can only be done once.',
+      details: route ? <><strong>{route.name}</strong>{route.interested_count ? <> · {route.interested_count} interested driver{route.interested_count !== 1 ? 's' : ''}</> : null}</> : null,
+      confirmLabel: 'Yes, launch',
+    }))) return
     setLaunching(true)
     try {
       const res = await fetch(`/api/admin/upcoming-routes/${id}/launch`, {
@@ -421,6 +430,14 @@ export default function RoadtripsAdminClient() {
 
   async function sendBroadcast(id) {
     if (!emailMsg.trim()) return
+    const route = routes.find(r => r.id === id)
+    if (!(await confirm({
+      title: 'Send this update?',
+      message: 'This emails every interested driver for this route. It cannot be undone.',
+      details: <>{route ? <><strong>{route.name}</strong>{route.interested_count ? <> · {route.interested_count} recipient{route.interested_count !== 1 ? 's' : ''}</> : null}<br /></> : null}Subject: {emailSubject || '—'}</>,
+      confirmLabel: 'Yes, send',
+      danger: true,
+    }))) return
     setEmailing(true)
     try {
       const res = await fetch(`/api/admin/upcoming-routes/${id}/broadcast`, {

@@ -248,10 +248,10 @@ export function ConfirmDialog({ title, message, details, confirmLabel = 'Yes, co
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', padding: '0 1.5rem 1.4rem' }}>
+        <div className="admin-confirm-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', padding: '0 1.5rem calc(1.4rem + env(safe-area-inset-bottom))' }}>
           <GhostBtn onClick={onCancel} disabled={busy}>{cancelLabel}</GhostBtn>
           <button type="button" onClick={onConfirm} disabled={busy} className="admin-btn"
-            style={{ padding: '0.65rem 1.4rem', background: danger ? '#93333E' : '#45643c', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: busy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: busy ? 0.6 : 1 }}>
+            style={{ padding: '0.65rem 1.4rem', minHeight: '44px', background: danger ? '#93333E' : '#45643c', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: busy ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: busy ? 0.6 : 1 }}>
             {busy ? 'Working…' : confirmLabel}
           </button>
         </div>

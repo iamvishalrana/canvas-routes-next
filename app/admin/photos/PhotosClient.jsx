@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, CopyBtn } from '../_components/shared'
+import { useConfirm } from '../_components/ConfirmProvider'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
@@ -170,6 +171,7 @@ function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDele
 }
 
 export default function PhotosClient() {
+  const confirm = useConfirm()
   const [mode, setMode] = useState('event') // 'event' | 'personal'
   const [photos, setPhotos] = useState([])
   const [members, setMembers] = useState([])
@@ -381,6 +383,12 @@ export default function PhotosClient() {
   }
 
   async function notifyMember(m) {
+    if (!(await confirm({
+      title: 'Notify this member?',
+      message: 'This emails the member to let them know their photos are ready to view.',
+      details: <><strong>{m.name || '—'}</strong>{m.email ? <> · {m.email}</> : null}</>,
+      confirmLabel: 'Yes, notify',
+    }))) return
     setNotifyStatus(s => ({ ...s, [m.id]: 'sending' }))
     try {
       const res = await fetch(`/api/admin/members/${m.id}/notify-photos`, { method: 'POST' })

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, GhostBtn, DangerBtn, CopyBtn } from '../_components/shared'
+import { useConfirm } from '../_components/ConfirmProvider'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import { formatPaymentType } from '../../../lib/paymentTypeLabels'
@@ -130,9 +131,9 @@ function Actions({ r, ctx }) {
   const {
     authorizedAction, authorizedErr, authorizedBusy,
     refunding, refundReason, refundErr, refundBusy,
-    receiptConfirm, receiptBusy, receiptDone, receiptErr,
+    receiptBusy, receiptDone, receiptErr,
     doCapture, doCancel, doRefund, resendReceipt,
-    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm, setRefundErr,
+    setAuthorizedAction, setRefunding, setRefundReason, setRefundErr,
   } = ctx
   const isPaid = ['paid', 'partially_refunded'].includes(r.stripe_payment_status)
   const isAuthorized = r.stripe_payment_status === 'authorized'
@@ -159,9 +160,10 @@ function Actions({ r, ctx }) {
   }
 
   if (refunding === r.stripe_payment_intent_id) {
+    // Reason picker only — the actual Yes/No gate is the popup that doRefund opens.
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
-        <div style={{ fontSize: '11px', color: '#93333E' }}>Refund {fmt((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0))}?</div>
+        <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#888' }}>Refund reason</div>
         {refundErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#93333E' }}>{refundErr[r.stripe_payment_intent_id]}</div>}
         <select value={refundReason} onChange={e => setRefundReason(e.target.value)}
           style={{ fontSize: '11px', padding: '0.3rem 0.5rem', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff', fontFamily: 'var(--font-inter),sans-serif', color: '#555', cursor: 'pointer' }}>
@@ -171,7 +173,7 @@ function Actions({ r, ctx }) {
         </select>
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           <DangerBtn small onClick={() => doRefund(r)} disabled={refundBusy === r.stripe_payment_intent_id}>
-            {refundBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
+            {refundBusy === r.stripe_payment_intent_id ? '…' : `Refund ${fmt((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0))}`}
           </DangerBtn>
           <GhostBtn small onClick={() => { setRefunding(null); setRefundReason('requested_by_customer') }}>Cancel</GhostBtn>
         </div>
@@ -179,22 +181,10 @@ function Actions({ r, ctx }) {
     )
   }
 
-  if (receiptConfirm === r.stripe_payment_intent_id) return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
-      <div style={{ fontSize: '11px', color: '#8A6535' }}>Resend receipt to {r.email}?</div>
-      <div style={{ display: 'flex', gap: '0.35rem' }}>
-        <GhostBtn small onClick={() => { setReceiptConfirm(null); resendReceipt(r) }} disabled={!!receiptBusy}>
-          {receiptBusy === r.stripe_payment_intent_id ? '…' : 'Confirm'}
-        </GhostBtn>
-        <GhostBtn small onClick={() => setReceiptConfirm(null)}>Cancel</GhostBtn>
-      </div>
-    </div>
-  )
-
   return (
     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-      <GhostBtn small onClick={() => setReceiptConfirm(r.stripe_payment_intent_id)}>
-        {receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : 'Receipt'}
+      <GhostBtn small onClick={() => resendReceipt(r)} disabled={receiptBusy === r.stripe_payment_intent_id}>
+        {receiptBusy === r.stripe_payment_intent_id ? '…' : receiptDone[r.stripe_payment_intent_id] ? 'Sent!' : 'Receipt'}
       </GhostBtn>
       {isPaid && (
         <DangerBtn small onClick={() => { setRefunding(r.stripe_payment_intent_id); setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null })) }}>
@@ -224,6 +214,7 @@ function PiLink({ id, manual }) {
 }
 
 export default function PaymentsClient({ initialRecords = [] }) {
+  const confirm = useConfirm()
   const [records, setRecords]         = useState(initialRecords)
   const [loading, setLoading]         = useState(false)
   const [loadError, setLoadError]     = useState(false)
@@ -256,7 +247,6 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const [authorizedBusy, setAuthorizedBusy]     = useState(null)
   const [authorizedErr, setAuthorizedErr]       = useState({})
   const [refundReason, setRefundReason] = useState('requested_by_customer')
-  const [receiptConfirm, setReceiptConfirm] = useState(null)
   const [receiptBusy, setReceiptBusy] = useState(null)
   const [receiptDone, setReceiptDone] = useState({})     // { [id]: true }
   const [receiptErr, setReceiptErr]   = useState({})
@@ -273,6 +263,11 @@ export default function PaymentsClient({ initialRecords = [] }) {
 
 
   async function doCapture(r) {
+    if (!(await confirm({
+      title: 'Capture this payment?',
+      message: `This charges the card hold for ${fmt(r.stripe_amount_paid || 0)} and emails ${r.email || 'the customer'} a confirmation. It can only be reversed by refunding.`,
+      confirmLabel: 'Yes, capture',
+    }))) return
     setAuthorizedBusy(r.stripe_payment_intent_id)
     setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
@@ -299,6 +294,14 @@ export default function PaymentsClient({ initialRecords = [] }) {
   }
 
   async function doRefund(r) {
+    const amount = (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)
+    if (!(await confirm({
+      title: 'Refund this payment?',
+      message: `This refunds ${fmt(amount)} to ${r.email || 'the customer'} and emails them a refund notification. It cannot be undone.`,
+      details: <>Reason: <strong>{refundReason.replace(/_/g, ' ')}</strong></>,
+      confirmLabel: 'Yes, refund',
+      danger: true,
+    }))) return
     setRefundBusy(r.stripe_payment_intent_id)
     setRefundErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
@@ -319,6 +322,11 @@ export default function PaymentsClient({ initialRecords = [] }) {
   }
 
   async function resendReceipt(r) {
+    if (!(await confirm({
+      title: 'Resend the receipt?',
+      message: `This emails a payment receipt to ${r.email || 'the customer'}.`,
+      confirmLabel: 'Yes, send receipt',
+    }))) return
     setReceiptBusy(r.stripe_payment_intent_id)
     setReceiptErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
     try {
@@ -405,9 +413,9 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const actionsCtx = {
     authorizedAction, authorizedErr, authorizedBusy,
     refunding, refundReason, refundErr, refundBusy,
-    receiptConfirm, receiptBusy, receiptDone, receiptErr,
+    receiptBusy, receiptDone, receiptErr,
     doCapture, doCancel, doRefund, resendReceipt,
-    setAuthorizedAction, setRefunding, setRefundReason, setReceiptConfirm, setRefundErr,
+    setAuthorizedAction, setRefunding, setRefundReason, setRefundErr,
   }
 
   return (
