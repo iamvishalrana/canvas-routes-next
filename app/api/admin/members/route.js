@@ -7,6 +7,7 @@ import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { padForStorage } from '../../../../lib/memberNumber.js'
 import { buildMemberInviteEmailHtml, memberInviteEmailText } from '../../../../lib/memberInviteEmail.js'
+import { claimSharedPhotosForMember } from '../../../../lib/claimSharedPhotos.js'
 
 // Next sequential membership number, computed fresh on every invite. NULLs
 // sort first in Postgres on a DESC order by default, so they must be
@@ -104,6 +105,18 @@ export async function POST(request) {
   } catch (err) {
     captureException(err, { context: 'member-create-attendance-backfill', email: memberData.email })
   }
+
+  // If this person was sent photos as a non-member before joining (via the
+  // photo-shares feature), permanently copy those into their own member
+  // gallery now so they keep them after the share link expires. Idempotent
+  // and best-effort — a failure here must never fail the invite (the members
+  // photos page re-runs the same claim on load as a safety net). Not awaited
+  // in a way that blocks the response: the storage copies can be slow, so it
+  // runs in after() like the invite email below.
+  after(async () => {
+    try { await claimSharedPhotosForMember(supabase, { memberId: invited.user.id, email: memberData.email }) }
+    catch (err) { captureException(err, { context: 'member-create-photo-claim', email: memberData.email }) }
+  })
 
   // Invite email in after() — rule #8: bare fire-and-forget gets killed when
   // Vercel tears the function down after the response; after() keeps it alive.

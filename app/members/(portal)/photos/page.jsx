@@ -2,45 +2,10 @@ import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { attendanceKey, attendanceKeyToEventName } from '../../../../lib/eventMeta'
-import { normalizeEmail } from '../../../../lib/normalizeEmail'
+import { claimSharedPhotosForMember } from '../../../../lib/claimSharedPhotos'
 import MembersGalleryTabs from '../../../../components/MembersGalleryTabs'
 import FadeUp from '../../../../components/FadeUp'
 import { membersPhotosT } from '../../../../lib/i18n/membersPhotos'
-
-const SHARES_BUCKET = 'photo-shares'
-
-// If this member was previously sent photos as a non-member (before they
-// had a portal account) via the photo-shares feature
-// (app/api/admin/photo-share-people), surface those photos here too —
-// live, not copied. Each folder's expires_at is admin-set per folder
-// (defaults to 30 days, 1-365 day range — see ./folders/route.js) and the
-// photo-shares-cleanup cron deletes folders once expired; this only reads
-// still-live folders, so a photo shows up here for exactly as long as its
-// own folder's expiry says it should. Once that folder expires it just
-// stops appearing (and is deleted on the next cron run) — nothing to
-// reconcile.
-async function fetchLiveSharedPhotos(admin, email) {
-  const { data: person } = await admin.from('photo_share_people').select('id').eq('email', email).maybeSingle()
-  if (!person) return []
-
-  const { data: folders } = await admin.from('photo_share_folders')
-    .select('id, title')
-    .eq('person_id', person.id)
-    .gt('expires_at', new Date().toISOString())
-  if (!folders?.length) return []
-
-  const folderTitleById = new Map(folders.map(f => [f.id, f.title]))
-  const { data: items } = await admin.from('photo_share_items')
-    .select('id, folder_id, storage_path, original_path')
-    .in('folder_id', folders.map(f => f.id))
-    .order('created_at', { ascending: true })
-
-  return (items || []).map(i => {
-    const { data: { publicUrl: url } } = admin.storage.from(SHARES_BUCKET).getPublicUrl(i.storage_path)
-    const { data: { publicUrl: originalUrl } } = admin.storage.from(SHARES_BUCKET).getPublicUrl(i.original_path || i.storage_path)
-    return { id: i.id, url, originalUrl, caption: folderTitleById.get(i.folder_id) || null }
-  })
-}
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Photos | Canvas Routes' } }
@@ -51,6 +16,18 @@ export default async function PhotosPage() {
   if (authError || !user) redirect('/members/login')
 
   const admin = createAdminClient()
+
+  // If this member was sent photos as a non-member before joining, permanently
+  // copy them into their own gallery now (idempotent — safe on every load).
+  // Runs BEFORE the personal-photos read below so freshly-claimed photos are
+  // included in this very render. This is both the backfill path for members
+  // who joined before the feature existed and a safety net if the invite-time
+  // claim (app/api/admin/members) ever failed. See lib/claimSharedPhotos.js.
+  if (user.email) {
+    try { await claimSharedPhotosForMember(admin, { memberId: user.id, email: user.email }) }
+    catch { /* best-effort — failures are captured inside the helper */ }
+  }
+
   const [{ data: member }, { data: eventPhotos }, { data: personalPhotos }, { data: tagRows }, { data: members }] = await Promise.all([
     admin.from('members').select('event_attendance, language').eq('id', user.id).maybeSingle(),
     admin.from('gallery_photos').select('id, album, album_date, caption, photo_url, original_url')
@@ -60,7 +37,6 @@ export default async function PhotosPage() {
     admin.from('gallery_photo_tags').select('photo_id, member_id'),
     admin.from('members').select('id, name'),
   ])
-  const sharedPhotos = user.email ? await fetchLiveSharedPhotos(admin, normalizeEmail(user.email)) : []
 
   const lang = member?.language === 'fr' ? 'fr' : 'en'
   const tt = membersPhotosT[lang]
@@ -90,10 +66,7 @@ export default async function PhotosPage() {
   const personalAlbum = {
     name: tt.myCarAndPersonal,
     date: null,
-    photos: [
-      ...(personalPhotos || []).map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })),
-      ...sharedPhotos,
-    ],
+    photos: (personalPhotos || []).map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })),
   }
 
   // Independent of gallery_photos — a member may have attended an event
