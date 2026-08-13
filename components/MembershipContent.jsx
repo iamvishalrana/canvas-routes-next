@@ -133,8 +133,13 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (!res.ok) { setPromoError(data.error || t.promoErrorInvalid); return }
       setPromoApplied({ code: promoInput.trim().toUpperCase(), ...data })
       setPromoInput('')
-      // Note: elements.update() is only valid in deferred-intent mode (no clientSecret).
-      // Membership uses clientSecret mode — the PI is already updated server-side by apply-promo.
+      // apply-promo changed the PaymentIntent's amount server-side. elements.update()
+      // is the wrong tool here (it's deferred-intent-only and would no-op/error in
+      // clientSecret mode) — fetchUpdates() is the clientSecret-mode equivalent that
+      // pulls the new amount into the PaymentElement. Without it the Apple Pay /
+      // Google Pay sheet keeps showing the pre-discount amount and can fail confirm
+      // with an amount mismatch. Best-effort: never let a refresh hiccup block the UI.
+      if (elements) { try { await elements.fetchUpdates() } catch {} }
     } catch {
       setPromoError(t.promoErrorApply)
     } finally {
@@ -153,7 +158,10 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
       if (res.ok) {
         setPromoApplied(null)
         setPromoError(null)
-        // elements.update() not called — invalid in client-secret mode; PI restored server-side
+        // Mirror handleApplyPromo: the PI amount was restored server-side, so pull
+        // it back into the PaymentElement / wallet sheet with fetchUpdates() (the
+        // clientSecret-mode refresh — elements.update() would be invalid here).
+        if (elements) { try { await elements.fetchUpdates() } catch {} }
         return true
       } else {
         setPromoError(t.promoErrorRemove)
