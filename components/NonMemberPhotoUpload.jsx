@@ -74,6 +74,8 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
     if (filesRef.current) filesRef.current.value = ''
   }
 
+  const uploadLocked = !!upload && !upload.finished
+
   return (
     <div className="nmp-card" style={{ marginTop: '1rem', marginBottom: '2rem', padding: '1rem 1.1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', fontFamily: 'var(--font-inter), sans-serif', animationDelay: `${entranceDelay}ms` }}>
       <style>{`
@@ -85,26 +87,37 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
         .nmp-icon { animation: nmp-icon-pulse 2.6s ease-in-out infinite; }
         .nmp-form { animation: nmp-fade-in 0.4s cubic-bezier(0.23,1,0.32,1) both; }
         .nmp-error, .nmp-done { animation: nmp-fade-in 0.35s ease both; }
+        .nmp-dropzone { transition: border-color 0.15s ease, background 0.15s ease; }
+        @media (hover: hover) { .nmp-dropzone:hover { border-color: rgba(69,100,60,0.55); background: rgba(69,100,60,0.05); } }
+        .nmp-dropzone:active { transform: scale(0.99); }
       `}</style>
       {!open ? (
         <button type="button" className="nmp-toggle" onClick={() => setOpen(true)}
-          style={{ background: 'none', border: 'none', padding: '0.5rem 0', margin: '-0.5rem 0', minHeight: '44px', width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent' }}>
-          <span className="nmp-icon" style={{ width: '28px', height: '28px', borderRadius: '99px', background: 'rgba(69,100,60,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          style={{ background: 'rgba(69,100,60,0.05)', border: '1px dashed rgba(69,100,60,0.45)', borderRadius: '8px', padding: '0.8rem 1rem', minHeight: '52px', width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.55rem', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent' }}>
+          <span className="nmp-icon" style={{ width: '28px', height: '28px', borderRadius: '99px', background: 'rgba(69,100,60,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </span>
-          <span style={{ fontSize: '12.5px', color: '#1a1a1a' }}>Have photos from {folderTitle}? Share them here.</span>
+          <span style={{ fontSize: '13px', fontWeight: '500', color: '#45643C', letterSpacing: '0.01em' }}>Add your photos from {folderTitle}</span>
         </button>
       ) : (
-        <div className="nmp-form">
-          <div style={{ fontSize: '12.5px', color: '#1a1a1a', marginBottom: '0.7rem' }}>
+        <div className="nmp-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div style={{ fontSize: '12.5px', color: '#1a1a1a', lineHeight: 1.6 }}>
             We'll add your photos to this gallery once reviewed.
           </div>
-          <input ref={filesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleFiles}
-            disabled={!!upload && !upload.finished} style={{ fontSize: '12px', fontFamily: 'var(--font-inter), sans-serif' }} />
-          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={!!upload && !upload.finished} maxLength={300}
-            placeholder="Caption (optional) — applies to all photos in this upload"
-            style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 0.85rem', marginTop: '0.6rem', border: '0.5px solid rgba(0,0,0,0.16)', background: '#fff', fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif', color: '#1a1a1a', outline: 'none' }} />
-          <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.5rem' }}>Up to {MAX_FILES} photos, 40MB each.</div>
+
+          {/* Clear tap target instead of the bare native file input */}
+          <label htmlFor={`nmp-file-${folderId}`} className="nmp-dropzone"
+            style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', border: '1px dashed rgba(69,100,60,0.4)', borderRadius: '4px', background: 'rgba(69,100,60,0.03)', padding: '0.75rem 1rem', minHeight: '44px', boxSizing: 'border-box', cursor: uploadLocked ? 'not-allowed' : 'pointer', opacity: uploadLocked ? 0.55 : 1, WebkitTapHighlightColor: 'transparent' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style={{ fontSize: '12.5px', color: '#45643C', letterSpacing: '0.02em' }}>Choose photos</span>
+            <input id={`nmp-file-${folderId}`} ref={filesRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleFiles}
+              disabled={uploadLocked} style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }} />
+          </label>
+
+          <input value={caption} onChange={e => setCaption(e.target.value)} disabled={uploadLocked} maxLength={300}
+            placeholder="Caption (optional) — applies to all photos in this upload" enterKeyHint="done"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 0.85rem', border: '0.5px solid rgba(0,0,0,0.16)', background: '#fff', fontSize: '16px', fontFamily: 'var(--font-inter), sans-serif', color: '#1a1a1a', outline: 'none' }} />
+          <div style={{ fontSize: '10px', color: '#bbb' }}>Up to {MAX_FILES} photos per upload.</div>
 
           {upload && (
             <div className="nmp-form" style={{ marginTop: '0.75rem' }}>

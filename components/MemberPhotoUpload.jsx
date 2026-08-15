@@ -118,11 +118,11 @@ export default function MemberPhotoUpload({ attendedEventNames, lang = 'en' }) {
       `}</style>
       {!open ? (
         <button type="button" className="mpu-toggle" onClick={() => setOpen(true)}
-          style={{ background: 'none', border: 'none', padding: '0.5rem 0', margin: '-0.5rem 0', minHeight: '44px', width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent' }}>
-          <span className="mpu-icon" style={{ width: '30px', height: '30px', borderRadius: '99px', background: 'rgba(69,100,60,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          style={{ background: 'rgba(69,100,60,0.05)', border: '1px dashed rgba(69,100,60,0.45)', borderRadius: '8px', padding: '0.85rem 1rem', minHeight: '52px', width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.55rem', fontFamily: 'var(--font-inter), sans-serif', WebkitTapHighlightColor: 'transparent' }}>
+          <span className="mpu-icon" style={{ width: '30px', height: '30px', borderRadius: '99px', background: 'rgba(69,100,60,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#45643C" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </span>
-          <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{t.haveEventPhotos}</span>
+          <span style={{ fontSize: '13.5px', fontWeight: '500', color: '#45643C', letterSpacing: '0.01em' }}>{t.addPhotosCta}</span>
         </button>
       ) : (
         <div className="mpu-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
