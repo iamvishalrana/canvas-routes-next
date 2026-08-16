@@ -12,6 +12,7 @@ import {
 } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { ExportButton } from '../_components/ExportModal'
+import ActivityTimeline from '../_components/ActivityTimeline'
 import MemberProfilePreview from '../../../components/MemberProfilePreview'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import { formatCarLabel } from '../../../lib/carLabel'
@@ -222,6 +223,14 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
             if (!res.ok) throw new Error('Failed to save notes')
           }}
         />
+      </div>
+
+      {/* Activity timeline — same email-keyed history as Contacts/Applications,
+          so all three stay in sync. Read-only; mounts only while expanded. */}
+      <div style={sectionPad}>
+        <div style={{ paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <ActivityTimeline email={m.email} />
+        </div>
       </div>
     </div>
   )

@@ -9,6 +9,7 @@ import {
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { useConfirm } from '../_components/ConfirmProvider'
+import ActivityTimeline from '../_components/ActivityTimeline'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 // Montreal calendar date (YYYY-MM-DD) an application was submitted, for the
@@ -1012,6 +1013,14 @@ export default function ApplicationsClient() {
                   {/* Admin Notes */}
                   {editingApp !== a.id && (
                     <AppAdminNotes key={a.id} appId={a.id} initialNotes={a.admin_notes} onSaved={notes => setApps(prev => prev.map(x => x.id === a.id ? { ...x, admin_notes: notes } : x))} />
+                  )}
+
+                  {/* Activity timeline — same email-keyed history as Contacts/
+                      Members, so all three stay in sync. Mounts only while open. */}
+                  {editingApp !== a.id && (
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <ActivityTimeline email={a.email} />
+                    </div>
                   )}
 
                   {/* Action row */}
