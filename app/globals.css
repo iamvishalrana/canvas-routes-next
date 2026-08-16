@@ -743,6 +743,28 @@ html { -webkit-text-size-adjust: 100%; }
   }
 }
 
+/* Dashboard "Scan a Receipt" CTA — subtle lift + a periodic gold shimmer sweep
+   so it reads as the primary action without being loud. */
+.admin-scan-cta { transition: transform 0.22s cubic-bezier(0.23,1,0.32,1), box-shadow 0.22s ease; }
+.admin-scan-cta::after {
+  content: '';
+  position: absolute; top: 0; left: -60%;
+  width: 45%; height: 100%;
+  background: linear-gradient(105deg, transparent 20%, rgba(197,168,130,0.18) 50%, transparent 80%);
+  transform: skewX(-14deg);
+  animation: admin-scan-shimmer 5.5s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+@keyframes admin-scan-shimmer {
+  0% { left: -60%; } 18% { left: 130%; } 100% { left: 130%; }
+}
+@media (hover: hover) {
+  .admin-scan-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(15,30,20,0.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-scan-cta::after { animation: none; }
+}
+
 /* Modal / confirm dialog */
 @keyframes adminOverlayIn {
   from { opacity: 0; }

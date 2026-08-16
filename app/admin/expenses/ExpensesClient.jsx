@@ -144,6 +144,7 @@ export default function ExpensesClient() {
   const [openGroups, setOpenGroups]     = useState({})
   const [openYears, setOpenYears]       = useState({})
   const [sortBy, setSortBy]             = useState('date_desc')
+  const [viewMode, setViewMode]         = useState('flat') // 'flat' (one date-sorted list) | 'folders' (Year → Event)
   const [filterEvent, setFilterEvent]   = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
   const [dateFrom, setDateFrom]         = useState('')
@@ -166,6 +167,8 @@ export default function ExpensesClient() {
   const [bulkEventPick, setBulkEventPick] = useState('')
   const fileRef = useRef(null)
   const scanRef = useRef(null)
+  const scanBtnRef = useRef(null)
+  const [scanHighlight, setScanHighlight] = useState(false)
   const editFileRef = useRef(null)
   // Tracks an uploaded-but-not-yet-saved receipt so it can be deleted from
   // Storage if it's replaced, removed, or the form/edit is abandoned before
@@ -189,6 +192,22 @@ export default function ExpensesClient() {
       setShowAdd(true)
     }
   }, [loading, expenses.length])
+
+  // Deep link from the dashboard "Scan a Receipt" button (/admin/expenses?scan=1):
+  // open the add form, scroll the scanner into view and pulse it. The file
+  // picker can't be auto-opened (browsers require a user gesture), so we make
+  // the Scan button the obvious next tap. The query param is cleared so a
+  // refresh doesn't re-trigger it.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!new URLSearchParams(window.location.search).get('scan')) return
+    setShowAdd(true)
+    setScanHighlight(true)
+    window.history.replaceState(null, '', '/admin/expenses')
+    const scrollT = setTimeout(() => scanBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
+    const offT = setTimeout(() => setScanHighlight(false), 3200)
+    return () => { clearTimeout(scrollT); clearTimeout(offT) }
+  }, [])
 
   // Card layout on phones (iPhone 13 Pro ≈ 390px) instead of a side-scrolling table
   useEffect(() => {
@@ -314,6 +333,19 @@ export default function ExpensesClient() {
   const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
   const grandTotalTax = visibleExpenses.reduce((s, e) => s + taxOf(e), 0)
   const missingReceiptCount = visibleExpenses.filter(e => !e.receipt_url).length
+
+  // The list renders from `renderYearGroups`. In 'folders' mode that's the real
+  // Year → Event hierarchy; in 'flat' mode it's a single synthetic year+group
+  // holding every visible receipt in one strict date order (honouring the sort
+  // dropdown) — so the same row machinery (edit/delete/select) is reused, just
+  // with the year/event headers hidden and the event name shown per row.
+  const renderYearGroups = viewMode === 'flat'
+    ? [{
+        year: '__flat__',
+        events: [{ name: '__flat__', items: sortItems(visibleExpenses), total: grandTotal, totalTax: grandTotalTax }],
+        count: visibleExpenses.length, total: grandTotal, totalTax: grandTotalTax,
+      }]
+    : yearGroups
 
   // Summary breakdowns — reflect whatever the filters currently show
   const summaryByCategory = (() => {
@@ -818,6 +850,36 @@ export default function ExpensesClient() {
           .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
           .exp-actions-row { flex-wrap: wrap; }
         }
+
+        /* Scan button — recurring gold shimmer sweep, plus a stronger attention
+           pulse when arrived via the dashboard deep link. */
+        .exp-scan-btn { position: relative; overflow: hidden; }
+        .exp-scan-btn::after {
+          content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%;
+          background: linear-gradient(105deg, transparent 20%, rgba(197,168,130,0.35) 50%, transparent 80%);
+          transform: skewX(-14deg); animation: exp-scan-shimmer 5s ease-in-out 1s infinite; pointer-events: none;
+        }
+        @keyframes exp-scan-shimmer { 0% { left: -60%; } 16% { left: 130%; } 100% { left: 130%; } }
+        .exp-scan-pulse { animation: exp-scan-attn 1s ease-in-out 3; }
+        @keyframes exp-scan-attn {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(197,168,130,0); }
+          50%      { box-shadow: 0 0 0 6px rgba(197,168,130,0.35); }
+        }
+
+        /* Expense rows fade + rise in on mount; a light stagger via nth-child so
+           filtering/switching views animates the list in rather than snapping. */
+        .exp-row { animation: expRowIn 0.34s cubic-bezier(0.16,1,0.3,1) both; }
+        @keyframes expRowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .exp-row:nth-child(1) { animation-delay: 0.02s; }
+        .exp-row:nth-child(2) { animation-delay: 0.05s; }
+        .exp-row:nth-child(3) { animation-delay: 0.08s; }
+        .exp-row:nth-child(4) { animation-delay: 0.11s; }
+        .exp-row:nth-child(5) { animation-delay: 0.14s; }
+        .exp-row:nth-child(6) { animation-delay: 0.17s; }
+        .exp-row:nth-child(n+7) { animation-delay: 0.2s; }
+        @media (prefers-reduced-motion: reduce) {
+          .exp-scan-btn::after, .exp-scan-pulse, .exp-row { animation: none; }
+        }
       `}</style>
 
       <datalist id="exp-event-names">{eventNames.map(n => <option key={n} value={n} />)}</datalist>
@@ -863,9 +925,10 @@ export default function ExpensesClient() {
         {/* Scan-to-fill banner */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.7rem 0.85rem', marginBottom: '1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', borderRadius: '8px' }}>
           <input ref={scanRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf" style={{ display: 'none' }} onChange={handleScan} />
-          <button type="button" className="exp-tap" onClick={() => scanRef.current?.click()} disabled={scanning}
-            style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', border: 'none', borderRadius: '6px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-            {scanning ? 'Scanning…' : '⚡ Scan receipt'}
+          <button type="button" ref={scanBtnRef} className={`exp-tap exp-scan-btn${scanHighlight ? ' exp-scan-pulse' : ''}`} onClick={() => scanRef.current?.click()} disabled={scanning}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, padding: '12px 22px', border: 'none', borderRadius: '8px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            {scanning ? 'Scanning…' : 'Scan receipt'}
           </button>
           <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount, tax, payment method, province &amp; a note. Just review &amp; save.</span>
         </div>
@@ -1103,6 +1166,18 @@ export default function ExpensesClient() {
                 <SelectChevron />
               </div>
             </div>
+            <div style={{ width: isMobile ? '100%' : 'auto' }}>
+              <L>View</L>
+              <div style={{ display: 'inline-flex', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '8px', overflow: 'hidden', width: isMobile ? '100%' : 'auto' }}>
+                {[['flat', 'By date'], ['folders', 'Folders']].map(([key, label]) => (
+                  <button key={key} type="button" className="exp-tap" onClick={() => setViewMode(key)}
+                    style={{ flex: 1, padding: '0.45rem 0.9rem', border: 'none', cursor: 'pointer', fontSize: '11px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif',
+                      background: viewMode === key ? '#0F1E14' : '#fff', color: viewMode === key ? '#F5F1EC' : '#777' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', paddingBottom: '2px' }}>
               {[['month', 'This month'], ['quarter', 'This quarter'], ['year', 'This year'], ['all', 'All time']].map(([key, label]) => {
                 const active = key === 'all' ? !hasDateFilter : false
@@ -1288,12 +1363,15 @@ export default function ExpensesClient() {
         <div style={{ padding: '3rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No expenses for this event.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {yearGroups.map(yg => {
-            // Newest year starts open; the rest start collapsed
-            const yearOpen = openYears[yg.year] ?? (yg.year === newestYear)
+          {renderYearGroups.map(yg => {
+            const flat = viewMode === 'flat'
+            // Newest year starts open; the rest start collapsed. Flat mode has
+            // no year folder, so it's always open.
+            const yearOpen = flat ? true : (openYears[yg.year] ?? (yg.year === newestYear))
             return (
               <div key={yg.year}>
-                {/* Year folder header */}
+                {/* Year folder header — hidden in flat (date) view */}
+                {!flat && (
                 <button onClick={() => setOpenYears(p => ({ ...p, [yg.year]: !yearOpen }))} className="exp-tap"
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem 0.35rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                   <ChevronIcon open={yearOpen} />
@@ -1306,15 +1384,17 @@ export default function ExpensesClient() {
                     <span style={{ fontSize: '11px', color: '#bbb', whiteSpace: 'nowrap' }}>+{fmt(yg.totalTax)} tax</span>
                   )}
                 </button>
+                )}
 
                 {yearOpen && (
-                  <div className="exp-group-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: isMobile ? 0 : '1.5rem', marginBottom: '0.75rem' }}>
+                  <div className="exp-group-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: (flat || isMobile) ? 0 : '1.5rem', marginBottom: '0.75rem' }}>
           {yg.events.map(group => {
             const gKey = `${yg.year}::${group.name}`
-            const isOpen = !!openGroups[gKey]
+            const isOpen = flat ? true : !!openGroups[gKey]
             return (
               <div key={gKey} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                {/* Group header */}
+                {/* Group header — hidden in flat (date) view */}
+                {!flat && (
                 <button onClick={() => toggleGroup(gKey)} className="exp-tap"
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.1rem', background: '#fafaf9', border: 'none', borderRadius: isOpen ? '12px 12px 0 0' : '12px', borderBottom: isOpen ? '0.5px solid rgba(0,0,0,0.07)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
                   <ChevronIcon open={isOpen} />
@@ -1327,6 +1407,7 @@ export default function ExpensesClient() {
                     <span style={{ fontSize: '11px', color: '#bbb', marginLeft: '0.25rem', whiteSpace: 'nowrap' }}>+{fmt(group.totalTax)} tax</span>
                   )}
                 </button>
+                )}
 
                 {isOpen && (
                   <div className="exp-group-body">
@@ -1375,7 +1456,7 @@ export default function ExpensesClient() {
                       )
 
                       return (
-                        <div key={expense.id} className={isNew ? 'exp-new' : ''}
+                        <div key={expense.id} className={isNew ? 'exp-new' : 'exp-row'}
                           style={{ borderBottom: i < group.items.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none' }}>
 
                           {isMobile ? (
@@ -1395,6 +1476,7 @@ export default function ExpensesClient() {
                                   </div>
                                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
                                     {fmtDate(expense.expense_date)}
+                                    {flat && <> · <span style={{ color: '#8A6535' }}>{expense.event_name || 'General'}</span></>}
                                     {expense.category && <> · {expense.category}</>}
                                     {expense.payment_method && <> · {PAYMENT_LABELS[expense.payment_method]}</>}
                                   </div>
@@ -1430,6 +1512,9 @@ export default function ExpensesClient() {
                                       <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '0.04em' }}>· {PAYMENT_LABELS[expense.payment_method]}</span>
                                     )}
                                   </span>
+                                  {flat && (
+                                    <div style={{ fontSize: '10px', color: '#8A6535', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.event_name || 'General'}</div>
+                                  )}
                                   {expense.notes && (
                                     <div style={{ fontSize: '10px', color: '#bbb', fontStyle: 'italic', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={expense.notes}>{expense.notes}</div>
                                   )}
@@ -1572,8 +1657,9 @@ export default function ExpensesClient() {
                       )
                     })}
 
-                    {/* Group total row */}
-                    {isMobile ? (
+                    {/* Group total row — hidden in flat view (it's just the grand
+                        total, already shown in the stat cards). */}
+                    {flat ? null : isMobile ? (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem', padding: '0.7rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9' }}>
                         <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>Group total</span>
                         <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>

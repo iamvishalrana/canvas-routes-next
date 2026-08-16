@@ -106,6 +106,22 @@ export default async function DashboardPage() {
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Dashboard</h1>
       </div>
 
+      {/* Scan a receipt — prominent quick action; deep-links into Expenses with
+          the scanner open (?scan=1). */}
+      <Link href="/admin/expenses?scan=1" className="admin-scan-cta"
+        style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.15rem 1.4rem', marginBottom: '2rem', borderRadius: '14px', background: 'linear-gradient(120deg,#0F1E14,#183226)', textDecoration: 'none', boxShadow: '0 6px 22px rgba(15,30,20,0.22)', opacity: 0, animation: 'adminFadeIn 0.4s ease-out 0.05s forwards', position: 'relative', overflow: 'hidden' }}>
+        <span aria-hidden style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(197,168,130,0.16)', border: '0.5px solid rgba(197,168,130,0.4)', flexShrink: 0 }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" />
+          </svg>
+        </span>
+        <span style={{ minWidth: 0 }}>
+          <span style={{ display: 'block', fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.5rem', letterSpacing: '0.03em', color: '#F5F1EC', lineHeight: 1.1 }}>Scan a Receipt</span>
+          <span style={{ display: 'block', fontSize: '11px', color: 'rgba(245,241,236,0.6)', marginTop: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>Snap or upload — we auto-fill the vendor, date, amount &amp; tax.</span>
+        </span>
+        <span style={{ marginLeft: 'auto', color: '#c5a882', fontSize: '20px', flexShrink: 0 }}>→</span>
+      </Link>
+
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {stats.map((s, i) => (
