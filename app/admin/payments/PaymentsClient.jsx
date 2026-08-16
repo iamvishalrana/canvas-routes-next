@@ -14,6 +14,14 @@ function fmt(cents) {
   return `$${((cents || 0) / 100).toFixed(2)}`
 }
 
+// Turn a raw Stripe snake_case value (e.g. 'not_assessed') into plain,
+// capitalized text ('Not assessed') for display.
+function humanize(s) {
+  if (!s) return ''
+  const words = String(s).replace(/_/g, ' ').trim()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
 function fmtDate(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
@@ -44,7 +52,7 @@ function PaymentDetails({ r }) {
   const m = r.metadata || {}
   const net = (r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)
   const cardLabel = r.card_brand
-    ? `${CARD_BRANDS[r.card_brand] || r.card_brand} •••• ${r.card_last4}${r.wallet ? ` · ${WALLET_LABELS[r.wallet] || r.wallet}` : ''}`
+    ? `${CARD_BRANDS[r.card_brand] || humanize(r.card_brand)} •••• ${r.card_last4}${r.wallet ? ` · ${WALLET_LABELS[r.wallet] || humanize(r.wallet)}` : ''}`
     : (r.manual ? 'Manual / e-transfer' : null)
   const rows = [
     ['Name',       r.name],
@@ -61,7 +69,7 @@ function PaymentDetails({ r }) {
     ['Refunded',   r.stripe_amount_refunded > 0 ? `−${fmt(r.stripe_amount_refunded)}` : null],
     ['Net',        r.stripe_amount_refunded > 0 ? fmt(net) : null],
     ['Paid with',  cardLabel],
-    ['Radar risk', r.risk_level ? `${r.risk_level}${r.risk_score != null ? ` · ${r.risk_score}/99` : ''}` : null],
+    ['Radar risk', r.risk_level ? `${humanize(r.risk_level)}${r.risk_score != null ? ` · ${r.risk_score}/99` : ''}` : null],
     ['Date',       fmtDateTime(r.stripe_paid_at)],
     ['DOB',        m.dob],
     ['Car',        [m.car_year, m.car_model || m.car_make].filter(Boolean).join(' ')],
@@ -121,7 +129,7 @@ function StatusChip({ status }) {
   const c = STATUS_COLORS[status] || STATUS_COLORS.pending
   return (
     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: `0.5px solid ${c.border}`, background: c.bg, color: c.text, whiteSpace: 'nowrap' }}>
-      {status || 'unknown'}
+      {(status || 'unknown').replace(/_/g, ' ')}
     </span>
   )
 }
