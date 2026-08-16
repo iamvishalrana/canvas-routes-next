@@ -279,7 +279,7 @@ export default function ExpensesClient() {
     if (filterCategory !== 'all' && (e.category || '') !== filterCategory) return false
     if (dateFrom && e.expense_date < dateFrom) return false
     if (dateTo && e.expense_date > dateTo) return false
-    if (filterMissing && e.receipt_url) return false
+    if (filterMissing && attachmentsOf(e).length) return false
     if (searchTerm) {
       const haystack = `${e.vendor || ''} ${e.event_name || ''} ${e.category || ''} ${e.notes || ''}`.toLowerCase()
       if (!haystack.includes(searchTerm)) return false
@@ -375,7 +375,7 @@ export default function ExpensesClient() {
   const visibleExpenses = groups.flatMap(g => g.items)
   const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
   const grandTotalTax = visibleExpenses.reduce((s, e) => s + taxOf(e), 0)
-  const missingReceiptCount = visibleExpenses.filter(e => !e.receipt_url).length
+  const missingReceiptCount = visibleExpenses.filter(e => !attachmentsOf(e).length).length
 
   // The list renders from `renderYearGroups`. In 'folders' mode that's the real
   // Year → Event hierarchy; in 'flat' mode it's a single synthetic year+group
@@ -652,7 +652,7 @@ export default function ExpensesClient() {
       // / vendor / date / tender between the two doesn't slip through. Fields
       // already filled are kept (not clobbered); genuinely empty ones still get
       // filled from this scan by the merge below.
-      const isSubsequent = !!(form.vendor || form.paid || attachments.length > 0)
+      const isSubsequent = attachments.length > 0
       const diffs = []
       if (isSubsequent) {
         const curPaid = parseFloat(form.paid) || 0
@@ -884,7 +884,7 @@ export default function ExpensesClient() {
           PAYMENT_LABELS[e.payment_method] || '', e.province || 'QC',
           parseFloat(e.amount || 0).toFixed(2), gst.toFixed(2), qst.toFixed(2), taxOf(e).toFixed(2),
           (parseFloat(e.amount || 0) + taxOf(e)).toFixed(2),
-          e.receipt_url || '', e.notes || '',
+          attachmentsOf(e).join(' | '), e.notes || '',
         ]
       }),
     ]
