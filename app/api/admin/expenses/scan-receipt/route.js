@@ -31,7 +31,7 @@ const FALLBACK_MODEL = 'claude-sonnet-5'
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
 const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exactly these keys:
-{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"total":number|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
+{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"total":number|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
 
 Rules:
 - "is_receipt" = true ONLY if the image is clearly a purchase receipt, invoice, bill, or order confirmation showing amounts paid or payable. If it is anything else — an article, a menu, a screenshot, a random document, a photo, a business card — set is_receipt to false and EVERY other key to null. Never guess values from something that is not a receipt.
@@ -39,7 +39,8 @@ Rules:
 - "date" = the transaction date in YYYY-MM-DD. If the year is missing, infer the most likely recent year.
 - "amount" = the PRE-TAX subtotal (goods/services before taxes). If only a grand total is shown with no tax lines, set "amount" to that total and leave "gst" and "qst" null.
 - "gst" = the GST / TPS / HST-federal amount (federal, ~5%) only. "qst" = the QST / TVQ / PST / HST-provincial amount only. If a single combined tax line is shown (e.g. HST) and you can't split it, put the whole amount in "gst" and leave "qst" null.
-- "total" = the grand total actually paid.
+- "tip" = the tip / gratuity / "Pourboire" / "Service" amount added on top of the taxed subtotal, if any (common on a restaurant's card/payment receipt but usually absent on the itemized bill). null if there is no tip line.
+- "total" = the grand total actually paid (this INCLUDES the tip when one is present).
 - "category" MUST be exactly one of: ${CATEGORIES.join(', ')}. Pick the best fit, or null if unclear.
 - "payment_method" MUST be exactly one of: cash, credit, debit, etransfer, other. Map the tender shown on the receipt, checking in this order: "CASH"/"ESPÈCES"/"COMPTANT" → "cash"; "Interac e-Transfer"/"Virement Interac" → "etransfer"; "INTERAC"/"DEBIT"/"DÉBIT"/"Débit"/debit card → "debit" (Interac by itself always means a debit card); VISA/Mastercard/Amex/Discover/"CREDIT"/"CRÉDIT" → "credit"; anything else → "other". null if not shown.
 - "province" = the 2-letter Canadian province/territory code of the MERCHANT's address (one of: ${PROVINCES.join(', ')}), or null if no Canadian address is visible.
@@ -157,6 +158,7 @@ export async function POST(request) {
     const amount = toNum(parsed.amount)
     const gst = toNum(parsed.gst)
     const qst = toNum(parsed.qst)
+    const tip = toNum(parsed.tip)
     const total = toNum(parsed.total)
     const payment_method = PAYMENT_METHODS.includes(parsed.payment_method) ? parsed.payment_method : null
     const province = (typeof parsed.province === 'string' && PROVINCES.includes(parsed.province.toUpperCase())) ? parsed.province.toUpperCase() : null
@@ -167,15 +169,15 @@ export async function POST(request) {
       return Response.json({ error: 'No amounts could be read from that image. Enter the details manually.' }, { status: 422 })
     }
 
-    // Flag when subtotal + taxes don't reconcile with the printed total so the
-    // client can tell the admin to double-check instead of silently trusting it
-    const mismatch = amount != null && total != null && (gst != null || qst != null)
-      ? Math.abs(amount + (gst || 0) + (qst || 0) - total) > 0.02
+    // Flag when subtotal + taxes + tip don't reconcile with the printed total so
+    // the client can tell the admin to double-check instead of silently trusting it
+    const mismatch = amount != null && total != null && (gst != null || qst != null || tip != null)
+      ? Math.abs(amount + (gst || 0) + (qst || 0) + (tip || 0) - total) > 0.02
       : false
 
     return Response.json({
       vendor: typeof parsed.vendor === 'string' ? parsed.vendor.slice(0, 100) : null,
-      date, amount, gst, qst, total, category, payment_method, province, notes, mismatch,
+      date, amount, gst, qst, tip, total, category, payment_method, province, notes, mismatch,
     })
   } catch (err) {
     captureException(err, { context: 'expenses-scan-receipt' })

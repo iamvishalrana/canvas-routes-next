@@ -39,7 +39,7 @@ const PROVINCES = [
 const PROVINCE_MAP = Object.fromEntries(PROVINCES.map(p => [p.value, p]))
 const provLabelOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).provLabel
 
-const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', province: 'QC', category: '', payment_method: '', receipt_url: '', notes: '' }
+const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', tip: '', province: 'QC', category: '', payment_method: '', receipt_url: '', notes: '' }
 
 function round2(n) { return Math.round((parseFloat(n) || 0) * 100) / 100 }
 // Break a tax-INCLUDED total into { subtotal, gst, qst } for a province's rates.
@@ -55,6 +55,10 @@ function taxOf(e) {
   const split = (parseFloat(e.gst_amount) || 0) + (parseFloat(e.qst_amount) || 0)
   return split > 0 ? split : (parseFloat(e.tax_amount) || 0)
 }
+// Tip / gratuity (restaurants) — sits on top of subtotal + tax, untaxed.
+function tipOf(e) { return parseFloat(e.tip_amount) || 0 }
+// Grand total actually paid: subtotal + tax + tip.
+function grandTotalOf(e) { return (parseFloat(e.amount) || 0) + taxOf(e) + tipOf(e) }
 
 // All attachments on an expense (new receipt_urls list, falling back to the
 // legacy single receipt_url for older rows).
@@ -265,13 +269,15 @@ export default function ExpensesClient() {
   }, [form.event_name])
 
   // Auto-split GST/QST from the tax-included amount + province, unless the admin
-  // has typed a tax value by hand (taxManualRef). Recomputes as they type.
+  // has typed a tax value by hand (taxManualRef). The tip is subtracted first —
+  // it's not taxed — so the split is only on subtotal + tax. Recomputes as they type.
   useEffect(() => {
     if (taxManualRef.current) return
     if (!form.paid) return
-    const { gst, qst } = splitTax(form.paid, form.province)
+    const taxable = (parseFloat(form.paid) || 0) - (parseFloat(form.tip) || 0)
+    const { gst, qst } = splitTax(taxable, form.province)
     setForm(p => ({ ...p, gst_amount: gst ? String(gst) : '', qst_amount: qst ? String(qst) : '' }))
-  }, [form.paid, form.province])
+  }, [form.paid, form.province, form.tip])
 
   // Date-range + category + free-text filters feed both the list and the summary
   const searchTerm = searchQuery.trim().toLowerCase()
@@ -289,7 +295,7 @@ export default function ExpensesClient() {
   const usedCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))].sort()
 
   // Sort order applies to expenses within a folder AND to the folder order itself
-  const totalOf = e => parseFloat(e.amount || 0) + taxOf(e)
+  const totalOf = e => grandTotalOf(e)
   const sortItems = items => {
     const arr = [...items]
     // Guard the date sort keys — expense_date is NOT NULL in the DB today, but
@@ -304,8 +310,8 @@ export default function ExpensesClient() {
   }
   const sortEventGroups = evs => {
     if (sortBy === 'vendor_az')   return evs.sort((a, b) => a.name.localeCompare(b.name))
-    if (sortBy === 'amount_desc') return evs.sort((a, b) => (b.total + b.totalTax) - (a.total + a.totalTax))
-    if (sortBy === 'amount_asc')  return evs.sort((a, b) => (a.total + a.totalTax) - (b.total + b.totalTax))
+    if (sortBy === 'amount_desc') return evs.sort((a, b) => (b.total + b.totalTax + b.totalTip) - (a.total + a.totalTax + a.totalTip))
+    if (sortBy === 'amount_asc')  return evs.sort((a, b) => (a.total + a.totalTax + a.totalTip) - (b.total + b.totalTax + b.totalTip))
     if (sortBy === 'date_asc')    return evs.sort((a, b) => a.items[0].expense_date.localeCompare(b.items[0].expense_date))
     return evs.sort((a, b) => b.items[0].expense_date.localeCompare(a.items[0].expense_date))
   }
@@ -324,6 +330,7 @@ export default function ExpensesClient() {
         items: sortItems(items),
         total:    items.reduce((s, e) => s + parseFloat(e.amount || 0), 0),
         totalTax: items.reduce((s, e) => s + taxOf(e), 0),
+        totalTip: items.reduce((s, e) => s + tipOf(e), 0),
       })))
   })()
 
@@ -360,12 +367,14 @@ export default function ExpensesClient() {
           items: sortItems(items),
           total:    items.reduce((s, e) => s + parseFloat(e.amount || 0), 0),
           totalTax: items.reduce((s, e) => s + taxOf(e), 0),
+          totalTip: items.reduce((s, e) => s + tipOf(e), 0),
         })))
         return {
           year, events,
           count:    events.reduce((s, ev) => s + ev.items.length, 0),
           total:    events.reduce((s, ev) => s + ev.total, 0),
           totalTax: events.reduce((s, ev) => s + ev.totalTax, 0),
+          totalTip: events.reduce((s, ev) => s + ev.totalTip, 0),
         }
       })
       .sort((a, b) => sortBy === 'date_asc' ? a.year.localeCompare(b.year) : b.year.localeCompare(a.year))
@@ -375,6 +384,7 @@ export default function ExpensesClient() {
   const visibleExpenses = groups.flatMap(g => g.items)
   const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
   const grandTotalTax = visibleExpenses.reduce((s, e) => s + taxOf(e), 0)
+  const grandTotalTip = visibleExpenses.reduce((s, e) => s + tipOf(e), 0)
   const missingReceiptCount = visibleExpenses.filter(e => !attachmentsOf(e).length).length
 
   // The list renders from `renderYearGroups`. In 'folders' mode that's the real
@@ -385,8 +395,8 @@ export default function ExpensesClient() {
   const renderYearGroups = viewMode === 'flat'
     ? [{
         year: '__flat__',
-        events: [{ name: '__flat__', items: sortItems(visibleExpenses), total: grandTotal, totalTax: grandTotalTax }],
-        count: visibleExpenses.length, total: grandTotal, totalTax: grandTotalTax,
+        events: [{ name: '__flat__', items: sortItems(visibleExpenses), total: grandTotal, totalTax: grandTotalTax, totalTip: grandTotalTip }],
+        count: visibleExpenses.length, total: grandTotal, totalTax: grandTotalTax, totalTip: grandTotalTip,
       }]
     : yearGroups
 
@@ -395,13 +405,14 @@ export default function ExpensesClient() {
     const map = {}
     for (const e of visibleExpenses) {
       const c = e.category || 'Uncategorized'
-      if (!map[c]) map[c] = { count: 0, amount: 0, tax: 0 }
+      if (!map[c]) map[c] = { count: 0, amount: 0, tax: 0, tip: 0 }
       map[c].count++
       map[c].amount += parseFloat(e.amount || 0)
       map[c].tax += taxOf(e)
+      map[c].tip += tipOf(e)
     }
     return Object.entries(map)
-      .map(([name, v]) => ({ name, ...v, total: v.amount + v.tax }))
+      .map(([name, v]) => ({ name, ...v, total: v.amount + v.tax + v.tip }))
       .sort((a, b) => b.total - a.total)
   })()
   // Per calendar quarter — GST + QST recoverable as input tax credits
@@ -458,6 +469,7 @@ export default function ExpensesClient() {
       amount:         expense.amount != null ? String(expense.amount) : '',
       gst_amount:     expense.gst_amount != null && expense.gst_amount !== 0 ? String(expense.gst_amount) : '',
       qst_amount:     expense.qst_amount != null && expense.qst_amount !== 0 ? String(expense.qst_amount) : '',
+      tip:            expense.tip_amount != null && expense.tip_amount !== 0 ? String(expense.tip_amount) : '',
       province:       expense.province     || 'QC',
       category:       expense.category     || '',
       payment_method: expense.payment_method || '',
@@ -488,7 +500,7 @@ export default function ExpensesClient() {
   // Copy an expense into the Add form — recurring purchases (fuel, coffee
   // supplies, the same vendor every event) become a two-tap entry
   function duplicateExpense(expense) {
-    const total = parseFloat(expense.amount || 0) + taxOf(expense)
+    const total = grandTotalOf(expense)
     // Start the new draft with no attachments — discard any the current draft
     // had uploaded-but-unsaved so they don't carry over or orphan.
     attachments.forEach(a => deleteReceiptByUrl(a.url))
@@ -505,6 +517,7 @@ export default function ExpensesClient() {
       paid:           total ? String(round2(total)) : '',
       gst_amount:     expense.gst_amount ? String(expense.gst_amount) : '',
       qst_amount:     expense.qst_amount ? String(expense.qst_amount) : '',
+      tip:            expense.tip_amount ? String(expense.tip_amount) : '',
       province:       expense.province || 'QC',
       category:       expense.category || '',
       payment_method: expense.payment_method || '',
@@ -527,7 +540,8 @@ export default function ExpensesClient() {
     const amtNum = parseFloat(editForm.amount) || 0
     const gstNum = parseFloat(editForm.gst_amount) || 0
     const qstNum = parseFloat(editForm.qst_amount) || 0
-    if (amtNum < 0 || gstNum < 0 || qstNum < 0) { setEditErr('Amounts cannot be negative.') ; return }
+    const tipNum = parseFloat(editForm.tip) || 0
+    if (amtNum < 0 || gstNum < 0 || qstNum < 0 || tipNum < 0) { setEditErr('Amounts cannot be negative.') ; return }
     setEditSaving(true); setEditErr(null)
     try {
       const res = await fetch(`/api/admin/expenses/${id}`, {
@@ -544,6 +558,7 @@ export default function ExpensesClient() {
           amount:         amtNum,
           gst_amount:     gstNum,
           qst_amount:     qstNum,
+          tip_amount:     tipNum,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -633,7 +648,8 @@ export default function ExpensesClient() {
       if (!res.ok) { setFormErr(data.error || (res.status === 413 ? 'That file is too large to scan.' : 'Scan failed.')); return }
 
       const total = data.total != null ? data.total
-        : (data.amount != null ? round2((data.amount || 0) + (data.gst || 0) + (data.qst || 0)) : null)
+        : (data.amount != null ? round2((data.amount || 0) + (data.gst || 0) + (data.qst || 0) + (data.tip || 0)) : null)
+      const scanTip = data.tip != null ? round2(data.tip) : null
 
       // Scan-time duplicate check — warn right away if this vendor + date + total
       // already exists, so the same receipt isn't scanned and saved twice. Mirrors
@@ -644,7 +660,7 @@ export default function ExpensesClient() {
         ? expenses.find(x =>
             (x.vendor || '').trim().toLowerCase() === sVendor &&
             x.expense_date === data.date &&
-            Math.abs((parseFloat(x.amount || 0) + taxOf(x)) - sTotal) < 0.01)
+            Math.abs(grandTotalOf(x) - sTotal) < 0.01)
         : null
 
       // Second document (invoice + receipt): compare this scan against what the
@@ -653,10 +669,21 @@ export default function ExpensesClient() {
       // already filled are kept (not clobbered); genuinely empty ones still get
       // filled from this scan by the merge below.
       const isSubsequent = attachments.length > 0
+      // Restaurant flow: the first document is the itemized bill (subtotal +
+      // tax); the later payment receipt often adds a TIP on top. If this scan
+      // carries a tip the form doesn't have yet, treat the extra as a tip (set
+      // it + bump the total) instead of flagging it as a discrepancy.
+      const curTip = parseFloat(form.tip) || 0
+      const tipAdded = (isSubsequent && scanTip != null && scanTip > 0 && curTip === 0) ? scanTip : null
+
       const diffs = []
       if (isSubsequent) {
+        // Compare amounts NET of tip on both sides, so a tip-only difference
+        // doesn't read as a mismatch.
         const curPaid = parseFloat(form.paid) || 0
-        if (sTotal != null && curPaid > 0 && Math.abs(sTotal - curPaid) > 0.01) diffs.push(`total ${fmt(sTotal)} vs ${fmt(curPaid)}`)
+        const scanPreTip = (sTotal != null ? sTotal : 0) - (scanTip || 0)
+        const curPreTip = curPaid - curTip
+        if (sTotal != null && curPaid > 0 && Math.abs(scanPreTip - curPreTip) > 0.01) diffs.push(`total ${fmt(scanPreTip)} vs ${fmt(curPreTip)}`)
         if (data.vendor && form.vendor && data.vendor.trim().toLowerCase() !== form.vendor.trim().toLowerCase()) diffs.push(`vendor “${data.vendor}” vs “${form.vendor}”`)
         if (data.date && form.expense_date && data.date !== form.expense_date) diffs.push(`date ${data.date} vs ${form.expense_date}`)
         if (data.payment_method && form.payment_method && data.payment_method !== form.payment_method) diffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[form.payment_method] || form.payment_method}`)
@@ -666,11 +693,13 @@ export default function ExpensesClient() {
         ? { type: 'warn', text: `Heads up — you already logged a ${fmt(sTotal)} expense from “${data.vendor}” on ${data.date}. Saving will add a second copy.` }
         : diffs.length
           ? { type: 'warn', text: `Second document differs from the first — ${diffs.join(' · ')}. The fields already filled were kept; adjust manually if this one is the correct source.` }
-          : data.mismatch
-            ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
-            : isSubsequent
-              ? { type: 'ok', text: 'Second document scanned & attached — it matches the first. ✓' }
-              : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
+          : tipAdded != null
+            ? { type: 'ok', text: `Payment receipt adds a ${fmt(tipAdded)} tip — total updated to ${fmt(total)}. ✓` }
+            : data.mismatch
+              ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
+              : isSubsequent
+                ? { type: 'ok', text: 'Second document scanned & attached — it matches the first. ✓' }
+                : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
 
       // The scan is authoritative about tax — including a receipt that has NONE
       // (zero-rated groceries/food). Always lock out the auto-split effect after
@@ -682,9 +711,12 @@ export default function ExpensesClient() {
         vendor:         p.vendor         || data.vendor   || '',
         expense_date:   p.expense_date   || data.date     || '',
         category:       p.category       || data.category || '',
-        paid:           p.paid           || (total   != null ? String(total)   : ''),
+        // When a later payment receipt adds a tip, bump the paid total to the
+        // tipped grand total; otherwise keep the first value (fill if empty).
+        paid:           tipAdded != null ? (total != null ? String(total) : p.paid) : (p.paid || (total != null ? String(total) : '')),
         gst_amount:     p.gst_amount     || (data.gst != null ? String(data.gst) : ''),
         qst_amount:     p.qst_amount     || (data.qst != null ? String(data.qst) : ''),
+        tip:            (parseFloat(p.tip) > 0 ? p.tip : (scanTip != null && scanTip > 0 ? String(scanTip) : p.tip)),
         payment_method: p.payment_method || data.payment_method || '',
         // Scanned province wins ONLY if the admin hasn't picked one by hand —
         // then a total-only receipt from, say, Ontario splits at ON rates, not
@@ -737,9 +769,10 @@ export default function ExpensesClient() {
     if (!form.paid || paidNum <= 0) { setFormErr('Amount paid is required.'); return }
     const gstNum = round2(form.gst_amount)
     const qstNum = round2(form.qst_amount)
-    if (gstNum < 0 || qstNum < 0) { setFormErr('Tax amounts cannot be negative.'); return }
-    const subtotal = round2(paidNum - gstNum - qstNum)
-    if (subtotal < 0) { setFormErr('Taxes are more than the amount paid.'); return }
+    const tipNum = round2(form.tip)
+    if (gstNum < 0 || qstNum < 0 || tipNum < 0) { setFormErr('Tax/tip amounts cannot be negative.'); return }
+    const subtotal = round2(paidNum - gstNum - qstNum - tipNum)
+    if (subtotal < 0) { setFormErr('Taxes and tip are more than the amount paid.'); return }
 
     // Duplicate guard — scanning the same receipt twice, or a double-tap on
     // Save, would otherwise silently create two identical rows. Warn once; a
@@ -752,7 +785,7 @@ export default function ExpensesClient() {
       const dup = expenses.find(x =>
         (x.vendor || '').trim().toLowerCase() === vendorKey &&
         x.expense_date === form.expense_date &&
-        Math.abs((parseFloat(x.amount || 0) + taxOf(x)) - totalPaid) < 0.01
+        Math.abs(grandTotalOf(x) - totalPaid) < 0.01
       )
       if (dup) {
         setFormErr(`Looks like a duplicate — a ${fmt(totalPaid)} expense from “${form.vendor.trim()}” on ${form.expense_date} already exists. Click Save again to add it anyway.`)
@@ -776,6 +809,7 @@ export default function ExpensesClient() {
           amount:         subtotal,
           gst_amount:     gstNum,
           qst_amount:     qstNum,
+          tip_amount:     tipNum,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -876,14 +910,14 @@ export default function ExpensesClient() {
     // silently exported all-time data instead.
     const source = visibleExpenses
     const rows = [
-      ['Date', 'Event', 'Vendor', 'Category', 'Payment', 'Province', 'Amount', 'GST', 'QST', 'Tax', 'Total', 'Receipt', 'Notes'],
+      ['Date', 'Event', 'Vendor', 'Category', 'Payment', 'Province', 'Amount', 'GST', 'QST', 'Tax', 'Tip', 'Total', 'Receipt', 'Notes'],
       ...source.map(e => {
         const gst = parseFloat(e.gst_amount || 0), qst = parseFloat(e.qst_amount || 0)
         return [
           e.expense_date, e.event_name || 'General', e.vendor || '', e.category || '',
           PAYMENT_LABELS[e.payment_method] || '', e.province || 'QC',
           parseFloat(e.amount || 0).toFixed(2), gst.toFixed(2), qst.toFixed(2), taxOf(e).toFixed(2),
-          (parseFloat(e.amount || 0) + taxOf(e)).toFixed(2),
+          tipOf(e).toFixed(2), grandTotalOf(e).toFixed(2),
           attachmentsOf(e).join(' | '), e.notes || '',
         ]
       }),
@@ -901,7 +935,8 @@ export default function ExpensesClient() {
   const paidNum = parseFloat(form.paid) || 0
   const gstNum = parseFloat(form.gst_amount) || 0
   const qstNum = parseFloat(form.qst_amount) || 0
-  const subtotalNum = round2(paidNum - gstNum - qstNum)
+  const tipNum = parseFloat(form.tip) || 0
+  const subtotalNum = round2(paidNum - gstNum - qstNum - tipNum)
 
   return (
     <div className="exp-wrap" style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)' }}>
@@ -1013,8 +1048,9 @@ export default function ExpensesClient() {
       {expenses.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
           {[
-            { label: 'Total Spent',     value: fmt(grandTotal + grandTotalTax),  color: '#1a1a1a' },
+            { label: 'Total Spent',     value: fmt(grandTotal + grandTotalTax + grandTotalTip),  color: '#1a1a1a' },
             { label: 'Tax Recoverable', value: fmt(grandTotalTax),               color: '#8A6535' },
+            ...(grandTotalTip > 0 ? [{ label: 'Tips', value: fmt(grandTotalTip), color: '#8A6535' }] : []),
             { label: 'Expenses',        value: visibleExpenses.length,           color: '#1a1a1a' },
             // Tapping toggles a receipt-less-only filter so the gaps are one tap away
             { label: filterMissing ? 'Missing Receipts · filtering' : 'Missing Receipts', value: missingReceiptCount, color: missingReceiptCount > 0 ? '#93333E' : '#3B6B2F', onClick: () => setFilterMissing(f => !f), active: filterMissing },
@@ -1127,6 +1163,11 @@ export default function ExpensesClient() {
             <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.qst_amount} placeholder="0.00"
               onChange={e => { taxManualRef.current = true; setForm(p => ({ ...p, qst_amount: e.target.value })) }} />
           </div>
+          <div>
+            <L>Tip ($)</L>
+            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.tip} placeholder="0.00"
+              onChange={e => setForm(p => ({ ...p, tip: e.target.value }))} />
+          </div>
         </div>
 
         {/* Live breakdown */}
@@ -1135,6 +1176,7 @@ export default function ExpensesClient() {
             Subtotal <span style={{ color: '#555' }}>{fmt(subtotalNum)}</span>
             &nbsp;·&nbsp; GST <span style={{ color: '#555' }}>{fmt(gstNum)}</span>
             &nbsp;·&nbsp; {provLabelOf(form.province)} <span style={{ color: '#555' }}>{fmt(qstNum)}</span>
+            {tipNum > 0 && <>&nbsp;·&nbsp; Tip <span style={{ color: '#555' }}>{fmt(tipNum)}</span></>}
             &nbsp;·&nbsp; Total <span style={{ color: '#1a1a1a' }}>{fmt(paidNum)}</span>
           </div>
         )}
@@ -1360,7 +1402,7 @@ export default function ExpensesClient() {
                         <div />
                         <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal)}</div>
                         <div style={{ fontSize: '12px', color: '#888', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotalTax)}</div>
-                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal + grandTotalTax)}</div>
+                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal + grandTotalTax + grandTotalTip)}</div>
                       </div>
                     </div>
                   </div>
@@ -1496,6 +1538,9 @@ export default function ExpensesClient() {
                   {yg.totalTax > 0 && (
                     <span style={{ fontSize: '11px', color: '#bbb', whiteSpace: 'nowrap' }}>+{fmt(yg.totalTax)} tax</span>
                   )}
+                  {yg.totalTip > 0 && (
+                    <span style={{ fontSize: '11px', color: '#bbb', whiteSpace: 'nowrap' }}>+{fmt(yg.totalTip)} tip</span>
+                  )}
                 </button>
                 )}
 
@@ -1519,6 +1564,9 @@ export default function ExpensesClient() {
                   {group.totalTax > 0 && (
                     <span style={{ fontSize: '11px', color: '#bbb', marginLeft: '0.25rem', whiteSpace: 'nowrap' }}>+{fmt(group.totalTax)} tax</span>
                   )}
+                  {group.totalTip > 0 && (
+                    <span style={{ fontSize: '11px', color: '#bbb', marginLeft: '0.25rem', whiteSpace: 'nowrap' }}>+{fmt(group.totalTip)} tip</span>
+                  )}
                 </button>
                 )}
 
@@ -1537,7 +1585,8 @@ export default function ExpensesClient() {
 
                     {group.items.map((expense, i) => {
                       const rowTax          = taxOf(expense)
-                      const total           = parseFloat(expense.amount || 0) + rowTax
+                      const rowTip          = tipOf(expense)
+                      const total           = parseFloat(expense.amount || 0) + rowTax + rowTip
                       const isPendingDelete = deleteConfirm === expense.id
                       const isDeletingThis  = deleting === expense.id
                       const isEditing       = editingId === expense.id
@@ -1601,8 +1650,8 @@ export default function ExpensesClient() {
                                 </div>
                                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                   <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{fmt(total)}</div>
-                                  {rowTax > 0 && (
-                                    <div style={{ fontSize: '10px', color: '#aaa', fontVariantNumeric: 'tabular-nums', marginTop: '1px' }}>{fmt(expense.amount)} + {fmt(rowTax)} tax</div>
+                                  {(rowTax > 0 || rowTip > 0) && (
+                                    <div style={{ fontSize: '10px', color: '#aaa', fontVariantNumeric: 'tabular-nums', marginTop: '1px' }}>{fmt(expense.amount)}{rowTax > 0 ? ` + ${fmt(rowTax)} tax` : ''}{rowTip > 0 ? ` + ${fmt(rowTip)} tip` : ''}</div>
                                   )}
                                 </div>
                               </div>
@@ -1708,6 +1757,11 @@ export default function ExpensesClient() {
                                   <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.qst_amount} placeholder="0.00"
                                     onChange={e => setEditForm(p => ({ ...p, qst_amount: e.target.value }))} />
                                 </div>
+                                <div>
+                                  <L>Tip ($)</L>
+                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.tip || ''} placeholder="0.00"
+                                    onChange={e => setEditForm(p => ({ ...p, tip: e.target.value }))} />
+                                </div>
                               </div>
                               <div style={{ marginBottom: '0.6rem' }}>
                                 <L>Notes</L>
@@ -1764,8 +1818,8 @@ export default function ExpensesClient() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem', padding: '0.7rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9' }}>
                         <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>Group total</span>
                         <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
-                          {fmt(group.total + group.totalTax)}
-                          {group.totalTax > 0 && <span style={{ fontSize: '10px', color: '#aaa', fontWeight: 400 }}> incl. {fmt(group.totalTax)} tax</span>}
+                          {fmt(group.total + group.totalTax + group.totalTip)}
+                          {(group.totalTax > 0 || group.totalTip > 0) && <span style={{ fontSize: '10px', color: '#aaa', fontWeight: 400 }}> incl.{group.totalTax > 0 ? ` ${fmt(group.totalTax)} tax` : ''}{group.totalTip > 0 ? ` ${fmt(group.totalTip)} tip` : ''}</span>}
                         </span>
                       </div>
                     ) : (
@@ -1774,7 +1828,7 @@ export default function ExpensesClient() {
                           <div style={{ gridColumn: '1 / 5', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
                           <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
                           <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
-                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total + group.totalTax)}</div>
+                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total + group.totalTax + group.totalTip)}</div>
                           <div />
                         </div>
                       </div>

@@ -33,8 +33,10 @@ export async function POST(request) {
   if (isNaN(amt) || amt < 0) return Response.json({ error: 'Valid amount required.' }, { status: 400 })
   const gstAmt = gst_amount === undefined || gst_amount === '' ? 0 : parseFloat(gst_amount)
   const qstAmt = qst_amount === undefined || qst_amount === '' ? 0 : parseFloat(qst_amount)
+  const tipAmt = body.tip_amount === undefined || body.tip_amount === '' ? 0 : parseFloat(body.tip_amount)
   if (!Number.isFinite(gstAmt) || gstAmt < 0) return Response.json({ error: 'GST must be a valid non-negative number.' }, { status: 400 })
   if (!Number.isFinite(qstAmt) || qstAmt < 0) return Response.json({ error: 'Tax must be a valid non-negative number.' }, { status: 400 })
+  if (!Number.isFinite(tipAmt) || tipAmt < 0) return Response.json({ error: 'Tip must be a valid non-negative number.' }, { status: 400 })
 
   const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
 
@@ -46,6 +48,7 @@ export async function POST(request) {
     amount:     amt,
     gst_amount: gstAmt,
     qst_amount: qstAmt,
+    tip_amount: tipAmt,
     tax_amount: 0, // legacy column — GST/QST are the source of truth now
     province:   province || 'QC',
     payment_method: VALID_PM.includes(payment_method) ? payment_method : null,
