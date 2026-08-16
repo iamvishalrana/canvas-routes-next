@@ -647,11 +647,30 @@ export default function ExpensesClient() {
             Math.abs((parseFloat(x.amount || 0) + taxOf(x)) - sTotal) < 0.01)
         : null
 
+      // Second document (invoice + receipt): compare this scan against what the
+      // first one already filled and flag any differences, so a mismatched total
+      // / vendor / date / tender between the two doesn't slip through. Fields
+      // already filled are kept (not clobbered); genuinely empty ones still get
+      // filled from this scan by the merge below.
+      const isSubsequent = !!(form.vendor || form.paid || attachments.length > 0)
+      const diffs = []
+      if (isSubsequent) {
+        const curPaid = parseFloat(form.paid) || 0
+        if (sTotal != null && curPaid > 0 && Math.abs(sTotal - curPaid) > 0.01) diffs.push(`total ${fmt(sTotal)} vs ${fmt(curPaid)}`)
+        if (data.vendor && form.vendor && data.vendor.trim().toLowerCase() !== form.vendor.trim().toLowerCase()) diffs.push(`vendor “${data.vendor}” vs “${form.vendor}”`)
+        if (data.date && form.expense_date && data.date !== form.expense_date) diffs.push(`date ${data.date} vs ${form.expense_date}`)
+        if (data.payment_method && form.payment_method && data.payment_method !== form.payment_method) diffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[form.payment_method] || form.payment_method}`)
+      }
+
       setScanNotice(dup
         ? { type: 'warn', text: `Heads up — you already logged a ${fmt(sTotal)} expense from “${data.vendor}” on ${data.date}. Saving will add a second copy.` }
-        : data.mismatch
-          ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
-          : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
+        : diffs.length
+          ? { type: 'warn', text: `Second document differs from the first — ${diffs.join(' · ')}. The fields already filled were kept; adjust manually if this one is the correct source.` }
+          : data.mismatch
+            ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
+            : isSubsequent
+              ? { type: 'ok', text: 'Second document scanned & attached — it matches the first. ✓' }
+              : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
 
       // The scan is authoritative about tax — including a receipt that has NONE
       // (zero-rated groceries/food). Always lock out the auto-split effect after
