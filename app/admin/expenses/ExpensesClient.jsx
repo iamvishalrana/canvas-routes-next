@@ -175,6 +175,7 @@ export default function ExpensesClient() {
   const [bulkEventPick, setBulkEventPick] = useState('')
   const fileRef = useRef(null)
   const scanRef = useRef(null)
+  const cameraRef = useRef(null) // camera-capture input (opens the rear camera directly on iOS)
   const scanBtnRef = useRef(null)
   const [scanHighlight, setScanHighlight] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -1016,13 +1017,20 @@ export default function ExpensesClient() {
 
         {/* Scan-to-fill banner */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.7rem 0.85rem', marginBottom: '1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', borderRadius: '8px' }}>
+          {/* Direct rear-camera capture on iOS (snap a receipt on the spot) */}
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleScan} />
+          {/* File / library picker — for an existing photo or a PDF */}
           <input ref={scanRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf" style={{ display: 'none' }} onChange={handleScan} />
-          <button type="button" ref={scanBtnRef} className={`exp-tap exp-scan-btn${scanHighlight ? ' exp-scan-pulse' : ''}`} onClick={() => scanRef.current?.click()} disabled={scanning}
+          <button type="button" ref={scanBtnRef} className={`exp-tap exp-scan-btn${scanHighlight ? ' exp-scan-pulse' : ''}`} onClick={() => cameraRef.current?.click()} disabled={scanning}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, padding: '12px 22px', border: 'none', borderRadius: '8px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            {scanning ? 'Scanning…' : 'Scan receipt'}
+            {scanning ? 'Scanning…' : 'Take photo'}
           </button>
-          <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount, tax, payment method, province &amp; a note. Just review &amp; save.</span>
+          <button type="button" className="exp-tap" onClick={() => scanRef.current?.click()} disabled={scanning}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '11px 16px', border: '0.5px solid rgba(15,30,20,0.35)', borderRadius: '8px', background: 'none', color: '#0F1E14', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Upload file
+          </button>
+          <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4, flex: '1 1 180px', minWidth: 0 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount, tax, payment method, province &amp; a note. Review &amp; save.</span>
         </div>
 
         {scanNotice && (
@@ -1172,7 +1180,7 @@ export default function ExpensesClient() {
               ✓ <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '130px' }}>{a.name}</span>
               <a href={a.url} target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none' }}>↗</a>
               <button type="button" aria-label={`Remove ${a.name}`} onClick={() => { deleteReceiptByUrl(a.url); setAttachments(prev => prev.filter(x => x.url !== a.url)) }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '15px', lineHeight: 1, padding: '0 1px' }}>×</button>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '17px', lineHeight: 1, padding: '5px 8px', display: 'inline-flex', alignItems: 'center' }}>×</button>
             </span>
           ))}
           <div style={{ marginLeft: 'auto' }}>
@@ -1709,7 +1717,7 @@ export default function ExpensesClient() {
                                     <span key={a.url} style={{ fontSize: '11px', color: '#3B6B2F', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(59,107,47,0.08)', border: '0.5px solid rgba(59,107,47,0.25)', borderRadius: '6px', padding: '3px 8px' }}>
                                       <a href={a.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3B6B2F', textDecoration: 'none' }}>Receipt {ai + 1} ↗</a>
                                       <button type="button" aria-label="Remove attachment" onClick={() => removeEditAttachment(a.url)}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '15px', lineHeight: 1, padding: '0 1px' }}>×</button>
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '17px', lineHeight: 1, padding: '5px 8px', display: 'inline-flex', alignItems: 'center' }}>×</button>
                                     </span>
                                   ))}
                                 </div>
