@@ -159,6 +159,7 @@ export default function ExpensesClient() {
   const [viewMode, setViewMode]         = useState('flat') // 'flat' (one date-sorted list) | 'folders' (Year → Event)
   const [filterEvent, setFilterEvent]   = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
+  const [filterPayment, setFilterPayment]   = useState('all')
   const [dateFrom, setDateFrom]         = useState('')
   const [dateTo, setDateTo]             = useState('')
   const [showSummary, setShowSummary]   = useState(false)
@@ -283,6 +284,7 @@ export default function ExpensesClient() {
   const searchTerm = searchQuery.trim().toLowerCase()
   const baseFiltered = expenses.filter(e => {
     if (filterCategory !== 'all' && (e.category || '') !== filterCategory) return false
+    if (filterPayment !== 'all' && (e.payment_method || '') !== filterPayment) return false
     if (dateFrom && e.expense_date < dateFrom) return false
     if (dateTo && e.expense_date > dateTo) return false
     if (filterMissing && attachmentsOf(e).length) return false
@@ -413,6 +415,19 @@ export default function ExpensesClient() {
     }
     return Object.entries(map)
       .map(([name, v]) => ({ name, ...v, total: v.amount + v.tax + v.tip }))
+      .sort((a, b) => b.total - a.total)
+  })()
+  // By payment method — for reconciling against a card/bank statement.
+  const summaryByPayment = (() => {
+    const map = {}
+    for (const e of visibleExpenses) {
+      const key = e.payment_method || 'unset'
+      if (!map[key]) map[key] = { count: 0, total: 0 }
+      map[key].count++
+      map[key].total += grandTotalOf(e)
+    }
+    return Object.entries(map)
+      .map(([key, v]) => ({ key, name: key === 'unset' ? 'Not set' : (PAYMENT_LABELS[key] || key), ...v }))
       .sort((a, b) => b.total - a.total)
   })()
   // Per calendar quarter — GST + QST recoverable as input tax credits
@@ -1150,7 +1165,7 @@ export default function ExpensesClient() {
           </div>
           <div>
             <L>Amount paid ($)</L>
-            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.paid} placeholder="tax incl."
+            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.paid} placeholder="tax + tip incl."
               onChange={e => { taxManualRef.current = false; setForm(p => ({ ...p, paid: e.target.value })) }} required />
           </div>
           <div>
@@ -1308,6 +1323,16 @@ export default function ExpensesClient() {
                 <SelectChevron />
               </div>
             </div>
+            <div style={{ width: isMobile ? '100%' : '160px' }}>
+              <L>Payment</L>
+              <div style={{ position: 'relative' }}>
+                <select style={sel} value={filterPayment} onChange={e => setFilterPayment(e.target.value)}>
+                  <option value="all">All methods</option>
+                  {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+                <SelectChevron />
+              </div>
+            </div>
             <div style={{ width: isMobile ? '100%' : '170px' }}>
               <L>Sort</L>
               <div style={{ position: 'relative' }}>
@@ -1351,7 +1376,7 @@ export default function ExpensesClient() {
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>
               {visibleExpenses.length} expense{visibleExpenses.length !== 1 ? 's' : ''}
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
-              {(hasDateFilter || filterCategory !== 'all' || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
+              {(hasDateFilter || filterCategory !== 'all' || filterPayment !== 'all' || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
@@ -1372,6 +1397,7 @@ export default function ExpensesClient() {
                 Summary{hasDateFilter ? ` · ${dateFrom || '…'} → ${dateTo || '…'}` : ' · All time'}
                 {filterEvent !== 'all' && ` · ${filterEvent}`}
                 {filterCategory !== 'all' && ` · ${filterCategory}`}
+                {filterPayment !== 'all' && ` · ${PAYMENT_LABELS[filterPayment] || filterPayment}`}
                 {searchTerm && ` · "${searchQuery.trim()}"`}
               </div>
 
@@ -1402,6 +1428,30 @@ export default function ExpensesClient() {
                         <div />
                         <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal)}</div>
                         <div style={{ fontSize: '12px', color: '#888', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotalTax)}</div>
+                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal + grandTotalTax + grandTotalTip)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* By payment method — reconcile against a card/bank statement */}
+                  <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>By payment method</div>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: '1.5rem' }}>
+                    <div style={{ minWidth: '300px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 110px', padding: '0.35rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+                        {['Method', 'Items', 'Total'].map((h, i) => (
+                          <div key={i} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', textAlign: i === 0 ? 'left' : 'right' }}>{h}</div>
+                        ))}
+                      </div>
+                      {summaryByPayment.map(m => (
+                        <div key={m.key} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 110px', padding: '0.45rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.04)' }}>
+                          <div style={{ fontSize: '12px', color: m.key === 'unset' ? '#bbb' : '#333' }}>{m.name}</div>
+                          <div style={{ fontSize: '12px', color: '#999', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{m.count}</div>
+                          <div style={{ fontSize: '12px', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(m.total)}</div>
+                        </div>
+                      ))}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 110px', padding: '0.5rem 0', borderTop: '0.5px solid rgba(0,0,0,0.12)' }}>
+                        <div style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>Total</div>
+                        <div />
                         <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(grandTotal + grandTotalTax + grandTotalTip)}</div>
                       </div>
                     </div>
