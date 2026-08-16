@@ -54,6 +54,11 @@ export async function PATCH(request, { params }) {
     if (parsed > maxOut) return Response.json({ error: `Can't set an expiry more than ${MAX_EXPIRY_YEARS_OUT} years out.` }, { status: 400 })
     update.expires_at = parsed.toISOString()
   }
+  // Any change to the expiry re-arms the 3-day "removed soon" reminder — so a
+  // renewed/extended folder gets a fresh reminder before its new expiry, and a
+  // folder wound down early can still warn the recipient before it's removed.
+  if ('expires_at' in update) update.reminder_sent_at = null
+
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
 
   const supabase = createAdminClient()

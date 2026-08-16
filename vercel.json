@@ -13,6 +13,10 @@
       "schedule": "0 11 * * *"
     },
     {
+      "path": "/api/cron/photo-shares-expiry-reminder",
+      "schedule": "0 10 * * *"
+    },
+    {
       "path": "/api/cron/photo-shares-cleanup",
       "schedule": "30 10 * * *"
     },
