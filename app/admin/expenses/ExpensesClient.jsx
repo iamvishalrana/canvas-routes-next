@@ -536,8 +536,12 @@ export default function ExpensesClient() {
       } else {
         // iPhone receipt photos are usually HEIC — the scan route can't read
         // those and compressImageClient passes small ones through untouched,
-        // so convert to JPEG first (no-op for already-web formats).
-        scanFile = await compressImageClient(await convertHeicIfNeeded(file))
+        // so convert to JPEG first (no-op for already-web formats). Downscale
+        // to ~1400px / q0.72 specifically for the OCR call — under the vision
+        // API's ~1568px cap, so it costs fewer image tokens while staying
+        // legible, and the full-resolution original is still what gets attached
+        // to the expense below via uploadReceipt(file).
+        scanFile = await compressImageClient(await convertHeicIfNeeded(file), { maxEdge: 1400, quality: 0.72 })
       }
       const sfd = new FormData()
       sfd.append('file', scanFile)

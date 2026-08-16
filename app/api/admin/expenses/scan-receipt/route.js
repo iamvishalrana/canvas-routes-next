@@ -20,6 +20,14 @@ const CATEGORIES = EXPENSE_CATEGORIES
 const PROVINCES = ['QC', 'ON', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU']
 const PAYMENT_METHODS = ['cash', 'credit', 'etransfer', 'other']
 
+// Cost control: the cheap model handles the vast majority of receipts (clear
+// printed totals). We escalate to the stronger model ONLY when the cheap pass
+// can't produce a usable result — see the escalation gate in POST. A confident
+// "not a receipt" is trusted from the cheap pass, so junk uploads never trigger
+// the second (pricier) call.
+const PRIMARY_MODEL  = 'claude-haiku-4-5-20251001'
+const FALLBACK_MODEL = 'claude-sonnet-5'
+
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
 const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exactly these keys:
@@ -109,18 +117,34 @@ export async function POST(request) {
     ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }
     : { type: 'image',    source: { type: 'base64', media_type: file.type, data: b64 } }
 
-  try {
+  // One extraction pass with a given model — returns the parsed JSON object, or
+  // null if the model didn't return parseable JSON.
+  const runModel = async (model) => {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-5',
+      model,
       max_tokens: 400,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: [mediaBlock, { type: 'text', text: EXTRACT_PROMPT }] }],
     })
-
     const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim()
-    let parsed
-    try { parsed = JSON.parse(text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')) }
-    catch { return Response.json({ error: 'Could not read that receipt. Enter the details manually.' }, { status: 422 }) }
+    try { return JSON.parse(text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')) }
+    catch { return null }
+  }
+
+  try {
+    let parsed = await runModel(PRIMARY_MODEL)
+
+    // Escalate to the stronger model only when the cheap pass failed to give a
+    // usable answer: unparseable JSON, or a "receipt" it couldn't read any
+    // amount from. A confident is_receipt:false is trusted as-is (no escalation)
+    // so non-receipt uploads stay a single cheap call.
+    const usable = parsed && (parsed.is_receipt === false || toNum(parsed.amount) != null || toNum(parsed.total) != null)
+    if (!usable) {
+      const retry = await runModel(FALLBACK_MODEL)
+      if (retry) parsed = retry
+    }
+
+    if (!parsed) return Response.json({ error: 'Could not read that receipt. Enter the details manually.' }, { status: 422 })
 
     // Not a receipt at all (random document, screenshot, article…) — refuse
     // rather than force-fitting garbage into the form
